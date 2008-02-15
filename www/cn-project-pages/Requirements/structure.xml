@@ -1,0 +1,14 @@
+<structure>
+<subpage>
+                                    <id>3786</id>
+                                  <name>Documents</name>
+                              <directory>Documents</directory>
+                    <ordinal>1</ordinal>
+                        </subpage>
+<subpage>
+                                    <id>3787</id>
+                                  <name>Rough Note</name>
+                              <directory>Rough Note</directory>
+                    <ordinal>2</ordinal>
+                        </subpage>
+</structure>
