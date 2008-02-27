@@ -3,7 +3,7 @@ package td2jira.td.api;
 import java.util.Date;
 import java.util.List;
 
-import com.collabnet.connector.qc.AttachmentData;
+import com.collabnet.ccf.pi.qc.AttachmentData;
 
 public interface IBug extends ILifeCycle {
 	String getStatus();

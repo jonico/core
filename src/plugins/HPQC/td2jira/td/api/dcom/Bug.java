@@ -16,7 +16,7 @@ import td2jira.td.api.IBugActions;
 import td2jira.td.api.IFactoryList;
 import td2jira.td.api.Utils;
 
-import com.collabnet.connector.qc.AttachmentData;
+import com.collabnet.ccf.pi.qc.AttachmentData;
 import com.jacob.activeX.ActiveXComponent;
 import com.jacob.com.Dispatch;
 import com.jacob.com.Variant;

@@ -1,4 +1,4 @@
-package com.collabnet.connector.qc;
+package com.collabnet.ccf.pi.qc;
 
 import java.text.DateFormat;
 import java.text.ParseException;

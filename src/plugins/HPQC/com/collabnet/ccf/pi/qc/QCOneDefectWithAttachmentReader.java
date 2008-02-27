@@ -1,4 +1,4 @@
-package com.collabnet.connector.qc;
+package com.collabnet.ccf.pi.qc;
 
 import java.io.IOException;
 import java.text.DateFormat;
@@ -15,10 +15,8 @@ import org.dom4j.Node;
 import org.openadaptor.auxil.connector.iostream.EncodingAwareObject;
 import org.openadaptor.core.IDataProcessor;
 
-import com.collabnet.connector.qc.QCConnectHelper;
-import com.collabnet.connector.qc.QCDefectHandler;
-
-import de.galileo.panama.SFEEXMLHelper;
+import com.collabnet.ccf.pi.qc.QCConnectHelper;
+import com.collabnet.ccf.pi.qc.QCDefectHandler;
 
 public class QCOneDefectWithAttachmentReader extends QCConnectHelper implements
 		IDataProcessor {
@@ -110,8 +108,8 @@ public class QCOneDefectWithAttachmentReader extends QCConnectHelper implements
 			
 			//TODO let user specify rootTag
 			Element root=document.addElement("QCArtifact"); 
-			SFEEXMLHelper.addField(root,"deleteFlag","false","Boolean",false);
-			SFEEXMLHelper.addField(root,"isDuplicate","true","Boolean",false);
+			QCXMLHelper.addField(root,"deleteFlag","false","Boolean",false);
+			QCXMLHelper.addField(root,"isDuplicate","true","Boolean",false);
 			// update the new time intervals
 			QCXMLHelper.addField(root, "project",getProjectName(), "String", false);
 			return new Object[]{document};
@@ -135,8 +133,8 @@ public class QCOneDefectWithAttachmentReader extends QCConnectHelper implements
 				QCXMLHelper.addField(root, fieldNames[j], fieldValues[j], "String", isFlexField);
 			}
 
-			SFEEXMLHelper.addField(root,"deleteFlag","false","Boolean",false);
-			SFEEXMLHelper.addField(root,"isDuplicate","false","Boolean",false);
+			QCXMLHelper.addField(root,"deleteFlag","false","Boolean",false);
+			QCXMLHelper.addField(root,"isDuplicate","false","Boolean",false);
 			// update the new time intervals
 			QCXMLHelper.addField(root, "project",getProjectName(), "String", false);
 			

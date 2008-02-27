@@ -1,4 +1,4 @@
-package com.collabnet.connector.qc;
+package com.collabnet.ccf.pi.qc;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -11,8 +11,6 @@ import org.dom4j.Node;
 import org.openadaptor.core.IDataProcessor;
 import org.openadaptor.core.exception.NullRecordException;
 import org.openadaptor.core.exception.RecordFormatException;
-
-import de.galileo.panama.SFEEXMLHelper;
 
 public class QCWriteConnector extends QCConnectHelper implements
 		IDataProcessor {
@@ -29,7 +27,7 @@ public class QCWriteConnector extends QCConnectHelper implements
 		
 		// Get Control information thusly
 		// this field is probably added from a read processor or read connector component
-		Boolean deleteArtifact=(Boolean)SFEEXMLHelper.asTypedValue(SFEEXMLHelper.getSingleValue(data, "deleteFlag", false), "Boolean");
+		Boolean deleteArtifact=(Boolean)QCXMLHelper.asTypedValue(QCXMLHelper.getSingleValue(data, "deleteFlag", false), "Boolean");
 
 		// Treat all fields as Strings for now
 		List<String> defectFieldNames=new ArrayList<String>();
@@ -60,7 +58,7 @@ public class QCWriteConnector extends QCConnectHelper implements
 		else {
 			try {
 					if (deleteArtifact.booleanValue()) {
-						defectHandler.deleteDefect(SFEEXMLHelper.getSingleValue(data,"BG_BUG_ID",false));
+						defectHandler.deleteDefect(QCXMLHelper.getSingleValue(data,"BG_BUG_ID",false));
 					}
 					else {
 						IQCDefect result = defectHandler.updateDefect(qcc, bugId, defectFieldNames, defectFieldValues);

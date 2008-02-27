@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.collabnet.connector.qc;
+package com.collabnet.ccf.pi.qc;
 
 public class NamesTypesAndValues {
 	public String type;

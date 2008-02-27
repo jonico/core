@@ -6,8 +6,8 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 
-import com.collabnet.connector.qc.IQCDefect;
-import com.collabnet.connector.qc.QCDefect;
+import com.collabnet.ccf.pi.qc.QCDefect;
+import com.collabnet.ccf.pi.qc.IQCDefect;
 
 import td2jira.td.api.Comment;
 import td2jira.td.api.ConnectionFactory;
