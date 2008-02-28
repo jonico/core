@@ -1,7 +1,7 @@
-package td2jira.td.api.dcom;
+package com.collabnet.ccf.pi.qc.api.dcom;
 
-import td2jira.td.api.IFactoryList;
 
+import com.collabnet.ccf.pi.qc.api.IFactoryList;
 import com.jacob.activeX.ActiveXComponent;
 import com.jacob.com.Dispatch;
 

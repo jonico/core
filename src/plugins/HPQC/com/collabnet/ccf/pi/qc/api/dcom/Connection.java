@@ -1,10 +1,10 @@
-package td2jira.td.api.dcom;
+package com.collabnet.ccf.pi.qc.api.dcom;
 
-import td2jira.td.api.ICommand;
-import td2jira.td.api.IConnection;
-import td2jira.td.api.IFactory;
-import td2jira.td.api.IHistory;
 
+import com.collabnet.ccf.pi.qc.api.ICommand;
+import com.collabnet.ccf.pi.qc.api.IConnection;
+import com.collabnet.ccf.pi.qc.api.IFactory;
+import com.collabnet.ccf.pi.qc.api.IHistory;
 import com.jacob.activeX.ActiveXComponent;
 import com.jacob.com.Dispatch;
 

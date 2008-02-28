@@ -1,4 +1,4 @@
-package td2jira.td.api;
+package com.collabnet.ccf.pi.qc.api;
 
 public interface ICommand extends ILifeCycle {
     public void setCommandText(String cmd);

@@ -8,8 +8,9 @@ import org.apache.commons.logging.LogFactory;
 import org.openadaptor.core.exception.ValidationException;
 import org.openadaptor.core.lifecycle.LifecycleComponent;
 
-import td2jira.td.api.ConnectionFactory;
-import td2jira.td.api.IConnection;
+import com.collabnet.ccf.pi.qc.api.ConnectionFactory;
+import com.collabnet.ccf.pi.qc.api.IConnection;
+
 
 public abstract class QCConnectHelper extends LifecycleComponent {
 	

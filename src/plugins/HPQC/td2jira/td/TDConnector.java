@@ -8,21 +8,21 @@ import org.apache.log4j.Logger;
 
 import com.collabnet.ccf.pi.qc.QCDefect;
 import com.collabnet.ccf.pi.qc.IQCDefect;
+import com.collabnet.ccf.pi.qc.api.Comment;
+import com.collabnet.ccf.pi.qc.api.ConnectionFactory;
+import com.collabnet.ccf.pi.qc.api.IBug;
+import com.collabnet.ccf.pi.qc.api.IBugActions;
+import com.collabnet.ccf.pi.qc.api.ICommand;
+import com.collabnet.ccf.pi.qc.api.IComment;
+import com.collabnet.ccf.pi.qc.api.IConnection;
+import com.collabnet.ccf.pi.qc.api.IFactory;
+import com.collabnet.ccf.pi.qc.api.IFactoryList;
+import com.collabnet.ccf.pi.qc.api.IFilter;
+import com.collabnet.ccf.pi.qc.api.IRecordSet;
+import com.collabnet.ccf.pi.qc.api.Utils;
+import com.collabnet.ccf.pi.qc.api.dcom.Bug;
+import com.collabnet.ccf.pi.qc.api.dcom.RecordSet;
 
-import td2jira.td.api.Comment;
-import td2jira.td.api.ConnectionFactory;
-import td2jira.td.api.IBug;
-import td2jira.td.api.IBugActions;
-import td2jira.td.api.ICommand;
-import td2jira.td.api.IComment;
-import td2jira.td.api.IConnection;
-import td2jira.td.api.IFactory;
-import td2jira.td.api.IFactoryList;
-import td2jira.td.api.IFilter;
-import td2jira.td.api.IRecordSet;
-import td2jira.td.api.Utils;
-import td2jira.td.api.dcom.Bug;
-import td2jira.td.api.dcom.RecordSet;
 
 public class TDConnector implements ITDConnector {
 	public static Logger logger = Logger.getLogger(TDConnector.class);

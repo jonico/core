@@ -52,7 +52,7 @@ public class Config {
 	public static String TD_MOCK_NEW_ATTACHMENT_PROBABILITY = "td.mock.new.attachment.probability=1";
 
 	public static String TD_CONNECTOR_IMPLEMENTATION = "td2jira.td.TDConnector";
-	public static String TD_IMPLEMENTATION = "td2jira.td.api.dcom.Connection";
+	public static String TD_IMPLEMENTATION = "com.collabnet.ccf.pi.qc.api.dcom.Connection";
 	public static String JIRA_CONNECTOR_IMPLEMENTATION = "jira.connector.implementation=td2jira.jira.xmlrpc.JIRAXmlRpcConnector";
 	
 	public static void load() throws Exception {

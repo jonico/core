@@ -1,7 +1,8 @@
-package td2jira.td.api;
+package com.collabnet.ccf.pi.qc.api;
+
+import com.collabnet.ccf.pi.qc.api.dcom.Connection;
 
 import td2jira.Config;
-import td2jira.td.api.dcom.Connection;
 
 public class ConnectionFactory {
 	private static IConnection instance ;

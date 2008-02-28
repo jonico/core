@@ -7,15 +7,15 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import td2jira.td.TDConnector;
-import td2jira.td.api.IBug;
-import td2jira.td.api.ICommand;
-import td2jira.td.api.IConnection;
-import td2jira.td.api.IFactory;
-import td2jira.td.api.IFactoryList;
-import td2jira.td.api.IFilter;
-import td2jira.td.api.IRecordSet;
-import td2jira.td.api.dcom.Bug;
+import com.collabnet.ccf.pi.qc.api.IBug;
+import com.collabnet.ccf.pi.qc.api.ICommand;
+import com.collabnet.ccf.pi.qc.api.IConnection;
+import com.collabnet.ccf.pi.qc.api.IFactory;
+import com.collabnet.ccf.pi.qc.api.IFactoryList;
+import com.collabnet.ccf.pi.qc.api.IFilter;
+import com.collabnet.ccf.pi.qc.api.IRecordSet;
+import com.collabnet.ccf.pi.qc.api.dcom.Bug;
+
 
 /**
  * The tracker handler class provides support for listing and/or edit trackers
@@ -23,7 +23,6 @@ import td2jira.td.api.dcom.Bug;
  */
 public class QCDefectHandler {
 
-	private TDConnector td = null;
 	private String username;
 	
 	private static final Log log = LogFactory.getLog(QCDefectHandler.class);

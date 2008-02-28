@@ -2,9 +2,10 @@ package td2jira.td;
 
 import java.util.List;
 
-import td2jira.td.api.Comment;
-import td2jira.td.api.IBug;
-import td2jira.td.api.IComment;
+import com.collabnet.ccf.pi.qc.api.Comment;
+import com.collabnet.ccf.pi.qc.api.IBug;
+import com.collabnet.ccf.pi.qc.api.IComment;
+
 
 public interface ITDConnector {
 

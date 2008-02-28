@@ -5,10 +5,10 @@ package com.collabnet.ccf.pi.qc;
 
 import java.util.List;
 
+import com.collabnet.ccf.pi.qc.api.IBug;
+import com.collabnet.ccf.pi.qc.api.dcom.Bug;
 import com.jacob.com.Dispatch;
 
-import td2jira.td.api.IBug;
-import td2jira.td.api.dcom.Bug;
 
 /**
  * @author Collabnet (c) 2008

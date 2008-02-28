@@ -1,14 +1,14 @@
-package td2jira.td.api.dcom;
+package com.collabnet.ccf.pi.qc.api.dcom;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import td2jira.td.api.IBug;
-import td2jira.td.api.IFactory;
-import td2jira.td.api.IField;
-import td2jira.td.api.IFilter;
-import td2jira.td.api.IItem;
 
+import com.collabnet.ccf.pi.qc.api.IBug;
+import com.collabnet.ccf.pi.qc.api.IFactory;
+import com.collabnet.ccf.pi.qc.api.IField;
+import com.collabnet.ccf.pi.qc.api.IFilter;
+import com.collabnet.ccf.pi.qc.api.IItem;
 import com.jacob.activeX.ActiveXComponent;
 import com.jacob.com.Dispatch;
 import com.jacob.com.Variant;

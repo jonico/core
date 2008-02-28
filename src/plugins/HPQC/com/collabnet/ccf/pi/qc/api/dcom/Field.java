@@ -1,8 +1,8 @@
-package td2jira.td.api.dcom;
+package com.collabnet.ccf.pi.qc.api.dcom;
 
-import td2jira.td.api.IField;
-import td2jira.td.api.IRecordSet;
 
+import com.collabnet.ccf.pi.qc.api.IField;
+import com.collabnet.ccf.pi.qc.api.IRecordSet;
 import com.jacob.activeX.ActiveXComponent;
 import com.jacob.com.Dispatch;
 import com.jacob.com.Variant;

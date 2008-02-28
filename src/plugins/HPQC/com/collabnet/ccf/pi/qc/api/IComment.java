@@ -1,4 +1,4 @@
-package td2jira.td.api;
+package com.collabnet.ccf.pi.qc.api;
 
 import java.io.Serializable;
 

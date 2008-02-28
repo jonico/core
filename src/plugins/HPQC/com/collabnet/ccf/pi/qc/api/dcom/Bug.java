@@ -1,4 +1,4 @@
-package td2jira.td.api.dcom;
+package com.collabnet.ccf.pi.qc.api.dcom;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
@@ -11,12 +11,12 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 
-import td2jira.td.api.Comment;
-import td2jira.td.api.IBugActions;
-import td2jira.td.api.IFactoryList;
-import td2jira.td.api.Utils;
 
 import com.collabnet.ccf.pi.qc.AttachmentData;
+import com.collabnet.ccf.pi.qc.api.Comment;
+import com.collabnet.ccf.pi.qc.api.IBugActions;
+import com.collabnet.ccf.pi.qc.api.IFactoryList;
+import com.collabnet.ccf.pi.qc.api.Utils;
 import com.jacob.activeX.ActiveXComponent;
 import com.jacob.com.Dispatch;
 import com.jacob.com.Variant;

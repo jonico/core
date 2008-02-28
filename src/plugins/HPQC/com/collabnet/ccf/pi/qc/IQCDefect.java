@@ -1,6 +1,6 @@
 package com.collabnet.ccf.pi.qc;
 
-import td2jira.td.api.IBug;
+import com.collabnet.ccf.pi.qc.api.IBug;
 
 public interface IQCDefect extends IBug {
 

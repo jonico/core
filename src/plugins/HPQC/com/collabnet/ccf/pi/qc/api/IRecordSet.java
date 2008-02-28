@@ -1,4 +1,4 @@
-package td2jira.td.api;
+package com.collabnet.ccf.pi.qc.api;
 
 public interface IRecordSet extends ILifeCycle {
 	public int getRecordCount();

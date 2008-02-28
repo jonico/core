@@ -1,4 +1,4 @@
-package td2jira.td.api;
+package com.collabnet.ccf.pi.qc.api;
 
 public interface IBugActions extends IBug {
 	boolean hasChange();
