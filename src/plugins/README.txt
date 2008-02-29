@@ -18,4 +18,4 @@ Reader:
 1. A reader should implement the IDataProcessor interface.
 2. The process() method should return an XML document which should adhere to the Generic Artifact Template
    specifications (http://ccf.open.collab.net/source/browse/*checkout*/ccf/trunk/docs/Generic%20Artifact%20Template.doc).
-   This could be achieved easily by using the com.collabnet.ccf.core.GenericArtifactHelper class.
+   This could be achieved easily by using the com.collabnet.ccf.core.ga.GenericArtifactHelper class.
