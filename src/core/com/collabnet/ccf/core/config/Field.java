@@ -57,6 +57,11 @@ public class Field {
 	public void setValues(List<String> values) {
 		this.values = values;
 	}
+	
+	public void setSingleValue(String singleValue) {
+		this.values = new ArrayList<String>();
+		values.add(singleValue);
+	}
 
 	public String getDisplayName() {
 		return displayName;

@@ -95,12 +95,12 @@ public class QCDefectHandler {
 	 */
 	public List<IQCDefect> getChangedDefects(IConnection qcc, String from, String to)
 	 throws Exception {
-		String sql = "SELECT DISTINCT(AU_ENTITY_ID) FROM AUDIT_LOG, AUDIT_PROPERTIES WHERE AU_ENTITY_TYPE = 'BUG'";
+		String sql = "SELECT AU_ENTITY_ID, AU_ACTION_ID FROM AUDIT_LOG WHERE AU_ENTITY_TYPE = 'BUG'";
 		if (from != null && !from.equals(""))
 			sql += " AND AU_TIME >= '" + from + "'";
 		if (to != null && !to.equals(""))
 			sql += " AND AU_TIME < '" + to + "'";
-		sql += " AND AU_ACTION_ID = AP_ACTION_ID ";
+		// sql += " AND AU_ACTION_ID = AP_ACTION_ID ";
 		// sql += "AND AU_USER NOT LIKE '" + username + "'";
 		log.info(sql);
 		
@@ -114,7 +114,12 @@ public class QCDefectHandler {
 			ids.add(defectId);
 		}
 
-		return getDefectsWithIds(qcc, ids);
+		List<IQCDefect> modifiedDefects = getDefectsWithIds(qcc, ids);
+		for (IQCDefect modifiedDefect:modifiedDefects) {
+			modifiedDefect.fillFieldsFromBug(qcc);
+		}
+		
+		return modifiedDefects;
 	}
 
 	public void deleteDefect(String id) {

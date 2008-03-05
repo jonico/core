@@ -28,13 +28,20 @@ public class QCConfigHelper {
 	static final String sfListComboValue = "ListCombo";
 	static final String sfUserComboValue = "UserCombo";
 	
+	static final String numberDataType = "number";
+	static final String charDataType = "char";
+	static final String memoDataType = "memo";
+	static final String dateDataType = "DATE";
+
+	static final String bgBugIdFieldName = "BG_BUG_ID";
+
 	public static IRecordSet executeSQL(IConnection qcc, String sql){
 		ICommand command = qcc.getCommand();
 		command.setCommandText(sql);
 		return command.execute();
 	}
 	
-	public static List<Field> getSchemaFields(IConnection qcc) {
+	public static List<Field> getSchemaFieldsAndValues(IConnection qcc) {
 
 		// Get all the fields in the project represented
 		// by qcc
@@ -105,4 +112,31 @@ public class QCConfigHelper {
 
 		return fields;
 	}
+
+	public static List<Field> getSchemaFields(IConnection qcc) {
+
+		// Get all the fields in the project represented
+		// by qcc
+		String sql = "SELECT * FROM SYSTEM_FIELD WHERE SF_TABLE_NAME='BUG'";
+
+		IRecordSet rs = executeSQL(qcc, sql);
+
+		int rc = rs.getRecordCount();
+		List<Field> fields = new ArrayList<Field>();
+		for(int cnt = 0 ; cnt < rc ; cnt++, rs.next())
+		{
+			String columnName = rs.getFieldValue(sfColumnName);
+			String columnType = rs.getFieldValue(sfColumnType);
+			String fieldDisplayName = rs.getFieldValue(sfUserLabel);
+			String editStyle = rs.getFieldValue(sfEditStyle);
+			Field field;
+
+			// Create field with empty value
+			field = new Field(columnName, fieldDisplayName, columnType, editStyle, (String) null, false);			
+			fields.add(field);
+		}
+
+		return fields;
+	}
+
 }

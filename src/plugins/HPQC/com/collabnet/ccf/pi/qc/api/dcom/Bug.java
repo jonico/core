@@ -247,20 +247,6 @@ public class Bug extends ActiveXComponent implements IBugActions {
 		setField("BG_DEV_COMMENTS", s);
 	}
 	
-	public String[] getFieldValues(String[] fieldNames, String[] fieldTypes) {
-		int noOfFields = fieldNames.length; 
-		String[] fieldValues = new String[noOfFields];
-		
-		for (int cnt = 0 ; cnt < noOfFields ; cnt++) {
-			if (fieldTypes[cnt].equals("Number"))
-				fieldValues[cnt] = Integer.toString(getFieldAsInt(fieldNames[cnt]));
-			else
-				fieldValues[cnt] = getFieldAsString(fieldNames[cnt]);
-		}
-
-		return fieldValues;
-	}
-	
 	public List<AttachmentData> getAttachmentData() {
 
 		List<AttachmentData> attachmentDataList = new ArrayList<AttachmentData>();

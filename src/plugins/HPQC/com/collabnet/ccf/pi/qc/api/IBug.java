@@ -33,7 +33,6 @@ public interface IBug extends ILifeCycle {
 	// Added by Madan
 	public void post();
 	public byte[] retrieveAttachmentData(String attachmentName);
-	public String[] getFieldValues(String[] fieldNames, String[] fieldTypes);
 
 	boolean hasAttachments();
 	List<String> getAttachmentsNames();

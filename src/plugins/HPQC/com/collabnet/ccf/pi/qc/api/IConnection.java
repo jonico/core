@@ -14,7 +14,5 @@ public interface IConnection extends ILifeCycle {
 	IFactory getBugFactory();
     public ICommand getCommand();
     public IHistory getHistory();
-    public String[] getFieldNames();
-	public String[] getFieldTypes();
 	void disconnect();
 }

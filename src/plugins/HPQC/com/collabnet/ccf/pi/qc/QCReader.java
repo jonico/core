@@ -117,24 +117,22 @@ public class QCReader extends QCConnectHelper implements
 			return new Object[]{document};
 		}
 		
-		String[] fieldNames = qcc.getFieldNames();
-		String[] fieldTypes = qcc.getFieldTypes();
-		List<Field> fields = QCConfigHelper.getSchemaFields(qcc);
-		for (IQCDefect defectRow : defectRows) {
+		for (IQCDefect defectRow: defectRows) {
 			// TODO Set encoding by user
 			Document document=QCXMLHelper.createXMLDocument(EncodingAwareObject.ISO_8859_1);
 			
 			//TODO let user specify rootTag
 			Element root=document.addElement("QCArtifact");
-			String[] fieldValues = defectRow.getFieldValues(fieldNames, fieldTypes);
-			for (int j=0;j< fieldNames.length;++j) {
+			
+			for(int j = 0 ; j < defectRow.getFields().size() ; j++ ) {
+				Field thisField = defectRow.getFields().get(j);
 				boolean isFlexField = true;
-				if (fieldNames[j].equals("BG_BUG_ID"))
+				if (thisField.getName().equals(QCConfigHelper.bgBugIdFieldName))
 					isFlexField = false;
 				
-				QCXMLHelper.addField(root, fieldNames[j], fieldValues[j], "String", isFlexField);
+				// TODO: Handle multiple values whereever appropriate
+				QCXMLHelper.addField(root, thisField.getName(), thisField.getValues().get(0), "String", isFlexField);
 			}
-
 			QCXMLHelper.addField(root,"deleteFlag","false","Boolean",false);
 			QCXMLHelper.addField(root,"isDuplicate","false","Boolean",false);
 			// update the new time intervals
