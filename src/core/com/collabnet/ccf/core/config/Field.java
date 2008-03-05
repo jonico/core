@@ -16,23 +16,26 @@ public class Field {
 	private String displayName;
 	// The datatype could be char and the editStyle could be ListCombo (eg from QC)
 	private String editStyle;
+	private boolean changed;
 
-	public Field(String name, String displayName, String datatype, String editStyle, String singleValue) {
+	public Field(String name, String displayName, String datatype, String editStyle, String singleValue, boolean changed) {
 		super();
 		this.name = name;
 		this.displayName = displayName;
 		this.datatype = datatype;
 		this.editStyle = editStyle;
+		this.changed = changed;
 		this.values = new ArrayList<String>();
 		values.add(singleValue);
 	}
 	
-	public Field(String name, String displayName, String datatype, String editStyle, List<String> values) {
+	public Field(String name, String displayName, String datatype, String editStyle, List<String> values, boolean changed) {
 		super();
 		this.name = name;
 		this.displayName = displayName;
 		this.datatype = datatype;
 		this.editStyle = editStyle;
+		this.changed = changed;
 		this.values = values;
 	}
 
@@ -69,6 +72,14 @@ public class Field {
 
 	public void setEditStyle(String editStyle) {
 		this.editStyle = editStyle;
+	}
+
+	public boolean isChanged() {
+		return changed;
+	}
+
+	public void setChanged(boolean changed) {
+		this.changed = changed;
 	}
 
 }

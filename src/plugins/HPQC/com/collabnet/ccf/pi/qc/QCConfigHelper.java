@@ -28,13 +28,13 @@ public class QCConfigHelper {
 	static final String sfListComboValue = "ListCombo";
 	static final String sfUserComboValue = "UserCombo";
 	
-	public IRecordSet executeSQL(IConnection qcc, String sql){
+	public static IRecordSet executeSQL(IConnection qcc, String sql){
 		ICommand command = qcc.getCommand();
 		command.setCommandText(sql);
 		return command.execute();
 	}
 	
-	public List<Field> getSchemaFields(IConnection qcc) {
+	public static List<Field> getSchemaFields(IConnection qcc) {
 
 		// Get all the fields in the project represented
 		// by qcc
@@ -63,7 +63,7 @@ public class QCConfigHelper {
 
 				if ( rsRc <= 0 ) {
 					// Create field with empty value
-					field = new Field(columnName, fieldDisplayName, columnType, editStyle, "");
+					field = new Field(columnName, fieldDisplayName, columnType, editStyle, "", false);
 				}
 				else {
 					List<String> values = new ArrayList<String>();
@@ -72,7 +72,7 @@ public class QCConfigHelper {
 						values.add(listValue);
 					}
 					// Create the field	
-					field = new Field(columnName, fieldDisplayName, columnType, editStyle, values);
+					field = new Field(columnName, fieldDisplayName, columnType, editStyle, values, false);
 				}
 			}
 			else if (editStyle == sfUserComboValue ) {
@@ -83,7 +83,7 @@ public class QCConfigHelper {
 
 				if ( rsRc <= 0 ) {
 					// Create field with empty value
-					field = new Field(columnName, fieldDisplayName, columnType, editStyle, "");
+					field = new Field(columnName, fieldDisplayName, columnType, editStyle, "", false);
 				}
 				else {
 					List<String> values = new ArrayList<String>();
@@ -92,12 +92,12 @@ public class QCConfigHelper {
 						values.add(userValue);
 					}
 					// Create the field	
-					field = new Field(columnName, fieldDisplayName, columnType, editStyle, values);
+					field = new Field(columnName, fieldDisplayName, columnType, editStyle, values, false);
 				}
 			}
 			else {
 				// Create field with empty value
-				field = new Field(columnName, fieldDisplayName, columnType, editStyle, "");
+				field = new Field(columnName, fieldDisplayName, columnType, editStyle, "", false);
 			}
 			
 			fields.add(field);

@@ -12,14 +12,14 @@ import org.openadaptor.core.IDataProcessor;
 import org.openadaptor.core.exception.NullRecordException;
 import org.openadaptor.core.exception.RecordFormatException;
 
-public class QCWriteConnector extends QCConnectHelper implements
+public class QCWriter extends QCConnectHelper implements
 		IDataProcessor {
 
-	private static final Log log = LogFactory.getLog(QCWriteConnector.class);
+	private static final Log log = LogFactory.getLog(QCWriter.class);
 	private String CreateToken;
 	private QCDefectHandler defectHandler;	
 
-    public QCWriteConnector(String id) {
+    public QCWriter(String id) {
 	    super(id);
 	}
 
@@ -130,7 +130,7 @@ public class QCWriteConnector extends QCConnectHelper implements
 		CreateToken = createToken;
 	}
 
-	public QCWriteConnector() {
+	public QCWriter() {
 		super();
 	}
 }

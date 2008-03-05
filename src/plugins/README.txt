@@ -19,3 +19,7 @@ Reader:
 2. The process() method should return an XML document which should adhere to the Generic Artifact Template
    specifications (http://ccf.open.collab.net/source/browse/*checkout*/ccf/trunk/docs/Generic%20Artifact%20Template.doc).
    This could be achieved easily by using the com.collabnet.ccf.core.ga.GenericArtifactHelper class.
+   
+ConfigHelper:
+1. A ConfigHelper class that should implement a static method getSchemaFields() that 
+   returns a List<Field> types, representing the artifact fields, and related info.

@@ -15,13 +15,12 @@ import org.dom4j.Node;
 import org.openadaptor.auxil.connector.iostream.EncodingAwareObject;
 import org.openadaptor.core.IDataProcessor;
 
-import com.collabnet.ccf.pi.qc.QCConnectHelper;
-import com.collabnet.ccf.pi.qc.QCDefectHandler;
+import com.collabnet.ccf.core.config.Field;
 
-public class QCOneDefectWithAttachmentReader extends QCConnectHelper implements
+public class QCReader extends QCConnectHelper implements
 		IDataProcessor {
     
-	private static final Log log = LogFactory.getLog(QCOneDefectWithAttachmentReader.class);
+	private static final Log log = LogFactory.getLog(QCReader.class);
 	
 	private boolean isDry=true;
 
@@ -29,13 +28,11 @@ public class QCOneDefectWithAttachmentReader extends QCConnectHelper implements
 
 	private QCDefectHandler defectHandler;
 
-    public QCOneDefectWithAttachmentReader(String id) {
+    public QCReader(String id) {
 	    super(id);
 	}
 
 	public Object[] process(Object data) {
-		
-		log.error("Inside QCOneDefectWithAttachmentReader.process()");
 		// TODO evaluate data to decide which items to fetch again
 		if (!(data instanceof Document)) {
 			log.error("Supplied data not in the expected dom4j format: "+data);
@@ -52,13 +49,13 @@ public class QCOneDefectWithAttachmentReader extends QCConnectHelper implements
 			return null;
 		}
 
-		List<Integer> idList = new ArrayList<Integer>();
-		idList.add(266);
-		Object[] result = readDefectsWithIds(idList);
+		// Fix these time operations
+		String fromTime = getFromTime(document);
+		String toTime = getToTime(document);
+		log.error(fromTime);
+		log.error(toTime);
+		Object[] result=readModifiedDefects(fromTime, toTime);
 		disconnect();
-		log.info("********");
-		log.info(result.length);
-		log.info("********");
 		return result;
 	}
 
@@ -76,26 +73,29 @@ public class QCOneDefectWithAttachmentReader extends QCConnectHelper implements
 		isDry=false;
 	}
 	
-	public Object[] readDefectsWithIds(List<Integer> idList) {
+	public Object[] readModifiedDefects(String fromTime, String toTime) {
 		// TODO Use the information of the firstTimeImport flag
 		
 		List<Document> dataRows=new ArrayList<Document>();
 		List<IQCDefect> defectRows;
+		DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");		
+		Date today = new Date();
+		
+		// Take care of dates
+		// If the last toTime exists, make this the
+		// from time for this run
+		//if(toTime != null && !toTime.equals(""))
+			fromTime = toTime;
+		// Current ToTime is always now
+		toTime = df.format(today);
 		
 		try {
-			defectRows = defectHandler.getDefectsWithIds(qcc, idList);
-
+			defectRows = defectHandler.getChangedDefects(qcc, fromTime, toTime);
 		} catch (Exception e) {
 			// TODO Throw an exception?
 			log.error("During the artifact retrieval process from QC, an error occured",e);
 			return null;
 		}
-		
-		log.info("Before validating defectRows");
-		if(defectRows != null)
-			log.info(defectRows.size());
-		log.info("After validating defectRows");
-			
 		
 		if (defectRows==null || defectRows.size() == 0) {
 			// we only received no entries
@@ -111,12 +111,15 @@ public class QCOneDefectWithAttachmentReader extends QCConnectHelper implements
 			QCXMLHelper.addField(root,"deleteFlag","false","Boolean",false);
 			QCXMLHelper.addField(root,"isDuplicate","true","Boolean",false);
 			// update the new time intervals
+			QCXMLHelper.addField(root, "fromTime", fromTime, "String", false);
+			QCXMLHelper.addField(root, "toTime",toTime, "String", false);
 			QCXMLHelper.addField(root, "project",getProjectName(), "String", false);
 			return new Object[]{document};
 		}
 		
 		String[] fieldNames = qcc.getFieldNames();
 		String[] fieldTypes = qcc.getFieldTypes();
+		List<Field> fields = QCConfigHelper.getSchemaFields(qcc);
 		for (IQCDefect defectRow : defectRows) {
 			// TODO Set encoding by user
 			Document document=QCXMLHelper.createXMLDocument(EncodingAwareObject.ISO_8859_1);
@@ -124,21 +127,21 @@ public class QCOneDefectWithAttachmentReader extends QCConnectHelper implements
 			//TODO let user specify rootTag
 			Element root=document.addElement("QCArtifact");
 			String[] fieldValues = defectRow.getFieldValues(fieldNames, fieldTypes);
-			List<AttachmentData> attachmentDataList = defectRow.getAttachmentData();
 			for (int j=0;j< fieldNames.length;++j) {
 				boolean isFlexField = true;
 				if (fieldNames[j].equals("BG_BUG_ID"))
 					isFlexField = false;
-
+				
 				QCXMLHelper.addField(root, fieldNames[j], fieldValues[j], "String", isFlexField);
 			}
 
 			QCXMLHelper.addField(root,"deleteFlag","false","Boolean",false);
 			QCXMLHelper.addField(root,"isDuplicate","false","Boolean",false);
 			// update the new time intervals
+			QCXMLHelper.addField(root, "fromTime", fromTime, "String", false);
+			QCXMLHelper.addField(root, "toTime",toTime, "String", false);
 			QCXMLHelper.addField(root, "project",getProjectName(), "String", false);
 			
-			QCXMLHelper.addAttachments(root, attachmentDataList);
 
 			dataRows.add(document);
 		}
@@ -172,7 +175,7 @@ public class QCOneDefectWithAttachmentReader extends QCConnectHelper implements
 	public void reset(Object context) {
 	}
 
-	public QCOneDefectWithAttachmentReader() {
+	public QCReader() {
 		super();
 	}
 }
