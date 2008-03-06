@@ -54,6 +54,16 @@
 								<xs:documentation>This attributes specifies the size of the (unencoded) attachment in bytes. "unknown" is a reserved value that indicates that the file size is not known (yet).</xs:documentation>
 							</xs:annotation>
 						</xs:attribute>
+						<xs:attribute name="attachmentVersion" type="xs:string" use="required">
+							<xs:annotation>
+								<xs:documentation>This attribute contains the version of the attachment in the target system. There is one reserved value "unknown" that is used if the source system does not support version control.</xs:documentation>
+							</xs:annotation>
+						</xs:attribute>
+						<xs:attribute name="attachmentLastModifiedDate" type="xs:string" use="required">
+							<xs:annotation>
+								<xs:documentation>This attribute contains the date when this attachment was lastly updated. If this information is not known, the value should be "unknown".</xs:documentation>
+							</xs:annotation>
+						</xs:attribute>
 						<xs:attribute name="attachmentSourceId" type="xs:string" use="required">
 							<xs:annotation>
 								<xs:documentation>This attribute contains the id of the attachment in the source system if an id exists. Otherwise, the value will be "unknown".</xs:documentation>
@@ -105,6 +115,11 @@
 			<xs:attribute name="artifactVersion" type="xs:string" use="required">
 				<xs:annotation>
 					<xs:documentation>This attribute contains the version of the artifact in the target system. There is one reserved value "unknown" that is used if the source system does not support version control.</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+			<xs:attribute name="artifactLastModifiedDate" type="xs:string" use="required">
+				<xs:annotation>
+					<xs:documentation>This attribute contains the date when this artifact was lastly updated. The more specific this date is, the better the polling components can do their job.</xs:documentation>
 				</xs:annotation>
 			</xs:attribute>
 			<xs:attribute name="conflictResolutionPriority" type="xs:string" use="required">
