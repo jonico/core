@@ -34,7 +34,7 @@
 						</xs:attribute>
 						<xs:attribute name="fieldValueType" use="required">
 							<xs:annotation>
-								<xs:documentation>This element contains the type of the value of the surrounding field element. If there are multiple occurences of the field element with the same name and field type, their values may have different types. Currently supported types are Integer, Double, DateTime, Date, String, HTMLString, Base64String, Boolean and User.</xs:documentation>
+								<xs:documentation>This element contains the type of the value of the surrounding field element. If there are multiple occurrences of the field element with the same name and field type, their values may have different types. Currently supported types are Integer, Double, DateTime, Date, String, HTMLString, Base64String, Boolean and User.</xs:documentation>
 							</xs:annotation>
 						</xs:attribute>
 						<xs:attribute name="fieldValueisNull" type="xs:string" use="required">
