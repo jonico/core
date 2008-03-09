@@ -122,7 +122,7 @@ public class GenericArtifactField {
 	/**
 	 * @return the fieldValueHasChanged
 	 */
-	public boolean isFieldValueHasChanged() {
+	public boolean getFieldValueHasChanged() {
 		return fieldValueHasChanged;
 	}
 

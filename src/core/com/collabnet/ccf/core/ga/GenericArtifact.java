@@ -777,6 +777,7 @@ public class GenericArtifact {
 	 *            the artifact value to set (attachments only)
 	 */
 	public void setArtifactValue(String artifactValue) {
+		// TODO: Do the Base64 conversion here or in GenericArtifactXMLHelper?
 		this.artifactValue = artifactValue;
 	}
 
@@ -784,6 +785,7 @@ public class GenericArtifact {
 	 * @return the artifact value (only set within attachments)
 	 */
 	public String getArtifactValue() {
+		// TODO: Do the Base64 conversion here or in GenericArtifactXMLHelper?
 		return artifactValue;
 	}
 
