@@ -1,8 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
 <structure>
-<page>
-                                       <id>3788</id>
-                                  <name>Requirements</name>
-                              <directory>Requirements</directory>
-                    <ordinal>1</ordinal>
-                        </page>
+  <page>
+    <id>3788</id>
+    <name>Requirements</name>
+    <directory>Requirements</directory>
+    <ordinal>1</ordinal>
+  </page>
+  <page>
+    <id>C97fX9</id>
+    <name>Setting up the dev environment</name>
+    <directory>Setting up the dev environment</directory>
+    <ordinal>2</ordinal>
+  </page>
 </structure>
+
