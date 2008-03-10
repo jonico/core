@@ -49,7 +49,7 @@ public class QCEntityService extends QCConnectHelper implements
 		// check whether there is already an entity in the target system
 		String id = QCXMLHelper.getSingleValue(data, "BG_BUG_ID", false);
 		log.info("Found bug id: "+id);
-		if (id!=null && !id.isEmpty())
+		if (id!=null && !(id.length() == 0))
 				defectAlreadyCreated=true;
 		else {
 			
