@@ -2,7 +2,6 @@
 <classpath>
 	<classpathentry excluding="td2jira/td/api/mock/|td2jira/Sync.java|td2jira/" kind="src" path="src/plugins/HPQC"/>
 	<classpathentry kind="src" path="src/core"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="src/core/lib/jacob.jar"/>
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/bootstrap.jar"/>
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/openadaptor.jar"/>
@@ -67,5 +66,6 @@
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/xml-apis_from_xerces_2.9.0.jar"/>
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/XmlSchema_1.1.jar"/>
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/xstream-1.2.1.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/J2SE-1.5"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
