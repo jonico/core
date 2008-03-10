@@ -34,6 +34,11 @@ public class QCConfigHelper {
 	static final String dateDataType = "DATE";
 
 	static final String bgBugIdFieldName = "BG_BUG_ID";
+	static final String auActionIdFieldName = "AU_ACTION_ID"; 
+	static final String apFieldNameFieldName = "AP_FIELD_NAME";
+
+	static final String apOldValueFieldName = "AP_OLD_VALUE";
+	static final String apOldLongValueFieldName = "AP_OLD_LONG_VALUE";
 
 	public static IRecordSet executeSQL(IConnection qcc, String sql){
 		ICommand command = qcc.getCommand();
