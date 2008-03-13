@@ -7,7 +7,8 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.collabnet.ccf.core.config.Field;
+import com.collabnet.ccf.core.ga.GenericArtifactField;
+import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.pi.qc.api.IBug;
 import com.collabnet.ccf.pi.qc.api.ICommand;
 import com.collabnet.ccf.pi.qc.api.IConnection;
@@ -57,7 +58,7 @@ public class QCDefectHandler {
 		return tasks;
 	}
 
-	public IQCDefect getDefectWithId(IConnection qcc, int id) {
+	public QCDefect getDefectWithId(IConnection qcc, int id) {
 		IFactory bf = qcc.getBugFactory();
 		IFilter filter = bf.getFilter();
 		
@@ -112,116 +113,61 @@ public class QCDefectHandler {
 	 *         defects
 	 * @throws RemoteException (, COMException?)
 	 */
-	public List<IQCDefect> getChangedDefects(IConnection qcc, String from, String to)
+	public List<GenericArtifact> getChangedDefects(IConnection qcc, String from, String to)
 	 throws Exception {
-		String sql = "SELECT UNIQUE(AU_ENTITY_ID) FROM AUDIT_LOG WHERE AU_ENTITY_TYPE = 'BUG'";
+		
+		// Obtain the transactions that happened within the from and to time
+		String sql = "SELECT AU_ACTION_ID, AU_ENTITY_ID FROM AUDIT_LOG WHERE AU_ENTITY_TYPE = 'BUG'";
 		if (from != null && !from.equals(""))
 			sql += " AND AU_TIME >= '" + from + "'";
 		if (to != null && !to.equals(""))
 			sql += " AND AU_TIME < '" + to + "'";
-		// sql += " AND AU_ACTION_ID = AP_ACTION_ID ";
-		// sql += "AND AU_USER NOT LIKE '" + username + "'";
+		sql += " ORDER BY AU_TIME ASC";
 		log.info(sql);
+		
+		sql = "SELECT AU_ACTION_ID, AU_ENTITY_ID FROM AUDIT_LOG WHERE AU_ENTITY_ID = 153";
 		
 		IRecordSet rs = executeSQL(qcc, sql);
 
 		int rc = rs.getRecordCount();
-		List<Integer> ids = new ArrayList<Integer>();
+		List<GenericArtifact> modifiedDefects = new ArrayList<GenericArtifact>();
 		for(int cnt = 0 ; cnt < rc ; cnt++, rs.next())
 		{
-			int defectId = Integer.parseInt(rs.getFieldValue("AU_ENTITY_ID"));
-			ids.add(defectId);
+			int actionId = Integer.parseInt(rs.getFieldValue("AU_ACTION_ID"));
+			int entityId = Integer.parseInt(rs.getFieldValue("AU_ENTITY_ID"));
+			
+			// TODO: Dummy implementation. Should change this to get the exact
+			// states during every acion id
+			QCDefect defect = getDefectWithId(qcc, entityId);
+			
+			GenericArtifact genericArtifact = defect.getGenericArtifactObject(qcc);
+			
+			// TODO: Remove hardcoding. Should be done based on the field values of the incoming document
+			
+			genericArtifact.setArtifactAction(GenericArtifact.ArtifactActionValue.CREATE);
+			genericArtifact.setArtifactMode(GenericArtifact.ArtifactModeValue.COMPLETE);
+			genericArtifact.setArtifactType(GenericArtifact.ArtifactTypeValue.PLAINARTIFACT);
+			
+						
+			log.error(defect.getId());
+			log.info("These are the fields of defect Id" + defect.getId() + ":" + genericArtifact.getAllGenericArtifactFields());
+			modifiedDefects.add(genericArtifact);
 		}
 
-		List<IQCDefect> modifiedDefects = getDefectsWithIds(qcc, ids);
-		for (IQCDefect modifiedDefect:modifiedDefects) {
-			modifiedDefect.fillFieldsFromBug(qcc);
-		}
-
-		// remove the deltas successively and obtain the defect
-		// as it was before each delta
-		for ( int ctr = 0 ; ctr < ids.size() ; ctr++) {
-			int id = ids.get(ctr);
-			List<IQCDefect> deltas = getDeltasBetween(qcc, id, from, to);
-		}
-		
 		return modifiedDefects;
 	}
 
-	List<IQCDefect> getDeltasBetween(IConnection qcc, int id, String from, String to) {
+	/** 
+	 * Given an action id (id for the AUDIT_LOG table 
+	 * 
+	 * @param actionId
+	 * @return the defect at the time of the actionId
+	 */
+	public QCDefect getArtifactStateFromActionId(int actionId) {
+		// return the state of the given defect at transaction actionId
 		
-		List<IQCDefect> defects = new ArrayList<IQCDefect>();
-		// obtain the transaction ids on this defect between from and to time
-		String sql = "SELECT AU_ACTION_ID FROM AUDIT_LOG WHERE AU_ENTITY_TYPE = 'BUG'";
-		sql       += "AND AU_ENTITY_ID = " + Integer.toString(id); 
-		if (from != null && !from.equals(""))
-			sql += " AND AU_TIME >= '" + from + "'";
-		if (to != null && !to.equals(""))
-			sql += " AND AU_TIME < '" + to + "'";
-		sql += " order by AU_TIME DESC, AU_ACTION_ID DESC";
-		// sql += " AND AU_ACTION_ID = AP_ACTION_ID ";
-		// sql += "AND AU_USER NOT LIKE '" + username + "'";
-		log.info(sql);
-		
-		IRecordSet rs = executeSQL(qcc, sql);
-
-		int rc = rs.getRecordCount();
-
-		IQCDefect defect = getDefectWithId(qcc, id);
-		defect.fillFieldsFromBug(qcc);
-		// The last IQCDefect contains the defect fields as is
-		// NOTE: We are adding to list from the end
-		defects.add(rc-1, defect);
-
-		// For every transaction (ACTION_ID)
-		for(int cnt = 0 ; cnt < rc-1 ; cnt++, rs.next())
-		{
-			// Fill the defect with the post-change value
-			// Should implement a deep copy later
-			defect = getDefectWithId(qcc, id);
-			defect.fillFieldsFromBug(qcc);
-
-			int actionId = Integer.parseInt(rs.getFieldValue(QCConfigHelper.auActionIdFieldName));
-			// obtain the corresponding changes
-			// TODO: take care of attachments too later. These reside in the
-			// AUDIT_LOG table itself instead of AUDIT_PROPERTIES
-			// Obtain the list values
-			String subSql = "SELECT * FROM AUDIT_PROPERTIES WHERE AP_ACTION_ID = " + actionId;
-			IRecordSet subRs = executeSQL(qcc, subSql);
-			int rsRc = subRs.getRecordCount();
-			
-			// For every changed field
-			for (int rsCnt = 0 ; rsCnt < rsRc ; subRs.next()) {
-				String changedFieldName = subRs.getFieldValue(QCConfigHelper.apFieldNameFieldName);
-			
-				// replace the newer value with the older value - if any
-				for (int i = 0 ; i < defect.getFields().size() ; i++) {
-					Field currentField = defect.getFields().get(i);
-
-					// If the field name matches
-					if (currentField.getName().equals(changedFieldName)) {
-						
-						// decide which column to consider based on the datatype
-						String oldValueColumnName = QCConfigHelper.apOldValueFieldName;
-						if (currentField.getDatatype().equals(QCConfigHelper.memoDataType)) {
-							oldValueColumnName = QCConfigHelper.apOldLongValueFieldName;
-						}
-						
-						String oldFieldValue = subRs.getFieldValue(oldValueColumnName);
-						// TODO: Handle multiple list values based on the editStyle
-						List<String> valuesList = new ArrayList<String>();
-						valuesList.add(oldFieldValue);
-						
-						// Replace the value with the old value
-						currentField.setValues(valuesList);
-					}
-				} // End of - replace the newer value with the older value - if any
-			} // End of - For every changed field
-			
-			defects.add(rc-2-cnt, defect);
-		} // END of - For every transaction (ACTION_ID)
-		
-		return defects;
+		QCDefect defect = null;
+		return defect;
 	}
 	
 	public void deleteDefect(String id) {

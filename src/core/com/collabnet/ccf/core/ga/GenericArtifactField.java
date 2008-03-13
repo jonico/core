@@ -1,5 +1,7 @@
 package com.collabnet.ccf.core.ga;
 
+import java.util.HashMap;
+
 /**
  * A field has a name and a field type and contains a typed value for the
  * property of the artifact that is described by this field. If a field with the
@@ -11,6 +13,8 @@ package com.collabnet.ccf.core.ga;
  * @author jnicolai
  */
 public class GenericArtifactField {
+	
+	// TODO: Change the below fieldType Strings to enum and use only enums everywhere
 	/**
 	 * Constant value for field type "mandatoryField"
 	 */
@@ -52,13 +56,23 @@ public class GenericArtifactField {
 	 * @author jnicolai
 	 */
 	public enum FieldValueTypeValue {
-		INTEGER, DOUBLE, DATETIME, DATE, STRING, HTMLSTRING, BASE64STRING, BOOLEAN, USER, UNKNOWN
+		INTEGER, DOUBLE, DATETIME, DATE, STRING, HTMLSTRING, BASE64STRING, BOOLEAN, USER,
+		LIST, MULTI_SELECT_LIST, UNKNOWN
 	};
 
+	public void getStringRepresentationOfFieldValueTypeValue(GenericArtifactField.FieldValueTypeValue fieldValueTypeValue) {
+		fieldValueTypeValue.toString();
+	}
+	
 	/**
 	 * This attribute contains the name of the field.
 	 */
 	private String fieldName = VALUE_UNKNOWN;
+
+	/**
+	 * This attribute contains the display name of the field.
+	 */
+	private String fieldDisplayName = VALUE_UNKNOWN;
 
 	/**
 	 * This attribute contains the type of the field. This is not the type of
@@ -106,8 +120,9 @@ public class GenericArtifactField {
 	 * @param fieldName
 	 * @param fieldType
 	 */
-	protected GenericArtifactField(String fieldName, String fieldType) {
+	protected GenericArtifactField(String fieldName, String fieldDisplayName, String fieldType) {
 		this.setFieldName(fieldName);
+		this.setFieldDisplayName(fieldDisplayName);
 		this.setFieldType(fieldType);
 	}
 
@@ -203,6 +218,14 @@ public class GenericArtifactField {
 	 */
 	public Object getFieldValue() {
 		return fieldValue;
+	}
+
+	public String getFieldDisplayName() {
+		return fieldDisplayName;
+	}
+
+	public void setFieldDisplayName(String fieldDisplayName) {
+		this.fieldDisplayName = fieldDisplayName;
 	}
 	
 }

@@ -6,7 +6,8 @@ package com.collabnet.ccf.pi.qc;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.collabnet.ccf.core.config.Field;
+import com.collabnet.ccf.core.ga.GenericArtifactField;
+import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.pi.qc.api.IBug;
 import com.collabnet.ccf.pi.qc.api.IConnection;
 import com.collabnet.ccf.pi.qc.api.dcom.Bug;
@@ -18,7 +19,7 @@ import com.jacob.com.Dispatch;
  *
  */
 public class QCDefect extends Bug implements IQCDefect {
-	List<Field> fields;
+	GenericArtifact genericArtifact;
 	List <byte []> attachmentData;
 
 	public QCDefect(Dispatch arg0)
@@ -30,34 +31,38 @@ public class QCDefect extends Bug implements IQCDefect {
 		super(bug);
 	}
 
-	public List<Field> getFields() {
-		return fields;
+	public GenericArtifact getGenericArtifact() {
+		return genericArtifact;
 	}
 
-	public void setFields(List<Field> fields) {
-		this.fields = fields;
+	public void setGenericArtifact(GenericArtifact genericArtifact) {
+		this.genericArtifact = genericArtifact;
 	}
-	
-	public void fillFieldsFromBug(IConnection qcc) {
-		fields = QCConfigHelper.getSchemaFields(qcc);
 
-		for(int cnt = 0 ; cnt < fields.size() ; cnt++) {
-			Field thisField = fields.get(cnt);
-			String thisFieldsDatatype = thisField.getDatatype();
-			if (thisFieldsDatatype.equals(QCConfigHelper.numberDataType)) {
-				thisField.setSingleValue(Integer.toString(getFieldAsInt(thisField.getName())));				
+	public GenericArtifact getGenericArtifactObject(IConnection qcc) {
+		genericArtifact = QCConfigHelper.getSchemaFields(qcc);
+
+		List<GenericArtifactField> allFields = genericArtifact.getAllGenericArtifactFields();
+		int noOfFields = allFields.size();
+		for(int cnt = 0 ; cnt < noOfFields ; cnt++) {
+			GenericArtifactField thisField = allFields.get(cnt);
+			
+			thisField.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
+			thisField.setFieldValueHasChanged(true);
+						
+			GenericArtifactField.FieldValueTypeValue thisFieldsDatatype = thisField.getFieldValueType();
+			if (thisFieldsDatatype.equals(GenericArtifactField.FieldValueTypeValue.INTEGER)) {
+				thisField.setFieldValue(getFieldAsInt(thisField.getFieldName()));				
 			}
 			else {
-				/* datatype can be one of:
-				 * QCConfigHelper.charDataType
-				 * QCConfigHelper.memoDataType
-				 * QCConfigHelper.dateDataType
-				 * 
-				 * Handle them all as strings
+				/* TODO: datatype can also be one of the other GenericArtifactField.FieldValueTypeValue
+				 * types. Handle them appropriately.
 				 */ 
-				thisField.setSingleValue(getFieldAsString(thisField.getName()));
+				thisField.setFieldValue(getFieldAsString(thisField.getFieldName()));
 			}
 		}
+ 	    
+		return genericArtifact;
 	
 	}
 

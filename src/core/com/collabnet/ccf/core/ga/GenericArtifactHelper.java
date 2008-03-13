@@ -97,6 +97,7 @@ public class GenericArtifactHelper {
 	private static final String FIELD_ACTION_DELETE = "delete";
 	private static final String FIELD_ACTION_REPLACE = "replace";
 	private static final String FIELD_NAME = "fieldName";
+	private static final String FIELD_DISPLAY_NAME = "fieldDisplayName";
 	private static final String FIELD_TYPE = "fieldType";
 	private static final String FIELD_VALUE_IS_NULL = "fieldValueIsNull";
 	private static final String FIELD_VALUE_TYPE = "fieldValueType";
@@ -297,6 +298,7 @@ public class GenericArtifactHelper {
 			GenericArtifactField.FieldValueTypeValue fieldValueType = translateAttributeValue(
 					field, FIELD_VALUE_TYPE, fieldValueTypeHashMap);
 			String fieldName = getAttributeValue(field, FIELD_NAME);
+			String fieldDisplayName = getAttributeValue(field, FIELD_DISPLAY_NAME);
 			String fieldType = getAttributeValue(field, FIELD_TYPE);
 			Boolean fieldValueIsNull = translateAttributeValue(field,
 					FIELD_VALUE_IS_NULL, fieldValueIsNullHashMap);
@@ -306,8 +308,7 @@ public class GenericArtifactHelper {
 
 			// we cannot change these two attributes later because this would
 			// influence the indexing data structures for fast lookup
-			GenericArtifactField genericArtifactField = genericArtifact
-					.addNewField(fieldName, fieldType);
+			GenericArtifactField genericArtifactField = genericArtifact.addNewField(fieldName, fieldDisplayName, fieldType);
 			genericArtifactField.setFieldAction(fieldAction);
 			genericArtifactField.setFieldValueType(fieldValueType);
 			genericArtifactField.setFieldValueHasChanged(fieldValueHasChanged);

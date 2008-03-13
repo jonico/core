@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import com.collabnet.ccf.core.ga.GenericArtifactField.FieldValueTypeValue;
+
 /**
  * 
  * This is the root element for every entity that is transported through the CCF
@@ -58,7 +60,7 @@ public class GenericArtifact {
 	 * This is a hash map that indexes all contained field elements according to
 	 * their field type and field name
 	 */
-	private HashMap<String, HashMap<String, List<GenericArtifactField>>> fieldTypeFieldNameHashMap;
+	private HashMap<String, HashMap<String, List<GenericArtifactField>>> fieldTypeFieldNameHashMap = new HashMap<String, HashMap<String, List<GenericArtifactField>>>();
 
 	/**
 	 * This is a list that contains all field element
@@ -799,9 +801,13 @@ public class GenericArtifact {
 	 *            field type, this value cannot be changed afterwards
 	 * @return the newly added generic artifact field object
 	 */
-	public GenericArtifactField addNewField(String fieldName, String fieldType) {
-		GenericArtifactField genericArtifactField = new GenericArtifactField(
-				fieldName, fieldType);
+	public GenericArtifactField addNewField(String fieldName, String fieldDisplayName, String fieldType) {
+		GenericArtifactField genericArtifactField = new GenericArtifactField(fieldName, 
+																			 fieldDisplayName,
+																			 fieldType);
+		if( allFieldList == null) {
+			allFieldList = new ArrayList<GenericArtifactField>();
+		}
 		allFieldList.add(genericArtifactField);
 		indexNewFieldElement(fieldName, fieldType, genericArtifactField);
 		return genericArtifactField;

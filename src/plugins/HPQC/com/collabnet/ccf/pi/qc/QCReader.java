@@ -15,7 +15,10 @@ import org.dom4j.Node;
 import org.openadaptor.auxil.connector.iostream.EncodingAwareObject;
 import org.openadaptor.core.IDataProcessor;
 
-import com.collabnet.ccf.core.config.Field;
+import com.collabnet.ccf.core.ga.GenericArtifact;
+import com.collabnet.ccf.core.ga.GenericArtifactField;
+import com.collabnet.ccf.core.ga.GenericArtifactHelper;
+import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
 
 public class QCReader extends QCConnectHelper implements
 		IDataProcessor {
@@ -40,7 +43,7 @@ public class QCReader extends QCConnectHelper implements
 		}
 			
 		Document document=(Document) data;
-
+		if(document!=null) log.info(document.getText());
 		try {
 			connect();
 		} catch (Exception e) {
@@ -54,6 +57,7 @@ public class QCReader extends QCConnectHelper implements
 		String toTime = getToTime(document);
 		log.error(fromTime);
 		log.error(toTime);
+		fromTime = toTime = null;
 		Object[] result=readModifiedDefects(fromTime, toTime);
 		disconnect();
 		return result;
@@ -68,7 +72,8 @@ public class QCReader extends QCConnectHelper implements
 	}
 
 	@Override
-	public void connect() throws IOException {	
+	public void connect() throws IOException {
+		log.info("Before calling the parent connect()");
 		super.connect();
 		isDry=false;
 	}
@@ -77,17 +82,7 @@ public class QCReader extends QCConnectHelper implements
 		// TODO Use the information of the firstTimeImport flag
 		
 		List<Document> dataRows=new ArrayList<Document>();
-		List<IQCDefect> defectRows;
-		DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");		
-		Date today = new Date();
-		
-		// Take care of dates
-		// If the last toTime exists, make this the
-		// from time for this run
-		//if(toTime != null && !toTime.equals(""))
-			fromTime = toTime;
-		// Current ToTime is always now
-		toTime = df.format(today);
+		List<GenericArtifact> defectRows;
 		
 		try {
 			defectRows = defectHandler.getChangedDefects(qcc, fromTime, toTime);
@@ -98,49 +93,38 @@ public class QCReader extends QCConnectHelper implements
 		}
 		
 		if (defectRows==null || defectRows.size() == 0) {
-			// we only received no entries
-			log.info("no modifications received from QC. Updating the time fields.");
-			/**
-			 * Construct a fake duplicate data entry with a changed from and to time
-			 */
-			// TODO Set encoding by user
-			Document document=QCXMLHelper.createXMLDocument(EncodingAwareObject.ISO_8859_1);
-			
-			//TODO let user specify rootTag
-			Element root=document.addElement("QCArtifact"); 
-			QCXMLHelper.addField(root,"deleteFlag","false","Boolean",false);
-			QCXMLHelper.addField(root,"isDuplicate","true","Boolean",false);
-			// update the new time intervals
-			QCXMLHelper.addField(root, "fromTime", fromTime, "String", false);
-			QCXMLHelper.addField(root, "toTime",toTime, "String", false);
-			QCXMLHelper.addField(root, "project",getProjectName(), "String", false);
+
+			// Return an empty generic artifact
+			// TODO: Should we fill in the latest from and to time?
+			GenericArtifact emptyGenericArtifact = new GenericArtifact();
+			Document document = null;
+			try {
+				document = GenericArtifactHelper.createGenericArtifactXMLDocument(emptyGenericArtifact);
+			}
+			catch (GenericArtifactParsingException gape) {
+				// TODO: Handle this appropriately
+				log.error("GenericArtifactParsingException while creating a GenericArtifact XML from an empty GenericArtifact object");
+			}
 			return new Object[]{document};
 		}
 		
-		for (IQCDefect defectRow: defectRows) {
-			// TODO Set encoding by user
-			Document document=QCXMLHelper.createXMLDocument(EncodingAwareObject.ISO_8859_1);
-			
-			//TODO let user specify rootTag
-			Element root=document.addElement("QCArtifact");
-			
-			for(int j = 0 ; j < defectRow.getFields().size() ; j++ ) {
-				Field thisField = defectRow.getFields().get(j);
-				boolean isFlexField = true;
-				if (thisField.getName().equals(QCConfigHelper.bgBugIdFieldName))
-					isFlexField = false;
-				
-				// TODO: Handle multiple values whereever appropriate
-				QCXMLHelper.addField(root, thisField.getName(), thisField.getValues().get(0), "String", isFlexField);
+		for (GenericArtifact defectRow: defectRows) {
+			Document document = null;
+			try {
+				document = GenericArtifactHelper.createGenericArtifactXMLDocument(defectRow);
 			}
-			QCXMLHelper.addField(root,"deleteFlag","false","Boolean",false);
-			QCXMLHelper.addField(root,"isDuplicate","false","Boolean",false);
-			// update the new time intervals
-			QCXMLHelper.addField(root, "fromTime", fromTime, "String", false);
-			QCXMLHelper.addField(root, "toTime",toTime, "String", false);
-			QCXMLHelper.addField(root, "project",getProjectName(), "String", false);
-			
+			catch (GenericArtifactParsingException gape) {
+				// TODO: Handle this appropriately
+				log.error("GenericArtifactParsingException while creating a GenericArtifact XML from the GenericArtifact object");
+			}
 
+			if (document != null) {
+				log.error(document.asXML());
+			}
+			else {
+				log.error("DOCUMENT IS NULL");
+			}
+			
 			dataRows.add(document);
 		}
 		return dataRows.toArray();

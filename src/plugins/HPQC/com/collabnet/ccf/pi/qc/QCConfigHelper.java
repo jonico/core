@@ -6,7 +6,8 @@ package com.collabnet.ccf.pi.qc;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.collabnet.ccf.core.config.Field;
+import com.collabnet.ccf.core.ga.GenericArtifact;
+import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.pi.qc.api.ICommand;
 import com.collabnet.ccf.pi.qc.api.IConnection;
 import com.collabnet.ccf.pi.qc.api.IRecordSet;
@@ -46,7 +47,14 @@ public class QCConfigHelper {
 		return command.execute();
 	}
 	
-	public static List<Field> getSchemaFieldsAndValues(IConnection qcc) {
+	private static GenericArtifactField.FieldValueTypeValue convertQCDataTypeToGADatatype(String dataType, String editStyle) {
+		
+		// TODO: Convert the datatype, editStyle pair to a valid GA type
+		
+		return GenericArtifactField.FieldValueTypeValue.STRING;
+	}
+	
+	public static GenericArtifact getSchemaFieldsAndValues(IConnection qcc) {
 
 		// Get all the fields in the project represented
 		// by qcc
@@ -55,15 +63,22 @@ public class QCConfigHelper {
 		IRecordSet rs = executeSQL(qcc, sql);
 
 		int rc = rs.getRecordCount();
-		List<Field> fields = new ArrayList<Field>();
+		GenericArtifact genericArtifact = new GenericArtifact();
 		for(int cnt = 0 ; cnt < rc ; cnt++, rs.next())
 		{
 			String columnName = rs.getFieldValue(sfColumnName);
 			String columnType = rs.getFieldValue(sfColumnType);
 			String fieldDisplayName = rs.getFieldValue(sfUserLabel);
 			String editStyle = rs.getFieldValue(sfEditStyle);
-			Field field;
+			GenericArtifactField field;
 
+
+			// obtain the GenericArtifactField datatype from the columnType and editStyle
+			GenericArtifactField.FieldValueTypeValue fieldValueType = convertQCDataTypeToGADatatype(columnType, editStyle);
+			field = genericArtifact.addNewField(columnName, fieldDisplayName, columnType);
+			field.setFieldValueType(fieldValueType);
+
+			// Obtain the value to set in the field
 			if (editStyle == sfListComboValue ) {
 				// Get the list values
 				String rootId = rs.getFieldValue(sfRootId);
@@ -73,18 +88,13 @@ public class QCConfigHelper {
 				IRecordSet subRs = executeSQL(qcc, subSql);
 				int rsRc = subRs.getRecordCount();
 
-				if ( rsRc <= 0 ) {
-					// Create field with empty value
-					field = new Field(columnName, fieldDisplayName, columnType, editStyle, "", false);
-				}
-				else {
+				if ( rsRc > 0 ) {
 					List<String> values = new ArrayList<String>();
 					for (int rsCnt = 0 ; rsCnt < rsRc ; subRs.next()) {
 						String listValue = subRs.getFieldValue(alDescription);
 						values.add(listValue);
 					}
-					// Create the field	
-					field = new Field(columnName, fieldDisplayName, columnType, editStyle, values, false);
+					field.setFieldValue(values);
 				}
 			}
 			else if (editStyle == sfUserComboValue ) {
@@ -93,32 +103,21 @@ public class QCConfigHelper {
 				IRecordSet subRs = executeSQL(qcc, subSql);
 				int rsRc = subRs.getRecordCount();
 
-				if ( rsRc <= 0 ) {
-					// Create field with empty value
-					field = new Field(columnName, fieldDisplayName, columnType, editStyle, "", false);
-				}
-				else {
+				if ( rsRc > 0 ) {
 					List<String> values = new ArrayList<String>();
 					for (int rsCnt = 0 ; rsCnt < rsRc ; subRs.next()) {
 						String userValue = subRs.getFieldValue(usUsername);
 						values.add(userValue);
 					}
-					// Create the field	
-					field = new Field(columnName, fieldDisplayName, columnType, editStyle, values, false);
+					field.setFieldValue(values);
 				}
 			}
-			else {
-				// Create field with empty value
-				field = new Field(columnName, fieldDisplayName, columnType, editStyle, "", false);
-			}
-			
-			fields.add(field);
 		}
 
-		return fields;
+		return genericArtifact;
 	}
 
-	public static List<Field> getSchemaFields(IConnection qcc) {
+	public static GenericArtifact getSchemaFields(IConnection qcc) {
 
 		// Get all the fields in the project represented
 		// by qcc
@@ -127,21 +126,22 @@ public class QCConfigHelper {
 		IRecordSet rs = executeSQL(qcc, sql);
 
 		int rc = rs.getRecordCount();
-		List<Field> fields = new ArrayList<Field>();
+		GenericArtifact genericArtifact = new GenericArtifact();
 		for(int cnt = 0 ; cnt < rc ; cnt++, rs.next())
 		{
 			String columnName = rs.getFieldValue(sfColumnName);
 			String columnType = rs.getFieldValue(sfColumnType);
 			String fieldDisplayName = rs.getFieldValue(sfUserLabel);
 			String editStyle = rs.getFieldValue(sfEditStyle);
-			Field field;
+			GenericArtifactField field;
 
-			// Create field with empty value
-			field = new Field(columnName, fieldDisplayName, columnType, editStyle, (String) null, false);			
-			fields.add(field);
+			// obtain the GenericArtifactField datatype from the columnType and editStyle
+			GenericArtifactField.FieldValueTypeValue fieldValueType = convertQCDataTypeToGADatatype(columnType, editStyle);
+			field = genericArtifact.addNewField(columnName, fieldDisplayName, GenericArtifactField.VALUE_FIELD_TYPE_INTEGRATION_DATA);
+			field.setFieldValueType(fieldValueType);
 		}
 
-		return fields;
+		return genericArtifact;
 	}
 
 }

@@ -2,13 +2,14 @@ package com.collabnet.ccf.pi.qc;
 
 import java.util.List;
 
-import com.collabnet.ccf.core.config.Field;
+import com.collabnet.ccf.core.ga.GenericArtifact;
+import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.pi.qc.api.IBug;
 import com.collabnet.ccf.pi.qc.api.IConnection;
 
 public interface IQCDefect extends IBug {
 
-	public List<Field> getFields();
-	public void setFields(List<Field> fields);
-	public void fillFieldsFromBug(IConnection qcc);
+	public GenericArtifact getGenericArtifact();
+	public void setGenericArtifact(GenericArtifact genericArtifact);
+	public GenericArtifact getGenericArtifactObject(IConnection qcc);
 }
