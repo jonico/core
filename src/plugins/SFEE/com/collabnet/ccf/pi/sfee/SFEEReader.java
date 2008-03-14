@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dom4j.Document;
@@ -37,7 +38,7 @@ public class SFEEReader extends SFEEConnectHelper implements
 			
 		Document document=(Document) data;
 		String trackerId=getProjectTracker(document);
-		if (trackerId==null|| trackerId.isEmpty()) {
+		if (StringUtils.isEmpty(trackerId)) {
 			log.error("Could not extract TRACKERID: "+document.asXML());
 			return null;
 		}
@@ -45,7 +46,7 @@ public class SFEEReader extends SFEEConnectHelper implements
 		Date lastModifiedDate;
 		boolean firstTimeImport=false;
 		String lastModifiedDateString = getLastModifiedDateString(document);
-		if (lastModifiedDateString==null|| lastModifiedDateString.isEmpty()) {
+		if (StringUtils.isEmpty(lastModifiedDateString)) {
 			// TODO Implement a special first time logic
 			log.warn("This seems to be a first time import ...: "+document.asXML());
 			lastModifiedDate=new Date(0);
@@ -66,7 +67,7 @@ public class SFEEReader extends SFEEConnectHelper implements
 		int lastArtifactVersion=-1;
 		
 		String lastArtifactVersionString=getLastArtifactVersionString(document);
-		if (lastArtifactVersionString==null||lastArtifactVersionString.isEmpty()) {
+		if (StringUtils.isEmpty(lastArtifactVersionString)) {
 				if (!firstTimeImport) {
 					log.warn("Seems as if we lost the version information fo the last queried artifact with id "+lastArtifactId+" for tracker "+trackerId);
 				}

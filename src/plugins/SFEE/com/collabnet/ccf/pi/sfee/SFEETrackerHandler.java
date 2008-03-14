@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -302,7 +303,7 @@ public class SFEETrackerHandler {
 		boolean tryItAgain = true;
 		ArtifactSoapDO artifactData = null;
 		int fallbackVersionInt=-1;
-		if (fallbackVersion!=null && !fallbackVersion.isEmpty()) {
+		if (StringUtils.isNotEmpty(fallbackVersion)) {
 			try {
 				fallbackVersionInt=Integer.parseInt(fallbackVersion);
 			}
@@ -331,7 +332,7 @@ public class SFEETrackerHandler {
 					 * Compare versions of the software artifacts
 					 */
 					String version=(String)getFlexFieldValue(lastSynchronizedWithOtherSystemSFEETargetFieldname, artifactData, "String");
-					if (version == null || version.isEmpty()) {
+					if (StringUtils.isEmpty(version)) {
 						log
 						.warn("Seems as if we lost version-information in flexField "+lastSynchronizedWithOtherSystemSFEETargetFieldname+ " in the target system for artifact with id: "
 								+ artifactData.getId()+ " in tracker "+artifactData.getFolderId()+" or it is the first resync, falling back to value in the version-Field");
@@ -380,10 +381,8 @@ public class SFEETrackerHandler {
 					
 					String currentOtherSystemVersion = (String) getFlexFieldValue(
 							otherSystemVersionFieldName, artifactData, "String");
-					if (currentOtherSystemVersion == null
-							|| currentOtherSystemVersion.isEmpty()
-							|| otherSystemVersion == null
-							|| otherSystemVersion.isEmpty()) {
+					if (StringUtils.isEmpty(currentOtherSystemVersion)
+							|| StringUtils.isEmpty(otherSystemVersion)) {
 						log
 								.warn("Seems as if we lost version-information in the target system for artifact with id: "
 										+ artifactData.getId()
