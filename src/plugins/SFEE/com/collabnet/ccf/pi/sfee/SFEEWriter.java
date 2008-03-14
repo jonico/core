@@ -17,6 +17,8 @@ import org.openadaptor.core.exception.ValidationException;
 import com.vasoftware.sf.soap44.types.SoapFieldValues;
 import com.vasoftware.sf.soap44.webservices.tracker.ArtifactSoapDO;
 
+import com.collabnet.ccf.pi.qc.NamesTypesAndValues;
+
 public class SFEEWriter extends SFEEConnectHelper implements
 		IDataProcessor {
 

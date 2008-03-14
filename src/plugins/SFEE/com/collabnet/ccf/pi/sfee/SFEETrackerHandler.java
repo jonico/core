@@ -1,4 +1,4 @@
-package de.galileo.panama;
+package com.collabnet.ccf.pi.sfee;
 
 import com.vasoftware.sf.soap44.types.SoapFieldValues;
 import com.vasoftware.sf.soap44.types.SoapFilter;

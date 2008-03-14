@@ -1,4 +1,4 @@
-package de.galileo.panama;
+package com.collabnet.ccf.pi.sfee;
 
 import java.io.IOException;
 import java.rmi.RemoteException;
