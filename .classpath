@@ -2,6 +2,7 @@
 <classpath>
 	<classpathentry excluding="td2jira/td/api/mock/|td2jira/Sync.java|td2jira/" kind="src" path="src/plugins/HPQC"/>
 	<classpathentry kind="src" path="src/core"/>
+	<classpathentry kind="src" path="src/plugins/SFEE"/>
 	<classpathentry kind="lib" path="src/core/lib/jacob/jacob.jar"/>
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/bootstrap.jar"/>
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/openadaptor.jar"/>
