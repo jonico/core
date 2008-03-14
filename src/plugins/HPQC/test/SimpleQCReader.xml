@@ -40,7 +40,7 @@
     </property>
   </bean>
   
-   <bean id="SimplePollingReader" class="test.SimpleLoopingPollingReadConnector">
+   <bean id="SimplePollingReader" class="com.collabnet.ccf.core.test.plugins.SimpleLoopingPollingReadConnector">
      <description>
        Poller which wraps QCReader and every 5 seconds.
      </description>              

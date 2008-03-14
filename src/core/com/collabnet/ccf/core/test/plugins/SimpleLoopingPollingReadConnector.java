@@ -1,4 +1,4 @@
-package test;
+package com.collabnet.ccf.core.test.plugins;
 
 import java.util.Date;
 
