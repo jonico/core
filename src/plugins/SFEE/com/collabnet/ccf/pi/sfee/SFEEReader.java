@@ -205,6 +205,7 @@ public class SFEEReader extends SFEEConnectHelper implements
 			// We treat version as if it was not an integer but a string (makes future conflict resolution easier)
 			// TODO Rethink about that decision
 			SFEEXMLHelper.addField(root,"version",artifactRow.getVersion(),"String",false);
+			log.error(document.asXML());
 			dataRows.add(document);
 		}
 		return dataRows.toArray();

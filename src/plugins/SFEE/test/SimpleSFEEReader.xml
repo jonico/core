@@ -28,8 +28,8 @@
     
     <property name="processMap">
       <map>
-			<entry key-ref="SimplePollingReader" value-ref="QCReader"/>
-			<entry key-ref="QCReader" value-ref="Writer"/>
+			<entry key-ref="SimplePollingReader" value-ref="SFEEReader"/>
+			<entry key-ref="SFEEReader" value-ref="Writer"/>
       </map>  
     </property>
     <property name="exceptionProcessor" ref="ExceptionHandler"/>
