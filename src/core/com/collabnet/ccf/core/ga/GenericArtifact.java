@@ -862,7 +862,7 @@ public class GenericArtifact {
 			List<GenericArtifactField> allGenericArtifactFieldsWithSameFieldNameList = new ArrayList<GenericArtifactField>();
 			allGenericArtifactFieldsWithSameFieldNameList
 					.add(genericArtifactField);
-			fieldTypeHashMap.put(fieldName,
+			fieldNameHashMap.put(fieldName,
 					allGenericArtifactFieldsWithSameFieldNameList);
 		}
 	}
