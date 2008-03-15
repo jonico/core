@@ -1,6 +1,7 @@
 package com.collabnet.ccf.pi.qc;
 
 import java.io.IOException;
+import java.io.*;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -108,8 +109,13 @@ public class QCReader extends QCConnectHelper implements
 			return new Object[]{document};
 		}
 		
+		try {
+		PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter("resultantGenericArtifact.xml")));
+		
 		for (GenericArtifact defectRow: defectRows) {
 			Document document = null;
+			
+
 			try {
 				document = GenericArtifactHelper.createGenericArtifactXMLDocument(defectRow);
 			}
@@ -120,6 +126,7 @@ public class QCReader extends QCConnectHelper implements
 
 			if (document != null) {
 				log.error(document.asXML());
+				out.println(document.asXML());
 			}
 			else {
 				log.error("DOCUMENT IS NULL");
@@ -127,6 +134,11 @@ public class QCReader extends QCConnectHelper implements
 			
 			dataRows.add(document);
 		}
+		}
+		catch (IOException e) {
+		log.error("IOException in QCReader caught " + e);	
+		}
+		
 		return dataRows.toArray();
 	}
 	
