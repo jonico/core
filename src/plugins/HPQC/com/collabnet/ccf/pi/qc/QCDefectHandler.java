@@ -62,7 +62,7 @@ public class QCDefectHandler {
 		IFactory bf = qcc.getBugFactory();
 		IFilter filter = bf.getFilter();
 		
-		filter.setFilter(QCConfigHelper.bgBugIdFieldName, Integer.toString(id));
+		filter.setFilter(QCConfigHelper.bgBugIdFieldName, Integer.toString(id));		
 		IFactoryList fl = filter.getNewList();
 
 		IBug bug = fl.getBug(1);
@@ -117,46 +117,90 @@ public class QCDefectHandler {
 	 throws Exception {
 		
 		// Obtain the transactions that happened within the from and to time
+		//Test Values: 
+		//1. from="2007-11-05 00:00:00"; to="2007-11-06 00:00:00";
+		//2. from="2007-09-15 00:00:00"; to="2007-10-02 00:00:00";
+		
 		String sql = "SELECT AU_ACTION_ID, AU_ENTITY_ID FROM AUDIT_LOG WHERE AU_ENTITY_TYPE = 'BUG'";
 		if (from != null && !from.equals(""))
 			sql += " AND AU_TIME >= '" + from + "'";
 		if (to != null && !to.equals(""))
-			sql += " AND AU_TIME < '" + to + "'";
+			sql += " AND AU_TIME <= '" + to + "'";
 		sql += " ORDER BY AU_TIME ASC";
 		log.info(sql);
-		
-		sql = "SELECT AU_ACTION_ID, AU_ENTITY_ID FROM AUDIT_LOG WHERE AU_ENTITY_ID = 153";
 		
 		IRecordSet rs = executeSQL(qcc, sql);
 
 		int rc = rs.getRecordCount();
-		List<GenericArtifact> modifiedDefects = new ArrayList<GenericArtifact>();
+		List<GenericArtifact> modifiedDefectArtifacts = new ArrayList<GenericArtifact>();
+		
 		for(int cnt = 0 ; cnt < rc ; cnt++, rs.next())
 		{
 			int actionId = Integer.parseInt(rs.getFieldValue("AU_ACTION_ID"));
 			int entityId = Integer.parseInt(rs.getFieldValue("AU_ENTITY_ID"));
 			
-			// TODO: Dummy implementation. Should change this to get the exact
-			// states during every acion id
-			QCDefect defect = getDefectWithId(qcc, entityId);
+			QCDefect latestDefect = getDefectWithId(qcc, entityId);
+			GenericArtifact latestDefectArtifact = latestDefect.getGenericArtifactObject(qcc);
+			latestDefectArtifact=getStateOfDefectAtActionID(qcc, entityId, actionId, from, to, latestDefectArtifact);
 			
-			GenericArtifact genericArtifact = defect.getGenericArtifactObject(qcc);
+			latestDefectArtifact.setArtifactMode(GenericArtifact.ArtifactModeValue.COMPLETE);
+			latestDefectArtifact.setArtifactType(GenericArtifact.ArtifactTypeValue.PLAINARTIFACT);
+			modifiedDefectArtifacts.add(latestDefectArtifact);
 			
-			// TODO: Remove hardcoding. Should be done based on the field values of the incoming document
-			
-			genericArtifact.setArtifactAction(GenericArtifact.ArtifactActionValue.CREATE);
-			genericArtifact.setArtifactMode(GenericArtifact.ArtifactModeValue.COMPLETE);
-			genericArtifact.setArtifactType(GenericArtifact.ArtifactTypeValue.PLAINARTIFACT);
-			
-						
-			log.error(defect.getId());
-			log.info("These are the fields of defect Id" + defect.getId() + ":" + genericArtifact.getAllGenericArtifactFields());
-			modifiedDefects.add(genericArtifact);
 		}
 
-		return modifiedDefects;
+		return modifiedDefectArtifacts;
 	}
-
+	
+	public GenericArtifact getStateOfDefectAtActionID(IConnection qcc, int entityId, int actionId, String from, String to, GenericArtifact latestDefectArtifact){
+		
+		String sql = "SELECT AU_ACTION_ID FROM AUDIT_LOG WHERE AU_ENTITY_TYPE = 'BUG' AND AU_ACTION_ID >= '" + actionId + 
+		"' AND AU_ENTITY_TYPE= 'BUG' AND AU_ENTITY_ID = '" + entityId + "'";
+		if (from != null && !from.equals(""))
+			sql += " AND AU_TIME >= '" + from + "'";
+		if (to != null && !to.equals(""))
+			sql += " AND AU_TIME <= '" + to + "'";
+		sql += " ORDER BY AU_ACTION_ID DESC";
+		
+		IRecordSet rs = executeSQL(qcc, sql);
+		int rc = rs.getRecordCount();
+		for(int cnt=0; cnt < rc; cnt++, rs.next()){
+			
+			int txnId = Integer.parseInt(rs.getFieldValue("AU_ACTION_ID"));
+			sql = "SELECT * FROM AUDIT_PROPERTIES WHERE AP_ACTION_ID= '"+ txnId + "'";
+			IRecordSet newRs = executeSQL(qcc, sql);
+			int newRc = newRs.getRecordCount();
+			
+			for (int newCnt=0; newCnt < newRc; newCnt++, newRs.next()){
+				String fieldName = newRs.getFieldValue("AP_FIELD_NAME");
+				String oldFieldValue = newRs.getFieldValue("AP_OLD_VALUE");
+				
+				List<GenericArtifactField> genArtifactFields = latestDefectArtifact.getAllGenericArtifactFieldsWithSameFieldName(fieldName);
+				if(genArtifactFields!=null & genArtifactFields.get(0)!=null)genArtifactFields.get(0).setFieldValue(oldFieldValue);
+			}
+		}
+		
+		List<GenericArtifactField> genArtifactFields = latestDefectArtifact.getAllGenericArtifactFieldsWithSameFieldName("BG_VTS");
+		if(genArtifactFields!=null && genArtifactFields.get(0)!=null && 
+				(genArtifactFields.get(0).getFieldValue()==null || genArtifactFields.get(0).getFieldValue().equals(""))) {
+			latestDefectArtifact.setArtifactAction(GenericArtifact.ArtifactActionValue.CREATE);
+			return latestDefectArtifact;
+		}
+			
+		
+		if(genArtifactFields!=null && genArtifactFields.get(0)!=null && genArtifactFields.get(0).getFieldValue()!=null &&
+				!(genArtifactFields.get(0).getFieldValue().equals(""))) {
+			latestDefectArtifact.setArtifactAction(GenericArtifact.ArtifactActionValue.UPDATE);
+			return latestDefectArtifact;
+		}
+			
+		
+		// The ArtifactActionValue IGNORE and DELETE needs to be done.
+		latestDefectArtifact.setArtifactAction(GenericArtifact.ArtifactActionValue.UNKNOWN);
+		return latestDefectArtifact;
+		
+	}
+	
 	/** 
 	 * Given an action id (id for the AUDIT_LOG table 
 	 * 
