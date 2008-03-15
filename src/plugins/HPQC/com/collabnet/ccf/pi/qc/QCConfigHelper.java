@@ -50,6 +50,20 @@ public class QCConfigHelper {
 	private static GenericArtifactField.FieldValueTypeValue convertQCDataTypeToGADatatype(String dataType, String editStyle) {
 		
 		// TODO: Convert the datatype, editStyle pair to a valid GA type
+		if(dataType.equals("char") && (editStyle==null || ( editStyle!=null && editStyle.equals(""))) ) 
+			return GenericArtifactField.FieldValueTypeValue.STRING;
+		if(dataType.equals("char") && ( editStyle!=null && editStyle.equals("UserCombo")) )
+			return GenericArtifactField.FieldValueTypeValue.USER;
+		if(dataType.equals("char") && ( editStyle!=null && editStyle.equals("ListCombo")) )
+			return GenericArtifactField.FieldValueTypeValue.LIST;
+		if(dataType.equals("char") && ( editStyle!=null && editStyle.equals("Memo")) )
+			return GenericArtifactField.FieldValueTypeValue.HTMLSTRING;
+		if(dataType.equals("char") && ( editStyle!=null && editStyle.equals("TreeCombo")) )
+			return GenericArtifactField.FieldValueTypeValue.STRING;
+		if(dataType.equals("number")) 
+			return GenericArtifactField.FieldValueTypeValue.INTEGER;
+		if(dataType.equals("DATE") && (editStyle!=null && editStyle.equals("DateCombo")) ) 
+			return GenericArtifactField.FieldValueTypeValue.DATE;
 		
 		return GenericArtifactField.FieldValueTypeValue.STRING;
 	}
@@ -72,12 +86,11 @@ public class QCConfigHelper {
 			String editStyle = rs.getFieldValue(sfEditStyle);
 			GenericArtifactField field;
 
-
 			// obtain the GenericArtifactField datatype from the columnType and editStyle
-			GenericArtifactField.FieldValueTypeValue fieldValueType = convertQCDataTypeToGADatatype(columnType, editStyle);
+			GenericArtifactField.FieldValueTypeValue fieldValueTypeValue = convertQCDataTypeToGADatatype(columnType, editStyle);
 			field = genericArtifact.addNewField(columnName, fieldDisplayName, columnType);
-			field.setFieldValueType(fieldValueType);
-
+			field.setFieldValueType(fieldValueTypeValue);
+			
 			// Obtain the value to set in the field
 			if (editStyle == sfListComboValue ) {
 				// Get the list values
