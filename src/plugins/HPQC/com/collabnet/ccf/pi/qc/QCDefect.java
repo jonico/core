@@ -51,6 +51,10 @@ public class QCDefect extends Bug implements IQCDefect {
 			thisField.setFieldValueHasChanged(true);
 						
 			GenericArtifactField.FieldValueTypeValue thisFieldsDatatype = thisField.getFieldValueType();
+			
+			if (thisFieldsDatatype.equals(GenericArtifactField.FieldValueTypeValue.DATE)) {
+				thisField.setFieldValue(getFieldAsDate(thisField.getFieldName()));				
+			}
 			if (thisFieldsDatatype.equals(GenericArtifactField.FieldValueTypeValue.INTEGER)) {
 				thisField.setFieldValue(getFieldAsInt(thisField.getFieldName()));				
 			}
@@ -60,6 +64,7 @@ public class QCDefect extends Bug implements IQCDefect {
 				 */ 
 				thisField.setFieldValue(getFieldAsString(thisField.getFieldName()));
 			}
+			
 		}
  	    
 		return genericArtifact;
