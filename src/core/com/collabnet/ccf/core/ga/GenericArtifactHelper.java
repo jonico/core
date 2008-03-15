@@ -79,6 +79,7 @@ public class GenericArtifactHelper {
 	private static final String ARTIFACT_ACTION_DELETE = "delete";
 	private static final String ARTIFACT_ACTION_IGNORE = "ignore";
 	private static final String ARTIFACT_ACTION_UPDATE = "update";
+	private static final String ARTIFACT_ACTION_UNKNOWN = "Unknown";
 
 	private static final String ARTIFACT_MODE_COMPLETE = "complete";
 	private static final String ARTIFACT_MODE_CHANGED_FIELDS_ONLY = "changedFieldsOnly";
@@ -110,6 +111,9 @@ public class GenericArtifactHelper {
 	private static final String FIELD_VALUE_TYPE_INTEGER = "Integer";
 	private static final String FIELD_VALUE_TYPE_STRING = "String";
 	private static final String FIELD_VALUE_TYPE_USER = "User";
+	private static final String FIELD_VALUE_TYPE_LIST = "List";
+	private static final String FIELD_VALUE_TYPE_MULTI_SELECT_LIST = "Multi_Select_String";
+	private static final String FIELD_VALUE_TYPE_UNKNOWN = "Unknown";
 	private static final String FIELD_VALUE_IS_NULL_TRUE = "true";
 	private static final String FIELD_VALUE_IS_NULL_FALSE = "false";
 	private static final String FIELD_VALUE_HAS_CHANGED = "fieldValueHasChanged";
@@ -147,6 +151,8 @@ public class GenericArtifactHelper {
 				GenericArtifact.ArtifactActionValue.IGNORE);
 		artifactActionHashMap.put(ARTIFACT_ACTION_UPDATE,
 				GenericArtifact.ArtifactActionValue.UPDATE);
+		artifactActionHashMap.put(ARTIFACT_ACTION_UNKNOWN,
+				GenericArtifact.ArtifactActionValue.UNKNOWN);
 
 		artifactTypeHashMap.put(ARTIFACT_TYPE_ATTACHMENT,
 				GenericArtifact.ArtifactTypeValue.ATTACHMENT);
@@ -180,7 +186,13 @@ public class GenericArtifactHelper {
 				GenericArtifactField.FieldValueTypeValue.STRING);
 		fieldValueTypeHashMap.put(FIELD_VALUE_TYPE_USER,
 				GenericArtifactField.FieldValueTypeValue.USER);
-
+		fieldValueTypeHashMap.put(FIELD_VALUE_TYPE_LIST,
+				GenericArtifactField.FieldValueTypeValue.LIST);
+		fieldValueTypeHashMap.put(FIELD_VALUE_TYPE_MULTI_SELECT_LIST,
+				GenericArtifactField.FieldValueTypeValue.MULTI_SELECT_LIST);
+		fieldValueTypeHashMap.put(FIELD_VALUE_TYPE_UNKNOWN,
+				GenericArtifactField.FieldValueTypeValue.UNKNOWN);
+		
 		fieldValueIsNullHashMap.put(FIELD_VALUE_IS_NULL_TRUE, Boolean.TRUE);
 		fieldValueIsNullHashMap.put(FIELD_VALUE_IS_NULL_FALSE, Boolean.FALSE);
 
@@ -526,6 +538,10 @@ public class GenericArtifactHelper {
 			addAttribute(root, ARTIFACT_ACTION, ARTIFACT_ACTION_UPDATE);
 			break;
 		}
+		case UNKNOWN: {
+			addAttribute(root, ARTIFACT_ACTION, ARTIFACT_ACTION_UNKNOWN);
+			break;
+		}
 		default: {
 			throw new GenericArtifactParsingException(
 					"Non valid value for root-attribute " + ARTIFACT_ACTION
@@ -674,6 +690,7 @@ public class GenericArtifactHelper {
 			setFieldValue(field, genericArtifactField.getFieldValue(),
 					genericArtifactField.getFieldValueType());
 		}
+		
 		return document;
 	}
 
@@ -792,6 +809,18 @@ public class GenericArtifactHelper {
 		}
 		case USER: {
 			addAttribute(field, FIELD_VALUE_TYPE, FIELD_VALUE_TYPE_USER);
+			break;
+		}
+		case LIST: {
+			addAttribute(field, FIELD_VALUE_TYPE, FIELD_VALUE_TYPE_LIST);
+			break;
+		}
+		case MULTI_SELECT_LIST: {
+			addAttribute(field, FIELD_VALUE_TYPE, FIELD_VALUE_TYPE_MULTI_SELECT_LIST);
+			break;
+		}
+		case UNKNOWN: {
+			addAttribute(field, FIELD_VALUE_TYPE, FIELD_VALUE_TYPE_UNKNOWN);
 			break;
 		}
 		default: {
