@@ -28,7 +28,7 @@ public class QCDefectHandler {
 	private String username;
 	
 	private static final Log log = LogFactory.getLog(QCDefectHandler.class);
-
+	
 	public IRecordSet executeSQL(IConnection qcc, String sql){
 		ICommand command = qcc.getCommand();
 		command.setCommandText(sql);
@@ -113,7 +113,7 @@ public class QCDefectHandler {
 	 *         defects
 	 * @throws RemoteException (, COMException?)
 	 */
-	public List<GenericArtifact> getChangedDefects(IConnection qcc, String from, String to)
+	public List<GenericArtifact> getChangedDefects(IConnection qcc, String from, String to, String sourceArtifactId, String sourceRepositoryId, String sourceRepositoryKind, String sourceSystemId, String sourceSystemKind)
 	 throws Exception {
 		
 		// Obtain the transactions that happened within the from and to time
@@ -145,8 +145,14 @@ public class QCDefectHandler {
 			
 			latestDefectArtifact.setArtifactMode(GenericArtifact.ArtifactModeValue.COMPLETE);
 			latestDefectArtifact.setArtifactType(GenericArtifact.ArtifactTypeValue.PLAINARTIFACT);
-			modifiedDefectArtifacts.add(latestDefectArtifact);
 			
+			latestDefectArtifact.setSourceArtifactId(sourceArtifactId);
+			latestDefectArtifact.setSourceRepositoryId(sourceRepositoryId);
+			latestDefectArtifact.setSourceRepositoryKind(sourceRepositoryKind);
+			latestDefectArtifact.setSourceSystemId(sourceSystemId);
+			latestDefectArtifact.setSourceSystemKind(sourceSystemKind);
+			
+			modifiedDefectArtifacts.add(latestDefectArtifact);
 		}
 
 		return modifiedDefectArtifacts;
