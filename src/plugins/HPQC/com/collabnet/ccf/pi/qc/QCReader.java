@@ -56,10 +56,15 @@ public class QCReader extends QCConnectHelper implements
 		// Fix these time operations
 		String fromTime = getFromTime(document);
 		String toTime = getToTime(document);
+		String sourceArtifactId = getSourceArtifactId(document); 
+		String sourceRepositoryId = getSourceRepositoryId(document);
+		String sourceRepositoryKind = getSourceRepositoryKind(document);
+		String sourceSystemId = getSourceSystemId(document);
+		String sourceSystemKind = getSourceSystemKind(document);
+		
 		log.error(fromTime);
 		log.error(toTime);
-		fromTime = toTime = null;
-		Object[] result=readModifiedDefects(fromTime, toTime);
+		Object[] result=readModifiedDefects(fromTime, toTime, sourceArtifactId, sourceRepositoryId, sourceRepositoryKind, sourceSystemId, sourceSystemKind);
 		disconnect();
 		return result;
 	}
@@ -79,14 +84,15 @@ public class QCReader extends QCConnectHelper implements
 		isDry=false;
 	}
 	
-	public Object[] readModifiedDefects(String fromTime, String toTime) {
+	public Object[] readModifiedDefects(String fromTime, String toTime, String sourceArtifactId, String sourceRepositoryId, String sourceRepositoryKind, String sourceSystemId, String sourceSystemKind) {
 		// TODO Use the information of the firstTimeImport flag
 		
 		List<Document> dataRows=new ArrayList<Document>();
 		List<GenericArtifact> defectRows;
 		
 		try {
-			defectRows = defectHandler.getChangedDefects(qcc, fromTime, toTime);
+			log.error("The fromTime coming from HQSL DB is:" + fromTime + " and the toTime is" +toTime);
+			defectRows = defectHandler.getChangedDefects(qcc, fromTime, toTime, sourceArtifactId, sourceRepositoryId, sourceRepositoryKind, sourceSystemId, sourceSystemKind);
 		} catch (Exception e) {
 			// TODO Throw an exception?
 			log.error("During the artifact retrieval process from QC, an error occured",e);
@@ -152,7 +158,7 @@ public class QCReader extends QCConnectHelper implements
 
 	private String getToTime(Document document) {
 		// TODO Let the user specify this value?
-		Node node= document.selectSingleNode("//TOTIME");
+		Node node= document.selectSingleNode("//TO_TIME");
 		if (node==null)
 			return null;
 		return node.getText();
@@ -160,12 +166,51 @@ public class QCReader extends QCConnectHelper implements
 
 	private String getFromTime(Document document) {
 		// TODO Let the user specify this value?
-		Node node= document.selectSingleNode("//FROMTIME");
+		Node node= document.selectSingleNode("//FROM_TIME");
+		if (node==null)
+			return null;
+		return node.getText();
+	}
+	private String getSourceArtifactId(Document document) {
+		// TODO Let the user specify this value?
+		Node node= document.selectSingleNode("//SOURCE_ARTIFACT_ID");
 		if (node==null)
 			return null;
 		return node.getText();
 	}
 
+	private String getSourceRepositoryId(Document document) {
+		// TODO Let the user specify this value?
+		Node node= document.selectSingleNode("//SOURCE_REPOSITORY_ID");
+		if (node==null)
+			return null;
+		return node.getText();
+	}
+	private String getSourceRepositoryKind(Document document) {
+		// TODO Let the user specify this value?
+		Node node= document.selectSingleNode("//SOURCE_REPOSITORY_KIND");
+		if (node==null)
+			return null;
+		return node.getText();
+	}
+
+	private String getSourceSystemId(Document document) {
+		// TODO Let the user specify this value?
+		Node node= document.selectSingleNode("//SOURCE_SYSTEM_ID");
+		if (node==null)
+			return null;
+		return node.getText();
+	}
+	private String getSourceSystemKind(Document document) {
+		// TODO Let the user specify this value?
+		Node node= document.selectSingleNode("//SOURCE_SYSTEM_KIND");
+		if (node==null)
+			return null;
+		return node.getText();
+	}
+	
+	
+	
 	public void reset(Object context) {
 	}
 
