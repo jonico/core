@@ -56,7 +56,7 @@ public class QCConfigHelper {
 			return GenericArtifactField.FieldValueTypeValue.USER;
 		if(dataType.equals("char") && ( editStyle!=null && editStyle.equals("ListCombo")) )
 			return GenericArtifactField.FieldValueTypeValue.LIST;
-		if(dataType.equals("char") && ( editStyle!=null && editStyle.equals("Memo")) )
+		if(dataType.equals("memo"))
 			return GenericArtifactField.FieldValueTypeValue.HTMLSTRING;
 		if(dataType.equals("char") && ( editStyle!=null && editStyle.equals("TreeCombo")) )
 			return GenericArtifactField.FieldValueTypeValue.STRING;
@@ -90,6 +90,12 @@ public class QCConfigHelper {
 			GenericArtifactField.FieldValueTypeValue fieldValueTypeValue = convertQCDataTypeToGADatatype(columnType, editStyle);
 			field = genericArtifact.addNewField(columnName, fieldDisplayName, columnType);
 			field.setFieldValueType(fieldValueTypeValue);
+			
+			// Only for the Comments field, the action value of the GenericArtifactField is set to APPEND. Later, this feature can be upgraded.
+			if(columnName!=null && columnName.equals("BG_DEV_COMMENTS"))
+				field.setFieldAction(GenericArtifactField.FieldActionValue.APPEND);
+			if(columnName!=null && !(columnName.equals("BG_DEV_COMMENTS")) )
+				field.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
 			
 			// Obtain the value to set in the field
 			if (editStyle == sfListComboValue ) {
@@ -150,8 +156,14 @@ public class QCConfigHelper {
 
 			// obtain the GenericArtifactField datatype from the columnType and editStyle
 			GenericArtifactField.FieldValueTypeValue fieldValueType = convertQCDataTypeToGADatatype(columnType, editStyle);
-			field = genericArtifact.addNewField(columnName, fieldDisplayName, GenericArtifactField.VALUE_FIELD_TYPE_INTEGRATION_DATA);
+			field = genericArtifact.addNewField(columnName, fieldDisplayName, GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
 			field.setFieldValueType(fieldValueType);
+			
+			// Only for the Comments field, the action value of the GenericArtifactField is set to APPEND. Later, this feature can be upgraded.
+			if(columnName!=null && columnName.equals("BG_DEV_COMMENTS"))
+				field.setFieldAction(GenericArtifactField.FieldActionValue.APPEND);
+			if(columnName!=null && !(columnName.equals("BG_DEV_COMMENTS")) )
+				field.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
 		}
 
 		return genericArtifact;
