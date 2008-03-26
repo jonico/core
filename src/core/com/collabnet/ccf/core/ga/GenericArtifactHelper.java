@@ -228,8 +228,8 @@ public class GenericArtifactHelper {
 				ARTIFACT_ACTION, artifactActionHashMap);
 		genericArtifact.setArtifactAction(artifactAction);
 
-		//genericArtifact.setArtifactLastModifiedDate(getAttributeValue(root,
-			//	ARTIFACT_LAST_MODIFIED_DATE));
+		genericArtifact.setArtifactLastModifiedDate(getAttributeValue(root,
+				ARTIFACT_LAST_MODIFIED_DATE));
 
 		ArtifactModeValue artifactMode = translateAttributeValue(root,
 				ARTIFACT_MODE, artifactModeHashMap);
