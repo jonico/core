@@ -69,7 +69,7 @@ public class QCReaderTrial2 extends QCConnectHelper implements
 		}
 		
 		for (int i = 0 ; i < opGaArraySize ; i++) {
-			GenericArtifact ga = QCConfigHelper.getSchemaFields(qcc);
+			GenericArtifact ga = QCConfigHelper.getSchemaFields(getQcc());
 			Document doc = null;
 			ga.setArtifactLastModifiedDate(getServerUrl()+ ":" + getDomain() + ":" + getProjectName());
 			ga.setArtifactVersion(Integer.toString(i));
@@ -119,7 +119,7 @@ public class QCReaderTrial2 extends QCConnectHelper implements
 		
 		try {
 			log.error("The fromTime coming from HQSL DB is:" + fromTime + " and the toTime is" +toTime);
-			defectRows = defectHandler.getChangedDefects(qcc, fromTime, toTime, sourceArtifactId, sourceRepositoryId, sourceRepositoryKind, sourceSystemId, sourceSystemKind);
+			defectRows = defectHandler.getChangedDefects(getQcc(), fromTime, toTime, sourceArtifactId, sourceRepositoryId, sourceRepositoryKind, sourceSystemId, sourceSystemKind);
 		} catch (Exception e) {
 			// TODO Throw an exception?
 			log.error("During the artifact retrieval process from QC, an error occured",e);
