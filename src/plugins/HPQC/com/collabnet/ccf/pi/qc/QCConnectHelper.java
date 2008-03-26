@@ -15,7 +15,7 @@ import com.collabnet.ccf.pi.qc.api.IConnection;
 public abstract class QCConnectHelper extends LifecycleComponent {
 	
     // The qc connection
-    IConnection qcc;
+    private IConnection qcc;
 
 	private String serverUrl;
 
@@ -178,6 +178,14 @@ public abstract class QCConnectHelper extends LifecycleComponent {
 
 	public String getPassword() {
 		return password;
+	}
+
+	public IConnection getQcc() {
+		return qcc;
+	}
+
+	public void setQcc(IConnection qcc) {
+		this.qcc = qcc;
 	}
 
 }
