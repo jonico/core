@@ -141,6 +141,9 @@
      <property name="password" value="collabnet"/>
    </bean>
 
-  <bean id="ExceptionHandler" class="org.openadaptor.auxil.connector.iostream.writer.FileWriteConnector"/>
+  <!-- <bean id="ExceptionHandler" class="org.openadaptor.auxil.connector.iostream.writer.FileWriteConnector"/> -->
+  <bean id="ExceptionHandler" class="trial2.Ambulance">
+  	<property name="hospitalFileName" value="C:/hospital.txt"/>
+  </bean>
 
 </beans>
