@@ -68,7 +68,7 @@ public class SFEEEntityServiceTrial2 extends QCConnectHelper implements
 
 		// artifact version is combination of Last Modified date and artifact value
 		String targetArtifactId = ga.getArtifactLastModifiedDate();
-		targetArtifactId += ga.getArtifactValue();
+		targetArtifactId += ga.getArtifactVersion();
 		ga.setTargetArtifactId(targetArtifactId);
 
 		log.error("Exiting SFEEEntityServiceTrial2");
