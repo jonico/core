@@ -57,6 +57,9 @@ public class SFEEWriterTrial2 extends QCConnectHelper implements
 		// Print out the input values
 		log.error(document.asXML());
 		
+		log.error("Exiting SFEEWriterTrial2.java");
+		log.error("=================================");
+
 		/*
 		GenericArtifact ga = null;
 		try {

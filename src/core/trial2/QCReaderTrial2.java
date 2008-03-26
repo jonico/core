@@ -72,7 +72,7 @@ public class QCReaderTrial2 extends QCConnectHelper implements
 			GenericArtifact ga = QCConfigHelper.getSchemaFields(qcc);
 			Document doc = null;
 			ga.setArtifactLastModifiedDate(getServerUrl()+ ":" + getDomain() + ":" + getProjectName());
-			ga.setArtifactValue(Integer.toString(i));
+			ga.setArtifactVersion(Integer.toString(i));
 			
 			// mandatory fields to be set
 			ga.setArtifactMode(GenericArtifact.ArtifactModeValue.COMPLETE);
