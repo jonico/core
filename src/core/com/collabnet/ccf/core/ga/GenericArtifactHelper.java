@@ -228,8 +228,8 @@ public class GenericArtifactHelper {
 				ARTIFACT_ACTION, artifactActionHashMap);
 		genericArtifact.setArtifactAction(artifactAction);
 
-		genericArtifact.setArtifactLastModifiedDate(getAttributeValue(root,
-				ARTIFACT_LAST_MODIFIED_DATE));
+		//genericArtifact.setArtifactLastModifiedDate(getAttributeValue(root,
+			//	ARTIFACT_LAST_MODIFIED_DATE));
 
 		ArtifactModeValue artifactMode = translateAttributeValue(root,
 				ARTIFACT_MODE, artifactModeHashMap);
@@ -468,8 +468,8 @@ public class GenericArtifactHelper {
 	private static String getAttributeValue(Element element,
 			String attributeName) throws GenericArtifactParsingException {
 		// TODO Cash constructed XPath objects?
-		XPath xpath = new DefaultXPath("@" + CCF_NAMESPACE_PREFIX + ":"
-				+ attributeName);
+		//XPath xpath = new DefaultXPath("@" + CCF_NAMESPACE_PREFIX + ":" + attributeName);
+		XPath xpath = new DefaultXPath("@"+ attributeName);
 		xpath.setNamespaceURIs(ccfNamespaceMap);
 		Node attributeNode = xpath.selectSingleNode(element);
 		if (attributeNode == null)
@@ -548,9 +548,7 @@ public class GenericArtifactHelper {
 							+ " specified.");
 		}
 		}
-		addAttribute(root, ARTIFACT_LAST_MODIFIED_DATE, genericArtifact
-				.getArtifactLastModifiedDate());
-
+		
 		switch (genericArtifact.getArtifactMode()) {
 		case CHANGEDFIELDSONLY: {
 			addAttribute(root, ARTIFACT_MODE, ARTIFACT_MODE_CHANGED_FIELDS_ONLY);
@@ -593,6 +591,8 @@ public class GenericArtifactHelper {
 		}
 		}
 
+		addAttribute(root, ARTIFACT_LAST_MODIFIED_DATE, genericArtifact
+				.getArtifactLastModifiedDate());
 		addAttribute(root, ARTIFACT_VERSION, genericArtifact
 				.getArtifactVersion());
 		addAttribute(root, CONFLICT_RESOLUTION_POLICY, genericArtifact
@@ -679,6 +679,10 @@ public class GenericArtifactHelper {
 
 			addAttribute(field, FIELD_NAME, genericArtifactField.getFieldName());
 			addAttribute(field, FIELD_TYPE, genericArtifactField.getFieldType());
+			if(genericArtifactField.getFieldDisplayName()==null)
+				addAttribute(field, FIELD_DISPLAY_NAME, "Unknown");
+			else
+				addAttribute(field, FIELD_DISPLAY_NAME, genericArtifactField.getFieldDisplayName());
 			if (genericArtifactField.getFieldValueHasChanged()) {
 				addAttribute(field, FIELD_VALUE_HAS_CHANGED,
 						FIELD_VALUE_HAS_CHANGED_TRUE);
