@@ -15,7 +15,7 @@ import org.openadaptor.core.Component;
 import org.openadaptor.core.IDataProcessor;
 import org.openadaptor.core.exception.MessageException;
 
-import com.collabnet.ccf.core.ga.GenericArtifactXMLHelper;
+import com.collabnet.ccf.pi.qc.QCXMLHelper;
 
 
 public class Ambulance extends Component implements
@@ -39,7 +39,7 @@ public class Ambulance extends Component implements
 					Object dataObj = exception.getData();
 					String source = exception.getOriginatingModule();
 					Exception rootCause = exception.getException();
-					Document doc = GenericArtifactXMLHelper.createXMLDocument("UTF-8");
+					Document doc = QCXMLHelper.createXMLDocument("UTF-8");
 					Element failure = doc.addElement("Failure");
 					Element failureSource = failure.addElement("Source");
 					failureSource.setText(source);
