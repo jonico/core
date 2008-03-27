@@ -15,7 +15,7 @@ import com.collabnet.ccf.pi.qc.api.IConnection;
 public abstract class QCConnectHelper extends LifecycleComponent {
 	
     // The qc connection
-    private IConnection qcc;
+    protected IConnection qcc;
 
 	private String serverUrl;
 
