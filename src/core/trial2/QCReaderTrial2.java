@@ -39,8 +39,6 @@ public class QCReaderTrial2 extends QCConnectHelper implements
 	}
 
 	public Object[] process(Object data) {
-		
-
 		log.error("=================================");
 		log.error("Entering QCReaderTrial2");
 		log.error(getServerUrl());
@@ -54,7 +52,7 @@ public class QCReaderTrial2 extends QCConnectHelper implements
 		}
 			
 		Document document=(Document) data;
-
+		
 		// Print out the input values
 		log.error(document.asXML());
 		
@@ -71,8 +69,20 @@ public class QCReaderTrial2 extends QCConnectHelper implements
 		for (int i = 0 ; i < opGaArraySize ; i++) {
 			GenericArtifact ga = QCConfigHelper.getSchemaFields(getQcc());
 			Document doc = null;
-			ga.setArtifactLastModifiedDate(getServerUrl()+ ":" + getDomain() + ":" + getProjectName());
+			ga.setArtifactLastModifiedDate(DateUtil.format(new Date()));
 			ga.setArtifactVersion(Integer.toString(i));
+
+			ga.setSourceArtifactId(this.getSourceArtifactId(document));
+			ga.setSourceRepositoryId(this.getSourceRepositoryId(document));
+			ga.setSourceRepositoryKind(this.getSourceRepositoryKind(document));
+			ga.setSourceSystemId(this.getSourceSystemId(document));
+			ga.setSourceSystemKind(this.getSourceSystemKind(document));
+
+			ga.setTargetArtifactId(this.getTargetArtifactId(document));
+			ga.setTargetRepositoryId(this.getTargetRepositoryId(document));
+			ga.setTargetRepositoryKind(this.getTargetRepositoryKind(document));
+			ga.setTargetSystemId(this.getTargetSystemId(document));
+			ga.setTargetSystemKind(this.getTargetSystemKind(document));
 			
 			// mandatory fields to be set
 			ga.setArtifactMode(GenericArtifact.ArtifactModeValue.COMPLETE);
@@ -85,6 +95,7 @@ public class QCReaderTrial2 extends QCConnectHelper implements
 				log.error("EXCEPTION:");
 				log.error("Iteration:" + i);
 				log.error(gape.toString());
+				throw new RuntimeException(gape);
 			}
 			log.error(doc.asXML());
 			docArray[i] = doc;
@@ -235,7 +246,43 @@ public class QCReaderTrial2 extends QCConnectHelper implements
 			return null;
 		return node.getText();
 	}
-	
+	private String getTargetArtifactId(Document document) {
+		// TODO Let the user specify this value?
+		Node node= document.selectSingleNode("//TARGET_ARTIFACT_ID");
+		if (node==null)
+			return null;
+		return node.getText();
+	}
+
+	private String getTargetRepositoryId(Document document) {
+		// TODO Let the user specify this value?
+		Node node= document.selectSingleNode("//TARGET_REPOSITORY_ID");
+		if (node==null)
+			return null;
+		return node.getText();
+	}
+	private String getTargetRepositoryKind(Document document) {
+		// TODO Let the user specify this value?
+		Node node= document.selectSingleNode("//TARGET_REPOSITORY_KIND");
+		if (node==null)
+			return null;
+		return node.getText();
+	}
+
+	private String getTargetSystemId(Document document) {
+		// TODO Let the user specify this value?
+		Node node= document.selectSingleNode("//TARGET_SYSTEM_ID");
+		if (node==null)
+			return null;
+		return node.getText();
+	}
+	private String getTargetSystemKind(Document document) {
+		// TODO Let the user specify this value?
+		Node node= document.selectSingleNode("//TARGET_SYSTEM_KIND");
+		if (node==null)
+			return null;
+		return node.getText();
+	}
 	
 	
 	public void reset(Object context) {
