@@ -51,7 +51,7 @@ public class SFEEWriterTrial2 extends QCConnectHelper implements
 			log.error("Supplied data not in the expected dom4j format: "+data);
 			return null;
 		}
-			
+		
 		Document document=(Document) data;
 
 		// Print out the input values
@@ -60,7 +60,7 @@ public class SFEEWriterTrial2 extends QCConnectHelper implements
 		log.error("Exiting SFEEWriterTrial2.java");
 		log.error("=================================");
 
-		/*
+		
 		GenericArtifact ga = null;
 		try {
 			ga = GenericArtifactHelper.createGenericArtifactJavaObject(document);
@@ -69,7 +69,7 @@ public class SFEEWriterTrial2 extends QCConnectHelper implements
 			log.error("EXCEPTION:");
 			log.error(gape.toString());
 		}
-
+		/*
 		// artifact version is combination of Last Modified date and artifact value
 		String artifactVersion = ga.getArtifactLastModifiedDate();
 		artifactVersion += ga.getArtifactValue();
@@ -90,7 +90,7 @@ public class SFEEWriterTrial2 extends QCConnectHelper implements
 		return docArray;
 		*/
 		
-		return null;
+		return new Object[]{ga};
 	}
 
 	public Object getReaderContext() {
