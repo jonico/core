@@ -42,7 +42,10 @@
             <entry key-ref="SFEE1Transformer" value-ref="SFEE1EntityService"/>
 
             <!-- There will be one writer per entity service -->
-            <entry key-ref="SFEE1EntityService" value-ref="SFEE1Writer"/>
+            <entry key-ref="SFEE1EntityService" value-ref="SFEE1Filter"/>
+            <entry key-ref="SFEE1Filter" value-ref="SFEE1Writer"/>
+            <!-- <entry key-ref="SFEE1EntityService" value-ref="SFEE1Writer"/> -->
+            <entry key-ref="SFEE1Writer" value-ref="MappingDBUpdater"/>
       </map>  
     </property>
     <property name="exceptionProcessor" ref="ExceptionHandler"/>
@@ -71,7 +74,25 @@
     <property name="resultSetConverter" ref="QCResultSetConverter"/>
     <property name="sql">
       <value>
-        SELECT * FROM SYSTEM_REPOSITORIES
+        select A.REPOSITORY_ID AS SOURCE_REPOSITORY_ID,
+		A.REPOSITORY_KIND AS SOURCE_REPOSITORY_KIND,
+		C.SYSTEM_ID AS SOURCE_SYSTEM_ID,
+		C.SYSTEM_KIND AS SOURCE_SYSTEM_KIND,
+		B.REPOSITORY_ID AS TARGET_REPOSITORY_ID,
+		B.REPOSITORY_KIND AS TARGET_REPOSITORY_KIND,
+		D.SYSTEM_ID AS TARGET_SYSTEM_ID,
+		D.SYSTEM_KIND AS TARGET_SYSTEM_KIND,
+		E.SOURCE_ARTIFACT_ID AS SOURCE_ARTIFACT_ID,
+		E.TARGET_ARTIFACT_ID AS TARGET_ARTIFACT_ID,
+	    REPOSITORY_MAPPING.LAST_READ_TIME AS FROM_TIME,
+	    REPOSITORY_MAPPING.VERSION AS VERSION,
+	    REPOSITORY_MAPPING.TRANSACTION_ID AS TRANSACTION_ID
+		from REPOSITORY_INFO A,REPOSITORY_INFO B, SYSTEM_INFO C, SYSTEM_INFO D, ARTIFACT_MAPPING E, REPOSITORY_MAPPING 
+		WHERE REPOSITORY_MAPPING.SOURCE_REPOSITORY_INFO_ID = A.ID AND
+		REPOSITORY_MAPPING.TARGET_REPOSITORY_INFO_ID = B.ID AND
+		A.SYSTEM_INFO_ID = C.ID AND
+		B.SYSTEM_INFO_ID = D.ID AND
+		REPOSITORY_MAPPING.ID = E.MAPPING_ID
       </value>
     </property>
   </bean>
@@ -113,6 +134,12 @@
         </property>
   </bean>
    -->
+   <bean id="SFEE1Filter"
+        class="trial2.XPathFilter">
+        <description>Discard documents that don't have target system kind SFEE4.4</description>
+        <property name="XPath" value="/artifact[@targetSystemKind='SFEE4.4']" />
+  </bean>
+   
   <bean id="SFEE1Transformer" class="trial2.XsltProcessor">
    <property name="xsltFile" value="../xslts/qc2sfee.xsl"/>
   </bean>
@@ -140,6 +167,13 @@
      <property name="userName" value="admin"/>
      <property name="password" value="collabnet"/>
    </bean>
+   <bean id="MappingDBUpdater" class="trial2.MappingDBUpdater">
+     <description>
+       Simply display the artifacts
+     </description>              
+     <property name="jdbcConnection" ref="JdbcConnectionRead"/>
+   </bean>
+   
 
   <!-- <bean id="ExceptionHandler" class="org.openadaptor.auxil.connector.iostream.writer.FileWriteConnector"/> -->
   <bean id="ExceptionHandler" class="trial2.Ambulance">
