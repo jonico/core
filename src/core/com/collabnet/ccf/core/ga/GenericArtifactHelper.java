@@ -402,6 +402,10 @@ public class GenericArtifactHelper {
 				genericArtifactField.setFieldValue(new String(value));
 				break;
 			}
+			case LIST: {
+				genericArtifactField.setFieldValue(new String(value));
+				break;
+			}
 			}
 	}
 
