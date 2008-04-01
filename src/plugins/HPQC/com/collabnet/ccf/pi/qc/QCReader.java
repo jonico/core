@@ -56,15 +56,21 @@ public class QCReader extends QCConnectHelper implements
 		// Fix these time operations
 		String fromTime = getFromTime(document);
 		String toTime = getToTime(document);
+		
 		String sourceArtifactId = getSourceArtifactId(document); 
 		String sourceRepositoryId = getSourceRepositoryId(document);
 		String sourceRepositoryKind = getSourceRepositoryKind(document);
 		String sourceSystemId = getSourceSystemId(document);
 		String sourceSystemKind = getSourceSystemKind(document);
 		
+		String targetRepositoryId = getTargetRepositoryId(document);
+		String targetRepositoryKind = getTargetRepositoryKind(document);
+		String targetSystemId = getTargetSystemId(document);
+		String targetSystemKind = getTargetSystemKind(document);
+		
 		log.error(fromTime);
 		log.error(toTime);
-		Object[] result=readModifiedDefects(fromTime, toTime, sourceArtifactId, sourceRepositoryId, sourceRepositoryKind, sourceSystemId, sourceSystemKind);
+		Object[] result=readModifiedDefects(fromTime, toTime, sourceArtifactId, sourceRepositoryId, sourceRepositoryKind, sourceSystemId, sourceSystemKind, targetRepositoryId, targetRepositoryKind, targetSystemId, targetSystemKind);
 		disconnect();
 		return result;
 	}
@@ -84,15 +90,17 @@ public class QCReader extends QCConnectHelper implements
 		isDry=false;
 	}
 	
-	public Object[] readModifiedDefects(String fromTime, String toTime, String sourceArtifactId, String sourceRepositoryId, String sourceRepositoryKind, String sourceSystemId, String sourceSystemKind) {
+	public Object[] readModifiedDefects(String fromTime, String toTime, String sourceArtifactId, String sourceRepositoryId, String sourceRepositoryKind, String sourceSystemId, String sourceSystemKind, String targetRepositoryId, String targetRepositoryKind, String targetSystemId, String targetSystemKind) {
 		// TODO Use the information of the firstTimeImport flag
 		
+		//Object[] retObj = new Object[100];
+		List<List<Document>> retObj=new ArrayList<List<Document>>();
 		List<Document> dataRows=new ArrayList<Document>();
 		List<GenericArtifact> defectRows;
 		
 		try {
 			log.error("The fromTime coming from HQSL DB is:" + fromTime + " and the toTime is" +toTime);
-			defectRows = defectHandler.getChangedDefects(qcc, fromTime, toTime, sourceArtifactId, sourceRepositoryId, sourceRepositoryKind, sourceSystemId, sourceSystemKind);
+			defectRows = defectHandler.getChangedDefects(this.getQcc(), fromTime, toTime, sourceArtifactId, sourceRepositoryId, sourceRepositoryKind, sourceSystemId, sourceSystemKind, targetRepositoryId, targetRepositoryKind, targetSystemId, targetSystemKind);
 		} catch (Exception e) {
 			// TODO Throw an exception?
 			log.error("During the artifact retrieval process from QC, an error occured",e);
@@ -114,9 +122,11 @@ public class QCReader extends QCConnectHelper implements
 			}
 			return new Object[]{document};
 		}
-		
-		try {
-		PrintWriter out = new PrintWriter(new BufferedWriter(new FileWriter("resultantGenericArtifact.xml")));
+		 
+		/*try {
+		FileOutputStream f = new FileOutputStream("resultantGenericArtifact.xml"); 
+		ObjectOutputStream s = new ObjectOutputStream(f);
+		*/
 		
 		for (GenericArtifact defectRow: defectRows) {
 			Document document = null;
@@ -132,20 +142,23 @@ public class QCReader extends QCConnectHelper implements
 
 			if (document != null) {
 				log.error(document.asXML());
-				out.println(document.asXML());
 			}
 			else {
 				log.error("DOCUMENT IS NULL");
 			}
 			
 			dataRows.add(document);
-		}
-		}
+			
+		}		
+		retObj.add(dataRows);
+		//s.writeObject(retObj);		
+		/*}
 		catch (IOException e) {
 		log.error("IOException in QCReader caught " + e);	
-		}
-		
+		}		
+		*/
 		return dataRows.toArray();
+		//return retObj.toArray();
 	}
 	
 	@Override
@@ -204,6 +217,36 @@ public class QCReader extends QCConnectHelper implements
 	private String getSourceSystemKind(Document document) {
 		// TODO Let the user specify this value?
 		Node node= document.selectSingleNode("//SOURCE_SYSTEM_KIND");
+		if (node==null)
+			return null;
+		return node.getText();
+	}
+		
+	private String getTargetRepositoryId(Document document) {
+		// TODO Let the user specify this value?
+		Node node= document.selectSingleNode("//TARGET_REPOSITORY_ID");
+		if (node==null)
+			return null;
+		return node.getText();
+	}
+	private String getTargetRepositoryKind(Document document) {
+		// TODO Let the user specify this value?
+		Node node= document.selectSingleNode("//TARGET_REPOSITORY_KIND");
+		if (node==null)
+			return null;
+		return node.getText();
+	}
+
+	private String getTargetSystemId(Document document) {
+		// TODO Let the user specify this value?
+		Node node= document.selectSingleNode("//TARGET_SYSTEM_ID");
+		if (node==null)
+			return null;
+		return node.getText();
+	}
+	private String getTargetSystemKind(Document document) {
+		// TODO Let the user specify this value?
+		Node node= document.selectSingleNode("//TARGET_SYSTEM_KIND");
 		if (node==null)
 			return null;
 		return node.getText();
