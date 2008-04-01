@@ -2,6 +2,11 @@ package com.collabnet.ccf.pi.qc;
 
 import java.io.IOException;
 import java.rmi.RemoteException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
@@ -13,6 +18,11 @@ import org.openadaptor.core.exception.NullRecordException;
 import org.openadaptor.core.exception.RecordFormatException;
 import org.openadaptor.core.exception.ValidationException;
 
+import com.collabnet.ccf.core.ga.GenericArtifact;
+import com.collabnet.ccf.core.ga.GenericArtifactField;
+import com.collabnet.ccf.core.ga.GenericArtifactHelper;
+
+
 
 
 public class QCEntityService extends QCConnectHelper implements
@@ -23,9 +33,10 @@ public class QCEntityService extends QCConnectHelper implements
 	}
 
 	private static final Log log = LogFactory.getLog(QCEntityService.class);
-	private String CreateToken;
+	/*private String CreateToken;
 	private String synchronizationUser;
 	private String otherSystemInQCTargetFieldname;
+	*/
 	private QCDefectHandler defectHandler;
 
 	public Object[] process(Object data) {
@@ -41,105 +52,137 @@ public class QCEntityService extends QCConnectHelper implements
 	}
 
 	private Object[] processXMLDocument(Document data) {
-		Boolean duplicateArtifact=(Boolean)QCXMLHelper.asTypedValue(QCXMLHelper.getSingleValue(data, "isDuplicate", false), "Boolean");
-		if (duplicateArtifact)
-			return new Object[0];
 		
-		boolean defectAlreadyCreated=false;
+		System.out.println("Inside QCEntityService, the incoming document is ::" + data.asXML());
+		System.out.println("***************************************************");
+		Document filledArtifactDocument = null;
+		GenericArtifact genericArtifact = new GenericArtifact();
+		try {
+			genericArtifact = GenericArtifactHelper.createGenericArtifactJavaObject(data);
+			//genericArtifact = fillInRequiredFields(genericArtifact);
+		}
+		catch(Exception e) {
+			System.out.println("GenericArtifact Parsing exception" + e);
+		}
+		String sourceArtifactId = genericArtifact.getSourceArtifactId();
+		String sourceSystemId  = genericArtifact.getSourceSystemId();
+		String sourceRepositoryId = genericArtifact.getSourceRepositoryId();
+		String targetArtifactId = genericArtifact.getTargetArtifactId();
+		String targetSystemId = genericArtifact.getTargetSystemId();
+		String targetRepositoryId = genericArtifact.getTargetRepositoryId();
 		
-		// check whether there is already an entity in the target system
-		String id = QCXMLHelper.getSingleValue(data, "BG_BUG_ID", false);
-		log.info("Found bug id: "+id);
-		if (StringUtils.isNotEmpty(id))
-				defectAlreadyCreated=true;
-		else {
-			
-			if (!QCXMLHelper.containsSingleField(data,getOtherSystemInQCTargetFieldname(),true)) {
-				// TODO Throw an exception?
-				log.error("required "+getOtherSystemInQCTargetFieldname()+"-element not present in artifact: "+data.asXML());
-				return null;
-			}
-			
-			// now we can query the target system for the existence of the artifact
-			try {
-				connect();
-				IQCDefect[] defects = defectHandler.getDefectsWithOtherSystemId(qcc, getOtherSystemInQCTargetFieldname(), QCXMLHelper.getSingleValue(data,getOtherSystemInQCTargetFieldname(),true));
-				//IQCDefect[] defects = defectHandler.getDefectsWithOtherSystemId(qcc, "BG_BUG_ID", QCXMLHelper.getSingleValue(data,"BG_BUG_ID",true));
-				//ArtifactDetailSoapRow [] artifacts=trackerHandler.getFilteredTrackerItems(getSessionId(), "tracker1006", getSFEEmappingID(), (String)data.get(getSFEEmappingID()));
-				log.error(defects.length);
-				if (defects==null || defects.length==0)
-					defectAlreadyCreated=false;
-				else if (defects.length>1) {
-					// TODO Throw an exception?
-					log.error("Defect is mapped more than once in the target system: "+data.asXML());
-					disconnect();
-					return null;
-				}
-				// defect already created, insert or update Id element
-				else {
-					defectAlreadyCreated=true;
-					if (QCXMLHelper.containsSingleField(data,"BG_BUG_ID",false))
-						QCXMLHelper.updateSingleField(data.getRootElement(), "BG_BUG_ID", defects[0].getId(), false);
-					else
-						QCXMLHelper.addField(data.getRootElement(), "BG_BUG_ID", defects[0].getId(),"String", false);
-				}	
-				disconnect();
-			} catch (Exception e) {
-				// TODO Declare exception so that it can be processed by OA exception handler
-				log.error("An error occured while connecting to QC", e);
-				disconnect();
-				return null;
-			}	
-		}		
-		if (defectAlreadyCreated) {	
-			// this object is already created, now find out, whether we have to do an update
-			// check whether last update was done by synchronization user
-			if (!QCXMLHelper.containsSingleField(data,"lastModifiedBy",false)) {
-				// TODO Throw an exception?
-				log.error("required lastModifiedBy-element not present in artifact: "+data.asXML());
-				return null;
-			}
-			// Only accept the change if the artifact was created or the change did not come from the synchronization middleware itself
-			// TODO Due to the update after a delete, this may miss some artifacts that were just created
-			if (QCXMLHelper.getSingleValue(data,"lastModifiedBy",false).equals(getSynchronizationUser()) && (!QCXMLHelper.getSingleValue(data, "lastModifiedDate", false).equals(QCXMLHelper.getSingleValue(data, "createdDate", false)))) {
-				log.info("lastModifiedBy Value :" + QCXMLHelper.getSingleValue(data,"lastModifiedBy",false));
-				log.info("getSynchronizationUser" + getSynchronizationUser());
-				log.info("lastModfiedDate from the xml file :" + QCXMLHelper.getSingleValue(data, "lastModifiedDate", false));
-				log.info("createdDate from the xml file :" + QCXMLHelper.getSingleValue(data, "createdDate", false));
-				// we do not have to pass this artifact because all changes are already presented in target system
-				log.info("Do not change object, since the change came from this system: "+QCXMLHelper.getSingleValue(data,"BG_BUG_ID",false));
-				return new Object[0];
-			}
-			// else object should be updated
-			else {
-				log.info("Updating or deleting object with "+getOtherSystemInQCTargetFieldname()+" "+QCXMLHelper.getSingleValue(data,"BG_BUG_ID",false)+" last modified by "+QCXMLHelper.getSingleValue(data,"lastModifiedBy",false));
-				return new Object [] {data};
+		String targetArtifactIdFromTable = getTargetArtifactIdFromTable(sourceArtifactId, sourceSystemId, sourceRepositoryId, targetSystemId, targetRepositoryId);
+		
+		if(targetArtifactIdFromTable!=null && !(targetArtifactIdFromTable.equals("NEW"))) {
+	    	genericArtifact.setTargetArtifactId(targetArtifactIdFromTable);
+	    }
+		if(targetArtifactIdFromTable==null) {
+	    	if(genericArtifact.getArtifactAction().equals(GenericArtifact.ArtifactActionValue.UPDATE)) {
+	    		//Send this artifact to HOSPITAL
+	    	}
+	    	if(genericArtifact.getArtifactAction().equals(GenericArtifact.ArtifactActionValue.CREATE)) {
+	    		//Insert a new record in the QC_ENTITY_CHECK Hsql table with the targetArtifactId value as "NEW". 
+	    		//This should be updated by the QCWriter after creating a defect.
+	    		Boolean insertStatus = insertRecordInTable(sourceArtifactId, sourceSystemId, sourceRepositoryId, targetSystemId, targetRepositoryId);
+	    		
+	    	}
+	    }
+		
+	    try {
+	    	filledArtifactDocument = GenericArtifactHelper.createGenericArtifactXMLDocument(genericArtifact);
+	    }
+	    catch(Exception e) {
+	    	log.error("Exception while converting the resultantGenericArtifact into the resultDocument in QCEntityService:"+e);
+	    }
+		
+	    System.out.println("Inside QCEntityService, after filing in the targetArtifactId::" + filledArtifactDocument.asXML());
+	    
+	    Object[] result = {filledArtifactDocument};
+		return result;
+	}
+	
+	
+	public static String getTargetArtifactIdFromTable(String sourceArtifactId, String sourceSystemId, String sourceRepositoryId, String targetSystemId, String targetRepositoryId) {
+		
+	    /* 1. Get the values of sourceArtifactId, sourceSystemId, sourceRepositoryId, targetArtifactId, targetSystemId, targetRepositoryId
+	      from the incoming GenericArtifact.
+	    2. Query the HSQL Table for the presence of a combination of sourceSystemId, sourceRepositoryId,targetSystemId, targetRepositoryId.
+	    3. If such a record exists, get the value of targetArtifactId for the given sourceArtifactId and populate the GenericArtifact and send it to QCWriter.
+	    4. If such a record doesn't exists, that Artifact is for creation (check is the artifactAction is CREATE or not, 
+	   	  handle that properly. The QCWriter should insert a new record in that table for this targetArtifactId.
+	    5.  
+	    */
+		
+		String targetArtifactIdFromTable = null;
+		String sql = "SELECT TARGET_ARTIFACT_ID FROM QC_ENTITY_CHECK WHERE SOURCE_SYSTEM_ID= '"+sourceSystemId+"' AND ";
+		       sql+= "SOURCE_REPOSITORY_ID= '"+sourceRepositoryId+"' AND TARGET_SYSTEM_ID='"+targetSystemId+"' AND ";
+		       sql+= "TARGET_REPOSITORY_ID='"+targetRepositoryId+"' AND SOURCE_ARTIFACT_ID='"+sourceArtifactId+"'";
+		
+		log.info("QCEntityService SQL Query:"+ sql);       
+		try {
+			ResultSet rs = executeSql(sql);
+			//while(!(rs.isLast()) ) {
+			if(rs!=null) {
+			for (; rs.next(); ) {
+				if(rs.getObject(1)!=null)
+					targetArtifactIdFromTable= rs.getObject(1).toString();
+		      	System.out.println(targetArtifactIdFromTable);
+		      	rs.next();
+		      }
 			}
 		}
-		
-		// artifact has to be created
-		if (QCXMLHelper.containsSingleField(data,"BG_BUG_ID",false))
-			QCXMLHelper.updateSingleField(data.getRootElement(), "BG_BUG_ID", getCreateToken(), false);
-		else
-			QCXMLHelper.addField(data.getRootElement(),"BG_BUG_ID", getCreateToken(),"String",false);
-		log.info("Trying to create new object or trying to delete object that is not (yet) mirrored");
-		return new Object [] {data};
+		catch(Exception e) {
+			log.error("Exception while executing the Query in QCEntityService:"+e);
+		}
+	    
+		return targetArtifactIdFromTable;
 	}
-
+	
+	public boolean insertRecordInTable(String sourceArtifactId, String sourceSystemId, String sourceRepositoryId, String targetSystemId, String targetRepositoryId) {
+		
+		Boolean status = false;
+		
+		String sql = "INSERT INTO QC_ENTITY_CHECK VALUES('"+sourceSystemId+"', '"+sourceRepositoryId+"', '"+sourceArtifactId+"', '"+targetSystemId+"', '"+targetRepositoryId+"', 'NEW')";
+		log.info("QCEntityService INSERT SQL Query:"+ sql); 
+		ResultSet rs = null;
+		try {
+			rs = executeSql(sql);
+		}
+		catch(Exception e) {
+			log.error("Exception while executing the INSERT Query in QCEntityService:"+e);
+		}
+		if(rs==null) return false;
+		else return true;
+	}
+	
+	public static ResultSet executeSql(String sql) throws ClassNotFoundException, SQLException {
+	  	Connection conn;                                                
+        Class.forName("org.hsqldb.jdbcDriver");
+        conn = DriverManager.getConnection("jdbc:hsqldb:hsql://localhost/xdb", "sa", "");
+        Statement st = null;
+        ResultSet rs = null;
+        st = conn.createStatement();         // statement objects can be reused with
+        rs = st.executeQuery(sql);    // run the query
+        return rs;
+  }
+ 
+	
+	
 	public void reset(Object context) {
 	}
 
-	public void setSynchronizationUser(String synchronizationUser) {
+	/*public void setSynchronizationUser(String synchronizationUser) {
 		this.synchronizationUser = synchronizationUser;
 	}
 
 	public String getSynchronizationUser() {
 		return synchronizationUser;
 	}
-	
+	*/
 	@Override
 	public void validate(List exceptions) {
 		super.validate(exceptions);
+		/*
 		if (getSynchronizationUser()==null) {
 			log.error("synchronizationUser-property no set");
 			exceptions.add(new ValidationException("synchronizationUser-property not set",this));
@@ -153,11 +196,12 @@ public class QCEntityService extends QCConnectHelper implements
 			log.error("createToken-property no set");
 			exceptions.add(new ValidationException("createToken-property not set",this));
 		}
+		*/
 		// Create tracker handler
 		defectHandler = new QCDefectHandler();
 	}
 
-	public void setOtherSystemInQCTargetFieldname(String sFEEmappingID) {
+	/*public void setOtherSystemInQCTargetFieldname(String sFEEmappingID) {
 		otherSystemInQCTargetFieldname = sFEEmappingID;
 	}
 
@@ -172,5 +216,6 @@ public class QCEntityService extends QCConnectHelper implements
 	public String getCreateToken() {
 		return CreateToken;
 	}
+	*/
 
 }
