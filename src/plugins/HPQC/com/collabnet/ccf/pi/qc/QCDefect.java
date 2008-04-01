@@ -5,6 +5,7 @@ package com.collabnet.ccf.pi.qc;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Date;
 
 import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifact;
@@ -60,7 +61,7 @@ public class QCDefect extends Bug implements IQCDefect {
 			//thisField.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
 			
 			thisField.setFieldValueHasChanged(true);
-						
+			
 			GenericArtifactField.FieldValueTypeValue thisFieldsDatatype = thisField.getFieldValueType();
 			
 			if (thisFieldsDatatype.equals(GenericArtifactField.FieldValueTypeValue.DATE)) {
@@ -73,7 +74,17 @@ public class QCDefect extends Bug implements IQCDefect {
 				/* TODO: datatype can also be one of the other GenericArtifactField.FieldValueTypeValue
 				 * types. Handle them appropriately.
 				 */ 
-				thisField.setFieldValue(getFieldAsString(thisField.getFieldName()));
+				String fieldName = thisField.getFieldName();
+				String fieldValueAsString = new String();
+				if(fieldName.equals("BG_VTS")) {
+					String fieldValue = getFieldAsString(fieldName);
+					thisField.setFieldValue(fieldValue);
+				}
+				else {
+					fieldValueAsString = getFieldAsString(fieldName);
+					thisField.setFieldValue(fieldValueAsString);
+				}
+				
 			}
 			
 		}
