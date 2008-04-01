@@ -29,7 +29,15 @@
     <property name="processMap">
       <map>
 			<entry key-ref="SimplePollingReader" value-ref="QCReader"/>
-			<entry key-ref="QCReader" value-ref="Writer"/>
+			<entry key-ref="QCReader"> 
+        		<list>
+        			<ref bean="QCReaderOutputWriter"/>
+        			<ref bean="Writer"/>
+          		</list>
+        	</entry>
+        	<entry key-ref="QCReaderOutputWriter" value-ref="QCEntityService"/>
+        	<entry key-ref="QCEntityService" value-ref="QCWriter"/>
+        	<entry key-ref="QCWriter" value-ref="Writer"/>
       </map>  
     </property>
     <property name="exceptionProcessor" ref="ExceptionHandler"/>
@@ -56,10 +64,60 @@
      <property name="serverUrl" value="http://10.2.1.114:8080/qcbin"/>
      <property name="domain" value="DOMAIN_PRJ_1"/>
      <property name="projectName" value="PRJ_1"/>
-     <property name="userName" value="admin"/>
-     <property name="password" value="collabnet"/>
+     <property name="userName" value="alex_qc"/>
+     <property name="password" value=""/>
   </bean>
 
+	 	
+  <bean id="QCReaderOutputVerificator" class="test.QCReaderOutputVerificator">
+  	<description>
+       Verifies if the run output matches with the expected data 
+  	</description>
+  	<property name="fileName" value="C:\\Venugopal\\Eclipse\\ccf-workspace\\CCFJ\\src\\plugins\\HPQC\\test\\resultantGenericArtifact.xml"/>
+  	<property name="serverUrl" value="http://10.2.1.114:8080/qcbin"/>
+    <property name="domain" value="QC_PLUGIN_TESTING"/>
+    <property name="projectName" value="PRJ_1"/>
+    <property name="userName" value="admin"/>
+    <property name="password" value="collabnet"/>
+  </bean>
+	
+
+	
+  <bean id="QCReaderOutputWriter" class="test.QCReaderOutputWriter">
+  	<description>
+       Writes the Object array containing the list of genericArtifactDocuments coming in from QCReader into a file
+       given as a property here. This file is accessed by the QCReaderOutputVerificator. 
+  	</description>
+  	<property name="fileName" value="C:\\Venugopal\\Eclipse\\ccf-workspace\\CCFJ\\src\\plugins\\HPQC\\test\\resultantGenericArtifact.xml"/>
+  	<property name="serverUrl" value="http://10.2.1.114:8080/qcbin"/>
+    <property name="domain" value="QC_PLUGIN_TESTING"/>
+    <property name="projectName" value="PRJ_1"/>
+    <property name="userName" value="admin"/>
+    <property name="password" value="collabnet"/>
+  </bean>
+  
+  <bean id="QCEntityService" class="com.collabnet.ccf.pi.qc.QCEntityService">
+     <description>
+     	This QCEntityService fills the targetArtifactId in the GenericArtifact and forwards it to the QCWriter.
+	 </description>
+     <property name="serverUrl" value="http://10.2.1.114:8080/qcbin"/>
+     <property name="domain" value="QC_PLUGIN_TESTING"/>
+     <property name="projectName" value="PRJ_1"/>
+     <property name="userName" value="alex_qc"/>
+     <property name="password" value=""/>
+  </bean>     
+  
+  <bean id="QCWriter" class="com.collabnet.ccf.pi.qc.QCWriter">
+     <description>
+     	This QCWriter will write the data contained in the incoming document to QC.
+	 </description>
+     <property name="serverUrl" value="http://10.2.1.114:8080/qcbin"/>
+     <property name="domain" value="QC_PLUGIN_TESTING"/>
+     <property name="projectName" value="PRJ_1"/>
+     <property name="userName" value="alex_qc"/>
+     <property name="password" value=""/>
+  </bean>      
+    	
   <bean id="Writer" class="org.openadaptor.auxil.connector.iostream.writer.FileWriteConnector"/>
   <bean id="ExceptionHandler" class="org.openadaptor.auxil.connector.iostream.writer.FileWriteConnector"/>
 
