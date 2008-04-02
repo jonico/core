@@ -2,6 +2,7 @@ package com.collabnet.ccf.pi.sfee;
 
 import java.text.DateFormat;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -11,6 +12,7 @@ import java.util.Locale;
 
 import javax.xml.datatype.XMLGregorianCalendar;
 
+import org.dom4j.Attribute;
 import org.dom4j.Document;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
@@ -22,7 +24,9 @@ import com.collabnet.ccf.pi.qc.NamesTypesAndValues;
 
 public class SFEEXMLHelper {
 	// TODO: Think about a more compact datetime format that still preserves timezone and seconds
-	private static DateFormat df = DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.LONG,new Locale("en"));
+	//private static DateFormat df = DateFormat.getDateTimeInstance(DateFormat.LONG, DateFormat.LONG,new Locale("en"));
+	//2007-11-05 00:00:00
+	private static DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 	
 	public static void addField(Element root,
 			String fieldName, Object fieldValue, String fieldType, boolean isFlexField) {
@@ -88,9 +92,21 @@ public class SFEEXMLHelper {
 	public static String generateElementName(String elementName) {
 		return elementName;
 	}
+	
+	public static String getArtifactAttribute(Document data, String attribute){
+		Element root = data.getRootElement();
+		Attribute attr = root.attribute(attribute);
+		return attr==null?null:attr.getValue();
+	}
+	
+	public static void setArtifactAttribute(Document data, String attribute, String value){
+		Element root = data.getRootElement();
+		Attribute attr = root.attribute(attribute);
+		attr.setText(value);
+	}
 
 	public static boolean containsSingleField(Document data, String fieldName, boolean isFlexField) {
-		Node result=data.selectSingleNode("//field[@name='"+fieldName+"' and @isFlexField='"+(isFlexField?"true":"false")+"']");
+		Node result=data.selectSingleNode("//ccf:field[@fieldName='"+fieldName+"' and @fieldType='"+(isFlexField?"flexField":"")+"']");
 		return result != null;
 	}
 	
@@ -100,7 +116,8 @@ public class SFEEXMLHelper {
 	}
 	
 	public static String getSingleValue(Document data, String fieldName, boolean isFlexField) {
-		Node result=data.selectSingleNode("//field[@name='"+fieldName+"' and @isFlexField='"+(isFlexField?"true":"false")+"']/value[@isNull='false']");
+		String xPathExpression = "//ccf:field[@fieldName='"+fieldName.trim()+"']";
+		Node result=data.selectSingleNode(xPathExpression);
 		return result==null?null:result.getText();
 	}
 	
@@ -217,7 +234,7 @@ public class SFEEXMLHelper {
 
 	public static void updateSingleField(Element rootElement,
 			String fieldName, Object fieldValue, boolean isFlexField) {
-		Node result=rootElement.selectSingleNode("//field[@name='"+fieldName+"' and @isFlexField='"+(isFlexField?"true":"false")+"']/value");
+		Node result=rootElement.selectSingleNode("//ccf:field[@fieldName='"+fieldName+"' and @fieldType='"+(isFlexField?"flexField":"")+"']");
 		if (result!=null) {
 			if (fieldValue==null) {
 				result.setText("");
