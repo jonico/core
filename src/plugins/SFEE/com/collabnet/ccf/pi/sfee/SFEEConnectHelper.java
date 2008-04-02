@@ -15,7 +15,7 @@ import com.vasoftware.sf.soap44.webservices.sfmain.ISourceForgeSoap;
 public abstract class SFEEConnectHelper extends LifecycleComponent {
 	
 	/** SourceForge Soap interface handle */
-    private ISourceForgeSoap mSfSoap;
+    protected ISourceForgeSoap mSfSoap;
 
     /** Login user name */
     private String mLoginUserName;
