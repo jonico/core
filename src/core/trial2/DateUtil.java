@@ -5,8 +5,10 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import com.collabnet.ccf.core.ga.GenericArtifactHelper;
+
 public class DateUtil {
-	private static final DateFormat dateFormat = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss Z");
+	private static final DateFormat dateFormat = GenericArtifactHelper.df;
 	public static Date parse(String dateString){
 		try {
 			return dateFormat.parse(dateString);
