@@ -63,7 +63,7 @@ public class SFEEReader extends SFEEConnectHelper implements
 			firstTimeImport=true;
 		}
 		else {
-			lastModifiedDate=(Date)SFEEXMLHelper.asTypedValue(lastModifiedDateString, "DateTime");
+			lastModifiedDate=(Date)SFEEGAHelper.asTypedValue(lastModifiedDateString, "DateTime");
 			lastModifiedDate.setTime(lastModifiedDate.getTime()+1);
 		}
 		
@@ -109,10 +109,15 @@ public class SFEEReader extends SFEEConnectHelper implements
 		
 		Object[] result=readTrackerItems(trackerId,lastModifiedDate,lastArtifactId,lastArtifactVersion,firstTimeImport,document);
 		for(Object doc: result){
-			Document resDocument = (Document) doc;
-			String targetRepositoryId = SFEEXMLHelper.getArtifactAttribute(resDocument, "targetRepositoryId");
-			String sourceRepositoryId = SFEEXMLHelper.getArtifactAttribute(resDocument, "sourceRepositoryId");
-			String sourceArtifactId = SFEEXMLHelper.getArtifactAttribute(resDocument, "sourceArtifactId");
+			GenericArtifact ga = null;
+			try {
+				ga = GenericArtifactHelper.createGenericArtifactJavaObject((Document) doc);
+			} catch (GenericArtifactParsingException e) {
+				throw new RuntimeException(e);
+			}
+			String targetRepositoryId = ga.getTargetRepositoryId();
+			String sourceRepositoryId = ga.getSourceRepositoryId();
+			String sourceArtifactId = ga.getSourceArtifactId();
 			dbHelper.insertSourceArtifactID(sourceArtifactId, sourceRepositoryId, targetRepositoryId);
 		}
 		disconnect();
@@ -158,27 +163,7 @@ public class SFEEReader extends SFEEConnectHelper implements
 		List<ArtifactSoapDO> artifactHistoryRows = appHandler.loadArtifactAuditHistory(artifactRows,lastModifiedDate);
 
 		if (artifactHistoryRows == null) {
-			// REFACTOR Refactor this part of converting the artifacts
-			// we only received duplicates
-			log.info("Only received duplicates, increasing lastModifiedDate...");
-			/**
-			 * Construct a fake duplicate data entry with a slightly higher lastModifiedTime
-			 * to avoid querying the same duplicates over and over again
-			 */
-			// TODO Set encoding by user
-			Document document=SFEEXMLHelper.createXMLDocument(EncodingAwareObject.ISO_8859_1);
-			
-			//TODO let user specify rootTag
-			Element root=document.addElement("SFEEArtifact"); 
-			// first of all, set the deletion field and duplicate field to false
-			SFEEXMLHelper.addField(root,"deleteFlag","false","Boolean",false);
-			SFEEXMLHelper.addField(root,"isDuplicate","true","Boolean",false);
-			SFEEXMLHelper.addField(root,"Id",lastArtifactId,"String",false);
-			SFEEXMLHelper.addField(root,"version",lastArtifactVersion,"String",false);
-			// increase date for one second
-			SFEEXMLHelper.addField(root,"lastModifiedDate",new Date(lastModifiedDate.getTime()+1000),"DateTime",false);
-			SFEEXMLHelper.addField(root,"folderId",projectTracker,"String",false);
-			return new Object[]{document};
+			return new Object[]{};
 		} else {
 			for(ArtifactSoapDO artifactRow:artifactHistoryRows)
 			{
