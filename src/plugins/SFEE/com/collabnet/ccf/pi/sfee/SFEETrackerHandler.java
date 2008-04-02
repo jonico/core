@@ -3,6 +3,7 @@ package com.collabnet.ccf.pi.sfee;
 import com.vasoftware.sf.soap44.types.SoapFieldValues;
 import com.vasoftware.sf.soap44.types.SoapFilter;
 import com.vasoftware.sf.soap44.types.SoapSortKey;
+import com.vasoftware.sf.soap44.webservices.sfmain.TrackerFieldSoapDO;
 import com.vasoftware.sf.soap44.webservices.tracker.*;
 import com.vasoftware.sf.soap44.webservices.ClientSoapStubFactory;
 
@@ -209,6 +210,13 @@ public class SFEETrackerHandler {
 				false, false).getDataRows();
 		return rows;
 	}
+	
+	public TrackerFieldSoapDO[] getFlexFields(String sessionID,
+			String trackerId)
+			throws RemoteException {
+		TrackerFieldSoapDO[] rows = mTrackerApp.getFields(sessionID, trackerId);
+		return rows;
+	}
 
 	/**
 	 * Creates an artifact.
@@ -232,10 +240,10 @@ public class SFEETrackerHandler {
 		
 		// first of all, the lastSynchronized flexField to the existing
 		// values
-		flexFieldNames.add(lastSynchronizedWithOtherSystemSFEETargetFieldname);
+//		flexFieldNames.add(lastSynchronizedWithOtherSystemSFEETargetFieldname);
 		// TODO: Only works if created artifacts starts with number 100
-		flexFieldValues.add("100");
-		flexFieldTypes.add("String");
+//		flexFieldValues.add("100");
+//		flexFieldTypes.add("String");
 
 		// construct SOAPFieldValues
 		SoapFieldValues flexFields = new SoapFieldValues();
@@ -260,8 +268,9 @@ public class SFEETrackerHandler {
 		artifactData.setCloseDate(closeDate);
 		artifactData.setResolvedReleaseId(resolvedReleaseId);
 		// adjust the lastSynchronizedValue
-		flexFieldValues.remove(flexFieldValues.size() - 1);
-		flexFieldValues.add(Integer.toString(artifactData.getVersion()+1));
+		// NOTE Commented out
+		//flexFieldValues.remove(flexFieldValues.size() - 1);
+		//flexFieldValues.add(Integer.toString(artifactData.getVersion()+1));
 		// construct new flex fields
 		SoapFieldValues newFlexFields = new SoapFieldValues();
 		newFlexFields.setNames(flexFieldNames.toArray(new String[0]));
@@ -290,10 +299,10 @@ public class SFEETrackerHandler {
 			String resolvedReleaseId, List<String> flexFieldNames,
 			List<Object> flexFieldValues, List<String> flexFieldTypes,
 			String title, String Id, String comment,
-			String lastSynchronizedWithOtherSystemSFEETargetFieldname,
-			String otherSystemVersion,
-			String otherSystemVersionFieldName,
-			String fallbackVersion,
+//			String lastSynchronizedWithOtherSystemSFEETargetFieldname,
+//			String otherSystemVersion,
+//			String otherSystemVersionFieldName,
+//			String fallbackVersion,
 			boolean forceOverride)
 			throws RemoteException {
 		
@@ -302,19 +311,19 @@ public class SFEETrackerHandler {
 		
 		boolean tryItAgain = true;
 		ArtifactSoapDO artifactData = null;
-		int fallbackVersionInt=-1;
-		if (StringUtils.isNotEmpty(fallbackVersion)) {
-			try {
-				fallbackVersionInt=Integer.parseInt(fallbackVersion);
-			}
-			catch (NumberFormatException e) {
-				log.error("version-field for artifact with id "+Id+" in tracker "+trackerId+" contained non-numeric value",e);
-				return null;
-			}
-		}
-		else {
-			fallbackVersion="-1";
-		}
+//		int fallbackVersionInt=-1;
+//		if (StringUtils.isNotEmpty(fallbackVersion)) {
+//			try {
+//				fallbackVersionInt=Integer.parseInt(fallbackVersion);
+//			}
+//			catch (NumberFormatException e) {
+//				log.error("version-field for artifact with id "+Id+" in tracker "+trackerId+" contained non-numeric value",e);
+//				return null;
+//			}
+//		}
+//		else {
+//			fallbackVersion="-1";
+//		}
 		
 		// this loop enables us to update even if a stale update method occured
 		while (tryItAgain) {
@@ -331,82 +340,82 @@ public class SFEETrackerHandler {
 					/**
 					 * Compare versions of the software artifacts
 					 */
-					String version=(String)getFlexFieldValue(lastSynchronizedWithOtherSystemSFEETargetFieldname, artifactData, "String");
-					if (StringUtils.isEmpty(version)) {
-						log
-						.warn("Seems as if we lost version-information in flexField "+lastSynchronizedWithOtherSystemSFEETargetFieldname+ " in the target system for artifact with id: "
-								+ artifactData.getId()+ " in tracker "+artifactData.getFolderId()+" or it is the first resync, falling back to value in the version-Field");
-						version=fallbackVersion;
-						if (fallbackVersionInt==-1) {
-							log
-							.error("Seems as if we lost version-information in version-Field in the source system for target artifact with id: "
-									+ artifactData.getId()+" in tracker "+artifactData.getFolderId());
-							if (forceOverride) {
-								log.warn("Since we should override changes, we still try to update the artifact with id: "+artifactData.getId());
-								version="-1";
-							}
-							else {
-								log.error("Since we should not override changes, we do not update the artifact with id: "+artifactData.getId()+" in tracker "+artifactData.getFolderId());
-								return null;
-							}
-						}
-					}
+//					String version=(String)getFlexFieldValue(lastSynchronizedWithOtherSystemSFEETargetFieldname, artifactData, "String");
+//					if (StringUtils.isEmpty(version)) {
+//						log
+//						.warn("Seems as if we lost version-information in flexField "+lastSynchronizedWithOtherSystemSFEETargetFieldname+ " in the target system for artifact with id: "
+//								+ artifactData.getId()+ " in tracker "+artifactData.getFolderId()+" or it is the first resync, falling back to value in the version-Field");
+//						version=fallbackVersion;
+//						if (fallbackVersionInt==-1) {
+//							log
+//							.error("Seems as if we lost version-information in version-Field in the source system for target artifact with id: "
+//									+ artifactData.getId()+" in tracker "+artifactData.getFolderId());
+//							if (forceOverride) {
+//								log.warn("Since we should override changes, we still try to update the artifact with id: "+artifactData.getId());
+//								version="-1";
+//							}
+//							else {
+//								log.error("Since we should not override changes, we do not update the artifact with id: "+artifactData.getId()+" in tracker "+artifactData.getFolderId());
+//								return null;
+//							}
+//						}
+//					}
 					
-					int versionInt = Integer.parseInt(version);
+//					int versionInt = Integer.parseInt(version);
 					// version is the max(ourOwnLastSynchronizedVersionWithOtherSystem,otherSystemLastSynchronizedVersionWithUs)
-					versionInt=versionInt>fallbackVersionInt?versionInt:fallbackVersionInt;
-					if (versionInt < artifactData.getVersion()) {
-						// TODO Rethink conflict resolution
-						if (forceOverride) {
-							log
-									.warn("Seems as if we are going to override a change for artifact with id: "
-											+ artifactData.getId()
-											+ " in tracker " + artifactData.getFolderId()
-											+ " and version: "
-											+ artifactData.getVersion()
-											+ ", last synchronized version: "
-											+ versionInt);
-						} else {
-							log
-									.warn("Seems as if our copy of the artifact is too old to override a change for artifact with id: "
-											+ artifactData.getId()
-											+ " in tracker " + artifactData.getFolderId()
-											+ " and version: "
-											+ artifactData.getVersion()
-											+ ", last synchronized version: "
-											+ versionInt);
-							return null;
-						}
-					}
+//					versionInt=versionInt>fallbackVersionInt?versionInt:fallbackVersionInt;
+//					if (versionInt < artifactData.getVersion()) {
+//						// TODO Rethink conflict resolution
+//						if (forceOverride) {
+//							log
+//									.warn("Seems as if we are going to override a change for artifact with id: "
+//											+ artifactData.getId()
+//											+ " in tracker " + artifactData.getFolderId()
+//											+ " and version: "
+//											+ artifactData.getVersion()
+//											+ ", last synchronized version: "
+//											+ versionInt);
+//						} else {
+//							log
+//									.warn("Seems as if our copy of the artifact is too old to override a change for artifact with id: "
+//											+ artifactData.getId()
+//											+ " in tracker " + artifactData.getFolderId()
+//											+ " and version: "
+//											+ artifactData.getVersion()
+//											+ ", last synchronized version: "
+//											+ versionInt);
+//							return null;
+//						}
+//					}
 					
-					String currentOtherSystemVersion = (String) getFlexFieldValue(
-							otherSystemVersionFieldName, artifactData, "String");
-					if (StringUtils.isEmpty(currentOtherSystemVersion)
-							|| StringUtils.isEmpty(otherSystemVersion)) {
-						log
-								.warn("Seems as if we lost version-information in the target system for artifact with id: "
-										+ artifactData.getId()
-										+ " in tracker " + artifactData.getFolderId()
-										+ " or it is the first resync.");
-					} else {
-						int currentOtherSystemVersionInt = Integer
-								.parseInt(currentOtherSystemVersion);
-						int otherSystemVersionInt = Integer
-								.parseInt(otherSystemVersion);
-						if (otherSystemVersionInt <= currentOtherSystemVersionInt) {
-							log
-									.warn("Seems as if we updated the target system before for artifact with id: "
-											+ artifactData.getId()
-											+ " in tracker " + artifactData.getFolderId()
-											+ " and current other system version: "
-											+ currentOtherSystemVersionInt
-											+ ", stored in flexField "
-											+ otherSystemVersionFieldName
-											+ " ,older or equal version: "
-											+ otherSystemVersionInt);
-							return null;
-						}
-					}
+//					String currentOtherSystemVersion = (String) getFlexFieldValue(
+//							otherSystemVersionFieldName, artifactData, "String");
+//					if (StringUtils.isEmpty(currentOtherSystemVersion)
+//							|| StringUtils.isEmpty(otherSystemVersion)) {
+//						log
+//								.warn("Seems as if we lost version-information in the target system for artifact with id: "
+//										+ artifactData.getId()
+//										+ " in tracker " + artifactData.getFolderId()
+//										+ " or it is the first resync.");
+//					} else {
+//						int currentOtherSystemVersionInt = Integer
+//								.parseInt(currentOtherSystemVersion);
+//						int otherSystemVersionInt = Integer
+//								.parseInt(otherSystemVersion);
+//						if (otherSystemVersionInt <= currentOtherSystemVersionInt) {
+//							log
+//									.warn("Seems as if we updated the target system before for artifact with id: "
+//											+ artifactData.getId()
+//											+ " in tracker " + artifactData.getFolderId()
+//											+ " and current other system version: "
+//											+ currentOtherSystemVersionInt
+//											+ ", stored in flexField "
+//											+ otherSystemVersionFieldName
+//											+ " ,older or equal version: "
+//											+ otherSystemVersionInt);
+//							return null;
+//						}
+//					}
 				} catch (NumberFormatException e) {
 					log.error(
 							"Version information not in numerical format for artifact with id: "
@@ -416,9 +425,9 @@ public class SFEETrackerHandler {
 				
 				// add the lastSynchronized flexField to the existing
 				// values
-				flexFieldNames.add(lastSynchronizedWithOtherSystemSFEETargetFieldname);
-				flexFieldValues.add(Integer.toString(artifactData.getVersion()+1));
-				flexFieldTypes.add("String");
+//				flexFieldNames.add(lastSynchronizedWithOtherSystemSFEETargetFieldname);
+//				flexFieldValues.add(Integer.toString(artifactData.getVersion()+1));
+//				flexFieldTypes.add("String");
 
 				// construct SOAPFieldValues
 				SoapFieldValues flexFields = new SoapFieldValues();
