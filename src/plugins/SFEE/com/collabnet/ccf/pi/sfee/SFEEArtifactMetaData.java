@@ -8,7 +8,6 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.collabnet.ccf.pi.sfee.SFEEXMLHelper;
 import com.vasoftware.sf.soap44.types.SoapFieldValues;
 import com.vasoftware.sf.soap44.webservices.sfmain.TrackerFieldSoapDO;
 import com.vasoftware.sf.soap44.webservices.tracker.ArtifactSoapDO;
@@ -53,7 +52,7 @@ public class SFEEArtifactMetaData {
 				else if(fieldType == Date.class){
 					if(value instanceof String){
 						String dateString = (String) value;
-						castedValue = SFEEXMLHelper.asTypedValue(dateString, "DateTime");
+						castedValue = SFEEGAHelper.asTypedValue(dateString, "DateTime");
 					}
 				}
 			} else{
