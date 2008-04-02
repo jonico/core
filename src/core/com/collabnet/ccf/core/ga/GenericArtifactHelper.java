@@ -38,7 +38,7 @@ public class GenericArtifactHelper {
 
 	// TODO: Think about a more compact datetime format that still preserves
 	// timezone and seconds
-	private static DateFormat df = DateFormat.getDateTimeInstance(
+	public static final DateFormat df = DateFormat.getDateTimeInstance(
 			DateFormat.LONG, DateFormat.LONG, new Locale("en"));
 	private static final String ARTIFACT_ROOT_ELEMENT_NAME = "artifact";
 	private static final String CCF_ARTIFACT_NAMESPACE = "http://ccf.open.collab.net/GenericArtifactV1.0";
@@ -83,11 +83,13 @@ public class GenericArtifactHelper {
 
 	private static final String ARTIFACT_MODE_COMPLETE = "complete";
 	private static final String ARTIFACT_MODE_CHANGED_FIELDS_ONLY = "changedFieldsOnly";
-
+	private static final String ARTIFACT_MODE_UNKNOWN = "unknown";
+	
 	private static final String ARTIFACT_TYPE_ATTACHMENT = "attachment";
 	private static final String ARTIFACT_TYPE_DEPENDENCY = "dependency";
 	private static final String ARTIFACT_TYPE_PLAIN_ARTIFACT = "plainArtifact";
-
+	private static final String ARTIFACT_TYPE_UNKNOWN = "unknown";
+	
 	private static final String ARTIFACT_FIELD_ELEMENT_NAME = "field";
 	private static final XPath fieldSelector = new DefaultXPath(
 			CCF_NAMESPACE_PREFIX + ":" + ARTIFACT_FIELD_ELEMENT_NAME);
@@ -97,6 +99,8 @@ public class GenericArtifactHelper {
 	private static final String FIELD_ACTION_APPEND = "append";
 	private static final String FIELD_ACTION_DELETE = "delete";
 	private static final String FIELD_ACTION_REPLACE = "replace";
+	private static final String FIELD_ACTION_UNKNOWN = "unknown";
+	
 	private static final String FIELD_NAME = "fieldName";
 	private static final String FIELD_DISPLAY_NAME = "fieldDisplayName";
 	private static final String FIELD_TYPE = "fieldType";
@@ -142,7 +146,9 @@ public class GenericArtifactHelper {
 				GenericArtifact.ArtifactModeValue.CHANGEDFIELDSONLY);
 		artifactModeHashMap.put(ARTIFACT_MODE_COMPLETE,
 				GenericArtifact.ArtifactModeValue.COMPLETE);
-
+		artifactModeHashMap.put(ARTIFACT_MODE_UNKNOWN,
+				GenericArtifact.ArtifactModeValue.UNKNOWN);
+		
 		artifactActionHashMap.put(ARTIFACT_ACTION_CREATE,
 				GenericArtifact.ArtifactActionValue.CREATE);
 		artifactActionHashMap.put(ARTIFACT_ACTION_DELETE,
@@ -160,14 +166,18 @@ public class GenericArtifactHelper {
 				GenericArtifact.ArtifactTypeValue.DEPENDENCY);
 		artifactTypeHashMap.put(ARTIFACT_TYPE_PLAIN_ARTIFACT,
 				GenericArtifact.ArtifactTypeValue.PLAINARTIFACT);
-
+		artifactTypeHashMap.put(ARTIFACT_TYPE_UNKNOWN,
+				GenericArtifact.ArtifactTypeValue.UNKNOWN);
+		
 		fieldActionHashMap.put(FIELD_ACTION_APPEND,
 				GenericArtifactField.FieldActionValue.APPEND);
 		fieldActionHashMap.put(FIELD_ACTION_DELETE,
 				GenericArtifactField.FieldActionValue.DELETE);
 		fieldActionHashMap.put(FIELD_ACTION_REPLACE,
 				GenericArtifactField.FieldActionValue.REPLACE);
-
+		fieldActionHashMap.put(FIELD_ACTION_UNKNOWN,
+				GenericArtifactField.FieldActionValue.UNKNOWN);
+		
 		fieldValueTypeHashMap.put(FIELD_VALUE_TYPE_BASE64STRING,
 				GenericArtifactField.FieldValueTypeValue.BASE64STRING);
 		fieldValueTypeHashMap.put(FIELD_VALUE_TYPE_BOOLEAN,
@@ -562,6 +572,10 @@ public class GenericArtifactHelper {
 			addAttribute(root, ARTIFACT_MODE, ARTIFACT_MODE_COMPLETE);
 			break;
 		}
+		case UNKNOWN: {
+			addAttribute(root, ARTIFACT_MODE, ARTIFACT_MODE_UNKNOWN);
+			break;
+		}
 		default: {
 			throw new GenericArtifactParsingException(
 					"Non valid value for root-attribute " + ARTIFACT_MODE
@@ -586,6 +600,10 @@ public class GenericArtifactHelper {
 		}
 		case PLAINARTIFACT: {
 			addAttribute(root, ARTIFACT_TYPE, ARTIFACT_TYPE_PLAIN_ARTIFACT);
+			break;
+		}
+		case UNKNOWN: {
+			addAttribute(root, ARTIFACT_TYPE, ARTIFACT_TYPE_UNKNOWN);
 			break;
 		}
 		default: {
@@ -672,6 +690,10 @@ public class GenericArtifactHelper {
 			}
 			case REPLACE: {
 				addAttribute(field, FIELD_ACTION, FIELD_ACTION_REPLACE);
+				break;
+			}
+			case UNKNOWN: {
+				addAttribute(field, FIELD_ACTION, FIELD_ACTION_UNKNOWN);
 				break;
 			}
 			default: {
