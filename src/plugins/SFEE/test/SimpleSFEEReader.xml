@@ -36,10 +36,8 @@
 
 		<property name="processMap">
 			<map>
-				<entry key-ref="SimplePollingReader"
-					value-ref="SFEEReader" />
-				<entry key-ref="SFEEReader"
-					value-ref="SFEEEntityService" />
+				<entry key-ref="SimplePollingReader" value-ref="SFEEReader" />
+				<entry key-ref="SFEEReader"	value-ref="SFEEEntityService" />
 				<entry key-ref="SFEEEntityService" value-ref="Writer" />
 				<entry key-ref="Writer" value-ref="MappingDBUpdater" />
 			</map>
@@ -109,6 +107,7 @@
 		<property name="otherSystemInSFEETargetFieldname"
 			value="create" />
 		<property name="synchronizationUser" value="connector" />
+		<property name="dbHelper" ref="SFEEDBHelper" />
 	</bean>
 
 	<bean id="GerericArtifactToSFEEConverter"
@@ -130,23 +129,21 @@
 		<property name="sql">
 			<value>
 				select A.REPOSITORY_ID AS SOURCE_REPOSITORY_ID,
-				A.REPOSITORY_KIND AS SOURCE_REPOSITORY_KIND, C.SYSTEM_ID
-				AS SOURCE_SYSTEM_ID, C.SYSTEM_KIND AS
-				SOURCE_SYSTEM_KIND, B.REPOSITORY_ID AS
-				TARGET_REPOSITORY_ID, B.REPOSITORY_KIND AS
-				TARGET_REPOSITORY_KIND, D.SYSTEM_ID AS TARGET_SYSTEM_ID,
-				D.SYSTEM_KIND AS TARGET_SYSTEM_KIND,
-				E.SOURCE_ARTIFACT_ID AS SOURCE_ARTIFACT_ID,
-				E.TARGET_ARTIFACT_ID AS TARGET_ARTIFACT_ID,
-				REPOSITORY_MAPPING.LAST_READ_TIME AS FROM_TIME,
-				REPOSITORY_MAPPING.VERSION AS VERSION,
-				REPOSITORY_MAPPING.TRANSACTION_ID AS TRANSACTION_ID from
-				REPOSITORY_INFO A,REPOSITORY_INFO B, SYSTEM_INFO C,
-				SYSTEM_INFO D, ARTIFACT_MAPPING E, REPOSITORY_MAPPING
-				WHERE REPOSITORY_MAPPING.SOURCE_REPOSITORY_INFO_ID =
-				A.ID AND REPOSITORY_MAPPING.TARGET_REPOSITORY_INFO_ID =
-				B.ID AND A.SYSTEM_INFO_ID = C.ID AND B.SYSTEM_INFO_ID =
-				D.ID AND REPOSITORY_MAPPING.ID = E.MAPPING_ID
+                A.REPOSITORY_KIND AS SOURCE_REPOSITORY_KIND, C.SYSTEM_ID
+                AS SOURCE_SYSTEM_ID, C.SYSTEM_KIND AS
+                SOURCE_SYSTEM_KIND, B.REPOSITORY_ID AS
+                TARGET_REPOSITORY_ID, B.REPOSITORY_KIND AS
+                TARGET_REPOSITORY_KIND, D.SYSTEM_ID AS TARGET_SYSTEM_ID,
+                D.SYSTEM_KIND AS TARGET_SYSTEM_KIND,
+                REPOSITORY_MAPPING.LAST_READ_TIME AS FROM_TIME,
+                REPOSITORY_MAPPING.VERSION AS VERSION,
+                REPOSITORY_MAPPING.TRANSACTION_ID AS TRANSACTION_ID from
+                REPOSITORY_INFO A,REPOSITORY_INFO B, SYSTEM_INFO C,
+                SYSTEM_INFO D, REPOSITORY_MAPPING
+                WHERE REPOSITORY_MAPPING.SOURCE_REPOSITORY_INFO_ID =
+                A.ID AND REPOSITORY_MAPPING.TARGET_REPOSITORY_INFO_ID =
+                B.ID AND A.SYSTEM_INFO_ID = C.ID AND B.SYSTEM_INFO_ID =
+                D.ID
 			</value>
 		</property>
 	</bean>
