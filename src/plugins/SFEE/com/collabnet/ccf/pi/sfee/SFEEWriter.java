@@ -14,6 +14,9 @@ import org.openadaptor.core.exception.NullRecordException;
 import org.openadaptor.core.exception.RecordFormatException;
 import org.openadaptor.core.exception.ValidationException;
 
+import com.collabnet.ccf.core.ga.GenericArtifact;
+import com.collabnet.ccf.core.ga.GenericArtifactHelper;
+import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
 import com.collabnet.ccf.pi.sfee.IGAToArtifactConverter;
 import com.vasoftware.sf.soap44.webservices.sfmain.TrackerFieldSoapDO;
 import com.vasoftware.sf.soap44.webservices.tracker.ArtifactSoapDO;
@@ -75,15 +78,21 @@ public class SFEEWriter extends SFEEConnectHelper implements
 	 */
 	private Object[] processXMLDocument(Document data) {
 		System.out.println("asdfs");
-		String trackerId = SFEEXMLHelper.getArtifactAttribute(data, "targetRepositoryId");
-		String sourceRepositoryId = SFEEXMLHelper.getArtifactAttribute(data, "sourceRepositoryId");
-		String sourceArtifactId = SFEEXMLHelper.getArtifactAttribute(data, "sourceArtifactId");
+		GenericArtifact ga = null;
+		try {
+			ga = GenericArtifactHelper.createGenericArtifactJavaObject(data);
+		} catch (GenericArtifactParsingException e2) {
+			throw new RuntimeException(e2);
+		}
+		String trackerId = ga.getTargetRepositoryId();
+		String sourceRepositoryId = ga.getSourceRepositoryId();
+		String sourceArtifactId = ga.getSourceArtifactId();
 		String targetArtifactIdFromDB = dbHelper.getTargetArtifactID(sourceArtifactId, sourceRepositoryId, trackerId);
 		if(!StringUtils.isEmpty(targetArtifactIdFromDB)){
-			SFEEXMLHelper.updateSingleField(data.getRootElement(), "Id", targetArtifactIdFromDB, true);
-			SFEEXMLHelper.setArtifactAttribute(data, "targetArtifactId", targetArtifactIdFromDB);
+			SFEEGAHelper.updateSingleField(ga, "Id", targetArtifactIdFromDB);
+			ga.setTargetArtifactId(targetArtifactIdFromDB);
 		}
-		SFEEXMLHelper.updateSingleField(data.getRootElement(), "FolderId", trackerId, true);
+		SFEEGAHelper.updateSingleField(ga, "FolderId", trackerId);
 		TrackerFieldSoapDO[] flexFields = null;
 		try {
 			connect();
@@ -121,7 +130,7 @@ public class SFEEWriter extends SFEEConnectHelper implements
 		
 
 		// check whether we should create or update the artifact
-		if (SFEEXMLHelper.getSingleValue(data, "Id", true).equals(
+		if (SFEEGAHelper.getSingleValue(ga, "Id").equals(
 				getCreateToken())) {
 			// find out whether we should delete something, that is not even
 			// present here
@@ -162,9 +171,8 @@ public class SFEEWriter extends SFEEConnectHelper implements
 
 				// update Id field after creating the artifact
 				String targetArtifactId = result.getId();
-				SFEEXMLHelper.updateSingleField(data
-						.getRootElement(), "Id", targetArtifactId, false);
-				SFEEXMLHelper.setArtifactAttribute(data, "targetArtifactId", targetArtifactId);
+				SFEEGAHelper.updateSingleField(ga, "Id", targetArtifactId);
+				ga.setTargetArtifactId(targetArtifactId);
 				dbHelper.updateTargetArtifactID(targetArtifactId, sourceArtifactId,
 						sourceRepositoryId, trackerId);
 
@@ -212,15 +220,6 @@ public class SFEEWriter extends SFEEConnectHelper implements
 									soapDoObj.getTitle(),
 									soapDoObj.getId(),
 									getUpdateComment(),
-//									getLastSynchronizedWithOtherSystemSFEETargetFieldname(),
-//									SFEEXMLHelper
-//											.getSingleValue(
-//													data,
-//													getOtherSystemVersionInSFEETargetFieldname(),
-//													true),
-//									getOtherSystemVersionInSFEETargetFieldname(),
-//									SFEEXMLHelper.getSingleValue(
-//											data, "version", false),
 									forceOverride);
 
 					if (result == null) {
@@ -245,7 +244,13 @@ public class SFEEWriter extends SFEEConnectHelper implements
 				return null;
 			}
 		}
-		Object[] result = { data };
+		Document document = null;
+		try {
+			document = GenericArtifactHelper.createGenericArtifactXMLDocument(ga);
+		} catch (GenericArtifactParsingException e) {
+			throw new RuntimeException(e);
+		}
+		Object[] result = { document };
 		disconnect();
 		return result;
 	}
