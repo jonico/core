@@ -15,7 +15,11 @@ import org.dom4j.Node;
 import org.openadaptor.auxil.connector.iostream.EncodingAwareObject;
 import org.openadaptor.core.IDataProcessor;
 
-import com.vasoftware.sf.soap44.types.SoapFieldValues;
+import com.collabnet.ccf.core.ga.GenericArtifact;
+import com.collabnet.ccf.core.ga.GenericArtifactField;
+import com.collabnet.ccf.core.ga.GenericArtifactHelper;
+import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
+import com.collabnet.ccf.pi.sfee.IArtifactToGAConverter;
 import com.vasoftware.sf.soap44.webservices.tracker.ArtifactSoapDO;
 
 public class SFEEReader extends SFEEConnectHelper implements
@@ -28,6 +32,12 @@ public class SFEEReader extends SFEEConnectHelper implements
 	private Object readerContext;
 
 	private SFEETrackerHandler trackerHandler;
+	
+	private SFEEAppHandler appHandler;
+	
+	private IArtifactToGAConverter artifactConverter;
+	
+	private SFEEDBHelper dbHelper = new SFEEDBHelper();
 	
 	public Object[] process(Object data) {
 		// TODO evaluate data to decide which items to fetch again
@@ -54,6 +64,7 @@ public class SFEEReader extends SFEEConnectHelper implements
 		}
 		else {
 			lastModifiedDate=(Date)SFEEXMLHelper.asTypedValue(lastModifiedDateString, "DateTime");
+			lastModifiedDate.setTime(lastModifiedDate.getTime()+1);
 		}
 		
 		String lastArtifactId=getLastArtifactId(document);
@@ -88,15 +99,22 @@ public class SFEEReader extends SFEEConnectHelper implements
 		} catch (RemoteException e) {
 			// TODO Declare exception so that it can be processed by OA exception handler
 			log.error("Could not log into SFEE", e);
-			return null;
+			throw new RuntimeException(e);
 		}
 		catch (IOException ex) {
 			// TODO postpone exception handling to OA framework
 			log.error("During the connection process to SFEE, an IO-Error occured", ex);
-			return null;
+			throw new RuntimeException(ex);
 		}
 		
-		Object[] result=readTrackerItems(trackerId,lastModifiedDate,lastArtifactId,lastArtifactVersion,firstTimeImport);
+		Object[] result=readTrackerItems(trackerId,lastModifiedDate,lastArtifactId,lastArtifactVersion,firstTimeImport,document);
+		for(Object doc: result){
+			Document resDocument = (Document) doc;
+			String targetRepositoryId = SFEEXMLHelper.getArtifactAttribute(resDocument, "targetRepositoryId");
+			String sourceRepositoryId = SFEEXMLHelper.getArtifactAttribute(resDocument, "sourceRepositoryId");
+			String sourceArtifactId = SFEEXMLHelper.getArtifactAttribute(resDocument, "sourceArtifactId");
+			dbHelper.insertSourceArtifactID(sourceArtifactId, sourceRepositoryId, targetRepositoryId);
+		}
 		disconnect();
 		return result;
 	}
@@ -120,10 +138,11 @@ public class SFEEReader extends SFEEConnectHelper implements
 	@Override
 	public void connect() throws IOException {	
 		super.connect();
+		appHandler = new SFEEAppHandler(mSfSoap, getSessionId());
 		isDry=false;
 	}
 	
-	public Object[] readTrackerItems(String projectTracker, Date lastModifiedDate, String lastArtifactId, int lastArtifactVersion, boolean firstTimeImport) {
+	public Object[] readTrackerItems(String projectTracker, Date lastModifiedDate, String lastArtifactId, int lastArtifactVersion, boolean firstTimeImport, Document dbDocument) {
 		// TODO Use the information of the firstTimeImport flag
 		
 		List<Document> dataRows=new ArrayList<Document>();
@@ -135,8 +154,11 @@ public class SFEEReader extends SFEEConnectHelper implements
 			log.error("During the artifact retrieval process to SFEE, an error occured",e);
 			return null;
 		}
-		
-		if (artifactRows==null) {
+		// Now we load the history of each artifact that got changed
+		List<ArtifactSoapDO> artifactHistoryRows = appHandler.loadArtifactAuditHistory(artifactRows,lastModifiedDate);
+
+		if (artifactHistoryRows == null) {
+			// REFACTOR Refactor this part of converting the artifacts
 			// we only received duplicates
 			log.info("Only received duplicates, increasing lastModifiedDate...");
 			/**
@@ -157,59 +179,44 @@ public class SFEEReader extends SFEEConnectHelper implements
 			SFEEXMLHelper.addField(root,"lastModifiedDate",new Date(lastModifiedDate.getTime()+1000),"DateTime",false);
 			SFEEXMLHelper.addField(root,"folderId",projectTracker,"String",false);
 			return new Object[]{document};
-		}
-		
-		for (ArtifactSoapDO artifactRow : artifactRows) {
-			// TODO Set encoding by user
-			Document document=SFEEXMLHelper.createXMLDocument(EncodingAwareObject.ISO_8859_1);
-			
-			//TODO let user specify rootTag
-			Element root=document.addElement("SFEEArtifact");
-			// first of all, set the deletion field and duplicate field to false
-			SFEEXMLHelper.addField(root,"deleteFlag","false","Boolean",false);
-			SFEEXMLHelper.addField(root,"isDuplicate","false","Boolean",false);
-			SFEEXMLHelper.addField(root,"description",artifactRow.getDescription(),"String",false);
-			SFEEXMLHelper.addField(root,"category",artifactRow.getCategory(),"String",false);
-			SFEEXMLHelper.addField(root,"group",artifactRow.getGroup(),"String",false);
-			SFEEXMLHelper.addField(root,"status",artifactRow.getStatus(),"String",false);
-			SFEEXMLHelper.addField(root,"statusClass",artifactRow.getStatusClass(),"String",false);
-			SFEEXMLHelper.addField(root,"customer",artifactRow.getCustomer(),"String",false);
-			SFEEXMLHelper.addField(root,"priority",artifactRow.getPriority(),"Integer",false);
-			SFEEXMLHelper.addField(root,"estimatedHours",artifactRow.getEstimatedHours(),"Integer",false);
-			SFEEXMLHelper.addField(root,"actualHours",artifactRow.getActualHours(),"Integer",false);
-			SFEEXMLHelper.addField(root,"closeDate",artifactRow.getCloseDate()," DateTime",false);
-			SFEEXMLHelper.addField(root,"assignedTo",artifactRow.getAssignedTo(),"String",false);
-			//hashMap.add(11,"assignedToFullname",artifactRows[i].getAssignedToFullname(),"String",false);
-			// hashMap.add(12,"reportedInReleaseTitle",artifactRows[i].getReportedInReleaseTitle(),"String",false);
-			SFEEXMLHelper.addField(root,"reportedReleaseId",artifactRow.getReportedReleaseId(),"String",false);
-			//hashMap.add(14,"resolvedInReleaseTitle",artifactRows[i].getResolvedInReleaseTitle(),"String",false);
-			SFEEXMLHelper.addField(root,"resolvedReleaseId",artifactRow.getResolvedReleaseId(),"String",false);
-			// now comes all the custom fields
-			SoapFieldValues customFields=artifactRow.getFlexFields();
-			String[] customFieldNames=customFields.getNames();
-			Object[] customFieldValues=customFields.getValues();
-			String[] customFieldTypes=customFields.getTypes();
-			//OrderedHashMap customFieldHashMap=new OrderedHashMap(customFieldNames.length);
-			for (int j=0;j<customFieldNames.length;++j) {
-				//insert(customFieldHashMap,customFieldNames[j], customFieldValues[j]);
-				SFEEXMLHelper.addField(root,customFieldNames[j], customFieldValues[j],customFieldTypes[j],true);
+		} else {
+			for(ArtifactSoapDO artifactRow:artifactHistoryRows)
+			{
+				GenericArtifact genericArtifact = artifactConverter.convert(artifactRow);
+				if(dbDocument != null)
+					populateSrcAndDest(dbDocument, genericArtifact);
+				Document document = null;
+				try {
+					document = GenericArtifactHelper.createGenericArtifactXMLDocument(genericArtifact);
+				} catch (GenericArtifactParsingException e) {
+					e.printStackTrace();
+					throw new RuntimeException(e);
+				}
+				log.error(document.asXML());
+				dataRows.add(document);
 			}
-			//SFEEXMLHelper.addTrackerField(root,"flexFields",customFieldHashMap);
-			SFEEXMLHelper.addField(root,"title",artifactRow.getTitle(),"String",false);
-			SFEEXMLHelper.addField(root,"folderId",artifactRow.getFolderId(),"String",false);
-			SFEEXMLHelper.addField(root,"Id",artifactRow.getId(),"String",false);
-			SFEEXMLHelper.addField(root,"createdBy",artifactRow.getCreatedBy(),"String",false);
-			SFEEXMLHelper.addField(root,"lastModifiedBy",artifactRow.getLastModifiedBy(),"String",false);
-			SFEEXMLHelper.addField(root,"createdDate",artifactRow.getCreatedDate(),"DateTime",false);
-			SFEEXMLHelper.addField(root,"lastModifiedDate",artifactRow.getLastModifiedDate(),"DateTime",false);
-			// SFEEXMLHelper.addField(root,"version",artifactRow.getVersion(),"Integer",false);
-			// We treat version as if it was not an integer but a string (makes future conflict resolution easier)
-			// TODO Rethink about that decision
-			SFEEXMLHelper.addField(root,"version",artifactRow.getVersion(),"String",false);
-			log.error(document.asXML());
-			dataRows.add(document);
 		}
 		return dataRows.toArray();
+	}
+	
+	private void populateSrcAndDest(Document dbDocument, GenericArtifact ga){
+		String sourceArtifactId = ga.getSourceArtifactId();
+		if(StringUtils.isEmpty(sourceArtifactId)){
+			List<GenericArtifactField> fields = ga.getAllGenericArtifactFieldsWithSameFieldName("Id");
+			for(GenericArtifactField field:fields){
+				sourceArtifactId = field.getFieldValue().toString();
+			}
+		}
+		ga.setSourceArtifactId(sourceArtifactId);
+		ga.setSourceRepositoryId(dbHelper.getSourceRepositoryId(dbDocument));
+		ga.setSourceRepositoryKind(dbHelper.getSourceRepositoryKind(dbDocument));
+		ga.setSourceSystemId(dbHelper.getSourceSystemId(dbDocument));
+		ga.setSourceSystemKind(dbHelper.getSourceSystemKind(dbDocument));
+		
+		ga.setTargetRepositoryId(dbHelper.getTargetRepositoryId(dbDocument));
+		ga.setTargetRepositoryKind(dbHelper.getTargetRepositoryKind(dbDocument));
+		ga.setTargetSystemId(dbHelper.getTargetSystemId(dbDocument));
+		ga.setTargetSystemKind(dbHelper.getTargetSystemKind(dbDocument));
 	}
 	
 	@Override
@@ -222,31 +229,34 @@ public class SFEEReader extends SFEEConnectHelper implements
 	
 	private String getProjectTracker(Document document) {
 		// TODO Let the user specify this value?
-		Node node= document.selectSingleNode("//TRACKERID");
-		if (node==null)
-			return null;
-		return node.getText();
+		return dbHelper.getSourceRepositoryId(document);
+//		Node node= document.selectSingleNode("//SOURCE_REPOSITORY_ID");
+//		if (node==null)
+//			return null;
+//		return node.getText();
 		
 	}
 	
 	private String getLastModifiedDateString(Document document) {
 		// TODO Let the user specify this value?
-		Node node= document.selectSingleNode("//TIMESTAMP");
-		if (node==null)
-			return null;
-		return node.getText();
+		return dbHelper.getFromTime(document);
+//		Node node= document.selectSingleNode("//TO_TIME");
+//		if (node==null)
+//			return null;
+//		return node.getText();
 	}
 	
 	private String getLastArtifactId(Document document) {
 		// TODO Let the user specify this value?
-		Node node= document.selectSingleNode("//ARTIFACTID");
-		if (node==null)
-			return null;
-		return node.getText();
+		return dbHelper.getSourceArtifactId(document);
+//		Node node= document.selectSingleNode("//SOURCE_ARTIFACT_ID");
+//		if (node==null)
+//			return null;
+//		return node.getText();
 	}
 	
 	private String getLastArtifactVersionString(Document document) {
-		// TODO Let the user specify this value?
+		// TODO I am not reading the artifact version ID from the DB. Refactor this method to DBHelper...?
 		Node node= document.selectSingleNode("//ARTIFACTVERSION");
 		if (node==null)
 			return null;
@@ -254,5 +264,21 @@ public class SFEEReader extends SFEEConnectHelper implements
 	}
 
 	public void reset(Object context) {
+	}
+
+	public IArtifactToGAConverter getArtifactConverter() {
+		return artifactConverter;
+	}
+
+	public void setArtifactConverter(IArtifactToGAConverter artifactConverter) {
+		this.artifactConverter = artifactConverter;
+	}
+
+	public SFEEDBHelper getDbHelper() {
+		return dbHelper;
+	}
+
+	public void setDbHelper(SFEEDBHelper dbHelper) {
+		this.dbHelper = dbHelper;
 	}
 }
