@@ -7,10 +7,13 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.util.List;
 
+import org.dom4j.Document;
 import org.openadaptor.auxil.connector.jdbc.JDBCConnection;
 import org.openadaptor.core.IDataProcessor;
 
 import com.collabnet.ccf.core.ga.GenericArtifact;
+import com.collabnet.ccf.core.ga.GenericArtifactHelper;
+import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
 
 public class MappingDBUpdater implements IDataProcessor{
 	JDBCConnection jdbcConnection = null;
@@ -26,8 +29,14 @@ public class MappingDBUpdater implements IDataProcessor{
 			
 	public Object[] process(Object data) {
 		// I will expect a Generic Artifact object
-		if(data instanceof GenericArtifact){
-			GenericArtifact ga = (GenericArtifact) data;
+		if(data instanceof Document){
+			System.out.println(((Document)data).asXML());
+			GenericArtifact ga = null;
+			try {
+				ga = GenericArtifactHelper.createGenericArtifactJavaObject((Document)data);
+			} catch (GenericArtifactParsingException e1) {
+				throw new RuntimeException(e1);
+			}
 			String lastModifiedDateString = ga.getArtifactLastModifiedDate();
 			String sourceRepositoryID = ga.getSourceRepositoryId();
 			String targetRepositoryID = ga.getTargetRepositoryId();
