@@ -12,103 +12,168 @@
 	xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns=""
 	xmlns:xs="http://www.w3.org/2001/XMLSchema"
 	exclude-result-prefixes="xsl xs">
+	<xsl:template match='/artifact'>
+		<artifact>
+			<xsl:attribute name="artifactAction"><xsl:value-of select="@artifactAction" /></xsl:attribute>
+			<xsl:attribute name="artifactMode"><xsl:value-of select="@artifactMode" /></xsl:attribute>
+			<xsl:attribute name="artifactType"><xsl:value-of select="@artifactType" /></xsl:attribute>
+			<xsl:attribute name="artifactLastModifiedDate"><xsl:value-of select="@artifactLastModifiedDate" /></xsl:attribute>
+			<xsl:attribute name="artifactVersion"><xsl:value-of select="@artifactVersion" /></xsl:attribute>
+			<xsl:attribute name="conflicResolutionPolicy"><xsl:value-of select="@conflicResolutionPolicy" /></xsl:attribute>
+			<xsl:attribute name="sourceArtifactId"><xsl:value-of select="@sourceArtifactId" /></xsl:attribute>
+			<xsl:attribute name="sourceRepositoryId"><xsl:value-of select="@sourceRepositoryId" /></xsl:attribute>
+			<xsl:attribute name="sourceRepositoryKind"><xsl:value-of select="@sourceRepositoryKind" /></xsl:attribute>
+			<xsl:attribute name="sourceSystemId"><xsl:value-of select="@sourceSystemId" /></xsl:attribute>
+			<xsl:attribute name="sourceSystemKind"><xsl:value-of select="@sourceSystemKind" /></xsl:attribute>
+			<xsl:attribute name="targetArtifactId"><xsl:value-of select="@targetArtifactId" /></xsl:attribute>
+			<xsl:attribute name="targetRepositoryId"><xsl:value-of select="@targetRepositoryId" /></xsl:attribute>
+			<xsl:attribute name="targetRepositoryKind"><xsl:value-of select="@targetRepositoryKind" /></xsl:attribute>
+			<xsl:attribute name="targetSystemId"><xsl:value-of select="@targetSystemId" /></xsl:attribute>
+			<xsl:attribute name="targetSystemKind"><xsl:value-of select="@targetSystemKind" /></xsl:attribute>
+			<xsl:for-each select="field">
+			</xsl:for-each>
+			<xsl:apply-templates />
+		</artifact>
+	</xsl:template>
+	<xsl:template
+		match='field[@fieldName="BG_ACTUAL_FIX_TIME"]'>
+		<field>
+		    <xsl:attribute name="fieldName">ActualHours</xsl:attribute>
+		    <xsl:attribute name="fieldDisplayName">ActualHours</xsl:attribute>
+		    <xsl:attribute name="fieldAction"><xsl:value-of select="@fieldAction" /></xsl:attribute>
+		    <xsl:attribute name="fieldType"><xsl:value-of select="@fieldType" /></xsl:attribute>
+		  	<xsl:attribute name="fieldValueHasChanged"><xsl:value-of select="@fieldValueHasChanged" /></xsl:attribute>
+		  	<xsl:attribute name="fieldValueType"><xsl:value-of select="@fieldValueType" /></xsl:attribute>
+		  	<xsl:attribute name="fieldValueIsNull"><xsl:value-of select="@fieldValueIsNull" /></xsl:attribute>
+		  	<xsl:value-of select="."></xsl:value-of>
+	  	</field>
+	</xsl:template>
+	<xsl:template
+		match='field[@fieldName="BG_ESTIMATED_FIX_TIME"]'>
+		<field>
+		    <xsl:attribute name="fieldName">EstimatedHours</xsl:attribute>
+		    <xsl:attribute name="fieldDisplayName">EstimatedHours</xsl:attribute>
+		    <xsl:attribute name="fieldAction"><xsl:value-of select="@fieldAction" /></xsl:attribute>
+		    <xsl:attribute name="fieldType"><xsl:value-of select="@fieldType" /></xsl:attribute>
+		  	<xsl:attribute name="fieldValueHasChanged"><xsl:value-of select="@fieldValueHasChanged" /></xsl:attribute>
+		  	<xsl:attribute name="fieldValueType"><xsl:value-of select="@fieldValueType" /></xsl:attribute>
+		  	<xsl:attribute name="fieldValueIsNull"><xsl:value-of select="@fieldValueIsNull" /></xsl:attribute>
+		  	<xsl:value-of select="."></xsl:value-of>
+	  	</field>
+	</xsl:template>
+	
+	<xsl:template
+		match='field[@fieldName="BG_BUG_ID"]'>
+		<field>
+		    <xsl:attribute name="fieldName">QC-Id</xsl:attribute>
+		    <xsl:attribute name="fieldDisplayName">QC-Id</xsl:attribute>
+		    <xsl:attribute name="fieldAction"><xsl:value-of select="@fieldAction" /></xsl:attribute>
+		    <xsl:attribute name="fieldType"><xsl:value-of select="@fieldType" /></xsl:attribute>
+		  	<xsl:attribute name="fieldValueHasChanged"><xsl:value-of select="@fieldValueHasChanged" /></xsl:attribute>
+		  	<xsl:attribute name="fieldValueType"><xsl:value-of select="@fieldValueType" /></xsl:attribute>
+		  	<xsl:attribute name="fieldValueIsNull"><xsl:value-of select="@fieldValueIsNull" /></xsl:attribute>
+		  	<xsl:value-of select="."></xsl:value-of>
+	  	</field>
+	</xsl:template>
+	<xsl:template
+		match='field[@fieldName="BG_SUMMARY"]'>
+		<field>
+		    <xsl:attribute name="fieldName">Title</xsl:attribute>
+		    <xsl:attribute name="fieldDisplayName">Title</xsl:attribute>
+		    <xsl:attribute name="fieldAction"><xsl:value-of select="@fieldAction" /></xsl:attribute>
+		    <xsl:attribute name="fieldType"><xsl:value-of select="@fieldType" /></xsl:attribute>
+		  	<xsl:attribute name="fieldValueHasChanged"><xsl:value-of select="@fieldValueHasChanged" /></xsl:attribute>
+		  	<xsl:attribute name="fieldValueType"><xsl:value-of select="@fieldValueType" /></xsl:attribute>
+		  	<xsl:attribute name="fieldValueIsNull"><xsl:value-of select="@fieldValueIsNull" /></xsl:attribute>
+		  	<xsl:value-of select="."></xsl:value-of>
+	  	</field>
+	</xsl:template>
+	<xsl:template
+		match='field[@fieldName="BG_DESCRIPTION"]'>
+		<field>
+		    <xsl:attribute name="fieldName">Description</xsl:attribute>
+		    <xsl:attribute name="fieldDisplayName">Description</xsl:attribute>
+		    <xsl:attribute name="fieldAction"><xsl:value-of select="@fieldAction" /></xsl:attribute>
+		    <xsl:attribute name="fieldType"><xsl:value-of select="@fieldType" /></xsl:attribute>
+		  	<xsl:attribute name="fieldValueHasChanged"><xsl:value-of select="@fieldValueHasChanged" /></xsl:attribute>
+		  	<xsl:attribute name="fieldValueType"><xsl:value-of select="@fieldValueType" /></xsl:attribute>
+		  	<xsl:attribute name="fieldValueIsNull"><xsl:value-of select="@fieldValueIsNull" /></xsl:attribute>
+		  	<xsl:value-of select="."></xsl:value-of>
+	  	</field>
+	</xsl:template>
 
-	<!-- Pattern how to rename a certain field 
-		<xsl:template
-		match='field[@name="SFEE-Version" and @isFlexField="true"]'
-		priority='3'>
-		<field name='version' isFlexField='false'>
-		<xsl:copy-of select='node()' />
+	<xsl:template
+		match='field[@fieldName="BG_STATUS"]'>
+		<xsl:variable name="statusValue" as="xs:string" select="." />
+		<field>
+		    <xsl:attribute name="fieldName">Status</xsl:attribute>
+		    <xsl:attribute name="fieldDisplayName">Status</xsl:attribute>
+		    <xsl:attribute name="fieldAction"><xsl:value-of select="@fieldAction" /></xsl:attribute>
+		    <xsl:attribute name="fieldType"><xsl:value-of select="@fieldType" /></xsl:attribute>
+		  	<xsl:attribute name="fieldValueHasChanged"><xsl:value-of select="@fieldValueHasChanged" /></xsl:attribute>
+		  	<xsl:attribute name="fieldValueType"><xsl:value-of select="@fieldValueType" /></xsl:attribute>
+		  	<xsl:attribute name="fieldValueIsNull"><xsl:value-of select="@fieldValueIsNull" /></xsl:attribute>
+		  	
+		  	<xsl:if test="$statusValue = 'Open'"><xsl:text>Open</xsl:text></xsl:if>
+			<xsl:if test="$statusValue = 'Closed'"><xsl:text>Closed</xsl:text></xsl:if>
+			<xsl:if test="$statusValue = 'Fixed'"><xsl:text>Pending</xsl:text></xsl:if>
+			<xsl:if test="$statusValue = 'Rejected'"><xsl:text>Pending</xsl:text></xsl:if>
+			<xsl:if test="$statusValue = 'Reopen'"><xsl:text>Open</xsl:text></xsl:if> 
+			<xsl:if test="$statusValue = 'New'"><xsl:text>Open</xsl:text></xsl:if>
+	  	</field>
+	</xsl:template>
+
+	 <xsl:template
+		match='field[@fieldName="BG_USER_03"]'>
+		<xsl:variable name="typeValue" as="xs:string" select="." />
+		<field>
+		    <xsl:attribute name="fieldName">Category</xsl:attribute>
+		    <xsl:attribute name="fieldDisplayName">Category</xsl:attribute>
+		    <xsl:attribute name="fieldAction"><xsl:value-of select="@fieldAction" /></xsl:attribute>
+		    <xsl:attribute name="fieldType"><xsl:value-of select="@fieldType" /></xsl:attribute>
+		  	<xsl:attribute name="fieldValueHasChanged"><xsl:value-of select="@fieldValueHasChanged" /></xsl:attribute>
+		  	<xsl:attribute name="fieldValueType"><xsl:value-of select="@fieldValueType" /></xsl:attribute>
+		  	<xsl:attribute name="fieldValueIsNull"><xsl:value-of select="@fieldValueIsNull" /></xsl:attribute>
+		  	<xsl:if test="$typeValue = 'Defect'"><xsl:text>DefectCat</xsl:text></xsl:if>
+			<xsl:if test="$typeValue = 'Patch'"><xsl:text>PatchCat</xsl:text></xsl:if>
+			<xsl:if test="$typeValue = 'Task'"><xsl:text>TaskCat</xsl:text></xsl:if>
+			<xsl:if test="$typeValue = 'Enhancement'"><xsl:text>EnhancementCat</xsl:text></xsl:if>
+			<xsl:if test="$typeValue = 'Feature'"><xsl:text>FeatureCat</xsl:text></xsl:if> 
+	  	</field>
+	</xsl:template>
+		
+
+	 <xsl:template
+		match='field[@fieldName="BG_PRIORITY"]'>
+		<xsl:variable name="priorityValue" as="xs:string"><xsl:value-of select="." /></xsl:variable>
+		<field>
+		    <xsl:attribute name="fieldName">Priority</xsl:attribute>
+		    <xsl:attribute name="fieldDisplayName">Priority</xsl:attribute>
+		    <xsl:attribute name="fieldAction"><xsl:value-of select="@fieldAction" /></xsl:attribute>
+		    <xsl:attribute name="fieldType"><xsl:value-of select="@fieldType" /></xsl:attribute>
+		  	<xsl:attribute name="fieldValueHasChanged"><xsl:value-of select="@fieldValueHasChanged" /></xsl:attribute>
+		  	<xsl:attribute name="fieldValueType"><xsl:value-of select="@fieldValueType" /></xsl:attribute>
+		  	<xsl:attribute name="fieldValueIsNull"><xsl:value-of select="@fieldValueIsNull" /></xsl:attribute>
+		  	
+			<xsl:if test="$priorityValue = '1-Low'"><xsl:text>5</xsl:text></xsl:if>
+			<xsl:if test="$priorityValue = '2-Medium'"><xsl:text>4</xsl:text></xsl:if>
+			<xsl:if test="$priorityValue = '3-High'"><xsl:text>3</xsl:text></xsl:if>
+			<xsl:if test="$priorityValue = '4-Very High'"><xsl:text>2</xsl:text></xsl:if>
+			<xsl:if test="$priorityValue = '5-Urgent'"><xsl:text>1</xsl:text></xsl:if> 
 		</field>
-		</xsl:template>
-	-->
-
-	<!-- Pattern how to filter a certain field  	
-		<xsl:template
-		match='field[@name="SFEE-Version" and @isFlexField="true"]'
-		priority='3'>
-		</xsl:template>
-	-->
-
-	<!-- Pattern how to copy all fields if there is no rule with a higher priority
-		<xsl:template match='field' priority='1'>
-		<xsl:copy-of select='.' />
-		</xsl:template>
-	-->
-
-	<!-- Pattern how to filter all flex-Fields if there is no rule with a higher priority
-		<xsl:template match='field[@isFlexField="yes"]' priority='1'>
-		</xsl:template>
-	-->
-
-	<!-- Pattern how to change the value of a certain field with a value mapping rule and add another field
-		<xsl:variable name="trackerMapping">
-		<mapping source="tracker1003" target="tracker1006" />
-		<mapping source="tracker1004" target="tracker1007" />
-		<mapping source="tracker1005" target="tracker1008" />
-		<mapping source="tracker1008" target="tracker1005" />
-		<mapping source="tracker1007" target="tracker1004" />
-		<mapping source="tracker1006" target="tracker1003" />
-		</xsl:variable>
-		
-		<xsl:variable name="conflictMapping">
-		<mapping source="tracker1003" override="true" />
-		<mapping source="tracker1004" override="true" />
-		<mapping source="tracker1005" override="true" />
-		<mapping source="tracker1008" override="false" />
-		<mapping source="tracker1007" override="false" />
-		<mapping source="tracker1006" override="false" />
-		</xsl:variable>
-		
-		
-		<xsl:key name='trackerMapper' match='mapping' use='@source' />
-		<xsl:key name='conflictMapper' match='mapping' use='@source' />
-		
-		<xsl:template
-		match='field[@name="folderId" and @isFlexField="false"]'
-		priority='3'>
-		<xsl:variable name="trackerValue" as="xs:string"
-		select="value" />
-		<field name='forceOverride' isFlexField='false'>
-		<type>Boolean</type>
-		<value isNull='false'>
-		<xsl:value-of
-		select='key("conflictMapper",$trackerValue,$conflictMapping)/@override' />
-		</value>
+	</xsl:template> 
+	<xsl:template
+		match='field[@fieldName="BG_RESPONSIBLE"]'>
+		<field>
+		    <xsl:attribute name="fieldName">AssignedTo</xsl:attribute>
+		    <xsl:attribute name="fieldDisplayName">AssignedTo</xsl:attribute>
+		    <xsl:attribute name="fieldAction"><xsl:value-of select="@fieldAction" /></xsl:attribute>
+		    <xsl:attribute name="fieldType"><xsl:value-of select="@fieldType" /></xsl:attribute>
+		  	<xsl:attribute name="fieldValueHasChanged"><xsl:value-of select="@fieldValueHasChanged" /></xsl:attribute>
+		  	<xsl:attribute name="fieldValueType"><xsl:value-of select="@fieldValueType" /></xsl:attribute>
+		  	<xsl:attribute name="fieldValueIsNull"><xsl:value-of select="@fieldValueIsNull" /></xsl:attribute>
+		  	<xsl:value-of select="."></xsl:value-of>
 		</field>
-		<field name='folderId' isFlexField='false'>
-		<xsl:copy-of select='type' />
-		<value isNull='false'>
-		<xsl:value-of
-		select='key("trackerMapper",$trackerValue,$trackerMapping)/@target' />
-		</value>
-		</field>
-		</xsl:template>
-	-->
-
-	<!-- Pattern how to proceed only dependencies using a special mode (has to be defined)
-		<xsl:template match='/SFEEArtifact'>
-		<SFEEArtifact>
-		<xsl:apply-templates mode="specialDependencyMode"/>
-		</SFEEArtifact>
-		</xsl:template>
-	-->
-
-	<!-- Pattern how to proceed only trackers with folderId tracker1005 using a special mode (has to be defined)
-		<xsl:template match='/SFEEArtifact[field[@name="folderId" and @isFlexField="false" and value="tracker1005"]]' priority='2'>
-		<SFEEArtifact>
-		<xsl:apply-templates mode="specialTracker1005Mode"/>
-		</SFEEArtifact>
-		</xsl:template>
-	-->
-	<!--	<xsl:variable name="docRoot" select="/" />-->
-  <!-- Whenever you match any node or any attribute -->
-  <xsl:template match="node()|@*">
-    <!-- Copy the current node -->
-    <xsl:copy>
-      <!-- Including any child nodes it has and any attributes -->
-      <xsl:apply-templates select="node()|@*"/>
-    </xsl:copy>
-  </xsl:template>
-
+	</xsl:template>
+	<xsl:template match="text()" />
 </xsl:stylesheet>
