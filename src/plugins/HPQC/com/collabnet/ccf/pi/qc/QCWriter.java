@@ -39,6 +39,8 @@ public class QCWriter extends QCConnectHelper implements
 		Document genericArtifactDocument = (Document) data;
 		GenericArtifact genericArtifact = getArtifactFromDocument(genericArtifactDocument);
 		Document resultDoc = null;
+		int bugId=0;
+		Boolean doesBugIdExistsInQC = false;
 		//Populate the sourceArtifactId into each of the GenericArtifacts from the QCEntityService
 		//This operation is done in a separate component called QCEntityService. So, the input flowing into this file is already populated
 				
@@ -51,14 +53,21 @@ public class QCWriter extends QCConnectHelper implements
 		
 		String sourceArtifactId = genericArtifact.getSourceArtifactId();
 		String sourceSystemId  = genericArtifact.getSourceSystemId();
+		String sourceSystemKind = genericArtifact.getSourceSystemKind();
 		String sourceRepositoryId = genericArtifact.getSourceRepositoryId();
+		String sourceRepositoryKind = genericArtifact.getSourceRepositoryKind();
+		
 		String targetArtifactId = genericArtifact.getTargetArtifactId();
 		String targetSystemId = genericArtifact.getTargetSystemId();
+		String targetSystemKind = genericArtifact.getTargetSystemKind();
 		String targetRepositoryId = genericArtifact.getTargetRepositoryId();
+		String targetRepositoryKind = genericArtifact.getTargetRepositoryKind();
 		
-		int bugId = Integer.parseInt(stringBugId);
+		if(stringBugId!=null || (stringBugId!=null && !stringBugId.equals("")) )
+			bugId = Integer.parseInt(stringBugId);
 		//Boolean doesBugIdExistsInQC = false;
-		Boolean doesBugIdExistsInQC = checkForBugIdInQC(bugId);
+		if(bugId!=0)
+			doesBugIdExistsInQC = checkForBugIdInQC(bugId);
 		
 		switch (artifactAction) {
 			
@@ -76,7 +85,7 @@ public class QCWriter extends QCConnectHelper implements
 					String targetArtifactIdAfterCreation = createdArtifact.getId();
 					log.info("Write Operation SUCCESSFULL!!!!! and the targetArtifactIdAfterCreation="+targetArtifactIdAfterCreation);
 					// Update the QC_ENTITY_CHECK HSQL DB Table
-					Boolean status = updateTable(sourceSystemId, sourceRepositoryId, targetSystemId, targetRepositoryId, sourceArtifactId, targetArtifactIdAfterCreation);
+					Boolean status = updateTable(sourceArtifactId, sourceSystemId, sourceSystemKind, sourceRepositoryId, sourceRepositoryKind, targetArtifactIdAfterCreation, targetSystemId, targetSystemKind, targetRepositoryId, targetRepositoryKind);
 					genericArtifact.setTargetArtifactId(targetArtifactIdAfterCreation);
 					// send this artifact to RCDU (Read COnnector Database Updater) indicating a success in creating the artifact
 					}
@@ -106,7 +115,7 @@ public class QCWriter extends QCConnectHelper implements
 					if(targetArtifactId!=null || !(targetArtifactId.equals("")) || targetArtifactId.equals("unknown")) {
 					try {
 						
-						String targetArtifactIdFromTable = QCEntityService.getTargetArtifactIdFromTable(sourceArtifactId, sourceSystemId, sourceRepositoryId, targetSystemId, targetRepositoryId);
+						String targetArtifactIdFromTable = QCEntityService.getTargetArtifactIdFromTable(sourceArtifactId, sourceSystemId, sourceSystemKind, sourceRepositoryId, sourceRepositoryKind, targetSystemId, targetSystemKind, targetRepositoryId, targetRepositoryKind);
 						IQCDefect updatedArtifact = defectHandler.updateDefect(getQcc(), targetArtifactIdFromTable, allFields);
 						log.info("Update Operation SUCCESSFULL!!!!! and the targetArtifactIdFromTable="+targetArtifactIdFromTable);
 						genericArtifact.setTargetArtifactId(targetArtifactIdFromTable);
@@ -129,6 +138,11 @@ public class QCWriter extends QCConnectHelper implements
 			case DELETE:
 				
 				
+			case UNKNOWN: {
+				break;
+			}
+				
+				
 			}
 		
 		try {
@@ -143,7 +157,7 @@ public class QCWriter extends QCConnectHelper implements
 		return result;
 	}
 	
-	public GenericArtifact getArtifactFromDocument(Document genericArtifactDocument) {
+	public static GenericArtifact getArtifactFromDocument(Document genericArtifactDocument) {
 		
 		GenericArtifact genericArtifact = new GenericArtifact();
 		
@@ -171,13 +185,13 @@ public class QCWriter extends QCConnectHelper implements
 		return fieldValue;
 	}
 	
-	public boolean updateTable(String sourceSystemId, String sourceRepositoryId, String targetSystemId, String targetRepositoryId, String sourceArtifactId, String targetArtifactIdAfterCreation) {
+	public boolean updateTable(String sourceArtifactId, String sourceSystemId, String sourceSystemKind, String sourceRepositoryId, String sourceRepositoryKind, String targetArtifactIdAfterCreation, String targetSystemId, String targetSystemKind, String targetRepositoryId, String targetRepositoryKind) {
 		
 		Boolean status = false;
 		
-		String sql = "UPDATE QC_ENTITY_CHECK SET TARGET_ARTIFACT_ID='"+targetArtifactIdAfterCreation+"' WHERE SOURCE_SYSTEM_ID='"+sourceSystemId+"'";
-		sql+=" AND SOURCE_REPOSITORY_ID='"+sourceRepositoryId+"' AND SOURCE_ARTIFACT_ID='"+sourceArtifactId+"'";
-		sql+=" AND TARGET_SYSTEM_ID='"+targetSystemId+"' AND TARGET_REPOSITORY_ID='"+targetRepositoryId+"'";
+		String mappingId = QCEntityService.getMappingIdFromTable(sourceSystemId, sourceSystemKind, sourceRepositoryId, sourceRepositoryKind, targetSystemId, targetSystemKind, targetRepositoryId, targetRepositoryKind);
+		String sql = "UPDATE ARTIFACT_MAPPING SET TARGET_ARTIFACT_ID='"+targetArtifactIdAfterCreation+"' WHERE ";
+			   sql+= "MAPPING_ID='"+mappingId+"' AND SOURCE_ARTIFACT_ID='"+sourceArtifactId+"'";
 		log.info("QCWriter UPDATE SQL Query:"+ sql); 
 		ResultSet rs = null;
 		try {
@@ -188,10 +202,7 @@ public class QCWriter extends QCConnectHelper implements
 		}
 		if(rs==null) return false;
 		else return true;
-		
-		
 	}
-	
 	
 	public static ResultSet executeSql(String sql) throws ClassNotFoundException, SQLException {
 	  	Connection conn;                                                
