@@ -63,8 +63,9 @@ public class SFEEToGenericArtifactConverter implements IArtifactToGAConverter {
 			Object[] flexFieldValues = flexFields.getValues();
 			for(int i=0; i < flexFieldNames.length; i++){
 				System.out.println(flexFieldNames[i]+"-"+flexFieldTypes[i]+"-"+flexFieldValues[i]);
-				if(flexFieldNames[i].equals(GenericArtifact.ArtifactActionValue.CREATE)){
+				if(flexFieldNames[i].equals("ArtifactAction")){
 					genericArtifact.setArtifactAction(GenericArtifact.ArtifactActionValue.CREATE);
+					continue;
 				}
 				else{
 					genericArtifact.setArtifactAction(GenericArtifact.ArtifactActionValue.UPDATE);

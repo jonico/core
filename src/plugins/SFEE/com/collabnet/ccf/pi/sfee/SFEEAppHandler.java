@@ -28,6 +28,9 @@ public class SFEEAppHandler {
 			String artifactId = artifact.getId();
 			AuditHistorySoapList history = mSfSoap.getAuditHistoryList(mSessionId, artifactId);
 			AuditHistorySoapRow[] rows = history.getDataRows();
+			if(rows == null || rows.length == 0){
+				SFEEArtifactMetaData.setFieldValue("ArtifactAction", artifact, GenericArtifact.ArtifactActionValue.CREATE);
+			}
 			List<ArtifactSoapDO> artifactHistory = new ArrayList<ArtifactSoapDO>();
 			artifactHistory.add(artifact);
 			ArtifactSoapDO lastHistory = artifact;
@@ -56,12 +59,6 @@ public class SFEEAppHandler {
 					}
 					else{
 						String fieldName = rows[i].getPropertyName();
-						if(fieldName.equals("Id")){
-							String oldValue = rows[i].getOldValue();
-							if(StringUtils.isEmpty(oldValue)){
-								SFEEArtifactMetaData.setFieldValue("ArtifactAction", historyEntry, GenericArtifact.ArtifactActionValue.CREATE);
-							}
-						}
 						String gaFieldName = Character.toUpperCase(fieldName.charAt(0)) + fieldName.substring(1);
 						SFEEArtifactMetaData.setFieldValue(gaFieldName, historyEntry, rows[i].getOldValue());
 					}
