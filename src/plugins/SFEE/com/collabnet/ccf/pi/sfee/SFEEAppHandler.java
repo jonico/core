@@ -61,6 +61,9 @@ public class SFEEAppHandler {
 						String fieldName = rows[i].getPropertyName();
 						String gaFieldName = Character.toUpperCase(fieldName.charAt(0)) + fieldName.substring(1);
 						SFEEArtifactMetaData.setFieldValue(gaFieldName, historyEntry, rows[i].getOldValue());
+						if(i == rows.length-1){
+							SFEEArtifactMetaData.setFieldValue("ArtifactAction", historyEntry, GenericArtifact.ArtifactActionValue.CREATE);
+						}
 					}
 				}
 //				if(!lastHistory.getLastModifiedDate().equals(row.getDateModified())){
