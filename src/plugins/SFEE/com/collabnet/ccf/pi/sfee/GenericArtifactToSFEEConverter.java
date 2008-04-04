@@ -19,15 +19,9 @@ import com.vasoftware.sf.soap44.webservices.tracker.ArtifactSoapDO;
 public class GenericArtifactToSFEEConverter implements IGAToArtifactConverter {
 	
 	
-	public Object convert(Document document, TrackerFieldSoapDO[] flexFields) {
+	public Object convert(GenericArtifact genericArtifact, TrackerFieldSoapDO[] flexFields) {
 		ArtifactSoapDO artifactObj = null;
-		GenericArtifact genericArtifact = null;
-		if(document != null){
-			try {
-				genericArtifact = GenericArtifactHelper.createGenericArtifactJavaObject(document);
-			} catch (GenericArtifactParsingException e) {
-				throw new RuntimeException(e);
-			}
+		if(genericArtifact != null){
 			artifactObj = new ArtifactSoapDO();
 			addFlexFields(artifactObj, flexFields);
 			for(GenericArtifactField field:genericArtifact.getAllGenericArtifactFields())

@@ -29,9 +29,9 @@ public class SFEEGAHelper {
 	}
 	
 	public static Object getSingleValue(GenericArtifact ga, String fieldName) {
-		List<GenericArtifactField> gaFolderIDs = ga.getAllGenericArtifactFieldsWithSameFieldName(fieldName);
-		if(gaFolderIDs != null && gaFolderIDs.size() == 1){
-			GenericArtifactField field = gaFolderIDs.get(0);
+		List<GenericArtifactField> fields = ga.getAllGenericArtifactFieldsWithSameFieldName(fieldName);
+		if(fields != null && fields.size() == 1){
+			GenericArtifactField field = fields.get(0);
 			return field.getFieldValue();
 		}
 		return null;

@@ -102,7 +102,7 @@ public class SFEEWriter extends SFEEConnectHelper implements
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
 		}
-		ArtifactSoapDO soapDoObj = (ArtifactSoapDO) converter.convert(data, flexFields);
+		ArtifactSoapDO soapDoObj = (ArtifactSoapDO) converter.convert(ga, flexFields);
 		
 		Boolean duplicateArtifact = false;
 //			(Boolean) SFEEXMLHelper
@@ -130,7 +130,8 @@ public class SFEEWriter extends SFEEConnectHelper implements
 		
 
 		// check whether we should create or update the artifact
-		if (SFEEGAHelper.getSingleValue(ga, "Id").equals(
+		String id = (String) SFEEGAHelper.getSingleValue(ga, "Id");
+		if ((StringUtils.isEmpty(id)) || SFEEGAHelper.getSingleValue(ga, "Id").equals(
 				getCreateToken())) {
 			// find out whether we should delete something, that is not even
 			// present here

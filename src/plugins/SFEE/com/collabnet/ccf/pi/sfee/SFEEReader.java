@@ -120,7 +120,6 @@ public class SFEEReader extends SFEEConnectHelper implements
 			String targetRepositoryId = ga.getTargetRepositoryId();
 			String sourceRepositoryId = ga.getSourceRepositoryId();
 			String sourceArtifactId = ga.getSourceArtifactId();
-			dbHelper.insertSourceArtifactID(sourceArtifactId, sourceRepositoryId, targetRepositoryId);
 		}
 		disconnect();
 		return result;

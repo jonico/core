@@ -40,7 +40,9 @@ public class SFEEToGenericArtifactConverter implements IArtifactToGAConverter {
 				field.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
 				field.setFieldValueType(fieldValueType);
 				Object fieldValue = SFEEArtifactMetaData.getFieldValue(fieldName,artifactRow);
-				field.setFieldValue(fieldValue);
+				if(fieldValue != null){
+					field.setFieldValue(fieldValue);
+				}
 				if(fieldName.equals("LastModifiedDate")){
 					genericArtifact.setArtifactLastModifiedDate(DateUtil.format((Date)fieldValue));
 				}
@@ -61,6 +63,12 @@ public class SFEEToGenericArtifactConverter implements IArtifactToGAConverter {
 			Object[] flexFieldValues = flexFields.getValues();
 			for(int i=0; i < flexFieldNames.length; i++){
 				System.out.println(flexFieldNames[i]+"-"+flexFieldTypes[i]+"-"+flexFieldValues[i]);
+				if(flexFieldNames[i].equals(GenericArtifact.ArtifactActionValue.CREATE)){
+					genericArtifact.setArtifactAction(GenericArtifact.ArtifactActionValue.CREATE);
+				}
+				else{
+					genericArtifact.setArtifactAction(GenericArtifact.ArtifactActionValue.UPDATE);
+				}
 				GenericArtifactField field;
 
 				GenericArtifactField.FieldValueTypeValue fieldValueType = convertSFDataTypeToGADatatype(flexFieldTypes[i]);

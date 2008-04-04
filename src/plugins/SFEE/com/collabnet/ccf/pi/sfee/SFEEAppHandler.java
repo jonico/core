@@ -6,6 +6,9 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
+import org.apache.commons.lang.StringUtils;
+
+import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.pi.sfee.SFEEArtifactMetaData;
 import com.vasoftware.sf.soap44.webservices.sfmain.AuditHistorySoapList;
 import com.vasoftware.sf.soap44.webservices.sfmain.AuditHistorySoapRow;
@@ -53,6 +56,12 @@ public class SFEEAppHandler {
 					}
 					else{
 						String fieldName = rows[i].getPropertyName();
+						if(fieldName.equals("Id")){
+							String oldValue = rows[i].getOldValue();
+							if(StringUtils.isEmpty(oldValue)){
+								SFEEArtifactMetaData.setFieldValue("ArtifactAction", historyEntry, GenericArtifact.ArtifactActionValue.CREATE);
+							}
+						}
 						String gaFieldName = Character.toUpperCase(fieldName.charAt(0)) + fieldName.substring(1);
 						SFEEArtifactMetaData.setFieldValue(gaFieldName, historyEntry, rows[i].getOldValue());
 					}

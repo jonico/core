@@ -90,6 +90,7 @@ public class SFEEEntityService extends SFEEConnectHelper implements
 	 */
 	private Object[] processXMLDocument(Document data) {
 		GenericArtifact ga = null;
+		Document returnDoc = null;
 		try {
 			ga = GenericArtifactHelper.createGenericArtifactJavaObject(data);
 		} catch (GenericArtifactParsingException e1) {
@@ -103,6 +104,7 @@ public class SFEEEntityService extends SFEEConnectHelper implements
 		
 		boolean artifactAlreadyCreated = false;
 		if(StringUtils.isEmpty(targetArtifactID)){
+			dbHelper.insertSourceArtifactID(sourceArtifactId, sourceRepositoryId, targetRepositoryId);
 			artifactAlreadyCreated = false;
 		}
 		else {
@@ -207,7 +209,12 @@ public class SFEEEntityService extends SFEEConnectHelper implements
 				// do not suppress it anymore, but pass it unchanged
 				// return new Object[0];
 				SFEEGAHelper.updateSingleField(ga, "isDuplicate", "true");
-				return new Object[] { data };
+				try {
+					returnDoc = GenericArtifactHelper.createGenericArtifactXMLDocument(ga);
+				} catch (GenericArtifactParsingException e) {
+					throw new RuntimeException(e);
+				}
+				return new Object[] { returnDoc };
 			}
 			// else object should be updated
 			else {
@@ -217,7 +224,12 @@ public class SFEEEntityService extends SFEEConnectHelper implements
 						+ SFEEGAHelper.getSingleValue(ga, "Id")
 						+ " last modified by "
 						+ SFEEGAHelper.getSingleValue(ga,"LastModifiedBy"));
-				return new Object[] { data };
+				try {
+					returnDoc = GenericArtifactHelper.createGenericArtifactXMLDocument(ga);
+				} catch (GenericArtifactParsingException e) {
+					throw new RuntimeException(e);
+				}
+				return new Object[] { returnDoc };
 			}
 		}
 		// artifact has to be created
@@ -228,7 +240,7 @@ public class SFEEEntityService extends SFEEConnectHelper implements
 					getCreateToken(), "String");
 		log
 				.info("Create new object or trying to delete object that is not (yet) mirrored");
-		Document returnDoc = null;
+		
 		try {
 			returnDoc = GenericArtifactHelper.createGenericArtifactXMLDocument(ga);
 		} catch (GenericArtifactParsingException e) {
