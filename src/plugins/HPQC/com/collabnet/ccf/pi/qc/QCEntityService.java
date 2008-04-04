@@ -66,14 +66,19 @@ public class QCEntityService extends QCConnectHelper implements
 		}
 		String sourceArtifactId = genericArtifact.getSourceArtifactId();
 		String sourceSystemId  = genericArtifact.getSourceSystemId();
+		String sourceSystemKind = genericArtifact.getSourceSystemKind();
 		String sourceRepositoryId = genericArtifact.getSourceRepositoryId();
+		String sourceRepositoryKind = genericArtifact.getSourceRepositoryKind();
+		
 		String targetArtifactId = genericArtifact.getTargetArtifactId();
 		String targetSystemId = genericArtifact.getTargetSystemId();
+		String targetSystemKind = genericArtifact.getTargetSystemKind();
 		String targetRepositoryId = genericArtifact.getTargetRepositoryId();
+		String targetRepositoryKind = genericArtifact.getTargetRepositoryKind();
 		
-		String targetArtifactIdFromTable = getTargetArtifactIdFromTable(sourceArtifactId, sourceSystemId, sourceRepositoryId, targetSystemId, targetRepositoryId);
+		String targetArtifactIdFromTable = getTargetArtifactIdFromTable(sourceArtifactId, sourceSystemId, sourceSystemKind, sourceRepositoryId, sourceRepositoryKind, targetSystemId, targetSystemKind, targetRepositoryId, targetRepositoryKind);
 		
-		if(targetArtifactIdFromTable!=null && !(targetArtifactIdFromTable.equals("NEW"))) {
+		if(targetArtifactIdFromTable!=null && !(targetArtifactIdFromTable.equals("NEW")) && !(targetArtifactIdFromTable.equals("NULL"))) {
 	    	genericArtifact.setTargetArtifactId(targetArtifactIdFromTable);
 	    }
 		if(targetArtifactIdFromTable==null) {
@@ -83,7 +88,7 @@ public class QCEntityService extends QCConnectHelper implements
 	    	if(genericArtifact.getArtifactAction().equals(GenericArtifact.ArtifactActionValue.CREATE)) {
 	    		//Insert a new record in the QC_ENTITY_CHECK Hsql table with the targetArtifactId value as "NEW". 
 	    		//This should be updated by the QCWriter after creating a defect.
-	    		Boolean insertStatus = insertRecordInTable(sourceArtifactId, sourceSystemId, sourceRepositoryId, targetSystemId, targetRepositoryId);
+	    		Boolean insertStatus = insertRecordInTable(sourceArtifactId, sourceSystemId, sourceSystemKind, sourceRepositoryId, sourceRepositoryKind, targetSystemId, targetSystemKind, targetRepositoryId, targetRepositoryKind);
 	    		
 	    	}
 	    }
@@ -102,7 +107,7 @@ public class QCEntityService extends QCConnectHelper implements
 	}
 	
 	
-	public static String getTargetArtifactIdFromTable(String sourceArtifactId, String sourceSystemId, String sourceRepositoryId, String targetSystemId, String targetRepositoryId) {
+	public static String getTargetArtifactIdFromTable(String sourceArtifactId, String sourceSystemId, String sourceSystemKind, String sourceRepositoryId, String sourceRepositoryKind, String targetSystemId, String targetSystemKind, String targetRepositoryId, String targetRepositoryKind) {
 		
 	    /* 1. Get the values of sourceArtifactId, sourceSystemId, sourceRepositoryId, targetArtifactId, targetSystemId, targetRepositoryId
 	      from the incoming GenericArtifact.
@@ -112,24 +117,35 @@ public class QCEntityService extends QCConnectHelper implements
 	   	  handle that properly. The QCWriter should insert a new record in that table for this targetArtifactId.
 	    5.  
 	    */
-		
+		int rsCount=0;
 		String targetArtifactIdFromTable = null;
-		String sql = "SELECT TARGET_ARTIFACT_ID FROM QC_ENTITY_CHECK WHERE SOURCE_SYSTEM_ID= '"+sourceSystemId+"' AND ";
-		       sql+= "SOURCE_REPOSITORY_ID= '"+sourceRepositoryId+"' AND TARGET_SYSTEM_ID='"+targetSystemId+"' AND ";
-		       sql+= "TARGET_REPOSITORY_ID='"+targetRepositoryId+"' AND SOURCE_ARTIFACT_ID='"+sourceArtifactId+"'";
-		
+		String sql= "SELECT TARGET_ARTIFACT_ID FROM ARTIFACT_MAPPING WHERE ";
+		       sql+= "SOURCE_ARTIFACT_ID='"+sourceArtifactId+"' AND ";
+		       sql+= "MAPPING_ID = ";
+		       sql+= "(select id FROM repository_mapping WHERE ";
+		       sql+= "SOURCE_REPOSITORY_INFO_ID="; 
+		       sql+= "(SELECT ID FROM REPOSITORY_INFO WHERE "; 
+		       sql+= "REPOSITORY_INFO.REPOSITORY_ID='"+sourceRepositoryId+"' AND ";
+		       sql+= "REPOSITORY_INFO.REPOSITORY_KIND='"+sourceRepositoryKind+"' AND ";
+		       sql+= "REPOSITORY_INFO.SYSTEM_INFO_ID= "; 
+		       sql+= "(SELECT ID FROM SYSTEM_INFO WHERE "; 
+		       sql+= "SYSTEM_INFO.SYSTEM_ID='"+sourceSystemId+"' AND ";
+		       sql+= "SYSTEM_INFO.SYSTEM_KIND='"+sourceSystemKind+"')) ";
+		       sql+= "AND ";
+		       sql+= "TARGET_REPOSITORY_INFO_ID= ";
+		       sql+= "(SELECT ID FROM REPOSITORY_INFO WHERE "; 
+		       sql+= "REPOSITORY_INFO.REPOSITORY_ID='"+targetRepositoryId+"' AND ";
+		       sql+= "REPOSITORY_INFO.REPOSITORY_KIND='"+targetRepositoryKind+"' AND ";
+		       sql+= "REPOSITORY_INFO.SYSTEM_INFO_ID= "; 
+		       sql+= "(SELECT ID FROM SYSTEM_INFO WHERE "; 
+		       sql+= "SYSTEM_INFO.SYSTEM_ID='"+targetSystemId+"' AND ";
+		       sql+= "SYSTEM_INFO.SYSTEM_KIND='"+targetSystemKind+"')) ) ";
+		       
 		log.info("QCEntityService SQL Query:"+ sql);       
 		try {
 			ResultSet rs = executeSql(sql);
-			//while(!(rs.isLast()) ) {
-			if(rs!=null) {
-			for (; rs.next(); ) {
-				if(rs.getObject(1)!=null)
-					targetArtifactIdFromTable= rs.getObject(1).toString();
-		      	System.out.println(targetArtifactIdFromTable);
-		      	rs.next();
-		      }
-			}
+			if(rs!=null && rs.next())
+				targetArtifactIdFromTable = rs.getString("TARGET_ARTIFACT_ID");
 		}
 		catch(Exception e) {
 			log.error("Exception while executing the Query in QCEntityService:"+e);
@@ -138,11 +154,12 @@ public class QCEntityService extends QCConnectHelper implements
 		return targetArtifactIdFromTable;
 	}
 	
-	public boolean insertRecordInTable(String sourceArtifactId, String sourceSystemId, String sourceRepositoryId, String targetSystemId, String targetRepositoryId) {
+	public boolean insertRecordInTable(String sourceArtifactId, String sourceSystemId, String sourceSystemKind, String sourceRepositoryId, String sourceRepositoryKind, String targetSystemId, String targetSystemKind, String targetRepositoryId, String targetRepositoryKind) {
 		
 		Boolean status = false;
 		
-		String sql = "INSERT INTO QC_ENTITY_CHECK VALUES('"+sourceSystemId+"', '"+sourceRepositoryId+"', '"+sourceArtifactId+"', '"+targetSystemId+"', '"+targetRepositoryId+"', 'NEW')";
+		String mappingId = getMappingIdFromTable(sourceSystemId, sourceSystemKind, sourceRepositoryId, sourceRepositoryKind, targetSystemId, targetSystemKind, targetRepositoryId, targetRepositoryKind);
+		String sql = "INSERT INTO ARTIFACT_MAPPING(MAPPING_ID, SOURCE_ARTIFACT_ID, TARGET_ARTIFACT_ID) VALUES('"+mappingId+"','"+sourceArtifactId+"', 'NEW')";
 		log.info("QCEntityService INSERT SQL Query:"+ sql); 
 		ResultSet rs = null;
 		try {
@@ -153,6 +170,44 @@ public class QCEntityService extends QCConnectHelper implements
 		}
 		if(rs==null) return false;
 		else return true;
+	}
+	
+	
+	public static String getMappingIdFromTable(String sourceSystemId, String sourceSystemKind, String sourceRepositoryId, String sourceRepositoryKind, String targetSystemId, String targetSystemKind, String targetRepositoryId, String targetRepositoryKind) {
+		
+		String sql1= "select ID FROM repository_mapping WHERE ";
+	       sql1+= "SOURCE_REPOSITORY_INFO_ID="; 
+	       sql1+= "(SELECT ID FROM REPOSITORY_INFO WHERE "; 
+	       sql1+= "REPOSITORY_INFO.REPOSITORY_ID='"+sourceRepositoryId+"' AND ";
+	       sql1+= "REPOSITORY_INFO.REPOSITORY_KIND='"+sourceRepositoryKind+"' AND ";
+	       sql1+= "REPOSITORY_INFO.SYSTEM_INFO_ID= "; 
+	       sql1+= "(SELECT ID FROM SYSTEM_INFO WHERE "; 
+	       sql1+= "SYSTEM_INFO.SYSTEM_ID='"+sourceSystemId+"' AND ";
+	       sql1+= "SYSTEM_INFO.SYSTEM_KIND='"+sourceSystemKind+"')) ";
+	       sql1+= "AND ";
+	       sql1+= "TARGET_REPOSITORY_INFO_ID= ";
+	       sql1+= "(SELECT ID FROM REPOSITORY_INFO WHERE "; 
+	       sql1+= "REPOSITORY_INFO.REPOSITORY_ID='"+targetRepositoryId+"' AND ";
+	       sql1+= "REPOSITORY_INFO.REPOSITORY_KIND='"+targetRepositoryKind+"' AND ";
+	       sql1+= "REPOSITORY_INFO.SYSTEM_INFO_ID= "; 
+	       sql1+= "(SELECT ID FROM SYSTEM_INFO WHERE "; 
+	       sql1+= "SYSTEM_INFO.SYSTEM_ID='"+targetSystemId+"' AND ";
+	       sql1+= "SYSTEM_INFO.SYSTEM_KIND='"+targetSystemKind+"'))";
+	   log.info(sql1);    
+	   ResultSet rs = null;
+	   String mappingId=null;
+	   int rsCount=0;
+	   try {
+		    rs = executeSql(sql1);
+			if(rs.next())
+				mappingId = rs.getString("ID");
+		   }
+	   catch(Exception e) {
+		   log.error("Exception while executing the getMappingIdFromTable Query in QCEntityService:"+e);
+		   }       
+		
+	   return mappingId;
+	
 	}
 	
 	public static ResultSet executeSql(String sql) throws ClassNotFoundException, SQLException {
