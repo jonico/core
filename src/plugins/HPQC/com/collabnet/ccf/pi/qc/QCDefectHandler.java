@@ -1,11 +1,15 @@
 package com.collabnet.ccf.pi.qc;
 
 import java.rmi.RemoteException;
+import java.sql.ResultSet;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import trial2.DateUtil;
 
 import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifact;
@@ -151,29 +155,28 @@ public class QCDefectHandler {
 	 *         defects
 	 * @throws RemoteException (, COMException?)
 	 */
-	public List<GenericArtifact> getChangedDefects(IConnection qcc, String from, String to, String sourceArtifactId, String sourceRepositoryId, String sourceRepositoryKind, String sourceSystemId, String sourceSystemKind, String targetRepositoryId, String targetRepositoryKind, String targetSystemId, String targetSystemKind)
+	public List<GenericArtifact> getChangedDefects(IConnection qcc, String transactionId, String sourceArtifactId, String sourceRepositoryId, String sourceRepositoryKind, String sourceSystemId, String sourceSystemKind, String targetRepositoryId, String targetRepositoryKind, String targetSystemId, String targetSystemKind)
 	 throws Exception {
 		
 		// Obtain the transactions that happened within the from and to time
 		//Test Values: 
 		//1. from="2007-11-05 00:00:00"; to="2007-11-06 00:00:00";
 		//2. from="2007-09-15 00:00:00"; to="2007-10-02 00:00:00";
-		
+		int rc=0;
 		String sql = "SELECT AU_ACTION_ID, AU_ENTITY_ID FROM AUDIT_LOG WHERE AU_ENTITY_TYPE = 'BUG'";
-		if (from != null && !from.equals(""))
-			sql += " AND AU_TIME >= '" + from + "'";
-		if (to != null && !to.equals(""))
-			sql += " AND AU_TIME <= '" + to + "'";
+		if (transactionId != null && !transactionId.equals(""))
+			sql += " AND AU_ACTION_ID > '" + transactionId + "'";
 		sql += " ORDER BY AU_TIME ASC";
 		log.info(sql);
 		
 		IRecordSet rs = executeSQL(qcc, sql);
-
-		int rc = rs.getRecordCount();
+		if(rs!=null)
+			rc = rs.getRecordCount();
 		List<GenericArtifact> modifiedDefectArtifacts = new ArrayList<GenericArtifact>();
 		
 		for(int cnt = 0 ; cnt < rc ; cnt++, rs.next())
 		{
+			String thisTransactionId = rs.getFieldValue("AU_ACTION_ID");
 			int actionId = Integer.parseInt(rs.getFieldValue("AU_ACTION_ID"));
 			int entityId = Integer.parseInt(rs.getFieldValue("AU_ENTITY_ID"));
 			
@@ -192,6 +195,7 @@ public class QCDefectHandler {
 			else
 				latestDefectArtifact.setArtifactAction(GenericArtifact.ArtifactActionValue.UPDATE);
 			
+			sourceArtifactId=getBugIdValueFromGenericArtifactInDefectHandler(latestDefectArtifact, "BG_BUG_ID");
 			latestDefectArtifact.setSourceArtifactId(sourceArtifactId);
 			latestDefectArtifact.setSourceRepositoryId(sourceRepositoryId);
 			latestDefectArtifact.setSourceRepositoryKind(sourceRepositoryKind);
@@ -202,8 +206,11 @@ public class QCDefectHandler {
 			latestDefectArtifact.setTargetRepositoryKind(targetRepositoryKind);
 			latestDefectArtifact.setTargetSystemId(targetSystemId);
 			latestDefectArtifact.setTargetSystemKind(targetSystemKind);
+			latestDefectArtifact.setLastReadTransactionId(thisTransactionId);
+			latestDefectArtifact=getStateOfDefectAtActionID(qcc, entityId, actionId, transactionId, latestDefectArtifact);
 			
-			latestDefectArtifact=getStateOfDefectAtActionID(qcc, entityId, actionId, from, to, latestDefectArtifact);
+			//if(latestDefectArtifact.getArtifactAction().equals(GenericArtifact.ArtifactActionValue.CREATE))
+			//	insertIntoArtifactMapping(sourceArtifactId, sourceSystemId, sourceSystemKind, sourceRepositoryId, sourceRepositoryKind, targetSystemId, targetSystemKind, targetRepositoryId, targetRepositoryKind);
 			
 			modifiedDefectArtifacts.add(latestDefectArtifact);
 		}
@@ -211,14 +218,12 @@ public class QCDefectHandler {
 		return modifiedDefectArtifacts;
 	}
 	
-	public GenericArtifact getStateOfDefectAtActionID(IConnection qcc, int entityId, int actionId, String from, String to, GenericArtifact latestDefectArtifact){
+	public GenericArtifact getStateOfDefectAtActionID(IConnection qcc, int entityId, int actionId, String transactionId, GenericArtifact latestDefectArtifact){
 		
 		String sql = "SELECT AU_ACTION_ID FROM AUDIT_LOG WHERE AU_ENTITY_TYPE = 'BUG' AND AU_ACTION_ID > '" + actionId + 
 		"' AND AU_ENTITY_TYPE= 'BUG' AND AU_ENTITY_ID = '" + entityId + "'";
-		if (from != null && !from.equals(""))
-			sql += " AND AU_TIME >= '" + from + "'";
-		if (to != null && !to.equals(""))
-			sql += " AND AU_TIME <= '" + to + "'";
+		if (transactionId != null && !transactionId.equals(""))
+			sql += " AND AU_ACTION_ID >= '" + transactionId + "'";
 		sql += " ORDER BY AU_ACTION_ID DESC";
 		log.info(sql);
 		
@@ -242,27 +247,28 @@ public class QCDefectHandler {
 				
 				List<GenericArtifactField> genArtifactFields = latestDefectArtifact.getAllGenericArtifactFieldsWithSameFieldName(fieldName);
 				if(genArtifactFields!=null & genArtifactFields.get(0)!=null)genArtifactFields.get(0).setFieldValue(oldFieldValue);
+				//genArtifactFields.get(0).setFieldValueHasChanged(true);
 			}
-			//if(cnt==rc-1) reqId=txnId-1;
+		
 		}
 		
 		
 		List<GenericArtifactField> genArtifactFields = latestDefectArtifact.getAllGenericArtifactFieldsWithSameFieldName("BG_VTS");
-		/*if(genArtifactFields!=null && genArtifactFields.get(0)!=null && 
-				(genArtifactFields.get(0).getFieldValue()==null || genArtifactFields.get(0).getFieldValue().equals(""))) {
-			latestDefectArtifact.setArtifactAction(GenericArtifact.ArtifactActionValue.CREATE);
-			latestDefectArtifact.setArtifactLastModifiedDate("0000-00-00 00:00:00");
-			return latestDefectArtifact;
-		}
-			
-		*/
+		
 		if(genArtifactFields!=null && genArtifactFields.get(0)!=null && genArtifactFields.get(0).getFieldValue()!=null &&
 				!(genArtifactFields.get(0).getFieldValue().equals(""))) {
-			//latestDefectArtifact.setArtifactAction(GenericArtifact.ArtifactActionValue.UPDATE);
-			latestDefectArtifact.setArtifactLastModifiedDate((String)genArtifactFields.get(0).getFieldValue());
+			Date newBgVts = DateUtil.parseQCDate((String) genArtifactFields.get(0).getFieldValue());
+			latestDefectArtifact.setArtifactLastModifiedDate(DateUtil.format(newBgVts));
 			return latestDefectArtifact;
 		}
-			
+		else {
+			//This means the BG_VTS field is null. So, find it, populate it & ArtifactLastModifiedDate
+			String bgVts = findBgVtsFromQC(qcc, actionId, entityId);
+			genArtifactFields.get(0).setFieldValue((String) bgVts);
+			Date newBgVts = DateUtil.parseQCDate(bgVts);
+			String lastModifiedDate = DateUtil.format(newBgVts);
+			latestDefectArtifact.setArtifactLastModifiedDate(lastModifiedDate);
+		}
 		
 		// The ArtifactActionValue IGNORE and DELETE needs to be done.
 		//latestDefectArtifact.setArtifactAction(GenericArtifact.ArtifactActionValue.UNKNOWN);
@@ -281,6 +287,38 @@ public class QCDefectHandler {
 		
 		QCDefect defect = null;
 		return defect;
+	}
+	
+	public String findBgVtsFromQC(IConnection qcc, int actionId, int entityId) {
+		
+		String sql = "SELECT * FROM AUDIT_LOG WHERE AU_ACTION_ID='"+ actionId + "' AND AU_ENTITY_ID='"+ entityId +"'";
+		IRecordSet newRs = executeSQL(qcc, sql);
+		String auTime = newRs.getFieldValue("AU_TIME");
+		return auTime;
+	}
+	
+	public String getBugIdValueFromGenericArtifactInDefectHandler(GenericArtifact individualGenericArtifact, String fieldName) {
+		
+		Integer intFieldValue = (Integer) individualGenericArtifact.getAllGenericArtifactFieldsWithSameFieldName(fieldName).get(0).getFieldValue();
+		String fieldValue = Integer.toString(intFieldValue.intValue());
+		return fieldValue;
+	}
+	
+	public boolean insertIntoArtifactMapping(String sourceArtifactId, String sourceSystemId, String sourceSystemKind, String sourceRepositoryId, String sourceRepositoryKind, String targetSystemId, String targetSystemKind, String targetRepositoryId, String targetRepositoryKind) {
+		
+		String mappingId = QCEntityService.getMappingIdFromTable(sourceSystemId, sourceSystemKind, sourceRepositoryId, sourceRepositoryKind, targetSystemId, targetSystemKind, targetRepositoryId, targetRepositoryKind);
+		String sql= "INSERT INTO ARTIFACT_MAPPING(MAPPING_ID, SOURCE_ARTIFACT_ID, TARGET_ARTIFACT_ID) VALUES('"+mappingId+"', '"+sourceArtifactId+"', 'NULL')";
+		log.info(sql);
+		ResultSet rs = null;
+		try {
+			rs = QCReader.executeSql(sql);
+		}
+		catch(Exception e) {
+			log.error("Exception while executing the UPDATE Query in QCReader:"+e);
+		}
+		if(rs==null) return false;
+		else
+			return true;
 	}
 	
 	public boolean checkForCreate(IConnection qcc, int txnId) {
