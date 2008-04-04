@@ -117,7 +117,13 @@ public class GenericArtifact {
 	 * does not support version control.
 	 */
 	private String artifactVersion = VALUE_UNKNOWN;
+	/**
+	 * This attribute contains the last transaction that was read. This is updated 
+	 * by the reader and functions similar to lastModifiedDate.
+	 */
+	private String lastReadTransactionId = VALUE_UNKNOWN;
 
+	
 	/**
 	 * This attribute contains the date when this artifact was lastly updated.
 	 * The more specific this date is, the better the polling components can do
@@ -932,6 +938,14 @@ public class GenericArtifact {
 		} else {
 			return allGenericArtifactFieldsWithSameFieldTypeMap.get(fieldName);
 		}
+	}
+
+	public String getLastReadTransactionId() {
+		return lastReadTransactionId;
+	}
+
+	public void setLastReadTransactionId(String lastReadTransactionId) {
+		this.lastReadTransactionId = lastReadTransactionId;
 	}
 
 }
