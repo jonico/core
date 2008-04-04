@@ -85,9 +85,9 @@ public class QCReaderOutputWriter extends QCConnectHelper implements IDataProces
 		}
 		catch(Exception e) {
 			System.out.println("GenericArtifact Parsing exception" + e);
-		}
-		intBugId = Integer.parseInt(QCWriter.getFieldValueFromGenericArtifact(changedArtifact, "BG_BUG_ID"));
-		intBugId = intBugId+100;
+		}		
+		//intBugId = Integer.parseInt(QCWriter.getFieldValueFromGenericArtifact(changedArtifact, "BG_BUG_ID"));
+		//intBugId = intBugId+100;
 		List<GenericArtifactField> allFields = changedArtifact.getAllGenericArtifactFields();
 		for (int cnt=0; cnt < allFields.size(); cnt++) {
 			GenericArtifactField thisField = allFields.get(cnt);
