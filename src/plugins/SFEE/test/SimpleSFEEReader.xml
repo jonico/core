@@ -36,20 +36,29 @@
 
 		<property name="processMap">
 			<map>
-				<entry key-ref="SimplePollingReader" value-ref="SFEEReader" />
-				<entry key-ref="SFEEReader"	value-ref="SFEEEntityService" />
+				<entry key-ref="SimplePollingReader" value-ref="QCReader" />
+				<entry key-ref="QCReader"	value-ref="SFEETransformer" />
+				<entry key-ref="SFEETransformer"	value-ref="SFEEEntityService" />
 				<entry key-ref="SFEEEntityService" value-ref="Writer" />
 				<entry key-ref="Writer" value-ref="MappingDBUpdater" />
 			</map>
 		</property>
 		<property name="exceptionProcessor" ref="ExceptionHandler" />
-		<property name="discardMap">
-			<map>
-				<!--    <entry key-ref="Filter" value-ref="DiscardLog"/> -->
-			</map>
-		</property>
 	</bean>
-
+	<bean id="SFEETransformer" class="trial2.XsltProcessor">
+   <property name="xsltFile" value="C:/madhu-work/CCF/svn/ccf/src/core/trial2/xslts/qc2sfee.xsl"/>
+  </bean>
+	 <bean id="QCReader" class="com.collabnet.ccf.pi.qc.QCReader">
+	     <description>
+	       Reads the modified defects from QC
+	     </description>              
+	     <property name="serverUrl" value="http://10.2.1.114:8080/qcbin"/>
+	     <property name="domain" value="QC_PLUGIN_TESTING"/>
+	     <property name="projectName" value="PRJ_1"/>
+	     <property name="userName" value="alex_qc"/>
+	     <property name="password" value=""/>
+  	 </bean>
+	
 	<bean id="SimplePollingReader"
 		class="com.collabnet.ccf.core.test.plugins.SimpleLoopingPollingReadConnector">
 		<description>
@@ -78,7 +87,7 @@
 	</bean>
 	<!-- <bean id="SFEEArtifactConverter" class="com.collabnet.ccf.pi.sfee.SFEEArtifactConverter"/> -->
 	<bean id="SFEEGerericArtifactConverter"
-		class="com.collabnet.ccf.pi.converters.SFEEToGenericArtifactConverter" />
+		class="com.collabnet.ccf.pi.sfee.SFEEToGenericArtifactConverter" />
 	<!-- <bean id="Writer" class="org.openadaptor.auxil.connector.iostream.writer.FileWriteConnector"/> -->
 	<bean id="Writer" class="com.collabnet.ccf.pi.sfee.SFEEWriter">
 		<description>Reads the modified defects from SFEE</description>
@@ -111,9 +120,10 @@
 	</bean>
 
 	<bean id="GerericArtifactToSFEEConverter"
-		class="com.collabnet.ccf.pi.converters.GenericArtifactToSFEEConverter" />
-	<bean id="ExceptionHandler"
-		class="org.openadaptor.auxil.connector.iostream.writer.FileWriteConnector" />
+		class="com.collabnet.ccf.pi.sfee.GenericArtifactToSFEEConverter" />
+	<bean id="ExceptionHandler" class="trial2.Ambulance">
+  		<property name="hospitalFileName" value="C:/hospital.txt"/>
+  	</bean>
 
 	<bean id="SFEEDatabaseReader"
 		class="org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector">
