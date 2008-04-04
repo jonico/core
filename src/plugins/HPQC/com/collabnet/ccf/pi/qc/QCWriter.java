@@ -91,6 +91,7 @@ public class QCWriter extends QCConnectHelper implements
 					}
 					catch(Exception e) {
 						log.error("Exception occured while creating defect in QC:"+e);
+						throw new RuntimeException(e);
 						//send this artifact to HOSPITAL	
 					}
 					}
@@ -123,13 +124,14 @@ public class QCWriter extends QCConnectHelper implements
 					}
 					catch(Exception e) {
 						log.error("Exception occured while updating defect in QC:"+genericArtifact.toString(),e);
+						throw new RuntimeException(e);
 						//send this artifact to HOSPITAL	
 					}
 					}
 					else {
 						// Now, the targetArtifactId is null. It must be a CREATE operation. But since the ACTION is update, send it to HOSPITAL.
 						//send this artifact to HOSPITAL
-						break;
+						throw new RuntimeException("The targetArtifactId is null. It must be a CREATE operation. But since the ACTION is update, sending it to HOSPITAL");
 					}
 				}
 				break;
