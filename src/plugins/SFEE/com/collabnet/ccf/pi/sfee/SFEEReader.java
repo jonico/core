@@ -15,6 +15,8 @@ import org.dom4j.Node;
 import org.openadaptor.auxil.connector.iostream.EncodingAwareObject;
 import org.openadaptor.core.IDataProcessor;
 
+import trial2.DateUtil;
+
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
@@ -224,11 +226,11 @@ public class SFEEReader extends SFEEConnectHelper implements
 	
 	private String getLastModifiedDateString(Document document) {
 		// TODO Let the user specify this value?
-		return dbHelper.getFromTime(document);
-//		Node node= document.selectSingleNode("//TO_TIME");
-//		if (node==null)
-//			return null;
-//		return node.getText();
+		String dbTime = dbHelper.getFromTime(document);
+		java.sql.Timestamp ts = java.sql.Timestamp.valueOf(dbTime);
+		long time = ts.getTime();
+		Date date = new Date(time);
+		return DateUtil.format(date);
 	}
 	
 	private String getLastArtifactId(Document document) {
