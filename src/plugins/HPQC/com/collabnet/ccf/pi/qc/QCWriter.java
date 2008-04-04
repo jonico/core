@@ -49,7 +49,7 @@ public class QCWriter extends QCConnectHelper implements
 		List<GenericArtifactField> allFields = genericArtifact.getAllGenericArtifactFields();
 		GenericArtifact.ArtifactActionValue artifactAction = genericArtifact.getArtifactAction();
 		String stringBugId = getFieldValueFromGenericArtifact(genericArtifact, "BG_BUG_ID");
-		
+		log.info("The bugId coming in is :"+stringBugId);
 		
 		String sourceArtifactId = genericArtifact.getSourceArtifactId();
 		String sourceSystemId  = genericArtifact.getSourceSystemId();
@@ -63,11 +63,12 @@ public class QCWriter extends QCConnectHelper implements
 		String targetRepositoryId = genericArtifact.getTargetRepositoryId();
 		String targetRepositoryKind = genericArtifact.getTargetRepositoryKind();
 		
-		if(stringBugId!=null || (stringBugId!=null && !stringBugId.equals("")) )
+		if(stringBugId!=null && (stringBugId!=null && !stringBugId.equals("")) )
 			bugId = Integer.parseInt(stringBugId);
 		//Boolean doesBugIdExistsInQC = false;
 		if(bugId!=0)
 			doesBugIdExistsInQC = checkForBugIdInQC(bugId);
+		
 		
 		switch (artifactAction) {
 			
