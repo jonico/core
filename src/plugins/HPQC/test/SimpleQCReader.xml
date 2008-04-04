@@ -37,7 +37,7 @@
         	</entry>
         	<entry key-ref="QCReaderOutputWriter" value-ref="QCEntityService"/>
         	<entry key-ref="QCEntityService" value-ref="QCWriter"/>
-        	<entry key-ref="QCWriter" value-ref="Writer"/>
+        	<!--  <entry key-ref="QCWriter" value-ref="MappingDBUpdater" />  --> 
       </map>  
     </property>
     <property name="exceptionProcessor" ref="ExceptionHandler"/>
@@ -62,8 +62,8 @@
        Reads the modified defects from QC
      </description>              
      <property name="serverUrl" value="http://10.2.1.114:8080/qcbin"/>
-     <property name="domain" value="DOMAIN_PRJ_1"/>
-     <property name="projectName" value="PRJ_1"/>
+     <property name="domain" value="QC_PLUGIN_TESTING"/>
+     <property name="projectName" value="PRJ_2"/>
      <property name="userName" value="alex_qc"/>
      <property name="password" value=""/>
   </bean>
@@ -130,8 +130,22 @@
     <property name="resultSetConverter" ref="QCResultSetConverter"/>
     <property name="sql">
       <value>
-        SELECT * 
-        FROM GENERIC_CONNECTOR_SYNC_INFO
+        		select A.REPOSITORY_ID AS SOURCE_REPOSITORY_ID,
+				A.REPOSITORY_KIND AS SOURCE_REPOSITORY_KIND, C.SYSTEM_ID
+				AS SOURCE_SYSTEM_ID, C.SYSTEM_KIND AS
+				SOURCE_SYSTEM_KIND, B.REPOSITORY_ID AS
+				TARGET_REPOSITORY_ID, B.REPOSITORY_KIND AS
+				TARGET_REPOSITORY_KIND, D.SYSTEM_ID AS TARGET_SYSTEM_ID,
+				D.SYSTEM_KIND AS TARGET_SYSTEM_KIND,
+				REPOSITORY_MAPPING.LAST_READ_TIME AS FROM_TIME,
+				REPOSITORY_MAPPING.VERSION AS VERSION,
+				REPOSITORY_MAPPING.TRANSACTION_ID AS TRANSACTION_ID from
+				REPOSITORY_INFO A,REPOSITORY_INFO B, SYSTEM_INFO C,
+				SYSTEM_INFO D, REPOSITORY_MAPPING
+				WHERE REPOSITORY_MAPPING.SOURCE_REPOSITORY_INFO_ID =
+				A.ID AND REPOSITORY_MAPPING.TARGET_REPOSITORY_INFO_ID =
+				B.ID AND A.SYSTEM_INFO_ID = C.ID AND B.SYSTEM_INFO_ID =
+				D.ID
       </value>
     </property>
   </bean>
@@ -143,7 +157,11 @@
     <property name="username" value="sa"/>
     <property name="password" value=""/>
   </bean>
-
+  <bean id="MappingDBUpdater" class="trial2.MappingDBUpdater">
+	<description>Simply display the artifacts</description>
+	<property name="jdbcConnection" ref="JdbcConnectionRead" />
+  </bean>
+	
   <bean id="QCResultSetConverter" class="org.openadaptor.auxil.connector.jdbc.reader.xml.ResultSetToXMLConverter">
 	<property name="convertToString" value="false"/>
 	<property name="rootElement" value="EmptySyncInf"/>  
