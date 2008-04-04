@@ -98,6 +98,7 @@ public class QCEntityService extends QCConnectHelper implements
 	    }
 	    catch(Exception e) {
 	    	log.error("Exception while converting the resultantGenericArtifact into the resultDocument in QCEntityService:"+e);
+	    	throw new RuntimeException(e);
 	    }
 		
 	    System.out.println("Inside QCEntityService, after filing in the targetArtifactId::" + filledArtifactDocument.asXML());
