@@ -16,13 +16,13 @@ public class SFEEGAHelper {
 
 	public static boolean containsSingleField(GenericArtifact ga, String fieldName){
 		List<GenericArtifactField> gaFolderIDs = ga.getAllGenericArtifactFieldsWithSameFieldName(fieldName);
-		return gaFolderIDs.size() == 1;
+		return gaFolderIDs!=null && gaFolderIDs.size() == 1;
 	}
 
 	public static void updateSingleField(GenericArtifact ga, String fieldName,
 			String fieldValue) {
 		List<GenericArtifactField> gaFolderIDs = ga.getAllGenericArtifactFieldsWithSameFieldName(fieldName);
-		if(gaFolderIDs.size() == 1){
+		if(gaFolderIDs != null && gaFolderIDs.size() == 1){
 			GenericArtifactField field = gaFolderIDs.get(0);
 			field.setFieldValue(fieldValue);
 		}
@@ -30,7 +30,7 @@ public class SFEEGAHelper {
 	
 	public static Object getSingleValue(GenericArtifact ga, String fieldName) {
 		List<GenericArtifactField> gaFolderIDs = ga.getAllGenericArtifactFieldsWithSameFieldName(fieldName);
-		if(gaFolderIDs.size() == 1){
+		if(gaFolderIDs != null && gaFolderIDs.size() == 1){
 			GenericArtifactField field = gaFolderIDs.get(0);
 			return field.getFieldValue();
 		}

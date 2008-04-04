@@ -130,9 +130,7 @@ public class SFEEEntityService extends SFEEConnectHelper implements
 			 * present in artifact: "+data); return null; }
 			 */
 			if (!SFEEGAHelper.containsSingleField(ga, "FolderId")) {
-				// TODO Throw an exception?
-				log.error("required folderId-element not present in artifact");
-				return null;
+				SFEEGAHelper.addField(ga, "FolderId", targetRepositoryId, "String");
 			}
 			// NOTE We will not be checking other system's field here
 //			if (!SFEEXMLHelper.containsSingleField(data,
@@ -230,8 +228,13 @@ public class SFEEEntityService extends SFEEConnectHelper implements
 					getCreateToken(), "String");
 		log
 				.info("Create new object or trying to delete object that is not (yet) mirrored");
-		
-		return new Object[] { data };
+		Document returnDoc = null;
+		try {
+			returnDoc = GenericArtifactHelper.createGenericArtifactXMLDocument(ga);
+		} catch (GenericArtifactParsingException e) {
+			throw new RuntimeException(e);
+		}
+		return new Object[] { returnDoc };
 	}
 
 	/**
