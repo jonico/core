@@ -30,13 +30,11 @@
 			<xsl:attribute name="targetRepositoryKind"><xsl:value-of select="@targetRepositoryKind" /></xsl:attribute>
 			<xsl:attribute name="targetSystemId"><xsl:value-of select="@targetSystemId" /></xsl:attribute>
 			<xsl:attribute name="targetSystemKind"><xsl:value-of select="@targetSystemKind" /></xsl:attribute>
-			<xsl:for-each select="field">
-			</xsl:for-each>
 			<xsl:apply-templates />
 		</artifact>
 	</xsl:template>
 	<xsl:template
-		match='field[@fieldName="BG_ACTUAL_FIX_TIME"]'>
+		match='ccf:field[@fieldName="BG_ACTUAL_FIX_TIME"]'>
 		<field>
 		    <xsl:attribute name="fieldName">ActualHours</xsl:attribute>
 		    <xsl:attribute name="fieldDisplayName">ActualHours</xsl:attribute>
@@ -49,7 +47,7 @@
 	  	</field>
 	</xsl:template>
 	<xsl:template
-		match='field[@fieldName="BG_ESTIMATED_FIX_TIME"]'>
+		match='ccf:field[@fieldName="BG_ESTIMATED_FIX_TIME"]'>
 		<field>
 		    <xsl:attribute name="fieldName">EstimatedHours</xsl:attribute>
 		    <xsl:attribute name="fieldDisplayName">EstimatedHours</xsl:attribute>
@@ -63,7 +61,7 @@
 	</xsl:template>
 	
 	<xsl:template
-		match='field[@fieldName="BG_BUG_ID"]'>
+		match='ccf:field[@fieldName="BG_BUG_ID"]'>
 		<field>
 		    <xsl:attribute name="fieldName">QC-Id</xsl:attribute>
 		    <xsl:attribute name="fieldDisplayName">QC-Id</xsl:attribute>
@@ -76,7 +74,7 @@
 	  	</field>
 	</xsl:template>
 	<xsl:template
-		match='field[@fieldName="BG_SUMMARY"]'>
+		match='ccf:field[@fieldName="BG_SUMMARY"]'>
 		<field>
 		    <xsl:attribute name="fieldName">Title</xsl:attribute>
 		    <xsl:attribute name="fieldDisplayName">Title</xsl:attribute>
@@ -89,7 +87,7 @@
 	  	</field>
 	</xsl:template>
 	<xsl:template
-		match='field[@fieldName="BG_DESCRIPTION"]'>
+		match='ccf:field[@fieldName="BG_DESCRIPTION"]'>
 		<field>
 		    <xsl:attribute name="fieldName">Description</xsl:attribute>
 		    <xsl:attribute name="fieldDisplayName">Description</xsl:attribute>
@@ -103,7 +101,7 @@
 	</xsl:template>
 
 	<xsl:template
-		match='field[@fieldName="BG_STATUS"]'>
+		match='ccf:field[@fieldName="BG_STATUS"]'>
 		<xsl:variable name="statusValue" as="xs:string" select="." />
 		<field>
 		    <xsl:attribute name="fieldName">Status</xsl:attribute>
@@ -124,7 +122,7 @@
 	</xsl:template>
 
 	 <xsl:template
-		match='field[@fieldName="BG_USER_03"]'>
+		match='ccf:field[@fieldName="BG_USER_03"]'>
 		<xsl:variable name="typeValue" as="xs:string" select="." />
 		<field>
 		    <xsl:attribute name="fieldName">Category</xsl:attribute>
@@ -144,7 +142,7 @@
 		
 
 	 <xsl:template
-		match='field[@fieldName="BG_PRIORITY"]'>
+		match='ccf:field[@fieldName="BG_PRIORITY"]'>
 		<xsl:variable name="priorityValue" as="xs:string"><xsl:value-of select="." /></xsl:variable>
 		<field>
 		    <xsl:attribute name="fieldName">Priority</xsl:attribute>
@@ -163,7 +161,7 @@
 		</field>
 	</xsl:template> 
 	<xsl:template
-		match='field[@fieldName="BG_RESPONSIBLE"]'>
+		match='ccf:field[@fieldName="BG_RESPONSIBLE"]'>
 		<field>
 		    <xsl:attribute name="fieldName">AssignedTo</xsl:attribute>
 		    <xsl:attribute name="fieldDisplayName">AssignedTo</xsl:attribute>
