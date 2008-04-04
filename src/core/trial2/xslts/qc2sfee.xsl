@@ -9,11 +9,11 @@
 -->
 
 <xsl:stylesheet version="2.0"
-	xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns=""
+	xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:ccf="http://ccf.open.collab.net/GenericArtifactV1.0"
 	xmlns:xs="http://www.w3.org/2001/XMLSchema"
 	exclude-result-prefixes="xsl xs">
-	<xsl:template match='/artifact'>
-		<artifact>
+	<xsl:template match='/ccf:artifact'>
+		<artifact xmlns="http://ccf.open.collab.net/GenericArtifactV1.0">
 			<xsl:attribute name="artifactAction"><xsl:value-of select="@artifactAction" /></xsl:attribute>
 			<xsl:attribute name="artifactMode"><xsl:value-of select="@artifactMode" /></xsl:attribute>
 			<xsl:attribute name="artifactType"><xsl:value-of select="@artifactType" /></xsl:attribute>
