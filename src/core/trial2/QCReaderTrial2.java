@@ -122,7 +122,7 @@ public class QCReaderTrial2 extends QCConnectHelper implements
 		isDry=false;
 	}
 	
-	public Object[] readModifiedDefects(String fromTime, String toTime, String sourceArtifactId, String sourceRepositoryId, String sourceRepositoryKind, String sourceSystemId, String sourceSystemKind) {
+	public Object[] readModifiedDefects(String fromTime, String toTime, String sourceArtifactId, String sourceRepositoryId, String sourceRepositoryKind, String sourceSystemId, String sourceSystemKind, String targetRepositoryId, String targetRepositoryKind, String targetSystemId, String targetSystemKind) {
 		// TODO Use the information of the firstTimeImport flag
 		
 		List<Document> dataRows=new ArrayList<Document>();
@@ -130,7 +130,8 @@ public class QCReaderTrial2 extends QCConnectHelper implements
 		
 		try {
 			log.error("The fromTime coming from HQSL DB is:" + fromTime + " and the toTime is" +toTime);
-			defectRows = defectHandler.getChangedDefects(getQcc(), fromTime, toTime, sourceArtifactId, sourceRepositoryId, sourceRepositoryKind, sourceSystemId, sourceSystemKind,null,null,null,null);
+			defectRows = defectHandler.getChangedDefects(this.getQcc(), fromTime, sourceArtifactId, sourceRepositoryId, sourceRepositoryKind, sourceSystemId, sourceSystemKind, targetRepositoryId, targetRepositoryKind, targetSystemId, targetSystemKind);
+
 		} catch (Exception e) {
 			// TODO Throw an exception?
 			log.error("During the artifact retrieval process from QC, an error occured",e);
