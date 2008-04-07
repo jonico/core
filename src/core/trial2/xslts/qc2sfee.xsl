@@ -88,6 +88,7 @@
 	</xsl:template>
 	<xsl:template
 		match='ccf:field[@fieldName="BG_DESCRIPTION"]'>
+		<xsl:variable name="statusValue" as="xs:string" select="." />
 		<field>
 		    <xsl:attribute name="fieldName">Description</xsl:attribute>
 		    <xsl:attribute name="fieldDisplayName">Description</xsl:attribute>
@@ -96,7 +97,7 @@
 		  	<xsl:attribute name="fieldValueHasChanged"><xsl:value-of select="@fieldValueHasChanged" /></xsl:attribute>
 		  	<xsl:attribute name="fieldValueType"><xsl:value-of select="@fieldValueType" /></xsl:attribute>
 		  	<xsl:attribute name="fieldValueIsNull"><xsl:value-of select="@fieldValueIsNull" /></xsl:attribute>
-		  	<xsl:value-of select="."></xsl:value-of>
+		  	<xsl:value-of select="substring-after(substring-before($statusValue,'&lt;/body&gt;'), '&lt;body&gt;')"/>
 	  	</field>
 	</xsl:template>
 
