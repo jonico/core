@@ -99,7 +99,9 @@ public class SFEEEntityService extends SFEEConnectHelper implements
 		String sourceArtifactId = ga.getSourceArtifactId();
 		String sourceRepositoryId = ga.getSourceRepositoryId();
 		String targetRepositoryId = ga.getTargetRepositoryId();
-		
+		if(sourceArtifactId.equalsIgnoreCase("Unknown")){
+			return new Object[]{data};
+		}
 		String targetArtifactID = dbHelper.getTargetArtifactID(sourceArtifactId, sourceRepositoryId, targetRepositoryId);
 		
 		boolean artifactAlreadyCreated = false;
@@ -124,6 +126,9 @@ public class SFEEEntityService extends SFEEConnectHelper implements
 		// check whether there is already an entity in the target system
 		// TODO Changed false to true
 		//String id = SFEEXMLHelper.getSingleValue(data, "Id", true);
+		if (!SFEEGAHelper.containsSingleField(ga, "FolderId")) {
+			SFEEGAHelper.addField(ga, "FolderId", targetRepositoryId, "String");
+		}
 		if(!artifactAlreadyCreated) {
 			// first check all required fields
 			/*
@@ -131,9 +136,6 @@ public class SFEEEntityService extends SFEEConnectHelper implements
 			 * Throw an exception? log.error("required flexFields-element not
 			 * present in artifact: "+data); return null; }
 			 */
-			if (!SFEEGAHelper.containsSingleField(ga, "FolderId")) {
-				SFEEGAHelper.addField(ga, "FolderId", targetRepositoryId, "String");
-			}
 			// NOTE We will not be checking other system's field here
 //			if (!SFEEXMLHelper.containsSingleField(data,
 //					getOtherSystemInSFEETargetFieldname(), true)) {
@@ -185,18 +187,20 @@ public class SFEEEntityService extends SFEEConnectHelper implements
 			// this object is already created, now find out, whether we have to
 			// do an update
 			// check whether last update was done by synchronization user
-			if (!SFEEGAHelper.containsSingleField(ga, "LastModifiedBy")) {
-				// TODO Throw an exception?
-				log
-						.error("required lastModifiedBy-element not present in artifact: "
-								+ data.asXML());
-				return null;
-			}
+//			if (!SFEEGAHelper.containsSingleField(ga, "LastModifiedBy")) {
+//				// TODO Throw an exception?
+//				log
+//						.error("required lastModifiedBy-element not present in artifact: "
+//								+ data.asXML());
+//				return null;
+//			}
 			// Only accept the change if the artifact was created or the change
 			// did not come from the synchronization middleware itself
 			// TODO Due to the update after a delete, this may miss some
 			// artifacts that were just created
-			if (SFEEGAHelper.getSingleValue(ga, "LastModifiedBy").equals(getSynchronizationUser())
+			Object lastModifiedBy = SFEEGAHelper.getSingleValue(ga, "LastModifiedBy");
+			String lastModifiedByStr = lastModifiedBy != null?lastModifiedBy.toString():null;
+			if ((!StringUtils.isEmpty(lastModifiedByStr)) && SFEEGAHelper.getSingleValue(ga, "LastModifiedBy").equals(getSynchronizationUser())
 					&& (!SFEEGAHelper.getSingleValue(ga,
 							"LastModifiedDate").equals(
 									SFEEGAHelper.getSingleValue(ga,
