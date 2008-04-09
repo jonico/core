@@ -24,7 +24,11 @@ public class GenericArtifact {
 	 * their name
 	 */
 	private HashMap<String, List<GenericArtifactField>> fieldNameHashMap = new HashMap<String, List<GenericArtifactField>>();
-	
+	/**
+	 * This is a hash map that indexes all contained attachment elements according to
+	 * their name
+	 */
+	private HashMap<String, List<GenericArtifactAttachment>> attachmentNameHashMap = new HashMap<String, List<GenericArtifactAttachment>>();
 	/**
 	 * 
 	 * Possible values for the artifact mode, "changedFieldsOnly" and "complete"
@@ -66,7 +70,10 @@ public class GenericArtifact {
 	 * This is a list that contains all field element
 	 */
 	private List<GenericArtifactField> allFieldList;
-
+	/**
+	 * This is a list that contains all attachment element
+	 */
+	private List<GenericArtifactAttachment> allAttachmentList;
 	/**
 	 * The value (content) of the artifact, encoded as BASE64 string. The content is
 	 * typically null unless it is an attachment.
@@ -819,6 +826,25 @@ public class GenericArtifact {
 		return genericArtifactField;
 	}
 
+	public GenericArtifactAttachment addNewAttachment(String attachmentName, String attachmentID, String attachmentDescription) {
+		GenericArtifactAttachment genericArtifactAttachment = new GenericArtifactAttachment(attachmentName, attachmentID, attachmentDescription);
+		if( allAttachmentList == null) {
+			allAttachmentList = new ArrayList<GenericArtifactAttachment>();
+		}
+		allAttachmentList.add(genericArtifactAttachment);
+		indexNewAttachmentElement(genericArtifactAttachment.getAttachmentName(), genericArtifactAttachment.getAttachmentType(), genericArtifactAttachment);
+		return genericArtifactAttachment;
+	}
+	
+	public GenericArtifactAttachment addNewAttachment(GenericArtifactAttachment genericArtifactAttachment) {
+		if( allAttachmentList == null) {
+			allAttachmentList = new ArrayList<GenericArtifactAttachment>();
+		}
+		allAttachmentList.add(genericArtifactAttachment);
+		indexNewAttachmentElement(genericArtifactAttachment.getAttachmentName(), genericArtifactAttachment.getAttachmentType(), genericArtifactAttachment);
+		return genericArtifactAttachment;
+	}
+	
 	/**
 	 * Add new field to a number of hash maps to speed up indexing
 	 * 
@@ -873,6 +899,21 @@ public class GenericArtifact {
 		}
 	}
 
+	private void indexNewAttachmentElement(String attachmentName, String attachmentType,
+			GenericArtifactAttachment genericArtifactAttachment) {
+
+		if (attachmentNameHashMap.containsKey(attachmentName)) {
+			attachmentNameHashMap.get(attachmentName).add(genericArtifactAttachment);
+		} else {
+			List<GenericArtifactAttachment> allGenericArtifactAttachmentsWithSameAttachmentNameList = new ArrayList<GenericArtifactAttachment>();
+			allGenericArtifactAttachmentsWithSameAttachmentNameList
+					.add(genericArtifactAttachment);
+			attachmentNameHashMap.put(attachmentName,
+					allGenericArtifactAttachmentsWithSameAttachmentNameList);
+		}
+	}
+
+	
 	/**
 	 * Returns all fields within the generic artifact You may change the
 	 * attributes of the fields but you may not directly add new fields to this
@@ -884,6 +925,9 @@ public class GenericArtifact {
 		return allFieldList;
 	}
 
+	public List<GenericArtifactAttachment> getAllGenericArtifactAttachments() {
+		return allAttachmentList;
+	}
 	/**
 	 * Returns all fields within the generic artifact that have the specified
 	 * field type You may change the attributes of the fields but you may not
