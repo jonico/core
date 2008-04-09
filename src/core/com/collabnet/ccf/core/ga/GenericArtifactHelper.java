@@ -25,6 +25,8 @@ import com.collabnet.ccf.core.ga.GenericArtifact.ArtifactActionValue;
 import com.collabnet.ccf.core.ga.GenericArtifact.ArtifactModeValue;
 import com.collabnet.ccf.core.ga.GenericArtifact.ArtifactTypeValue;
 import com.collabnet.ccf.core.ga.GenericArtifactField.FieldValueTypeValue;
+import com.collabnet.ccf.core.ga.GenericArtifactAttachment;
+import com.collabnet.ccf.core.ga.GenericArtifactAttachment.AttachmentValueTypeValue;
 
 /**
  * 
@@ -124,6 +126,45 @@ public class GenericArtifactHelper {
 	private static final String FIELD_VALUE_HAS_CHANGED_TRUE = "true";
 	private static final String FIELD_VALUE_HAS_CHANGED_FALSE = "false";
 
+	//for atachments
+	private static final String ARTIFACT_ATTACHMENT_ELEMENT_NAME = "attachment";
+	private static final XPath attachmentSelector = new DefaultXPath(
+			CCF_NAMESPACE_PREFIX + ":" + ARTIFACT_ATTACHMENT_ELEMENT_NAME);
+
+	private static final String ATTACHMENT_ACTION = "attachmentAction";
+	private static final String ATTACHMENT_ACTION_CREATE = "create";
+	private static final String ATTACHMENT_ACTION_DELETE = "delete";
+	private static final String ATTACHMENT_ACTION_RENAME = "rename";
+	private static final String ATTACHMENT_ACTION_UNKNOWN = "unknown";
+	
+	private static final String ATTACHMENT_NAME = "attachmentName";
+	private static final String ATTACHMENT_ID = "attachmentId";
+	private static final String ATTACHMENT_DESCRIPTION = "attachmentDescription";
+	private static final String ATTACHMENT_SIZE = "attachmentSize";
+	private static final String ATTACHMENT_SOURCE_URL = "attachmentSourceUrl";
+	
+	private static final String ATTACHMENT_CONTENT_TYPE = "attachmentContentType";
+	private static final String ATTACHMENT_CONTENT_TYPE_DATA = "data";
+	private static final String ATTACHMENT_CONTENT_TYPE_LINK = "link";
+	private static final String ATTACHMENT_CONTENT_TYPE_EMPTY = "empty";
+	private static final String ATTACHMENT_CONTENT_TYPE_UNKNOWN = "unknown";
+	
+	private static final String ATTACHMENT_TYPE = "attachmentType";
+	private static final String ATTACHMENT_VALUE_TYPE_BASE64STRING = "Base64String";
+	private static final String ATTACHMENT_VALUE_TYPE_UNKNOWN = "Unknown";
+	
+	private static final String ATTACHMENT_VALUE_IS_NULL = "attachmentValueIsNull";
+	private static final String ATTACHMENT_VALUE_TYPE = "attachmentValueType";
+	
+	private static final String ATTACHMENT_VALUE_IS_NULL_TRUE = "true";
+	private static final String ATTACHMENT_VALUE_IS_NULL_FALSE = "false";
+	private static final String ATTACHMENT_VALUE_HAS_CHANGED = "attachmentValueHasChanged";
+	private static final String ATTACHMENT_VALUE_HAS_CHANGED_TRUE = "true";
+	private static final String ATTACHMENT_VALUE_HAS_CHANGED_FALSE = "false";
+
+	
+	
+	
 	// translation tables
 	private static HashMap<String, GenericArtifact.ArtifactModeValue> artifactModeHashMap = new HashMap<String, GenericArtifact.ArtifactModeValue>(
 			2);
@@ -131,6 +172,7 @@ public class GenericArtifactHelper {
 			4);
 	private static HashMap<String, GenericArtifact.ArtifactTypeValue> artifactTypeHashMap = new HashMap<String, GenericArtifact.ArtifactTypeValue>(
 			3);
+	
 	private static HashMap<String, GenericArtifactField.FieldActionValue> fieldActionHashMap = new HashMap<String, GenericArtifactField.FieldActionValue>(
 			3);
 	private static HashMap<String, GenericArtifactField.FieldValueTypeValue> fieldValueTypeHashMap = new HashMap<String, GenericArtifactField.FieldValueTypeValue>(
@@ -138,6 +180,17 @@ public class GenericArtifactHelper {
 	private static HashMap<String, Boolean> fieldValueIsNullHashMap = new HashMap<String, Boolean>(
 			2);
 	private static HashMap<String, Boolean> fieldValueHasChangedHashMap = new HashMap<String, Boolean>(
+			2);
+	
+	private static HashMap<String, GenericArtifactAttachment.AttachmentActionValue> attachmentActionHashMap = new HashMap<String, GenericArtifactAttachment.AttachmentActionValue>(
+			4);
+	private static HashMap<String, GenericArtifactAttachment.AttachmentContentTypeValue> attachmentContentTypeHashMap = new HashMap<String, GenericArtifactAttachment.AttachmentContentTypeValue>(
+			4);
+	private static HashMap<String, GenericArtifactAttachment.AttachmentValueTypeValue> attachmentValueTypeHashMap = new HashMap<String, GenericArtifactAttachment.AttachmentValueTypeValue>(
+			2);
+	private static HashMap<String, Boolean> attachmentValueIsNullHashMap = new HashMap<String, Boolean>(
+			2);
+	private static HashMap<String, Boolean> attachmentValueHasChangedHashMap = new HashMap<String, Boolean>(
 			2);
 
 	// populate translation tables
@@ -213,6 +266,46 @@ public class GenericArtifactHelper {
 
 		// set CCF namespace in order to select nodes properly
 		fieldSelector.setNamespaceURIs(ccfNamespaceMap);
+		
+		
+		// for attachments
+		attachmentActionHashMap.put(ATTACHMENT_ACTION_CREATE,
+				GenericArtifactAttachment.AttachmentActionValue.CREATE);
+		attachmentActionHashMap.put(ATTACHMENT_ACTION_RENAME,
+				GenericArtifactAttachment.AttachmentActionValue.RENAME);
+		attachmentActionHashMap.put(ATTACHMENT_ACTION_DELETE,
+				GenericArtifactAttachment.AttachmentActionValue.DELETE);
+		attachmentActionHashMap.put(ATTACHMENT_ACTION_UNKNOWN,
+				GenericArtifactAttachment.AttachmentActionValue.UNKNOWN);
+
+		attachmentContentTypeHashMap.put(ATTACHMENT_CONTENT_TYPE_DATA,
+				GenericArtifactAttachment.AttachmentContentTypeValue.DATA);
+		attachmentContentTypeHashMap.put(ATTACHMENT_CONTENT_TYPE_LINK,
+				GenericArtifactAttachment.AttachmentContentTypeValue.LINK);
+		attachmentContentTypeHashMap.put(ATTACHMENT_CONTENT_TYPE_EMPTY,
+				GenericArtifactAttachment.AttachmentContentTypeValue.EMPTY);
+		attachmentContentTypeHashMap.put(ATTACHMENT_CONTENT_TYPE_UNKNOWN,
+				GenericArtifactAttachment.AttachmentContentTypeValue.UNKNOWN);
+
+		
+		attachmentValueTypeHashMap.put(ATTACHMENT_VALUE_TYPE_BASE64STRING,
+				GenericArtifactAttachment.AttachmentValueTypeValue.BASE64STRING);
+		attachmentValueTypeHashMap.put(ATTACHMENT_VALUE_TYPE_UNKNOWN,
+				GenericArtifactAttachment.AttachmentValueTypeValue.UNKNOWN);
+		
+		attachmentValueIsNullHashMap.put(ATTACHMENT_VALUE_IS_NULL_TRUE, Boolean.TRUE);
+		attachmentValueIsNullHashMap.put(ATTACHMENT_VALUE_IS_NULL_FALSE, Boolean.FALSE);
+
+		attachmentValueHasChangedHashMap.put(ATTACHMENT_VALUE_HAS_CHANGED_TRUE,
+				Boolean.TRUE);
+		attachmentValueHasChangedHashMap.put(ATTACHMENT_VALUE_HAS_CHANGED_FALSE,
+				Boolean.FALSE);
+
+		// set CCF namespace in order to select nodes properly
+		attachmentSelector.setNamespaceURIs(ccfNamespaceMap);
+		
+		
+		
 	}
 
 	/**
@@ -345,7 +438,58 @@ public class GenericArtifactHelper {
 						+ fieldValueType + " because: " + e.getMessage());
 			}
 		}
+		/*
+		//now add attachments
+		
+		List<Element> attachments = getAllAttachmentElements(root);
+		for (Element attachment : attachments) {
+			GenericArtifactAttachment.AttachmentActionValue attachmentAction = translateAttributeValue(
+					attachment, ATTACHMENT_ACTION, attachmentActionHashMap);
+			GenericArtifactAttachment.AttachmentContentTypeValue attachmentContentType = translateAttributeValue(
+					attachment, ATTACHMENT_CONTENT_TYPE, attachmentContentTypeHashMap);
+			GenericArtifactAttachment.AttachmentValueTypeValue attachmentValueType = translateAttributeValue(
+					attachment, ATTACHMENT_VALUE_TYPE, attachmentValueTypeHashMap);
+			String attachmentName = getAttributeValue(attachment, ATTACHMENT_NAME);
+			String attachmentId = getAttributeValue(attachment, ATTACHMENT_ID);
+			String attachmentDescription = getAttributeValue(attachment, ATTACHMENT_DESCRIPTION);
+			String attachmentSize = getAttributeValue(attachment, ATTACHMENT_SIZE);
+			String attachmentType = getAttributeValue(attachment, ATTACHMENT_TYPE);
+			String attachmentSourceUrl = getAttributeValue(attachment, ATTACHMENT_SOURCE_URL);
+			Boolean attachmentValueIsNull = translateAttributeValue(attachment,
+					ATTACHMENT_VALUE_IS_NULL, attachmentValueIsNullHashMap);
+			Boolean attachmentValueHasChanged = translateAttributeValue(attachment,
+					ATTACHMENT_VALUE_HAS_CHANGED, attachmentValueHasChangedHashMap);
+			String attachmentValue = getValue(attachment);
 
+			GenericArtifactAttachment genericArtifactAttachment = new GenericArtifactAttachment();
+			genericArtifactAttachment.setAttachmentName(attachmentName);
+			genericArtifactAttachment.setAttachmentId(attachmentId);
+			genericArtifactAttachment.setAttachmentSize(Integer.parseInt(attachmentSize));
+			genericArtifactAttachment.setAttachmentSourceUrl(attachmentName);
+			genericArtifactAttachment.setAttachmentDescription(attachmentDescription);
+			
+			genericArtifactAttachment.setAttachmentContentType(attachmentContentType);
+			genericArtifactAttachment.setAttachmentAction(attachmentAction);
+			genericArtifactAttachment.setAttachmentType(attachmentType);
+			genericArtifactAttachment.setAttachmentValueType(attachmentValueType);
+			genericArtifactAttachment.setAttachmentValueHasChanged(attachmentValueHasChanged);
+			
+			
+			try {
+				convertAttachmentValue(genericArtifactAttachment, attachmentValueIsNull,
+						attachmentValueType, attachmentValue);
+			} catch (ParseException e) {
+				throw new GenericArtifactParsingException("Value " + attachmentValue
+						+ " for field-element with name " + attachmentName
+						+ " and field type " + attachmentType
+						+ " was not convertible to an instance of value type "
+						+ attachmentValueType + " because: " + e.getMessage());
+			}
+		}
+		*/
+		
+		
+		
 		return genericArtifact;
 	}
 
@@ -420,6 +564,43 @@ public class GenericArtifactHelper {
 	}
 
 	/**
+	 * Convert the string value
+	 * 
+	 * @param genericArtifactField
+	 *            field for which to set the new value
+	 * @param fieldValueIsNull
+	 *            if true, the field's value should be null
+	 * @param fieldValueType
+	 *            type of the field's value
+	 * @param value
+	 *            String encoded value out of XML element
+	 * @throws ParseException
+	 */
+	private static void convertAttachmentValue(
+			GenericArtifactAttachment genericArtifactAttachment,
+			Boolean attachmentValueIsNull, AttachmentValueTypeValue attachmentValueType,
+			String value) throws ParseException {
+		// TODO Think carefully about all type conversions
+		if (attachmentValueIsNull) {
+			genericArtifactAttachment.setAttachmentData(null);
+		} else
+			switch (attachmentValueType) {
+			case BASE64STRING: {
+				// TODO Better conversion?
+				genericArtifactAttachment.setAttachmentData(value.getBytes());
+				break;
+			}
+			case UNKNOWN: {
+				// TODO Better conversion?
+				genericArtifactAttachment.setAttachmentData(null);
+				break;
+			}
+			}
+	}
+
+	
+	
+	/**
 	 * Extracts all field from the
 	 * 
 	 * @param root
@@ -436,7 +617,24 @@ public class GenericArtifactHelper {
 		else
 			return fieldElements;
 	}
-
+	/**
+	 * Extracts all attachment from the
+	 * 
+	 * @param root
+	 *            generic artifact root-element
+	 * @return a list with all attachment-elements of the root-element
+	 */
+	@SuppressWarnings("unchecked")
+	private static List<Element> getAllAttachmentElements(Element root) {
+		// our XPath-Expression matches only elements, so this conversion is
+		// type-safe
+		List<Element> attachmentElements = attachmentSelector.selectNodes(root);
+		if (attachmentElements == null)
+			return new ArrayList<Element>();
+		else
+			return attachmentElements;
+	}
+	
 	/**
 	 * Retrieves the value of the specified attribute of the supplied XML
 	 * element and translate it from its String representation to type T by
@@ -721,6 +919,83 @@ public class GenericArtifactHelper {
 					genericArtifactField.getFieldValueType());
 		}
 		
+		if(genericArtifact.getAllGenericArtifactAttachments()!=null) {
+		// now add attachments
+		for (GenericArtifactAttachment genericArtifactAttachment : genericArtifact
+				.getAllGenericArtifactAttachments()) {
+			Element attachment = addElement(root, ARTIFACT_ATTACHMENT_ELEMENT_NAME,
+					CCF_ARTIFACT_NAMESPACE);
+			switch (genericArtifactAttachment.getAttachmentAction()) {
+			case CREATE: {
+				addAttribute(attachment, ATTACHMENT_ACTION, ATTACHMENT_ACTION_CREATE);
+				break;
+			}
+			case RENAME: {
+				addAttribute(attachment, ATTACHMENT_ACTION, ATTACHMENT_ACTION_RENAME);
+				break;
+			}
+			case DELETE: {
+				addAttribute(attachment, ATTACHMENT_ACTION, ATTACHMENT_ACTION_DELETE);
+				break;
+			}
+			case UNKNOWN: {
+				addAttribute(attachment, ATTACHMENT_ACTION, ATTACHMENT_ACTION_UNKNOWN);
+				break;
+			}
+			default: {
+				throw new GenericArtifactParsingException(
+						"Non valid value for field-attribute " + ATTACHMENT_ACTION
+								+ " specified.");
+			}
+			}
+			
+			switch (genericArtifactAttachment.getAttachmentContentType()) {
+			case DATA: {
+				addAttribute(attachment, ATTACHMENT_CONTENT_TYPE, ATTACHMENT_CONTENT_TYPE_DATA);
+				break;
+			}
+			case LINK: {
+				addAttribute(attachment, ATTACHMENT_CONTENT_TYPE, ATTACHMENT_CONTENT_TYPE_LINK);
+				break;
+			}
+			case EMPTY: {
+				addAttribute(attachment, ATTACHMENT_CONTENT_TYPE, ATTACHMENT_CONTENT_TYPE_EMPTY);
+				break;
+			}
+			case UNKNOWN: {
+				addAttribute(attachment, ATTACHMENT_CONTENT_TYPE, ATTACHMENT_CONTENT_TYPE_UNKNOWN);
+				break;
+			}
+			default: {
+				throw new GenericArtifactParsingException(
+						"Non valid value for field-attribute " + ATTACHMENT_CONTENT_TYPE
+								+ " specified.");
+			}
+			}
+
+			addAttribute(attachment, ATTACHMENT_NAME, genericArtifactAttachment.getAttachmentName());
+			addAttribute(attachment, ATTACHMENT_ID, genericArtifactAttachment.getAttachmentId());
+			addAttribute(attachment, ATTACHMENT_SIZE, String.valueOf(genericArtifactAttachment.getAttachmentSize()));
+			addAttribute(attachment, ATTACHMENT_DESCRIPTION, genericArtifactAttachment.getAttachmentDescription());
+			addAttribute(attachment, ATTACHMENT_SOURCE_URL, genericArtifactAttachment.getAttachmentSourceUrl());
+			
+			addAttribute(attachment, ATTACHMENT_TYPE, genericArtifactAttachment.getAttachmentType());
+			if (genericArtifactAttachment.getAttachmentValueHasChanged()) {
+				addAttribute(attachment, ATTACHMENT_VALUE_HAS_CHANGED,
+						ATTACHMENT_VALUE_HAS_CHANGED_TRUE);
+			} else {
+				addAttribute(attachment, ATTACHMENT_VALUE_HAS_CHANGED,
+						ATTACHMENT_VALUE_HAS_CHANGED_FALSE);
+			}
+
+			setAttachmentValue(attachment, genericArtifactAttachment.getAttachmentData(),
+					genericArtifactAttachment.getAttachmentValueType());
+		}
+		}
+
+		
+		
+		
 		return document;
 	}
 
@@ -876,6 +1151,33 @@ public class GenericArtifactHelper {
 		}
 	}
 
+	private static void setAttachmentValue(Element attachment, byte[] attachmentValue,
+			AttachmentValueTypeValue attachmentValueType)
+			throws GenericArtifactParsingException {
+		// TODO Carefully specify conversion for every single type
+
+		switch (attachmentValueType) {
+		case BASE64STRING: {
+			addAttribute(attachment, ATTACHMENT_VALUE_TYPE, ATTACHMENT_VALUE_TYPE_BASE64STRING);
+			break;
+		}
+		case UNKNOWN: {
+			addAttribute(attachment, ATTACHMENT_VALUE_TYPE, ATTACHMENT_VALUE_TYPE_UNKNOWN);
+			break;
+		}
+		
+		}
+		if (attachmentValue == null) {
+			addAttribute(attachment, ATTACHMENT_VALUE_IS_NULL, ATTACHMENT_VALUE_IS_NULL_TRUE);
+		} else {
+			addAttribute(attachment, ATTACHMENT_VALUE_IS_NULL, ATTACHMENT_VALUE_IS_NULL_FALSE);
+			setValue(attachment, new String(attachmentValue), true);
+		}
+	}
+
+	
+	
+	
 	/**
 	 * Adds an attribute with the supplied value to the supplied element
 	 * 
