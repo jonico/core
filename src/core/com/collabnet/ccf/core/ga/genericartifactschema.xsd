@@ -44,6 +44,68 @@
 						</xs:attribute>
 					</xs:complexType>
 				</xs:element>
+				<xs:element name="attachment" minOccurs="0" maxOccurs="unbounded">
+					<xs:annotation>
+						<xs:documentation>A attachment has a name and a attachment id and description. The content of the attachment element is always encoded as BASE64STRING.</xs:documentation>
+					</xs:annotation>
+					<xs:complexType>
+						<xs:attribute name="attachmentName" type="xs:string" use="required">
+							<xs:annotation>
+								<xs:documentation>This attribute contains the name of the attachment</xs:documentation>
+							</xs:annotation>
+						</xs:attribute>
+						<xs:attribute name="attachmentId" type="xs:string" use="required">
+							<xs:annotation>
+								<xs:documentation>This attribute contains the id of the attachment</xs:documentation>
+							</xs:annotation>
+						</xs:attribute>
+						<xs:attribute name="attachmentSize" type="xs:long" use="required">
+							<xs:annotation>
+								<xs:documentation>This attribute contains the size of the attachment</xs:documentation>
+							</xs:annotation>
+						</xs:attribute>
+						<xs:attribute name="attachmentDescription" type="xs:string" use="required">
+							<xs:annotation>
+								<xs:documentation>This attribute contains the Description of the attachment</xs:documentation>
+							</xs:annotation>
+						</xs:attribute>
+						<xs:attribute name="attachmentContentType" type="xs:string" use="required">
+							<xs:annotation>
+								<xs:documentation>This attribute contains the ContentType of the attachment. Valid values are "DATA", "LINK" and "EMPTY".</xs:documentation>
+							</xs:annotation>
+						</xs:attribute>
+						<xs:attribute name="attachmentSourceUrl" type="xs:string" use="required">
+							<xs:annotation>
+								<xs:documentation>This attribute contains the SourceUrl of the attachment.</xs:documentation>
+							</xs:annotation>
+						</xs:attribute>
+						<xs:attribute name="attachmentType" type="xs:string" use="required">
+							<xs:annotation>
+								<xs:documentation>This attribute contains the type of the attachment. This is not the type of the attachment's value but a mechanism to differentiate different artifact properties with the same name. Values might be "mandatoryattachment", "flexattachment", "integrationData" or just a plain number.</xs:documentation>
+							</xs:annotation>
+						</xs:attribute>
+						<xs:attribute name="attachmentValueHasChanged" type="xs:string" use="required">
+							<xs:annotation>
+								<xs:documentation>This attribute may have the values "true" or "false" to state whether this property has been changed since the last update. This attribute can be used by the target system as a hint which attachments to update.</xs:documentation>
+							</xs:annotation>
+						</xs:attribute>
+						<xs:attribute name="attachmentAction" type="xs:string" use="required">
+							<xs:annotation>
+								<xs:documentation>This attribute determines whether the content of the value tag should be "create"ed, "rename"d, or "delete"d. Valid values are "create", "rename" and "delete".</xs:documentation>
+							</xs:annotation>
+						</xs:attribute>
+						<xs:attribute name="attachmentValueType" use="required">
+							<xs:annotation>
+								<xs:documentation>This element contains the type of the value of the surrounding attachment element. Currently supported type is Base64String.</xs:documentation>
+							</xs:annotation>
+						</xs:attribute>
+						<xs:attribute name="attachmentValueisNull" type="xs:string" use="required">
+							<xs:annotation>
+								<xs:documentation>This attribute may have the values "true" or "false" to differentiate between an empty string and a null value for the content of the attachment element.</xs:documentation>
+							</xs:annotation>
+						</xs:attribute>
+					</xs:complexType>
+				</xs:element>
 			</xs:sequence>
 			<xs:attribute name="artifactMode" type="xs:string" use="required">
 				<xs:annotation>
