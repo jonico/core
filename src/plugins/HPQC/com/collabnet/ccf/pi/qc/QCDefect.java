@@ -7,10 +7,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Date;
 
+import com.collabnet.ccf.core.ga.GenericArtifactAttachment;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.pi.qc.api.IBug;
 import com.collabnet.ccf.pi.qc.api.IConnection;
+import com.collabnet.ccf.pi.qc.api.IFactory;
 import com.collabnet.ccf.pi.qc.api.dcom.Bug;
 import com.jacob.com.Dispatch;
 
@@ -41,8 +43,14 @@ public class QCDefect extends Bug implements IQCDefect {
 	}
 
 	public GenericArtifact getGenericArtifactObject(IConnection qcc) {
+		GenericArtifact dummyArtifact = new GenericArtifact();
+		return dummyArtifact;
+	}
+	
+	public GenericArtifact getGenericArtifactObject(IConnection qcc, String actionId, String entityId, List<String> attachOperation) {
 		genericArtifact = QCConfigHelper.getSchemaFields(qcc);
-
+		if(attachOperation!=null)
+			genericArtifact = QCConfigHelper.getSchemaAttachments(qcc, genericArtifact, actionId, entityId, attachOperation.get(2));
 		List<GenericArtifactField> allFields = genericArtifact.getAllGenericArtifactFields();
 		int noOfFields = allFields.size();
 		for(int cnt = 0 ; cnt < noOfFields ; cnt++) {
@@ -88,7 +96,32 @@ public class QCDefect extends Bug implements IQCDefect {
 			}
 			
 		}
- 	    
+		if(attachOperation!=null) {
+		// filling the values for attachment
+		IFactory bugFactory = qcc.getBugFactory();
+		IBug bug = bugFactory.getItem(entityId);
+				
+		GenericArtifactAttachment thisAttachment = genericArtifact.getAllGenericArtifactAttachments().get(0);
+		
+		if(thisAttachment.getAttachmentContentType().equals(GenericArtifactAttachment.AttachmentContentTypeValue.DATA)) {
+			byte data[] = bug.retrieveAttachmentData(attachOperation.get(2));
+			System.out.println("************************************************");
+			for (byte b : data) {
+				System.out.print((char) b);
+			}
+			System.out.println("************************************************");
+			long attachmentSize = (long) data.length;
+			thisAttachment.setAttachmentSize(attachmentSize);
+			thisAttachment.setRawAttachmentData(data);
+			thisAttachment.setAttachmentSourceUrl("VALUE_UNKNOWN");
+		}
+		else {
+			thisAttachment.setAttachmentSourceUrl(thisAttachment.getAttachmentName());
+			thisAttachment.setAttachmentSize(0);
+			//genericArtifactAttachment.setRawAttachmentData(null);
+		}
+		}
+		
 		return genericArtifact;
 	
 	}
