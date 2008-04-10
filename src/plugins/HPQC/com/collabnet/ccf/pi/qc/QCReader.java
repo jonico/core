@@ -107,7 +107,7 @@ public class QCReader extends QCConnectHelper implements
 		
 		try {
 			log.error("The transactionId coming from HQSL DB is:" + transactionId);
-			defectRows = defectHandler.getChangedDefects(this.getQcc(), transactionId, sourceArtifactId, sourceRepositoryId, sourceRepositoryKind, sourceSystemId, sourceSystemKind, targetRepositoryId, targetRepositoryKind, targetSystemId, targetSystemKind);
+			defectRows = defectHandler.getChangedDefects(this.getQcc(), getUserName(), transactionId, sourceArtifactId, sourceRepositoryId, sourceRepositoryKind, sourceSystemId, sourceSystemKind, targetRepositoryId, targetRepositoryKind, targetSystemId, targetSystemKind);
 		} catch (Exception e) {
 			// TODO Throw an exception?
 			log.error("During the artifact retrieval process from QC, an error occured",e);
@@ -177,6 +177,9 @@ public class QCReader extends QCConnectHelper implements
 		
 		defectHandler = new QCDefectHandler();
 	}
+	public String getUserName() {
+		return super.getUserName();		
+	}
 	public GenericArtifact populateRequiredFields(GenericArtifact emptyGenericArtifact) {
 		
 		
@@ -212,6 +215,7 @@ public class QCReader extends QCConnectHelper implements
 			}
 		catch(Exception e) {
 			log.error("Exception while parsing the string into Date"+e);
+			//throw new RuntimeException(e);
 		}
 		return fromDateInTimestamp;
 	}
@@ -227,6 +231,7 @@ public class QCReader extends QCConnectHelper implements
 		}
 		catch(Exception e) {
 			log.error("Exception while parsing the string into Date"+e);
+			//throw new RuntimeException(e);
 		}
 		return finalString;		
 	}
@@ -263,6 +268,7 @@ public class QCReader extends QCConnectHelper implements
 		}
 		catch(Exception e) {
 			log.error("Exception while executing the UPDATE Query in QCReader:"+e);
+			//throw new RuntimeException(e);
 		}
 		if(rs==null) return false;	
 		return status;
