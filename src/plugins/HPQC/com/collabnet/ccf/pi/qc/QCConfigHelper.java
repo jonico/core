@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.collabnet.ccf.core.ga.GenericArtifact;
+import com.collabnet.ccf.core.ga.GenericArtifactAttachment;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.pi.qc.api.ICommand;
 import com.collabnet.ccf.pi.qc.api.IConnection;
@@ -167,6 +168,28 @@ public class QCConfigHelper {
 		}
 
 		return genericArtifact;
+	}
+	
+	
+	public static GenericArtifact getSchemaAttachments(IConnection qcc, GenericArtifact genericArtifact, String actionId, String entityId, String attachmentName) {
+		
+		GenericArtifactAttachment attachment;
+		List<String> attachmentIdAndType = QCDefectHandler.getFromTable(qcc, entityId, attachmentName); 
+		if(attachmentIdAndType!=null) {
+			String attachmentId = attachmentIdAndType.get(0); // CR_REF_ID
+			String attachmentContentType = attachmentIdAndType.get(1); // CR_REF_TYPE
+			String attachmentDescription = attachmentIdAndType.get(2); // CR_DESCRIPTION
+			
+			attachment = genericArtifact.addNewAttachment(attachmentName, attachmentId, attachmentDescription);
+			attachment.setAttachmentAction(GenericArtifactAttachment.AttachmentActionValue.CREATE);
+			if(attachmentContentType.equals("File"))
+				attachment.setAttachmentContentType(GenericArtifactAttachment.AttachmentContentTypeValue.DATA);
+			else
+				attachment.setAttachmentContentType(GenericArtifactAttachment.AttachmentContentTypeValue.LINK);
+		}
+		
+		return genericArtifact;
+		
 	}
 
 }
