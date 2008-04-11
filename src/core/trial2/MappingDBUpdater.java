@@ -5,6 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.text.DateFormat;
 import java.text.ParseException;
+import java.util.Date;
 import java.util.List;
 
 import org.dom4j.Document;
@@ -43,7 +44,13 @@ public class MappingDBUpdater implements IDataProcessor{
 			String sourceArtifactID = ga.getSourceArtifactId();
 			String targetArtifactID = ga.getTargetArtifactId();
 			java.util.Date lastModifiedDate = null;
-			lastModifiedDate = DateUtil.parse(lastModifiedDateString);
+			if(lastModifiedDateString.equalsIgnoreCase("Unknown")){
+				lastModifiedDate = new Date();
+				return new Object[]{};
+			}
+			else {
+				lastModifiedDate = DateUtil.parse(lastModifiedDateString);
+			}
 			java.sql.Timestamp time = new java.sql.Timestamp(lastModifiedDate.getTime());
 			java.sql.Date sqlDate = new java.sql.Date(lastModifiedDate.getTime());
 			PreparedStatement pstmt = null;;
@@ -60,9 +67,9 @@ public class MappingDBUpdater implements IDataProcessor{
 				pstmt.setString(4, sourceArtifactID);
 				pstmt.setString(5, targetArtifactID);
 				int numRecordsAffected = pstmt.executeUpdate();
-				if(numRecordsAffected != 1){
+				if(numRecordsAffected > 1){
 					dbConnection.rollback();
-					throw new RuntimeException("How come I am updating two repository mapping....?");
+					throw new RuntimeException("How come I am updating two repository mapping....?"+numRecordsAffected);
 				}
 				else{
 					dbConnection.commit();
