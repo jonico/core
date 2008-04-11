@@ -50,6 +50,7 @@ public class GenericArtifactHelper {
 
 	private static final String ARTIFACT_ACTION = "artifactAction";
 	private static final String ARTIFACT_LAST_MODIFIED_DATE = "artifactLastModifiedDate";
+	private static final String ARTIFACT_LAST_READ_TRANSACTION_ID = "artifactLastReadTransactionId";
 	private static final String ARTIFACT_MODE = "artifactMode";
 	private static final String ARTIFACT_TYPE = "artifactType";
 	private static final String ARTIFACT_VERSION = "artifactVersion";
@@ -334,6 +335,8 @@ public class GenericArtifactHelper {
 
 		genericArtifact.setArtifactLastModifiedDate(getAttributeValue(root,
 				ARTIFACT_LAST_MODIFIED_DATE));
+		genericArtifact.setLastReadTransactionId(getAttributeValue(root,
+				ARTIFACT_LAST_READ_TRANSACTION_ID));
 
 		ArtifactModeValue artifactMode = translateAttributeValue(root,
 				ARTIFACT_MODE, artifactModeHashMap);
@@ -439,10 +442,11 @@ public class GenericArtifactHelper {
 						+ fieldValueType + " because: " + e.getMessage());
 			}
 		}
-		/*
+		
 		//now add attachments
 		
 		List<Element> attachments = getAllAttachmentElements(root);
+		if(attachments!=null) {
 		for (Element attachment : attachments) {
 			GenericArtifactAttachment.AttachmentActionValue attachmentAction = translateAttributeValue(
 					attachment, ATTACHMENT_ACTION, attachmentActionHashMap);
@@ -452,7 +456,7 @@ public class GenericArtifactHelper {
 					attachment, ATTACHMENT_VALUE_TYPE, attachmentValueTypeHashMap);
 			String attachmentName = getAttributeValue(attachment, ATTACHMENT_NAME);
 			String attachmentId = getAttributeValue(attachment, ATTACHMENT_ID);
-			String attachmentDescription = getAttributeValue(attachment, ATTACHMENT_DESCRIPTION);
+			//String attachmentDescription = getAttributeValue(attachment, ATTACHMENT_DESCRIPTION);
 			String attachmentSize = getAttributeValue(attachment, ATTACHMENT_SIZE);
 			String attachmentType = getAttributeValue(attachment, ATTACHMENT_TYPE);
 			String attachmentMimeType = getAttributeValue(attachment, ATTACHMENT_MIME_TYPE);
@@ -463,13 +467,8 @@ public class GenericArtifactHelper {
 					ATTACHMENT_VALUE_HAS_CHANGED, attachmentValueHasChangedHashMap);
 			String attachmentValue = getValue(attachment);
 
-			GenericArtifactAttachment genericArtifactAttachment = new GenericArtifactAttachment();
-			genericArtifactAttachment.setAttachmentName(attachmentName);
-			genericArtifactAttachment.setAttachmentId(attachmentId);
-			genericArtifactAttachment.setAttachmentSize(Integer.parseInt(attachmentSize));
-			genericArtifactAttachment.setAttachmentSourceUrl(attachmentName);
-			genericArtifactAttachment.setAttachmentDescription(attachmentDescription);
-			
+			GenericArtifactAttachment genericArtifactAttachment = genericArtifact.addNewAttachment(attachmentName, attachmentId, "VALUE_UNKNOWN");
+			//genericArtifactAttachment.setAttachmentDescription(attachmentDescription);
 			genericArtifactAttachment.setAttachmentContentType(attachmentContentType);
 			genericArtifactAttachment.setAttachmentAction(attachmentAction);
 			genericArtifactAttachment.setAttachmentType(attachmentType);
@@ -477,10 +476,18 @@ public class GenericArtifactHelper {
 			genericArtifactAttachment.setAttachmentValueHasChanged(attachmentValueHasChanged);
 			genericArtifactAttachment.setMimeType(attachmentMimeType);
 			
+			if(attachmentContentType.equals(GenericArtifactAttachment.AttachmentContentTypeValue.DATA)) {
+				genericArtifactAttachment.setAttachmentSize(Long.parseLong(attachmentSize));
+				genericArtifactAttachment.setAttachmentSourceUrl("VALUE_UNKNOWN");
+			}
+			else {
+				genericArtifactAttachment.setAttachmentSourceUrl(attachmentName);
+				genericArtifactAttachment.setAttachmentSize(0);
+			}
 			
 			try {
 				convertAttachmentValue(genericArtifactAttachment, attachmentValueIsNull,
-						attachmentValueType, attachmentValue);
+						attachmentValueType, attachmentValue, attachmentContentType);
 			} catch (ParseException e) {
 				throw new GenericArtifactParsingException("Value " + attachmentValue
 						+ " for field-element with name " + attachmentName
@@ -489,9 +496,7 @@ public class GenericArtifactHelper {
 						+ attachmentValueType + " because: " + e.getMessage());
 			}
 		}
-		*/
-		
-		
+		}
 		
 		return genericArtifact;
 	}
@@ -563,6 +568,10 @@ public class GenericArtifactHelper {
 				genericArtifactField.setFieldValue(new String(value));
 				break;
 			}
+			case MULTI_SELECT_LIST: {
+				genericArtifactField.setFieldValue(new String(value));
+				break;
+			}
 			}
 	}
 
@@ -582,7 +591,8 @@ public class GenericArtifactHelper {
 	private static void convertAttachmentValue(
 			GenericArtifactAttachment genericArtifactAttachment,
 			Boolean attachmentValueIsNull, AttachmentValueTypeValue attachmentValueType,
-			String value) throws ParseException {
+			String value, 
+			GenericArtifactAttachment.AttachmentContentTypeValue attachmentContentType) throws ParseException {
 		// TODO Think carefully about all type conversions
 		if (attachmentValueIsNull) {
 			genericArtifactAttachment.setAttachmentData(null);
@@ -590,7 +600,10 @@ public class GenericArtifactHelper {
 			switch (attachmentValueType) {
 			case BASE64STRING: {
 				// TODO Better conversion?
-				genericArtifactAttachment.setAttachmentData(value.getBytes());
+				if(attachmentContentType.equals(GenericArtifactAttachment.AttachmentContentTypeValue.DATA))
+					genericArtifactAttachment.setAttachmentData(value.getBytes());
+				else
+					genericArtifactAttachment.setAttachmentData(null);
 				break;
 			}
 			case UNKNOWN: {
@@ -816,6 +829,8 @@ public class GenericArtifactHelper {
 
 		addAttribute(root, ARTIFACT_LAST_MODIFIED_DATE, genericArtifact
 				.getArtifactLastModifiedDate());
+		addAttribute(root, ARTIFACT_LAST_READ_TRANSACTION_ID, genericArtifact
+				.getLastReadTransactionId());
 		addAttribute(root, ARTIFACT_VERSION, genericArtifact
 				.getArtifactVersion());
 		addAttribute(root, CONFLICT_RESOLUTION_POLICY, genericArtifact
@@ -874,7 +889,8 @@ public class GenericArtifactHelper {
 				.getTargetSystemId());
 		addAttribute(root, TARGET_SYSTEM_KIND, genericArtifact
 				.getTargetSystemKind());
-
+		
+		if(genericArtifact.getAllGenericArtifactFields()!=null) {
 		// now add fields
 		for (GenericArtifactField genericArtifactField : genericArtifact
 				.getAllGenericArtifactFields()) {
@@ -921,6 +937,8 @@ public class GenericArtifactHelper {
 			setFieldValue(field, genericArtifactField.getFieldValue(),
 					genericArtifactField.getFieldValueType());
 		}
+		}
+		
 		
 		if(genericArtifact.getAllGenericArtifactAttachments()!=null) {
 		// now add attachments
@@ -1138,7 +1156,7 @@ public class GenericArtifactHelper {
 							+ " specified.");
 		}
 		}
-		if (fieldValue == null) {
+		if (fieldValue == null || (fieldValue!=null && fieldValue.equals("0"))) {
 			addAttribute(field, FIELD_VALUE_IS_NULL, FIELD_VALUE_IS_NULL_TRUE);
 		} else {
 			addAttribute(field, FIELD_VALUE_IS_NULL, FIELD_VALUE_IS_NULL_FALSE);
