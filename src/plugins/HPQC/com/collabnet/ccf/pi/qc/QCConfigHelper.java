@@ -23,6 +23,8 @@ public class QCConfigHelper {
 	static final String sfColumnType = "SF_COLUMN_TYPE";
 	static final String sfUserLabel = "SF_USER_LABEL";
 	static final String sfEditStyle = "SF_EDIT_STYLE";
+	static final String sfIsMultiValue = "SF_IS_MULTIVALUE";
+	
 	static final String sfRootId = "SF_ROOT_ID";
 	static final String alDescription = "AL_DESCRIPTION";
 	static final String usUsername = "US_USERNAME";
@@ -48,19 +50,28 @@ public class QCConfigHelper {
 		return command.execute();
 	}
 	
-	private static GenericArtifactField.FieldValueTypeValue convertQCDataTypeToGADatatype(String dataType, String editStyle) {
+	private static GenericArtifactField.FieldValueTypeValue convertQCDataTypeToGADatatype(String dataType, String editStyle, String isMultiValue) {
 		
 		// TODO: Convert the datatype, editStyle pair to a valid GA type
 		if(dataType.equals("char") && (editStyle==null || ( editStyle!=null && editStyle.equals(""))) ) 
 			return GenericArtifactField.FieldValueTypeValue.STRING;
 		if(dataType.equals("char") && ( editStyle!=null && editStyle.equals("UserCombo")) )
 			return GenericArtifactField.FieldValueTypeValue.USER;
-		if(dataType.equals("char") && ( editStyle!=null && editStyle.equals("ListCombo")) )
-			return GenericArtifactField.FieldValueTypeValue.LIST;
+		if(dataType.equals("char") && ( editStyle!=null && editStyle.equals("ListCombo")) ) {
+			if(isMultiValue.equals("N"))			
+				return GenericArtifactField.FieldValueTypeValue.LIST;
+			if(isMultiValue.equals("Y"))
+				return GenericArtifactField.FieldValueTypeValue.MULTI_SELECT_LIST;
+		}
 		if(dataType.equals("memo"))
 			return GenericArtifactField.FieldValueTypeValue.HTMLSTRING;
-		if(dataType.equals("char") && ( editStyle!=null && editStyle.equals("TreeCombo")) )
-			return GenericArtifactField.FieldValueTypeValue.STRING;
+		if(dataType.equals("char") && ( editStyle!=null && editStyle.equals("TreeCombo")) ) {
+			if(isMultiValue.equals("N"))			
+				return GenericArtifactField.FieldValueTypeValue.STRING;
+			if(isMultiValue.equals("Y"))
+				return GenericArtifactField.FieldValueTypeValue.MULTI_SELECT_LIST;
+		}
+			
 		if(dataType.equals("number")) 
 			return GenericArtifactField.FieldValueTypeValue.INTEGER;
 		if(dataType.equals("DATE") && (editStyle!=null && editStyle.equals("DateCombo")) ) 
@@ -85,10 +96,11 @@ public class QCConfigHelper {
 			String columnType = rs.getFieldValue(sfColumnType);
 			String fieldDisplayName = rs.getFieldValue(sfUserLabel);
 			String editStyle = rs.getFieldValue(sfEditStyle);
+			String isMultiValue = rs.getFieldValue(sfIsMultiValue);
 			GenericArtifactField field;
 
 			// obtain the GenericArtifactField datatype from the columnType and editStyle
-			GenericArtifactField.FieldValueTypeValue fieldValueTypeValue = convertQCDataTypeToGADatatype(columnType, editStyle);
+			GenericArtifactField.FieldValueTypeValue fieldValueTypeValue = convertQCDataTypeToGADatatype(columnType, editStyle, isMultiValue);
 			field = genericArtifact.addNewField(columnName, fieldDisplayName, columnType);
 			field.setFieldValueType(fieldValueTypeValue);
 			
@@ -153,10 +165,11 @@ public class QCConfigHelper {
 			String columnType = rs.getFieldValue(sfColumnType);
 			String fieldDisplayName = rs.getFieldValue(sfUserLabel);
 			String editStyle = rs.getFieldValue(sfEditStyle);
+			String isMultiValue = rs.getFieldValue(sfIsMultiValue);
 			GenericArtifactField field;
-
+			
 			// obtain the GenericArtifactField datatype from the columnType and editStyle
-			GenericArtifactField.FieldValueTypeValue fieldValueType = convertQCDataTypeToGADatatype(columnType, editStyle);
+			GenericArtifactField.FieldValueTypeValue fieldValueType = convertQCDataTypeToGADatatype(columnType, editStyle, isMultiValue);
 			field = genericArtifact.addNewField(columnName, fieldDisplayName, GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
 			field.setFieldValueType(fieldValueType);
 			
