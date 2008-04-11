@@ -14,7 +14,10 @@ import org.apache.log4j.Logger;
 
 import com.collabnet.ccf.pi.qc.AttachmentData;
 import com.collabnet.ccf.pi.qc.api.Comment;
+import com.collabnet.ccf.pi.qc.api.IAttachment;
+import com.collabnet.ccf.pi.qc.api.IAttachmentFactory;
 import com.collabnet.ccf.pi.qc.api.IBugActions;
+import com.collabnet.ccf.pi.qc.api.IFactory;
 import com.collabnet.ccf.pi.qc.api.IFactoryList;
 import com.collabnet.ccf.pi.qc.api.Utils;
 import com.jacob.activeX.ActiveXComponent;
@@ -235,6 +238,19 @@ public class Bug extends ActiveXComponent implements IBugActions {
 		throw new IllegalArgumentException("no data found");
 	}
 
+	public void createNewAttachment(String fileName, int type) {
+		IAttachmentFactory attachmentFactory = new AttachmentFactory(getPropertyAsComponent("Attachments"));
+		IAttachment attachment = attachmentFactory.addItem();
+		
+		//attachment.putFileName("c:\\Venugopal\\Test_SQL.txt");
+		attachment.putFileName(fileName);
+		attachment.putType(type);
+		attachment.post();
+		
+		System.out.println("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
+		return;
+	}
+	
 	public boolean hasAttachments() {
         return getPropertyAsBoolean("HasAttachment");
     }
