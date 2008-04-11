@@ -23,7 +23,8 @@ public class SFEEAppHandler {
 		this.mSessionId = sessionId;
 	}
 
-	public List<ArtifactSoapDO> getArtifactAuditHistory(ArtifactSoapDO artifact, Date lastModifiedDate){
+	public List<ArtifactSoapDO> getArtifactAuditHistory(ArtifactSoapDO artifact,
+				Date lastModifiedDate, String connectorUser){
 		try {
 			String artifactId = artifact.getId();
 			AuditHistorySoapList history = mSfSoap.getAuditHistoryList(mSessionId, artifactId);
@@ -36,6 +37,11 @@ public class SFEEAppHandler {
 			ArtifactSoapDO lastHistory = artifact;
 			//AuditHistorySoapRow lastHistoryRow = null;
 			for(int i=0; i < rows.length; i++){
+				// If the change is made by the connector user
+				// ignore it. Do not ship the change
+				if(rows[i].getModifiedBy().equals(connectorUser)){
+					continue;
+				}
 				pr(rows[i]);
 				
 				ArtifactSoapDO historyEntry = null;
@@ -92,11 +98,13 @@ public class SFEEAppHandler {
 		System.out.println("Operation --> "+row.getOperation());
 		System.out.println("============================================================================");
 	}
-	public List<ArtifactSoapDO> loadArtifactAuditHistory(List<ArtifactSoapDO> artifactRows, Date lastModifiedDate) {
+	public List<ArtifactSoapDO> loadArtifactAuditHistory(List<ArtifactSoapDO> artifactRows,
+			Date lastModifiedDate, String connectorUser) {
 		List<ArtifactSoapDO> artifactHistoryRows = new ArrayList<ArtifactSoapDO>();
 		if(artifactRows != null){
 			for(ArtifactSoapDO artifactRow:artifactRows){
-				List<ArtifactSoapDO> artifactHistory = getArtifactAuditHistory(artifactRow, lastModifiedDate);
+				List<ArtifactSoapDO> artifactHistory = getArtifactAuditHistory(artifactRow,
+								lastModifiedDate,connectorUser);
 				if(artifactHistory != null){
 					artifactHistoryRows.addAll(artifactHistory);
 				}
