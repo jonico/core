@@ -1,7 +1,6 @@
 package com.collabnet.ccf.pi.qc;
 
 import java.rmi.RemoteException;
-import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -396,22 +395,6 @@ public class QCDefectHandler {
 		return attachmentDetails;
 	}
 	
-	public boolean insertIntoArtifactMapping(String sourceArtifactId, String sourceSystemId, String sourceSystemKind, String sourceRepositoryId, String sourceRepositoryKind, String targetSystemId, String targetSystemKind, String targetRepositoryId, String targetRepositoryKind) {
-		
-		String mappingId = QCEntityService.getMappingIdFromTable(sourceSystemId, sourceSystemKind, sourceRepositoryId, sourceRepositoryKind, targetSystemId, targetSystemKind, targetRepositoryId, targetRepositoryKind);
-		String sql= "INSERT INTO ARTIFACT_MAPPING(MAPPING_ID, SOURCE_ARTIFACT_ID, TARGET_ARTIFACT_ID) VALUES('"+mappingId+"', '"+sourceArtifactId+"', 'NULL')";
-		log.info(sql);
-		ResultSet rs = null;
-		try {
-			rs = QCReader.executeSql(sql);
-		}
-		catch(Exception e) {
-			log.error("Exception while executing the UPDATE Query in QCReader:"+e);
-		}
-		if(rs==null) return false;
-		else
-			return true;
-	}
 	
 	public boolean checkForCreate(IConnection qcc, int txnId) {
 		

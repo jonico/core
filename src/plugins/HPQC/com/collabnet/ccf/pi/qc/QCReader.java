@@ -1,11 +1,6 @@
 package com.collabnet.ccf.pi.qc;
 
 import java.io.*;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.sql.Timestamp;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -25,6 +20,7 @@ import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
+import com.collabnet.ccf.pi.sfee.SFEEDBHelper;
 
 public class QCReader extends QCConnectHelper implements
 		IDataProcessor {
@@ -137,7 +133,7 @@ public class QCReader extends QCConnectHelper implements
 		//Boolean updateStatus = updateFromTimeInHsqlTable(newFromTime, sourceRepositoryId, sourceRepositoryKind, sourceSystemId, sourceSystemKind, targetRepositoryId, targetRepositoryKind, targetSystemId, targetSystemKind);		
 		
 		String newTransactionId = getLastTransactionIdFromLastArtifact(defectRows);
-		Boolean updateStatus = updateTransactionIdInHsqlTable(newTransactionId, sourceRepositoryId, sourceRepositoryKind, sourceSystemId, sourceSystemKind, targetRepositoryId, targetRepositoryKind, targetSystemId, targetSystemKind);		
+		Boolean updateStatus = SFEEDBHelper.updateTransactionIdInHsqlTable(newTransactionId, sourceRepositoryId, sourceRepositoryKind, sourceSystemId, sourceSystemKind, targetRepositoryId, targetRepositoryKind, targetSystemId, targetSystemKind);		
 		
 		for (GenericArtifact defectRow: defectRows) {
 			Document document = null;
@@ -236,47 +232,6 @@ public class QCReader extends QCConnectHelper implements
 		return finalString;		
 	}
 	
-	public boolean updateTransactionIdInHsqlTable(String newTransactionId, String sourceRepositoryId, String sourceRepositoryKind, String sourceSystemId, String sourceSystemKind, String targetRepositoryId, String targetRepositoryKind, String targetSystemId, String targetSystemKind) {
-		
-		Boolean status=true;
-		//Timestamp fromDateInTimestamp=convertIntoTimestamp(newFromTime);
-		
-		String sql = "UPDATE REPOSITORY_MAPPING SET TRANSACTION_ID="+newTransactionId; 
-			sql+= " WHERE ";
-			
-			sql+= "REPOSITORY_MAPPING.SOURCE_REPOSITORY_INFO_ID ="; 
-			sql+= "(SELECT ID FROM REPOSITORY_INFO WHERE ";
-			sql+= "REPOSITORY_INFO.REPOSITORY_ID='"+sourceRepositoryId+"' AND ";
-			sql+= "REPOSITORY_INFO.REPOSITORY_KIND='"+sourceRepositoryKind+"' AND ";			
-			sql+= "REPOSITORY_INFO.SYSTEM_INFO_ID= ";
-			sql+= "(SELECT ID FROM SYSTEM_INFO WHERE ";
-			sql+= "SYSTEM_INFO.SYSTEM_ID='"+sourceSystemId+"' AND ";
-			sql+= "SYSTEM_INFO.SYSTEM_KIND='"+sourceSystemKind+"' )) AND ";
-			
-			sql+= "REPOSITORY_MAPPING.TARGET_REPOSITORY_INFO_ID = "; 
-			sql+= "(SELECT ID FROM REPOSITORY_INFO WHERE ";
-			sql+= "REPOSITORY_INFO.REPOSITORY_ID='"+targetRepositoryId+"' AND ";
-			sql+= "REPOSITORY_INFO.REPOSITORY_KIND='"+targetRepositoryKind+"' AND ";
-			sql+= "REPOSITORY_INFO.SYSTEM_INFO_ID= ";
-			sql+= "(SELECT ID FROM SYSTEM_INFO WHERE ";
-			sql+= "SYSTEM_INFO.SYSTEM_ID='"+targetSystemId+"' AND ";
-			sql+= "SYSTEM_INFO.SYSTEM_KIND='"+targetSystemKind+"' ))";
-		log.info(sql);	
-		ResultSet rs = null;
-		try {
-			rs = executeSql(sql);
-		}
-		catch(Exception e) {
-			log.error("Exception while executing the UPDATE Query in QCReader:"+e);
-			//throw new RuntimeException(e);
-		}
-		if(rs==null) return false;	
-		return status;
-	}
-	
-	
-	
-	
 	private String getVersion(Document document) {
 		// TODO Let the user specify this value?
 		Node node= document.selectSingleNode("//VERSION");
@@ -365,17 +320,7 @@ public class QCReader extends QCConnectHelper implements
 			return null;
 		return node.getText();
 	}
-	public static ResultSet executeSql(String sql) throws ClassNotFoundException, SQLException {
-	  	Connection conn;                                                
-        Class.forName("org.hsqldb.jdbcDriver");
-        conn = DriverManager.getConnection("jdbc:hsqldb:hsql://localhost/xdb", "sa", "");
-        Statement st = null;
-        ResultSet rs = null;
-        st = conn.createStatement();         // statement objects can be reused with
-        rs = st.executeQuery(sql);    // run the query
-        return rs;
-  }
-	
+
 	
 	public void reset(Object context) {
 	}

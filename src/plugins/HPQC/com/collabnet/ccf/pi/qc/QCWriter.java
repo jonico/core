@@ -1,15 +1,11 @@
 package com.collabnet.ccf.pi.qc;
 
 import java.io.IOException;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
 import com.collabnet.ccf.pi.qc.QCEntityService;
+import com.collabnet.ccf.pi.sfee.SFEEDBHelper;
 
 import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifact;
@@ -86,7 +82,7 @@ public class QCWriter extends QCConnectHelper implements
 					String targetArtifactIdAfterCreation = createdArtifact.getId();
 					log.info("Write Operation SUCCESSFULL!!!!! and the targetArtifactIdAfterCreation="+targetArtifactIdAfterCreation);
 					// Update the QC_ENTITY_CHECK HSQL DB Table
-					Boolean status = updateTable(sourceArtifactId, sourceSystemId, sourceSystemKind, sourceRepositoryId, sourceRepositoryKind, targetArtifactIdAfterCreation, targetSystemId, targetSystemKind, targetRepositoryId, targetRepositoryKind);
+					Boolean status = SFEEDBHelper.updateTable(sourceArtifactId, sourceSystemId, sourceSystemKind, sourceRepositoryId, sourceRepositoryKind, targetArtifactIdAfterCreation, targetSystemId, targetSystemKind, targetRepositoryId, targetRepositoryKind);
 					genericArtifact.setTargetArtifactId(targetArtifactIdAfterCreation);
 					// send this artifact to RCDU (Read COnnector Database Updater) indicating a success in creating the artifact
 					}
@@ -117,7 +113,7 @@ public class QCWriter extends QCConnectHelper implements
 					if(targetArtifactId!=null || !(targetArtifactId.equals("")) || targetArtifactId.equals("unknown")) {
 					try {
 						
-						String targetArtifactIdFromTable = QCEntityService.getTargetArtifactIdFromTable(sourceArtifactId, sourceSystemId, sourceSystemKind, sourceRepositoryId, sourceRepositoryKind, targetSystemId, targetSystemKind, targetRepositoryId, targetRepositoryKind);
+						String targetArtifactIdFromTable = SFEEDBHelper.getTargetArtifactIdFromTable(sourceArtifactId, sourceSystemId, sourceSystemKind, sourceRepositoryId, sourceRepositoryKind, targetSystemId, targetSystemKind, targetRepositoryId, targetRepositoryKind);
 						IQCDefect updatedArtifact = defectHandler.updateDefect(getQcc(), targetArtifactIdFromTable, allFields);
 						log.info("Update Operation SUCCESSFULL!!!!! and the targetArtifactIdFromTable="+targetArtifactIdFromTable);
 						genericArtifact.setTargetArtifactId(targetArtifactIdFromTable);
@@ -187,36 +183,6 @@ public class QCWriter extends QCConnectHelper implements
 		
 		return fieldValue;
 	}
-	
-	public boolean updateTable(String sourceArtifactId, String sourceSystemId, String sourceSystemKind, String sourceRepositoryId, String sourceRepositoryKind, String targetArtifactIdAfterCreation, String targetSystemId, String targetSystemKind, String targetRepositoryId, String targetRepositoryKind) {
-		
-		Boolean status = false;
-		
-		String mappingId = QCEntityService.getMappingIdFromTable(sourceSystemId, sourceSystemKind, sourceRepositoryId, sourceRepositoryKind, targetSystemId, targetSystemKind, targetRepositoryId, targetRepositoryKind);
-		String sql = "UPDATE ARTIFACT_MAPPING SET TARGET_ARTIFACT_ID='"+targetArtifactIdAfterCreation+"' WHERE ";
-			   sql+= "MAPPING_ID='"+mappingId+"' AND SOURCE_ARTIFACT_ID='"+sourceArtifactId+"'";
-		log.info("QCWriter UPDATE SQL Query:"+ sql); 
-		ResultSet rs = null;
-		try {
-			rs = executeSql(sql);
-		}
-		catch(Exception e) {
-			log.error("Exception while executing the UPDATE Query in QCWriter:"+e);
-		}
-		if(rs==null) return false;
-		else return true;
-	}
-	
-	public static ResultSet executeSql(String sql) throws ClassNotFoundException, SQLException {
-	  	Connection conn;                                                
-        Class.forName("org.hsqldb.jdbcDriver");
-        conn = DriverManager.getConnection("jdbc:hsqldb:hsql://localhost/xdb", "sa", "");
-        Statement st = null;
-        ResultSet rs = null;
-        st = conn.createStatement();         // statement objects can be reused with
-        rs = st.executeQuery(sql);    // run the query
-        return rs;
-  }
 	
 	public boolean checkForBugIdInQC(int bugId) {
 		
