@@ -34,6 +34,8 @@ public class GenericArtifactAttachment {
 	 */
 	public static final String VALUE_UNKNOWN = "unknown";
 
+	public static final String TEXT_PLAIN = "text/plain";
+
 	/**
 	 * 
 	 * Possible values for the attachment action, "append", "replace" and "delete"
@@ -135,6 +137,8 @@ public class GenericArtifactAttachment {
 	 * this sourceUrl value will give the link. If neither, it will be empty.
 	 */
 	private String attachmentSourceUrl = VALUE_UNKNOWN;
+	
+	private String mimeType = VALUE_UNKNOWN;
 	
 	public GenericArtifactAttachment() {
 	}
@@ -300,6 +304,14 @@ public class GenericArtifactAttachment {
 
 	public void setAttachmentDescription(String attachmentDescription) {
 		this.attachmentDescription = attachmentDescription;
+	}
+
+	public String getMimeType() {
+		return mimeType;
+	}
+
+	public void setMimeType(String mimeType) {
+		this.mimeType = mimeType;
 	}
 
 		
