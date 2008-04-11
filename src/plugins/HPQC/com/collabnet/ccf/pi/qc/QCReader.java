@@ -129,12 +129,6 @@ public class QCReader extends QCConnectHelper implements
 			return new Object[]{document};
 		}
 		 
-		//String newFromTime = getLastModifiedDateFromLastArtifact(defectRows);
-		//Boolean updateStatus = updateFromTimeInHsqlTable(newFromTime, sourceRepositoryId, sourceRepositoryKind, sourceSystemId, sourceSystemKind, targetRepositoryId, targetRepositoryKind, targetSystemId, targetSystemKind);		
-		
-		String newTransactionId = getLastTransactionIdFromLastArtifact(defectRows);
-		Boolean updateStatus = SFEEDBHelper.updateTransactionIdInHsqlTable(newTransactionId, sourceRepositoryId, sourceRepositoryKind, sourceSystemId, sourceSystemKind, targetRepositoryId, targetRepositoryKind, targetSystemId, targetSystemKind);		
-		
 		for (GenericArtifact defectRow: defectRows) {
 			Document document = null;
 			try {
