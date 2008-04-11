@@ -22,6 +22,10 @@ public class SFEEGAHelper {
 	public static void updateSingleField(GenericArtifact ga, String fieldName,
 			String fieldValue) {
 		List<GenericArtifactField> gaFolderIDs = ga.getAllGenericArtifactFieldsWithSameFieldName(fieldName);
+		if(gaFolderIDs == null){
+			throw new RuntimeException("Field "+fieldName
+					+" does not exist in Generic Artifact. Cannot update field");
+		}
 		if(gaFolderIDs != null && gaFolderIDs.size() == 1){
 			GenericArtifactField field = gaFolderIDs.get(0);
 			field.setFieldValue(fieldValue);
