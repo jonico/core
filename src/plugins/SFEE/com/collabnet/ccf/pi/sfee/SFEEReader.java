@@ -5,6 +5,8 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.TreeMap;
+import java.util.Map.Entry;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
@@ -22,6 +24,7 @@ import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
 import com.collabnet.ccf.pi.sfee.IArtifactToGAConverter;
+import com.vasoftware.sf.soap44.webservices.sfmain.TrackerFieldSoapDO;
 import com.vasoftware.sf.soap44.webservices.tracker.ArtifactSoapDO;
 
 public class SFEEReader extends SFEEConnectHelper implements
@@ -36,6 +39,8 @@ public class SFEEReader extends SFEEConnectHelper implements
 	private SFEETrackerHandler trackerHandler;
 	
 	private SFEEAppHandler appHandler;
+	
+	private SFEEAttachmentHandler attachmentHandler = null;
 	
 	private IArtifactToGAConverter artifactConverter;
 	
@@ -144,7 +149,7 @@ public class SFEEReader extends SFEEConnectHelper implements
 	@Override
 	public void connect() throws IOException {	
 		super.connect();
-		appHandler = new SFEEAppHandler(mSfSoap, getSessionId());
+		appHandler = new SFEEAppHandler(getMSfSoap(), getSessionId());
 		isDry=false;
 	}
 	
@@ -161,25 +166,50 @@ public class SFEEReader extends SFEEConnectHelper implements
 			return null;
 		}
 		// Now we load the history of each artifact that got changed
-		List<ArtifactSoapDO> artifactHistoryRows = appHandler.loadArtifactAuditHistory(artifactRows,lastModifiedDate);
+		List<ArtifactSoapDO> artifactHistoryRows = appHandler.loadArtifactAuditHistory(artifactRows,lastModifiedDate,getUsername());
+		TreeMap<Date, GenericArtifact> attachments = null;
+		try {
+			attachments = attachmentHandler.listAttachments(getSessionId(),
+					lastModifiedDate,getUsername(),artifactRows, this.getMSfSoap());
+		} catch (RemoteException e1) {
+			e1.printStackTrace();
+			throw new RuntimeException(e1);
+		}
+		TrackerFieldSoapDO[] trackerFields = null;
+		try {
+			trackerFields = trackerHandler.getFlexFields(getSessionId(), projectTracker);
+		} catch (RemoteException e1) {
+			e1.printStackTrace();
+			throw new RuntimeException(e1);
+		}
+		TreeMap<Date,GenericArtifact> gaMap = new TreeMap<Date,GenericArtifact>();
 
 		if (artifactHistoryRows == null) {
 			return new Object[]{};
 		} else {
 			for(ArtifactSoapDO artifactRow:artifactHistoryRows)
 			{
-				GenericArtifact genericArtifact = artifactConverter.convert(artifactRow);
+				GenericArtifact genericArtifact = artifactConverter.convert(artifactRow, trackerFields);
 				if(dbDocument != null)
 					populateSrcAndDest(dbDocument, genericArtifact);
-				Document document = null;
-				try {
-					document = GenericArtifactHelper.createGenericArtifactXMLDocument(genericArtifact);
-				} catch (GenericArtifactParsingException e) {
-					e.printStackTrace();
-					throw new RuntimeException(e);
-				}
-				log.error(document.asXML());
+				gaMap.put(artifactRow.getLastModifiedDate(), genericArtifact);
+			}
+		}
+		for(Entry<Date,GenericArtifact> entry:attachments.entrySet()){
+			GenericArtifact ga = entry.getValue();
+			Date date = entry.getKey();
+			if(dbDocument != null)
+				populateSrcAndDest(dbDocument, ga);
+			gaMap.put(date, ga);
+		}
+		for(Entry<Date, GenericArtifact> entry:gaMap.entrySet()){
+			try {
+				GenericArtifact genericArtifact = entry.getValue();
+				Document document = GenericArtifactHelper.createGenericArtifactXMLDocument(genericArtifact);
 				dataRows.add(document);
+			} catch (GenericArtifactParsingException e) {
+				e.printStackTrace();
+				throw new RuntimeException(e);
 			}
 		}
 		return dataRows.toArray();
@@ -210,6 +240,7 @@ public class SFEEReader extends SFEEConnectHelper implements
 		super.validate(exceptions);
 		
 		trackerHandler = new SFEETrackerHandler(getServerUrl());
+		attachmentHandler = new SFEEAttachmentHandler(getServerUrl());
 	}
 
 	
@@ -266,5 +297,13 @@ public class SFEEReader extends SFEEConnectHelper implements
 
 	public void setDbHelper(SFEEDBHelper dbHelper) {
 		this.dbHelper = dbHelper;
+	}
+
+	public SFEEAttachmentHandler getAttachmentHandler() {
+		return attachmentHandler;
+	}
+
+	public void setAttachmentHandler(SFEEAttachmentHandler attachmentHandler) {
+		this.attachmentHandler = attachmentHandler;
 	}
 }
