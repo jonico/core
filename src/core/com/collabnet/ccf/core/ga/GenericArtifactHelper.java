@@ -150,6 +150,7 @@ public class GenericArtifactHelper {
 	private static final String ATTACHMENT_CONTENT_TYPE_UNKNOWN = "unknown";
 	
 	private static final String ATTACHMENT_TYPE = "attachmentType";
+	private static final String ATTACHMENT_MIME_TYPE = "attachmentMIMEType";
 	private static final String ATTACHMENT_VALUE_TYPE_BASE64STRING = "Base64String";
 	private static final String ATTACHMENT_VALUE_TYPE_UNKNOWN = "Unknown";
 	
@@ -454,6 +455,7 @@ public class GenericArtifactHelper {
 			String attachmentDescription = getAttributeValue(attachment, ATTACHMENT_DESCRIPTION);
 			String attachmentSize = getAttributeValue(attachment, ATTACHMENT_SIZE);
 			String attachmentType = getAttributeValue(attachment, ATTACHMENT_TYPE);
+			String attachmentMimeType = getAttributeValue(attachment, ATTACHMENT_MIME_TYPE);
 			String attachmentSourceUrl = getAttributeValue(attachment, ATTACHMENT_SOURCE_URL);
 			Boolean attachmentValueIsNull = translateAttributeValue(attachment,
 					ATTACHMENT_VALUE_IS_NULL, attachmentValueIsNullHashMap);
@@ -473,6 +475,7 @@ public class GenericArtifactHelper {
 			genericArtifactAttachment.setAttachmentType(attachmentType);
 			genericArtifactAttachment.setAttachmentValueType(attachmentValueType);
 			genericArtifactAttachment.setAttachmentValueHasChanged(attachmentValueHasChanged);
+			genericArtifactAttachment.setMimeType(attachmentMimeType);
 			
 			
 			try {
@@ -980,6 +983,7 @@ public class GenericArtifactHelper {
 			addAttribute(attachment, ATTACHMENT_SOURCE_URL, genericArtifactAttachment.getAttachmentSourceUrl());
 			
 			addAttribute(attachment, ATTACHMENT_TYPE, genericArtifactAttachment.getAttachmentType());
+			addAttribute(attachment, ATTACHMENT_MIME_TYPE, genericArtifactAttachment.getMimeType());
 			if (genericArtifactAttachment.getAttachmentValueHasChanged()) {
 				addAttribute(attachment, ATTACHMENT_VALUE_HAS_CHANGED,
 						ATTACHMENT_VALUE_HAS_CHANGED_TRUE);
