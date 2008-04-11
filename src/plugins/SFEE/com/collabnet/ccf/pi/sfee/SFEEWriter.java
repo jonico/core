@@ -15,6 +15,8 @@ import org.openadaptor.core.exception.RecordFormatException;
 import org.openadaptor.core.exception.ValidationException;
 
 import com.collabnet.ccf.core.ga.GenericArtifact;
+import com.collabnet.ccf.core.ga.GenericArtifactAttachment;
+import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
 import com.collabnet.ccf.pi.sfee.IGAToArtifactConverter;
@@ -65,7 +67,8 @@ public class SFEEWriter extends SFEEConnectHelper implements
 	
 	private IGAToArtifactConverter converter;
 	
-	private SFEEDBHelper dbHelper = new SFEEDBHelper();
+
+	private SFEEAttachmentHandler attachmentHandler;
 
 	/**
 	 * Main method to handle the creation, updating and deletion of SFEE tracker
@@ -77,7 +80,7 @@ public class SFEEWriter extends SFEEConnectHelper implements
 	 *         artifact schema
 	 */
 	private Object[] processXMLDocument(Document data) {
-		System.out.println("asdfs");
+		System.out.println("asdfw  s");
 		GenericArtifact ga = null;
 		try {
 			ga = GenericArtifactHelper.createGenericArtifactJavaObject(data);
@@ -87,12 +90,32 @@ public class SFEEWriter extends SFEEConnectHelper implements
 		String trackerId = ga.getTargetRepositoryId();
 		String sourceRepositoryId = ga.getSourceRepositoryId();
 		String sourceArtifactId = ga.getSourceArtifactId();
-		String targetArtifactIdFromDB = dbHelper.getTargetArtifactID(sourceArtifactId, sourceRepositoryId, trackerId);
+		String sourceSystemId = ga.getSourceSystemId();
+		String sourceSystemKind = ga.getSourceSystemKind();
+		String targetSystemId = ga.getTargetSystemId();
+		String targetSystemKind = ga.getTargetSystemKind();
+		String sourceRepositoryKind = ga.getSourceRepositoryKind();
+		String targetRepositoryKind = ga.getTargetRepositoryKind();
+		String targetRepositoryId = ga.getTargetRepositoryId();
+		if(sourceArtifactId.equalsIgnoreCase("Unknown")){
+			return new Object[]{data};
+		}
+		String targetArtifactIdFromDB = SFEEDBHelper.getTargetArtifactIdFromTable(sourceArtifactId,
+				sourceSystemId, sourceSystemKind, sourceRepositoryId, sourceRepositoryKind,
+				targetSystemId, targetSystemKind, targetRepositoryId, targetRepositoryKind);
+		if(!SFEEGAHelper.containsSingleField(ga, "Id")){
+			SFEEGAHelper.addField(ga, "Id", getCreateToken(), "String");
+		}
 		if(!StringUtils.isEmpty(targetArtifactIdFromDB)){
 			SFEEGAHelper.updateSingleField(ga, "Id", targetArtifactIdFromDB);
 			ga.setTargetArtifactId(targetArtifactIdFromDB);
 		}
-		SFEEGAHelper.updateSingleField(ga, "FolderId", trackerId);
+		if(SFEEGAHelper.containsSingleField(ga, "FolderId")){
+			SFEEGAHelper.updateSingleField(ga, "FolderId", trackerId);
+		}
+		else {
+			SFEEGAHelper.addField(ga, "FolderId", trackerId, "String");
+		}
 		TrackerFieldSoapDO[] flexFields = null;
 		try {
 			connect();
@@ -131,8 +154,9 @@ public class SFEEWriter extends SFEEConnectHelper implements
 
 		// check whether we should create or update the artifact
 		String id = (String) SFEEGAHelper.getSingleValue(ga, "Id");
+		ArtifactSoapDO result = null;
 		if ((StringUtils.isEmpty(id)) || SFEEGAHelper.getSingleValue(ga, "Id").equals(
-				getCreateToken())) {
+				"NEW")) {
 			// find out whether we should delete something, that is not even
 			// present here
 			if (deleteArtifact.booleanValue()) {
@@ -145,7 +169,7 @@ public class SFEEWriter extends SFEEConnectHelper implements
 			// TODO apply a better type conversion concept here
 			try {
 
-				ArtifactSoapDO result = trackerHandler
+				result = trackerHandler
 						.createArtifact(
 								getSessionId(),
 								soapDoObj.getFolderId(),
@@ -174,8 +198,9 @@ public class SFEEWriter extends SFEEConnectHelper implements
 				String targetArtifactId = result.getId();
 				SFEEGAHelper.updateSingleField(ga, "Id", targetArtifactId);
 				ga.setTargetArtifactId(targetArtifactId);
-				dbHelper.updateTargetArtifactID(targetArtifactId, sourceArtifactId,
-						sourceRepositoryId, trackerId);
+				SFEEDBHelper.updateTable(sourceArtifactId, sourceSystemId, sourceSystemKind,
+						sourceRepositoryId, sourceRepositoryKind, targetArtifactId, 
+						targetSystemId, targetSystemKind, targetRepositoryId, targetRepositoryKind);
 
 			} catch (NumberFormatException e) {
 				log.error("Wrong data format of attribute for artifact "
@@ -198,7 +223,7 @@ public class SFEEWriter extends SFEEConnectHelper implements
 				} else {
 					// update token or do conflict resolution
 					// TODO apply a better type conversion concept here
-					ArtifactSoapDO result = trackerHandler
+					result = trackerHandler
 							.updateArtifact(
 									getSessionId(),
 									soapDoObj.getFolderId(),
@@ -245,15 +270,26 @@ public class SFEEWriter extends SFEEConnectHelper implements
 				return null;
 			}
 		}
+		if(result != null){
+			List<GenericArtifactAttachment> attachList = ga.getAllGenericArtifactAttachments();
+			for(GenericArtifactAttachment att:attachList){
+				try {
+					attachmentHandler.handleAttachment(this.getSessionId(), att, result);
+				} catch (RemoteException e) {
+					e.printStackTrace();
+					throw new RuntimeException(e);
+				}
+			}
+		}
 		Document document = null;
 		try {
 			document = GenericArtifactHelper.createGenericArtifactXMLDocument(ga);
 		} catch (GenericArtifactParsingException e) {
 			throw new RuntimeException(e);
 		}
-		Object[] result = { document };
+		Object[] resultDocs = { document };
 		disconnect();
-		return result;
+		return resultDocs;
 	}
 
 	@Override
@@ -298,6 +334,7 @@ public class SFEEWriter extends SFEEConnectHelper implements
 		}
 
 		trackerHandler = new SFEETrackerHandler(getServerUrl());
+		attachmentHandler = new SFEEAttachmentHandler(getServerUrl());
 	}
 
 	/**
@@ -408,13 +445,5 @@ public class SFEEWriter extends SFEEConnectHelper implements
 
 	public void setConverter(IGAToArtifactConverter converter) {
 		this.converter = converter;
-	}
-
-	public SFEEDBHelper getDbHelper() {
-		return dbHelper;
-	}
-
-	public void setDbHelper(SFEEDBHelper dbHelper) {
-		this.dbHelper = dbHelper;
 	}
 }
