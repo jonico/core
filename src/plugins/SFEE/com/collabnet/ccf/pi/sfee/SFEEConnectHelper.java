@@ -15,7 +15,7 @@ import com.vasoftware.sf.soap44.webservices.sfmain.ISourceForgeSoap;
 public abstract class SFEEConnectHelper extends LifecycleComponent {
 	
 	/** SourceForge Soap interface handle */
-    protected ISourceForgeSoap mSfSoap;
+    private ISourceForgeSoap mSfSoap;
 
     /** Login user name */
     private String mLoginUserName;
@@ -124,7 +124,7 @@ public abstract class SFEEConnectHelper extends LifecycleComponent {
 		this.username = username;
 	}
 
-	private String getUsername() {
+	public String getUsername() {
 		return username;
 	}
 
@@ -184,5 +184,13 @@ public abstract class SFEEConnectHelper extends LifecycleComponent {
 			log.error("SFEE logoff failed", e);
 		}
 		super.stop();
+	}
+
+	public ISourceForgeSoap getMSfSoap() {
+		return mSfSoap;
+	}
+
+	public void setMSfSoap(ISourceForgeSoap sfSoap) {
+		mSfSoap = sfSoap;
 	}
 }
