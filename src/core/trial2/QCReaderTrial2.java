@@ -130,7 +130,7 @@ public class QCReaderTrial2 extends QCConnectHelper implements
 		
 		try {
 			log.error("The fromTime coming from HQSL DB is:" + fromTime + " and the toTime is" +toTime);
-			defectRows = defectHandler.getChangedDefects(this.getQcc(), fromTime, sourceArtifactId, sourceRepositoryId, sourceRepositoryKind, sourceSystemId, sourceSystemKind, targetRepositoryId, targetRepositoryKind, targetSystemId, targetSystemKind);
+			defectRows = defectHandler.getChangedDefects(this.getQcc(), this.getUserName(), fromTime, sourceArtifactId, sourceRepositoryId, sourceRepositoryKind, sourceSystemId, sourceSystemKind, targetRepositoryId, targetRepositoryKind, targetSystemId, targetSystemKind);
 
 		} catch (Exception e) {
 			// TODO Throw an exception?
