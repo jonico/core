@@ -3,8 +3,10 @@ package com.collabnet.ccf.pi.qc;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.StringTokenizer;
+import java.io.*;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -87,25 +89,46 @@ public class QCDefectHandler {
 		
 		return defect;
 	}
-
+	
+	public String writeDataIntoFile(byte[] data) {
+		String fileName = "c:\\Venugopal\\Temp_Store_Data.txt";
+		try {
+			FileOutputStream fs = new FileOutputStream(fileName);
+			fs.write(data);
+			fs.close();
+		}
+		catch(Exception e){
+				log.error("Exception while writing the byte array into the file"+e);
+		}
+		
+		return fileName;
+	}
+	
+	
 	public IQCDefect updateDefect(IConnection qcc, String bugId, List<GenericArtifactField> allFields) throws Exception {
 
 		IFactory bugFactory = qcc.getBugFactory();
 		IBug bug = bugFactory.getItem(bugId);
+		List<String> allFieldNames = new ArrayList();
 		
+		String fieldValue = null;
 		for (int cnt=0; cnt < allFields.size(); cnt++) {
 			
 			GenericArtifactField thisField = allFields.get(cnt);
 			String fieldName = thisField.getFieldName();
-			String fieldValue = (String) thisField.getFieldValue();
+			if(thisField.getFieldValueType().equals(GenericArtifactField.FieldValueTypeValue.DATE))
+				fieldValue = getProperFieldValue(thisField);
+			else
+				fieldValue = (String) thisField.getFieldValue();
 			
 			if(fieldName.equals("BG_DEV_COMMENTS")) {
 				String oldFieldValue = bug.getFieldAsString(fieldName);
 				fieldValue = oldFieldValue+" "+fieldValue;				
 			}	
-			if(!( fieldName.equals("BG_BUG_ID") || fieldName.equals("BG_BUG_VER_STAMP") || fieldName.equals("BG_VTS") 
-					|| fieldName.equals("BG_SUBJECT")) )
-			bug.setField(fieldName, fieldValue);
+			if(!(allFieldNames.contains(allFields.get(cnt).getFieldName())) && !( fieldName.equals("BG_BUG_ID") || fieldName.equals("BG_BUG_VER_STAMP") || fieldName.equals("BG_ATTACHMENT") || fieldName.equals("BG_VTS")) )
+				bug.setField(fieldName, fieldValue);
+			
+			allFieldNames.add(fieldName);
 		}
 		bug.post();
 		
@@ -117,15 +140,17 @@ public class QCDefectHandler {
 		IFactory bugFactory = qcc.getBugFactory();
 		IBug bug = bugFactory.addItem("Created by the connector");
 		
-		/*for (int cnt = 0 ; cnt < fieldNames.size() ; cnt++) {
-			bug.setField(fieldNames.get(cnt), fieldValues.get(cnt));
-		}
-		*/
+		List<String> allFieldNames = new ArrayList();
+		String fieldValue = null;
 		for (int cnt=0; cnt < allFields.size(); cnt++) {
 			
 			GenericArtifactField thisField = allFields.get(cnt);
 			String fieldName = thisField.getFieldName();
-			String fieldValue = (String) thisField.getFieldValue();
+			if(thisField.getFieldValueType().equals(GenericArtifactField.FieldValueTypeValue.DATE))
+				fieldValue = getProperFieldValue(thisField);
+			else
+				fieldValue = (String) thisField.getFieldValue();
+			
 			/* The following fields cannot be set or have some conditions
 			Cannot be set from here:
 			1. BG_BUG_ID
@@ -135,9 +160,15 @@ public class QCDefectHandler {
 			1. BG_SUBJECT -> Can be set to a Valid value that is present in the list.
 			
 			*/
-			if(!( fieldName.equals("BG_BUG_ID") || fieldName.equals("BG_BUG_VER_STAMP") || fieldName.equals("BG_VTS") 
-					|| fieldName.equals("BG_SUBJECT")) )
-			bug.setField(fieldName, fieldValue);
+			if(!(allFieldNames.contains(allFields.get(cnt).getFieldName())) && !( fieldName.equals("BG_BUG_ID") || fieldName.equals("BG_BUG_VER_STAMP") || fieldName.equals("BG_ATTACHMENT") || fieldName.equals("BG_VTS")) )
+					
+				bug.setField(fieldName, fieldValue);
+			else {
+				log.info(fieldName);
+				//dont do anything
+			}
+			
+			allFieldNames.add(fieldName);
 		}
 		
 		bug.post();
@@ -145,6 +176,82 @@ public class QCDefectHandler {
 		return new QCDefect((Bug)bug);
 	}
 
+	public void createAttachment(IConnection qcc, String entityId, List<GenericArtifactAttachment> allAttachments) {
+		
+		IFactory bugFactory = qcc.getBugFactory();
+		IBug bug = bugFactory.getItem(entityId);
+		String fileName = null;
+		for (int cnt=0; cnt < allAttachments.size(); cnt++) {
+			GenericArtifactAttachment thisAttachment = allAttachments.get(cnt);
+			GenericArtifactAttachment.AttachmentContentTypeValue contentTypeValue = thisAttachment.getAttachmentContentType();
+			int type=0;
+			if(contentTypeValue.equals(GenericArtifactAttachment.AttachmentContentTypeValue.DATA)) {
+				type=1;
+				byte [] data = thisAttachment.getRawAttachmentData();
+				fileName = writeDataIntoFile(data);
+				bug.createNewAttachment(fileName, type);
+				Boolean deleteStatus = deleteTempFile(fileName);
+			}
+			else {
+				type=2;
+				String link = thisAttachment.getAttachmentSourceUrl();
+				bug.createNewAttachment(link, type);
+			}
+			
+		}
+		
+		return;
+	}
+	
+	
+	
+	public String getProperFieldValue(GenericArtifactField thisField) {
+		
+		String fieldValue = null;
+		GenericArtifactField.FieldValueTypeValue fieldValueTypeValue = thisField.getFieldValueType();
+		switch(fieldValueTypeValue) {
+		
+		case DATE: {
+			GregorianCalendar gcal = (GregorianCalendar)thisField.getFieldValue();
+			fieldValue = DateUtil.formatQCDate(gcal.getTime());
+			break;
+		}
+		
+		}
+		return fieldValue;
+		
+	}
+	
+	public boolean deleteTempFile(String fileName) {
+		
+		File f = new File(fileName);
+
+	    // Make sure the file or directory exists and isn't write protected
+	    if (!f.exists())
+	      throw new IllegalArgumentException(
+	          "Delete: no such file or directory: " + fileName);
+
+	    if (!f.canWrite())
+	      throw new IllegalArgumentException("Delete: write protected: "
+	          + fileName);
+
+	    // If it is a directory, make sure it is empty
+	    if (f.isDirectory()) {
+	      String[] files = f.list();
+	      if (files.length > 0)
+	        throw new IllegalArgumentException(
+	            "Delete: directory not empty: " + fileName);
+	    }
+
+	    // Attempt to delete it
+	    boolean success = f.delete();
+
+	    if (!success)
+	      throw new IllegalArgumentException("Delete: deletion failed");
+	  
+	    return success;
+	}
+	
 	/**
 	 * Return all defects modified between the given time range, in a map
 	 * 
@@ -260,7 +367,11 @@ public class QCDefectHandler {
 			}
 		
 		}
-		
+		String deltaComment = getDeltaOfComment(qcc, actionId);
+		if(deltaComment!=null) {
+			List<GenericArtifactField> genArtifactFieldsForComments = latestDefectArtifact.getAllGenericArtifactFieldsWithSameFieldName("BG_DEV_COMMENTS");
+			genArtifactFieldsForComments.get(0).setFieldValue(deltaComment);
+		}
 		
 		List<GenericArtifactField> genArtifactFields = latestDefectArtifact.getAllGenericArtifactFieldsWithSameFieldName("BG_VTS");
 		
@@ -315,51 +426,31 @@ public class QCDefectHandler {
 		return null;
 	}
 	
-	public GenericArtifact handleAttachments(IConnection qcc, String entityId, List<String> attachOperation, GenericArtifact latestDefectArtifact) {
+	public String getDeltaOfComment(IConnection qcc, int actionId) {
 		
-		IFactory bugFactory = qcc.getBugFactory();
-		IBug bug = bugFactory.getItem(entityId);
+		String deltaComment = null;
 		
-		if(bug.hasAttachments()) {
-			String attachmentName = attachOperation.get(2);
-			log.info("Attachment Name is: "+attachOperation.get(2)) ;
-			List<String> attachmentIdAndType = getFromTable(qcc, entityId, attachmentName); 
-			if(attachmentIdAndType!=null) {
-				String attachmentId = attachmentIdAndType.get(0); // CR_REF_ID
-				String attachmentContentType = attachmentIdAndType.get(1); // CR_REF_TYPE
-				String attachmentDescription = attachmentIdAndType.get(2); // CR_DESCRIPTION
-				
-				GenericArtifactAttachment genericArtifactAttachment = new GenericArtifactAttachment();
-				genericArtifactAttachment.setAttachmentAction(GenericArtifactAttachment.AttachmentActionValue.CREATE);
-				genericArtifactAttachment.setAttachmentName(attachmentName);
-				genericArtifactAttachment.setAttachmentId(attachmentId);
-				if(attachmentContentType.equals("File")) {
-					byte data[] = bug.retrieveAttachmentData(attachOperation.get(2));
-					log.info("************************************************");
-					for (byte b : data) {
-						System.out.print((char) b);
-					}
-					log.info("************************************************");
-					long attachmentSize = (long) data.length;
-					genericArtifactAttachment.setAttachmentSize(attachmentSize);
-					genericArtifactAttachment.setAttachmentContentType(GenericArtifactAttachment.AttachmentContentTypeValue.DATA);
-					genericArtifactAttachment.setRawAttachmentData(data);
-					genericArtifactAttachment.setAttachmentSourceUrl("VALUE_UNKNOWN");
-				}
-				else {
-					genericArtifactAttachment.setAttachmentContentType(GenericArtifactAttachment.AttachmentContentTypeValue.LINK);
-					genericArtifactAttachment.setAttachmentSourceUrl(attachmentName);
-					genericArtifactAttachment.setAttachmentSize(0);
-					//genericArtifactAttachment.setRawAttachmentData(null);
-				}
-				genericArtifactAttachment.setAttachmentDescription(attachmentDescription);
-				
-				
-				genericArtifactAttachment = latestDefectArtifact.addNewAttachment(genericArtifactAttachment);
+		String sql = "SELECT * FROM AUDIT_PROPERTIES WHERE AP_ACTION_ID= '"+ actionId + "'";
+		IRecordSet newRs = executeSQL(qcc, sql);
+		int newRc = newRs.getRecordCount();
+		
+		for (int newCnt=0; newCnt < newRc; newCnt++, newRs.next()){
+			String fieldName = newRs.getFieldValue("AP_FIELD_NAME");
+			if(fieldName.equals("BG_DEV_COMMENTS")) {
+				String oldFieldValue = newRs.getFieldValue("AP_OLD_LONG_VALUE");
+				String newFieldValue = newRs.getFieldValue("AP_NEW_LONG_VALUE");
+				if(oldFieldValue!=null && (oldFieldValue!=null && !oldFieldValue.equals("")))
+					deltaComment = (newFieldValue.substring(0,oldFieldValue.length()));
+				log.info(deltaComment);
 			}
 		}
-		return latestDefectArtifact;
+		
+		
+		return deltaComment;
 	}
+	
+	
+
 	
 	public String findBgVtsFromQC(IConnection qcc, int actionId, int entityId) {
 		
