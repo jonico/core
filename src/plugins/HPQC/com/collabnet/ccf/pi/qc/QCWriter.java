@@ -2,11 +2,13 @@ package com.collabnet.ccf.pi.qc;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import com.collabnet.ccf.pi.qc.QCEntityService;
 import com.collabnet.ccf.pi.sfee.SFEEDBHelper;
 
+import com.collabnet.ccf.core.ga.GenericArtifactAttachment;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
@@ -43,6 +45,9 @@ public class QCWriter extends QCConnectHelper implements
 		connectProperly();
 		
 		List<GenericArtifactField> allFields = genericArtifact.getAllGenericArtifactFields();
+		List<GenericArtifactAttachment> allAttachments = genericArtifact.getAllGenericArtifactAttachments();
+		genericArtifact = concatValuesOfSameFieldNames(genericArtifact);
+		allFields = genericArtifact.getAllGenericArtifactFields();
 		GenericArtifact.ArtifactActionValue artifactAction = genericArtifact.getArtifactAction();
 		String stringBugId = getFieldValueFromGenericArtifact(genericArtifact, "BG_BUG_ID");
 		log.info("The bugId coming in is :"+stringBugId);
@@ -84,7 +89,16 @@ public class QCWriter extends QCConnectHelper implements
 					// Update the QC_ENTITY_CHECK HSQL DB Table
 					Boolean status = SFEEDBHelper.updateTable(sourceArtifactId, sourceSystemId, sourceSystemKind, sourceRepositoryId, sourceRepositoryKind, targetArtifactIdAfterCreation, targetSystemId, targetSystemKind, targetRepositoryId, targetRepositoryKind);
 					genericArtifact.setTargetArtifactId(targetArtifactIdAfterCreation);
-					// send this artifact to RCDU (Read COnnector Database Updater) indicating a success in creating the artifact
+					// send this artifact to RCDU (Read Connector Database Updater) indicating a success in creating the artifact
+					
+					
+					if(allAttachments!=null && (allAttachments!=null && allAttachments.size()>0)) {
+						//create the attachment per genericArtifact
+						defectHandler.createAttachment(qcc, targetArtifactIdAfterCreation, allAttachments);
+						
+					}
+					
+					
 					}
 					catch(Exception e) {
 						log.error("Exception occured while creating defect in QC:"+e);
@@ -118,6 +132,15 @@ public class QCWriter extends QCConnectHelper implements
 						log.info("Update Operation SUCCESSFULL!!!!! and the targetArtifactIdFromTable="+targetArtifactIdFromTable);
 						genericArtifact.setTargetArtifactId(targetArtifactIdFromTable);
 						//send this artifact to RCDU (Read COnnector Database Updater) indicating a success in updating the artifact
+					
+						
+						if(allAttachments!=null && (allAttachments!=null && allAttachments.size()>0)) {
+							//create the attachment per genericArtifact
+							defectHandler.createAttachment(qcc, targetArtifactIdFromTable, allAttachments);
+							
+						}
+					
+					
 					}
 					catch(Exception e) {
 						log.error("Exception occured while updating defect in QC:"+genericArtifact.toString(),e);
@@ -170,9 +193,35 @@ public class QCWriter extends QCConnectHelper implements
 		return genericArtifact;
 	}
 	
+	public GenericArtifact concatValuesOfSameFieldNames(GenericArtifact genericArtifact) {
+		
+		List<GenericArtifactField> allFields = genericArtifact.getAllGenericArtifactFields();
+		List<String> allFieldNames = new ArrayList();
+		for(int cnt=0; cnt < allFields.size(); cnt++) {
+			
+			if( !(allFieldNames.contains(allFields.get(cnt).getFieldName())) && 
+					genericArtifact.getAllGenericArtifactFieldsWithSameFieldName(allFields.get(cnt).getFieldName()).size()>1) {
+				List<GenericArtifactField> allSameFields = genericArtifact.getAllGenericArtifactFieldsWithSameFieldName(allFields.get(cnt).getFieldName());
+				String concatinatedString = (String) allSameFields.get(0).getFieldValue();
+				for(int newCnt=1; newCnt < allSameFields.size(); newCnt++) {
+					concatinatedString+=";";
+					concatinatedString+=(String)allSameFields.get(newCnt).getFieldValue();
+				}
+				genericArtifact.getAllGenericArtifactFieldsWithSameFieldName(allFields.get(cnt).getFieldName()).get(0).setFieldValue(concatinatedString);
+			}
+			allFieldNames.add(allFields.get(cnt).getFieldName());
+			
+			
+		}
+		
+		return genericArtifact;
+	}
+	
+	
 	public void connectProperly() {
 		
 		connect();
+		
 		//qcc.initConnectionEx(getServerUrl());
 		qcc.connectProjectEx(getDomain(), getProjectName(), getUserName(), getPassword());
 		
