@@ -59,7 +59,6 @@ public class SFEEEntityService extends SFEEConnectHelper implements
 	 */
 	private SFEETrackerHandler trackerHandler;
 	
-	private SFEEDBHelper dbHelper = null;
 
 	/**
 	 * openAdaptor Method to process all input and puts out the results This
@@ -89,168 +88,56 @@ public class SFEEEntityService extends SFEEConnectHelper implements
 	 *         artifact schema
 	 */
 	private Object[] processXMLDocument(Document data) {
-		GenericArtifact ga = null;
-		Document returnDoc = null;
+		Document filledArtifactDocument = null;
+		GenericArtifact genericArtifact = new GenericArtifact();
 		try {
-			ga = GenericArtifactHelper.createGenericArtifactJavaObject(data);
-		} catch (GenericArtifactParsingException e1) {
-			throw new RuntimeException(e1);
+			genericArtifact = GenericArtifactHelper.createGenericArtifactJavaObject(data);
 		}
-		String sourceArtifactId = ga.getSourceArtifactId();
-		String sourceRepositoryId = ga.getSourceRepositoryId();
-		String targetRepositoryId = ga.getTargetRepositoryId();
+		catch(Exception e) {
+			System.out.println("GenericArtifact Parsing exception" + e);
+		}
+		String sourceArtifactId = genericArtifact.getSourceArtifactId();
+		String sourceSystemId  = genericArtifact.getSourceSystemId();
+		String sourceSystemKind = genericArtifact.getSourceSystemKind();
+		String sourceRepositoryId = genericArtifact.getSourceRepositoryId();
+		String sourceRepositoryKind = genericArtifact.getSourceRepositoryKind();
+		
+		String targetArtifactId = genericArtifact.getTargetArtifactId();
+		String targetSystemId = genericArtifact.getTargetSystemId();
+		String targetSystemKind = genericArtifact.getTargetSystemKind();
+		String targetRepositoryId = genericArtifact.getTargetRepositoryId();
+		String targetRepositoryKind = genericArtifact.getTargetRepositoryKind();
 		if(sourceArtifactId.equalsIgnoreCase("Unknown")){
 			return new Object[]{data};
 		}
-		String targetArtifactID = dbHelper.getTargetArtifactID(sourceArtifactId, sourceRepositoryId, targetRepositoryId);
 		
-		boolean artifactAlreadyCreated = false;
-		if(StringUtils.isEmpty(targetArtifactID)){
-			dbHelper.insertSourceArtifactID(sourceArtifactId, sourceRepositoryId, targetRepositoryId);
-			artifactAlreadyCreated = false;
-		}
-		else {
-			artifactAlreadyCreated = true;
-		}
-		Boolean duplicateArtifact = false;
-//			(Boolean) SFEEXMLHelper
-//				.asTypedValue(SFEEXMLHelper.getSingleValue(data,
-//						"isDuplicate", false), "Boolean");
-		if (duplicateArtifact)
-			// do not suppress it anymore, but pass it unchanged
-			// return new Object[0];
-			return new Object[] { data };
-
+		String targetArtifactIdFromTable = SFEEDBHelper.getTargetArtifactIdFromTable(sourceArtifactId, sourceSystemId, sourceSystemKind, sourceRepositoryId, sourceRepositoryKind, targetSystemId, targetSystemKind, targetRepositoryId, targetRepositoryKind);
 		
-
-		// check whether there is already an entity in the target system
-		// TODO Changed false to true
-		//String id = SFEEXMLHelper.getSingleValue(data, "Id", true);
-		if (!SFEEGAHelper.containsSingleField(ga, "FolderId")) {
-			SFEEGAHelper.addField(ga, "FolderId", targetRepositoryId, "String");
-		}
-		if(!artifactAlreadyCreated) {
-			// first check all required fields
-			/*
-			 * if (!SFEEXMLHelper.containsKey(data,"flexFields")) { // TODO
-			 * Throw an exception? log.error("required flexFields-element not
-			 * present in artifact: "+data); return null; }
-			 */
-			// NOTE We will not be checking other system's field here
-//			if (!SFEEXMLHelper.containsSingleField(data,
-//					getOtherSystemInSFEETargetFieldname(), true)) {
-//				// TODO Throw an exception?
-//				log.error("required " + getOtherSystemInSFEETargetFieldname()
-//						+ "-element not present in artifact: " + data.asXML());
-//				return null;
-//			}
-
-			// now we can query the target system for the existence of the
-			// artifact
-		}
-		else {
-			try {
-				connect();
-				ArtifactSoapDO soapDO = trackerHandler.getTrackerItem(getSessionId(), targetArtifactID);
-				if (soapDO == null)
-					artifactAlreadyCreated = false;
-				// artifact already created, insert or update Id element
-				else {
-					artifactAlreadyCreated = true;
-					System.out.println();
-					if (SFEEGAHelper.containsSingleField(ga,"Id"))
-						SFEEGAHelper.updateSingleField(ga, "Id", targetArtifactID);
-					else
-						SFEEGAHelper.addField(ga, "Id", targetArtifactID, "String");
-				}
-				disconnect();
-			} catch (RemoteException e) {
-				// TODO Declare exception so that it can be processed by OA
-				// exception handler
-				log
-						.error(
-								"During the connection process to SFEE, an error occured",
-								e);
-				disconnect();
-				return null;
-			} catch (IOException ex) {
-				// TODO postpone exception handling to OA framework
-				log
-						.error(
-								"During the connection process to SFEE, an error occured",
-								ex);
-				disconnect();
-				return null;
-			}
-		}
-		if (artifactAlreadyCreated) {
-			// this object is already created, now find out, whether we have to
-			// do an update
-			// check whether last update was done by synchronization user
-//			if (!SFEEGAHelper.containsSingleField(ga, "LastModifiedBy")) {
-//				// TODO Throw an exception?
-//				log
-//						.error("required lastModifiedBy-element not present in artifact: "
-//								+ data.asXML());
-//				return null;
-//			}
-			// Only accept the change if the artifact was created or the change
-			// did not come from the synchronization middleware itself
-			// TODO Due to the update after a delete, this may miss some
-			// artifacts that were just created
-			Object lastModifiedBy = SFEEGAHelper.getSingleValue(ga, "LastModifiedBy");
-			String lastModifiedByStr = lastModifiedBy != null?lastModifiedBy.toString():null;
-			if ((!StringUtils.isEmpty(lastModifiedByStr)) && SFEEGAHelper.getSingleValue(ga, "LastModifiedBy").equals(getSynchronizationUser())
-					&& (!SFEEGAHelper.getSingleValue(ga,
-							"LastModifiedDate").equals(
-									SFEEGAHelper.getSingleValue(ga,
-									"CreatedDate")))) {
-				// we do not have to write this artifact because all changes are
-				// already presented in target system
-				log
-						.info("Do not change object, since the change came from this system: "
-								+ SFEEGAHelper.getSingleValue(ga,"Id"));
-				// do not suppress it anymore, but pass it unchanged
-				// return new Object[0];
-				SFEEGAHelper.updateSingleField(ga, "isDuplicate", "true");
-				try {
-					returnDoc = GenericArtifactHelper.createGenericArtifactXMLDocument(ga);
-				} catch (GenericArtifactParsingException e) {
-					throw new RuntimeException(e);
-				}
-				return new Object[] { returnDoc };
-			}
-			// else object should be updated
-			else {
-				log.info("Updating or deleting object with "
-						+ getOtherSystemInSFEETargetFieldname()
-						+ " "
-						+ SFEEGAHelper.getSingleValue(ga, "Id")
-						+ " last modified by "
-						+ SFEEGAHelper.getSingleValue(ga,"LastModifiedBy"));
-				try {
-					returnDoc = GenericArtifactHelper.createGenericArtifactXMLDocument(ga);
-				} catch (GenericArtifactParsingException e) {
-					throw new RuntimeException(e);
-				}
-				return new Object[] { returnDoc };
-			}
-		}
-		// artifact has to be created
-		if (SFEEGAHelper.containsSingleField(ga, "Id"))
-			SFEEGAHelper.updateSingleField(ga,"Id", getCreateToken());
-		else
-			SFEEGAHelper.addField(ga, "Id",
-					getCreateToken(), "String");
-		log
-				.info("Create new object or trying to delete object that is not (yet) mirrored");
+		if(targetArtifactIdFromTable!=null && !(targetArtifactIdFromTable.equals("NEW")) && !(targetArtifactIdFromTable.equals("NULL"))) {
+	    	genericArtifact.setTargetArtifactId(targetArtifactIdFromTable);
+	    }
+		if(targetArtifactIdFromTable==null) {
+			// TODO Review the logic here
+//	    	if(genericArtifact.getArtifactAction().equals(GenericArtifact.ArtifactActionValue.UPDATE)) {
+//	    		//Send this artifact to HOSPITAL
+//	    	}
+//	    	if(genericArtifact.getArtifactAction().equals(GenericArtifact.ArtifactActionValue.CREATE)) {
+	    		Boolean insertStatus = SFEEDBHelper.insertRecordInTable(sourceArtifactId, sourceSystemId,
+	    				sourceSystemKind, sourceRepositoryId, sourceRepositoryKind, targetSystemId,
+	    				targetSystemKind, targetRepositoryId, targetRepositoryKind);
+//	    	}
+	    }
 		
-		try {
-			returnDoc = GenericArtifactHelper.createGenericArtifactXMLDocument(ga);
-		} catch (GenericArtifactParsingException e) {
-			throw new RuntimeException(e);
-		}
-		return new Object[] { returnDoc };
+	    try {
+	    	filledArtifactDocument = GenericArtifactHelper.createGenericArtifactXMLDocument(genericArtifact);
+	    }
+	    catch(Exception e) {
+	    	log.error("Exception while converting the resultantGenericArtifact into the resultDocument in QCEntityService:"+e);
+	    	throw new RuntimeException(e);
+	    }
+		
+	    Object[] result = {filledArtifactDocument};
+		return result;
 	}
 
 	/**
@@ -341,13 +228,5 @@ public class SFEEEntityService extends SFEEConnectHelper implements
 	 */
 	public String getCreateToken() {
 		return createToken;
-	}
-
-	public SFEEDBHelper getDbHelper() {
-		return dbHelper;
-	}
-
-	public void setDbHelper(SFEEDBHelper dbHelper) {
-		this.dbHelper = dbHelper;
 	}
 }
