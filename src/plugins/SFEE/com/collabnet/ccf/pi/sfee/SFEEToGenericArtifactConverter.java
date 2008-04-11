@@ -12,25 +12,27 @@ import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
 import com.collabnet.ccf.core.ga.GenericArtifactField.FieldValueTypeValue;
 import com.collabnet.ccf.pi.sfee.IArtifactToGAConverter;
+import com.collabnet.ccf.pi.sfee.meta.ArtifactMetaData;
 import com.vasoftware.sf.soap44.types.SoapFieldValues;
+import com.vasoftware.sf.soap44.webservices.sfmain.TrackerFieldSoapDO;
 import com.vasoftware.sf.soap44.webservices.tracker.ArtifactSoapDO;
 
 public class SFEEToGenericArtifactConverter implements IArtifactToGAConverter {
 	
 	
-	public GenericArtifact convert(Object dataObject) {
+	public GenericArtifact convert(Object dataObject, TrackerFieldSoapDO[] trackerFields) {
 		if(dataObject != null){
 			ArtifactSoapDO artifactRow = (ArtifactSoapDO) dataObject;
 			GenericArtifact genericArtifact = new GenericArtifact();
 			for(String fieldName:SFEEArtifactMetaData.getArtifactFields())
 			{
-				Class fieldType = SFEEArtifactMetaData.getFieldType(fieldName);
+				//Class fieldType = SFEEArtifactMetaData.getFieldType(fieldName);
 				//String fieldDisplayName = rs.getFieldValue(sfUserLabel);
 				//String editStyle = rs.getFieldValue(sfEditStyle);
 				GenericArtifactField field;
 
 				// obtain the GenericArtifactField datatype from the columnType and editStyle
-				GenericArtifactField.FieldValueTypeValue fieldValueType = convertSFDataTypeToGADatatype(fieldType);
+				GenericArtifactField.FieldValueTypeValue fieldValueType = ArtifactMetaData.getFieldValueType(fieldName, trackerFields);
 				// CHANGE Field display name is not correct here.
 				field = genericArtifact.addNewField(fieldName, "Unknown", GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
 				// TODO The following attributes are set blindly. Please correct these
@@ -39,6 +41,8 @@ public class SFEEToGenericArtifactConverter implements IArtifactToGAConverter {
 				genericArtifact.setArtifactMode(GenericArtifact.ArtifactModeValue.COMPLETE);
 				field.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
 				field.setFieldValueType(fieldValueType);
+				//TODO Change this
+				field.setFieldValueHasChanged(true);
 				Object fieldValue = SFEEArtifactMetaData.getFieldValue(fieldName,artifactRow);
 				if(fieldValue != null){
 					field.setFieldValue(fieldValue);
@@ -86,7 +90,7 @@ public class SFEEToGenericArtifactConverter implements IArtifactToGAConverter {
 		}
 		return null;
 	}
-	public FieldValueTypeValue convertSFDataTypeToGADatatype(Class fieldType) {
+	public FieldValueTypeValue convertSFDatdaTypeToGADatatype(Class fieldType) {
 		if(fieldType == String.class){
 			return GenericArtifactField.FieldValueTypeValue.STRING;
 		}
