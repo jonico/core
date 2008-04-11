@@ -11,7 +11,9 @@
 <xsl:stylesheet version="2.0"
 	xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:ccf="http://ccf.open.collab.net/GenericArtifactV1.0"
 	xmlns:xs="http://www.w3.org/2001/XMLSchema"
+	xmlns:stringutil="xalan://com.collabnet.ccf.core.utils.GATransformerUtil"
 	exclude-result-prefixes="xsl xs">
+	
 	<xsl:template match='/ccf:artifact'>
 		<artifact xmlns="http://ccf.open.collab.net/GenericArtifactV1.0">
 			<xsl:attribute name="artifactAction"><xsl:value-of select="@artifactAction" /></xsl:attribute>
@@ -88,7 +90,9 @@
 	</xsl:template>
 	<xsl:template
 		match='ccf:field[@fieldName="BG_DESCRIPTION"]'>
-		<xsl:variable name="statusValue" as="xs:string" select="." />
+		<xsl:variable name="statusValue" as="xs:string">
+			<xsl:value-of select="."></xsl:value-of>
+		</xsl:variable>
 		<field>
 		    <xsl:attribute name="fieldName">Description</xsl:attribute>
 		    <xsl:attribute name="fieldDisplayName">Description</xsl:attribute>
@@ -97,7 +101,14 @@
 		  	<xsl:attribute name="fieldValueHasChanged"><xsl:value-of select="@fieldValueHasChanged" /></xsl:attribute>
 		  	<xsl:attribute name="fieldValueType"><xsl:value-of select="@fieldValueType" /></xsl:attribute>
 		  	<xsl:attribute name="fieldValueIsNull"><xsl:value-of select="@fieldValueIsNull" /></xsl:attribute>
-		  	<xsl:value-of select="substring-after(substring-before($statusValue,'&lt;/body&gt;'), '&lt;body&gt;')"/>
+		  	<xsl:choose>
+				<xsl:when test="@fieldValueType='HTMLString'">
+					<xsl:value-of select="stringutil:stripHTML(string(.))"/>
+				</xsl:when>
+				<xsl:otherwise>
+					<xsl:value-of select="."></xsl:value-of>
+				</xsl:otherwise>
+			</xsl:choose>
 	  	</field>
 	</xsl:template>
 
@@ -123,7 +134,7 @@
 	</xsl:template>
 
 	 <xsl:template
-		match='ccf:field[@fieldName="BG_USER_03"]'>
+		match='ccf:field[@fieldName="BG_USER_01"]'>
 		<xsl:variable name="typeValue" as="xs:string" select="." />
 		<field>
 		    <xsl:attribute name="fieldName">Category</xsl:attribute>
@@ -163,6 +174,7 @@
 	</xsl:template> 
 	<xsl:template
 		match='ccf:field[@fieldName="BG_RESPONSIBLE"]'>
+		<xsl:variable name="qcValue" as="xs:string"><xsl:value-of select="." /></xsl:variable>
 		<field>
 		    <xsl:attribute name="fieldName">AssignedTo</xsl:attribute>
 		    <xsl:attribute name="fieldDisplayName">AssignedTo</xsl:attribute>
@@ -171,8 +183,58 @@
 		  	<xsl:attribute name="fieldValueHasChanged"><xsl:value-of select="@fieldValueHasChanged" /></xsl:attribute>
 		  	<xsl:attribute name="fieldValueType"><xsl:value-of select="@fieldValueType" /></xsl:attribute>
 		  	<xsl:attribute name="fieldValueIsNull"><xsl:value-of select="@fieldValueIsNull" /></xsl:attribute>
-		  	<xsl:value-of select="."></xsl:value-of>
+		  	<xsl:if test="$qcValue = 'alex_qc'"><xsl:text>connector</xsl:text></xsl:if>
+		  	<xsl:if test="$qcValue = 'cecil_qc'"><xsl:text>mseethar</xsl:text></xsl:if>
+			<xsl:if test="$qcValue = 'admin'"><xsl:text>admin</xsl:text></xsl:if>
+			<xsl:if test="$qcValue = 'none'"><xsl:text>none</xsl:text></xsl:if>
+			<xsl:if test="$qcValue = 'None'"><xsl:text>None</xsl:text></xsl:if>
 		</field>
 	</xsl:template>
+	<!-- <xsl:template
+		match='ccf:field[@fieldName="BG_DETECTED_BY"]'>
+		<xsl:variable name="detectedBy" as="xs:string"><xsl:value-of select="." /></xsl:variable>
+		<field>
+		    <xsl:attribute name="fieldName">Detected By</xsl:attribute>
+		    <xsl:attribute name="fieldDisplayName">Detected By</xsl:attribute>
+		    <xsl:attribute name="fieldAction"><xsl:value-of select="@fieldAction" /></xsl:attribute>
+		    <xsl:attribute name="fieldType"><xsl:value-of select="@fieldType" /></xsl:attribute>
+		  	<xsl:attribute name="fieldValueHasChanged"><xsl:value-of select="@fieldValueHasChanged" /></xsl:attribute>
+		  	<xsl:attribute name="fieldValueType"><xsl:value-of select="@fieldValueType" /></xsl:attribute>
+		  	<xsl:attribute name="fieldValueIsNull"><xsl:value-of select="@fieldValueIsNull" /></xsl:attribute>
+		  	<xsl:if test="$detectedBy = 'alex_qc'"><xsl:text>connector</xsl:text></xsl:if>
+		  	<xsl:if test="$detectedBy = 'cecil_qc'"><xsl:text>mseethar</xsl:text></xsl:if>
+			<xsl:if test="$detectedBy = 'admin'"><xsl:text>admin</xsl:text></xsl:if>
+			<xsl:if test="$detectedBy = 'none'"><xsl:text>none</xsl:text></xsl:if>
+			<xsl:if test="$detectedBy = 'None'"><xsl:text>None</xsl:text></xsl:if>
+	  	</field>
+	</xsl:template>
+	
+	<xsl:template
+		match='ccf:field[@fieldName="BG_SEVERITY"]'>
+		<field>
+		    <xsl:attribute name="fieldName">Severity</xsl:attribute>
+		    <xsl:attribute name="fieldDisplayName">Severity</xsl:attribute>
+		    <xsl:attribute name="fieldAction"><xsl:value-of select="@fieldAction" /></xsl:attribute>
+		    <xsl:attribute name="fieldType"><xsl:value-of select="@fieldType" /></xsl:attribute>
+		  	<xsl:attribute name="fieldValueHasChanged"><xsl:value-of select="@fieldValueHasChanged" /></xsl:attribute>
+		  	<xsl:attribute name="fieldValueType"><xsl:value-of select="@fieldValueType" /></xsl:attribute>
+		  	<xsl:attribute name="fieldValueIsNull"><xsl:value-of select="@fieldValueIsNull" /></xsl:attribute>
+		  	<xsl:value-of select="."></xsl:value-of>
+	  	</field>
+	</xsl:template>
+	
+	<xsl:template
+		match='ccf:field[@fieldName="BG_DETECTION_DATE"]'>
+		<field>
+		    <xsl:attribute name="fieldName">Detected On</xsl:attribute>
+		    <xsl:attribute name="fieldDisplayName">Detected On</xsl:attribute>
+		    <xsl:attribute name="fieldAction"><xsl:value-of select="@fieldAction" /></xsl:attribute>
+		    <xsl:attribute name="fieldType"><xsl:value-of select="@fieldType" /></xsl:attribute>
+		  	<xsl:attribute name="fieldValueHasChanged"><xsl:value-of select="@fieldValueHasChanged" /></xsl:attribute>
+		  	<xsl:attribute name="fieldValueType"><xsl:value-of select="@fieldValueType" /></xsl:attribute>
+		  	<xsl:attribute name="fieldValueIsNull"><xsl:value-of select="@fieldValueIsNull" /></xsl:attribute>
+		  	<xsl:value-of select="."></xsl:value-of>
+	  	</field>
+	</xsl:template> -->
 	<xsl:template match="text()" />
 </xsl:stylesheet>
