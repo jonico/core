@@ -42,6 +42,7 @@ public class Ambulance extends Component implements
 					Document doc = QCXMLHelper.createXMLDocument("UTF-8");
 					Element failure = doc.addElement("Failure");
 					Element failureSource = failure.addElement("Source");
+					if(source != null)
 					failureSource.setText(source);
 					Element exceptionDetail = failure.addElement("Exception");
 					ByteArrayOutputStream bos = new ByteArrayOutputStream();
