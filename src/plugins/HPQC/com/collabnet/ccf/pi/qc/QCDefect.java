@@ -6,6 +6,7 @@ package com.collabnet.ccf.pi.qc;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Date;
+import java.util.StringTokenizer;
 
 import com.collabnet.ccf.core.ga.GenericArtifactAttachment;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
@@ -78,7 +79,31 @@ public class QCDefect extends Bug implements IQCDefect {
 			if (thisFieldsDatatype.equals(GenericArtifactField.FieldValueTypeValue.INTEGER)) {
 				thisField.setFieldValue(getFieldAsInt(thisField.getFieldName()));				
 			}
-			else {
+			if (thisFieldsDatatype.equals(GenericArtifactField.FieldValueTypeValue.HTMLSTRING)) {
+				thisField.setFieldValue(getFieldAsString(thisField.getFieldName()));				
+			}
+			if (thisFieldsDatatype.equals(GenericArtifactField.FieldValueTypeValue.LIST)) {
+				thisField.setFieldValue(getFieldAsString(thisField.getFieldName()));				
+			}
+			if (thisFieldsDatatype.equals(GenericArtifactField.FieldValueTypeValue.USER)) {
+				thisField.setFieldValue(getFieldAsString(thisField.getFieldName()));				
+			}
+			if (thisFieldsDatatype.equals(GenericArtifactField.FieldValueTypeValue.BASE64STRING)) {
+				thisField.setFieldValue(getFieldAsInt(thisField.getFieldName()));				
+			}
+			if (thisFieldsDatatype.equals(GenericArtifactField.FieldValueTypeValue.MULTI_SELECT_LIST)) {
+				String fieldValue = getFieldAsString(thisField.getFieldName());
+				List<String> fieldValues = getFieldValues(fieldValue);
+				int size = fieldValues.size();
+				if(size>=1)thisField.setFieldValue(fieldValues.get(0));
+				for(int sizeCnt=1; sizeCnt < size; sizeCnt++) {
+					GenericArtifactField field;
+					field = genericArtifact.addNewField(thisField.getFieldName(), thisField.getFieldDisplayName(), GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
+					field.setFieldValueType(GenericArtifactField.FieldValueTypeValue.MULTI_SELECT_LIST);
+					field.setFieldValue(fieldValues.get(sizeCnt));
+				}
+			}
+			if (thisFieldsDatatype.equals(GenericArtifactField.FieldValueTypeValue.STRING)) {
 				/* TODO: datatype can also be one of the other GenericArtifactField.FieldValueTypeValue
 				 * types. Handle them appropriately.
 				 */ 
@@ -93,6 +118,9 @@ public class QCDefect extends Bug implements IQCDefect {
 					thisField.setFieldValue(fieldValueAsString);
 				}
 				
+			}
+			if (thisFieldsDatatype.equals(GenericArtifactField.FieldValueTypeValue.UNKNOWN)) {
+				thisField.setFieldValue(getFieldAsString(thisField.getFieldName()));				
 			}
 			
 		}
@@ -125,5 +153,20 @@ public class QCDefect extends Bug implements IQCDefect {
 		return genericArtifact;
 	
 	}
+	
+	
+	public List<String> getFieldValues(String fieldValue) {
+		
+		List<String> fieldValues = new ArrayList();
+		StringTokenizer st = new StringTokenizer(fieldValue, ";"); 
+		while(st.hasMoreTokens()) {
+		String thisFieldValue = st.nextToken();
+		fieldValues.add(thisFieldValue);
+		}
+		return fieldValues;
+	}
+	
+	
+	
 
 }
