@@ -125,8 +125,16 @@ public class QCDefectHandler {
 				String oldFieldValue = bug.getFieldAsString(fieldName);
 				fieldValue = oldFieldValue+" "+fieldValue;				
 			}	
-			if(!(allFieldNames.contains(allFields.get(cnt).getFieldName())) && !( fieldName.equals("BG_BUG_ID") || fieldName.equals("BG_BUG_VER_STAMP") || fieldName.equals("BG_ATTACHMENT") || fieldName.equals("BG_VTS")) )
-				bug.setField(fieldName, fieldValue);
+			if(!(allFieldNames.contains(allFields.get(cnt).getFieldName())) && !( fieldName.equals("BG_BUG_ID") || fieldName.equals("BG_BUG_VER_STAMP") || fieldName.equals("BG_ATTACHMENT") || fieldName.equals("BG_VTS")) ) {
+				try {	
+					bug.setField(fieldName, fieldValue);
+				}
+				catch(Exception e) {
+					log.error("In QCDefectHandler.updateDefect method: Some inappropriate value/dataType is being set to this fieldName");
+					log.error("***For this fieldName: "+fieldName+", the value that is being set, fieldValue: "+fieldValue);
+					return null;
+				}
+			}
 			
 			allFieldNames.add(fieldName);
 		}
@@ -160,9 +168,16 @@ public class QCDefectHandler {
 			1. BG_SUBJECT -> Can be set to a Valid value that is present in the list.
 			
 			*/
-			if(!(allFieldNames.contains(allFields.get(cnt).getFieldName())) && !( fieldName.equals("BG_BUG_ID") || fieldName.equals("BG_BUG_VER_STAMP") || fieldName.equals("BG_ATTACHMENT") || fieldName.equals("BG_VTS")) )
-					
+			if(!(allFieldNames.contains(allFields.get(cnt).getFieldName())) && !( fieldName.equals("BG_BUG_ID") || fieldName.equals("BG_BUG_VER_STAMP") || fieldName.equals("BG_ATTACHMENT") || fieldName.equals("BG_VTS")) ) {
+				try {	
 				bug.setField(fieldName, fieldValue);
+				}
+				catch(Exception e) {
+					log.error("In QCDefectHandler.createDefect method: Some inappropriate value/dataType is being set to this fieldName");
+					log.error("***For this fieldName: "+fieldName+", the value that is being set, fieldValue: "+fieldValue);
+					return null;
+				}
+			}
 			else {
 				log.info(fieldName);
 				//dont do anything
@@ -189,7 +204,14 @@ public class QCDefectHandler {
 				type=1;
 				byte [] data = thisAttachment.getRawAttachmentData();
 				fileName = writeDataIntoFile(data);
-				bug.createNewAttachment(fileName, type);
+				try {	
+					bug.createNewAttachment(fileName, type);
+				}
+				catch(Exception e) {
+					log.error("In QCDefectHandler.createAttachment method: Some inappropriate fileName/Type for creating an attachment");
+					log.error("***For this fileName: "+fileName+", the type that is being set, type: "+type);
+					return;
+				}
 				Boolean deleteStatus = deleteTempFile(fileName);
 			}
 			else {
