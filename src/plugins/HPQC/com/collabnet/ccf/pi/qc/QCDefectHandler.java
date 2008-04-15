@@ -90,8 +90,8 @@ public class QCDefectHandler {
 		return defect;
 	}
 	
-	public String writeDataIntoFile(byte[] data) {
-		String fileName = "c:\\Venugopal\\Temp_Store_Data.txt";
+	public String writeDataIntoFile(byte[] data, String actualFileName) {
+		String fileName = "c:\\Venugopal\\"+actualFileName;
 		try {
 			FileOutputStream fs = new FileOutputStream(fileName);
 			fs.write(data);
@@ -199,11 +199,12 @@ public class QCDefectHandler {
 		for (int cnt=0; cnt < allAttachments.size(); cnt++) {
 			GenericArtifactAttachment thisAttachment = allAttachments.get(cnt);
 			GenericArtifactAttachment.AttachmentContentTypeValue contentTypeValue = thisAttachment.getAttachmentContentType();
+			String actualFileName = thisAttachment.getAttachmentName();
 			int type=0;
 			if(contentTypeValue.equals(GenericArtifactAttachment.AttachmentContentTypeValue.DATA)) {
 				type=1;
 				byte [] data = thisAttachment.getRawAttachmentData();
-				fileName = writeDataIntoFile(data);
+				fileName = writeDataIntoFile(data, actualFileName);
 				try {	
 					bug.createNewAttachment(fileName, type);
 				}
