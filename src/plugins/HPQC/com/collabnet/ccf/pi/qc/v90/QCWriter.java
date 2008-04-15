@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import com.collabnet.ccf.pi.qc.v90.QCEntityService;
-import com.collabnet.ccf.pi.sfee.SFEEDBHelper;
+import com.collabnet.ccf.pi.sfee.v44.SFEEDBHelper;
 
 import com.collabnet.ccf.core.ga.GenericArtifactAttachment;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
@@ -46,7 +46,8 @@ public class QCWriter extends QCConnectHelper implements
 		
 		List<GenericArtifactField> allFields = genericArtifact.getAllGenericArtifactFields();
 		List<GenericArtifactAttachment> allAttachments = genericArtifact.getAllGenericArtifactAttachments();
-		genericArtifact = concatValuesOfSameFieldNames(genericArtifact);
+		if(allFields!=null)
+			genericArtifact = concatValuesOfSameFieldNames(genericArtifact);
 		allFields = genericArtifact.getAllGenericArtifactFields();
 		GenericArtifact.ArtifactActionValue artifactAction = genericArtifact.getArtifactAction();
 		String stringBugId = getFieldValueFromGenericArtifact(genericArtifact, "BG_BUG_ID");
@@ -128,11 +129,12 @@ public class QCWriter extends QCConnectHelper implements
 					try {
 						
 						String targetArtifactIdFromTable = SFEEDBHelper.getTargetArtifactIdFromTable(sourceArtifactId, sourceSystemId, sourceSystemKind, sourceRepositoryId, sourceRepositoryKind, targetSystemId, targetSystemKind, targetRepositoryId, targetRepositoryKind);
-						IQCDefect updatedArtifact = defectHandler.updateDefect(getQcc(), targetArtifactIdFromTable, allFields);
-						log.info("Update Operation SUCCESSFULL!!!!! and the targetArtifactIdFromTable="+targetArtifactIdFromTable);
-						genericArtifact.setTargetArtifactId(targetArtifactIdFromTable);
-						//send this artifact to RCDU (Read COnnector Database Updater) indicating a success in updating the artifact
-					
+						if(allFields!=null) {
+							IQCDefect updatedArtifact = defectHandler.updateDefect(getQcc(), targetArtifactIdFromTable, allFields);
+							log.info("Update Operation SUCCESSFULL!!!!! and the targetArtifactIdFromTable="+targetArtifactIdFromTable);
+							genericArtifact.setTargetArtifactId(targetArtifactIdFromTable);
+							//send this artifact to RCDU (Read COnnector Database Updater) indicating a success in updating the artifact
+						}
 						
 						if(allAttachments!=null && (allAttachments!=null && allAttachments.size()>0)) {
 							//create the attachment per genericArtifact
@@ -228,7 +230,9 @@ public class QCWriter extends QCConnectHelper implements
 	}
 	public static String getFieldValueFromGenericArtifact(GenericArtifact individualGenericArtifact, String fieldName) {
 		
-		String fieldValue = (String) individualGenericArtifact.getAllGenericArtifactFieldsWithSameFieldName(fieldName).get(0).getFieldValue();
+		String fieldValue = null;
+		if(individualGenericArtifact.getAllGenericArtifactFields()!=null && individualGenericArtifact.getAllGenericArtifactFieldsWithSameFieldName(fieldName)!=null)
+			fieldValue = (String) individualGenericArtifact.getAllGenericArtifactFieldsWithSameFieldName(fieldName).get(0).getFieldValue();
 		
 		return fieldValue;
 	}

@@ -16,7 +16,7 @@ import org.openadaptor.core.exception.ValidationException;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
-import com.collabnet.ccf.pi.sfee.SFEEDBHelper;
+import com.collabnet.ccf.pi.sfee.v44.SFEEDBHelper;
 
 
 

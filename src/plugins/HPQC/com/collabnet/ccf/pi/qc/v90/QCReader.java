@@ -20,7 +20,6 @@ import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
-import com.collabnet.ccf.pi.sfee.SFEEDBHelper;
 
 public class QCReader extends QCConnectHelper implements
 		IDataProcessor {
