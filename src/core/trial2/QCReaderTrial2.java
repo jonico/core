@@ -19,9 +19,10 @@ import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
-import com.collabnet.ccf.pi.qc.QCConfigHelper;
-import com.collabnet.ccf.pi.qc.QCConnectHelper;
-import com.collabnet.ccf.pi.qc.QCDefectHandler;
+import com.collabnet.ccf.core.utils.DateUtil;
+import com.collabnet.ccf.pi.qc.v90.QCConfigHelper;
+import com.collabnet.ccf.pi.qc.v90.QCConnectHelper;
+import com.collabnet.ccf.pi.qc.v90.QCDefectHandler;
 
 public class QCReaderTrial2 extends QCConnectHelper implements
 		IDataProcessor {

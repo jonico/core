@@ -8,7 +8,7 @@ import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.collabnet.ccf.pi.sfee.meta.ArtifactMetaData;
+import com.collabnet.ccf.pi.sfee.v44.meta.ArtifactMetaData;
 import com.vasoftware.sf.soap44.types.SoapFieldValues;
 import com.vasoftware.sf.soap44.webservices.sfmain.TrackerFieldSoapDO;
 import com.vasoftware.sf.soap44.webservices.tracker.ArtifactSoapDO;

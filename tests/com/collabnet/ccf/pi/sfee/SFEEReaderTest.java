@@ -6,7 +6,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 
-import com.collabnet.ccf.pi.sfee.SFEEToGenericArtifactConverter;
+import com.collabnet.ccf.pi.sfee.v44.SFEEReader;
+import com.collabnet.ccf.pi.sfee.v44.SFEEToGenericArtifactConverter;
+
 
 public class SFEEReaderTest extends TestCase {
 	SFEEReader sfeeReader = null;

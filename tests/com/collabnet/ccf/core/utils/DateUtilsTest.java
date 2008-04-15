@@ -10,7 +10,7 @@ public class DateUtilsTest extends TestCase {
 	public void testConvertDate() throws ParseException {
 		Date now = new Date();
 		System.out.println(now);
-		Date convertedDate = DateUtils.convertDate(now, "GMT-8");
+		Date convertedDate = DateUtil.convertDate(now, "GMT-8");
 		System.out.println(convertedDate);
 		assertEquals(now,convertedDate);
 		

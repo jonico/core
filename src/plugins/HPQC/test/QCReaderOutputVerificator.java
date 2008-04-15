@@ -2,8 +2,6 @@ package test;
 
 import java.io.*;
 import org.dom4j.Document;
-import org.dom4j.Element;
-import org.dom4j.Node;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -11,14 +9,12 @@ import org.apache.commons.logging.LogFactory;
 import org.openadaptor.core.exception.NullRecordException;
 import org.openadaptor.core.exception.RecordFormatException;
 import org.openadaptor.core.exception.ValidationException;
-import org.openadaptor.auxil.connector.iostream.EncodingAwareObject;
 import org.openadaptor.core.IDataProcessor;
 
-import com.collabnet.ccf.pi.qc.QCConnectHelper;
-import com.collabnet.ccf.pi.qc.QCDefectHandler;
+import com.collabnet.ccf.pi.qc.v90.QCConnectHelper;
+import com.collabnet.ccf.pi.qc.v90.QCDefectHandler;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 public class QCReaderOutputVerificator extends QCConnectHelper implements IDataProcessor {
