@@ -434,15 +434,20 @@ public class QCDefectHandler {
 	public List<String> getAttachmentOperation(String auDescription) {
 		
 		List<String> attachDescription = new ArrayList();
-		StringTokenizer st = new StringTokenizer(auDescription, " "); 
-		String attachLabel = st.nextToken();
+		StringTokenizer st = new StringTokenizer(auDescription, ":");
+		
+		String attachLabelAndOperation = st.nextToken().trim();
+		String crReference = st.nextToken().trim();
+		
+		StringTokenizer newSt = new StringTokenizer(attachLabelAndOperation, " ");
+		String attachLabel = newSt.nextToken().trim();
 		attachDescription.add(attachLabel);
-		String operation = st.nextToken();
+		String operation = newSt.nextToken().trim();
 		attachDescription.add(operation);
-		String crReference  = st.nextToken(); 
 		attachDescription.add(crReference);
+		
 		log.info(attachDescription);
-		if(operation.equals("added:"))
+		if(operation.equals("added"))
 			return attachDescription;
 		
 		return null;
