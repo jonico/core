@@ -1,7 +1,5 @@
 package com.collabnet.ccf.pi.sfee.v44;
 
-import java.io.IOException;
-import java.rmi.RemoteException;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
@@ -13,13 +11,7 @@ import org.openadaptor.core.exception.RecordFormatException;
 import org.openadaptor.core.exception.ValidationException;
 
 import com.collabnet.ccf.core.ga.GenericArtifact;
-import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
-import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
-import com.vasoftware.sf.soap44.webservices.tracker.ArtifactDetailSoapRow;
-import com.vasoftware.sf.soap44.webservices.tracker.ArtifactSoapDO;
-
-import org.apache.commons.lang.StringUtils;
 
 /**
  * This component will find out whether an artifact coming out of a non-SFEE

@@ -1,37 +1,12 @@
 package trial2;
 
-import java.io.*;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dom4j.Document;
-import org.dom4j.Element;
 import org.dom4j.Node;
-import org.hsqldb.lib.HashMap;
-import org.openadaptor.auxil.connector.iostream.EncodingAwareObject;
-import org.openadaptor.auxil.connector.iostream.reader.FileReadConnector;
-import org.openadaptor.auxil.connector.iostream.reader.string.LineReader;
-import org.openadaptor.auxil.connector.iostream.writer.FileWriteConnector;
-import org.openadaptor.auxil.connector.jdbc.JDBCConnection;
-import org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector;
-import org.openadaptor.auxil.connector.jdbc.reader.xml.ResultSetToXMLConverter;
-import org.openadaptor.auxil.convertor.delimited.DelimitedStringToOrderedMapConvertor;
-import org.openadaptor.auxil.convertor.xml.OrderedMapToXmlConvertor;
 import org.openadaptor.core.IDataProcessor;
-import org.openadaptor.core.adaptor.Adaptor;
-import org.openadaptor.core.router.Router;
-
-import com.collabnet.ccf.core.ga.GenericArtifact;
-import com.collabnet.ccf.core.ga.GenericArtifactField;
-import com.collabnet.ccf.core.ga.GenericArtifactHelper;
-import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
 
 public class DynamicWiring implements
 		IDataProcessor {

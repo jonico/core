@@ -1,18 +1,5 @@
 package com.collabnet.ccf.pi.sfee.v44;
 
-import com.collabnet.ccf.core.ga.GenericArtifact;
-import com.collabnet.ccf.core.ga.GenericArtifactAttachment;
-import com.collabnet.ccf.core.utils.DateUtil;
-
-import com.vasoftware.sf.soap44.webservices.filestorage.IFileStorageAppSoap;
-import com.vasoftware.sf.soap44.webservices.filestorage.ISimpleFileStorageAppSoap;
-import com.vasoftware.sf.soap44.webservices.sfmain.AttachmentSoapList;
-import com.vasoftware.sf.soap44.webservices.sfmain.AttachmentSoapRow;
-import com.vasoftware.sf.soap44.webservices.sfmain.ISourceForgeSoap;
-import com.vasoftware.sf.soap44.webservices.tracker.ArtifactSoapDO;
-import com.vasoftware.sf.soap44.webservices.tracker.ITrackerAppSoap;
-import com.vasoftware.sf.soap44.webservices.ClientSoapStubFactory;
-
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.rmi.RemoteException;
@@ -24,6 +11,18 @@ import javax.activation.DataHandler;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+
+import com.collabnet.ccf.core.ga.GenericArtifact;
+import com.collabnet.ccf.core.ga.GenericArtifactAttachment;
+import com.collabnet.ccf.core.utils.DateUtil;
+import com.vasoftware.sf.soap44.webservices.ClientSoapStubFactory;
+import com.vasoftware.sf.soap44.webservices.filestorage.IFileStorageAppSoap;
+import com.vasoftware.sf.soap44.webservices.filestorage.ISimpleFileStorageAppSoap;
+import com.vasoftware.sf.soap44.webservices.sfmain.AttachmentSoapList;
+import com.vasoftware.sf.soap44.webservices.sfmain.AttachmentSoapRow;
+import com.vasoftware.sf.soap44.webservices.sfmain.ISourceForgeSoap;
+import com.vasoftware.sf.soap44.webservices.tracker.ArtifactSoapDO;
+import com.vasoftware.sf.soap44.webservices.tracker.ITrackerAppSoap;
 
 
 /**

@@ -3,8 +3,6 @@ package com.collabnet.ccf.core.config;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
-import java.text.DateFormat;
-import java.text.ParseException;
 import java.util.Date;
 import java.util.List;
 

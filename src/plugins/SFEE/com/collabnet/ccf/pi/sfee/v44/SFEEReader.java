@@ -12,18 +12,14 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dom4j.Document;
-import org.dom4j.Element;
 import org.dom4j.Node;
-import org.openadaptor.auxil.connector.iostream.EncodingAwareObject;
 import org.openadaptor.core.IDataProcessor;
-
 
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
 import com.collabnet.ccf.core.utils.DateUtil;
-import com.collabnet.ccf.pi.sfee.v44.IArtifactToGAConverter;
 import com.vasoftware.sf.soap44.webservices.sfmain.TrackerFieldSoapDO;
 import com.vasoftware.sf.soap44.webservices.tracker.ArtifactSoapDO;
 

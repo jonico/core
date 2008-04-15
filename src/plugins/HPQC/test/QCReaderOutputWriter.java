@@ -1,26 +1,23 @@
 package test;
 
-import org.dom4j.Document;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
+import org.dom4j.Document;
+import org.openadaptor.core.IDataProcessor;
 import org.openadaptor.core.exception.NullRecordException;
 import org.openadaptor.core.exception.RecordFormatException;
 import org.openadaptor.core.exception.ValidationException;
-import org.openadaptor.core.IDataProcessor;
-
 
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.pi.qc.v90.QCConnectHelper;
 import com.collabnet.ccf.pi.qc.v90.QCDefectHandler;
-
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.util.List;
 
 public class QCReaderOutputWriter extends QCConnectHelper implements IDataProcessor {
 	

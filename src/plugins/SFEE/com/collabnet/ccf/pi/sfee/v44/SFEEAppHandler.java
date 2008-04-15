@@ -6,10 +6,7 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
-import org.apache.commons.lang.StringUtils;
-
 import com.collabnet.ccf.core.ga.GenericArtifact;
-import com.collabnet.ccf.pi.sfee.v44.SFEEArtifactMetaData;
 import com.vasoftware.sf.soap44.webservices.sfmain.AuditHistorySoapList;
 import com.vasoftware.sf.soap44.webservices.sfmain.AuditHistorySoapRow;
 import com.vasoftware.sf.soap44.webservices.sfmain.ISourceForgeSoap;

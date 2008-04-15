@@ -11,7 +11,6 @@ import java.util.List;
 
 import org.apache.log4j.Logger;
 
-
 import com.collabnet.ccf.pi.qc.v90.AttachmentData;
 import com.collabnet.ccf.pi.qc.v90.api.Comment;
 import com.collabnet.ccf.pi.qc.v90.api.IAttachment;

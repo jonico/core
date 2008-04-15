@@ -1,8 +1,9 @@
 package trial2;
 
-import java.io.*;
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -10,13 +11,10 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dom4j.Document;
-import org.dom4j.Element;
 import org.dom4j.Node;
-import org.openadaptor.auxil.connector.iostream.EncodingAwareObject;
 import org.openadaptor.core.IDataProcessor;
 
 import com.collabnet.ccf.core.ga.GenericArtifact;
-import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
 import com.collabnet.ccf.core.utils.DateUtil;

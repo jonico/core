@@ -4,13 +4,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.collabnet.ccf.pi.sfee.v44.SFEEDBHelper;
-
-import com.collabnet.ccf.core.ga.GenericArtifactAttachment;
-import com.collabnet.ccf.core.ga.GenericArtifactField;
-import com.collabnet.ccf.core.ga.GenericArtifact;
-import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
-import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dom4j.Document;
@@ -18,6 +11,13 @@ import org.dom4j.Node;
 import org.openadaptor.core.IDataProcessor;
 import org.openadaptor.core.exception.NullRecordException;
 import org.openadaptor.core.exception.RecordFormatException;
+
+import com.collabnet.ccf.core.ga.GenericArtifact;
+import com.collabnet.ccf.core.ga.GenericArtifactAttachment;
+import com.collabnet.ccf.core.ga.GenericArtifactField;
+import com.collabnet.ccf.core.ga.GenericArtifactHelper;
+import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
+import com.collabnet.ccf.pi.sfee.v44.SFEEDBHelper;
 
 public class QCWriter extends QCConnectHelper implements
 		IDataProcessor {

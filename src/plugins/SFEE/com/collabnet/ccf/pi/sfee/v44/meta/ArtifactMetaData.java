@@ -1,7 +1,5 @@
 package com.collabnet.ccf.pi.sfee.v44.meta;
 
-import java.util.HashMap;
-
 import com.collabnet.ccf.core.ga.GenericArtifactField.FieldValueTypeValue;
 import com.vasoftware.sf.soap44.webservices.sfmain.TrackerFieldSoapDO;
 

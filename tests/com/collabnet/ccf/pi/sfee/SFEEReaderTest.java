@@ -1,10 +1,10 @@
 package com.collabnet.ccf.pi.sfee;
 
-import junit.framework.TestCase;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
+
+import junit.framework.TestCase;
 
 import com.collabnet.ccf.pi.sfee.v44.SFEEReader;
 import com.collabnet.ccf.pi.sfee.v44.SFEEToGenericArtifactConverter;

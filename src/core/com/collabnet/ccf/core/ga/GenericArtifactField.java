@@ -1,6 +1,5 @@
 package com.collabnet.ccf.core.ga;
 
-import java.util.HashMap;
 
 /**
  * A field has a name and a field type and contains a typed value for the

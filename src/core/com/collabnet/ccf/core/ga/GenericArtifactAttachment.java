@@ -1,7 +1,5 @@
 package com.collabnet.ccf.core.ga;
 
-import java.util.HashMap;
-
 import org.apache.commons.codec.binary.Base64;
 
 /**

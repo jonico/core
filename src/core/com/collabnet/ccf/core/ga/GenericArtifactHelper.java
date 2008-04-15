@@ -13,6 +13,7 @@ import java.util.Locale;
 import java.util.Map;
 
 import javax.xml.datatype.XMLGregorianCalendar;
+
 import org.dom4j.Document;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
@@ -24,9 +25,8 @@ import org.openadaptor.auxil.connector.iostream.EncodingAwareObject;
 import com.collabnet.ccf.core.ga.GenericArtifact.ArtifactActionValue;
 import com.collabnet.ccf.core.ga.GenericArtifact.ArtifactModeValue;
 import com.collabnet.ccf.core.ga.GenericArtifact.ArtifactTypeValue;
-import com.collabnet.ccf.core.ga.GenericArtifactField.FieldValueTypeValue;
-import com.collabnet.ccf.core.ga.GenericArtifactAttachment;
 import com.collabnet.ccf.core.ga.GenericArtifactAttachment.AttachmentValueTypeValue;
+import com.collabnet.ccf.core.ga.GenericArtifactField.FieldValueTypeValue;
 
 /**
  * 

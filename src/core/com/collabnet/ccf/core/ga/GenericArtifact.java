@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import com.collabnet.ccf.core.ga.GenericArtifactField.FieldValueTypeValue;
-
 /**
  * 
  * This is the root element for every entity that is transported through the CCF

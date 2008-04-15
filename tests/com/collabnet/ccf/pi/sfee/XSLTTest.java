@@ -12,16 +12,14 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.stream.StreamSource;
 
+import junit.framework.TestCase;
+
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.DocumentHelper;
 import org.dom4j.io.DocumentResult;
 import org.dom4j.io.DocumentSource;
-import org.openadaptor.core.exception.ProcessingException;
-import org.openadaptor.core.exception.ValidationException;
 import org.openadaptor.util.FileUtils;
-
-import junit.framework.TestCase;
 
 public class XSLTTest extends TestCase {
 	private static String xsltFile = "C:/madhu-work/CCF/svn/ccf/src/core/trial2/xslts/qc2sfee.xsl";

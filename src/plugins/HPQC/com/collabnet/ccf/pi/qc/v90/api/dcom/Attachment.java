@@ -2,7 +2,6 @@ package com.collabnet.ccf.pi.qc.v90.api.dcom;
 
 import org.apache.log4j.Logger;
 
-
 import com.collabnet.ccf.pi.qc.v90.api.IAttachment;
 import com.jacob.activeX.ActiveXComponent;
 import com.jacob.com.Dispatch;
