@@ -2,10 +2,8 @@ package com.collabnet.ccf.pi.qc.v90;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
-import com.collabnet.ccf.pi.qc.v90.QCEntityService;
 import com.collabnet.ccf.pi.sfee.v44.SFEEDBHelper;
 
 import com.collabnet.ccf.core.ga.GenericArtifactAttachment;

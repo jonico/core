@@ -1,8 +1,7 @@
 package com.collabnet.ccf.pi.qc.v90;
 
-import java.io.*;
+import java.io.IOException;
 import java.sql.Timestamp;
-import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -11,13 +10,10 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dom4j.Document;
-import org.dom4j.Element;
 import org.dom4j.Node;
-import org.openadaptor.auxil.connector.iostream.EncodingAwareObject;
 import org.openadaptor.core.IDataProcessor;
 
 import com.collabnet.ccf.core.ga.GenericArtifact;
-import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
 

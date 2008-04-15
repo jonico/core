@@ -1,9 +1,5 @@
 package com.collabnet.ccf.pi.qc.v90.api.dcom;
 
-import java.util.ArrayList;
-import java.util.List;
-
-
 import com.collabnet.ccf.pi.qc.v90.api.IAttachment;
 import com.collabnet.ccf.pi.qc.v90.api.IAttachmentFactory;
 import com.jacob.activeX.ActiveXComponent;

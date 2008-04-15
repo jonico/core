@@ -1,6 +1,5 @@
 package com.collabnet.ccf.pi.qc.v90.api.dcom;
 
-import java.util.ArrayList;
 import java.util.List;
 
 
@@ -8,7 +7,6 @@ import com.collabnet.ccf.pi.qc.v90.api.IBug;
 import com.collabnet.ccf.pi.qc.v90.api.IFactory;
 import com.collabnet.ccf.pi.qc.v90.api.IField;
 import com.collabnet.ccf.pi.qc.v90.api.IFilter;
-import com.collabnet.ccf.pi.qc.v90.api.IItem;
 import com.jacob.activeX.ActiveXComponent;
 import com.jacob.com.Dispatch;
 import com.jacob.com.Variant;

@@ -1,6 +1,5 @@
 package test;
 
-import java.io.*;
 import org.dom4j.Document;
 
 import org.apache.commons.logging.Log;
@@ -14,6 +13,11 @@ import org.openadaptor.core.IDataProcessor;
 import com.collabnet.ccf.pi.qc.v90.QCConnectHelper;
 import com.collabnet.ccf.pi.qc.v90.QCDefectHandler;
 
+import java.io.FileInputStream;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 

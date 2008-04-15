@@ -1,20 +1,15 @@
 package com.collabnet.ccf.pi.qc.v90;
 
-import java.io.IOException;
-import java.rmi.RemoteException;
 import java.util.List;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dom4j.Document;
 import org.openadaptor.core.IDataProcessor;
 import org.openadaptor.core.exception.NullRecordException;
 import org.openadaptor.core.exception.RecordFormatException;
-import org.openadaptor.core.exception.ValidationException;
 
 import com.collabnet.ccf.core.ga.GenericArtifact;
-import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.pi.sfee.v44.SFEEDBHelper;
 

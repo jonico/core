@@ -17,7 +17,6 @@ import com.collabnet.ccf.pi.qc.v90.api.Comment;
 import com.collabnet.ccf.pi.qc.v90.api.IAttachment;
 import com.collabnet.ccf.pi.qc.v90.api.IAttachmentFactory;
 import com.collabnet.ccf.pi.qc.v90.api.IBugActions;
-import com.collabnet.ccf.pi.qc.v90.api.IFactory;
 import com.collabnet.ccf.pi.qc.v90.api.IFactoryList;
 import com.collabnet.ccf.pi.qc.v90.api.Utils;
 import com.jacob.activeX.ActiveXComponent;
