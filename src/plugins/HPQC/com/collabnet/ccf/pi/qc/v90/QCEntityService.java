@@ -24,11 +24,6 @@ public class QCEntityService extends QCConnectHelper implements
 	}
 
 	private static final Log log = LogFactory.getLog(QCEntityService.class);
-	/*private String CreateToken;
-	private String synchronizationUser;
-	private String otherSystemInQCTargetFieldname;
-	*/
-	private QCDefectHandler defectHandler;
 
 	public Object[] process(Object data) {
 		if (data == null) {
@@ -102,51 +97,7 @@ public class QCEntityService extends QCConnectHelper implements
 	public void reset(Object context) {
 	}
 
-	/*public void setSynchronizationUser(String synchronizationUser) {
-		this.synchronizationUser = synchronizationUser;
-	}
-
-	public String getSynchronizationUser() {
-		return synchronizationUser;
-	}
-	*/
-	@Override
 	public void validate(List exceptions) {
 		super.validate(exceptions);
-		/*
-		if (getSynchronizationUser()==null) {
-			log.error("synchronizationUser-property no set");
-			exceptions.add(new ValidationException("synchronizationUser-property not set",this));
-		}
-		if (getOtherSystemInQCTargetFieldname()==null) {
-			log.error("otherSystemInQCTargetFieldname-property not set");
-			exceptions.add(new ValidationException("otherSystemInQCTargetFieldname not set",this));
-		}
-		
-		if (getCreateToken()==null) {
-			log.error("createToken-property no set");
-			exceptions.add(new ValidationException("createToken-property not set",this));
-		}
-		*/
-		// Create tracker handler
-		defectHandler = new QCDefectHandler();
-	}
-
-	/*public void setOtherSystemInQCTargetFieldname(String sFEEmappingID) {
-		otherSystemInQCTargetFieldname = sFEEmappingID;
-	}
-
-	public String getOtherSystemInQCTargetFieldname() {
-		return otherSystemInQCTargetFieldname;
-	}
-
-	public void setCreateToken(String createToken) {
-		CreateToken = createToken;
-	}
-
-	public String getCreateToken() {
-		return CreateToken;
-	}
-	*/
-
+	}	
 }
