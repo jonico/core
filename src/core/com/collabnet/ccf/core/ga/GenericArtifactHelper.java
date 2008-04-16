@@ -357,7 +357,7 @@ public class GenericArtifactHelper {
 
 		// only read optional attributes if necessary
 		if (artifactType == ArtifactTypeValue.DEPENDENCY) {
-				//|| artifactType == ArtifactTypeValue.ATTACHMENT) {
+		//		|| artifactType == ArtifactTypeValue.ATTACHMENT) {
 			genericArtifact.setDepParentSourceArtifactId(getAttributeValue(
 					root, DEP_PARENT_SOURCE_ARTIFACT_ID));
 			genericArtifact.setDepParentSourceRepositoryId(getAttributeValue(
@@ -837,8 +837,8 @@ public class GenericArtifactHelper {
 				.getConflictResolutionPolicy());
 
 		// only create optional attributes if necessary
-		if (artifactType == ArtifactTypeValue.DEPENDENCY ) {
-				//|| artifactType == ArtifactTypeValue.ATTACHMENT) {
+		if (artifactType == ArtifactTypeValue.DEPENDENCY) {
+		//		|| artifactType == ArtifactTypeValue.ATTACHMENT) {
 			addAttribute(root, DEP_PARENT_SOURCE_ARTIFACT_ID, genericArtifact
 					.getDepParentSourceArtifactId());
 			addAttribute(root, DEP_PARENT_SOURCE_REPOSITORY_ID, genericArtifact
