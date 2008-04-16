@@ -10,14 +10,11 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dom4j.Document;
+import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.openadaptor.core.Component;
 import org.openadaptor.core.IDataProcessor;
 import org.openadaptor.core.exception.MessageException;
-
-import com.collabnet.ccf.pi.qc.v90.QCXMLHelper;
-
-
 
 public class Ambulance extends Component implements
 		IDataProcessor {
@@ -33,15 +30,18 @@ public class Ambulance extends Component implements
 	public Ambulance() {
 		super();
 	}
-	
+	public static Document createXMLDocument(String encoding) {
+		Document document=DocumentHelper.createDocument();
+		document.setXMLEncoding(encoding);
+		return document;
+	}
 	public Object[] process(Object data) {
 		if(data instanceof MessageException){
 					MessageException exception = (MessageException) data;
 					Object dataObj = exception.getData();
 					String source = exception.getOriginatingModule();
 					Exception rootCause = exception.getException();
-					// TODO Remove QCXMLHelper reference here
-					Document doc = QCXMLHelper.createXMLDocument("UTF-8");
+					Document doc = createXMLDocument("UTF-8");
 					Element failure = doc.addElement("Failure");
 					Element failureSource = failure.addElement("Source");
 					if(source != null)
