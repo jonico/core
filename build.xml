@@ -1,9 +1,4 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!-- WARNING: Eclipse auto-generated file.
-              Any modifications will be overwritten.
-              To include a user specific buildfile here, simply create one in the same
-              directory with the processing instruction <?eclipse.ant.import?>
-              as the first entry and export the buildfile again. -->
 <project basedir="." default="build" name="CCFJ">
 	<property environment="env" />
 	<property name="junit.output.dir" value="junit-reports" />
@@ -11,7 +6,7 @@
 	<property name="target" value="1.5" />
 	<property name="source" value="1.5" />
 	<path id="CCFJ.classpath">
-		<pathelement location="bin" />
+		<pathelement location="build/classes" />
 		<pathelement location="src/core/lib/openadaptor-3.4/bootstrap.jar" />
 		<pathelement location="src/core/lib/openadaptor-3.4/openadaptor.jar" />
 		<pathelement location="src/core/lib/openadaptor-3.4/openadaptor-depends.jar" />
@@ -81,11 +76,13 @@
 	<target name="init">
 		<delete dir="build/jars" />
 		<delete dir="build" />
+		<delete dir="${junit.output.dir}" />
 		<mkdir dir="build/jars" />
+		<mkdir dir="${junit.output.dir}" />
 	</target>
 	<target name="clean">
-		<delete dir="bin" />
-		<mkdir dir="bin" />
+		<delete dir="build/classes" />
+		<mkdir dir="build/classes" />
 	</target>
 	<target depends="clean" name="cleanall" />
 	<target depends="init, build.core, build.sfee.plugin, build.qc.plugin, build.junit.tests, junit" name="build" />
@@ -93,12 +90,12 @@
 	<target name="build.core">
 		<antcall target="clean">
 		</antcall>
-		<javac debug="true" debuglevel="${debuglevel}" destdir="bin" source="${source}" target="${target}">
+		<javac debug="true" debuglevel="${debuglevel}" destdir="build/classes" source="${source}" target="${target}">
 			<src path="src/core" />
 			<classpath refid="CCFJ.classpath" />
 		</javac>
 		<jar destfile="build/jars/CCFCoreV10.jar">
-			<fileset dir="bin">
+			<fileset dir="build/classes">
 				<include name="**/*.class" />
 			</fileset>
 		</jar>
@@ -107,7 +104,7 @@
 	<target name="build.qc.plugin">
 		<antcall target="clean">
 		</antcall>
-		<javac debug="true" debuglevel="${debuglevel}" destdir="bin" source="${source}" target="${target}">
+		<javac debug="true" debuglevel="${debuglevel}" destdir="build/classes" source="${source}" target="${target}">
 			<src path="src/plugins/HPQC/v90" />
 			<classpath refid="CCFJ.classpath" />
 			<classpath>
@@ -118,7 +115,7 @@
 			</classpath>
 		</javac>
 		<jar destfile="build/jars/CCFQCPluginV90.jar">
-			<fileset dir="bin">
+			<fileset dir="build/classes">
 				<include name="**/*.class" />
 			</fileset>
 		</jar>
@@ -126,7 +123,7 @@
 	<target name="build.sfee.plugin">
 		<antcall target="clean">
 		</antcall>
-		<javac debug="true" debuglevel="${debuglevel}" destdir="bin" source="${source}" target="${target}">
+		<javac debug="true" debuglevel="${debuglevel}" destdir="build/classes" source="${source}" target="${target}">
 			<src path="src/plugins/SFEE/v44" />
 			<classpath refid="CCFJ.classpath" />
 			<classpath>
@@ -137,7 +134,7 @@
 
 		</javac>
 		<jar destfile="build/jars/CCFSFEEPluginV44.jar">
-			<fileset dir="bin">
+			<fileset dir="build/classes">
 				<include name="**/*.class" />
 			</fileset>
 		</jar>
@@ -145,7 +142,7 @@
 	<target name="build.junit.tests">
 		<antcall target="clean">
 		</antcall>
-		<javac debug="true" debuglevel="${debuglevel}" destdir="bin" source="${source}" target="${target}">
+		<javac debug="true" debuglevel="${debuglevel}" destdir="build/classes" source="${source}" target="${target}">
 			<src path="tests" />
 			<classpath refid="CCFJ.classpath" />
 			<classpath>
@@ -155,7 +152,7 @@
 			</classpath>
 		</javac>
 		<jar destfile="build/jars/CCF-JUnit-V10.jar">
-			<fileset dir="bin">
+			<fileset dir="build/classes">
 				<include name="**/*.class" />
 			</fileset>
 		</jar>
@@ -163,14 +160,15 @@
 	<target name="junit">
 		<delete dir="junit-reports" />
 		<mkdir dir="junit-reports" />
-		<junit printsummary="withOutAndErr">
+		<junit showoutput="on" printsummary="on" filtertrace="off">
+			<formatter type="plain" />
 			<classpath refid="CCFJ.classpath" />
 			<classpath>
 				<fileset dir="build/jars">
 					<include name="*.jar" />
 				</fileset>
 			</classpath>
-			<batchtest filtertrace="off">
+			<batchtest todir="${junit.output.dir}">
 				<fileset dir="tests">
 					<include name="**/*Test*.java" />
 				</fileset>
