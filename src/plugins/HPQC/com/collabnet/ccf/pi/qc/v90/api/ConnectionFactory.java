@@ -6,7 +6,7 @@ public class ConnectionFactory {
 	private static IConnection instance ;
 	public static IConnection getInstance(String server, String domain, String project, String user, String pass) {
 		if( instance == null || !instance.isLoggedIn() ) {
-			String clz = "com.collabnet.ccf.pi.qc.api.dcom.Connection";
+			String clz = "com.collabnet.ccf.pi.qc.v90.api.dcom.Connection";
 			if( clz == null || clz.trim().length() == 0 ) clz = Connection.class.getCanonicalName();
 			try {
 				Class[] types = new Class[]{String.class,String.class,String.class,String.class,String.class};
