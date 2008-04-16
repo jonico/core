@@ -1,4 +1,4 @@
-package test.QAHelperClasses;
+package com.collabnet.ccf.pi.qc;
 
 import java.io.FileInputStream;
 import java.io.FileWriter;
