@@ -31,6 +31,7 @@ public class SFEEReaderTest extends TestCase {
 		sfeeReader.setKeepAlive(keepAlive);
 		sfeeReader.setArtifactConverter(artifactConverter);
 		sfeeReader.connect();
+		sfeeReader.validate(null);
 	}
 
 	public void testReadTrackerItems(){
@@ -44,7 +45,7 @@ public class SFEEReaderTest extends TestCase {
 		sfeeReader.readTrackerItems(projectTracker, lastModifiedDate, lastArtifactId, lastArtifactVersion, firstTimeImport, null);
 	}
 	
-	public void te1stCommentsList(){
+	public void testCommentsList(){
 		ISourceForgeSoap soapApp = sfeeReader.getMSfSoap();
 		try {
 			System.out.println(soapApp.getApiVersion());
@@ -64,7 +65,7 @@ public class SFEEReaderTest extends TestCase {
 		}
 	}
 	
-	public void t2estWriteAttachment(){
+	public void testWriteAttachment(){
 		
 		ISimpleFileStorageAppSoap fileStorageApp = (ISimpleFileStorageAppSoap) ClientSoapStubFactory.getSoapStub(
 				ISimpleFileStorageAppSoap.class, serverUrl);
@@ -86,7 +87,7 @@ public class SFEEReaderTest extends TestCase {
 		}
 	}
 	
-	public void t2estAttachmentsList(){
+	public void testAttachmentsList(){
 		ISourceForgeSoap soapApp = sfeeReader.getMSfSoap();
 		try {
 			
