@@ -23,6 +23,7 @@ public class QCWriter extends QCConnectHelper implements
 		IDataProcessor {
 
 	private static final Log log = LogFactory.getLog(QCWriter.class);
+	private String configDir;
 	private String CreateToken;
 	private QCDefectHandler defectHandler;	
 
@@ -93,7 +94,7 @@ public class QCWriter extends QCConnectHelper implements
 					
 					if(allAttachments!=null && (allAttachments!=null && allAttachments.size()>0)) {
 						//create the attachment per genericArtifact
-						defectHandler.createAttachment(qcc, targetArtifactIdAfterCreation, allAttachments);
+						defectHandler.createAttachment(qcc, targetArtifactIdAfterCreation, getConfigDir(), allAttachments);
 						
 					}
 					
@@ -136,7 +137,7 @@ public class QCWriter extends QCConnectHelper implements
 						
 						if(allAttachments!=null && (allAttachments!=null && allAttachments.size()>0)) {
 							//create the attachment per genericArtifact
-							defectHandler.createAttachment(qcc, targetArtifactIdFromTable, allAttachments);
+							defectHandler.createAttachment(qcc, targetArtifactIdFromTable,  getConfigDir(), allAttachments);
 							
 						}
 					
@@ -196,7 +197,7 @@ public class QCWriter extends QCConnectHelper implements
 	public GenericArtifact concatValuesOfSameFieldNames(GenericArtifact genericArtifact) {
 		
 		List<GenericArtifactField> allFields = genericArtifact.getAllGenericArtifactFields();
-		List<String> allFieldNames = new ArrayList();
+		List<String> allFieldNames = new ArrayList<String>();
 		for(int cnt=0; cnt < allFields.size(); cnt++) {
 			
 			if( !(allFieldNames.contains(allFields.get(cnt).getFieldName())) && 
@@ -296,5 +297,13 @@ public class QCWriter extends QCConnectHelper implements
 
 	public QCWriter() {
 		super();
+	}
+
+	public String getConfigDir() {
+		return configDir;
+	}
+
+	public void setConfigDir(String configDir) {
+		this.configDir = configDir;
 	}
 }
