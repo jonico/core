@@ -116,7 +116,7 @@ public class QCWriter extends QCConnectHelper implements
 				
 			case UPDATE: {
 				//If the bugId does not exists in QC, throw an error. Otherwise continue.
-				if(doesBugIdExistsInQC==true) { //should be checked if doesBugIdExistsInQc==false
+				if(doesBugIdExistsInQC==false) { //should be checked if doesBugIdExistsInQc==false
 					//send this artifact to HOSPITAL
 					break;
 				}
