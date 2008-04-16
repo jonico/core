@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="src" path="src/plugins/SFEE/v44"/>
+	<classpathentry excluding="lib/**" kind="src" path="src/plugins/SFEE/v44"/>
 	<classpathentry kind="src" path="src/plugins/HPQC/v90"/>
 	<classpathentry kind="src" path="tests"/>
-	<classpathentry kind="src" path="src/core"/>
+	<classpathentry excluding="lib/**" kind="src" path="src/core"/>
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/bootstrap.jar"/>
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/openadaptor.jar"/>
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/openadaptor-depends.jar"/>
