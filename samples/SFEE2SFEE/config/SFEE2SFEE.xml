@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
+	<description><![CDATA[
+  Simple test wiring to write out the first generic artifact!
+  ]]></description>
+
+	<bean class="org.openadaptor.core.jmx.MBeanServer">
+		<description>
+			Embed this in your config to expose jmx interface via http
+			and rmi.
+		</description>
+		<constructor-arg value="8082" />
+	</bean>
+
+	<bean id="SystemUtil" class="org.openadaptor.util.SystemUtil">
+		<description>
+			Embed this in your config to expose useful management bean.
+		</description>
+	</bean>
+
+	<bean id="LogAdmin"
+		class="org.openadaptor.thirdparty.log4j.LogAdmin">
+		<description>
+			Embed this in your config to expose log4j management.
+		</description>
+	</bean>
+
+	<bean id="Adaptor" class="org.openadaptor.core.adaptor.Adaptor">
+		<property name="messageProcessor" ref="Router" />
+	</bean>
+
+	<bean id="Router" class="org.openadaptor.core.router.Router">
+
+		<property name="processMap">
+			<map>
+				<entry key-ref="SimplePollingReaderSFEE2QC" value-ref="SFEEReader" />
+				
+				<entry key-ref="SFEEReader"	value-ref="SFEEEntityService" />
+				<entry key-ref="SFEEEntityService" value-ref="SFEEWriter" />
+				<entry key-ref="SFEEWriter" value-ref="MappingDBUpdater" />
+			</map>
+		</property>
+		<property name="exceptionProcessor" ref="ExceptionHandler" />
+	</bean>
+	<bean id="SFEETransformer" class="com.collabnet.ccf.core.transformer.XsltProcessor">
+   <property name="xsltFile" value="C:/madhu-work/CCF/svn/ccf/src/core/trial2/xslts/qc2sfee.xsl"/>
+  </bean>
+	 <bean id="QCReader" class="com.collabnet.ccf.pi.qc.v90.QCReader">
+	     <description>
+	       Reads the modified defects from QC
+	     </description>              
+	     <property name="serverUrl" value="http://10.2.1.114:8080/qcbin"/>
+	     <property name="domain" value="MADHU_CCF_TESTING"/>
+	     <property name="projectName" value="MADHU_TEST"/>
+	     <property name="userName" value="alex_qc"/>
+	     <property name="password" value=""/>
+	     <property name="keepAlive" value="true"/>
+  	 </bean>
+	
+	<bean id="SimplePollingReaderQC2SFEE"
+		class="com.collabnet.ccf.core.test.plugins.SimpleLoopingPollingReadConnector">
+		<description>
+			Poller which wraps QCReader and every 5 seconds.
+		</description>
+		<property name="pollLimit" value="-1" />
+		<property name="delegate" ref="QC2SFEEDatabaseReader" />
+		<property name="pollIntervalSecs" value="10" />
+	</bean>
+	
+	<bean id="SimplePollingReaderSFEE2QC"
+		class="com.collabnet.ccf.core.test.plugins.SimpleLoopingPollingReadConnector">
+		<description>
+			Poller which wraps QCReader and every 5 seconds.
+		</description>
+		<property name="pollLimit" value="-1" />
+		<property name="delegate" ref="SFEE2QCDatabaseReader" />
+		<property name="pollIntervalSecs" value="10" />
+	</bean>
+
+	<bean id="SFEEReader"
+		class="com.collabnet.ccf.pi.sfee.v44.SFEEReader">
+		<description>Reads the modified defects from SFEE</description>
+		<property name="username" value="connector" />
+		<property name="password" value="password" />
+		<property name="serverUrl"
+			value="http://cu074.cubit.maa.collab.net:8080" />
+		<property name="keepAlive" value="true" />
+		<property name="artifactConverter"
+			ref="SFEEGerericArtifactConverter" />
+	</bean>
+	<bean id="SFEEGerericArtifactConverter"
+		class="com.collabnet.ccf.pi.sfee.v44.SFEEToGenericArtifactConverter" />
+	<bean id="SFEEWriter" class="com.collabnet.ccf.pi.sfee.v44.SFEEWriter">
+		<description>Writes the modified defects from SFEE</description>
+		<property name="username" value="connector" />
+		<property name="password" value="password" />
+		<property name="serverUrl"
+			value="http://cu074.cubit.maa.collab.net:8080" />
+		<property name="keepAlive" value="true" />
+		<property name="converter" ref="GerericArtifactToSFEEConverter" />
+		<property name="createToken" value="create" />
+		<property name="otherSystemVersionInSFEETargetFieldname"
+			value="create" />
+		<property name="updateComment"
+			value="Synchronized by Connector user" />
+	</bean>
+	<bean id="SFEEEntityService"
+		class="com.collabnet.ccf.pi.sfee.v44.SFEEEntityService">
+		<description>Reads the modified defects from SFEE</description>
+		<property name="username" value="connector" />
+		<property name="password" value="password" />
+		<property name="serverUrl"
+			value="http://cu074.cubit.maa.collab.net:8080" />
+		<property name="keepAlive" value="true" />
+		<property name="createToken" value="create" />
+		<property name="otherSystemInSFEETargetFieldname"
+			value="create" />
+		<property name="synchronizationUser" value="connector" />
+	</bean>
+
+	<bean id="GerericArtifactToSFEEConverter"
+		class="com.collabnet.ccf.pi.sfee.v44.GenericArtifactToSFEEConverter" />
+	<bean id="ExceptionHandler" class="com.collabnet.ccf.core.hospital.Ambulance">
+  		<property name="hospitalFileName" value="C:/hospital.txt"/>
+  	</bean>
+
+	<bean id="QC2SFEEDatabaseReader"
+		class="org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector">
+		<description>
+			Reader which polls database using configured SQL.
+		</description>
+		<property name="jdbcConnection" ref="JdbcConnectionReadQC2SFEE" />
+		<!-- batch size of 0 or less means process all rows in one message batch. -->
+		<!-- batch size of one means process one row per message and so on -->
+		<property name="batchSize" value="0" />
+		<property name="resultSetConverter"
+			ref="ResultSetConverter" />
+		<property name="sql">
+			<value>
+				select A.REPOSITORY_ID AS SOURCE_REPOSITORY_ID,
+                A.REPOSITORY_KIND AS SOURCE_REPOSITORY_KIND, C.SYSTEM_ID
+                AS SOURCE_SYSTEM_ID, C.SYSTEM_KIND AS
+                SOURCE_SYSTEM_KIND, B.REPOSITORY_ID AS
+                TARGET_REPOSITORY_ID, B.REPOSITORY_KIND AS
+                TARGET_REPOSITORY_KIND, D.SYSTEM_ID AS TARGET_SYSTEM_ID,
+                D.SYSTEM_KIND AS TARGET_SYSTEM_KIND,
+                REPOSITORY_MAPPING.LAST_READ_TIME AS FROM_TIME,
+                REPOSITORY_MAPPING.VERSION AS VERSION,
+                REPOSITORY_MAPPING.TRANSACTION_ID AS TRANSACTION_ID from
+                REPOSITORY_INFO A,REPOSITORY_INFO B, SYSTEM_INFO C,
+                SYSTEM_INFO D, REPOSITORY_MAPPING
+                WHERE REPOSITORY_MAPPING.SOURCE_REPOSITORY_INFO_ID =
+                A.ID AND REPOSITORY_MAPPING.TARGET_REPOSITORY_INFO_ID =
+                B.ID AND A.SYSTEM_INFO_ID = C.ID AND B.SYSTEM_INFO_ID =
+                D.ID AND REPOSITORY_MAPPING.ID = 1
+			</value>
+		</property>
+	</bean>
+	
+	<bean id="SFEE2QCDatabaseReader"
+		class="org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector">
+		<description>
+			Reader which polls database using configured SQL.
+		</description>
+		<property name="jdbcConnection" ref="JdbcConnectionReadSFEE2QC" />
+		<!-- batch size of 0 or less means process all rows in one message batch. -->
+		<!-- batch size of one means process one row per message and so on -->
+		<property name="batchSize" value="0" />
+		<property name="resultSetConverter"
+			ref="ResultSetConverter" />
+		<property name="sql">
+			<value>
+				select A.REPOSITORY_ID AS SOURCE_REPOSITORY_ID,
+                A.REPOSITORY_KIND AS SOURCE_REPOSITORY_KIND, C.SYSTEM_ID
+                AS SOURCE_SYSTEM_ID, C.SYSTEM_KIND AS
+                SOURCE_SYSTEM_KIND, B.REPOSITORY_ID AS
+                TARGET_REPOSITORY_ID, B.REPOSITORY_KIND AS
+                TARGET_REPOSITORY_KIND, D.SYSTEM_ID AS TARGET_SYSTEM_ID,
+                D.SYSTEM_KIND AS TARGET_SYSTEM_KIND,
+                REPOSITORY_MAPPING.LAST_READ_TIME AS FROM_TIME,
+                REPOSITORY_MAPPING.VERSION AS VERSION,
+                REPOSITORY_MAPPING.TRANSACTION_ID AS TRANSACTION_ID from
+                REPOSITORY_INFO A,REPOSITORY_INFO B, SYSTEM_INFO C,
+                SYSTEM_INFO D, REPOSITORY_MAPPING
+                WHERE REPOSITORY_MAPPING.SOURCE_REPOSITORY_INFO_ID =
+                A.ID AND REPOSITORY_MAPPING.TARGET_REPOSITORY_INFO_ID =
+                B.ID AND A.SYSTEM_INFO_ID = C.ID AND B.SYSTEM_INFO_ID =
+                D.ID AND REPOSITORY_MAPPING.ID = 2
+			</value>
+		</property>
+	</bean>
+
+	<bean id="JdbcConnectionReadQC2SFEE"
+		class="org.openadaptor.auxil.connector.jdbc.JDBCConnection">
+		<description>This defines jdbc connection.</description>
+		<property name="driver" value="org.hsqldb.jdbcDriver" />
+		<property name="url" value="jdbc:hsqldb:hsql://localhost/xdb" />
+		<property name="username" value="sa" />
+		<property name="password" value="" />
+	</bean>
+	<bean id="JdbcConnectionReadSFEE2QC"
+		class="org.openadaptor.auxil.connector.jdbc.JDBCConnection">
+		<description>This defines jdbc connection.</description>
+		<property name="driver" value="org.hsqldb.jdbcDriver" />
+		<property name="url" value="jdbc:hsqldb:hsql://localhost/xdb" />
+		<property name="username" value="sa" />
+		<property name="password" value="" />
+	</bean>
+
+	<bean id="ResultSetConverter"
+		class="org.openadaptor.auxil.connector.jdbc.reader.xml.ResultSetToXMLConverter">
+		<property name="convertToString" value="false" />
+		<property name="rootElement" value="EmptySyncInf" />
+	</bean>
+	<bean id="MappingDBUpdater" class="com.collabnet.ccf.core.config.MappingDBUpdater">
+		<description>Simply display the artifacts</description>
+		<property name="jdbcConnection" ref="JdbcConnectionReadSFEE2QC" />
+	</bean>
+		<bean id="QCTransformer" class="com.collabnet.ccf.core.transformer.XsltProcessor">
+   <property name="xsltFile" value="C:\madhu-work\CCF\svn\ccf\src\core\trial2\xslts\sfee2qc.xsl"/>
+  </bean>
+	<bean id="QCEntityService" class="com.collabnet.ccf.pi.qc.v90.QCEntityService">
+     <description>
+     	This QCEntityService fills the targetArtifactId in the GenericArtifact and forwards it to the QCWriter.
+	 </description>
+     <property name="serverUrl" value="http://10.2.1.114:8080/qcbin"/>
+     <property name="domain" value="MADHU_CCF_TESTING"/>
+     <property name="projectName" value="MADHU_TEST"/>
+     <property name="userName" value="alex_qc"/>
+     <property name="password" value=""/>
+     <property name="keepAlive" value="true"/>
+  </bean>
+  <bean id="QCWriter" class="com.collabnet.ccf.pi.qc.v90.QCWriter">
+     <description>
+     	This QCWriter will write the data contained in the incoming document to QC.
+	 </description>
+     <property name="serverUrl" value="http://10.2.1.114:8080/qcbin"/>
+     <property name="domain" value="MADHU_CCF_TESTING"/>
+     <property name="projectName" value="MADHU_TEST"/>
+     <property name="userName" value="alex_qc"/>
+     <property name="password" value=""/>
+     <property name="keepAlive" value="true"/>
+  </bean>
+</beans>
