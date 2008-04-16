@@ -1,4 +1,4 @@
-package test.QAHelperClasses;
+package com.collabnet.ccf.pi.qc;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
