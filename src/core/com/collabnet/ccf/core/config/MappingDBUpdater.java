@@ -69,7 +69,6 @@ public class MappingDBUpdater implements IDataProcessor{
 				lastModifiedDate = DateUtil.parse(lastModifiedDateString);
 			}
 			java.sql.Timestamp time = new java.sql.Timestamp(lastModifiedDate.getTime());
-			java.sql.Date sqlDate = new java.sql.Date(lastModifiedDate.getTime());
 			PreparedStatement pstmt = null;;
 			try {
 				if (!jdbcConnection.isConnected()) {
