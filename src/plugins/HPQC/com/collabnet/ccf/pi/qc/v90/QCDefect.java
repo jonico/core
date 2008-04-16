@@ -129,6 +129,9 @@ public class QCDefect extends Bug implements IQCDefect {
 		IBug bug = bugFactory.getItem(entityId);
 				
 		GenericArtifactAttachment thisAttachment = genericArtifact.getAllGenericArtifactAttachments().get(0);
+		MimetypesFileTypeMap mimeType = new MimetypesFileTypeMap();
+		String thisMimeType = mimeType.getContentType(thisAttachment.getAttachmentName());
+		thisAttachment.setMimeType(thisMimeType);
 		
 		if(thisAttachment.getAttachmentContentType().equals(GenericArtifactAttachment.AttachmentContentTypeValue.DATA)) {
 			byte data[] = bug.retrieveAttachmentData(attachOperation.get(2));
