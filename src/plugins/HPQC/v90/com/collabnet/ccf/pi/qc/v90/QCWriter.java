@@ -23,7 +23,6 @@ public class QCWriter extends QCConnectHelper implements
 		IDataProcessor {
 
 	private static final Log log = LogFactory.getLog(QCWriter.class);
-	private String configDir;
 	private String CreateToken;
 	private QCDefectHandler defectHandler;	
 
@@ -41,7 +40,7 @@ public class QCWriter extends QCConnectHelper implements
 		//Populate the sourceArtifactId into each of the GenericArtifacts from the QCEntityService
 		//This operation is done in a separate component called QCEntityService. So, the input flowing into this file is already populated
 				
-		connectProperly();
+		connect();
 		
 		List<GenericArtifactField> allFields = genericArtifact.getAllGenericArtifactFields();
 		List<GenericArtifactAttachment> allAttachments = genericArtifact.getAllGenericArtifactAttachments();
@@ -64,9 +63,11 @@ public class QCWriter extends QCConnectHelper implements
 		String targetRepositoryId = genericArtifact.getTargetRepositoryId();
 		String targetRepositoryKind = genericArtifact.getTargetRepositoryKind();
 		
-		if(stringBugId!=null && (stringBugId!=null && !stringBugId.equals("")) )
+		/*if(stringBugId!=null && (stringBugId!=null && !stringBugId.equals("")) )
 			bugId = Integer.parseInt(stringBugId);
-		//Boolean doesBugIdExistsInQC = false;
+		*/
+		if(targetArtifactId!=null && (targetArtifactId!=null && !targetArtifactId.equals("unknown")))
+				bugId = Integer.parseInt(targetArtifactId);
 		if(bugId!=0)
 			doesBugIdExistsInQC = checkForBugIdInQC(bugId);
 		
@@ -94,7 +95,7 @@ public class QCWriter extends QCConnectHelper implements
 					
 					if(allAttachments!=null && (allAttachments!=null && allAttachments.size()>0)) {
 						//create the attachment per genericArtifact
-						defectHandler.createAttachment(qcc, targetArtifactIdAfterCreation, getConfigDir(), allAttachments);
+						defectHandler.createAttachment(qcc, targetArtifactIdAfterCreation, allAttachments);
 						
 					}
 					
@@ -117,14 +118,12 @@ public class QCWriter extends QCConnectHelper implements
 				
 			case UPDATE: {
 				//If the bugId does not exists in QC, throw an error. Otherwise continue.
-				if(doesBugIdExistsInQC==false) { //should be checked if doesBugIdExistsInQc==false
+				/*if(doesBugIdExistsInQC==false) { //should be checked if doesBugIdExistsInQc==false
 					//send this artifact to HOSPITAL
 					break;
-				}
+				}*/
 				
-				else
-				{
-					if(targetArtifactId!=null || !(targetArtifactId.equals("")) || targetArtifactId.equals("unknown")) {
+				if(targetArtifactId!=null || !(targetArtifactId.equals("")) || targetArtifactId.equals("unknown")) {
 					try {
 						
 						String targetArtifactIdFromTable = DBHelper.getTargetArtifactIdFromTable(sourceArtifactId, sourceSystemId, sourceSystemKind, sourceRepositoryId, sourceRepositoryKind, targetSystemId, targetSystemKind, targetRepositoryId, targetRepositoryKind);
@@ -137,7 +136,7 @@ public class QCWriter extends QCConnectHelper implements
 						
 						if(allAttachments!=null && (allAttachments!=null && allAttachments.size()>0)) {
 							//create the attachment per genericArtifact
-							defectHandler.createAttachment(qcc, targetArtifactIdFromTable,  getConfigDir(), allAttachments);
+							defectHandler.createAttachment(qcc, targetArtifactIdFromTable, allAttachments);
 							
 						}
 					
@@ -154,7 +153,7 @@ public class QCWriter extends QCConnectHelper implements
 						//send this artifact to HOSPITAL
 						throw new RuntimeException("The targetArtifactId is null. It must be a CREATE operation. But since the ACTION is update, sending it to HOSPITAL");
 					}
-				}
+				
 				break;
 			}
 			
@@ -223,7 +222,7 @@ public class QCWriter extends QCConnectHelper implements
 		
 		connect();
 		//qcc.connectProjectEx(getDomain(), getProjectName(), getUserName(), getPassword());
-		
+		return;
 	}
 	public static String getFieldValueFromGenericArtifact(GenericArtifact individualGenericArtifact, String fieldName) {
 		
@@ -297,11 +296,4 @@ public class QCWriter extends QCConnectHelper implements
 		super();
 	}
 
-	public String getConfigDir() {
-		return configDir;
-	}
-
-	public void setConfigDir(String configDir) {
-		this.configDir = configDir;
-	}
 }
