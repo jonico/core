@@ -54,15 +54,15 @@
 		<property name="exceptionProcessor" ref="ExceptionHandler" />
 	</bean>
 	<bean id="SFEETransformer" class="com.collabnet.ccf.core.transformer.XsltProcessor">
-   <property name="xsltFile" value="C:/madhu-work/CCF/svn/ccf/src/core/trial2/xslts/qc2sfee.xsl"/>
+   <property name="xsltFile" value="C:\Venugopal\Eclipse\ccf-workspace\CCFJ\samples\QC-SFEE\2Way\xslt\qc2sfee.xsl"/>
   </bean>
 	 <bean id="QCReader" class="com.collabnet.ccf.pi.qc.v90.QCReader">
 	     <description>
 	       Reads the modified defects from QC
 	     </description>              
 	     <property name="serverUrl" value="http://10.2.1.114:8080/qcbin"/>
-	     <property name="domain" value="MADHU_CCF_TESTING"/>
-	     <property name="projectName" value="MADHU_TEST"/>
+	     <property name="domain" value="QC_PLUGIN_TESTING"/>
+	     <property name="projectName" value="PRJ_1"/>
 	     <property name="userName" value="alex_qc"/>
 	     <property name="password" value=""/>
 	     <property name="keepAlive" value="true"/>
@@ -228,15 +228,15 @@
 		<property name="jdbcConnection" ref="JdbcConnectionReadSFEE2QC" />
 	</bean>
 		<bean id="QCTransformer" class="com.collabnet.ccf.core.transformer.XsltProcessor">
-   <property name="xsltFile" value="C:\madhu-work\CCF\svn\ccf\src\core\trial2\xslts\sfee2qc.xsl"/>
+   <property name="xsltFile" value="C:\Venugopal\Eclipse\ccf-workspace\CCFJ\samples\QC-SFEE\2Way\xslt\sfee2qc.xsl"/>
   </bean>
 	<bean id="QCEntityService" class="com.collabnet.ccf.pi.qc.v90.QCEntityService">
      <description>
      	This QCEntityService fills the targetArtifactId in the GenericArtifact and forwards it to the QCWriter.
 	 </description>
      <property name="serverUrl" value="http://10.2.1.114:8080/qcbin"/>
-     <property name="domain" value="MADHU_CCF_TESTING"/>
-     <property name="projectName" value="MADHU_TEST"/>
+     <property name="domain" value="QC_PLUGIN_TESTING"/>
+     <property name="projectName" value="PRJ_1"/>
      <property name="userName" value="alex_qc"/>
      <property name="password" value=""/>
      <property name="keepAlive" value="true"/>
@@ -246,10 +246,11 @@
      	This QCWriter will write the data contained in the incoming document to QC.
 	 </description>
      <property name="serverUrl" value="http://10.2.1.114:8080/qcbin"/>
-     <property name="domain" value="MADHU_CCF_TESTING"/>
-     <property name="projectName" value="MADHU_TEST"/>
+     <property name="domain" value="QC_PLUGIN_TESTING"/>
+     <property name="projectName" value="PRJ_1"/>
      <property name="userName" value="alex_qc"/>
      <property name="password" value=""/>
      <property name="keepAlive" value="true"/>
+     <property name="configDir" value="C:\\Venugopal\\"/>
   </bean>
 </beans>
