@@ -83,7 +83,7 @@ public class MappingDBUpdater implements IDataProcessor{
 				pstmt.setString(4, sourceArtifactID);
 				pstmt.setString(5, targetArtifactID);
 				int numRecordsAffected = pstmt.executeUpdate();
-				if(numRecordsAffected != 1){
+				if(numRecordsAffected > 1){
 					dbConnection.rollback();
 					throw new RuntimeException("How come I am updating two repository mapping....?");
 				}
