@@ -54,7 +54,7 @@
 		<property name="exceptionProcessor" ref="ExceptionHandler" />
 	</bean>
 	<bean id="SFEETransformer" class="com.collabnet.ccf.core.transformer.XsltProcessor">
-   <property name="xsltFile" value="C:\Venugopal\Eclipse\ccf-workspace\CCFJ\samples\QC-SFEE\2Way\xslt\qc2sfee.xsl"/>
+   <property name="xsltFile" value="../xslt/qc2sfee.xsl"/>
   </bean>
 	 <bean id="QCReader" class="com.collabnet.ccf.pi.qc.v90.QCReader">
 	     <description>
@@ -228,7 +228,7 @@
 		<property name="jdbcConnection" ref="JdbcConnectionReadSFEE2QC" />
 	</bean>
 		<bean id="QCTransformer" class="com.collabnet.ccf.core.transformer.XsltProcessor">
-   <property name="xsltFile" value="C:\Venugopal\Eclipse\ccf-workspace\CCFJ\samples\QC-SFEE\2Way\xslt\sfee2qc.xsl"/>
+   <property name="xsltFile" value="..\xslt\sfee2qc.xsl"/>
   </bean>
 	<bean id="QCEntityService" class="com.collabnet.ccf.pi.qc.v90.QCEntityService">
      <description>
@@ -251,6 +251,6 @@
      <property name="userName" value="alex_qc"/>
      <property name="password" value=""/>
      <property name="keepAlive" value="true"/>
-     <property name="configDir" value="C:\\Venugopal\\"/>
+     <property name="configDir" value="."/>
   </bean>
 </beans>
