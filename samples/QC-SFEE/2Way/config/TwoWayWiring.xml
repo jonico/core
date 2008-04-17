@@ -62,8 +62,8 @@
 	       Reads the modified defects from QC
 	     </description>              
 	     <property name="serverUrl" value="http://10.2.1.114:8080/qcbin"/>
-	     <property name="domain" value="QC_PLUGIN_TESTING"/>
-	     <property name="projectName" value="PRJ_1"/>
+	     <property name="domain" value="CCF_DEMO_DOMAIN"/>
+	     <property name="projectName" value="DEMO_PRJ"/>
 	     <property name="userName" value="alex_qc"/>
 	     <property name="password" value=""/>
 	     <property name="keepAlive" value="true"/>
@@ -99,7 +99,7 @@
 		<property name="keepAlive" value="true" />
 		<property name="artifactConverter"
 			ref="SFEEGerericArtifactConverter" />
-		<property name="tracker" value="tracker1004" />
+		<property name="tracker" value="tracker1122" />
 	</bean>
 	<bean id="SFEEGerericArtifactConverter"
 		class="com.collabnet.ccf.pi.sfee.v44.SFEEToGenericArtifactConverter" />
@@ -116,7 +116,7 @@
 			value="create" />
 		<property name="updateComment"
 			value="Synchronized by Connector user" />
-		<property name="tracker" value="tracker1004" />
+		<property name="tracker" value="tracker1122" />
 	</bean>
 	<bean id="SFEEEntityService"
 		class="com.collabnet.ccf.pi.sfee.v44.SFEEEntityService">
@@ -238,8 +238,8 @@
      	This QCEntityService fills the targetArtifactId in the GenericArtifact and forwards it to the QCWriter.
 	 </description>
      <property name="serverUrl" value="http://10.2.1.114:8080/qcbin"/>
-     <property name="domain" value="QC_PLUGIN_TESTING"/>
-     <property name="projectName" value="PRJ_1"/>
+     <property name="domain" value="CCF_DEMO_DOMAIN"/>
+     <property name="projectName" value="DEMO_PRJ"/>
      <property name="userName" value="alex_qc"/>
      <property name="password" value=""/>
      <property name="keepAlive" value="true"/>
@@ -249,8 +249,8 @@
      	This QCWriter will write the data contained in the incoming document to QC.
 	 </description>
      <property name="serverUrl" value="http://10.2.1.114:8080/qcbin"/>
-     <property name="domain" value="QC_PLUGIN_TESTING"/>
-     <property name="projectName" value="PRJ_1"/>
+     <property name="domain" value="CCF_DEMO_DOMAIN"/>
+     <property name="projectName" value="DEMO_PRJ"/>
      <property name="userName" value="alex_qc"/>
      <property name="password" value=""/>
      <property name="keepAlive" value="true"/>
