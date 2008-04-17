@@ -183,8 +183,6 @@ public class XsltProcessor extends Component implements IDataProcessor {
 		DocumentResult result = new DocumentResult();
 		// TODO: Allow the user to specify stylesheet parameters?
 		transformer.transform(source, result);
-		System.out.println("1*******"+d.asXML());
-		System.out.println("2*******"+result.getDocument().asXML());
 		return result.getDocument();
 	}
 
