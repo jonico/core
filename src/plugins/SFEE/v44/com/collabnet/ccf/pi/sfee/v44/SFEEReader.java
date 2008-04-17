@@ -161,9 +161,16 @@ public class SFEEReader extends SFEEConnectHelper implements
 			log.error("During the artifact retrieval process to SFEE, an error occured",e);
 			return null;
 		}
+		TrackerFieldSoapDO[] trackerFields = null;
+		try {
+			trackerFields = trackerHandler.getFlexFields(getSessionId(), projectTracker);
+		} catch (RemoteException e1) {
+			e1.printStackTrace();
+			throw new RuntimeException(e1);
+		}
 		// Now we load the history of each artifact that got changed
 		List<ArtifactSoapDO> artifactHistoryRows = appHandler.loadArtifactAuditHistory(artifactRows,
-				lastModifiedDate,getUsername());
+				lastModifiedDate,getUsername(), trackerFields);
 		TreeMap<Date, GenericArtifact> attachments = null;
 		try {
 			attachments = attachmentHandler.listAttachments(getSessionId(),
@@ -172,15 +179,7 @@ public class SFEEReader extends SFEEConnectHelper implements
 			e1.printStackTrace();
 			throw new RuntimeException(e1);
 		}
-		TrackerFieldSoapDO[] trackerFields = null;
-		try {
-			trackerFields = trackerHandler.getFlexFields(getSessionId(), projectTracker);
-		} catch (RemoteException e1) {
-			e1.printStackTrace();
-			throw new RuntimeException(e1);
-		}
-		TreeMap<Date,GenericArtifact> gaMap = new TreeMap<Date,GenericArtifact>();
-
+		
 		if (artifactHistoryRows == null) {
 			return new Object[]{};
 		} else {

@@ -1,5 +1,8 @@
 package com.collabnet.ccf.pi.sfee.v44.meta;
 
+import java.util.Date;
+import java.util.GregorianCalendar;
+
 import com.collabnet.ccf.core.ga.GenericArtifactField.FieldValueTypeValue;
 import com.vasoftware.sf.soap44.webservices.sfmain.TrackerFieldSoapDO;
 
@@ -85,7 +88,7 @@ public class ArtifactMetaData {
 			field = SFEEFields.valueOf(Character.toLowerCase(fieldName.charAt(0))+fieldName.substring(1));
 		}
 		catch(IllegalArgumentException e){
-			e.printStackTrace();
+			System.out.println("Field "+fieldName+" is not found in ArtifactMetaData");
 		}
 		if(field != null){
 			ArtifactMetaData.FIELD_VALUE_TYPE valueType = field.getValueType();
@@ -126,7 +129,29 @@ public class ArtifactMetaData {
 				}
 			}
 		}
+		if(fieldValueType == null){
+			if(fieldName.equals("SF_Comment")){
+				return FieldValueTypeValue.STRING;
+			}
+		}
 		return fieldValueType;
+	}
+	public static Object getFieldValue(String fieldName, Object value, FieldValueTypeValue fieldType){
+		if(fieldType == FieldValueTypeValue.DATE || 
+				fieldType == FieldValueTypeValue.DATETIME){
+			if(value instanceof GregorianCalendar){
+				return ((GregorianCalendar)value).getTime();
+			}
+			else if(value instanceof Date){
+				return value;
+			}
+			if(value instanceof String){
+				long dataValue = Long.parseLong((String) value)*1000;
+				Date returnDate = new Date(dataValue);
+				return returnDate;
+			}
+		}
+		return value;
 	}
 	public static FieldValueTypeValue getGAFieldValueType(String fieldType, String valueType){
 		if(fieldType.equals(TrackerFieldSoapDO.FIELD_TYPE_MULTISELECT)){
@@ -156,4 +181,26 @@ public class ArtifactMetaData {
 			return FieldValueTypeValue.STRING;
 		}
 	}
-}
+	
+	public static Object parseFieldValue(String fieldName, String value,
+			TrackerFieldSoapDO[] trackerFields) {
+		for(TrackerFieldSoapDO field:trackerFields){
+			String name = field.getName();
+			if(name.equals(fieldName)){
+				String fieldType = field.getFieldType();
+				String valueType = field.getValueType();
+				if(valueType.equals(TrackerFieldSoapDO.FIELD_VALUE_TYPE_DATE)){
+					long time = Long.parseLong(value);
+					Date dateTime = new Date(time);
+					return dateTime;
+				}
+				else if(valueType.equals(TrackerFieldSoapDO.FIELD_VALUE_TYPE_INTEGER)){
+					return Integer.parseInt(value);
+				}
+				else{
+					return value;
+				}
+			}
+		}
+		return value;
+	}}

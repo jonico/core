@@ -7,9 +7,14 @@ import java.util.Date;
 import java.util.List;
 
 import com.collabnet.ccf.core.ga.GenericArtifact;
+import com.collabnet.ccf.pi.sfee.v44.SFEEArtifactMetaData;
+import com.collabnet.ccf.pi.sfee.v44.meta.ArtifactMetaData;
 import com.vasoftware.sf.soap44.webservices.sfmain.AuditHistorySoapList;
 import com.vasoftware.sf.soap44.webservices.sfmain.AuditHistorySoapRow;
+import com.vasoftware.sf.soap44.webservices.sfmain.CommentSoapList;
+import com.vasoftware.sf.soap44.webservices.sfmain.CommentSoapRow;
 import com.vasoftware.sf.soap44.webservices.sfmain.ISourceForgeSoap;
+import com.vasoftware.sf.soap44.webservices.sfmain.TrackerFieldSoapDO;
 import com.vasoftware.sf.soap44.webservices.tracker.ArtifactSoapDO;
 
 public class SFEEAppHandler {
@@ -21,7 +26,7 @@ public class SFEEAppHandler {
 	}
 
 	public List<ArtifactSoapDO> getArtifactAuditHistory(ArtifactSoapDO artifact,
-				Date lastModifiedDate, String connectorUser){
+				Date lastModifiedDate, String connectorUser, TrackerFieldSoapDO[] trackerFields){
 		try {
 			String artifactId = artifact.getId();
 			AuditHistorySoapList history = mSfSoap.getAuditHistoryList(mSessionId, artifactId);
@@ -63,6 +68,7 @@ public class SFEEAppHandler {
 					else{
 						String fieldName = rows[i].getPropertyName();
 						String gaFieldName = Character.toUpperCase(fieldName.charAt(0)) + fieldName.substring(1);
+						Object value = ArtifactMetaData.parseFieldValue(fieldName, rows[i].getOldValue(), trackerFields);
 						SFEEArtifactMetaData.setFieldValue(gaFieldName, historyEntry, rows[i].getOldValue());
 						if(i == rows.length-1){
 							SFEEArtifactMetaData.setFieldValue("ArtifactAction", historyEntry, GenericArtifact.ArtifactActionValue.CREATE);
@@ -76,6 +82,8 @@ public class SFEEAppHandler {
 //				}
 			}
 			Collections.reverse(artifactHistory);
+			addComments(artifactHistory, artifact,
+					lastModifiedDate,connectorUser);
 			return artifactHistory;
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
@@ -83,6 +91,45 @@ public class SFEEAppHandler {
 		}
 		return null;
 	}
+	private void addComments(List<ArtifactSoapDO> artifactHistory,
+			ArtifactSoapDO artifact, Date lastModifiedDate, String connectorUser) {
+		try {
+			CommentSoapList commentList = mSfSoap.getCommentList(mSessionId, artifact.getId());
+			CommentSoapRow[] comments = commentList.getDataRows();
+			if(comments != null){
+				for(CommentSoapRow comment:comments){
+					String createdBy = comment.getCreatedBy();
+					Date createdDate = comment.getDateCreated();
+					if(createdBy.equals(connectorUser)){
+						continue;
+					}
+					if(lastModifiedDate.before(createdDate)){
+						continue;
+					}
+					String description = comment.getDescription();
+					boolean commentSet = false;
+					for(ArtifactSoapDO artifactDO:artifactHistory){
+						//TODO If nothing is matching what will happen?
+						if(artifactDO.getLastModifiedDate().after(createdDate)){
+							//TODO If more than one comment is added, How this will behave?
+							SFEEArtifactMetaData.setFieldValue("SF_Comment", artifactDO, description);
+							commentSet = true;
+							break;
+						}
+					}
+					if(!commentSet){
+						System.out.println("Comment "+description+" Could not be set "+createdDate);
+					}
+				}
+			}
+		} catch (RemoteException e) {
+			System.out.println("Could not get Comments list for artifact "+artifact.getId());
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
+
 	private void pr(AuditHistorySoapRow row){
 		System.out.println("============================================================================");
 		System.out.println("Property Name --> "+row.getPropertyName());
@@ -96,12 +143,12 @@ public class SFEEAppHandler {
 		System.out.println("============================================================================");
 	}
 	public List<ArtifactSoapDO> loadArtifactAuditHistory(List<ArtifactSoapDO> artifactRows,
-			Date lastModifiedDate, String connectorUser) {
+			Date lastModifiedDate, String connectorUser, TrackerFieldSoapDO[] trackerFields) {
 		List<ArtifactSoapDO> artifactHistoryRows = new ArrayList<ArtifactSoapDO>();
 		if(artifactRows != null){
 			for(ArtifactSoapDO artifactRow:artifactRows){
 				List<ArtifactSoapDO> artifactHistory = getArtifactAuditHistory(artifactRow,
-								lastModifiedDate,connectorUser);
+								lastModifiedDate,connectorUser, trackerFields);
 				if(artifactHistory != null){
 					artifactHistoryRows.addAll(artifactHistory);
 				}

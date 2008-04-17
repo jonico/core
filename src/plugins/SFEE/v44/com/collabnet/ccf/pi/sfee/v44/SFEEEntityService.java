@@ -13,6 +13,7 @@ import org.openadaptor.core.exception.ValidationException;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 
+
 /**
  * This component will find out whether an artifact coming out of a non-SFEE
  * system has to be created, updated, deleted or ignored within SFEE. It will
@@ -49,7 +50,6 @@ public class SFEEEntityService extends SFEEConnectHelper implements
 	/**
 	 * SFEE tracker handler instance
 	 */
-	private SFEETrackerHandler trackerHandler;
 	
 
 	/**
@@ -181,7 +181,6 @@ public class SFEEEntityService extends SFEEConnectHelper implements
 					"createToken-property not set", this));
 		}
 		// Create tracker handler
-		trackerHandler = new SFEETrackerHandler(getServerUrl());
 	}
 
 	/**

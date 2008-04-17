@@ -18,6 +18,7 @@ import com.collabnet.ccf.core.utils.DateUtil;
 import com.vasoftware.sf.soap44.webservices.ClientSoapStubFactory;
 import com.vasoftware.sf.soap44.webservices.filestorage.IFileStorageAppSoap;
 import com.vasoftware.sf.soap44.webservices.filestorage.ISimpleFileStorageAppSoap;
+import com.vasoftware.sf.soap44.webservices.frs.IFrsAppSoap;
 import com.vasoftware.sf.soap44.webservices.sfmain.AttachmentSoapList;
 import com.vasoftware.sf.soap44.webservices.sfmain.AttachmentSoapRow;
 import com.vasoftware.sf.soap44.webservices.sfmain.ISourceForgeSoap;
@@ -36,7 +37,7 @@ public class SFEEAttachmentHandler {
 	private ISimpleFileStorageAppSoap fileStorageApp = null;
 	
 	private IFileStorageAppSoap fileStorageSoapApp = null;
-
+	
 	private static final Log log = LogFactory.getLog(SFEETrackerHandler.class);
 
 	/**
@@ -69,7 +70,7 @@ public class SFEEAttachmentHandler {
 		fileStorageApp.write(sessionId, fileDescriptor, data);
 		fileStorageApp.endFileUpload(sessionId, fileDescriptor);
 			
-		ArtifactSoapDO soapDo = mTrackerApp.getArtifactData(sessionId, "artf1054");
+		ArtifactSoapDO soapDo = mTrackerApp.getArtifactData(sessionId, artifact.getId());
 		mTrackerApp.setArtifactData(sessionId, soapDo, comment,
 					fileName, mimeType, fileDescriptor);
 		return artifact;
@@ -86,12 +87,13 @@ public class SFEEAttachmentHandler {
 		}
 		return data;
 	}
-	public void handleAttachment(String sessionId, GenericArtifactAttachment att, ArtifactSoapDO artifact) throws RemoteException {
+	public void handleAttachment(String sessionId, GenericArtifactAttachment att, ArtifactSoapDO artifact, String userName) throws RemoteException {
 		GenericArtifactAttachment.AttachmentContentTypeValue contentType =
 			att.getAttachmentContentType();
 		String attachDescription = att.getAttachmentDescription();
 		String attachmentId = att.getAttachmentId();
 		String attachmentName = att.getAttachmentName();
+		attachmentName = userName + "_" + attachmentName;
 		long size = att.getAttachmentSize();
 		String attachmentURL = att.getAttachmentSourceUrl();
 		String attachmentType = att.getAttachmentType();
@@ -136,6 +138,10 @@ public class SFEEAttachmentHandler {
 			AttachmentSoapList attachmentsList = sourceForgeSoap.listAttachments(sessionId, artifactId);
 			AttachmentSoapRow[] attachmentRows = attachmentsList.getDataRows();
 			for(AttachmentSoapRow row:attachmentRows){
+				String fileName = row.getFileName();
+				if(fileName.startsWith(username+"_")){
+					continue;
+				}
 				Date createdDate = row.getDateCreated();
 				if(createdDate.after(lastModifiedDate)){
 					GenericArtifact ga = new GenericArtifact();

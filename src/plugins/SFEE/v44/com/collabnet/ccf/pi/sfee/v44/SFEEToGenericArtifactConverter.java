@@ -2,10 +2,16 @@ package com.collabnet.ccf.pi.sfee.v44;
 
 import java.util.Date;
 
+import org.dom4j.Document;
+
+
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
+import com.collabnet.ccf.core.ga.GenericArtifactHelper;
+import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
 import com.collabnet.ccf.core.ga.GenericArtifactField.FieldValueTypeValue;
 import com.collabnet.ccf.core.utils.DateUtil;
+import com.collabnet.ccf.pi.sfee.v44.IArtifactToGAConverter;
 import com.collabnet.ccf.pi.sfee.v44.meta.ArtifactMetaData;
 import com.vasoftware.sf.soap44.types.SoapFieldValues;
 import com.vasoftware.sf.soap44.webservices.sfmain.TrackerFieldSoapDO;
@@ -79,13 +85,13 @@ public class SFEEToGenericArtifactConverter implements IArtifactToGAConverter {
 				field.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
 				field.setFieldValueType(fieldValueType);
 				// TODO setting the field value as is is not correct. Please change this.
-				field.setFieldValue(flexFieldValues[i]);
+				field.setFieldValue(ArtifactMetaData.getFieldValue(flexFieldNames[i], flexFieldValues[i], fieldValueType));
 			}
 			return genericArtifact;
 		}
 		return null;
 	}
-	public FieldValueTypeValue convertSFDatdaTypeToGADatatype(Class fieldType) {
+	public FieldValueTypeValue convertSFDatdaTypeToGADatsatype(Class fieldType) {
 		if(fieldType == String.class){
 			return GenericArtifactField.FieldValueTypeValue.STRING;
 		}
