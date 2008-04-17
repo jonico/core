@@ -221,7 +221,7 @@ public class SFEEReader extends SFEEConnectHelper implements
 	private void populateSrcAndDest(Document dbDocument, GenericArtifact ga){
 		String sourceArtifactId = ga.getSourceArtifactId();
 		String targetArtifactId = dbHelper.getTargetArtifactId(dbDocument);
-		if(targetArtifactId.equals("NEW")){
+		if(targetArtifactId == null || targetArtifactId.equals("NEW")){
 			ga.setArtifactAction(ArtifactActionValue.CREATE);
 		}
 		else {
