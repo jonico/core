@@ -19,6 +19,7 @@ import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
+import com.collabnet.ccf.core.ga.GenericArtifact.ArtifactActionValue;
 import com.collabnet.ccf.core.utils.DateUtil;
 import com.vasoftware.sf.soap44.webservices.sfmain.TrackerFieldSoapDO;
 import com.vasoftware.sf.soap44.webservices.tracker.ArtifactSoapDO;
@@ -218,6 +219,13 @@ public class SFEEReader extends SFEEConnectHelper implements
 	
 	private void populateSrcAndDest(Document dbDocument, GenericArtifact ga){
 		String sourceArtifactId = ga.getSourceArtifactId();
+		String targetArtifactId = dbHelper.getTargetArtifactId(dbDocument);
+		if(targetArtifactId.equals("NEW")){
+			ga.setArtifactAction(ArtifactActionValue.CREATE);
+		}
+		else {
+			ga.setArtifactAction(ArtifactActionValue.UPDATE);
+		}
 		if(StringUtils.isEmpty(sourceArtifactId)){
 			List<GenericArtifactField> fields = ga.getAllGenericArtifactFieldsWithSameFieldName("Id");
 			for(GenericArtifactField field:fields){
