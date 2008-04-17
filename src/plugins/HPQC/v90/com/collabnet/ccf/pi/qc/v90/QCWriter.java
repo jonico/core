@@ -12,12 +12,12 @@ import org.openadaptor.core.IDataProcessor;
 import org.openadaptor.core.exception.NullRecordException;
 import org.openadaptor.core.exception.RecordFormatException;
 
+import com.collabnet.ccf.core.db.DBHelper;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactAttachment;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
-import com.collabnet.ccf.pi.sfee.v44.SFEEDBHelper;
 
 public class QCWriter extends QCConnectHelper implements
 		IDataProcessor {
@@ -87,7 +87,7 @@ public class QCWriter extends QCConnectHelper implements
 					String targetArtifactIdAfterCreation = createdArtifact.getId();
 					log.info("Write Operation SUCCESSFULL!!!!! and the targetArtifactIdAfterCreation="+targetArtifactIdAfterCreation);
 					// Update the QC_ENTITY_CHECK HSQL DB Table
-					Boolean status = SFEEDBHelper.updateTable(sourceArtifactId, sourceSystemId, sourceSystemKind, sourceRepositoryId, sourceRepositoryKind, targetArtifactIdAfterCreation, targetSystemId, targetSystemKind, targetRepositoryId, targetRepositoryKind);
+					Boolean status = DBHelper.updateTable(sourceArtifactId, sourceSystemId, sourceSystemKind, sourceRepositoryId, sourceRepositoryKind, targetArtifactIdAfterCreation, targetSystemId, targetSystemKind, targetRepositoryId, targetRepositoryKind);
 					genericArtifact.setTargetArtifactId(targetArtifactIdAfterCreation);
 					// send this artifact to RCDU (Read Connector Database Updater) indicating a success in creating the artifact
 					
@@ -127,7 +127,7 @@ public class QCWriter extends QCConnectHelper implements
 					if(targetArtifactId!=null || !(targetArtifactId.equals("")) || targetArtifactId.equals("unknown")) {
 					try {
 						
-						String targetArtifactIdFromTable = SFEEDBHelper.getTargetArtifactIdFromTable(sourceArtifactId, sourceSystemId, sourceSystemKind, sourceRepositoryId, sourceRepositoryKind, targetSystemId, targetSystemKind, targetRepositoryId, targetRepositoryKind);
+						String targetArtifactIdFromTable = DBHelper.getTargetArtifactIdFromTable(sourceArtifactId, sourceSystemId, sourceSystemKind, sourceRepositoryId, sourceRepositoryKind, targetSystemId, targetSystemKind, targetRepositoryId, targetRepositoryKind);
 						if(allFields!=null) {
 							IQCDefect updatedArtifact = defectHandler.updateDefect(getQcc(), targetArtifactIdFromTable, allFields);
 							log.info("Update Operation SUCCESSFULL!!!!! and the targetArtifactIdFromTable="+targetArtifactIdFromTable);

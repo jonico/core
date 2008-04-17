@@ -9,9 +9,9 @@ import org.openadaptor.core.IDataProcessor;
 import org.openadaptor.core.exception.NullRecordException;
 import org.openadaptor.core.exception.RecordFormatException;
 
+import com.collabnet.ccf.core.db.DBHelper;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
-import com.collabnet.ccf.pi.sfee.v44.SFEEDBHelper;
 
 
 
@@ -62,7 +62,7 @@ public class QCEntityService extends QCConnectHelper implements
 		String targetRepositoryId = genericArtifact.getTargetRepositoryId();
 		String targetRepositoryKind = genericArtifact.getTargetRepositoryKind();
 		
-		String targetArtifactIdFromTable = SFEEDBHelper.getTargetArtifactIdFromTable(sourceArtifactId, sourceSystemId, sourceSystemKind, sourceRepositoryId, sourceRepositoryKind, targetSystemId, targetSystemKind, targetRepositoryId, targetRepositoryKind);
+		String targetArtifactIdFromTable = DBHelper.getTargetArtifactIdFromTable(sourceArtifactId, sourceSystemId, sourceSystemKind, sourceRepositoryId, sourceRepositoryKind, targetSystemId, targetSystemKind, targetRepositoryId, targetRepositoryKind);
 		
 		if(targetArtifactIdFromTable!=null && !(targetArtifactIdFromTable.equals("NEW")) && !(targetArtifactIdFromTable.equals("NULL"))) {
 	    	genericArtifact.setTargetArtifactId(targetArtifactIdFromTable);
@@ -74,7 +74,7 @@ public class QCEntityService extends QCConnectHelper implements
 	    	if(genericArtifact.getArtifactAction().equals(GenericArtifact.ArtifactActionValue.CREATE)) {
 	    		//Insert a new record in the QC_ENTITY_CHECK Hsql table with the targetArtifactId value as "NEW". 
 	    		//This should be updated by the QCWriter after creating a defect.
-	    		Boolean insertStatus = SFEEDBHelper.insertRecordInTable(sourceArtifactId, sourceSystemId, sourceSystemKind, sourceRepositoryId, sourceRepositoryKind, targetSystemId, targetSystemKind, targetRepositoryId, targetRepositoryKind);
+	    		Boolean insertStatus = DBHelper.insertRecordInTable(sourceArtifactId, sourceSystemId, sourceSystemKind, sourceRepositoryId, sourceRepositoryKind, targetSystemId, targetSystemKind, targetRepositoryId, targetRepositoryKind);
 	    		
 	    	}
 	    }
