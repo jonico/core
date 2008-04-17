@@ -43,7 +43,7 @@ public class QCReader extends QCConnectHelper implements
 		if(document!=null) log.info(document.getText());
 		try {
 			connect();
-			qcc.connectProjectEx(getDomain(), getProjectName(), getUserName(), getPassword());
+			//qcc.connectProjectEx(getDomain(), getProjectName(), getUserName(), getPassword());
 		} catch (Exception e) {
 			// TODO Declare exception so that it can be processed by OA exception handler
 			log.error("Could not log into QC", e);
