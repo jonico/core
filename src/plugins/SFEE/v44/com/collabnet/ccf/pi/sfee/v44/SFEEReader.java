@@ -15,6 +15,7 @@ import org.dom4j.Document;
 import org.dom4j.Node;
 import org.openadaptor.core.IDataProcessor;
 
+import com.collabnet.ccf.core.db.DBHelper;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
@@ -41,7 +42,7 @@ public class SFEEReader extends SFEEConnectHelper implements
 	
 	private IArtifactToGAConverter artifactConverter;
 	
-	private SFEEDBHelper dbHelper = new SFEEDBHelper();
+	private DBHelper dbHelper = new DBHelper();
 	
 	public Object[] process(Object data) {
 		// TODO evaluate data to decide which items to fetch again
@@ -300,11 +301,11 @@ public class SFEEReader extends SFEEConnectHelper implements
 		this.artifactConverter = artifactConverter;
 	}
 
-	public SFEEDBHelper getDbHelper() {
+	public DBHelper getDbHelper() {
 		return dbHelper;
 	}
 
-	public void setDbHelper(SFEEDBHelper dbHelper) {
+	public void setDbHelper(DBHelper dbHelper) {
 		this.dbHelper = dbHelper;
 	}
 

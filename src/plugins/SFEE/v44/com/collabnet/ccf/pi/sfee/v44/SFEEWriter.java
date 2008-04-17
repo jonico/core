@@ -14,6 +14,7 @@ import org.openadaptor.core.exception.NullRecordException;
 import org.openadaptor.core.exception.RecordFormatException;
 import org.openadaptor.core.exception.ValidationException;
 
+import com.collabnet.ccf.core.db.DBHelper;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactAttachment;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
@@ -99,7 +100,7 @@ public class SFEEWriter extends SFEEConnectHelper implements
 		if(sourceArtifactId.equalsIgnoreCase("Unknown")){
 			return new Object[]{data};
 		}
-		String targetArtifactIdFromDB = SFEEDBHelper.getTargetArtifactIdFromTable(sourceArtifactId,
+		String targetArtifactIdFromDB = DBHelper.getTargetArtifactIdFromTable(sourceArtifactId,
 				sourceSystemId, sourceSystemKind, sourceRepositoryId, sourceRepositoryKind,
 				targetSystemId, targetSystemKind, targetRepositoryId, targetRepositoryKind);
 		if(!SFEEGAHelper.containsSingleField(ga, "Id")){
@@ -197,7 +198,7 @@ public class SFEEWriter extends SFEEConnectHelper implements
 				String targetArtifactId = result.getId();
 				SFEEGAHelper.updateSingleField(ga, "Id", targetArtifactId);
 				ga.setTargetArtifactId(targetArtifactId);
-				SFEEDBHelper.updateTable(sourceArtifactId, sourceSystemId, sourceSystemKind,
+				DBHelper.updateTable(sourceArtifactId, sourceSystemId, sourceSystemKind,
 						sourceRepositoryId, sourceRepositoryKind, targetArtifactId, 
 						targetSystemId, targetSystemKind, targetRepositoryId, targetRepositoryKind);
 

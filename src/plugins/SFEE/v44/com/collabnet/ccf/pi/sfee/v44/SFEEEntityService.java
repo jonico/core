@@ -10,6 +10,7 @@ import org.openadaptor.core.exception.NullRecordException;
 import org.openadaptor.core.exception.RecordFormatException;
 import org.openadaptor.core.exception.ValidationException;
 
+import com.collabnet.ccf.core.db.DBHelper;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 
@@ -103,7 +104,7 @@ public class SFEEEntityService extends SFEEConnectHelper implements
 			return new Object[]{data};
 		}
 		
-		String targetArtifactIdFromTable = SFEEDBHelper.getTargetArtifactIdFromTable(sourceArtifactId, sourceSystemId, sourceSystemKind, sourceRepositoryId, sourceRepositoryKind, targetSystemId, targetSystemKind, targetRepositoryId, targetRepositoryKind);
+		String targetArtifactIdFromTable = DBHelper.getTargetArtifactIdFromTable(sourceArtifactId, sourceSystemId, sourceSystemKind, sourceRepositoryId, sourceRepositoryKind, targetSystemId, targetSystemKind, targetRepositoryId, targetRepositoryKind);
 		
 		if(targetArtifactIdFromTable!=null && !(targetArtifactIdFromTable.equals("NEW")) && !(targetArtifactIdFromTable.equals("NULL"))) {
 	    	genericArtifact.setTargetArtifactId(targetArtifactIdFromTable);
@@ -114,7 +115,7 @@ public class SFEEEntityService extends SFEEConnectHelper implements
 //	    		//Send this artifact to HOSPITAL
 //	    	}
 //	    	if(genericArtifact.getArtifactAction().equals(GenericArtifact.ArtifactActionValue.CREATE)) {
-	    		Boolean insertStatus = SFEEDBHelper.insertRecordInTable(sourceArtifactId, sourceSystemId,
+	    		Boolean insertStatus = DBHelper.insertRecordInTable(sourceArtifactId, sourceSystemId,
 	    				sourceSystemKind, sourceRepositoryId, sourceRepositoryKind, targetSystemId,
 	    				targetSystemKind, targetRepositoryId, targetRepositoryKind);
 //	    	}
