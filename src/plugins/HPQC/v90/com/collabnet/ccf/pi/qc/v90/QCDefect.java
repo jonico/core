@@ -115,8 +115,12 @@ public class QCDefect extends Bug implements IQCDefect {
 			if (thisFieldsDatatype
 					.equals(GenericArtifactField.FieldValueTypeValue.MULTI_SELECT_LIST)) {
 				String fieldValue = getFieldAsString(thisField.getFieldName());
-				List<String> fieldValues = getFieldValues(fieldValue);
-				int size = fieldValues.size();
+				List<String> fieldValues = new ArrayList<String> ();
+				int size = 0;
+				if(fieldValue!=null) {
+					fieldValues = getFieldValues(fieldValue);
+					size = fieldValues.size();
+				}
 				if (size >= 1)
 					thisField.setFieldValue(fieldValues.get(0));
 				for (int sizeCnt = 1; sizeCnt < size; sizeCnt++) {
