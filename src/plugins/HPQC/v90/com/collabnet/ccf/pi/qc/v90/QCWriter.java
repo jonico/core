@@ -222,9 +222,7 @@ public class QCWriter extends QCConnectHelper implements
 	public void connectProperly() {
 		
 		connect();
-		
-		//qcc.initConnectionEx(getServerUrl());
-		qcc.connectProjectEx(getDomain(), getProjectName(), getUserName(), getPassword());
+		//qcc.connectProjectEx(getDomain(), getProjectName(), getUserName(), getPassword());
 		
 	}
 	public static String getFieldValueFromGenericArtifact(GenericArtifact individualGenericArtifact, String fieldName) {
