@@ -5,184 +5,44 @@ source structure
 The source code is available at:
 http://ccf.open.collab.net/svn/ccf/trunk
 
-The following files need to be packed (Note to releng, Madan: Some folder structures will be change and have to be taken care of appropriately)
- Directory of \bin\com\collabnet\ccf\core\ga
-04/07/2008  12:51 PM            12,169 GenericArtifact.class
-04/07/2008  12:51 PM             3,278 GenericArtifactField.class
-04/07/2008  12:51 PM            24,279 GenericArtifactHelper.class
-04/07/2008  12:51 PM               501 GenericArtifactParsingException.class
+The following files need to be packed
+/CCFDBService                   - /installer/ServiceWrappers/CCFDBService/**
+/CCFDBService/db/CCFDB.script   - /config/db-schema/CCFDB.script
+/lib                            - /build/jars/*.jar
+/lib/extlib                     - /src/core/lib/openadaptor-3.4/*.jar
+                                  /src/core/lib/openadaptor-3.4/3rdparty/*.jar
+                                  /src/plugins/HPQC/lib/jacob/*.jar
+                                  /src/plugins/SFEE/lib/*.jar
+/lib/extlib/jni                 - /src/plugins/HPQC/lib/jacob/jacob.dll
+/samples                        - /samples/**
+/License.html                   - /License.html
+/README.txt                     - /README.txt
 
- Directory of \bin\com\collabnet\ccf\core\test\plugins
-04/07/2008  12:51 PM               693 SimpleLoopingPollingReadConnector.class
+1. build using /build.xml
+2. Copy files as above into the installer
 
- Directory of \bin\com\collabnet\ccf\pi\qc
-04/07/2008  12:51 PM               779 AttachmentData.class
-04/07/2008  12:51 PM               442 IQCDefect.class
-04/07/2008  12:51 PM               548 NamesTypesAndValues.class
-04/07/2008  12:51 PM             5,769 QCConfigHelper.class
-04/07/2008  12:51 PM             4,706 QCConnectHelper.class
-04/07/2008  12:51 PM             3,574 QCDefect.class
-04/07/2008  12:51 PM            14,935 QCDefectHandler.class
-04/07/2008  12:51 PM             9,617 QCEntityService.class
-04/07/2008  12:51 PM            13,757 QCReader.class
-04/07/2008  12:51 PM            11,447 QCWriter.class
-04/07/2008  12:51 PM             8,729 QCXMLHelper.class
+On installer run,
+0. Splash screen
+1. Welcome screen
+2. License
+3. Query for the installation directory
+4. Do you want to install the hsql db service? (Y/N radio buttons)
+   NOTE: This db is required for storing CCF related information. You could
+         choose to install a hsql database service, and store the info there
+         (recommended), or you could use your own database, and create the
+         necessary schemas as given in the READMEs in the CCF_INSTALL_DIR/samples
+   [X] Start the hsql db service (enable only on selection of Y above)
+   (If yes, install 1 and 2, Run /CCFDBService/InstallCCFDBService.bat,
+    display errors to the user. Else do nothing)
+5. Install the other files and directories (as above - no questions to the user)
+6. Dependency: CCF requires JRE 1.4 or above to run. Please install, if you havent already done so.
+   JRE 1.4 can be obtained from java.sun.com
+7. Show the /README.txt
+8. On finish, open a browser with open.collab.net
 
- Directory of \bin\com\collabnet\ccf\pi\qc\api
-04/07/2008  12:51 PM               975 Comment.class
-04/07/2008  12:51 PM             1,675 ConnectionFactory.class
-04/07/2008  12:51 PM             1,125 IBug.class
-04/07/2008  12:51 PM               531 IBugActions.class
-04/07/2008  12:51 PM               283 ICommand.class
-04/07/2008  12:51 PM               318 IComment.class
-04/07/2008  12:51 PM               751 IConnection.class
-04/07/2008  12:51 PM               446 IFactory.class
-04/07/2008  12:51 PM               357 IFactoryList.class
-04/07/2008  12:51 PM               167 IField.class
-04/07/2008  12:51 PM               512 IFilter.class
-04/07/2008  12:51 PM               233 IHistory.class
-04/07/2008  12:51 PM               165 IItem.class
-04/07/2008  12:51 PM               185 ILifeCycle.class
-04/07/2008  12:51 PM               415 IRecordSet.class
-04/07/2008  12:51 PM             4,422 Utils.class
 
- Directory of \bin\com\collabnet\ccf\pi\qc\api\dcom
-04/07/2008  12:51 PM             9,075 Bug.class
-04/07/2008  12:51 PM             1,113 Command.class
-04/07/2008  12:51 PM             3,080 Connection.class
-04/07/2008  12:51 PM             1,740 Factory.class
-04/07/2008  12:51 PM             1,482 FactoryList.class
-04/07/2008  12:51 PM               439 Field.class
-04/07/2008  12:51 PM             2,100 Filter.class
-04/07/2008  12:51 PM               663 History.class
-04/07/2008  12:51 PM               435 Item.class
-04/07/2008  12:51 PM             2,268 RecordSet.class
 
- Directory of \bin\com\collabnet\ccf\pi\sfee
-04/07/2008  12:51 PM             3,508 GenericArtifactToSFEEConverter.class
-04/07/2008  12:51 PM               235 IArtifactToGAConverter.class
-04/07/2008  12:51 PM               300 IGAToArtifactConverter.class
-04/07/2008  12:51 PM             5,835 SFEEAppHandler.class
-04/07/2008  12:51 PM             8,347 SFEEArtifactMetaData.class
-04/07/2008  12:51 PM             4,374 SFEEConnectHelper.class
-04/07/2008  12:51 PM             6,790 SFEEDBHelper.class
-04/07/2008  12:51 PM             7,783 SFEEEntityService.class
-04/07/2008  12:51 PM             4,101 SFEEGAHelper.class
-04/07/2008  12:51 PM            10,276 SFEEReader.class
-04/07/2008  12:51 PM             5,565 SFEEToGenericArtifactConverter.class
-04/07/2008  01:21 PM            14,379 SFEETrackerHandler.class
-04/07/2008  12:51 PM            10,808 SFEEWriter.class
 
- Directory of \bin\lib
-03/14/2008  12:37 PM            37,839 jacob.jar
-
- Directory of \bin\lib\jacob
-08/07/2007  06:44 PM           106,496 jacob.dll
-08/07/2007  06:44 PM            37,839 jacob.jar
-
- Directory of \bin\lib\openadaptor-3.4
-12/21/2007  12:15 PM             7,654 bootstrap.jar
-12/21/2007  12:15 PM               787 log4j.properties
-12/21/2007  12:15 PM        12,690,178 openadaptor-depends.jar
-12/21/2007  12:15 PM            22,888 openadaptor-spring.jar
-12/21/2007  12:15 PM            17,393 openadaptor-stub.jar
-12/21/2007  12:15 PM           551,228 openadaptor.jar
-
- Directory of \bin\lib\openadaptor-3.4\3rdparty
-12/21/2007  12:15 PM            55,932 activation.jar
-12/21/2007  12:15 PM         1,599,570 axis_1.4.jar
-12/21/2007  12:15 PM           243,597 carol.jar
-12/21/2007  12:15 PM           324,238 cglib-nodep.jar
-12/21/2007  12:15 PM            46,725 commons-codec_1.3.jar
-12/21/2007  12:15 PM           571,259 commons-collections_3.2.jar
-12/21/2007  12:15 PM            71,442 commons-discovery_0.2.jar
-12/21/2007  12:15 PM           279,781 commons-httpclient_3.0.1.jar
-12/21/2007  12:15 PM           285,104 commons-jxpath_1.2.jar
-12/21/2007  12:15 PM           169,763 commons-lang_2.0.jar
-12/21/2007  12:15 PM            31,605 commons-logging.jar
-12/21/2007  12:15 PM           153,280 commons-net_1.2.2.jar
-12/21/2007  12:15 PM           313,898 dom4j_1.6.1.jar
-12/21/2007  12:15 PM             7,843 dumbster.jar
-12/21/2007  12:15 PM           630,492 hsqldb.jar
-12/21/2007  12:15 PM           233,813 jaxen_1.1-beta-9.jar
-12/21/2007  12:15 PM            31,191 jaxrpc.jar
-12/21/2007  12:15 PM           153,253 jdom.jar
-12/21/2007  12:15 PM           107,342 jetty-util_6.0.1.jar
-12/21/2007  12:15 PM           429,619 jetty_6.0.1.jar
-12/21/2007  12:15 PM             6,277 jmock-cglib-1.2.0.jar
-12/21/2007  12:15 PM           172,657 jmock-core-1.2.0.jar
-12/21/2007  12:15 PM            25,998 jms.jar
-12/21/2007  12:15 PM           171,827 jmxremote.jar
-12/21/2007  12:15 PM           365,858 jmxri.jar
-12/21/2007  12:15 PM           102,394 jmxtools.jar
-12/21/2007  12:15 PM            11,428 jonas_timer.jar
-12/21/2007  12:15 PM            64,502 jotm.jar
-12/21/2007  12:15 PM             5,824 jotm_jrmp_stubs.jar
-12/21/2007  12:15 PM            39,013 json.jar
-12/21/2007  12:15 PM           708,951 js_1_6R5.jar
-12/21/2007  12:15 PM             8,809 jta-spec_1.0.1.jar
-12/21/2007  12:15 PM           121,070 junit.jar
-12/21/2007  12:15 PM           391,834 log4j-1.2.15.jar
-12/21/2007  12:15 PM           356,519 mail.jar
-12/21/2007  12:15 PM           153,287 mockrunner-jdbc.jar
-12/21/2007  12:15 PM           173,606 mockrunner-jms.jar
-12/21/2007  12:15 PM           527,090 mysql-connector-java-5.0.6-bin.jar
-12/21/2007  12:15 PM             1,842 qname.jar
-12/21/2007  12:15 PM           388,716 quartz_1.5.2.jar
-12/21/2007  12:15 PM            84,091 resolver_from_xerces_2.9.0.jar
-12/21/2007  12:15 PM           208,025 rome_0.9.jar
-12/21/2007  12:15 PM            18,979 saaj.jar
-12/21/2007  12:15 PM            92,055 script.jar
-12/21/2007  12:15 PM           278,286 serializer_from_xerces_2.9.0.jar
-12/21/2007  12:15 PM           136,279 servlet-api_2.5-6.0.1.jar
-12/21/2007  12:15 PM           173,719 spring-core_2.0.2.jar
-12/21/2007  12:15 PM            42,486 spring-mock.jar
-12/21/2007  12:15 PM         2,593,850 spring_2.0.2.jar
-12/21/2007  12:15 PM            26,514 stax-api_1.0.1.jar
-12/21/2007  12:15 PM           361,173 velocity_1.4.jar
-12/21/2007  12:15 PM           148,429 wsdl4j_1.6.2.jar
-12/21/2007  12:15 PM           474,413 wstx-asl_3.0.1.jar
-12/21/2007  12:15 PM         1,223,877 xercesImpl_2.9.0.jar
-12/21/2007  12:15 PM           903,888 xfire-all_1.2.3.jar
-12/21/2007  12:15 PM           194,354 xml-apis_from_xerces_2.9.0.jar
-12/21/2007  12:15 PM           127,961 XmlSchema_1.1.jar
-12/21/2007  12:15 PM           349,667 xstream-1.2.1.jar
-
- Directory of \bin\lib\SFEE
-03/14/2008  04:24 PM           476,917 sf_soap44_sdk.jar
-
- Directory of \bin\trial2
-04/07/2008  12:51 PM             3,282 Ambulance.class
-04/07/2008  12:51 PM             1,526 DateUtil.class
-04/07/2008  12:51 PM             3,359 DynamicWiring.class
-04/07/2008  12:51 PM             1,338 FilterTransformerWriter.class
-04/07/2008  12:51 PM             4,691 MappingDBUpdater.class
-04/07/2008  12:51 PM            10,196 QCReaderTrial2.class
-04/07/2008  12:51 PM             7,343 SFEEEntityServiceTrial2.class
-04/07/2008  12:51 PM             7,199 SFEEWriterTrial2.class
-04/07/2008  12:51 PM             6,234 TrialCCFCoreMapping.class
-04/07/2008  12:51 PM               343 Wiring.class
-04/07/2008  12:51 PM             1,405 XPathFilter.class
-04/07/2008  12:51 PM             4,549 XsltProcessor.class
-
- Directory of \bin\trial2\db
-04/07/2008  11:54 AM             2,330 trial2CCFCoreMapping.script
-12/30/2007  03:02 PM             7,104 trialCCFCoreMapping.bu.script
-
- Directory of \bin\trial2\wirings
-03/31/2008  10:38 AM             8,033 Trial2CCFCoreMapping.xml
-
- Directory of \bin\trial2\xslts
-04/07/2008  11:54 AM            11,120 qc2sfee.xsl
-04/07/2008  11:54 AM            11,188 sfee2qc.xsl
-
- Directory of \src
-04/09/2008  07:41 AM               119 README.txt
-
- Directory of \src\core\trial2
-04/09/2008  07:39 AM               138 README.txt
-
-All files in the directory \docs\user
 
 Other requirements:
 All installer related files should be checked into \installer
