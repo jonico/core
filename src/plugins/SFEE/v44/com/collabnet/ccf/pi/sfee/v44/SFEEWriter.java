@@ -17,10 +17,8 @@ import org.openadaptor.core.exception.ValidationException;
 import com.collabnet.ccf.core.db.DBHelper;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactAttachment;
-import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
-import com.collabnet.ccf.pi.sfee.v44.IGAToArtifactConverter;
 import com.vasoftware.sf.soap44.webservices.sfmain.TrackerFieldSoapDO;
 import com.vasoftware.sf.soap44.webservices.tracker.ArtifactSoapDO;
 
@@ -68,6 +66,8 @@ public class SFEEWriter extends SFEEConnectHelper implements
 	
 	private IGAToArtifactConverter converter;
 	
+	private String tracker = null;
+	
 
 	private SFEEAttachmentHandler attachmentHandler;
 
@@ -87,7 +87,7 @@ public class SFEEWriter extends SFEEConnectHelper implements
 		} catch (GenericArtifactParsingException e2) {
 			throw new RuntimeException(e2);
 		}
-		String trackerId = ga.getTargetRepositoryId();
+		//String trackerId = ga.getTargetRepositoryId();
 		String sourceRepositoryId = ga.getSourceRepositoryId();
 		String sourceArtifactId = ga.getSourceArtifactId();
 		String sourceSystemId = ga.getSourceSystemId();
@@ -111,15 +111,15 @@ public class SFEEWriter extends SFEEConnectHelper implements
 			ga.setTargetArtifactId(targetArtifactIdFromDB);
 		}
 		if(SFEEGAHelper.containsSingleField(ga, "FolderId")){
-			SFEEGAHelper.updateSingleField(ga, "FolderId", trackerId);
+			SFEEGAHelper.updateSingleField(ga, "FolderId", tracker);
 		}
 		else {
-			SFEEGAHelper.addField(ga, "FolderId", trackerId, "String");
+			SFEEGAHelper.addField(ga, "FolderId", tracker, "String");
 		}
 		TrackerFieldSoapDO[] flexFields = null;
 		try {
 			connect();
-			flexFields = trackerHandler.getFlexFields(getSessionId(), trackerId);
+			flexFields = trackerHandler.getFlexFields(getSessionId(), tracker);
 			disconnect();
 		} catch (RemoteException e1) {
 			// TODO Auto-generated catch block
@@ -447,5 +447,13 @@ public class SFEEWriter extends SFEEConnectHelper implements
 
 	public void setConverter(IGAToArtifactConverter converter) {
 		this.converter = converter;
+	}
+
+	public String getTracker() {
+		return tracker;
+	}
+
+	public void setTracker(String tracker) {
+		this.tracker = tracker;
 	}
 }

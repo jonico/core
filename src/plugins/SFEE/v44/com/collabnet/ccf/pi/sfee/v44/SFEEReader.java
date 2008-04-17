@@ -17,6 +17,7 @@ import org.openadaptor.core.IDataProcessor;
 
 import com.collabnet.ccf.core.db.DBHelper;
 import com.collabnet.ccf.core.ga.GenericArtifact;
+import com.collabnet.ccf.core.ga.GenericArtifactAttachment;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
@@ -44,6 +45,8 @@ public class SFEEReader extends SFEEConnectHelper implements
 	
 	private DBHelper dbHelper = new DBHelper();
 	
+	private String tracker = null;
+	
 	public Object[] process(Object data) {
 		// TODO evaluate data to decide which items to fetch again
 		if (!(data instanceof Document)) {
@@ -52,11 +55,8 @@ public class SFEEReader extends SFEEConnectHelper implements
 		}
 			
 		Document document=(Document) data;
-		String trackerId=getProjectTracker(document);
-		if (StringUtils.isEmpty(trackerId)) {
-			log.error("Could not extract TRACKERID: "+document.asXML());
-			return null;
-		}
+		//String trackerId=getProjectTracker(document);
+
 		
 		Date lastModifiedDate;
 		boolean firstTimeImport=false;
@@ -75,7 +75,7 @@ public class SFEEReader extends SFEEConnectHelper implements
 		String lastArtifactId=getLastArtifactId(document);
 		if (lastArtifactId==null) {
 			if (!firstTimeImport) {
-				log.warn("Seems as if we lost the artifactId for the last queried artifact for tracker "+trackerId);
+				log.warn("Seems as if we lost the artifactId for the last queried artifact for tracker "+tracker);
 			}
 			lastArtifactId="";			
 		}
@@ -85,7 +85,7 @@ public class SFEEReader extends SFEEConnectHelper implements
 		String lastArtifactVersionString=getLastArtifactVersionString(document);
 		if (StringUtils.isEmpty(lastArtifactVersionString)) {
 				if (!firstTimeImport) {
-					log.warn("Seems as if we lost the version information fo the last queried artifact with id "+lastArtifactId+" for tracker "+trackerId);
+					log.warn("Seems as if we lost the version information fo the last queried artifact with id "+lastArtifactId+" for tracker "+tracker);
 				}
 				lastArtifactVersion=-1;
 		}
@@ -94,7 +94,7 @@ public class SFEEReader extends SFEEConnectHelper implements
 				lastArtifactVersion=Integer.parseInt(lastArtifactVersionString);
 			}
 			catch (NumberFormatException e) {
-				log.error("Last version of last queried artifact "+lastArtifactId+" for tracker "+trackerId+" contained no numerical value",e);
+				log.error("Last version of last queried artifact "+lastArtifactId+" for tracker "+tracker+" contained no numerical value",e);
 				lastArtifactVersion=-1;
 			}
 		}
@@ -112,7 +112,7 @@ public class SFEEReader extends SFEEConnectHelper implements
 			throw new RuntimeException(ex);
 		}
 		
-		Object[] result=readTrackerItems(trackerId,lastModifiedDate,lastArtifactId,lastArtifactVersion,firstTimeImport,document);
+		Object[] result=readTrackerItems(tracker,lastModifiedDate,lastArtifactId,lastArtifactVersion,firstTimeImport,document);
 		for(Object doc: result){
 			GenericArtifact ga = null;
 			try {
@@ -221,7 +221,11 @@ public class SFEEReader extends SFEEConnectHelper implements
 	private void populateSrcAndDest(Document dbDocument, GenericArtifact ga){
 		String sourceArtifactId = ga.getSourceArtifactId();
 		String targetArtifactId = dbHelper.getTargetArtifactId(dbDocument);
-		if(targetArtifactId == null || targetArtifactId.equals("NEW")){
+		List<GenericArtifactAttachment> attachments =  ga.getAllGenericArtifactAttachments();
+		if(attachments != null && (attachments.size() > 0)){
+			ga.setArtifactAction(ArtifactActionValue.UPDATE);
+		}
+		else if(targetArtifactId == null || targetArtifactId.equals("NEW")){
 			ga.setArtifactAction(ArtifactActionValue.CREATE);
 		}
 		else {
@@ -315,5 +319,13 @@ public class SFEEReader extends SFEEConnectHelper implements
 
 	public void setAttachmentHandler(SFEEAttachmentHandler attachmentHandler) {
 		this.attachmentHandler = attachmentHandler;
+	}
+
+	public String getTracker() {
+		return tracker;
+	}
+
+	public void setTracker(String tracker) {
+		this.tracker = tracker;
 	}
 }
