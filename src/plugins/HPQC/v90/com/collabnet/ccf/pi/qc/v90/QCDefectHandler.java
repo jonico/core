@@ -2,6 +2,7 @@ package com.collabnet.ccf.pi.qc.v90;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -86,11 +87,12 @@ public class QCDefectHandler {
 		return defect;
 	}
 
-	public String writeDataIntoFile(byte[] data, String configDir,
-			String actualFileName) {
-		String fileName = configDir + actualFileName;
+	public File writeDataIntoFile(byte[] data, String fileName) {
+		File attachmentFile = null;
+		String tempDir = System.getProperty("java.io.tmpdir");
+		attachmentFile = new File(tempDir, fileName);
 		try {
-			FileOutputStream fs = new FileOutputStream(fileName);
+			FileOutputStream fs = new FileOutputStream(attachmentFile);
 			fs.write(data);
 			fs.close();
 		} catch (Exception e) {
@@ -98,7 +100,7 @@ public class QCDefectHandler {
 					+ e);
 		}
 
-		return fileName;
+		return attachmentFile;
 	}
 
 	public IQCDefect updateDefect(IConnection qcc, String bugId,
@@ -201,11 +203,10 @@ public class QCDefectHandler {
 	}
 
 	public void createAttachment(IConnection qcc, String entityId,
-			String configDir, List<GenericArtifactAttachment> allAttachments) {
+			List<GenericArtifactAttachment> allAttachments) {
 
 		IFactory bugFactory = qcc.getBugFactory();
 		IBug bug = bugFactory.getItem(entityId);
-		String fileName = null;
 		for (int cnt = 0; cnt < allAttachments.size(); cnt++) {
 			GenericArtifactAttachment thisAttachment = allAttachments.get(cnt);
 			GenericArtifactAttachment.AttachmentContentTypeValue contentTypeValue = thisAttachment
@@ -216,17 +217,17 @@ public class QCDefectHandler {
 					.equals(GenericArtifactAttachment.AttachmentContentTypeValue.DATA)) {
 				type = 1;
 				byte[] data = thisAttachment.getRawAttachmentData();
-				fileName = writeDataIntoFile(data, configDir, actualFileName);
+				File attachmentFile = writeDataIntoFile(data, actualFileName);
 				try {
-					bug.createNewAttachment(fileName, type);
+					bug.createNewAttachment(attachmentFile.getAbsolutePath(), type);
 				} catch (Exception e) {
 					log
 							.error("In QCDefectHandler.createAttachment method: Some inappropriate fileName/Type for creating an attachment");
-					log.error("***For this fileName: " + fileName
+					log.error("***For this fileName: " + attachmentFile.getAbsolutePath()
 							+ ", the type that is being set, type: " + type);
 					return;
 				}
-				Boolean deleteStatus = deleteTempFile(fileName);
+				Boolean deleteStatus = deleteTempFile(attachmentFile.getAbsolutePath());
 			} else {
 				type = 2;
 				String link = thisAttachment.getAttachmentSourceUrl();
