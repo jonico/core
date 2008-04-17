@@ -54,6 +54,7 @@
 		<property name="exceptionProcessor" ref="ExceptionHandler" />
 	</bean>
 	<bean id="SFEETransformer" class="com.collabnet.ccf.core.transformer.XsltProcessor">
+
    <property name="xsltFile" value="../xslt/qc2sfee.xsl"/>
   </bean>
 	 <bean id="QCReader" class="com.collabnet.ccf.pi.qc.v90.QCReader">
@@ -98,6 +99,7 @@
 		<property name="keepAlive" value="true" />
 		<property name="artifactConverter"
 			ref="SFEEGerericArtifactConverter" />
+		<property name="tracker" value="tracker1004" />
 	</bean>
 	<bean id="SFEEGerericArtifactConverter"
 		class="com.collabnet.ccf.pi.sfee.v44.SFEEToGenericArtifactConverter" />
@@ -114,6 +116,7 @@
 			value="create" />
 		<property name="updateComment"
 			value="Synchronized by Connector user" />
+		<property name="tracker" value="tracker1004" />
 	</bean>
 	<bean id="SFEEEntityService"
 		class="com.collabnet.ccf.pi.sfee.v44.SFEEEntityService">
