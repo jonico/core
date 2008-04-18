@@ -42,7 +42,7 @@ public class SFEEReaderTest extends TestCase {
 		String lastArtifactId = "artf1179";
 		int lastArtifactVersion = -1;
 		boolean firstTimeImport = false;
-		sfeeReader.readTrackerItems(projectTracker, lastModifiedDate, lastArtifactId, lastArtifactVersion, firstTimeImport, null);
+		sfeeReader.readTrackerItems(projectTracker, lastModifiedDate, lastArtifactVersion, firstTimeImport, null);
 	}
 	
 	public void testCommentsList(){
