@@ -175,4 +175,36 @@
 			</batchtest>
 		</junit>
 	</target>
+
+        <!--Installer Deployment-->
+        
+        <target name="sanity" description="Checking the NSIS PATH for creating the installer">	 
+              
+   	       <fail unless="env.NSIS_PATH">
+	           NSIS_PATH variable is not available in the enviroinment
+               </fail>
+	       <echo>NSIS_PATH=${env.NSIS_PATH}</echo>
+        </target>
+
+        <target name="cleanup" description="Cleans all generated files">
+              <delete dir="deploy"/>
+              <delete dir="production_installer"/>        
+        </target>
+
+        <target name="deploy" depends="sanity,cleanup,build,create_installer">
+              <property file="default.properties"/>
+              <mkdir dir="deploy"/>
+              <zip destfile="deploy/PI-${tool.name}-${tool.version}.${tool.buildnumber}.zip">
+   	          <!--<zipfileset dir="Documentation" includes="*"/>-->
+	          <zipfileset dir="production_installer" includes="*" />
+              </zip>	
+        </target>
+
+        <target name="create_installer">
+             <mkdir dir="production_installer" />
+             <exec executable="${env.NSIS_PATH}\makensis.exe">
+                 <arg value="installer\CollabNet Connector Framework.nsi"/>
+             </exec> 
+             <move file="installer\CollabNet Connector Framework-1.0-win32.exe" tofile="production_installer\Collabnet Connector Framework-1.0-win32.exe"/>
+        </target>	
 </project>
