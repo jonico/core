@@ -109,7 +109,7 @@ public class SFEETrackerHandler {
 	 * @throws RemoteException
 	 */
 	public List<ArtifactSoapDO> getChangedTrackerItems(String sessionID,
-			String trackerId, Date lastModifiedDate, String lastArtifactId,
+			String trackerId, Date lastModifiedDate,
 			int lastArtifactVersion) throws RemoteException {
 		// only select ID of row because we have to get the details in any case
 		String[] selectedColumns = { ArtifactSoapDO.COLUMN_ID,
@@ -144,17 +144,17 @@ public class SFEETrackerHandler {
 		boolean duplicateFound = false;
 		for (int i = 0; i < rows.length; ++i) {
 			String id = rows[i].getId();
-			if (id.equals(lastArtifactId)
-					&& lastArtifactVersion == rows[i].getVersion()) {
-				duplicateFound = true;
-			} else {
+//			if (id.equals(lastArtifactId)
+//					&& lastArtifactVersion == rows[i].getVersion()) {
+//				duplicateFound = true;
+//			} else {
 				ArtifactSoapDO artifactData = mTrackerApp.getArtifactData(
 						sessionID, id);
 				if (duplicateFound) {
 					detailRowsNew.add(artifactData);
 				}
 				detailRowsFull.add(artifactData);
-			}
+//			}
 		}
 		if (!duplicateFound)
 			return detailRowsFull;

@@ -48,36 +48,25 @@ public class SFEEReader extends SFEEConnectHelper implements
 	private String tracker = null;
 	
 	public Object[] process(Object data) {
-		// TODO evaluate data to decide which items to fetch again
 		if (!(data instanceof Document)) {
 			log.error("Supplied data not in the expected dom4j format: "+data);
 			return null;
 		}
-			
+		log.debug("Start Processing");
 		Document document=(Document) data;
-		//String trackerId=getProjectTracker(document);
-
 		
 		Date lastModifiedDate;
 		boolean firstTimeImport=false;
 		String lastModifiedDateString = getLastModifiedDateString(document);
 		if (StringUtils.isEmpty(lastModifiedDateString)) {
-			// TODO Implement a special first time logic
-			log.warn("This seems to be a first time import ...: "+document.asXML());
+			log.info("This seems to be a first time import ...: "+document.asXML());
 			lastModifiedDate=new Date(0);
 			firstTimeImport=true;
 		}
 		else {
+			log.debug("Artifacts to be fetched from "+lastModifiedDateString);
 			lastModifiedDate=(Date)SFEEGAHelper.asTypedValue(lastModifiedDateString, "DateTime");
 			lastModifiedDate.setTime(lastModifiedDate.getTime()+1);
-		}
-		
-		String lastArtifactId=getLastArtifactId(document);
-		if (lastArtifactId==null) {
-			if (!firstTimeImport) {
-				log.warn("Seems as if we lost the artifactId for the last queried artifact for tracker "+tracker);
-			}
-			lastArtifactId="";			
 		}
 		
 		int lastArtifactVersion=-1;
@@ -85,7 +74,7 @@ public class SFEEReader extends SFEEConnectHelper implements
 		String lastArtifactVersionString=getLastArtifactVersionString(document);
 		if (StringUtils.isEmpty(lastArtifactVersionString)) {
 				if (!firstTimeImport) {
-					log.warn("Seems as if we lost the version information fo the last queried artifact with id "+lastArtifactId+" for tracker "+tracker);
+					log.warn("Seems as if we lost the version information for tracker "+tracker);
 				}
 				lastArtifactVersion=-1;
 		}
@@ -94,7 +83,7 @@ public class SFEEReader extends SFEEConnectHelper implements
 				lastArtifactVersion=Integer.parseInt(lastArtifactVersionString);
 			}
 			catch (NumberFormatException e) {
-				log.error("Last version of last queried artifact "+lastArtifactId+" for tracker "+tracker+" contained no numerical value",e);
+				log.error("Last version  for tracker "+tracker+" contained non-numerical value",e);
 				lastArtifactVersion=-1;
 			}
 		}
@@ -112,7 +101,7 @@ public class SFEEReader extends SFEEConnectHelper implements
 			throw new RuntimeException(ex);
 		}
 		
-		Object[] result=readTrackerItems(tracker,lastModifiedDate,lastArtifactId,lastArtifactVersion,firstTimeImport,document);
+		Object[] result=readTrackerItems(tracker,lastModifiedDate,lastArtifactVersion,firstTimeImport,document);
 		for(Object doc: result){
 			GenericArtifact ga = null;
 			try {
@@ -151,13 +140,13 @@ public class SFEEReader extends SFEEConnectHelper implements
 		isDry=false;
 	}
 	
-	public Object[] readTrackerItems(String projectTracker, Date lastModifiedDate, String lastArtifactId, int lastArtifactVersion, boolean firstTimeImport, Document dbDocument) {
+	public Object[] readTrackerItems(String projectTracker, Date lastModifiedDate, int lastArtifactVersion, boolean firstTimeImport, Document dbDocument) {
 		// TODO Use the information of the firstTimeImport flag
 		
 		List<Document> dataRows=new ArrayList<Document>();
 		List<ArtifactSoapDO> artifactRows;
 		try {
-			artifactRows = trackerHandler.getChangedTrackerItems(getSessionId(), projectTracker,lastModifiedDate, lastArtifactId, lastArtifactVersion);
+			artifactRows = trackerHandler.getChangedTrackerItems(getSessionId(), projectTracker,lastModifiedDate, lastArtifactVersion);
 		} catch (RemoteException e) {
 			// TODO Throw an exception?
 			log.error("During the artifact retrieval process to SFEE, an error occured",e);
@@ -182,50 +171,62 @@ public class SFEEReader extends SFEEConnectHelper implements
 			throw new RuntimeException(e1);
 		}
 		
-		if (artifactHistoryRows == null) {
+		if (artifactHistoryRows == null && (attachments==null || attachments.size() == 0)) {
 			return new Object[]{};
 		} else {
-			for(ArtifactSoapDO artifactRow:artifactHistoryRows)
-			{
-				GenericArtifact genericArtifact = artifactConverter.convert(artifactRow, trackerFields);
-				if(dbDocument != null)
-					populateSrcAndDest(dbDocument, genericArtifact);
-				Document document = null;
-				try {
-					document = GenericArtifactHelper.createGenericArtifactXMLDocument(genericArtifact);
-				} catch (GenericArtifactParsingException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+			if(artifactHistoryRows != null){
+				for(ArtifactSoapDO artifactRow:artifactHistoryRows)
+				{
+					GenericArtifact genericArtifact = artifactConverter.convert(artifactRow, trackerFields);
+					if(dbDocument != null)
+						populateSrcAndDest(dbDocument, genericArtifact);
+					Document document = null;
+					try {
+						document = GenericArtifactHelper.createGenericArtifactXMLDocument(genericArtifact);
+					} catch (GenericArtifactParsingException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					dataRows.add(document);
 				}
-				dataRows.add(document);
+			}
+			if(attachments != null){
+				for(Entry<Date,GenericArtifact> entry:attachments.entrySet()){
+					GenericArtifact ga = entry.getValue();
+					Date date = entry.getKey();
+					if(dbDocument != null){
+						populateSrcAndDest(dbDocument, ga);
+						ga.setArtifactAction(ArtifactActionValue.UPDATE);
+					}
+					Document document = null;
+					try {
+						document = GenericArtifactHelper.createGenericArtifactXMLDocument(ga);
+					} catch (GenericArtifactParsingException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
+					dataRows.add(document);
+				}
 			}
 		}
-		for(Entry<Date,GenericArtifact> entry:attachments.entrySet()){
-			GenericArtifact ga = entry.getValue();
-			Date date = entry.getKey();
-			if(dbDocument != null)
-				populateSrcAndDest(dbDocument, ga);
-			Document document = null;
-			try {
-				document = GenericArtifactHelper.createGenericArtifactXMLDocument(ga);
-			} catch (GenericArtifactParsingException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			dataRows.add(document);
-		}
-		
 		return dataRows.toArray();
 	}
 	
 	private void populateSrcAndDest(Document dbDocument, GenericArtifact ga){
 		String sourceArtifactId = ga.getSourceArtifactId();
-		String targetArtifactId = dbHelper.getTargetArtifactId(dbDocument);
-		List<GenericArtifactAttachment> attachments =  ga.getAllGenericArtifactAttachments();
-		if(attachments != null && (attachments.size() > 0)){
-			ga.setArtifactAction(ArtifactActionValue.UPDATE);
-		}
-		else if(targetArtifactId == null || targetArtifactId.equals("NEW")){
+		String sourceRepositoryId = dbHelper.getSourceRepositoryId(dbDocument);
+		String sourceRepositoryKind = dbHelper.getSourceRepositoryKind(dbDocument);
+		String sourceSystemId = dbHelper.getSourceSystemId(dbDocument);
+		String sourceSystemKind = dbHelper.getSourceSystemKind(dbDocument);
+		
+		String targetRepositoryId = dbHelper.getTargetRepositoryId(dbDocument);
+		String targetRepositoryKind = dbHelper.getTargetRepositoryKind(dbDocument);
+		String targetSystemId = dbHelper.getTargetSystemId(dbDocument);
+		String targetSystemKind = dbHelper.getTargetSystemKind(dbDocument);
+		String targetArtifactId = DBHelper.getTargetArtifactIdFromTable(sourceArtifactId,
+				sourceSystemId, sourceSystemKind, sourceRepositoryId, sourceRepositoryKind,
+				targetSystemId, targetSystemKind, targetRepositoryId, targetRepositoryKind);
+		if(StringUtils.isEmpty(targetArtifactId)){
 			ga.setArtifactAction(ArtifactActionValue.CREATE);
 		}
 		else {
@@ -238,15 +239,15 @@ public class SFEEReader extends SFEEConnectHelper implements
 			}
 		}
 		ga.setSourceArtifactId(sourceArtifactId);
-		ga.setSourceRepositoryId(dbHelper.getSourceRepositoryId(dbDocument));
-		ga.setSourceRepositoryKind(dbHelper.getSourceRepositoryKind(dbDocument));
-		ga.setSourceSystemId(dbHelper.getSourceSystemId(dbDocument));
-		ga.setSourceSystemKind(dbHelper.getSourceSystemKind(dbDocument));
+		ga.setSourceRepositoryId(sourceRepositoryId);
+		ga.setSourceRepositoryKind(sourceRepositoryKind);
+		ga.setSourceSystemId(sourceSystemId);
+		ga.setSourceSystemKind(sourceSystemKind);
 		
-		ga.setTargetRepositoryId(dbHelper.getTargetRepositoryId(dbDocument));
-		ga.setTargetRepositoryKind(dbHelper.getTargetRepositoryKind(dbDocument));
-		ga.setTargetSystemId(dbHelper.getTargetSystemId(dbDocument));
-		ga.setTargetSystemKind(dbHelper.getTargetSystemKind(dbDocument));
+		ga.setTargetRepositoryId(targetRepositoryId);
+		ga.setTargetRepositoryKind(targetRepositoryKind);
+		ga.setTargetSystemId(targetSystemId);
+		ga.setTargetSystemKind(targetSystemKind);
 	}
 	
 	@Override
@@ -259,13 +260,7 @@ public class SFEEReader extends SFEEConnectHelper implements
 
 	
 	private String getProjectTracker(Document document) {
-		// TODO Let the user specify this value?
 		return dbHelper.getSourceRepositoryId(document);
-//		Node node= document.selectSingleNode("//SOURCE_REPOSITORY_ID");
-//		if (node==null)
-//			return null;
-//		return node.getText();
-		
 	}
 	
 	private String getLastModifiedDateString(Document document) {
@@ -277,18 +272,9 @@ public class SFEEReader extends SFEEConnectHelper implements
 		return DateUtil.format(date);
 	}
 	
-	private String getLastArtifactId(Document document) {
-		// TODO Let the user specify this value?
-		return dbHelper.getSourceArtifactId(document);
-//		Node node= document.selectSingleNode("//SOURCE_ARTIFACT_ID");
-//		if (node==null)
-//			return null;
-//		return node.getText();
-	}
-	
 	private String getLastArtifactVersionString(Document document) {
 		// TODO I am not reading the artifact version ID from the DB. Refactor this method to DBHelper...?
-		Node node= document.selectSingleNode("//ARTIFACTVERSION");
+		Node node= document.selectSingleNode("//VERSION");
 		if (node==null)
 			return null;
 		return node.getText();
