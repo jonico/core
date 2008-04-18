@@ -10,7 +10,7 @@ import java.util.Date;
 import java.util.List;
 
 import org.apache.log4j.Logger;
-
+import com.collabnet.ccf.core.utils.OleDate;
 import com.collabnet.ccf.pi.qc.v90.AttachmentData;
 import com.collabnet.ccf.pi.qc.v90.api.Comment;
 import com.collabnet.ccf.pi.qc.v90.api.IAttachment;
@@ -81,7 +81,10 @@ public class Bug extends ActiveXComponent implements IBugActions {
     {
         Variant res = Dispatch.call(this, "Field", field);
         double ddate = res.getDate();
-        Date d = new Date((long)ddate);
+        OleDate oleDate = new OleDate(); 
+        oleDate.setDate(ddate);
+        Date d = (Date) oleDate;
+        System.out.println("For the field:"+field+", the value is: "+d);
         return d;
     }
 
