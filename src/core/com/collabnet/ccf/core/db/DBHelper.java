@@ -322,13 +322,6 @@ public class DBHelper {
 			return null;
 		return node.getText();
 	}
-	public String getSourceArtifactId(Document document) {
-		// TODO Let the user specify this value?
-		Node node= document.selectSingleNode("//SOURCE_ARTIFACT_ID");
-		if (node==null)
-			return null;
-		return node.getText();
-	}
 
 	public String getSourceRepositoryId(Document document) {
 		// TODO Let the user specify this value?
@@ -355,13 +348,6 @@ public class DBHelper {
 	public String getSourceSystemKind(Document document) {
 		// TODO Let the user specify this value?
 		Node node= document.selectSingleNode("//SOURCE_SYSTEM_KIND");
-		if (node==null)
-			return null;
-		return node.getText();
-	}
-	public String getTargetArtifactId(Document document) {
-		// TODO Let the user specify this value?
-		Node node= document.selectSingleNode("//TARGET_ARTIFACT_ID");
 		if (node==null)
 			return null;
 		return node.getText();
