@@ -57,6 +57,8 @@ public class QCConfigHelper {
 			return GenericArtifactField.FieldValueTypeValue.STRING;
 		if(dataType.equals("char") && ( editStyle!=null && editStyle.equals("UserCombo")) )
 			return GenericArtifactField.FieldValueTypeValue.USER;
+		if(dataType.equals("char") && ( editStyle!=null && editStyle.equals("DateCombo")) )
+			return GenericArtifactField.FieldValueTypeValue.DATE;
 		if(dataType.equals("char") && ( editStyle!=null && editStyle.equals("ListCombo")) ) {
 			if(isMultiValue.equals("N"))			
 				return GenericArtifactField.FieldValueTypeValue.LIST;
