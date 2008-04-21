@@ -1,8 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- 
-	$Id: file.xml 885 2007-10-02 08:49:13Z higginse $
-	$HeadURL: https://openadaptor3.openadaptor.org/svn/openadaptor3/tags/3.3/example/spring/connectors/file/file.xml $
--->
 <beans xmlns="http://www.springframework.org/schema/beans"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
@@ -11,19 +7,17 @@
   This adaptor does the following...
     
     * reads delimited records from file
-    * converts delmited input into a map
+    * converts delimited input into a map
     * converts map to xml
     * converts xml to generic artifact xml format
     * does a transformation on the data to change some field values
     * converts the generic artifact format back to a ordered map xml structure
     * converts the ordered map xml structure back to a map
     * write map as a csv file  
-    
-  It is designed to illustrate the basic structure of a file reader/writer adaptor
 
   Run it like this...
     
-    java org.openadaptor.spring.SpringAdaptor -config csv2csv.xml -bean Adaptor
+    java org.openadaptor.spring.SpringAdaptor -config config/csv2csv.xml -bean Adaptor
     
   You need the following in your classpath
   
@@ -44,23 +38,29 @@
 		</description>
 		<property name="processMap">
 			<map>
-				<entry key-ref="Reader" value-ref="MapConverter" />
-				<entry key-ref="MapConverter" value-ref="XmlConverter" />
-				<entry key-ref="XmlConverter" value-ref="XsltProcessor" />
-				<entry key-ref="XsltProcessor"
-					value-ref="SFEEEntityService" />
-				<entry key-ref="SFEEEntityService"
-					value-ref="SFEEWriteConnector" />
+				<entry key-ref="InputCSVFileReader" value-ref="InputCSVString2OrderedMapConverter" />
+				<entry key-ref="InputCSVString2OrderedMapConverter" value-ref="OrderedMap2XmlMapConverter" />
+				<entry key-ref="OrderedMap2XmlMapConverter" value-ref="XmlMap2GenericArtifactConverter" />
+				<entry key-ref="XmlMap2GenericArtifactConverter"
+					value-ref="GenericArtifact2GenericArtifactConverter" />
+				<entry key-ref="GenericArtifact2GenericArtifactConverter"
+					value-ref="GenericArtifact2XmlMapConverter" />
+				<entry key-ref="GenericArtifact2XmlMapConverter"
+					value-ref="XmlMap2OrderedMapConverter" />
+				<entry key-ref="XmlMap2OrderedMapConverter"
+					value-ref="OrderedMap2OutputCSVStringConverter" />
+				<entry key-ref="OrderedMap2OutputCSVStringConverter"
+					value-ref="OutputCSVFileWriter" />
 			</map>
 		</property>
 	</bean>
 
-	<bean id="Reader"
+	<bean id="InputCSVFileReader"
 		class="org.openadaptor.auxil.connector.iostream.reader.FileReadConnector">
 		<description>
 			This read connector reads lines from a file.
 		</description>
-		<property name="filename" value="csvfile.dat" />
+		<property name="filename" value="input/csvinputfile.dat" />
 		<property name="dataReader">
 			<bean
 				class="org.openadaptor.auxil.connector.iostream.reader.string.LineReader">
@@ -73,7 +73,7 @@
 		</property>
 	</bean>
 
-	<bean id="MapConverter"
+	<bean id="InputCSVString2OrderedMapConverter"
 		class="org.openadaptor.auxil.convertor.delimited.DelimitedStringToOrderedMapConvertor">
 		<description>
 			Strings are delimited by commas; each value in the string
@@ -85,7 +85,7 @@
 		<property name="stripEnclosingQuotes" value="true" />
 	</bean>
 
-	<bean id="XmlConverter"
+	<bean id="OrderedMap2XmlMapConverter"
 		class="org.openadaptor.auxil.convertor.xml.OrderedMapToXmlConvertor">
 		<description>Convert the map into XML</description>
 		<property name="rootElementTag" value="record" />
@@ -96,8 +96,36 @@
 		<description>This writer writes data to a file.</description>
 	</bean>
 	
-	<bean id="XsltProcessor" class="de.galileo.panama.XsltProcessor">
-		<property name="xsltFile" value="csv2sfee.xsl" />
+	<bean id="XmlMap2GenericArtifactConverter" class="com.collabnet.ccf.core.transformer.XsltProcessor">
+		<property name="xsltFile" value="xslt/xmlmap2genericartifact.xsl" />
 	</bean>
+	
+	<bean id="GenericArtifact2XmlMapConverter" class="com.collabnet.ccf.core.transformer.XsltProcessor">
+		<property name="xsltFile" value="xslt/genericartifact2xmlmap.xsl" />
+	</bean>
+	
+	<bean id="GenericArtifact2GenericArtifactConverter" class="com.collabnet.ccf.core.transformer.XsltProcessor">
+		<property name="xsltFile" value="xslt/genericartifact2genericartifact.xsl" />
+	</bean>
+	
+	<bean id="XmlMap2OrderedMapConverter"
+		class="org.openadaptor.auxil.convertor.xml.XmlToOrderedMapConvertor">
+		<property name="omitTopLevelElementTag" value="true"/>
+	</bean>
+	
+	<bean id="OrderedMap2OutputCSVStringConverter"
+		class="org.openadaptor.auxil.convertor.delimited.OrderedMapToDelimitedStringConvertor">
+		<property name="quoteChar" value='"'/>
+		<property name="outputHeader" value="true"/>
+		<property name="forceEnclosingQuotes" value="true"/>
+	</bean>
+	
+	<bean id="OutputCSVFileWriter"
+		class="org.openadaptor.auxil.connector.iostream.writer.FileWriteConnector">
+		<property name="filename" value="output/csvoutputfile.dat" />
+		<property name="append" value="false" />
+	</bean>
+	
+	
 
 </beans>
