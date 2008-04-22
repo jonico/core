@@ -103,33 +103,5 @@
 	<bean id="XmlMap2GenericArtifactConverter" class="com.collabnet.ccf.core.transformer.XsltProcessor">
 		<property name="xsltFile" value="xslt/xmlmap2genericartifact.xsl" />
 	</bean>
-	
-	<bean id="GenericArtifact2XmlMapConverter" class="com.collabnet.ccf.core.transformer.XsltProcessor">
-		<property name="xsltFile" value="xslt/genericartifact2xmlmap.xsl" />
-	</bean>
-	
-	<bean id="GenericArtifact2GenericArtifactConverter" class="com.collabnet.ccf.core.transformer.XsltProcessor">
-		<property name="xsltFile" value="xslt/genericartifact2genericartifact.xsl" />
-	</bean>
-	
-	<bean id="XmlMap2OrderedMapConverter"
-		class="org.openadaptor.auxil.convertor.xml.XmlToOrderedMapConvertor">
-		<property name="omitTopLevelElementTag" value="true"/>
-	</bean>
-	
-	<bean id="OrderedMap2OutputCSVStringConverter"
-		class="org.openadaptor.auxil.convertor.delimited.OrderedMapToDelimitedStringConvertor">
-		<property name="quoteChar" value='"'/>
-		<property name="outputHeader" value="true"/>
-		<property name="forceEnclosingQuotes" value="true"/>
-	</bean>
-	
-	<bean id="OutputCSVFileWriter"
-		class="org.openadaptor.auxil.connector.iostream.writer.FileWriteConnector">
-		<property name="filename" value="output/csvoutputfile.dat" />
-		<property name="append" value="false" />
-	</bean>
-	
-	
 
 </beans>

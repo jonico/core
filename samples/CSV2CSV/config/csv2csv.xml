@@ -90,11 +90,6 @@
 		<description>Convert the map into XML</description>
 		<property name="rootElementTag" value="record" />
 	</bean>
-
-	<bean id="Writer"
-		class="org.openadaptor.auxil.connector.iostream.writer.FileWriteConnector">
-		<description>This writer writes data to a file.</description>
-	</bean>
 	
 	<bean id="XmlMap2GenericArtifactConverter" class="com.collabnet.ccf.core.transformer.XsltProcessor">
 		<property name="xsltFile" value="xslt/xmlmap2genericartifact.xsl" />
