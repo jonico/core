@@ -13,7 +13,6 @@
 	xmlns:xs="http://www.w3.org/2001/XMLSchema"
 	xmlns:stringutil="xalan://com.collabnet.ccf.core.utils.GATransformerUtil"
 	exclude-result-prefixes="xsl xs">
-	<xsl:output method="xml" indent="yes" version="1.0" standalone="yes" cdata-section-elements="ccf:attachment attachment" />
 	<xsl:template match='/ccf:artifact'>
 		<artifact xmlns="http://ccf.open.collab.net/GenericArtifactV1.0">
 			<xsl:attribute name="artifactAction"><xsl:value-of select="@artifactAction" /></xsl:attribute>
@@ -37,26 +36,13 @@
 		</artifact>
 	</xsl:template>
 	<xsl:template match="ccf:attachment">
-		<attachment>
-			<xsl:attribute name="attachmentAction"><xsl:value-of select="@attachmentAction" /></xsl:attribute>
-			<xsl:attribute name="attachmentContentType"><xsl:value-of select="@attachmentContentType" /></xsl:attribute>
-			<xsl:attribute name="attachmentName"><xsl:value-of select="@attachmentName" /></xsl:attribute>
-			<xsl:attribute name="attachmentId"><xsl:value-of select="@attachmentId" /></xsl:attribute>
-			<xsl:attribute name="attachmentSize"><xsl:value-of select="@attachmentSize" /></xsl:attribute>
-			<xsl:attribute name="attachmentSourceUrl"><xsl:value-of select="@attachmentSourceUrl" /></xsl:attribute>
-			<xsl:attribute name="attachmentType"><xsl:value-of select="@attachmentType" /></xsl:attribute>
-			<xsl:attribute name="attachmentMIMEType"><xsl:value-of select="@attachmentMIMEType" /></xsl:attribute>
-			<xsl:attribute name="attachmentValueHasChanged"><xsl:value-of select="@attachmentValueHasChanged" /></xsl:attribute>
-			<xsl:attribute name="attachmentValueType"><xsl:value-of select="@attachmentValueType" /></xsl:attribute>
-			<xsl:attribute name="attachmentValueIsNull"><xsl:value-of select="@attachmentValueIsNull" /></xsl:attribute>
-			<xsl:value-of select="."></xsl:value-of>
-		</attachment>
+		<xsl:copy-of select="."/>
 	</xsl:template>
 	<xsl:template
 		match='ccf:field[@fieldName="BG_ACTUAL_FIX_TIME"]'>
 		<field>
-		    <xsl:attribute name="fieldName">ActualHours</xsl:attribute>
-		    <xsl:attribute name="fieldDisplayName">ActualHours</xsl:attribute>
+		    <xsl:attribute name="fieldName">Actual Hours</xsl:attribute>
+		    <xsl:attribute name="fieldDisplayName">Actual Hours</xsl:attribute>
 		    <xsl:attribute name="fieldAction"><xsl:value-of select="@fieldAction" /></xsl:attribute>
 		    <xsl:attribute name="fieldType"><xsl:value-of select="@fieldType" /></xsl:attribute>
 		  	<xsl:attribute name="fieldValueHasChanged"><xsl:value-of select="@fieldValueHasChanged" /></xsl:attribute>
@@ -68,8 +54,8 @@
 	<xsl:template
 		match='ccf:field[@fieldName="BG_ESTIMATED_FIX_TIME"]'>
 		<field>
-		    <xsl:attribute name="fieldName">EstimatedHours</xsl:attribute>
-		    <xsl:attribute name="fieldDisplayName">EstimatedHours</xsl:attribute>
+		    <xsl:attribute name="fieldName">Estimated Hours</xsl:attribute>
+		    <xsl:attribute name="fieldDisplayName">Estimated Hours</xsl:attribute>
 		    <xsl:attribute name="fieldAction"><xsl:value-of select="@fieldAction" /></xsl:attribute>
 		    <xsl:attribute name="fieldType"><xsl:value-of select="@fieldType" /></xsl:attribute>
 		  	<xsl:attribute name="fieldValueHasChanged"><xsl:value-of select="@fieldValueHasChanged" /></xsl:attribute>
@@ -193,8 +179,8 @@
 		match='ccf:field[@fieldName="BG_RESPONSIBLE"]'>
 		<xsl:variable name="qcValue" as="xs:string"><xsl:value-of select="." /></xsl:variable>
 		<field>
-		    <xsl:attribute name="fieldName">AssignedTo</xsl:attribute>
-		    <xsl:attribute name="fieldDisplayName">AssignedTo</xsl:attribute>
+		    <xsl:attribute name="fieldName">Assigned To</xsl:attribute>
+		    <xsl:attribute name="fieldDisplayName">Assigned To</xsl:attribute>
 		    <xsl:attribute name="fieldAction"><xsl:value-of select="@fieldAction" /></xsl:attribute>
 		    <xsl:attribute name="fieldType"><xsl:value-of select="@fieldType" /></xsl:attribute>
 		  	<xsl:attribute name="fieldValueHasChanged"><xsl:value-of select="@fieldValueHasChanged" /></xsl:attribute>
