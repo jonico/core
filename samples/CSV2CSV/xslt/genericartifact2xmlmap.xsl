@@ -1,7 +1,14 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0"?>
 
-<xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:fn="http://www.w3.org/2005/xpath-functions" xmlns="" exclude-result-prefixes="xsl xs fn">
-	<xsl:template match="/node()">
-		<xsl:copy-of select='.' />
+<xsl:stylesheet version="2.0"
+	xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:ccf="http://ccf.open.collab.net/GenericArtifactV1.0"
+	xmlns:xs="http://www.w3.org/2001/XMLSchema" exclude-result-prefixes="xsl xs">
+	<xsl:template match='/ccf:artifact'>
+		<record>
+			<xsl:apply-templates />
+		</record>
+	</xsl:template>
+	<xsl:template match='ccf:field'>
+		<xsl:element name="{@fieldName}"><xsl:value-of select="text()"/></xsl:element>
 	</xsl:template>
 </xsl:stylesheet>
