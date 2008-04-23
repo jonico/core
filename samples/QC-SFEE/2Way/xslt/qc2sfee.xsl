@@ -225,7 +225,19 @@
 		  	<xsl:value-of select="."></xsl:value-of>
 	  	</field>
 	</xsl:template>
-	
+	<xsl:template
+		match='ccf:field[@fieldName="BG_USER_03"]'>
+		<field>
+		    <xsl:attribute name="fieldName">Test Date</xsl:attribute>
+		    <xsl:attribute name="fieldDisplayName">Test Date</xsl:attribute>
+		    <xsl:attribute name="fieldAction"><xsl:value-of select="@fieldAction" /></xsl:attribute>
+		    <xsl:attribute name="fieldType"><xsl:value-of select="@fieldType" /></xsl:attribute>
+		  	<xsl:attribute name="fieldValueHasChanged"><xsl:value-of select="@fieldValueHasChanged" /></xsl:attribute>
+		  	<xsl:attribute name="fieldValueType"><xsl:value-of select="@fieldValueType" /></xsl:attribute>
+		  	<xsl:attribute name="fieldValueIsNull"><xsl:value-of select="@fieldValueIsNull" /></xsl:attribute>
+		  	<xsl:value-of select="."></xsl:value-of>
+	  	</field>
+	</xsl:template>
 	<xsl:template
 		match='ccf:field[@fieldName="BG_DETECTION_DATE"]'>
 		<field>
