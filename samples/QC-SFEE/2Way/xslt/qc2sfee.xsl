@@ -41,8 +41,8 @@
 	<xsl:template
 		match='ccf:field[@fieldName="BG_ACTUAL_FIX_TIME"]'>
 		<field>
-		    <xsl:attribute name="fieldName">Actual Hours</xsl:attribute>
-		    <xsl:attribute name="fieldDisplayName">Actual Hours</xsl:attribute>
+		    <xsl:attribute name="fieldName">ActualHours</xsl:attribute>
+		    <xsl:attribute name="fieldDisplayName">ActualHours</xsl:attribute>
 		    <xsl:attribute name="fieldAction"><xsl:value-of select="@fieldAction" /></xsl:attribute>
 		    <xsl:attribute name="fieldType"><xsl:value-of select="@fieldType" /></xsl:attribute>
 		  	<xsl:attribute name="fieldValueHasChanged"><xsl:value-of select="@fieldValueHasChanged" /></xsl:attribute>
@@ -54,8 +54,8 @@
 	<xsl:template
 		match='ccf:field[@fieldName="BG_ESTIMATED_FIX_TIME"]'>
 		<field>
-		    <xsl:attribute name="fieldName">Estimated Hours</xsl:attribute>
-		    <xsl:attribute name="fieldDisplayName">Estimated Hours</xsl:attribute>
+		    <xsl:attribute name="fieldName">EstimatedHours</xsl:attribute>
+		    <xsl:attribute name="fieldDisplayName">EstimatedHours</xsl:attribute>
 		    <xsl:attribute name="fieldAction"><xsl:value-of select="@fieldAction" /></xsl:attribute>
 		    <xsl:attribute name="fieldType"><xsl:value-of select="@fieldType" /></xsl:attribute>
 		  	<xsl:attribute name="fieldValueHasChanged"><xsl:value-of select="@fieldValueHasChanged" /></xsl:attribute>
@@ -179,8 +179,8 @@
 		match='ccf:field[@fieldName="BG_RESPONSIBLE"]'>
 		<xsl:variable name="qcValue" as="xs:string"><xsl:value-of select="." /></xsl:variable>
 		<field>
-		    <xsl:attribute name="fieldName">Assigned To</xsl:attribute>
-		    <xsl:attribute name="fieldDisplayName">Assigned To</xsl:attribute>
+		    <xsl:attribute name="fieldName">AssignedTo</xsl:attribute>
+		    <xsl:attribute name="fieldDisplayName">AssignedTo</xsl:attribute>
 		    <xsl:attribute name="fieldAction"><xsl:value-of select="@fieldAction" /></xsl:attribute>
 		    <xsl:attribute name="fieldType"><xsl:value-of select="@fieldType" /></xsl:attribute>
 		  	<xsl:attribute name="fieldValueHasChanged"><xsl:value-of select="@fieldValueHasChanged" /></xsl:attribute>
