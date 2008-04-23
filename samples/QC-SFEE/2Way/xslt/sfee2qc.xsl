@@ -195,7 +195,7 @@
 		match='ccf:field[@fieldName="Detected On"]'>
 		<field>
 		    <xsl:attribute name="fieldName">BG_DETECTION_DATE</xsl:attribute>
-		    <xsl:attribute name="fieldDisplayName">Detected On</xsl:attribute>
+		    <xsl:attribute name="fieldDisplayName">Detected on Date</xsl:attribute>
 		    <xsl:attribute name="fieldAction"><xsl:value-of select="@fieldAction" /></xsl:attribute>
 		    <xsl:attribute name="fieldType"><xsl:value-of select="@fieldType" /></xsl:attribute>
 		  	<xsl:attribute name="fieldValueHasChanged"><xsl:value-of select="@fieldValueHasChanged" /></xsl:attribute>
@@ -224,6 +224,19 @@
 			<xsl:if test="$priorityValue = '1'"><xsl:text>5-Urgent</xsl:text></xsl:if>
 		</field>
 	</xsl:template> 
+	<xsl:template
+		match='ccf:field[@fieldName="Test Date"]'>
+		<field>
+		    <xsl:attribute name="fieldName">BG_USER_03</xsl:attribute>
+		    <xsl:attribute name="fieldDisplayName">Test Date</xsl:attribute>
+		    <xsl:attribute name="fieldAction"><xsl:value-of select="@fieldAction" /></xsl:attribute>
+		    <xsl:attribute name="fieldType"><xsl:value-of select="@fieldType" /></xsl:attribute>
+		  	<xsl:attribute name="fieldValueHasChanged"><xsl:value-of select="@fieldValueHasChanged" /></xsl:attribute>
+		  	<xsl:attribute name="fieldValueType"><xsl:value-of select="@fieldValueType" /></xsl:attribute>
+		  	<xsl:attribute name="fieldValueIsNull"><xsl:value-of select="@fieldValueIsNull" /></xsl:attribute>
+		  	<xsl:value-of select="."></xsl:value-of>
+	  	</field>
+	</xsl:template>
 	<xsl:template
 		match='ccf:field[@fieldName="AssignedTo"]'>
 		<xsl:variable name="assignedTo" as="xs:string"><xsl:value-of select="." /></xsl:variable>
