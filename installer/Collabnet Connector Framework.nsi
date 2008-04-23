@@ -104,13 +104,13 @@ Section "MainSection" SEC02
      File "$0\..\..\config\db-schema\CCFDB.script"
      SetOutPath "$INSTDIR\CCFDBService\logs"
   ${EndIf}
-  
+
   SetOutPath "$INSTDIR\lib"
   File "$0\..\..\build\jars\CCFQCPluginV90.jar"
   File "$0\..\..\build\jars\CCF-JUnit-V10.jar"
   File "$0\..\..\build\jars\CCFSFEEPluginV44.jar"
   File "$0\..\..\build\jars\CCFCoreV10.jar"
-  
+
   SetOutPath "$INSTDIR\lib\extlib"
   File "$0\..\..\src\core\lib\openadaptor-3.4\bootstrap.jar"
   File "$0\..\..\src\core\lib\openadaptor-3.4\log4j.properties"
@@ -181,10 +181,10 @@ Section "MainSection" SEC02
   File "$0\..\..\src\plugins\HPQC\lib\jacob\jacob.jar"
 
   File "$0\..\..\src\plugins\SFEE\v44\lib\sf_soap44_sdk.jar"
-  
+
   SetOutPath "$INSTDIR\lib\extlib\jni"
   File "$0\..\..\src\plugins\HPQC\lib\jacob\jacob.dll"
-  
+
   SetOutPath "$INSTDIR\samples"
   File "$0\..\..\samples\README.txt"
 
@@ -193,7 +193,7 @@ Section "MainSection" SEC02
 
   SetOutPath "$INSTDIR\samples\QC-SFEE\2Way\config"
   File "$0\..\..\samples\QC-SFEE\2Way\config\TwoWayWiring.xml"
-  
+
   SetOutPath "$INSTDIR\samples\QC-SFEE\2Way\xslt"
   File "$0\..\..\samples\QC-SFEE\2Way\xslt\qc2sfee.xsl"
   File "$0\..\..\samples\QC-SFEE\2Way\xslt\sfee2qc.xsl"
@@ -272,9 +272,16 @@ Section -Post
   WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "URLInfoAbout" "${PRODUCT_WEB_SITE}"
   WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "Publisher" "${PRODUCT_PUBLISHER}"
   WriteRegStr ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}" "DisplayIcon" "$INSTDIR\uninst.exe"
+
+  ${If} "$INSTALL_DB" = 1
+       ;Install the service here
+       nsExec::Exec '"$INSTDIR\CCFDBService\InstallCCFDBService.bat"'
+  ${EndIf}
+
   ${If} $IS_SERVICE = 1
-      ;MessageBox MB_OK "Starting CCF DB service"
-      nsExec::Exec 'sc.exe create CCFDBService binpath= "\"$INSTDIR\CCFDBService\InstallCCFDBService.bat\"" displayname= "CCFDBService" start= auto'
+      ;nsExec::Exec 'sc.exe create CCFDBService binpath= "\"$INSTDIR\CCFDBService\InstallCCFDBService.bat\"" displayname= "CCFDBService" start= auto'
+      ;Start the service here
+      nsExec::Exec '"$INSTDIR\CCFDBService\wrapper.exe" -t "$INSTDIR\CCFDBService\config\wrapper.conf"'
   ${EndIf}
   Exec "notepad $INSTDIR\README.txt"
 SectionEnd
@@ -293,6 +300,11 @@ Section Uninstall
 
   Delete "$SMPROGRAMS\Collabnet Connector Framework\Uninstall.lnk"
   RMDir "$SMPROGRAMS\Collabnet Connector Framework"
+
+  ;Stop the service
+  nsExec::Exec '\"$INSTDIR\CCFDBService\wrapper.exe\" -p \"$INSTDIR\CCFDBService\config\wrapper.conf\" ">>" \"$INSTDIR\CCFDBService\logs\wrapper.log\"'
+  ;Uninstall the service
+  nsExec::Exec '"$INSTDIR\CCFDBService\UninstallCCFDBService.bat"'
 
   Delete "$INSTDIR\${PRODUCT_NAME}.url"
   Delete "$INSTDIR\uninst.exe"
@@ -437,7 +449,7 @@ Section Uninstall
   Delete "$INSTDIR\samples\SFEE2SFEE\config\SFEE2SFEE.xml"
 
   Delete "$INSTDIR\samples\SFEE2SFEE\db\SFEE2SFEE.script"
-  
+
   Delete "$INSTDIR\License.html"
   Delete "$INSTDIR\README.txt"
 
@@ -479,10 +491,9 @@ Section Uninstall
   RMDir "$INSTDIR\samples\SFEE2SFEE"
 
   RMDir "$INSTDIR\samples"
-  
+
   RMDir "$INSTDIR"
 
-  nsExec::Exec 'sc.exe delete CCFDBService'
   DeleteRegKey ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}"
   SetAutoClose true
 SectionEnd
@@ -532,7 +543,7 @@ Function Configure_CCFdb
     ReadINIStr $3 "$PLUGINSDIR\configure_CCFdb.ini" "Field 5" "State"
     continue: Pop ${TEMP1}
     call validate
-    
+
     ;GetDlgItem $1 $HWNDPARENT 2008
     ;GetFunctionAddress $0 OnClick
     ;nsDialogs::OnClick /NOUNLOAD $1 $0
