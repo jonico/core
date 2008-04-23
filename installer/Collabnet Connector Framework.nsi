@@ -182,7 +182,7 @@ Section "MainSection" SEC02
 
   File "$0\..\..\src\plugins\SFEE\v44\lib\sf_soap44_sdk.jar"
 
-  SetOutPath "$INSTDIR\lib\extlib\jni"
+  SetOutPath "$INSTDIR\lib\jni"
   File "$0\..\..\src\plugins\HPQC\lib\jacob\jacob.dll"
 
   SetOutPath "$INSTDIR\samples"
@@ -397,7 +397,7 @@ Section Uninstall
 
   Delete "$INSTDIR\lib\extlib\sf_soap44_sdk.jar"
 
-  Delete "$INSTDIR\lib\extlib\jni\jacob.dll"
+  Delete "$INSTDIR\lib\jni\jacob.dll"
 
   Delete "$INSTDIR\samples\README.txt"
 
