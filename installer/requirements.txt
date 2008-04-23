@@ -13,7 +13,7 @@ The following files need to be packed
                                   /src/core/lib/openadaptor-3.4/3rdparty/*.jar
                                   /src/plugins/HPQC/lib/jacob/*.jar
                                   /src/plugins/SFEE/lib/*.jar
-/lib/extlib/jni                 - /src/plugins/HPQC/lib/jacob/jacob.dll
+/lib/jni      		            - /src/plugins/HPQC/lib/jacob/jacob.dll
 /samples                        - /samples/**
 /License.html                   - /License.html
 /README.txt                     - /README.txt
