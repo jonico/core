@@ -1,8 +1,8 @@
 package com.collabnet.ccf.core.utils;
 
-import java.util.Date;
 import java.lang.Math;
 
+@SuppressWarnings("serial")
 public class OleDate extends java.util.Date
 {
 
@@ -11,11 +11,13 @@ public class OleDate extends java.util.Date
 		super();
 	}
 
+	@SuppressWarnings("deprecation")
 	public OleDate(int year, int month, int date)
 	{
 		super(year, month, date);
 	}
 
+	@SuppressWarnings("deprecation")
 	public OleDate(int year, int month, int date, int hrs, int min, int sec)
 	{
 		super(year, month, date, hrs, min, sec);
@@ -26,6 +28,7 @@ public class OleDate extends java.util.Date
 		super(date);
 	}
 
+	@SuppressWarnings("deprecation")
 	public OleDate(String s)
 	{
 		super(s);
@@ -42,11 +45,13 @@ public class OleDate extends java.util.Date
 	// Half a second, expressed in days
 	static double	HALF_SECOND	= (1.0 / 172800.0);
 
+	@SuppressWarnings("deprecation")
 	public void setDate(double dtSrc)
 	{
 
 		// source code copied from MFC 4.21 and modified
 
+		@SuppressWarnings("unused")
 		long nDays; // Number of days since Dec. 30, 1899
 		long nDaysAbsolute; // Number of days since 1/1/0
 		long nSecsInDay; // Time in seconds since midnight
@@ -66,9 +71,7 @@ public class OleDate extends java.util.Date
 		int tm_mday;
 		int tm_mon;
 		int tm_year;
-		int tm_wday;
-		int tm_yday;
-
+		
 		double dblDate = dtSrc; // temporary serial date
 
 		// If a valid date, then this conversion should not overflow
@@ -182,6 +185,7 @@ public class OleDate extends java.util.Date
 	static int	rgMonthDays[]	= { 0, 31, 59, 90, 120, 151, 181, 212, 243,
 			273, 304, 334, 365	};
 
+	@SuppressWarnings("deprecation")
 	public double toDouble()
 	{
 		// source code copied from MFC 4.21 and modified.
@@ -197,6 +201,7 @@ public class OleDate extends java.util.Date
 		boolean bLeapYear = ((wYear & 3) == 0)
 				&& ((wYear % 100) != 0 || (wYear % 400) == 0);
 
+		@SuppressWarnings("unused")
 		int nDaysInMonth = rgMonthDays[wMonth] - rgMonthDays[wMonth - 1]
 				+ ((bLeapYear && wDay == 29 && wMonth == 2) ? 1 : 0);
 
