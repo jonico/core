@@ -23,6 +23,10 @@ import com.jacob.com.Dispatch;
  * 
  */
 public class QCDefect extends Bug implements IQCDefect {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	GenericArtifact genericArtifact;
 	List<byte[]> attachmentData;
 
