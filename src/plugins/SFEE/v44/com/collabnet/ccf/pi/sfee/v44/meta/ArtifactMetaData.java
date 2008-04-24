@@ -187,7 +187,7 @@ public class ArtifactMetaData {
 		for(TrackerFieldSoapDO field:trackerFields){
 			String name = field.getName();
 			if(name.equals(fieldName)){
-				String fieldType = field.getFieldType();
+				//String fieldType = field.getFieldType();
 				String valueType = field.getValueType();
 				if(valueType.equals(TrackerFieldSoapDO.FIELD_VALUE_TYPE_DATE)){
 					long time = Long.parseLong(value);
@@ -203,4 +203,21 @@ public class ArtifactMetaData {
 			}
 		}
 		return value;
-	}}
+	}
+	
+	public static boolean isUserDefined(String fieldName){
+		SFEEFields field = null;
+		try{
+			field = SFEEFields.valueOf(Character.toLowerCase(fieldName.charAt(0))+fieldName.substring(1));
+		}
+		catch(IllegalArgumentException e){
+			System.out.println("Field "+fieldName+" is not found in ArtifactMetaData");
+		}
+		if(field != null){
+			return false;
+		}
+		else {
+			return true;
+		}
+	}
+}
