@@ -64,8 +64,10 @@ public class QCReaderOutputWriter extends QCConnectHelper implements IDataProces
 	public Document changeForQCWriter(Document incomingObj) {
 		
 		Document changedDoc = null;
+		@SuppressWarnings("unused")
 		int intBugId=0;
 		GenericArtifact changedArtifact= new GenericArtifact();
+		@SuppressWarnings("unused")
 		String bugId = new String();
 		System.out.println("------------------------------------------------------------");
 		
@@ -79,6 +81,7 @@ public class QCReaderOutputWriter extends QCConnectHelper implements IDataProces
 		//intBugId = intBugId+100;
 		List<GenericArtifactField> allFields = changedArtifact.getAllGenericArtifactFields();
 		for (int cnt=0; cnt < allFields.size(); cnt++) {
+			@SuppressWarnings("unused")
 			GenericArtifactField thisField = allFields.get(cnt);
 			
 			/*if(thisField.getFieldName().equals("BG_BUG_ID"))
@@ -106,6 +109,7 @@ public class QCReaderOutputWriter extends QCConnectHelper implements IDataProces
 		return changedDoc;
 	}
 	
+	@SuppressWarnings("unchecked")
 	public void validate(List exceptions) {
 		super.validate(exceptions);
 		// Capture the return exception list and validate the exceptions

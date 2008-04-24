@@ -38,6 +38,7 @@ public class QCReaderOutputVerificator extends QCConnectHelper implements IDataP
 		return result;
 	}
 	
+	@SuppressWarnings("unchecked")
 	public Object[] processXMLDocuments(Object data, String fileName) {
 		
 		int runStatus=1;
@@ -97,6 +98,7 @@ public class QCReaderOutputVerificator extends QCConnectHelper implements IDataP
 		}
 	
 	
+	@SuppressWarnings("unchecked")
 	public void validate(List exceptions) {
 		super.validate(exceptions);
 		// Capture the return exception list and validate the exceptions
