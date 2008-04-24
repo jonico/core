@@ -460,6 +460,7 @@ public class GenericArtifactHelper {
 			String attachmentSize = getAttributeValue(attachment, ATTACHMENT_SIZE);
 			String attachmentType = getAttributeValue(attachment, ATTACHMENT_TYPE);
 			String attachmentMimeType = getAttributeValue(attachment, ATTACHMENT_MIME_TYPE);
+			@SuppressWarnings("unused")
 			String attachmentSourceUrl = getAttributeValue(attachment, ATTACHMENT_SOURCE_URL);
 			Boolean attachmentValueIsNull = translateAttributeValue(attachment,
 					ATTACHMENT_VALUE_IS_NULL, attachmentValueIsNullHashMap);
