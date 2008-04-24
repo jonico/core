@@ -461,6 +461,7 @@ Section Uninstall
 
   RMDir "$INSTDIR\lib\extlib\jni"
   RMDir "$INSTDIR\lib\extlib"
+  RMDir "$INSTDIR\lib\jni"
   RMDir "$INSTDIR\lib"
 
   RMDir "$INSTDIR\samples\QC-SFEE\2Way\ServiceWrapper\config"
