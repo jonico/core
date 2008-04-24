@@ -7,6 +7,7 @@ import junit.framework.TestCase;
 
 public class GATransformerUtilTest extends TestCase {
 
+	@SuppressWarnings("unchecked")
 	public void testStripHTML() throws IOException {
 		Class thisClass = this.getClass();
 		ClassLoader loader = thisClass.getClassLoader();
@@ -26,8 +27,7 @@ public class GATransformerUtilTest extends TestCase {
 		}
 		isHtmlStripped.close();
 		String htmlStripped = bufferHtmlStripped.toString();
-		GATransformerUtil util = new GATransformerUtil();
-		String stripped = util.stripHTML(buffer.toString());
+		String stripped = GATransformerUtil.stripHTML(buffer.toString());
 		assertEquals(htmlStripped.trim(), stripped.trim());
 	}
 
