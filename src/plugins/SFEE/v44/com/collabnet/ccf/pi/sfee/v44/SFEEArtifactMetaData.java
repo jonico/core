@@ -14,9 +14,11 @@ import com.vasoftware.sf.soap44.webservices.sfmain.TrackerFieldSoapDO;
 import com.vasoftware.sf.soap44.webservices.tracker.ArtifactSoapDO;
 
 public class SFEEArtifactMetaData {
+	
+	@SuppressWarnings("unchecked")
 	private static HashMap<String,Class> artifactFieldsType = new HashMap<String, Class>();
 	private static final Pattern getterMethodPattern = Pattern.compile("get[A-Z][a-zA-Z]*");
-	private static final Pattern setterMethodPattern = Pattern.compile("set[A-Z][a-zA-Z]*");
+	//private static final Pattern setterMethodPattern = Pattern.compile("set[A-Z][a-zA-Z]*");
 	private static final String FLEX_FIELDS = "[gs]etFlexFields";
 	static {
 		loadFieldNames();
@@ -24,9 +26,11 @@ public class SFEEArtifactMetaData {
 	public static Set<String> getArtifactFields(){
 		return artifactFieldsType.keySet();
 	}
+	@SuppressWarnings("unchecked")
 	public static Class getFieldType(String fieldName){
 		return artifactFieldsType.get(fieldName);
 	}
+	@SuppressWarnings("unchecked")
 	public static void setFieldValue(String fieldName, ArtifactSoapDO artifactRow, 
 										Object value) {
 		System.out.println();
@@ -67,7 +71,7 @@ public class SFEEArtifactMetaData {
 			}
 			Method m = c.getMethod("set"+fieldName, empty);
 			Object[] emptyObj = new Object[]{castedValue};
-			Object o = m.invoke(artifactRow, emptyObj);
+			m.invoke(artifactRow, emptyObj);
 		} catch (SecurityException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -159,6 +163,7 @@ public class SFEEArtifactMetaData {
 		flexFields.setTypes(fieldTypes);
 	}
 	
+	@SuppressWarnings("unchecked")
 	private static void loadFieldNames(){
 		if(artifactFieldsType.isEmpty()){
 			Class artifactSoapDOClass = ArtifactSoapDO.class;
@@ -168,7 +173,7 @@ public class SFEEArtifactMetaData {
 				System.out.println(name);
 				Matcher getterMatcher = getterMethodPattern.matcher(name);
 				//Matcher propertyGrabber = fieldNamePattern.matcher(name);
-				Matcher setterMatcher = setterMethodPattern.matcher(name);
+				//Matcher setterMatcher = setterMethodPattern.matcher(name);
 				if(getterMatcher.matches() && (!Pattern.matches(FLEX_FIELDS, name))){
 					String setterName = name.replaceAll("^[g]", "s");
 					try {
@@ -208,6 +213,7 @@ public class SFEEArtifactMetaData {
 		cloned.setFlexFields(clonedFlexFields);
 		return cloned;
 	}
+	@SuppressWarnings("unchecked")
 	public static Object getFieldValue(String fieldName, ArtifactSoapDO artifactRow) {
 		Class c = artifactRow.getClass();
 		try {
@@ -234,20 +240,7 @@ public class SFEEArtifactMetaData {
 		}
 		return null;
 	}
-	public static boolean isUserDefined(String fieldName){
-		Set<String> nonUserDefinedFields = artifactFieldsType.keySet();
-		fieldName = convertFieldName(fieldName);
-		if(nonUserDefinedFields.contains(fieldName)){
-			return false;
-		}
-		else if(fieldName.equals("ReportedInRelease")){
-			return false;
-		}
-		else if(fieldName.equals("ResolvedInRelease")){
-			return false;
-		}
-		return true;
-	}
+	
 	public static String convertFieldName(String fieldName){
 		return Character.toUpperCase(fieldName.charAt(0))+fieldName.substring(1);
 	}

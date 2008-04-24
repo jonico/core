@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
+import com.collabnet.ccf.pi.sfee.v44.meta.ArtifactMetaData;
 import com.vasoftware.sf.soap44.types.SoapFieldValues;
 import com.vasoftware.sf.soap44.webservices.sfmain.TrackerFieldSoapDO;
 import com.vasoftware.sf.soap44.webservices.tracker.ArtifactSoapDO;
@@ -33,7 +34,7 @@ public class GenericArtifactToSFEEConverter implements IGAToArtifactConverter {
 		
 		for(int i=0; i < flexFields.length; i++){
 			String fieldName = flexFields[i].getName();
-			if(SFEEArtifactMetaData.isUserDefined(fieldName)){
+			if(ArtifactMetaData.isUserDefined(fieldName)){
 				System.out.println("Adding flex Field... "+fieldName);
 				fieldNames.add(SFEEArtifactMetaData.convertFieldName(fieldName));
 				fieldTypes.add(flexFields[i].getValueType());
@@ -46,5 +47,4 @@ public class GenericArtifactToSFEEConverter implements IGAToArtifactConverter {
 		soapFieldValues.setValues(fieldValues.toArray(new Object[0]));
 		artifactObj.setFlexFields(soapFieldValues);
 	}
-
 }

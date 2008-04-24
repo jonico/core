@@ -109,8 +109,8 @@ public class SFEETrackerHandler {
 	 * @throws RemoteException
 	 */
 	public List<ArtifactSoapDO> getChangedTrackerItems(String sessionID,
-			String trackerId, Date lastModifiedDate,
-			int lastArtifactVersion) throws RemoteException {
+			String trackerId, Date lastModifiedDate) throws RemoteException {
+		log.debug("Getting the changed artifacts from "+lastModifiedDate);
 		// only select ID of row because we have to get the details in any case
 		String[] selectedColumns = { ArtifactSoapDO.COLUMN_ID,
 				ArtifactSoapDO.COLUMN_LAST_MODIFIED_DATE,
@@ -122,6 +122,9 @@ public class SFEETrackerHandler {
 		ArtifactDetailSoapRow[] rows = mTrackerApp.getArtifactDetailList(
 				sessionID, trackerId, selectedColumns, filter, sortKeys, 0, -1,
 				false, false).getDataRows();
+		if(rows != null){
+			log.debug("There were " + rows.length +" artifacts changed");
+		}
 		ArrayList<ArtifactSoapDO> detailRowsFull = new ArrayList<ArtifactSoapDO>();
 		ArrayList<ArtifactSoapDO> detailRowsNew = new ArrayList<ArtifactSoapDO>();
 		// retrieve artifact details
@@ -141,6 +144,7 @@ public class SFEETrackerHandler {
 		 * in lost artifacts (that were created or modified in the same second
 		 * the last call took place)
 		 */
+		log.debug("Getting the details of the changed artifacts");
 		boolean duplicateFound = false;
 		for (int i = 0; i < rows.length; ++i) {
 			String id = rows[i].getId();

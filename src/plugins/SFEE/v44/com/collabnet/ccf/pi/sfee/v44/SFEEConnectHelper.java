@@ -148,6 +148,7 @@ public abstract class SFEEConnectHelper extends LifecycleComponent {
 		return password;
 	}
 
+	@SuppressWarnings("unchecked")
 	public void validate(List exceptions) {
 		// check whether all necessary properties are set
 		if (getServerUrl() == null) {

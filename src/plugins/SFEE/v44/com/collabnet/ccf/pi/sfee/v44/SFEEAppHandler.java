@@ -7,8 +7,6 @@ import java.util.Date;
 import java.util.List;
 
 import com.collabnet.ccf.core.ga.GenericArtifact;
-import com.collabnet.ccf.pi.sfee.v44.SFEEArtifactMetaData;
-import com.collabnet.ccf.pi.sfee.v44.meta.ArtifactMetaData;
 import com.vasoftware.sf.soap44.webservices.sfmain.AuditHistorySoapList;
 import com.vasoftware.sf.soap44.webservices.sfmain.AuditHistorySoapRow;
 import com.vasoftware.sf.soap44.webservices.sfmain.CommentSoapList;
@@ -33,6 +31,9 @@ public class SFEEAppHandler {
 			AuditHistorySoapRow[] rows = history.getDataRows();
 			if(rows == null || rows.length == 0){
 				SFEEArtifactMetaData.setFieldValue("ArtifactAction", artifact, GenericArtifact.ArtifactActionValue.CREATE);
+				if(artifact.getLastModifiedBy().equals(connectorUser)){
+					return null;
+				}
 			}
 			List<ArtifactSoapDO> artifactHistory = new ArrayList<ArtifactSoapDO>();
 			artifactHistory.add(artifact);
@@ -68,7 +69,7 @@ public class SFEEAppHandler {
 					else{
 						String fieldName = rows[i].getPropertyName();
 						String gaFieldName = Character.toUpperCase(fieldName.charAt(0)) + fieldName.substring(1);
-						Object value = ArtifactMetaData.parseFieldValue(fieldName, rows[i].getOldValue(), trackerFields);
+						//Object value = ArtifactMetaData.parseFieldValue(fieldName, rows[i].getOldValue(), trackerFields);
 						SFEEArtifactMetaData.setFieldValue(gaFieldName, historyEntry, rows[i].getOldValue());
 						if(i == rows.length-1){
 							SFEEArtifactMetaData.setFieldValue("ArtifactAction", historyEntry, GenericArtifact.ArtifactActionValue.CREATE);

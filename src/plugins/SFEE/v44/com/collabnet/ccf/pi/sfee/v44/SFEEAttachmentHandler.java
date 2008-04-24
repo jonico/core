@@ -9,16 +9,12 @@ import java.util.TreeMap;
 
 import javax.activation.DataHandler;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactAttachment;
 import com.collabnet.ccf.core.utils.DateUtil;
 import com.vasoftware.sf.soap44.webservices.ClientSoapStubFactory;
 import com.vasoftware.sf.soap44.webservices.filestorage.IFileStorageAppSoap;
 import com.vasoftware.sf.soap44.webservices.filestorage.ISimpleFileStorageAppSoap;
-import com.vasoftware.sf.soap44.webservices.frs.IFrsAppSoap;
 import com.vasoftware.sf.soap44.webservices.sfmain.AttachmentSoapList;
 import com.vasoftware.sf.soap44.webservices.sfmain.AttachmentSoapRow;
 import com.vasoftware.sf.soap44.webservices.sfmain.ISourceForgeSoap;
@@ -38,7 +34,7 @@ public class SFEEAttachmentHandler {
 	
 	private IFileStorageAppSoap fileStorageSoapApp = null;
 	
-	private static final Log log = LogFactory.getLog(SFEETrackerHandler.class);
+	//private static final Log log = LogFactory.getLog(SFEETrackerHandler.class);
 
 	/**
 	 * Class constructor.
@@ -91,13 +87,13 @@ public class SFEEAttachmentHandler {
 		GenericArtifactAttachment.AttachmentContentTypeValue contentType =
 			att.getAttachmentContentType();
 		String attachDescription = att.getAttachmentDescription();
-		String attachmentId = att.getAttachmentId();
+		//String attachmentId = att.getAttachmentId();
 		String attachmentName = att.getAttachmentName();
 		attachmentName = userName + "_" + attachmentName;
-		long size = att.getAttachmentSize();
+		//long size = att.getAttachmentSize();
 		String attachmentURL = att.getAttachmentSourceUrl();
-		String attachmentType = att.getAttachmentType();
-		GenericArtifactAttachment.AttachmentValueTypeValue valueType = att.getAttachmentValueType();
+		//String attachmentType = att.getAttachmentType();
+		//GenericArtifactAttachment.AttachmentValueTypeValue valueType = att.getAttachmentValueType();
 		byte[] data = att.getRawAttachmentData();
 		GenericArtifactAttachment.AttachmentActionValue attAction = att.getAttachmentAction();
 		if(attAction == GenericArtifactAttachment.AttachmentActionValue.CREATE){
@@ -134,7 +130,7 @@ public class SFEEAttachmentHandler {
 		TreeMap<Date, GenericArtifact> attachmentGAs = new TreeMap<Date, GenericArtifact>();
 		for(ArtifactSoapDO artifact:artifactRows){
 			String artifactId = artifact.getId();
-			String folderId = artifact.getFolderId();
+			//String folderId = artifact.getFolderId();
 			AttachmentSoapList attachmentsList = sourceForgeSoap.listAttachments(sessionId, artifactId);
 			AttachmentSoapRow[] attachmentRows = attachmentsList.getDataRows();
 			for(AttachmentSoapRow row:attachmentRows){

@@ -95,7 +95,7 @@ public class SFEEEntityService extends SFEEConnectHelper implements
 		String sourceRepositoryId = genericArtifact.getSourceRepositoryId();
 		String sourceRepositoryKind = genericArtifact.getSourceRepositoryKind();
 		
-		String targetArtifactId = genericArtifact.getTargetArtifactId();
+		//String targetArtifactId = genericArtifact.getTargetArtifactId();
 		String targetSystemId = genericArtifact.getTargetSystemId();
 		String targetSystemKind = genericArtifact.getTargetSystemKind();
 		String targetRepositoryId = genericArtifact.getTargetRepositoryId();
@@ -118,6 +118,12 @@ public class SFEEEntityService extends SFEEConnectHelper implements
 	    		Boolean insertStatus = DBHelper.insertRecordInTable(sourceArtifactId, sourceSystemId,
 	    				sourceSystemKind, sourceRepositoryId, sourceRepositoryKind, targetSystemId,
 	    				targetSystemKind, targetRepositoryId, targetRepositoryKind);
+	    		if(insertStatus){
+	    			log.debug("Artifact inserted into the mapping table");
+	    		}
+	    		else{
+	    			log.warn("Artifact insertion failed...!");
+	    		}
 //	    	}
 	    }
 		

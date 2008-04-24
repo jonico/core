@@ -17,7 +17,6 @@ import org.openadaptor.core.IDataProcessor;
 
 import com.collabnet.ccf.core.db.DBHelper;
 import com.collabnet.ccf.core.ga.GenericArtifact;
-import com.collabnet.ccf.core.ga.GenericArtifactAttachment;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
@@ -59,36 +58,18 @@ public class SFEEReader extends SFEEConnectHelper implements
 		boolean firstTimeImport=false;
 		String lastModifiedDateString = getLastModifiedDateString(document);
 		if (StringUtils.isEmpty(lastModifiedDateString)) {
-			log.info("This seems to be a first time import ...: "+document.asXML());
 			lastModifiedDate=new Date(0);
 			firstTimeImport=true;
+			log.info("This seems to be a first time import. Fetching artifacts from "+lastModifiedDate);
 		}
 		else {
 			log.debug("Artifacts to be fetched from "+lastModifiedDateString);
 			lastModifiedDate=(Date)SFEEGAHelper.asTypedValue(lastModifiedDateString, "DateTime");
 			lastModifiedDate.setTime(lastModifiedDate.getTime()+1);
 		}
-		
-		int lastArtifactVersion=-1;
-		
-		String lastArtifactVersionString=getLastArtifactVersionString(document);
-		if (StringUtils.isEmpty(lastArtifactVersionString)) {
-				if (!firstTimeImport) {
-					log.warn("Seems as if we lost the version information for tracker "+tracker);
-				}
-				lastArtifactVersion=-1;
-		}
-		else {
-			try {
-				lastArtifactVersion=Integer.parseInt(lastArtifactVersionString);
-			}
-			catch (NumberFormatException e) {
-				log.error("Last version  for tracker "+tracker+" contained non-numerical value",e);
-				lastArtifactVersion=-1;
-			}
-		}
-		
+
 		try {
+			log.debug("Connecting to SFEE "+this.getServerUrl()+" with user name "+this.getUsername());
 			connect();
 		} catch (RemoteException e) {
 			// TODO Declare exception so that it can be processed by OA exception handler
@@ -101,19 +82,9 @@ public class SFEEReader extends SFEEConnectHelper implements
 			throw new RuntimeException(ex);
 		}
 		
-		Object[] result=readTrackerItems(tracker,lastModifiedDate,lastArtifactVersion,firstTimeImport,document);
-		for(Object doc: result){
-			GenericArtifact ga = null;
-			try {
-				ga = GenericArtifactHelper.createGenericArtifactJavaObject((Document) doc);
-			} catch (GenericArtifactParsingException e) {
-				throw new RuntimeException(e);
-			}
-			String targetRepositoryId = ga.getTargetRepositoryId();
-			String sourceRepositoryId = ga.getSourceRepositoryId();
-			String sourceArtifactId = ga.getSourceArtifactId();
-		}
+		Object[] result=readTrackerItems(tracker,lastModifiedDate, firstTimeImport,document);
 		disconnect();
+		log.debug("Disconnected from SFEE");
 		return result;
 	}
 
@@ -140,13 +111,13 @@ public class SFEEReader extends SFEEConnectHelper implements
 		isDry=false;
 	}
 	
-	public Object[] readTrackerItems(String projectTracker, Date lastModifiedDate, int lastArtifactVersion, boolean firstTimeImport, Document dbDocument) {
+	public Object[] readTrackerItems(String projectTracker, Date lastModifiedDate, boolean firstTimeImport, Document dbDocument) {
 		// TODO Use the information of the firstTimeImport flag
 		
 		List<Document> dataRows=new ArrayList<Document>();
 		List<ArtifactSoapDO> artifactRows;
 		try {
-			artifactRows = trackerHandler.getChangedTrackerItems(getSessionId(), projectTracker,lastModifiedDate, lastArtifactVersion);
+			artifactRows = trackerHandler.getChangedTrackerItems(getSessionId(), projectTracker,lastModifiedDate);
 		} catch (RemoteException e) {
 			// TODO Throw an exception?
 			log.error("During the artifact retrieval process to SFEE, an error occured",e);
@@ -193,7 +164,6 @@ public class SFEEReader extends SFEEConnectHelper implements
 			if(attachments != null){
 				for(Entry<Date,GenericArtifact> entry:attachments.entrySet()){
 					GenericArtifact ga = entry.getValue();
-					Date date = entry.getKey();
 					if(dbDocument != null){
 						populateSrcAndDest(dbDocument, ga);
 						ga.setArtifactAction(ArtifactActionValue.UPDATE);
@@ -250,6 +220,7 @@ public class SFEEReader extends SFEEConnectHelper implements
 		ga.setTargetSystemKind(targetSystemKind);
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
 	public void validate(List exceptions) {
 		super.validate(exceptions);
@@ -258,11 +229,6 @@ public class SFEEReader extends SFEEConnectHelper implements
 		attachmentHandler = new SFEEAttachmentHandler(getServerUrl());
 	}
 
-	
-	private String getProjectTracker(Document document) {
-		return dbHelper.getSourceRepositoryId(document);
-	}
-	
 	private String getLastModifiedDateString(Document document) {
 		// TODO Let the user specify this value?
 		String dbTime = dbHelper.getFromTime(document);
