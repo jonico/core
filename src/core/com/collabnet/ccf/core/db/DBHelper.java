@@ -105,7 +105,6 @@ public class DBHelper {
 	       sql1+= "SYSTEM_INFO.SYSTEM_KIND='"+targetSystemKind+"'))";
 	   ResultSet rs = null;
 	   String mappingId=null;
-	   int rsCount=0;
 	   try {
 		    rs = executeSql(sql1);
 			if(rs.next())
@@ -120,8 +119,6 @@ public class DBHelper {
 	}
 	
 	public static synchronized boolean insertRecordInTable(String sourceArtifactId, String sourceSystemId, String sourceSystemKind, String sourceRepositoryId, String sourceRepositoryKind, String targetSystemId, String targetSystemKind, String targetRepositoryId, String targetRepositoryKind) {
-		Boolean status = false;
-		
 		String mappingId = DBHelper.getMappingIdFromTable(
 				sourceSystemId, sourceSystemKind, sourceRepositoryId, sourceRepositoryKind,
 				targetSystemId, targetSystemKind, targetRepositoryId, targetRepositoryKind);
@@ -150,7 +147,6 @@ public class DBHelper {
 	   	  handle that properly. The QCWriter should insert a new record in that table for this targetArtifactId.
 	    5.  
 	    */
-		int rsCount=0;
 		String targetArtifactIdFromTable = null;
 		String sql= "SELECT TARGET_ARTIFACT_ID FROM ARTIFACT_MAPPING WHERE ";
 		       sql+= "SOURCE_ARTIFACT_ID='"+sourceArtifactId+"' AND ";
@@ -200,7 +196,7 @@ public class DBHelper {
 	   	  handle that properly. The QCWriter should insert a new record in that table for this targetArtifactId.
 	    5.  
 	    */
-		int rsCount=0;
+		//int rsCount=0;
 		String targetArtifactIdFromTable = null;
 		String sql= "SELECT SOURCE_ARTIFACT_ID FROM ARTIFACT_MAPPING WHERE ";
 		       sql+= "TARGET_ARTIFACT_ID='"+targetArtifactId+"' AND ";
@@ -239,7 +235,7 @@ public class DBHelper {
 	
 	public static synchronized boolean updateTable(String sourceArtifactId, String sourceSystemId, String sourceSystemKind, String sourceRepositoryId, String sourceRepositoryKind, String targetArtifactIdAfterCreation, String targetSystemId, String targetSystemKind, String targetRepositoryId, String targetRepositoryKind) {
 		
-		Boolean status = false;
+		//Boolean status = false;
 		System.out.println();
 		String mappingId = DBHelper.getMappingIdFromTable(sourceSystemId, sourceSystemKind,
 				sourceRepositoryId, sourceRepositoryKind, targetSystemId, targetSystemKind,
@@ -308,7 +304,6 @@ public class DBHelper {
 	    return conn;
 	}
 	public String getToTime(Document document) {
-		// TODO Let the user specify this value?
 		Node node= document.selectSingleNode("//TO_TIME");
 		if (node==null)
 			return null;
@@ -316,7 +311,6 @@ public class DBHelper {
 	}
 
 	public String getFromTime(Document document) {
-		// TODO Let the user specify this value?
 		Node node= document.selectSingleNode("//FROM_TIME");
 		if (node==null)
 			return null;
@@ -324,14 +318,12 @@ public class DBHelper {
 	}
 
 	public String getSourceRepositoryId(Document document) {
-		// TODO Let the user specify this value?
 		Node node= document.selectSingleNode("//SOURCE_REPOSITORY_ID");
 		if (node==null)
 			return null;
 		return node.getText();
 	}
 	public String getSourceRepositoryKind(Document document) {
-		// TODO Let the user specify this value?
 		Node node= document.selectSingleNode("//SOURCE_REPOSITORY_KIND");
 		if (node==null)
 			return null;
@@ -339,14 +331,12 @@ public class DBHelper {
 	}
 
 	public String getSourceSystemId(Document document) {
-		// TODO Let the user specify this value?
 		Node node= document.selectSingleNode("//SOURCE_SYSTEM_ID");
 		if (node==null)
 			return null;
 		return node.getText();
 	}
 	public String getSourceSystemKind(Document document) {
-		// TODO Let the user specify this value?
 		Node node= document.selectSingleNode("//SOURCE_SYSTEM_KIND");
 		if (node==null)
 			return null;
@@ -354,14 +344,12 @@ public class DBHelper {
 	}
 
 	public String getTargetRepositoryId(Document document) {
-		// TODO Let the user specify this value?
 		Node node= document.selectSingleNode("//TARGET_REPOSITORY_ID");
 		if (node==null)
 			return null;
 		return node.getText();
 	}
 	public String getTargetRepositoryKind(Document document) {
-		// TODO Let the user specify this value?
 		Node node= document.selectSingleNode("//TARGET_REPOSITORY_KIND");
 		if (node==null)
 			return null;
@@ -369,14 +357,12 @@ public class DBHelper {
 	}
 
 	public String getTargetSystemId(Document document) {
-		// TODO Let the user specify this value?
 		Node node= document.selectSingleNode("//TARGET_SYSTEM_ID");
 		if (node==null)
 			return null;
 		return node.getText();
 	}
 	public String getTargetSystemKind(Document document) {
-		// TODO Let the user specify this value?
 		Node node= document.selectSingleNode("//TARGET_SYSTEM_KIND");
 		if (node==null)
 			return null;
