@@ -155,6 +155,7 @@ public class QCReader extends QCConnectHelper implements
 		//return retObj.toArray();
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
 	public void validate(List exceptions) {
 		super.validate(exceptions);
@@ -221,6 +222,7 @@ public class QCReader extends QCConnectHelper implements
 		return finalString;		
 	}
 	
+	@SuppressWarnings("unused")
 	private String getVersion(Document document) {
 		// TODO Let the user specify this value?
 		Node node= document.selectSingleNode("//VERSION");

@@ -2,7 +2,6 @@ package com.collabnet.ccf.pi.qc.v90;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -227,6 +226,7 @@ public class QCDefectHandler {
 							+ ", the type that is being set, type: " + type);
 					return;
 				}
+				@SuppressWarnings("unused")
 				Boolean deleteStatus = deleteTempFile(attachmentFile.getAbsolutePath());
 			} else {
 				type = 2;
@@ -405,7 +405,7 @@ public class QCDefectHandler {
 
 		IRecordSet rs = executeSQL(qcc, sql);
 		int rc = rs.getRecordCount();
-		int txnId = 0, reqId = 0;
+		int txnId = 0;
 		for (int cnt = 0; cnt < rc; cnt++, rs.next()) {
 
 			txnId = Integer.parseInt(rs.getFieldValue("AU_ACTION_ID"));
@@ -549,7 +549,6 @@ public class QCDefectHandler {
 			String attachmentName) {
 
 		List<String> attachmentDetails = null;
-		int newRc = 0;
 		String sql = "SELECT CR_REF_ID, CR_REF_TYPE, CR_DESCRIPTION FROM CROS_REF WHERE CR_KEY_1='"
 				+ entityId + "' AND CR_REFERENCE= '" + attachmentName + "'";
 		IRecordSet newRs = executeSQL(qcc, sql);

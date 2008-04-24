@@ -100,6 +100,7 @@ public abstract class QCConnectHelper extends LifecycleComponent {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	public void validate(List exceptions) {
 		// check whether all necessary properties are set
 		if (getServerUrl() == null) {

@@ -56,7 +56,6 @@ public class QCEntityService extends QCConnectHelper implements
 		String sourceRepositoryId = genericArtifact.getSourceRepositoryId();
 		String sourceRepositoryKind = genericArtifact.getSourceRepositoryKind();
 		
-		String targetArtifactId = genericArtifact.getTargetArtifactId();
 		String targetSystemId = genericArtifact.getTargetSystemId();
 		String targetSystemKind = genericArtifact.getTargetSystemKind();
 		String targetRepositoryId = genericArtifact.getTargetRepositoryId();
@@ -74,7 +73,8 @@ public class QCEntityService extends QCConnectHelper implements
 	    	if(genericArtifact.getArtifactAction().equals(GenericArtifact.ArtifactActionValue.CREATE)) {
 	    		//Insert a new record in the QC_ENTITY_CHECK Hsql table with the targetArtifactId value as "NEW". 
 	    		//This should be updated by the QCWriter after creating a defect.
-	    		Boolean insertStatus = DBHelper.insertRecordInTable(sourceArtifactId, sourceSystemId, sourceSystemKind, sourceRepositoryId, sourceRepositoryKind, targetSystemId, targetSystemKind, targetRepositoryId, targetRepositoryKind);
+	    		@SuppressWarnings("unused")
+				Boolean insertStatus = DBHelper.insertRecordInTable(sourceArtifactId, sourceSystemId, sourceSystemKind, sourceRepositoryId, sourceRepositoryKind, targetSystemId, targetSystemKind, targetRepositoryId, targetRepositoryKind);
 	    		
 	    	}
 	    }
@@ -97,6 +97,7 @@ public class QCEntityService extends QCConnectHelper implements
 	public void reset(Object context) {
 	}
 
+	@SuppressWarnings("unchecked")
 	public void validate(List exceptions) {
 		super.validate(exceptions);
 	}	

@@ -7,7 +7,6 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dom4j.Document;
-import org.dom4j.Node;
 import org.openadaptor.core.IDataProcessor;
 import org.openadaptor.core.exception.NullRecordException;
 import org.openadaptor.core.exception.RecordFormatException;
@@ -88,6 +87,7 @@ public class QCWriter extends QCConnectHelper implements
 					String targetArtifactIdAfterCreation = createdArtifact.getId();
 					log.info("Write Operation SUCCESSFULL!!!!! and the targetArtifactIdAfterCreation="+targetArtifactIdAfterCreation);
 					// Update the QC_ENTITY_CHECK HSQL DB Table
+					@SuppressWarnings("unused")
 					Boolean status = DBHelper.updateTable(sourceArtifactId, sourceSystemId, sourceSystemKind, sourceRepositoryId, sourceRepositoryKind, targetArtifactIdAfterCreation, targetSystemId, targetSystemKind, targetRepositoryId, targetRepositoryKind);
 					genericArtifact.setTargetArtifactId(targetArtifactIdAfterCreation);
 					// send this artifact to RCDU (Read Connector Database Updater) indicating a success in creating the artifact
@@ -128,6 +128,7 @@ public class QCWriter extends QCConnectHelper implements
 						
 						String targetArtifactIdFromTable = DBHelper.getTargetArtifactIdFromTable(sourceArtifactId, sourceSystemId, sourceSystemKind, sourceRepositoryId, sourceRepositoryKind, targetSystemId, targetSystemKind, targetRepositoryId, targetRepositoryKind);
 						if(allFields!=null) {
+							@SuppressWarnings("unused")
 							IQCDefect updatedArtifact = defectHandler.updateDefect(getQcc(), targetArtifactIdFromTable, allFields);
 							log.info("Update Operation SUCCESSFULL!!!!! and the targetArtifactIdFromTable="+targetArtifactIdFromTable);
 							genericArtifact.setTargetArtifactId(targetArtifactIdFromTable);
@@ -253,6 +254,7 @@ public class QCWriter extends QCConnectHelper implements
 		}
 	}
 	
+	@SuppressWarnings("unchecked")
 	@Override
 	public void validate(List exceptions) {
 		super.validate(exceptions);
@@ -274,14 +276,6 @@ public class QCWriter extends QCConnectHelper implements
 	}
 
 	public void reset(Object context) {
-	}
-
-	private String getToTime(Document document) {
-		// TODO Let the user specify this value?
-		Node node= document.selectSingleNode("//TOTIME");
-		if (node==null)
-			return null;
-		return node.getText();
 	}
 
 	public String getCreateToken() {
