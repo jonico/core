@@ -1,6 +1,7 @@
 package com.collabnet.ccf.pi.qc.v90.api;
 
 
+@SuppressWarnings("serial")
 public class Comment implements IComment {
 	private String author;
 	private String created;
