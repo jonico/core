@@ -159,6 +159,7 @@ public class MappingDBUpdater implements IDataProcessor{
 		
 	}
 
+	@SuppressWarnings("unchecked")
 	public void validate(List exceptions) {
 		// TODO Auto-generated method stub
 		
