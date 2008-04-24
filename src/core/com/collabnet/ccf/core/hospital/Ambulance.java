@@ -36,6 +36,7 @@ public class Ambulance extends Component implements
 		return document;
 	}
 	public Object[] process(Object data) {
+		log.debug("Artifact reached ambulance");
 		if(data instanceof MessageException){
 					MessageException exception = (MessageException) data;
 					Object dataObj = exception.getData();
@@ -74,6 +75,7 @@ public class Ambulance extends Component implements
 		
 	}
 
+	@SuppressWarnings("unchecked")
 	public void validate(List exceptions) {
 		// TODO Auto-generated method stub
 		
