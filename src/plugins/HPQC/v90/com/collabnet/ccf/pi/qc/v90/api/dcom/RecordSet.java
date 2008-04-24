@@ -8,7 +8,12 @@ import com.jacob.com.Variant;
 
 public class RecordSet extends ActiveXComponent implements IRecordSet
 {
-    public RecordSet(Dispatch arg0){
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	public RecordSet(Dispatch arg0){
         super(arg0);
     }
 

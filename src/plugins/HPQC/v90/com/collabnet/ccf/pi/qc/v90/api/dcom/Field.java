@@ -7,7 +7,12 @@ import com.jacob.com.Dispatch;
 
 public class Field extends ActiveXComponent implements IField
 {
-    public Field(Dispatch arg0){
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	public Field(Dispatch arg0){
         super(arg0);
     }
 }

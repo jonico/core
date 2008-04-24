@@ -12,7 +12,12 @@ import com.jacob.com.Variant;
 
 public class Factory extends ActiveXComponent implements IFactory
 {
-    public Factory(Dispatch arg0){
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	public Factory(Dispatch arg0){
         super(arg0);
     }
 
@@ -20,7 +25,8 @@ public class Factory extends ActiveXComponent implements IFactory
         return new Filter(this);
     }
     
-    public List<IField> getFields()
+    @SuppressWarnings("unchecked")
+	public List<IField> getFields()
     {
     	//List activeXComponentList = (List<ActiveXComponent>) getPropertyAsComponent("Fields");
     	List<IField> fieldList = (List <IField>)getPropertyAsComponent("Fields");

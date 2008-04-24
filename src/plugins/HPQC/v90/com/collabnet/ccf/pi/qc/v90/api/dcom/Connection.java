@@ -10,7 +10,11 @@ import com.jacob.com.Dispatch;
 
 public class Connection extends ActiveXComponent implements IConnection
 {
-    public Connection(String server, String domain, String project, String user, String pass) {
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	public Connection(String server, String domain, String project, String user, String pass) {
         super("TDApiOle80.TDConnection");
         initConnectionEx(server);
         login(user, pass);

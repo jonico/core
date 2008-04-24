@@ -6,7 +6,12 @@ import com.jacob.activeX.ActiveXComponent;
 import com.jacob.com.Dispatch;
 
 public class FactoryList extends ActiveXComponent implements IFactoryList {
-    public FactoryList(Dispatch arg0) {
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	public FactoryList(Dispatch arg0) {
         super(arg0);
     }
 

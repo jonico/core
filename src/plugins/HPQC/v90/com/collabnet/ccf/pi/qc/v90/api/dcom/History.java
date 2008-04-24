@@ -8,7 +8,12 @@ import com.jacob.com.Dispatch;
 
 public class History extends ActiveXComponent implements IHistory
 {
-    public History(Dispatch arg0){
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	public History(Dispatch arg0){
         super(arg0);
     }
 

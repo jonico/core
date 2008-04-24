@@ -9,7 +9,12 @@ import com.jacob.com.Dispatch;
 public class Filter extends ActiveXComponent implements IFilter
 {
 
-    public Filter(ActiveXComponent factory)
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	public Filter(ActiveXComponent factory)
     {
         super(factory.getPropertyAsComponent("Filter"));
     }

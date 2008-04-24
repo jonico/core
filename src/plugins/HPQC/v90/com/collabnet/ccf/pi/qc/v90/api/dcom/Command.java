@@ -9,7 +9,12 @@ import com.jacob.com.Variant;
 
 public class Command extends ActiveXComponent implements ICommand
 {
-    public Command(Dispatch arg0){
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	public Command(Dispatch arg0){
         super(arg0);
     }
     

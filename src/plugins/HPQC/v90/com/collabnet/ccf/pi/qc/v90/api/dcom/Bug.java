@@ -23,6 +23,10 @@ import com.jacob.com.Dispatch;
 import com.jacob.com.Variant;
 
 public class Bug extends ActiveXComponent implements IBugActions {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	public static Logger logger = Logger.getLogger(Bug.class);
 
     public Bug(Dispatch arg0)
