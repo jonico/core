@@ -34,15 +34,14 @@ public class SFEEReaderTest extends TestCase {
 		sfeeReader.validate(null);
 	}
 
+	@SuppressWarnings("deprecation")
 	public void testReadTrackerItems(){
 		String projectTracker = "tracker1004";
 		//"Mon Nov 05 00:00:00 GMT+05:30 2007"
 		Date lastModifiedDate = new Date(2007-1900,10,05,0,0,0);
 		//Date lastModifiedDate = new Date(2008-1900,4,7,9,10,0);
-		String lastArtifactId = "artf1179";
-		int lastArtifactVersion = -1;
 		boolean firstTimeImport = false;
-		sfeeReader.readTrackerItems(projectTracker, lastModifiedDate, lastArtifactVersion, firstTimeImport, null);
+		sfeeReader.readTrackerItems(projectTracker, lastModifiedDate, firstTimeImport, null);
 	}
 	
 	public void testCommentsList(){
