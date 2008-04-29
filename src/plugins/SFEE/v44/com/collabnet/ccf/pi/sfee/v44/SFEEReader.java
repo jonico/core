@@ -232,10 +232,13 @@ public class SFEEReader extends SFEEConnectHelper implements
 	private String getLastModifiedDateString(Document document) {
 		// TODO Let the user specify this value?
 		String dbTime = dbHelper.getFromTime(document);
-		java.sql.Timestamp ts = java.sql.Timestamp.valueOf(dbTime);
-		long time = ts.getTime();
-		Date date = new Date(time);
-		return DateUtil.format(date);
+		if(!StringUtils.isEmpty(dbTime)){
+			java.sql.Timestamp ts = java.sql.Timestamp.valueOf(dbTime);
+			long time = ts.getTime();
+			Date date = new Date(time);
+			return DateUtil.format(date);
+		}
+		return null;
 	}
 	
 	private String getLastArtifactVersionString(Document document) {
