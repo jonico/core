@@ -481,11 +481,15 @@ public class QCDefectHandler {
 	public List<String> getAttachmentOperation(String auDescription) {
 
 		List<String> attachDescription = new ArrayList<String>();
-		StringTokenizer st = new StringTokenizer(auDescription, ":");
+		
+		int colonPosition = auDescription.indexOf(": ");
+		String attachLabelAndOperation = auDescription.substring(0, colonPosition);
+		String crReference = auDescription.substring(colonPosition+2, auDescription.length());
+		/*StringTokenizer st = new StringTokenizer(auDescription, ": ");
 
 		String attachLabelAndOperation = st.nextToken().trim();
 		String crReference = st.nextToken().trim();
-
+		 */
 		StringTokenizer newSt = new StringTokenizer(attachLabelAndOperation,
 				" ");
 		String attachLabel = newSt.nextToken().trim();
@@ -493,6 +497,7 @@ public class QCDefectHandler {
 		String operation = newSt.nextToken().trim();
 		attachDescription.add(operation);
 		attachDescription.add(crReference);
+		
 
 		log.info(attachDescription);
 		if (operation.equals("added"))
@@ -517,8 +522,7 @@ public class QCDefectHandler {
 				String newFieldValue = newRs.getFieldValue("AP_NEW_LONG_VALUE");
 				if (oldFieldValue != null
 						&& (oldFieldValue != null && !oldFieldValue.equals("")))
-					deltaComment = (newFieldValue.substring(0, oldFieldValue
-							.length()));
+					deltaComment = (newFieldValue.substring(0, oldFieldValue.length()));
 				log.info(deltaComment);
 			}
 		}

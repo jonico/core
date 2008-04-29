@@ -195,12 +195,15 @@ public class QCConfigHelper {
 			String attachmentContentType = attachmentIdAndType.get(1); // CR_REF_TYPE
 			String attachmentDescription = attachmentIdAndType.get(2); // CR_DESCRIPTION
 			
-			attachment = genericArtifact.addNewAttachment(attachmentName, attachmentId, attachmentDescription);
-			attachment.setAttachmentAction(GenericArtifactAttachment.AttachmentActionValue.CREATE);
-			if(attachmentContentType.equals("File"))
+			if(attachmentContentType.equals("File")) {
+				attachment = genericArtifact.addNewAttachment(attachmentName, attachmentId, attachmentDescription);
 				attachment.setAttachmentContentType(GenericArtifactAttachment.AttachmentContentTypeValue.DATA);
-			else
+			}
+			else {
+				attachment = genericArtifact.addNewAttachment(attachmentId, attachmentId, attachmentDescription);
 				attachment.setAttachmentContentType(GenericArtifactAttachment.AttachmentContentTypeValue.LINK);
+			}
+			attachment.setAttachmentAction(GenericArtifactAttachment.AttachmentActionValue.CREATE);
 		}
 		
 		return genericArtifact;

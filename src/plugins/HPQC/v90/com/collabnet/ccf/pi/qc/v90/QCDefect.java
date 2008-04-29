@@ -180,9 +180,9 @@ public class QCDefect extends Bug implements IQCDefect {
 						.retrieveAttachmentData(attachOperation.get(2));
 				System.out
 						.println("************************************************");
-				for (byte b : data) {
+				/*for (byte b : data) {
 					System.out.print((char) b);
-				}
+				}*/
 				System.out
 						.println("************************************************");
 				long attachmentSize = (long) data.length;
