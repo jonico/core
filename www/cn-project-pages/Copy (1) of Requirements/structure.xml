@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<structure>
+  <subpage>
+    <id>5s1vDW</id>
+    <name>Documents</name>
+    <directory>Documents</directory>
+    <ordinal>1</ordinal>
+  </subpage>
+  <subpage>
+    <id>8yt0t5</id>
+    <name>Rough Note</name>
+    <directory>Rough Note</directory>
+    <ordinal>2</ordinal>
+  </subpage>
+</structure>
+

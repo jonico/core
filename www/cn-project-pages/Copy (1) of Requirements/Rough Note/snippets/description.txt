@@ -1,0 +1,1 @@
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />Used as a rough note for requirement gathering and freezing
