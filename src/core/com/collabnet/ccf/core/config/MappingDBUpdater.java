@@ -140,6 +140,41 @@ public class MappingDBUpdater implements IDataProcessor{
 					}
 				}
 			}
+			//Updating the last_read_time field for this mapping too
+			
+			try {
+				if (!jdbcConnection.isConnected()) {
+					jdbcConnection.connect();
+				}
+				Connection dbConnection = jdbcConnection.getConnection();
+				dbConnection.setAutoCommit(false);
+				pstmt = dbConnection.prepareStatement(sql);
+				pstmt.setTimestamp(1, time);
+				pstmt.setString(2, targetRepositoryID);
+				pstmt.setString(3, sourceRepositoryID);
+				pstmt.setString(4, targetArtifactID);
+				pstmt.setString(5, sourceArtifactID);
+				int numRecordsAffected = pstmt.executeUpdate();
+				if(numRecordsAffected > 1){
+					dbConnection.rollback();
+					throw new RuntimeException("How come I am updating two repository mapping....?");
+				}
+				else{
+					dbConnection.commit();
+					dbConnection.setAutoCommit(true);
+				}
+			} catch (SQLException e) {
+				throw new RuntimeException(e);
+			}
+			finally{
+				if(pstmt != null){
+					try {
+						pstmt.close();
+					} catch (SQLException e) {
+						e.printStackTrace();
+					}
+				}
+			}
 			}
 			
 			
