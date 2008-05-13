@@ -617,7 +617,7 @@
 					</xs:documentation>
 				</xs:annotation>
 			</xs:attribute>
-			<xs:attribute name="errorCode" type="xs:string">
+			<xs:attribute name="errorCode" type="xs:string" use="required">
 				<xs:annotation>
 					<xs:documentation>
 						This attribute indicates whether an error
@@ -630,7 +630,7 @@
 					</xs:documentation>
 				</xs:annotation>
 			</xs:attribute>
-			<xs:attribute name="transactionId" type="xs:string">
+			<xs:attribute name="transactionId" type="xs:string" use="required">
 				<xs:annotation>
 					<xs:documentation>
 						This attribute defines the current transaction
