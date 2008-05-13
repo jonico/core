@@ -103,7 +103,7 @@ public class QCDefectHandler {
 	}
 
 	public IQCDefect updateDefect(IConnection qcc, String bugId,
-			List<GenericArtifactField> allFields) throws Exception {
+			List<GenericArtifactField> allFields, String connectorUser) throws Exception {
 
 		IFactory bugFactory = qcc.getBugFactory();
 		IBug bug = bugFactory.getItem(bugId);
@@ -122,7 +122,10 @@ public class QCDefectHandler {
 
 			if (fieldName.equals("BG_DEV_COMMENTS")) {
 				String oldFieldValue = bug.getFieldAsString(fieldName);
-				fieldValue = oldFieldValue + " " + fieldValue;
+				if((oldFieldValue!=null && fieldValue!=null && !oldFieldValue.equals(fieldValue)) ||
+						(oldFieldValue==null && fieldValue!=null) )
+					fieldValue = oldFieldValue + " \n"+ connectorUser+ ":: " + fieldValue;
+				
 			}
 			if (!(allFieldNames.contains(allFields.get(cnt).getFieldName()))
 					&& !(fieldName.equals("BG_BUG_ID")
@@ -336,7 +339,15 @@ public class QCDefectHandler {
 			List<String> attachOperation = null;
 			if (auDescription != null
 					&& (auDescription != null && !auDescription.equals("")))
+			{
+				try{
 				attachOperation = getAttachmentOperation(auDescription);
+				}
+				catch(Exception e) {
+					log.error("An Exception!!!!! caught in the getAttachmentOperation method in QCDefectHandler: "+e);
+					attachOperation = null;
+				}
+			}
 
 			QCDefect latestDefect = getDefectWithId(qcc, entityId);
 			GenericArtifact latestDefectArtifact = latestDefect
@@ -389,6 +400,99 @@ public class QCDefectHandler {
 
 		return modifiedDefectArtifacts;
 	}
+	
+	/**
+	 * Return all defects modified between the given time range, in a map
+	 * 
+	 * @param lastReadTime
+	 *            from time from which modifications have to be queried.
+	 * @return null if no modifications were found, else a list of modified
+	 *         defects
+	 * @throws RemoteException (,
+	 *             COMException?)
+	 */
+	public List<GenericArtifact> getLatestChangedDefects(IConnection qcc,
+			String connectorUser, String transactionId, String lastReadTime, 
+			String sourceArtifactId, String sourceRepositoryId,
+			String sourceRepositoryKind, String sourceSystemId,
+			String sourceSystemKind, String targetRepositoryId,
+			String targetRepositoryKind, String targetSystemId,
+			String targetSystemKind) throws Exception {
+		
+		int rc=0;
+		String sql = "SELECT DISTINCT(AU_ENTITY_ID) FROM AUDIT_LOG WHERE AU_ENTITY_TYPE = 'BUG' AND AU_ACTION_ID > '"+ transactionId + "'";
+		
+		log.info(sql);
+
+		IRecordSet rs = executeSQL(qcc, sql);
+		if (rs != null)
+			rc = rs.getRecordCount();
+		
+		List<GenericArtifact> modifiedDefectArtifacts = new ArrayList<GenericArtifact>();
+
+		for (int cnt = 0; cnt < rc; cnt++, rs.next()) {
+			int entityId = Integer.parseInt(rs.getFieldValue("AU_ENTITY_ID"));
+			String bugId = rs.getFieldValue("AU_ENTITY_ID");
+			List<Object> transactionIdAndAttachOperation = getTxnIdAndAuDescription(bugId, transactionId, qcc);
+			String thisTransactionId = (String) transactionIdAndAttachOperation.get(0);
+			List<String> attachmentNames = (List<String>) transactionIdAndAttachOperation.get(1);
+			log.info("In getLatestChangedDefects, txnId="+thisTransactionId+" and attachmentNames="+attachmentNames);
+			QCDefect latestDefect = getDefectWithId(qcc, entityId);
+			GenericArtifact latestDefectArtifact = latestDefect
+					.getGenericArtifactObject(qcc, bugId, bugId,
+							attachmentNames);
+			if(latestDefectArtifact==null)continue;
+			latestDefectArtifact = getArtifactAction(latestDefectArtifact, qcc, thisTransactionId, entityId, lastReadTime);
+			latestDefectArtifact
+					.setArtifactMode(GenericArtifact.ArtifactModeValue.COMPLETE);
+			latestDefectArtifact
+					.setArtifactType(GenericArtifact.ArtifactTypeValue.PLAINARTIFACT);
+
+			sourceArtifactId = getBugIdValueFromGenericArtifactInDefectHandler(
+					latestDefectArtifact, "BG_BUG_ID");
+			latestDefectArtifact.setSourceArtifactId(sourceArtifactId);
+			latestDefectArtifact.setSourceRepositoryId(sourceRepositoryId);
+			latestDefectArtifact.setSourceRepositoryKind(sourceRepositoryKind);
+			latestDefectArtifact.setSourceSystemId(sourceSystemId);
+			latestDefectArtifact.setSourceSystemKind(sourceSystemKind);
+
+			latestDefectArtifact.setTargetRepositoryId(targetRepositoryId);
+			latestDefectArtifact.setTargetRepositoryKind(targetRepositoryKind);
+			latestDefectArtifact.setTargetSystemId(targetSystemId);
+			latestDefectArtifact.setTargetSystemKind(targetSystemKind);
+			latestDefectArtifact.setLastReadTransactionId(thisTransactionId);
+			
+			modifiedDefectArtifacts.add(latestDefectArtifact);
+			
+		}
+		return modifiedDefectArtifacts;
+	}
+
+	
+	public List<Object> getTxnIdAndAuDescription(String bugId, String txnId, IConnection qcc) {
+		
+		List<Object> txnIdAndAuDescription = new ArrayList<Object> ();
+		String transactionId = new String();
+		List<String> attachmentNames = new ArrayList<String> ();
+		String sql = "select AU_ACTION_ID, AU_DESCRIPTION from audit_log where au_entity_id = '"+bugId+"' and au_entity_type='BUG' and au_action_id > '"+txnId+"' order by au_action_id desc";
+		IRecordSet newRs = executeSQL(qcc, sql);
+		int newRc = newRs.getRecordCount();
+		log.info("In QCDefectHandler.getTxnIdAndAuDescription, sql="+sql);
+		for (int newCnt = 0; newCnt < newRc; newCnt++, newRs.next()) {
+			if(newCnt==0)transactionId = newRs.getFieldValue("AU_ACTION_ID");
+			String auDescription = newRs.getFieldValue("AU_DESCRIPTION");
+			List<String> attachDescription = getAttachmentOperation(auDescription);
+			if(attachDescription!=null && attachDescription.size()>0) {
+				if(attachDescription.get(1)!=null && attachDescription.get(1).equals("added"))
+					attachmentNames.add(attachDescription.get(2));
+			}	
+		}
+		txnIdAndAuDescription.add((Object)transactionId);
+		txnIdAndAuDescription.add((Object)attachmentNames); 
+		
+		return txnIdAndAuDescription;
+	}
+	
 
 	public GenericArtifact getStateOfDefectAtActionID(IConnection qcc,
 			int entityId, int actionId, String transactionId,
@@ -481,7 +585,7 @@ public class QCDefectHandler {
 	public List<String> getAttachmentOperation(String auDescription) {
 
 		List<String> attachDescription = new ArrayList<String>();
-		
+		if(auDescription!=null) {
 		int colonPosition = auDescription.indexOf(": ");
 		String attachLabelAndOperation = auDescription.substring(0, colonPosition);
 		String crReference = auDescription.substring(colonPosition+2, auDescription.length());
@@ -502,10 +606,47 @@ public class QCDefectHandler {
 		log.info(attachDescription);
 		if (operation.equals("added"))
 			return attachDescription;
-
+		}
 		return null;
 	}
-
+	
+	public GenericArtifact getArtifactAction(GenericArtifact latestDefectArtifact, IConnection qcc, String actionId, int entityId, String lastReadTime) {
+		
+		List<GenericArtifactField> genArtifactFields = latestDefectArtifact
+		.getAllGenericArtifactFieldsWithSameFieldName("BG_VTS");
+		Date lastReadDate = DateUtil.parseQCDate(lastReadTime);
+		Date createdOn = getDefectCreatedDate(qcc, entityId);
+		if (genArtifactFields != null && genArtifactFields.get(0) != null
+				&& genArtifactFields.get(0).getFieldValue() != null
+				&& !(genArtifactFields.get(0).getFieldValue().equals(""))) {
+			Date newBgVts = DateUtil.parseQCDate((String) genArtifactFields
+					.get(0).getFieldValue());
+			latestDefectArtifact.setArtifactLastModifiedDate(DateUtil
+					.format(newBgVts));
+			if(createdOn.after(lastReadDate))
+				latestDefectArtifact.setArtifactAction(GenericArtifact.ArtifactActionValue.CREATE);
+			else
+				latestDefectArtifact.setArtifactAction(GenericArtifact.ArtifactActionValue.UPDATE);
+			
+			return latestDefectArtifact;
+		} else {
+			// This means the BG_VTS field is null. So, find it, populate it &
+			// ArtifactLastModifiedDate
+			String bgVts = findBgVtsFromQC(qcc, Integer.parseInt(actionId), entityId);
+			genArtifactFields.get(0).setFieldValue((String) bgVts);
+			Date newBgVts = DateUtil.parseQCDate(bgVts);
+			String lastModifiedDate = DateUtil.format(newBgVts);
+			latestDefectArtifact.setArtifactLastModifiedDate(lastModifiedDate);
+			log.info("The newBgVts="+newBgVts+", and lastReadDate="+lastReadDate);
+			if(createdOn.after(lastReadDate))
+				latestDefectArtifact.setArtifactAction(GenericArtifact.ArtifactActionValue.CREATE);
+			else
+				latestDefectArtifact.setArtifactAction(GenericArtifact.ArtifactActionValue.UPDATE);
+		}
+		return latestDefectArtifact;
+	}
+	
+	
 	public String getDeltaOfComment(IConnection qcc, int actionId) {
 
 		String deltaComment = null;
@@ -529,7 +670,26 @@ public class QCDefectHandler {
 
 		return deltaComment;
 	}
-
+	
+	public Date getDefectCreatedDate(IConnection qcc, int entityId) {
+		
+		String sql = "SELECT AU_TIME FROM AUDIT_LOG WHERE AU_ENTITY_TYPE='BUG' AND AU_ENTITY_ID= '"+entityId+"'";
+		IRecordSet rs = executeSQL(qcc, sql);
+		String fieldName = new String();
+		Date createdOn = new Date();
+		int rc = rs.getRecordCount();
+	
+		for (int cnt = 0; cnt < rc; cnt++, rs.next()) {
+			if(cnt==0) {
+				fieldName = rs.getFieldValue("AU_TIME");
+				break;
+			}
+		}
+		createdOn = DateUtil.parseQCDate(fieldName);
+		
+		return createdOn;
+	}
+	
 	public String findBgVtsFromQC(IConnection qcc, int actionId, int entityId) {
 
 		String sql = "SELECT * FROM AUDIT_LOG WHERE AU_ACTION_ID='" + actionId
