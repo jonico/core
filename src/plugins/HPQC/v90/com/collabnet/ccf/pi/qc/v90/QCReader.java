@@ -66,7 +66,7 @@ public class QCReader extends QCConnectHelper implements
 		String targetSystemKind = getTargetSystemKind(document);
 		
 		log.error(fromTime);
-		Object[] result=readModifiedDefects(transactionId, sourceArtifactId, sourceRepositoryId, sourceRepositoryKind, sourceSystemId, sourceSystemKind, targetRepositoryId, targetRepositoryKind, targetSystemId, targetSystemKind);
+		Object[] result=readModifiedDefects(transactionId, fromTime, sourceArtifactId, sourceRepositoryId, sourceRepositoryKind, sourceSystemId, sourceSystemKind, targetRepositoryId, targetRepositoryKind, targetSystemId, targetSystemKind);
 		disconnect();
 		return result;
 	}
@@ -88,7 +88,7 @@ public class QCReader extends QCConnectHelper implements
 	
 	
 	
-	public Object[] readModifiedDefects(String transactionId, String sourceArtifactId, String sourceRepositoryId, String sourceRepositoryKind, String sourceSystemId, String sourceSystemKind, String targetRepositoryId, String targetRepositoryKind, String targetSystemId, String targetSystemKind) {
+	public Object[] readModifiedDefects(String transactionId, String lastReadTime, String sourceArtifactId, String sourceRepositoryId, String sourceRepositoryKind, String sourceSystemId, String sourceSystemKind, String targetRepositoryId, String targetRepositoryKind, String targetSystemId, String targetSystemKind) {
 		// TODO Use the information of the firstTimeImport flag
 		
 		//Object[] retObj = new Object[100];
@@ -98,7 +98,7 @@ public class QCReader extends QCConnectHelper implements
 		
 		try {
 			log.error("The transactionId coming from HQSL DB is:" + transactionId);
-			defectRows = defectHandler.getChangedDefects(this.getQcc(), getUserName(), transactionId, sourceArtifactId, sourceRepositoryId, sourceRepositoryKind, sourceSystemId, sourceSystemKind, targetRepositoryId, targetRepositoryKind, targetSystemId, targetSystemKind);
+			defectRows = defectHandler.getLatestChangedDefects(this.getQcc(), getUserName(), transactionId, lastReadTime, sourceArtifactId, sourceRepositoryId, sourceRepositoryKind, sourceSystemId, sourceSystemKind, targetRepositoryId, targetRepositoryKind, targetSystemId, targetSystemKind);
 		} catch (Exception e) {
 			// TODO Throw an exception?
 			log.error("During the artifact retrieval process from QC, an error occured",e);
