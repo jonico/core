@@ -129,7 +129,7 @@ public class QCWriter extends QCConnectHelper implements
 						String targetArtifactIdFromTable = DBHelper.getTargetArtifactIdFromTable(sourceArtifactId, sourceSystemId, sourceSystemKind, sourceRepositoryId, sourceRepositoryKind, targetSystemId, targetSystemKind, targetRepositoryId, targetRepositoryKind);
 						if(allFields!=null) {
 							@SuppressWarnings("unused")
-							IQCDefect updatedArtifact = defectHandler.updateDefect(getQcc(), targetArtifactIdFromTable, allFields);
+							IQCDefect updatedArtifact = defectHandler.updateDefect(getQcc(), targetArtifactIdFromTable, allFields, this.getUserName());
 							log.info("Update Operation SUCCESSFULL!!!!! and the targetArtifactIdFromTable="+targetArtifactIdFromTable);
 							genericArtifact.setTargetArtifactId(targetArtifactIdFromTable);
 							//send this artifact to RCDU (Read COnnector Database Updater) indicating a success in updating the artifact
