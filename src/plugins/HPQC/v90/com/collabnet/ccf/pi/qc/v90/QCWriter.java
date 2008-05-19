@@ -87,8 +87,8 @@ public class QCWriter extends QCConnectHelper implements
 					String targetArtifactIdAfterCreation = createdArtifact.getId();
 					log.info("Write Operation SUCCESSFULL!!!!! and the targetArtifactIdAfterCreation="+targetArtifactIdAfterCreation);
 					// Update the QC_ENTITY_CHECK HSQL DB Table
-					@SuppressWarnings("unused")
-					Boolean status = DBHelper.updateTable(sourceArtifactId, sourceSystemId, sourceSystemKind, sourceRepositoryId, sourceRepositoryKind, targetArtifactIdAfterCreation, targetSystemId, targetSystemKind, targetRepositoryId, targetRepositoryKind);
+					//@SuppressWarnings("unused")
+					//Boolean status = DBHelper.updateTable(sourceArtifactId, sourceSystemId, sourceSystemKind, sourceRepositoryId, sourceRepositoryKind, targetArtifactIdAfterCreation, targetSystemId, targetSystemKind, targetRepositoryId, targetRepositoryKind);
 					genericArtifact.setTargetArtifactId(targetArtifactIdAfterCreation);
 					// send this artifact to RCDU (Read Connector Database Updater) indicating a success in creating the artifact
 					
@@ -123,24 +123,24 @@ public class QCWriter extends QCConnectHelper implements
 					break;
 				}*/
 				
-				if(targetArtifactId!=null || !(targetArtifactId.equals("")) || targetArtifactId.equals("unknown")) {
+				if(targetArtifactId!=null || !(targetArtifactId.equals(""))) {
 					try {
 						
-						String targetArtifactIdFromTable = DBHelper.getTargetArtifactIdFromTable(sourceArtifactId, sourceSystemId, sourceSystemKind, sourceRepositoryId, sourceRepositoryKind, targetSystemId, targetSystemKind, targetRepositoryId, targetRepositoryKind);
+						//String targetArtifactIdFromTable = DBHelper.getTargetArtifactIdFromTable(sourceArtifactId, sourceSystemId, sourceSystemKind, sourceRepositoryId, sourceRepositoryKind, targetSystemId, targetSystemKind, targetRepositoryId, targetRepositoryKind);
 						if(allFields!=null) {
 							@SuppressWarnings("unused")
-							IQCDefect updatedArtifact = defectHandler.updateDefect(getQcc(), targetArtifactIdFromTable, allFields, this.getUserName());
-							log.info("Update Operation SUCCESSFULL!!!!! and the targetArtifactIdFromTable="+targetArtifactIdFromTable);
-							genericArtifact.setTargetArtifactId(targetArtifactIdFromTable);
+							IQCDefect updatedArtifact = defectHandler.updateDefect(getQcc(), targetArtifactId, allFields, this.getUserName());
+							log.info("Update Operation SUCCESSFULL!!!!! and the targetArtifactIdFromTable="+targetArtifactId);
+							genericArtifact.setTargetArtifactId(targetArtifactId);
 							//send this artifact to RCDU (Read COnnector Database Updater) indicating a success in updating the artifact
 						}
 						
 						if(allAttachments!=null && (allAttachments!=null && allAttachments.size()>0)) {
 							//create the attachment per genericArtifact
-							defectHandler.createAttachment(qcc, targetArtifactIdFromTable, allAttachments);
+							defectHandler.createAttachment(qcc, targetArtifactId, allAttachments);
 							
 						}
-					
+						
 					
 					}
 					catch(Exception e) {
