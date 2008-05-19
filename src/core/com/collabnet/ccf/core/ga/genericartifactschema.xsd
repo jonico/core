@@ -342,7 +342,7 @@
 						should be sufficient to determine the source
 						repository. There is one reserved value
 						"unknown" that is used if the artifact cannot be
-						directlyassociated to a source repository (this
+						directly associated to a source repository (this
 						might be the case for dependencies, associations
 						and attachments).
 					</xs:documentation>
@@ -623,7 +623,7 @@
 						This attribute indicates whether an error
 						occured during processing. The default value for
 						this field is "ok". If this field is set to
-						another value but "okay", components not
+						another value but "ok", components not
 						specialized in handling errors should just
 						ignore the artifact, so the artifactAction
 						attribute should be set to "ignore".
