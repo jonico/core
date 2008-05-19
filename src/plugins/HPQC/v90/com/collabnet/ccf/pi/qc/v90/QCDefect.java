@@ -33,15 +33,15 @@ public class QCDefect extends Bug implements IQCDefect {
 	private static final long serialVersionUID = 1L;
 	GenericArtifact genericArtifact;
 	List<byte[]> attachmentData;
-	
+
 	private static final Log log = LogFactory.getLog(QCDefect.class);
 	/**
-	 * This is the maximum size of the aggregate of attachments 
-	 * allowed to be shipped in one cycle. 
+	 * This is the maximum size of the aggregate of attachments allowed to be
+	 * shipped in one cycle.
 	 */
 	private static final long maxAttachmentSizePerCycle = 5000000;
 	private static long cumulativeAttachmentSize = 0;
-		
+
 	public QCDefect(Dispatch arg0) {
 		super(arg0);
 	}
@@ -66,10 +66,10 @@ public class QCDefect extends Bug implements IQCDefect {
 	public GenericArtifact getGenericArtifactObject(IConnection qcc,
 			String actionId, String entityId, List<String> attachmentNames) {
 		genericArtifact = QCConfigHelper.getSchemaFields(qcc);
-		if (attachmentNames != null)
-			genericArtifact = QCConfigHelper
-					.getCompleteSchemaAttachments(qcc, genericArtifact, actionId,
-							entityId, attachmentNames);
+		// if (attachmentNames != null)
+		// genericArtifact = QCConfigHelper
+		// .getCompleteSchemaAttachments(qcc, genericArtifact, actionId,
+		// entityId, attachmentNames);
 		List<GenericArtifactField> allFields = genericArtifact
 				.getAllGenericArtifactFields();
 		int noOfFields = allFields.size();
@@ -131,9 +131,9 @@ public class QCDefect extends Bug implements IQCDefect {
 			if (thisFieldsDatatype
 					.equals(GenericArtifactField.FieldValueTypeValue.MULTI_SELECT_LIST)) {
 				String fieldValue = getFieldAsString(thisField.getFieldName());
-				List<String> fieldValues = new ArrayList<String> ();
+				List<String> fieldValues = new ArrayList<String>();
 				int size = 0;
-				if(fieldValue!=null) {
+				if (fieldValue != null) {
 					fieldValues = getFieldValues(fieldValue);
 					size = fieldValues.size();
 				}
@@ -174,14 +174,15 @@ public class QCDefect extends Bug implements IQCDefect {
 			}
 
 		}
-		
+
 		List<GenericArtifactAttachment> allAttachments = genericArtifact
-		.getAllGenericArtifactAttachments();
+				.getAllGenericArtifactAttachments();
 		int noOfAttachments = 0;
-		if(allAttachments!=null)noOfAttachments = allAttachments.size();
+		if (allAttachments != null)
+			noOfAttachments = allAttachments.size();
 		for (int cnt = 0; cnt < noOfAttachments; cnt++) {
-			
-		//if (attachOperation != null) {
+
+			// if (attachOperation != null) {
 			// filling the values for attachment
 			IFactory bugFactory = qcc.getBugFactory();
 			IBug bug = bugFactory.getItem(entityId);
@@ -196,10 +197,11 @@ public class QCDefect extends Bug implements IQCDefect {
 					GenericArtifactAttachment.AttachmentContentTypeValue.DATA)) {
 				byte data[] = null;
 				try {
-				data = bug.retrieveAttachmentData(attachmentNames.get(cnt));
-				}
-				catch(Exception e) {
-					log.error("An Exception!!!!! occured in QCDefect while trying to do retrieveAttachmentData of an INVALID Filename"+ e);
+					data = bug.retrieveAttachmentData(attachmentNames.get(cnt));
+				} catch (Exception e) {
+					log
+							.error("An Exception!!!!! occured in QCDefect while trying to do retrieveAttachmentData of an INVALID Filename"
+									+ e);
 					return genericArtifact;
 				}
 				log.info("************************************************");
@@ -212,13 +214,70 @@ public class QCDefect extends Bug implements IQCDefect {
 				thisAttachment.setAttachmentSize(0);
 			}
 		}
-		if(allAttachments!=null) {
-		Boolean attachmentSizeChecker = checkForAttachmentSize(allAttachments);
-		if(attachmentSizeChecker==false)return null;
+
+		if (allAttachments != null) {
+			Boolean attachmentSizeChecker = checkForAttachmentSize(allAttachments);
+			if (attachmentSizeChecker == false)
+				return null;
 		}
-		
+
 		return genericArtifact;
 
+	}
+
+	public GenericArtifact getGenericArtifactObjectWithOnlyAttachments(
+			IConnection qcc, String actionId, String entityId,
+			List<String> attachmentNames) {
+
+		if (attachmentNames != null)
+			genericArtifact = QCConfigHelper.getCompleteSchemaAttachments(qcc, actionId, entityId, attachmentNames);
+
+		List<GenericArtifactAttachment> allAttachments = genericArtifact
+				.getAllGenericArtifactAttachments();
+		int noOfAttachments = 0;
+		if (allAttachments != null)
+			noOfAttachments = allAttachments.size();
+		for (int cnt = 0; cnt < noOfAttachments; cnt++) {
+
+			// if (attachOperation != null) {
+			// filling the values for attachment
+			IFactory bugFactory = qcc.getBugFactory();
+			IBug bug = bugFactory.getItem(entityId);
+
+			GenericArtifactAttachment thisAttachment = allAttachments.get(cnt);
+			MimetypesFileTypeMap mimeType = new MimetypesFileTypeMap();
+			String thisMimeType = mimeType.getContentType(thisAttachment
+					.getAttachmentName());
+			thisAttachment.setMimeType(thisMimeType);
+
+			if (thisAttachment.getAttachmentContentType().equals(
+					GenericArtifactAttachment.AttachmentContentTypeValue.DATA)) {
+				byte data[] = null;
+				try {
+					data = bug.retrieveAttachmentData(attachmentNames.get(cnt));
+				} catch (Exception e) {
+					log
+							.error("An Exception!!!!! occured in QCDefect while trying to do retrieveAttachmentData of an INVALID Filename"
+									+ e);
+					return genericArtifact;
+				}
+				log.info("************************************************");
+				long attachmentSize = (long) data.length;
+				thisAttachment.setAttachmentSize(attachmentSize);
+				thisAttachment.setRawAttachmentData(data);
+				thisAttachment.setAttachmentSourceUrl("VALUE_UNKNOWN");
+			} else {
+				thisAttachment.setAttachmentSourceUrl(attachmentNames.get(cnt));
+				thisAttachment.setAttachmentSize(0);
+			}
+		}
+		if (allAttachments != null) {
+			Boolean attachmentSizeChecker = checkForAttachmentSize(allAttachments);
+			if (attachmentSizeChecker == false)
+				return null;
+		}
+
+		return genericArtifact;
 	}
 
 	public List<String> getFieldValues(String fieldValue) {
@@ -231,14 +290,16 @@ public class QCDefect extends Bug implements IQCDefect {
 		}
 		return fieldValues;
 	}
-	
-	public boolean checkForAttachmentSize(List<GenericArtifactAttachment> allAttachments) {
-		
-		for(int cnt=0; cnt <allAttachments.size(); cnt++) {
-			long thisAttachmentSize = allAttachments.get(cnt).getAttachmentSize();
-			cumulativeAttachmentSize+=thisAttachmentSize;
+
+	public boolean checkForAttachmentSize(
+			List<GenericArtifactAttachment> allAttachments) {
+
+		for (int cnt = 0; cnt < allAttachments.size(); cnt++) {
+			long thisAttachmentSize = allAttachments.get(cnt)
+					.getAttachmentSize();
+			cumulativeAttachmentSize += thisAttachmentSize;
 		}
-		if(cumulativeAttachmentSize < maxAttachmentSizePerCycle)
+		if (cumulativeAttachmentSize < maxAttachmentSizePerCycle)
 			return true;
 		else
 			return false;
