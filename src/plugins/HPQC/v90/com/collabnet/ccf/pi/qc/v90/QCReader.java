@@ -27,8 +27,8 @@ public class QCReader extends QCConnectHelper implements
 	private Object readerContext;
 
 	private QCDefectHandler defectHandler;
-
-    public QCReader(String id) {
+	
+	public QCReader(String id) {
 	    super(id);
 	}
 
@@ -94,11 +94,12 @@ public class QCReader extends QCConnectHelper implements
 		//Object[] retObj = new Object[100];
 		List<List<Document>> retObj=new ArrayList<List<Document>>();
 		List<Document> dataRows=new ArrayList<Document>();
-		List<GenericArtifact> defectRows;
+		List<GenericArtifact> defectRows = new ArrayList<GenericArtifact>();
 		
 		try {
 			log.error("The transactionId coming from HQSL DB is:" + transactionId);
-			defectRows = defectHandler.getLatestChangedDefects(this.getQcc(), getUserName(), transactionId, lastReadTime, sourceArtifactId, sourceRepositoryId, sourceRepositoryKind, sourceSystemId, sourceSystemKind, targetRepositoryId, targetRepositoryKind, targetSystemId, targetSystemKind);
+			defectRows = defectHandler.getLatestChangedDefects(defectRows, this.getQcc(), getUserName(), transactionId, lastReadTime, sourceArtifactId, sourceRepositoryId, sourceRepositoryKind, sourceSystemId, sourceSystemKind, targetRepositoryId, targetRepositoryKind, targetSystemId, targetSystemKind);
+			//defectRows = attachmentHandler.getLatestChangedAttachments(defectRows, this.getQcc(), getUserName(), transactionId, lastReadTime, sourceArtifactId, sourceRepositoryId, sourceRepositoryKind, sourceSystemId, sourceSystemKind, targetRepositoryId, targetRepositoryKind, targetSystemId, targetSystemKind);
 		} catch (Exception e) {
 			// TODO Throw an exception?
 			log.error("During the artifact retrieval process from QC, an error occured",e);
@@ -184,7 +185,7 @@ public class QCReader extends QCConnectHelper implements
 	
 	public String getLastTransactionIdFromLastArtifact(List<GenericArtifact> defectRows) {
 		
-		String newTransactionId = new String();
+		String newTransactionId = "";
 		int size = defectRows.size();
 		GenericArtifact thisArtifact = defectRows.get(size-1);
 		newTransactionId = thisArtifact.getLastReadTransactionId();
