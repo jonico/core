@@ -214,30 +214,32 @@ public class QCConfigHelper {
 	
 	
 	
-	public static GenericArtifact getCompleteSchemaAttachments(IConnection qcc, GenericArtifact genericArtifact, String actionId, String entityId, List<String> attachmentNames) {
+	public static GenericArtifact getCompleteSchemaAttachments(IConnection qcc, String actionId, String entityId, List<String> attachmentNames) {
 		
-		for(int cnt=0; cnt < attachmentNames.size(); cnt++) {
-		
-		GenericArtifactAttachment attachment;
-		List<String> attachmentIdAndType = QCDefectHandler.getFromTable(qcc, entityId, attachmentNames.get(cnt)); 
-		if(attachmentIdAndType!=null) {
-			String attachmentId = attachmentIdAndType.get(0); // CR_REF_ID
-			String attachmentContentType = attachmentIdAndType.get(1); // CR_REF_TYPE
-			String attachmentDescription = attachmentIdAndType.get(2); // CR_DESCRIPTION
+		GenericArtifact genericArtifact = new GenericArtifact();
+		if(attachmentNames!=null) {
+			for(int cnt=0; cnt < attachmentNames.size(); cnt++) {
 			
-			if(attachmentContentType.equals("File")) {
-				attachment = genericArtifact.addNewAttachment(attachmentNames.get(cnt), attachmentId, attachmentDescription);
-				attachment.setAttachmentContentType(GenericArtifactAttachment.AttachmentContentTypeValue.DATA);
+			GenericArtifactAttachment attachment;
+			List<String> attachmentIdAndType = QCDefectHandler.getFromTable(qcc, entityId, attachmentNames.get(cnt)); 
+			if(attachmentIdAndType!=null) {
+				String attachmentId = attachmentIdAndType.get(0); // CR_REF_ID
+				String attachmentContentType = attachmentIdAndType.get(1); // CR_REF_TYPE
+				String attachmentDescription = attachmentIdAndType.get(2); // CR_DESCRIPTION
+				
+				if(attachmentContentType.equals("File")) {
+					attachment = genericArtifact.addNewAttachment(attachmentNames.get(cnt), attachmentId, attachmentDescription);
+					attachment.setAttachmentContentType(GenericArtifactAttachment.AttachmentContentTypeValue.DATA);
+				}
+				else {
+					attachment = genericArtifact.addNewAttachment(attachmentId, attachmentId, attachmentDescription);
+					attachment.setAttachmentContentType(GenericArtifactAttachment.AttachmentContentTypeValue.LINK);
+				}
+				attachment.setAttachmentAction(GenericArtifactAttachment.AttachmentActionValue.CREATE);
 			}
-			else {
-				attachment = genericArtifact.addNewAttachment(attachmentId, attachmentId, attachmentDescription);
-				attachment.setAttachmentContentType(GenericArtifactAttachment.AttachmentContentTypeValue.LINK);
+			
 			}
-			attachment.setAttachmentAction(GenericArtifactAttachment.AttachmentActionValue.CREATE);
 		}
-		
-		}
-		
 		return genericArtifact;
 		
 	}
