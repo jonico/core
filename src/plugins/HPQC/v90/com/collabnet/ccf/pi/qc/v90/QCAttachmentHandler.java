@@ -264,7 +264,7 @@ public class QCAttachmentHandler {
 			}
 
 			if (thisField.getFieldName().equals(AttachmentMetaData.getAttachmentName())) {
-				if(contentType.equals("File"))
+				if(contentType.equals("DATA"))
 					thisField.setFieldValue(attachmentName);
 				else
 					thisField.setFieldValue("Unknown");
@@ -277,7 +277,7 @@ public class QCAttachmentHandler {
 						.setFieldValueType(GenericArtifactField.FieldValueTypeValue.INTEGER);
 			}
 			if (thisField.getFieldName().equals(AttachmentMetaData.getAttachmentSourceUrl())) {
-				if(contentType.equals("File"))
+				if(contentType.equals("DATA"))
 					thisField.setFieldValue("Unknown");
 				else
 					thisField.setFieldValue(attachmentName);
