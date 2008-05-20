@@ -20,8 +20,6 @@ public class AttachmentMetaData {
 	private static final String ATTACHMENT_VALUE_HAS_CHANGED = "attachmentValueHasChanged";
 	private static final String ATTACHMENT_VALUE_IS_NULL = "attachmentValueIsNull";
 	
-	public final String ATTACHMENT_VALUE_IS_NULL_TRUE = "true";
-	public final String ATTACHMENT_VALUE_IS_NULL_FALSE = "false";
 	/**
 	 * 
 	 * This contains an array of attachment fields.
@@ -43,7 +41,7 @@ public class AttachmentMetaData {
 	};
 
 	public enum AttachmentValueIsNull {
-		ATTACHMENT_VALUE_IS_NULL_TRUE, ATTACHMENT_VALUE_IS_NULL_FALSE
+		TRUE, FALSE
 	};
 	
 	public static String[] getAttachmentMetaData() {
