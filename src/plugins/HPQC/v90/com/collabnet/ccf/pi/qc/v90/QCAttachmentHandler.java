@@ -17,6 +17,7 @@ import org.apache.commons.logging.LogFactory;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactAttachment;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
+import com.collabnet.ccf.core.ga.AttachmentMetaData;
 import com.collabnet.ccf.core.utils.DateUtil;
 import com.collabnet.ccf.pi.qc.v90.api.IBug;
 import com.collabnet.ccf.pi.qc.v90.api.ICommand;
@@ -42,11 +43,11 @@ public class QCAttachmentHandler {
 	private static final long maxAttachmentSizePerCycle = 5000000;
 	private static long cumulativeAttachmentSize = 0;
 
-	private static final String[] attachmentMetaData = {
-			"attachmentContentType", "attachmentName", "attachmentId",
-			"attachmentSize", "attachmentSourceUrl", "attachmentType",
-			"attachmentMIMEType", "attachmentValueHasChanged",
-			"attachmentValueType", "attachmentValueIsNull"};
+//	private static final String[] attachmentMetaData = {
+//			"attachmentName", "attachmentId", "attachmentSize", 
+//			"attachmentSourceUrl", "attachmentType",
+//			"attachmentMIMEType", "attachmentValueHasChanged",
+//			"attachmentValueType", "attachmentValueIsNull"};
 
 	public static IRecordSet executeSQL(IConnection qcc, String sql) {
 		ICommand command = qcc.getCommand();
@@ -127,25 +128,6 @@ public class QCAttachmentHandler {
 		return;
 	}
 
-	public String getProperFieldValue(GenericArtifactField thisField) {
-
-		String fieldValue = null;
-		GenericArtifactField.FieldValueTypeValue fieldValueTypeValue = thisField
-				.getFieldValueType();
-		switch (fieldValueTypeValue) {
-
-		case DATE: {
-			GregorianCalendar gcal = (GregorianCalendar) thisField
-					.getFieldValue();
-			fieldValue = DateUtil.formatQCDate(gcal.getTime());
-			break;
-		}
-
-		}
-		return fieldValue;
-
-	}
-
 	public boolean deleteTempFile(String fileName) {
 
 		File f = new File(fileName);
@@ -176,162 +158,13 @@ public class QCAttachmentHandler {
 		return success;
 	}
 
-	/**
-	 * Return all defects modified between the given time range, in a map
-	 * 
-	 * @param lastReadTime
-	 *            from time from which modifications have to be queried.
-	 * @return null if no modifications were found, else a list of modified
-	 *         defects
-	 * @throws RemoteException (,
-	 *             COMException?)
-	 */
-	public List<GenericArtifact> getLatestChangedAttachments(
-			List<GenericArtifact> modifiedDefectArtifacts, IConnection qcc,
-			String connectorUser, String transactionId, String lastReadTime,
-			String sourceArtifactId, String sourceRepositoryId,
-			String sourceRepositoryKind, String sourceSystemId,
-			String sourceSystemKind, String targetRepositoryId,
-			String targetRepositoryKind, String targetSystemId,
-			String targetSystemKind) throws Exception {
-
-		int rc = 0;
-		String sql = "SELECT DISTINCT(AU_ENTITY_ID) FROM AUDIT_LOG WHERE AU_ENTITY_TYPE = 'BUG' AND AU_ACTION_ID > '"
-				+ transactionId + "'";
-
-		log.info(sql);
-
-		IRecordSet rs = executeSQL(qcc, sql);
-		if (rs != null)
-			rc = rs.getRecordCount();
-
-		// List<GenericArtifact> modifiedDefectArtifacts = new
-		// ArrayList<GenericArtifact>();
-
-		for (int cnt = 0; cnt < rc; cnt++, rs.next()) {
-			int entityId = Integer.parseInt(rs.getFieldValue("AU_ENTITY_ID"));
-			String bugId = rs.getFieldValue("AU_ENTITY_ID");
-			List<Object> transactionIdAndAttachOperation = getTxnIdAndAuDescription(
-					bugId, transactionId, qcc);
-			String thisTransactionId = (String) transactionIdAndAttachOperation
-					.get(0);
-			List<String> attachmentNames = (List<String>) transactionIdAndAttachOperation
-					.get(1);
-			log
-					.info("In getLatestChangedAttachments of ***QCAttachmentHandler***, txnId="
-							+ thisTransactionId
-							+ " and attachmentNames="
-							+ attachmentNames);
-			// QCDefect latestDefect = getDefectWithId(qcc, entityId);
-			GenericArtifact attachmentsArtifact = getGenericArtifactObjectOfAttachment(
-					qcc, bugId, attachmentNames.get(0));
-			if (attachmentsArtifact == null)
-				continue;
-
-			List<GenericArtifactAttachment> allAttachments = attachmentsArtifact
-					.getAllGenericArtifactAttachments();
-
-			for (int newCnt = 0; newCnt < allAttachments.size(); newCnt++) {
-
-				GenericArtifact latestDefectArtifact = new GenericArtifact();
-				latestDefectArtifact.addNewAttachment(allAttachments
-						.get(newCnt));
-				latestDefectArtifact = getArtifactAction(latestDefectArtifact,
-						qcc, thisTransactionId, entityId, lastReadTime);
-				latestDefectArtifact
-						.setArtifactMode(GenericArtifact.ArtifactModeValue.COMPLETE);
-				latestDefectArtifact
-						.setArtifactType(GenericArtifact.ArtifactTypeValue.ATTACHMENT);
-
-				latestDefectArtifact.setSourceArtifactId(bugId);
-				latestDefectArtifact.setSourceRepositoryId(sourceRepositoryId);
-				latestDefectArtifact
-						.setSourceRepositoryKind(sourceRepositoryKind);
-				latestDefectArtifact.setSourceSystemId(sourceSystemId);
-				latestDefectArtifact.setSourceSystemKind(sourceSystemKind);
-
-				latestDefectArtifact.setTargetRepositoryId(targetRepositoryId);
-				latestDefectArtifact
-						.setTargetRepositoryKind(targetRepositoryKind);
-				latestDefectArtifact.setTargetSystemId(targetSystemId);
-				latestDefectArtifact.setTargetSystemKind(targetSystemKind);
-				latestDefectArtifact
-						.setLastReadTransactionId(thisTransactionId);
-
-				modifiedDefectArtifacts.add(latestDefectArtifact);
-			}
-
-		}
-		return modifiedDefectArtifacts;
-	}
-
-	public List<Object> getTxnIdAndAuDescription(String bugId, String txnId,
-			IConnection qcc) {
-
-		List<Object> txnIdAndAuDescription = new ArrayList<Object>();
-		String transactionId = new String();
-		List<String> attachmentNames = new ArrayList<String>();
-		String sql = "select AU_ACTION_ID, AU_DESCRIPTION from audit_log where au_entity_id = '"
-				+ bugId
-				+ "' and au_entity_type='BUG' and au_action_id > '"
-				+ txnId + "' order by au_action_id desc";
-		IRecordSet newRs = executeSQL(qcc, sql);
-		int newRc = newRs.getRecordCount();
-		log.info("In QCDefectHandler.getTxnIdAndAuDescription, sql=" + sql);
-		for (int newCnt = 0; newCnt < newRc; newCnt++, newRs.next()) {
-			if (newCnt == 0)
-				transactionId = newRs.getFieldValue("AU_ACTION_ID");
-			String auDescription = newRs.getFieldValue("AU_DESCRIPTION");
-			List<String> attachDescription = getAttachmentOperation(auDescription);
-			if (attachDescription != null && attachDescription.size() > 0) {
-				if (attachDescription.get(1) != null
-						&& attachDescription.get(1).equals("added"))
-					attachmentNames.add(attachDescription.get(2));
-			}
-		}
-		txnIdAndAuDescription.add((Object) transactionId);
-		txnIdAndAuDescription.add((Object) attachmentNames);
-
-		return txnIdAndAuDescription;
-	}
-
-	public List<String> getAttachmentOperation(String auDescription) {
-
-		List<String> attachDescription = new ArrayList<String>();
-		if (auDescription != null) {
-			int colonPosition = auDescription.indexOf(": ");
-			String attachLabelAndOperation = auDescription.substring(0,
-					colonPosition);
-			String crReference = auDescription.substring(colonPosition + 2,
-					auDescription.length());
-			/*
-			 * StringTokenizer st = new StringTokenizer(auDescription, ": ");
-			 * 
-			 * String attachLabelAndOperation = st.nextToken().trim(); String
-			 * crReference = st.nextToken().trim();
-			 */
-			StringTokenizer newSt = new StringTokenizer(
-					attachLabelAndOperation, " ");
-			String attachLabel = newSt.nextToken().trim();
-			attachDescription.add(attachLabel);
-			String operation = newSt.nextToken().trim();
-			attachDescription.add(operation);
-			attachDescription.add(crReference);
-
-			log.info(attachDescription);
-			if (operation.equals("added"))
-				return attachDescription;
-		}
-		return null;
-	}
-
 	public GenericArtifact getArtifactAction(
 			GenericArtifact latestDefectArtifact, IConnection qcc,
 			String actionId, int entityId, String lastReadTime) {
 
 		Date lastReadDate = DateUtil.parseQCDate(lastReadTime);
 		Date createdOn = getDefectCreatedDate(qcc, entityId);
-		if (createdOn.after(lastReadDate))
+		if (createdOn!=null && createdOn.after(lastReadDate))
 			latestDefectArtifact
 					.setArtifactAction(GenericArtifact.ArtifactActionValue.CREATE);
 		else
@@ -346,7 +179,7 @@ public class QCAttachmentHandler {
 		String sql = "SELECT AU_TIME FROM AUDIT_LOG WHERE AU_ENTITY_TYPE='BUG' AND AU_ENTITY_ID= '"
 				+ entityId + "'";
 		IRecordSet rs = executeSQL(qcc, sql);
-		String fieldName = new String();
+		String fieldName = null;
 		Date createdOn = new Date();
 		int rc = rs.getRecordCount();
 
@@ -356,7 +189,8 @@ public class QCAttachmentHandler {
 				break;
 			}
 		}
-		createdOn = DateUtil.parseQCDate(fieldName);
+		if(fieldName!=null)
+			createdOn = DateUtil.parseQCDate(fieldName);
 
 		return createdOn;
 	}
@@ -384,6 +218,7 @@ public class QCAttachmentHandler {
 	public GenericArtifact getGenericArtifactObjectOfAttachment(
 			IConnection qcc, String entityId, String attachmentName) {
 		long attachmentSize = 0;
+		String thisMimeType = null;
 		if (attachmentName != null)
 			genericArtifact = getSchemaAttachment(qcc, entityId, attachmentName);
 
@@ -391,12 +226,13 @@ public class QCAttachmentHandler {
 		IBug bug = bugFactory.getItem(entityId);
 
 		MimetypesFileTypeMap mimeType = new MimetypesFileTypeMap();
-		String thisMimeType = mimeType.getContentType(attachmentName);
+		if (attachmentName != null)
+			thisMimeType = mimeType.getContentType(attachmentName);
 		byte data[] = null;
 
 		String contentType = (String) genericArtifact
 				.getAllGenericArtifactFieldsWithSameFieldName(
-						"attachmentContentType").get(0).getFieldValue();
+						"attachmentType").get(0).getFieldValue().toString();
 		List<GenericArtifactField> allFields = genericArtifact
 				.getAllGenericArtifactFields();
 		int noOfFields = allFields.size();
@@ -407,7 +243,7 @@ public class QCAttachmentHandler {
 			thisField.setFieldDisplayName(thisField.getFieldName());
 			thisField.setFieldValueHasChanged(true);
 
-			if (contentType.equals("File")) {
+			if (contentType.equals("DATA")) {
 				thisField
 						.setFieldValueType(GenericArtifactField.FieldValueTypeValue.BASE64STRING);
 				try {
@@ -427,7 +263,7 @@ public class QCAttachmentHandler {
 				// attachmentName = "Unknown";
 			}
 
-			if (thisField.getFieldName().equals("attachmentName")) {
+			if (thisField.getFieldName().equals(AttachmentMetaData.getAttachmentName())) {
 				if(contentType.equals("File"))
 					thisField.setFieldValue(attachmentName);
 				else
@@ -435,12 +271,12 @@ public class QCAttachmentHandler {
 				thisField
 						.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
 			}
-			if (thisField.getFieldName().equals("attachmentSize")) {
+			if (thisField.getFieldName().equals(AttachmentMetaData.getAttachmentSize())) {
 				thisField.setFieldValue(attachmentSize);
 				thisField
 						.setFieldValueType(GenericArtifactField.FieldValueTypeValue.INTEGER);
 			}
-			if (thisField.getFieldName().equals("attachmentSourceUrl")) {
+			if (thisField.getFieldName().equals(AttachmentMetaData.getAttachmentSourceUrl())) {
 				if(contentType.equals("File"))
 					thisField.setFieldValue("Unknown");
 				else
@@ -448,13 +284,16 @@ public class QCAttachmentHandler {
 				thisField
 						.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
 			}
-			if (thisField.getFieldName().equals("attachmentType")) {
-				thisField.setFieldValue("Unknown");
-				thisField
-						.setFieldValueType(GenericArtifactField.FieldValueTypeValue.UNKNOWN);
-			}
-			if (thisField.getFieldName().equals("attachmentMIMEType")) {
+			if (thisField.getFieldName().equals(AttachmentMetaData.getAttachmentMimeType())) {
 				thisField.setFieldValue(thisMimeType);
+				thisField
+						.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
+			}
+			if (thisField.getFieldName().equals(AttachmentMetaData.getAttachmentValueIsNull())) {
+				if(data!=null)
+					thisField.setFieldValue(AttachmentMetaData.AttachmentValueIsNull.FALSE);
+				else
+					thisField.setFieldValue(AttachmentMetaData.AttachmentValueIsNull.TRUE);
 				thisField
 						.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
 			}
@@ -462,8 +301,10 @@ public class QCAttachmentHandler {
 			// thisField.setFieldValue(data);
 
 		}
-		if (data != null)
-			genericArtifact.setArtifactValue(data.toString());
+		if (data != null) {
+			log.info("Here is the data*****"+data.toString());
+			genericArtifact.setRawAttachmentData(data);
+		}
 		// Boolean attachmentSizeChecker =
 		// checkForAttachmentSize(allAttachments);
 		// if (attachmentSizeChecker == false)
@@ -490,12 +331,13 @@ public class QCAttachmentHandler {
 			String entityId, String attachmentName) {
 
 		GenericArtifact genericArtifact = new GenericArtifact();
+		String [] attachmentMetaData = AttachmentMetaData.getAttachmentMetaData();
 		if (attachmentName != null) {
 			List<String> attachmentIdAndType = QCDefectHandler.getFromTable(
 					qcc, entityId, attachmentName);
 			if (attachmentIdAndType != null) {
 				String attachmentId = attachmentIdAndType.get(0); // CR_REF_ID
-				String attachmentContentType = attachmentIdAndType.get(1); // CR_REF_TYPE
+				String attachmentType = attachmentIdAndType.get(1); // CR_REF_TYPE
 				String attachmentDescription = attachmentIdAndType.get(2); // CR_DESCRIPTION
 
 				for (int cnt = 0; cnt < attachmentMetaData.length; cnt++) {
@@ -504,19 +346,20 @@ public class QCAttachmentHandler {
 					field = genericArtifact.addNewField(
 							attachmentMetaData[cnt], attachmentMetaData[cnt],
 							GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
-					field
-							.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
-					if (attachmentMetaData[cnt].equals("attachmentContentType")) {
-						field.setFieldValue(attachmentContentType);
-						field
-								.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
+					
+					field.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
+					if (attachmentMetaData[cnt].equals(AttachmentMetaData.getAttachmentType())) {
+						if(attachmentType.equals("File"))
+							field.setFieldValue(AttachmentMetaData.AttachmentType.DATA);
+						else
+							field.setFieldValue(AttachmentMetaData.AttachmentType.LINK);
+						field.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
 					}
-					if (attachmentMetaData[cnt].equals("attachmentId")) {
+					if (attachmentMetaData[cnt].equals(AttachmentMetaData.getAttachmentId())) {
 						field.setFieldValue(attachmentId);
-						field
-								.setFieldValueType(GenericArtifactField.FieldValueTypeValue.INTEGER);
+						field.setFieldValueType(GenericArtifactField.FieldValueTypeValue.INTEGER);
 					}
-					if (attachmentMetaData[cnt].equals("attachmentDescription")) {
+					if (attachmentMetaData[cnt].equals(AttachmentMetaData.getAttachmentDescription())) {
 						field.setFieldValue(attachmentDescription);
 						field
 								.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
