@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import org.apache.commons.codec.binary.Base64;
+
 /**
  * 
  * This is the root element for every entity that is transported through the CCF
@@ -800,6 +802,19 @@ public class GenericArtifact {
 	public String getArtifactValue() {
 		// TODO: Do the Base64 conversion here or in GenericArtifactXMLHelper?
 		return artifactValue;
+	}
+
+	/**
+	 * @param attachmentValue the attachmentValue to set
+	 */
+	public void setRawAttachmentData(byte[] attachmentData) {
+		this.artifactValue = Base64.encodeBase64(attachmentData).toString();
+	}
+	/**
+	 * @return the fieldValue
+	 */
+	public String getRawAttachmentData() {
+		return Base64.decodeBase64(artifactValue.getBytes()).toString();
 	}
 
 	/**
