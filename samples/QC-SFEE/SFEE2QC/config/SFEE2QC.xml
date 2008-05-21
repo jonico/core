@@ -110,7 +110,7 @@
 			value="Synchronized by Connector user" />
 	</bean>
 	<bean id="SFEEEntityService"
-		class="com.collabnet.ccf.pi.sfee.v44.SFEEEntityService">
+		class="com.collabnet.ccf.core.EntityService">
 		<description>Reads the modified defects from SFEE</description>
 		<property name="username" value="connector" />
 		<property name="password" value="password" />
