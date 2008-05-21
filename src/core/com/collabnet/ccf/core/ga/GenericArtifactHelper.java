@@ -526,21 +526,25 @@ public class GenericArtifactHelper {
 			switch (fieldValueType) {
 			case BASE64STRING: {
 				// TODO Better conversion?
-				genericArtifactField.setFieldValue(new String(value));
+				genericArtifactField.setFieldValue(value);
 				break;
 			}
 			case BOOLEAN: {
-				genericArtifactField.setFieldValue(new Boolean(value));
+				genericArtifactField.setFieldValue(Boolean.valueOf(value));
 				break;
 			}
 			case DATE: {
 				GregorianCalendar cal = new GregorianCalendar();
-				cal.setTime(df.parse(value));
+				synchronized(df){
+					cal.setTime(df.parse(value));
+				}
 				genericArtifactField.setFieldValue(cal);
 				break;
 			}
 			case DATETIME: {
-				genericArtifactField.setFieldValue(df.parse(value));
+				synchronized(df){
+					genericArtifactField.setFieldValue(df.parse(value));
+				}
 				break;
 			}
 			case DOUBLE: {
@@ -549,28 +553,28 @@ public class GenericArtifactHelper {
 			}
 			case HTMLSTRING: {
 				// TODO Better conversion?
-				genericArtifactField.setFieldValue(new String(value));
+				genericArtifactField.setFieldValue(value);
 				break;
 			}
 			case INTEGER: {
 				// TODO Better conversion?
-				genericArtifactField.setFieldValue(new String(value));
+				genericArtifactField.setFieldValue(value);
 				break;
 			}
 			case STRING: {
-				genericArtifactField.setFieldValue(new String(value));
+				genericArtifactField.setFieldValue(value);
 				break;
 			}
 			case USER: {
-				genericArtifactField.setFieldValue(new String(value));
+				genericArtifactField.setFieldValue(value);
 				break;
 			}
 			case LIST: {
-				genericArtifactField.setFieldValue(new String(value));
+				genericArtifactField.setFieldValue(value);
 				break;
 			}
 			case MULTI_SELECT_LIST: {
-				genericArtifactField.setFieldValue(new String(value));
+				genericArtifactField.setFieldValue(value);
 				break;
 			}
 			}
@@ -1162,13 +1166,19 @@ public class GenericArtifactHelper {
 		} else {
 			addAttribute(field, FIELD_VALUE_IS_NULL, FIELD_VALUE_IS_NULL_FALSE);
 			if (fieldValue instanceof Date)
-				setValue(field, df.format((Date) fieldValue), false);
+				synchronized(df){
+					setValue(field, df.format((Date) fieldValue), false);
+				}
 			else if (fieldValue instanceof Calendar)
-				setValue(field, df.format(((Calendar) fieldValue).getTime()),
-						false);
+				synchronized(df){
+					setValue(field, df.format(((Calendar) fieldValue).getTime()),
+							false);
+				}
 			else if (fieldValue instanceof XMLGregorianCalendar)
-				setValue(field, df.format(((XMLGregorianCalendar) fieldValue)
-						.toGregorianCalendar().getTime()), false);
+				synchronized(df){
+					setValue(field, df.format(((XMLGregorianCalendar) fieldValue)
+							.toGregorianCalendar().getTime()), false);
+				}
 			else
 				setValue(field, fieldValue.toString(), false);
 		}
