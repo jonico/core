@@ -21,7 +21,6 @@ public class SFEEReaderTest extends TestCase {
     String password="password";
     String serverUrl="http://cu074.cubit.maa.collab.net:8080";
     String keepAlive = "true";
-    SFEEToGenericArtifactConverter artifactConverter = new SFEEToGenericArtifactConverter();
 	public void setUp() throws Exception {
 		super.setUp();
 		sfeeReader = new SFEEReader();
@@ -29,7 +28,6 @@ public class SFEEReaderTest extends TestCase {
 		sfeeReader.setPassword(password);
 		sfeeReader.setServerUrl(serverUrl);
 		sfeeReader.setKeepAlive(keepAlive);
-		sfeeReader.setArtifactConverter(artifactConverter);
 		sfeeReader.connect();
 		sfeeReader.validate(null);
 	}
@@ -44,7 +42,7 @@ public class SFEEReaderTest extends TestCase {
 		sfeeReader.readTrackerItems(projectTracker, lastModifiedDate, firstTimeImport, null);
 	}
 	
-	public void testCommentsList(){
+	public void te2stCommentsList(){
 		ISourceForgeSoap soapApp = sfeeReader.getMSfSoap();
 		try {
 			System.out.println(soapApp.getApiVersion());
@@ -64,7 +62,7 @@ public class SFEEReaderTest extends TestCase {
 		}
 	}
 	
-	public void testWriteAttachment(){
+	public void te2stWriteAttachment(){
 		
 		ISimpleFileStorageAppSoap fileStorageApp = (ISimpleFileStorageAppSoap) ClientSoapStubFactory.getSoapStub(
 				ISimpleFileStorageAppSoap.class, serverUrl);
@@ -86,7 +84,7 @@ public class SFEEReaderTest extends TestCase {
 		}
 	}
 	
-	public void testAttachmentsList(){
+	public void te2stAttachmentsList(){
 		ISourceForgeSoap soapApp = sfeeReader.getMSfSoap();
 		try {
 			
