@@ -39,6 +39,7 @@ import java.util.Map;
  * 
  * @author <a href="mailto:smachhau@users.sourceforge.net">Sebastian Machhausen</a>
  */
+@SuppressWarnings("unchecked")
 public class StringUtils {
 
 	
