@@ -11,7 +11,6 @@ import java.util.StringTokenizer;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.apache.commons.lang.StringUtils;
 
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactAttachment;
@@ -432,7 +431,7 @@ public class QCDefectHandler {
 		attachmentHandler = new QCAttachmentHandler();
 		int rc = 0;
 		String sql = "SELECT DISTINCT(AU_ENTITY_ID) FROM AUDIT_LOG WHERE AU_ENTITY_TYPE = 'BUG' AND AU_ACTION_ID > '"
-				+ transactionId + "'";
+				+ transactionId + "' AND AU_USER != '"+ connectorUser+ "' AND AU_FATHER_ID = '-1'";
 
 		log.info(sql);
 
@@ -448,6 +447,8 @@ public class QCDefectHandler {
 			String bugId = rs.getFieldValue("AU_ENTITY_ID");
 			List<Object> transactionIdAndAttachOperation = getTxnIdAndAuDescription(
 					bugId, transactionId, qcc);
+			if(transactionIdAndAttachOperation==null)
+				continue;
 			String thisTransactionId = (String) transactionIdAndAttachOperation
 					.get(0);
 			List<String> attachmentNames = (List<String>) transactionIdAndAttachOperation
@@ -482,6 +483,8 @@ public class QCDefectHandler {
 					GenericArtifact latestAttachmentArtifact = attachmentHandler
 							.getGenericArtifactObjectOfAttachment(qcc, bugId,
 									attachmentNames.get(attachCount));
+					if(latestAttachmentArtifact==null)
+						continue;
 					latestAttachmentArtifact = attachmentHandler
 							.getArtifactAction(latestAttachmentArtifact, qcc,
 									thisTransactionId, entityId, lastReadTime);
@@ -509,12 +512,11 @@ public class QCDefectHandler {
 			IConnection qcc) {
 
 		List<Object> txnIdAndAuDescription = new ArrayList<Object>();
-		//String transactionId = new String();
-		String transactionId = StringUtils.defaultString("");
+		String transactionId = null;
 		List<String> attachmentNames = new ArrayList<String>();
 		String sql = "select AU_ACTION_ID, AU_DESCRIPTION from audit_log where au_entity_id = '"
 				+ bugId
-				+ "' and au_entity_type='BUG' and au_action_id > '"
+				+ "' and au_entity_type='BUG' and au_father_id='-1' and au_action_id > '"
 				+ txnId + "' order by au_action_id desc";
 		IRecordSet newRs = executeSQL(qcc, sql);
 		int newRc = newRs.getRecordCount();
@@ -528,6 +530,8 @@ public class QCDefectHandler {
 				if (attachDescription.get(1) != null
 						&& attachDescription.get(1).equals("added"))
 					attachmentNames.add(attachDescription.get(2));
+				else
+					return null;
 			}
 		}
 		txnIdAndAuDescription.add((Object) transactionId);
@@ -562,7 +566,7 @@ public class QCDefectHandler {
 
 			for (int newCnt = 0; newCnt < newRc; newCnt++, newRs.next()) {
 				String fieldName = newRs.getFieldValue("AP_FIELD_NAME");
-				String oldFieldValue = new String();
+				String oldFieldValue = null;
 				if (!(fieldName.equals("BG_DESCRIPTION")))
 					oldFieldValue = newRs.getFieldValue("AP_OLD_VALUE");
 				else
@@ -684,9 +688,8 @@ public class QCDefectHandler {
 				.getAllGenericArtifactFieldsWithSameFieldName("BG_VTS");
 		Date lastReadDate = DateUtil.parseQCDate(lastReadTime);
 		Date createdOn = getDefectCreatedDate(qcc, entityId);
-		if (genArtifactFields != null && genArtifactFields.get(0) != null
-				&& genArtifactFields.get(0).getFieldValue() != null) {
-			if (!(genArtifactFields.get(0).getFieldValue().equals(""))) {
+		if (genArtifactFields != null && genArtifactFields.get(0) != null) {
+			if (genArtifactFields.get(0).getFieldValue()!=null) {
 				Date newBgVts = DateUtil.parseQCDate((String) genArtifactFields
 						.get(0).getFieldValue());
 				latestDefectArtifact.setArtifactLastModifiedDate(DateUtil
@@ -761,8 +764,8 @@ public class QCDefectHandler {
 		String sql = "SELECT AU_TIME FROM AUDIT_LOG WHERE AU_ENTITY_TYPE='BUG' AND AU_ENTITY_ID= '"
 				+ entityId + "'";
 		IRecordSet rs = executeSQL(qcc, sql);
-		String fieldName = new String();
-		Date createdOn = new Date();
+		String fieldName = null;
+		Date createdOn = null;
 		int rc = rs.getRecordCount();
 
 		for (int cnt = 0; cnt < rc; cnt++, rs.next()) {
@@ -771,7 +774,8 @@ public class QCDefectHandler {
 				break;
 			}
 		}
-		createdOn = DateUtil.parseQCDate(fieldName);
+		if(fieldName!=null)
+			createdOn = DateUtil.parseQCDate(fieldName);
 
 		return createdOn;
 	}
@@ -802,7 +806,7 @@ public class QCDefectHandler {
 		String sql = "SELECT CR_REF_ID, CR_REF_TYPE, CR_DESCRIPTION FROM CROS_REF WHERE CR_KEY_1='"
 				+ entityId + "' AND CR_REFERENCE= '" + attachmentName + "'";
 		IRecordSet newRs = executeSQL(qcc, sql);
-		if (newRs != null) {
+		if (newRs != null && newRs.getRecordCount()!=0) {
 			attachmentDetails = new ArrayList<String>();
 			String crRefId = newRs.getFieldValue("CR_REF_ID");
 			attachmentDetails.add(crRefId);
@@ -827,7 +831,7 @@ public class QCDefectHandler {
 
 		for (int newCnt = 0; newCnt < newRc; newCnt++, newRs.next()) {
 			String fieldName = newRs.getFieldValue("AP_FIELD_NAME");
-			String oldFieldValue = new String();
+			String oldFieldValue = null;
 			if (!(fieldName.equals("BG_DESCRIPTION")))
 				oldFieldValue = newRs.getFieldValue("AP_OLD_VALUE");
 			else
