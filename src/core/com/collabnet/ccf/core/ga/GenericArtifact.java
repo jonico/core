@@ -808,13 +808,13 @@ public class GenericArtifact {
 	 * @param attachmentValue the attachmentValue to set
 	 */
 	public void setRawAttachmentData(byte[] attachmentData) {
-		this.artifactValue = Base64.encodeBase64(attachmentData).toString();
+		this.artifactValue = new String(Base64.encodeBase64(attachmentData));
 	}
 	/**
 	 * @return the fieldValue
 	 */
 	public String getRawAttachmentData() {
-		return Base64.decodeBase64(artifactValue.getBytes()).toString();
+		return new String(Base64.decodeBase64(artifactValue.getBytes()));
 	}
 
 	/**
