@@ -104,7 +104,7 @@ public class QCAttachmentHandler {
 
 		int type = 0;
 		if (contentTypeValue
-				.equals("File")) {
+				.equals(AttachmentMetaData.AttachmentType.DATA.toString())) {
 			type = 1;
 			File attachmentFile = writeDataIntoFile(data, attachmentName);
 			try {
