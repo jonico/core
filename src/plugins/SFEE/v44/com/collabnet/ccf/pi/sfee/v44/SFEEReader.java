@@ -15,7 +15,6 @@ import org.dom4j.Document;
 import org.dom4j.Node;
 import org.openadaptor.core.IDataProcessor;
 
-import com.collabnet.ccf.core.db.DBHelper;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
@@ -40,12 +39,18 @@ public class SFEEReader extends SFEEConnectHelper implements
 	
 	private SFEEAttachmentHandler attachmentHandler = null;
 	
-	private IArtifactToGAConverter artifactConverter;
+	private SFEEToGenericArtifactConverter artifactConverter;
 	
-	private DBHelper dbHelper = new DBHelper();
-	
-	private String tracker = null;
-	
+	public SFEEReader() {
+	    super();
+	    artifactConverter = new SFEEToGenericArtifactConverter();
+	}
+
+    public SFEEReader(String id) {
+	    super(id);
+	    artifactConverter = new SFEEToGenericArtifactConverter();
+	}
+    
 	public Object[] process(Object data) {
 		if (!(data instanceof Document)) {
 			log.error("Supplied data not in the expected dom4j format: "+data);
@@ -81,19 +86,11 @@ public class SFEEReader extends SFEEConnectHelper implements
 			log.error("During the connection process to SFEE, an IO-Error occured", ex);
 			throw new RuntimeException(ex);
 		}
-		
+		String tracker = this.getSourceRepositoryId(document);
 		Object[] result=readTrackerItems(tracker,lastModifiedDate, firstTimeImport,document);
 		disconnect();
 		log.debug("Disconnected from SFEE");
 		return result;
-	}
-
-	public SFEEReader() {
-	    super();
-	}
-
-    public SFEEReader(String id) {
-	    super(id);
 	}
 
 	public Object getReaderContext() {
@@ -131,15 +128,23 @@ public class SFEEReader extends SFEEConnectHelper implements
 			throw new RuntimeException(e1);
 		}
 		// Now we load the history of each artifact that got changed
-		List<ArtifactSoapDO> artifactHistoryRows = appHandler.loadArtifactAuditHistory(artifactRows,
-				lastModifiedDate,getUsername(), trackerFields);
+		// List<ArtifactSoapDO> artifactHistoryRows = appHandler.loadArtifactAuditHistory(artifactRows,
+		//		lastModifiedDate,getUsername(), trackerFields);
+		List<ArtifactSoapDO> artifactHistoryRows = null;
 		TreeMap<Date, GenericArtifact> attachments = null;
-		try {
-			attachments = attachmentHandler.listAttachments(getSessionId(),
-					lastModifiedDate,getUsername(),artifactRows, this.getMSfSoap());
-		} catch (RemoteException e1) {
-			e1.printStackTrace();
-			throw new RuntimeException(e1);
+		if(artifactRows != null){
+			for(ArtifactSoapDO artifact:artifactRows){
+				appHandler.addComments(artifact,
+						lastModifiedDate,this.getUsername());
+			}
+			artifactHistoryRows = artifactRows;
+			try {
+				attachments = attachmentHandler.listAttachments(getSessionId(),
+						lastModifiedDate,getUsername(),artifactRows, this.getMSfSoap());
+			} catch (RemoteException e1) {
+				e1.printStackTrace();
+				throw new RuntimeException(e1);
+			}
 		}
 		
 		if (artifactHistoryRows == null && (attachments==null || attachments.size() == 0)) {
@@ -148,7 +153,11 @@ public class SFEEReader extends SFEEConnectHelper implements
 			if(artifactHistoryRows != null){
 				for(ArtifactSoapDO artifactRow:artifactHistoryRows)
 				{
-					GenericArtifact genericArtifact = artifactConverter.convert(artifactRow, trackerFields);
+					if(artifactRow.getCreatedBy().equals(this.getUsername())){
+						continue;
+					}
+					GenericArtifact genericArtifact = artifactConverter.convert(artifactRow, trackerFields, lastModifiedDate);
+					
 					if(dbDocument != null)
 						populateSrcAndDest(dbDocument, genericArtifact);
 					Document document = null;
@@ -166,7 +175,6 @@ public class SFEEReader extends SFEEConnectHelper implements
 					GenericArtifact ga = entry.getValue();
 					if(dbDocument != null){
 						populateSrcAndDest(dbDocument, ga);
-						ga.setArtifactAction(ArtifactActionValue.UPDATE);
 					}
 					Document document = null;
 					try {
@@ -184,24 +192,16 @@ public class SFEEReader extends SFEEConnectHelper implements
 	
 	private void populateSrcAndDest(Document dbDocument, GenericArtifact ga){
 		String sourceArtifactId = ga.getSourceArtifactId();
-		String sourceRepositoryId = dbHelper.getSourceRepositoryId(dbDocument);
-		String sourceRepositoryKind = dbHelper.getSourceRepositoryKind(dbDocument);
-		String sourceSystemId = dbHelper.getSourceSystemId(dbDocument);
-		String sourceSystemKind = dbHelper.getSourceSystemKind(dbDocument);
+		String sourceRepositoryId = this.getSourceRepositoryId(dbDocument);
+		String sourceRepositoryKind = this.getSourceRepositoryKind(dbDocument);
+		String sourceSystemId = this.getSourceSystemId(dbDocument);
+		String sourceSystemKind = this.getSourceSystemKind(dbDocument);
 		
-		String targetRepositoryId = dbHelper.getTargetRepositoryId(dbDocument);
-		String targetRepositoryKind = dbHelper.getTargetRepositoryKind(dbDocument);
-		String targetSystemId = dbHelper.getTargetSystemId(dbDocument);
-		String targetSystemKind = dbHelper.getTargetSystemKind(dbDocument);
-		String targetArtifactId = DBHelper.getTargetArtifactIdFromTable(sourceArtifactId,
-				sourceSystemId, sourceSystemKind, sourceRepositoryId, sourceRepositoryKind,
-				targetSystemId, targetSystemKind, targetRepositoryId, targetRepositoryKind);
-		if(StringUtils.isEmpty(targetArtifactId)){
-			ga.setArtifactAction(ArtifactActionValue.CREATE);
-		}
-		else {
-			ga.setArtifactAction(ArtifactActionValue.UPDATE);
-		}
+		String targetRepositoryId = this.getTargetRepositoryId(dbDocument);
+		String targetRepositoryKind = this.getTargetRepositoryKind(dbDocument);
+		String targetSystemId = this.getTargetSystemId(dbDocument);
+		String targetSystemKind = this.getTargetSystemKind(dbDocument);
+		
 		if(StringUtils.isEmpty(sourceArtifactId)){
 			List<GenericArtifactField> fields = ga.getAllGenericArtifactFieldsWithSameFieldName("Id");
 			for(GenericArtifactField field:fields){
@@ -231,7 +231,7 @@ public class SFEEReader extends SFEEConnectHelper implements
 
 	private String getLastModifiedDateString(Document document) {
 		// TODO Let the user specify this value?
-		String dbTime = dbHelper.getFromTime(document);
+		String dbTime = this.getFromTime(document);
 		if(!StringUtils.isEmpty(dbTime)){
 			java.sql.Timestamp ts = java.sql.Timestamp.valueOf(dbTime);
 			long time = ts.getTime();
@@ -248,24 +248,74 @@ public class SFEEReader extends SFEEConnectHelper implements
 			return null;
 		return node.getText();
 	}
+	
+	public String getToTime(Document document) {
+		Node node= document.selectSingleNode("//TO_TIME");
+		if (node==null)
+			return null;
+		return node.getText();
+	}
+
+	public String getFromTime(Document document) {
+		Node node= document.selectSingleNode("//FROM_TIME");
+		if (node==null)
+			return null;
+		return node.getText();
+	}
+
+	public String getSourceRepositoryId(Document document) {
+		Node node= document.selectSingleNode("//SOURCE_REPOSITORY_ID");
+		if (node==null)
+			return null;
+		return node.getText();
+	}
+	public String getSourceRepositoryKind(Document document) {
+		Node node= document.selectSingleNode("//SOURCE_REPOSITORY_KIND");
+		if (node==null)
+			return null;
+		return node.getText();
+	}
+
+	public String getSourceSystemId(Document document) {
+		Node node= document.selectSingleNode("//SOURCE_SYSTEM_ID");
+		if (node==null)
+			return null;
+		return node.getText();
+	}
+	public String getSourceSystemKind(Document document) {
+		Node node= document.selectSingleNode("//SOURCE_SYSTEM_KIND");
+		if (node==null)
+			return null;
+		return node.getText();
+	}
+
+	public String getTargetRepositoryId(Document document) {
+		Node node= document.selectSingleNode("//TARGET_REPOSITORY_ID");
+		if (node==null)
+			return null;
+		return node.getText();
+	}
+	public String getTargetRepositoryKind(Document document) {
+		Node node= document.selectSingleNode("//TARGET_REPOSITORY_KIND");
+		if (node==null)
+			return null;
+		return node.getText();
+	}
+
+	public String getTargetSystemId(Document document) {
+		Node node= document.selectSingleNode("//TARGET_SYSTEM_ID");
+		if (node==null)
+			return null;
+		return node.getText();
+	}
+	public String getTargetSystemKind(Document document) {
+		Node node= document.selectSingleNode("//TARGET_SYSTEM_KIND");
+		if (node==null)
+			return null;
+		return node.getText();
+	}
 
 	public void reset(Object context) {
-	}
-
-	public IArtifactToGAConverter getArtifactConverter() {
-		return artifactConverter;
-	}
-
-	public void setArtifactConverter(IArtifactToGAConverter artifactConverter) {
-		this.artifactConverter = artifactConverter;
-	}
-
-	public DBHelper getDbHelper() {
-		return dbHelper;
-	}
-
-	public void setDbHelper(DBHelper dbHelper) {
-		this.dbHelper = dbHelper;
 	}
 
 	public SFEEAttachmentHandler getAttachmentHandler() {
@@ -274,13 +324,5 @@ public class SFEEReader extends SFEEConnectHelper implements
 
 	public void setAttachmentHandler(SFEEAttachmentHandler attachmentHandler) {
 		this.attachmentHandler = attachmentHandler;
-	}
-
-	public String getTracker() {
-		return tracker;
-	}
-
-	public void setTracker(String tracker) {
-		this.tracker = tracker;
 	}
 }

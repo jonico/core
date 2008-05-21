@@ -5,12 +5,14 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dom4j.Document;
+import org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector;
+import org.openadaptor.auxil.connector.jdbc.writer.JDBCWriteConnector;
+import org.openadaptor.auxil.orderedmap.IOrderedMap;
+import org.openadaptor.auxil.orderedmap.OrderedHashMap;
 import org.openadaptor.core.IDataProcessor;
 import org.openadaptor.core.exception.NullRecordException;
 import org.openadaptor.core.exception.RecordFormatException;
-import org.openadaptor.core.exception.ValidationException;
 
-import com.collabnet.ccf.core.db.DBHelper;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 
@@ -23,7 +25,7 @@ import com.collabnet.ccf.core.ga.GenericArtifactHelper;
  * @author jnicolai
  * 
  */
-public class SFEEEntityService extends SFEEConnectHelper implements
+public class SFEEEntityService /*extends SFEEConnectHelper*/ implements
 		IDataProcessor {
 	/**
 	 * log4j logger instance
@@ -40,13 +42,19 @@ public class SFEEEntityService extends SFEEConnectHelper implements
 	 * If an artifact was lastly modified by this user and not just created, it
 	 * will be ignored to prevent endless update loops.
 	 */
-	private String synchronizationUser;
+	//private String synchronizationUser;
 
 	/**
 	 * field name that is used within SFEE to store the artifact id used in the
 	 * source (non-SFEE) system
 	 */
 	private String otherSystemInSFEETargetFieldname;
+	
+	private JDBCReadConnector entityServiceReader = null;
+	
+	private JDBCReadConnector entityServiceMappingIdReader = null;
+	
+	private JDBCWriteConnector entityServiceWriteConnector = null;
 
 	/**
 	 * SFEE tracker handler instance
@@ -103,8 +111,16 @@ public class SFEEEntityService extends SFEEConnectHelper implements
 		if(sourceArtifactId.equalsIgnoreCase("Unknown")){
 			return new Object[]{data};
 		}
-		
-		String targetArtifactIdFromTable = DBHelper.getTargetArtifactIdFromTable(sourceArtifactId, sourceSystemId, sourceSystemKind, sourceRepositoryId, sourceRepositoryKind, targetSystemId, targetSystemKind, targetRepositoryId, targetRepositoryKind);
+		String mappingId = lookupMappingId(sourceRepositoryId,
+				sourceRepositoryKind,
+				sourceSystemId,
+				sourceSystemKind,
+				targetRepositoryId,
+				targetRepositoryKind,
+				targetSystemId,
+				targetSystemKind);
+		String targetArtifactIdFromTable = lookupTargetArtifactId(sourceArtifactId,
+				mappingId);
 		
 		if(targetArtifactIdFromTable!=null && !(targetArtifactIdFromTable.equals("NEW")) && !(targetArtifactIdFromTable.equals("NULL"))) {
 	    	genericArtifact.setTargetArtifactId(targetArtifactIdFromTable);
@@ -115,9 +131,8 @@ public class SFEEEntityService extends SFEEConnectHelper implements
 //	    		//Send this artifact to HOSPITAL
 //	    	}
 //	    	if(genericArtifact.getArtifactAction().equals(GenericArtifact.ArtifactActionValue.CREATE)) {
-	    		Boolean insertStatus = DBHelper.insertRecordInTable(sourceArtifactId, sourceSystemId,
-	    				sourceSystemKind, sourceRepositoryId, sourceRepositoryKind, targetSystemId,
-	    				targetSystemKind, targetRepositoryId, targetRepositoryKind);
+	    		Boolean insertStatus = true;
+	    		this.createMapping(mappingId, sourceArtifactId, "NEW");
 	    		if(insertStatus){
 	    			log.debug("Artifact inserted into the mapping table");
 	    		}
@@ -138,6 +153,100 @@ public class SFEEEntityService extends SFEEConnectHelper implements
 	    Object[] result = {filledArtifactDocument};
 		return result;
 	}
+	
+	private String lookupMappingId(String sourceRepositoryId, String sourceRepositoryKind,
+			String sourceSystemId, String sourceSystemKind,
+			String targetRepositoryId, String targetRepositoryKind,
+			String targetSystemId, String targetSystemKind){
+		String mappingId = null;
+		IOrderedMap inputParameters = new OrderedHashMap();
+		inputParameters.add(sourceRepositoryId);
+		inputParameters.add(sourceRepositoryKind);
+		inputParameters.add(sourceSystemId);
+		inputParameters.add(sourceSystemKind);
+		inputParameters.add(targetRepositoryId);
+		inputParameters.add(targetRepositoryKind);
+		inputParameters.add(targetSystemId);
+		inputParameters.add(targetSystemKind);
+		
+		entityServiceMappingIdReader.connect();
+		Object[] resultSet = entityServiceMappingIdReader.next(inputParameters, 1000);
+		entityServiceMappingIdReader.disconnect();
+		
+		if(resultSet == null || resultSet.length == 0){
+			mappingId = null;
+		}
+		else if(resultSet.length == 1){
+			if(resultSet[0] instanceof OrderedHashMap){
+				OrderedHashMap result = (OrderedHashMap) resultSet[0];
+				if(result.size() == 1){
+					mappingId = result.get(0).toString();
+				}
+				else if(result.size() > 1){
+					log.warn("There are more than one mapping ids returned from the tables"
+							+" for source repository "+sourceRepositoryId
+							+" and target repository "+targetRepositoryId);
+				}
+				else {
+					mappingId = null;
+				}
+			}
+		}
+		else {
+			log.warn("There are more than one mapping ids returned from the tables"
+					+" for source repository "+sourceRepositoryId
+					+" and target repository "+targetRepositoryId);
+		}
+		
+		return mappingId;
+	}
+
+	private String lookupTargetArtifactId(String sourceArtifactId,
+			String mappingId) {
+		String targetArtifactId = null;
+		IOrderedMap inputParameters = new OrderedHashMap();
+		
+		inputParameters.add(sourceArtifactId);
+		inputParameters.add(mappingId);
+
+		entityServiceReader.connect();
+		Object[] resultSet = entityServiceReader.next(inputParameters, 1000);
+		entityServiceReader.disconnect();
+		
+		if(resultSet == null || resultSet.length == 0){
+			targetArtifactId = null;
+		}
+		else if(resultSet.length == 1){
+			if(resultSet[0] instanceof OrderedHashMap){
+				OrderedHashMap result = (OrderedHashMap) resultSet[0];
+				if(result.size() == 1){
+					targetArtifactId = result.get(0).toString();
+				}
+				else if(result.size() > 1){
+					log.warn("There are more than one target artifact ids returned from the table for "+sourceArtifactId);
+				}
+				else {
+					targetArtifactId = null;
+				}
+			}
+		}
+		else {
+			log.warn("There are more than one target artifact ids returned from the table for "+sourceArtifactId);
+		}
+		return targetArtifactId;
+	}
+	
+	private void createMapping(String mappingId, String sourceArtifactId, String targetArtifactId){
+		IOrderedMap inputParameters = new OrderedHashMap();
+		
+		inputParameters.add(0,"MAPPING_ID",mappingId);
+		inputParameters.add(1,"SOURCE_ARTIFACT_ID",sourceArtifactId);
+		inputParameters.add(2,"TARGET_ARTIFACT_ID",targetArtifactId);
+		IOrderedMap[] data = new IOrderedMap[]{inputParameters};
+		entityServiceWriteConnector.connect();
+		entityServiceWriteConnector.deliver(data);
+		entityServiceWriteConnector.disconnect();
+	}
 
 	/**
 	 * Reset the processor
@@ -145,49 +254,12 @@ public class SFEEEntityService extends SFEEConnectHelper implements
 	public void reset(Object context) {
 	}
 
-	/**
-	 * Set synchronization user
-	 * 
-	 * @param synchronizationUser
-	 *            see private attribute doc
-	 */
-	public void setSynchronizationUser(String synchronizationUser) {
-		this.synchronizationUser = synchronizationUser;
-	}
-
-	/**
-	 * Get synchronization user
-	 * 
-	 * @return see private attribute doc
-	 */
-	public String getSynchronizationUser() {
-		return synchronizationUser;
-	}
-
 	@SuppressWarnings("unchecked")
-	@Override
 	/**
 	 * Validate whether all mandatory properties are set correctly
 	 */
 	public void validate(List exceptions) {
-		super.validate(exceptions);
-		if (getSynchronizationUser() == null) {
-			log.error("synchronizationUser-property no set");
-			exceptions.add(new ValidationException(
-					"synchronizationUser-property not set", this));
-		}
-		if (getOtherSystemInSFEETargetFieldname() == null) {
-			log.error("otherSystemInSFEETargetFieldname-property not set");
-			exceptions.add(new ValidationException(
-					"otherSystemInSFEETargetFieldname not set", this));
-		}
-
-		if (getCreateToken() == null) {
-			log.error("createToken-property no set");
-			exceptions.add(new ValidationException(
-					"createToken-property not set", this));
-		}
-		// Create tracker handler
+		
 	}
 
 	/**
@@ -226,5 +298,31 @@ public class SFEEEntityService extends SFEEConnectHelper implements
 	 */
 	public String getCreateToken() {
 		return createToken;
+	}
+
+	public JDBCReadConnector getEntityServiceReader() {
+		return entityServiceReader;
+	}
+
+	public void setEntityServiceReader(JDBCReadConnector entityServiceReader) {
+		this.entityServiceReader = entityServiceReader;
+	}
+
+	public JDBCReadConnector getEntityServiceMappingIdReader() {
+		return entityServiceMappingIdReader;
+	}
+
+	public void setEntityServiceMappingIdReader(
+			JDBCReadConnector entityServiceMappingIdReader) {
+		this.entityServiceMappingIdReader = entityServiceMappingIdReader;
+	}
+
+	public JDBCWriteConnector getEntityServiceWriteConnector() {
+		return entityServiceWriteConnector;
+	}
+
+	public void setEntityServiceWriteConnector(
+			JDBCWriteConnector entityServiceWriteConnector) {
+		this.entityServiceWriteConnector = entityServiceWriteConnector;
 	}
 }

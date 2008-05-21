@@ -2,7 +2,8 @@ package com.collabnet.ccf.pi.sfee.v44;
 
 import java.io.IOException;
 import java.rmi.RemoteException;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
@@ -14,11 +15,12 @@ import org.openadaptor.core.exception.NullRecordException;
 import org.openadaptor.core.exception.RecordFormatException;
 import org.openadaptor.core.exception.ValidationException;
 
-import com.collabnet.ccf.core.db.DBHelper;
 import com.collabnet.ccf.core.ga.GenericArtifact;
-import com.collabnet.ccf.core.ga.GenericArtifactAttachment;
+import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
+import com.collabnet.ccf.core.utils.DateUtil;
+import com.collabnet.ccf.pi.sfee.v44.meta.ArtifactMetaData;
 import com.vasoftware.sf.soap44.webservices.sfmain.TrackerFieldSoapDO;
 import com.vasoftware.sf.soap44.webservices.tracker.ArtifactSoapDO;
 
@@ -64,11 +66,6 @@ public class SFEEWriter extends SFEEConnectHelper implements
 	 */
 	private String otherSystemVersionInSFEETargetFieldname;
 	
-	private IGAToArtifactConverter converter;
-	
-	private String tracker = null;
-	
-
 	private SFEEAttachmentHandler attachmentHandler;
 
 	/**
@@ -88,44 +85,37 @@ public class SFEEWriter extends SFEEConnectHelper implements
 			throw new RuntimeException(e2);
 		}
 		//String trackerId = ga.getTargetRepositoryId();
-		String sourceRepositoryId = ga.getSourceRepositoryId();
+		//String sourceRepositoryId = ga.getSourceRepositoryId();
 		String sourceArtifactId = ga.getSourceArtifactId();
-		String sourceSystemId = ga.getSourceSystemId();
-		String sourceSystemKind = ga.getSourceSystemKind();
-		String targetSystemId = ga.getTargetSystemId();
-		String targetSystemKind = ga.getTargetSystemKind();
-		String sourceRepositoryKind = ga.getSourceRepositoryKind();
-		String targetRepositoryKind = ga.getTargetRepositoryKind();
+//		String sourceSystemId = ga.getSourceSystemId();
+//		String sourceSystemKind = ga.getSourceSystemKind();
+//		String targetSystemId = ga.getTargetSystemId();
+//		String targetSystemKind = ga.getTargetSystemKind();
+//		String sourceRepositoryKind = ga.getSourceRepositoryKind();
+//		String targetRepositoryKind = ga.getTargetRepositoryKind();
 		String targetRepositoryId = ga.getTargetRepositoryId();
+		String targetArtifactId = ga.getTargetArtifactId();
+		String tracker = targetRepositoryId;
 		if(sourceArtifactId.equalsIgnoreCase("Unknown")){
 			return new Object[]{data};
 		}
-		String targetArtifactIdFromDB = DBHelper.getTargetArtifactIdFromTable(sourceArtifactId,
-				sourceSystemId, sourceSystemKind, sourceRepositoryId, sourceRepositoryKind,
-				targetSystemId, targetSystemKind, targetRepositoryId, targetRepositoryKind);
-		if(!SFEEGAHelper.containsSingleField(ga, "Id")){
-			SFEEGAHelper.addField(ga, "Id", getCreateToken(), "String");
+		
+
+		if(!SFEEGAHelper.containsSingleField(ga, ArtifactMetaData.SFEEFields.id.getFieldName())){
+			SFEEGAHelper.addField(ga, ArtifactMetaData.SFEEFields.id.getFieldName(), getCreateToken(), "String");
 		}
-		if(!StringUtils.isEmpty(targetArtifactIdFromDB)){
-			SFEEGAHelper.updateSingleField(ga, "Id", targetArtifactIdFromDB);
-			ga.setTargetArtifactId(targetArtifactIdFromDB);
+		if(!StringUtils.isEmpty(targetArtifactId)){
+			SFEEGAHelper.updateSingleField(ga, 
+					ArtifactMetaData.SFEEFields.id.getFieldName(), targetArtifactId);
+			ga.setTargetArtifactId(targetArtifactId);
 		}
-		if(SFEEGAHelper.containsSingleField(ga, "FolderId")){
-			SFEEGAHelper.updateSingleField(ga, "FolderId", tracker);
+		if(SFEEGAHelper.containsSingleField(ga, ArtifactMetaData.SFEEFields.folderId.getFieldName())){
+			SFEEGAHelper.updateSingleField(ga, ArtifactMetaData.SFEEFields.folderId.getFieldName(), tracker);
 		}
 		else {
-			SFEEGAHelper.addField(ga, "FolderId", tracker, "String");
+			SFEEGAHelper.addField(ga, ArtifactMetaData.SFEEFields.folderId.getFieldName(), tracker, "String");
 		}
-		TrackerFieldSoapDO[] flexFields = null;
-		try {
-			connect();
-			flexFields = trackerHandler.getFlexFields(getSessionId(), tracker);
-			disconnect();
-		} catch (RemoteException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
-		ArtifactSoapDO soapDoObj = (ArtifactSoapDO) converter.convert(ga, flexFields);
+
 		
 		Boolean duplicateArtifact = false;
 //			(Boolean) SFEEXMLHelper
@@ -153,134 +143,69 @@ public class SFEEWriter extends SFEEConnectHelper implements
 		
 
 		// check whether we should create or update the artifact
-		String id = (String) SFEEGAHelper.getSingleValue(ga, "Id");
+		String id = (String) SFEEGAHelper.getSingleValue(ga, ArtifactMetaData.SFEEFields.id.getFieldName());
 		ArtifactSoapDO result = null;
-		if ((StringUtils.isEmpty(id)) || SFEEGAHelper.getSingleValue(ga, "Id").equals(
-				"NEW")) {
-			// find out whether we should delete something, that is not even
-			// present here
-			if (deleteArtifact.booleanValue()) {
-				log
-						.warn("Cannot delete an artifact that is not even mirrored (yet): "
-								+ data.asXML());
-				return null;
-			}
-			connect();
-			// TODO apply a better type conversion concept here
-			try {
-
-				result = trackerHandler
-						.createArtifact(
-								getSessionId(),
-								soapDoObj.getFolderId(),
-								soapDoObj.getDescription(),
-								soapDoObj.getCategory(),
-								soapDoObj.getGroup(),
-								soapDoObj.getStatus(),
-								soapDoObj.getStatusClass(),
-								soapDoObj.getCustomer(),
-								soapDoObj.getPriority(),
-								soapDoObj.getEstimatedHours(),
-								soapDoObj.getActualHours(),
-								soapDoObj.getCloseDate(),
-								soapDoObj.getAssignedTo(),
-								soapDoObj.getReportedReleaseId(),
-								soapDoObj.getResolvedReleaseId(),
-								Arrays.asList(soapDoObj.getFlexFields().getNames()),
-								Arrays.asList(soapDoObj.getFlexFields().getValues()),
-								Arrays.asList(soapDoObj.getFlexFields().getTypes()),
-								soapDoObj.getTitle(),
-								// TODO - Don't know what these mean
-								getUpdateComment(),
-								getLastSynchronizedWithOtherSystemSFEETargetFieldname());
-
-				// update Id field after creating the artifact
-				String targetArtifactId = result.getId();
-				SFEEGAHelper.updateSingleField(ga, "Id", targetArtifactId);
-				ga.setTargetArtifactId(targetArtifactId);
-				DBHelper.updateTable(sourceArtifactId, sourceSystemId, sourceSystemKind,
-						sourceRepositoryId, sourceRepositoryKind, targetArtifactId, 
-						targetSystemId, targetSystemKind, targetRepositoryId, targetRepositoryKind);
-
-			} catch (NumberFormatException e) {
-				log.error("Wrong data format of attribute for artifact "
-						+ data.asXML(), e);
-				disconnect();
-				return null;
-			} catch (RemoteException e) {
-				log.error(
-						"Remote exception while trying to create new artifact: "
-								+ data.asXML(), e);
-				disconnect();
-				return null;
-			}
-		} else {
-			connect();
-			try {
+		if(ga.getArtifactType() != GenericArtifact.ArtifactTypeValue.ATTACHMENT){
+			if ((StringUtils.isEmpty(id)) || SFEEGAHelper.getSingleValue(ga, 
+					ArtifactMetaData.SFEEFields.id.getFieldName()).equals("NEW")) {
+				// find out whether we should delete something, that is not even
+				// present here
 				if (deleteArtifact.booleanValue()) {
-					trackerHandler.removeArtifact(getSessionId(),
-							soapDoObj.getId());
-				} else {
-					// update token or do conflict resolution
-					// TODO apply a better type conversion concept here
-					result = trackerHandler
-							.updateArtifact(
-									getSessionId(),
-									soapDoObj.getFolderId(),
-									soapDoObj.getDescription(),
-									soapDoObj.getCategory(),
-									soapDoObj.getGroup(),
-									soapDoObj.getStatus(),
-									soapDoObj.getStatusClass(),
-									soapDoObj.getCustomer(),
-									soapDoObj.getPriority(),
-									soapDoObj.getEstimatedHours(),
-									soapDoObj.getActualHours(),
-									soapDoObj.getCloseDate(),
-									soapDoObj.getAssignedTo(),
-									soapDoObj.getReportedReleaseId(),
-									soapDoObj.getResolvedReleaseId(),
-									Arrays.asList(soapDoObj.getFlexFields().getNames()),
-									Arrays.asList(soapDoObj.getFlexFields().getValues()),
-									Arrays.asList(soapDoObj.getFlexFields().getTypes()),
-									soapDoObj.getTitle(),
-									soapDoObj.getId(),
-									getUpdateComment(),
-									forceOverride);
-
-					if (result == null) {
-						// conflict resolution has decided in favor of the
-						// target copy
-						disconnect();
-						return new Object[0];
-					}
+					log
+							.warn("Cannot delete an artifact that is not even mirrored (yet): "
+									+ data.asXML());
+					return null;
 				}
-			} catch (NumberFormatException e) {
-				log.error("Wrong data format of attribute for artifact "
-						+ data.asXML(), e);
-				disconnect();
-				return null;
-			} catch (RemoteException e) {
-				// TODO Find a better way how to deal with stale updates
-				// (calling conflict resolution and trying it again?)
-				log.error(
-						"Remote exception while trying to update or delete artifact: "
-								+ data.asXML(), e);
-				disconnect();
-				return null;
+				connect();
+				// TODO apply a better type conversion concept here
+				try {
+	
+					result = this.createArtifact(ga, tracker);
+	
+					// update Id field after creating the artifact
+					targetArtifactId = result.getId();
+					SFEEGAHelper.updateSingleField(ga, ArtifactMetaData.SFEEFields.id.getFieldName(), targetArtifactId);
+					ga.setTargetArtifactId(targetArtifactId);
+				} catch (NumberFormatException e) {
+					log.error("Wrong data format of attribute for artifact "
+							+ data.asXML(), e);
+					return null;
+				} finally {
+					disconnect();
+				}
+			} else {
+				connect();
+				try {
+					if (deleteArtifact.booleanValue()) {
+	//					trackerHandler.removeArtifact(getSessionId(),
+	//							soapDoObj.getId());
+					} else {
+						// update token or do conflict resolution
+						// TODO apply a better type conversion concept here
+						result = this.updateArtifact(ga, tracker, forceOverride);
+						if (result == null) {
+							// conflict resolution has decided in favor of the
+							// target copy
+							disconnect();
+							return new Object[0];
+						}
+					}
+				} catch (NumberFormatException e) {
+					log.error("Wrong data format of attribute for artifact "
+							+ data.asXML(), e);
+					return null;
+				} finally {
+					disconnect();
+				}
 			}
 		}
-		if(result != null){
-			List<GenericArtifactAttachment> attachList = ga.getAllGenericArtifactAttachments();
-			if(attachList != null){
-				for(GenericArtifactAttachment att:attachList){
-					try {
-						attachmentHandler.handleAttachment(this.getSessionId(), att, result, this.getUsername());
-					} catch (RemoteException e) {
-						e.printStackTrace();
-						throw new RuntimeException(e);
-					}
-				}
+		else {
+			try {
+				attachmentHandler.handleAttachment(this.getSessionId(), ga,
+						targetArtifactId, this.getUsername());
+			} catch (RemoteException e) {
+				e.printStackTrace();
+				throw new RuntimeException(e);
 			}
 		}
 		Document document = null;
@@ -292,6 +217,157 @@ public class SFEEWriter extends SFEEConnectHelper implements
 		Object[] resultDocs = { document };
 		disconnect();
 		return resultDocs;
+	}
+	
+	private ArtifactSoapDO createArtifact(GenericArtifact ga, String tracker){
+		TrackerFieldSoapDO[] flexFields = null;
+		try {
+			connect();
+			flexFields = trackerHandler.getFlexFields(getSessionId(), tracker);
+			disconnect();
+		} catch (RemoteException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		ArrayList<String> flexFieldNames = new ArrayList<String>();
+		ArrayList<String> flexFieldTypes = new ArrayList<String>();
+		ArrayList<Object> flexFieldValues = new ArrayList<Object>();
+		if(flexFields != null) {
+			for(TrackerFieldSoapDO flexField: flexFields){
+				String fieldName = flexField.getName();
+				List<GenericArtifactField> gaFields = ga.getAllGenericArtifactFieldsWithSameFieldName(fieldName);
+				for(GenericArtifactField gaField:gaFields){
+					flexFieldNames.add(fieldName);
+					flexFieldTypes.add(flexField.getFieldType());
+					Object value = gaField.getFieldValue();
+					flexFieldValues.add(value);
+				}
+			}
+		}
+		String folderId = getStringGAField(ArtifactMetaData.SFEEFields.folderId, ga);
+		String description = SFEEWriter.getStringGAField(ArtifactMetaData.SFEEFields.description, ga);
+		String category = SFEEWriter.getStringGAField(ArtifactMetaData.SFEEFields.category, ga);
+		String group = SFEEWriter.getStringGAField(ArtifactMetaData.SFEEFields.group, ga);
+		String status = SFEEWriter.getStringGAField(ArtifactMetaData.SFEEFields.status, ga);
+		String statusClass = SFEEWriter.getStringGAField(ArtifactMetaData.SFEEFields.statusClass, ga);
+		String customer = SFEEWriter.getStringGAField(ArtifactMetaData.SFEEFields.customer, ga);
+		int priority = SFEEWriter.getIntGAField(ArtifactMetaData.SFEEFields.category, ga);
+		int estimatedHours = SFEEWriter.getIntGAField(ArtifactMetaData.SFEEFields.estimatedHours, ga);
+		int actualHours = SFEEWriter.getIntGAField(ArtifactMetaData.SFEEFields.actualHours, ga);
+		Date closeDate = SFEEWriter.getDateGAField(ArtifactMetaData.SFEEFields.closeDate, ga);
+		String assignedTo = SFEEWriter.getStringGAField(ArtifactMetaData.SFEEFields.assignedTo, ga);
+		String reportedReleaseId = SFEEWriter.getStringGAField(ArtifactMetaData.SFEEFields.reportedReleaseId, ga);
+		String resolvedReleaseId = SFEEWriter.getStringGAField(ArtifactMetaData.SFEEFields.resolvedReleaseId, ga);
+		String title = SFEEWriter.getStringGAField(ArtifactMetaData.SFEEFields.title, ga);
+		String[] comments = this.getComments(ga);
+		ArtifactSoapDO result = null;
+		try {
+			result = trackerHandler
+			.createArtifact(
+					getSessionId(),
+					folderId,
+					description,
+					category,
+					group,
+					status,
+					statusClass,
+					customer,
+					priority,
+					estimatedHours,
+					actualHours,
+					closeDate,
+					assignedTo,
+					reportedReleaseId,
+					resolvedReleaseId,
+					flexFieldNames,
+					flexFieldValues,
+					flexFieldTypes,
+					title,
+					// TODO - Don't know what these mean
+					comments,
+					getLastSynchronizedWithOtherSystemSFEETargetFieldname());
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return result;
+	}
+	
+	private ArtifactSoapDO updateArtifact(GenericArtifact ga, String tracker, boolean forceOverride){
+		TrackerFieldSoapDO[] flexFields = null;
+		try {
+			connect();
+			flexFields = trackerHandler.getFlexFields(getSessionId(), tracker);
+			disconnect();
+		} catch (RemoteException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		ArrayList<String> flexFieldNames = new ArrayList<String>();
+		ArrayList<String> flexFieldTypes = new ArrayList<String>();
+		ArrayList<Object> flexFieldValues = new ArrayList<Object>();
+		if(flexFields != null){
+			for(TrackerFieldSoapDO flexField: flexFields){
+				String fieldName = flexField.getName();
+				List<GenericArtifactField> gaFields = ga.getAllGenericArtifactFieldsWithSameFieldName(fieldName);
+				if(gaFields != null){
+					for(GenericArtifactField gaField:gaFields){
+						flexFieldNames.add(fieldName);
+						flexFieldTypes.add(flexField.getFieldType());
+						Object value = gaField.getFieldValue();
+						flexFieldValues.add(value);
+					}
+				}
+			}
+		}
+		String id = getStringGAField(ArtifactMetaData.SFEEFields.id, ga);
+		String folderId = getStringGAField(ArtifactMetaData.SFEEFields.folderId, ga);
+		String description = this.getStringGAField(ArtifactMetaData.SFEEFields.description, ga);
+		String category = this.getStringGAField(ArtifactMetaData.SFEEFields.category, ga);
+		String group = this.getStringGAField(ArtifactMetaData.SFEEFields.group, ga);
+		String status = this.getStringGAField(ArtifactMetaData.SFEEFields.status, ga);
+		String statusClass = this.getStringGAField(ArtifactMetaData.SFEEFields.statusClass, ga);
+		String customer = this.getStringGAField(ArtifactMetaData.SFEEFields.customer, ga);
+		int priority = this.getIntGAField(ArtifactMetaData.SFEEFields.priority, ga);
+		int estimatedHours = this.getIntGAField(ArtifactMetaData.SFEEFields.estimatedHours, ga);
+		int actualHours = this.getIntGAField(ArtifactMetaData.SFEEFields.actualHours, ga);
+		Date closeDate = this.getDateGAField(ArtifactMetaData.SFEEFields.closeDate, ga);
+		String assignedTo = this.getStringGAField(ArtifactMetaData.SFEEFields.assignedTo, ga);
+		String reportedReleaseId = this.getStringGAField(ArtifactMetaData.SFEEFields.reportedReleaseId, ga);
+		String resolvedReleaseId = this.getStringGAField(ArtifactMetaData.SFEEFields.resolvedReleaseId, ga);
+		String title = this.getStringGAField(ArtifactMetaData.SFEEFields.title, ga);
+		String[] comments = this.getComments(ga);
+		ArtifactSoapDO result = null;
+		try {
+			result = trackerHandler
+			.updateArtifact(
+					getSessionId(),
+					folderId,
+					description,
+					category,
+					group,
+					status,
+					statusClass,
+					customer,
+					priority,
+					estimatedHours,
+					actualHours,
+					closeDate,
+					assignedTo,
+					reportedReleaseId,
+					resolvedReleaseId,
+					flexFieldNames,
+					flexFieldValues,
+					flexFieldTypes,
+					title,
+					id,
+					comments,
+					forceOverride);
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return result;
 	}
 
 	@Override
@@ -381,6 +457,88 @@ public class SFEEWriter extends SFEEConnectHelper implements
 	 */
 	public void reset(Object context) {
 	}
+	
+	public static GenericArtifactField getGAField(String name, GenericArtifact ga){
+		List<GenericArtifactField> gaFields = ga.getAllGenericArtifactFieldsWithSameFieldName(name);
+		if(gaFields == null || gaFields.size() == 0){
+			return null;
+		}
+		else if(gaFields.size() == 1){
+			GenericArtifactField field = gaFields.get(0);
+			return field;
+		}
+		else {
+			throw new RuntimeException("This should never be the case");
+		}
+	}
+	
+	public static String getStringGAField(ArtifactMetaData.SFEEFields field, GenericArtifact ga){
+		String fieldValue = SFEEWriter.getStringGAField(field.getFieldName(), ga);
+		return fieldValue;
+	}
+	
+	public static String getStringGAField(String fieldName, GenericArtifact ga){
+		String fieldValue = null;
+		GenericArtifactField gaField = SFEEWriter.getGAField(fieldName, ga);
+		if(gaField != null){
+			fieldValue = (String) gaField.getFieldValue();
+		}
+		return fieldValue;
+	}
+	
+	public static int getIntGAField(ArtifactMetaData.SFEEFields field, GenericArtifact ga){
+		int fieldValue = 0;
+		GenericArtifactField gaField = SFEEWriter.getGAField(field.getFieldName(), ga);
+		if(gaField != null){
+			Object fieldValueObj = gaField.getFieldValue();
+			if(fieldValueObj instanceof String){
+				String fieldValueString = (String) fieldValueObj;
+				fieldValue = Integer.parseInt(fieldValueString);
+			}
+			else if(fieldValueObj instanceof Integer){
+				fieldValue = ((Integer) fieldValueObj).intValue();
+			}
+		}
+		return fieldValue;
+	}
+	
+	public static Date getDateGAField(ArtifactMetaData.SFEEFields field, GenericArtifact ga){
+		Date fieldValue = null;
+		GenericArtifactField gaField = SFEEWriter.getGAField(field.getFieldName(), ga);
+		if(gaField != null){
+			Object fieldValueObj = gaField.getFieldValue();
+			if(fieldValueObj instanceof String){
+				String fieldValueString = (String) fieldValueObj;
+				fieldValue = DateUtil.parse(fieldValueString);
+			}
+			else if(fieldValueObj instanceof Date){
+				fieldValue = (Date) fieldValueObj;
+			}
+		}
+		return fieldValue;
+	}
+	
+	private String[] getComments(GenericArtifact ga){
+		String[] comments = null;
+		List<GenericArtifactField> gaFields = 
+			ga.getAllGenericArtifactFieldsWithSameFieldName(ArtifactMetaData.SFEEFields.commentText.getFieldName());
+		int commentsSize = 0;
+		if(gaFields != null){
+			commentsSize = gaFields.size();
+		}
+		if(commentsSize == 0){
+			comments = new String[]{this.getUpdateComment()};
+		}
+		else {
+			comments = new String[commentsSize];
+			for(int i=0; i < commentsSize; i++){
+				GenericArtifactField field = gaFields.get(i);
+				String comment = (String) field.getFieldValue();
+				comments[i] = comment;
+			}
+		}
+		return comments;
+	}
 
 	/**
 	 * Set the update comment
@@ -439,21 +597,5 @@ public class SFEEWriter extends SFEEConnectHelper implements
 	 */
 	public String getLastSynchronizedWithOtherSystemSFEETargetFieldname() {
 		return lastSynchronizedWithOtherSystemSFEETargetFieldname;
-	}
-
-	public IGAToArtifactConverter getConverter() {
-		return converter;
-	}
-
-	public void setConverter(IGAToArtifactConverter converter) {
-		this.converter = converter;
-	}
-
-	public String getTracker() {
-		return tracker;
-	}
-
-	public void setTracker(String tracker) {
-		this.tracker = tracker;
 	}
 }

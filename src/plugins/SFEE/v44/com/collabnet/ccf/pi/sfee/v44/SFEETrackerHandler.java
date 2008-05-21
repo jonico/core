@@ -146,19 +146,21 @@ public class SFEETrackerHandler {
 		 */
 		log.debug("Getting the details of the changed artifacts");
 		boolean duplicateFound = false;
-		for (int i = 0; i < rows.length; ++i) {
-			String id = rows[i].getId();
-//			if (id.equals(lastArtifactId)
-//					&& lastArtifactVersion == rows[i].getVersion()) {
-//				duplicateFound = true;
-//			} else {
-				ArtifactSoapDO artifactData = mTrackerApp.getArtifactData(
-						sessionID, id);
-				if (duplicateFound) {
-					detailRowsNew.add(artifactData);
-				}
-				detailRowsFull.add(artifactData);
-//			}
+		if(rows != null) {
+			for (int i = 0; i < rows.length; ++i) {
+				String id = rows[i].getId();
+	//			if (id.equals(lastArtifactId)
+	//					&& lastArtifactVersion == rows[i].getVersion()) {
+	//				duplicateFound = true;
+	//			} else {
+					ArtifactSoapDO artifactData = mTrackerApp.getArtifactData(
+							sessionID, id);
+					if (duplicateFound) {
+						detailRowsNew.add(artifactData);
+					}
+					detailRowsFull.add(artifactData);
+	//			}
+			}
 		}
 		if (!duplicateFound)
 			return detailRowsFull;
@@ -240,7 +242,7 @@ public class SFEETrackerHandler {
 			String assignedTo, String reportedReleaseId,
 			String resolvedReleaseId, List<String> flexFieldNames,
 			List<Object> flexFieldValues, List<String> flexFieldTypes,
-			String title, String comment,
+			String title, String[] comments,
 			String lastSynchronizedWithOtherSystemSFEETargetFieldname)
 			throws RemoteException {
 
@@ -285,9 +287,10 @@ public class SFEETrackerHandler {
 		newFlexFields.setValues(flexFieldValues.toArray());
 		newFlexFields.setTypes(flexFieldTypes.toArray(new String[0]));
 		artifactData.setFlexFields(newFlexFields);
-
-		mTrackerApp.setArtifactData(sessionId, artifactData, comment, null,
-				null, null);
+		for(String comment:comments){
+			mTrackerApp.setArtifactData(sessionId, artifactData, comment, null,
+					null, null);
+		}
 		log.info("Artifact created: " + artifactData.getId());
 		return artifactData;
 	}
@@ -306,7 +309,7 @@ public class SFEETrackerHandler {
 			String assignedTo, String reportedReleaseId,
 			String resolvedReleaseId, List<String> flexFieldNames,
 			List<Object> flexFieldValues, List<String> flexFieldTypes,
-			String title, String Id, String comment,
+			String title, String Id, String[] comments,
 //			String lastSynchronizedWithOtherSystemSFEETargetFieldname,
 //			String otherSystemVersion,
 //			String otherSystemVersionFieldName,
@@ -459,8 +462,10 @@ public class SFEETrackerHandler {
 				artifactData.setStatusClass(statusClass);
 				artifactData.setCloseDate(closeDate);
 				artifactData.setResolvedReleaseId(resolvedReleaseId);
-				mTrackerApp.setArtifactData(sessionId, artifactData, comment,
-						null, null, null);
+				for(String comment:comments){
+					mTrackerApp.setArtifactData(sessionId, artifactData, comment, null,
+							null, null);
+				}
 			} catch (com.vasoftware.sf.soap44.fault.VersionMismatchFault e) {
 				if (forceOverride) {
 					log.warn("Stale update, trying again ...:", e);

@@ -63,11 +63,17 @@ public class SFEEGAHelper {
 		          result = new Integer(value);
 	        else if ("Long".equalsIgnoreCase(type))
 	          result = new Long(value);
-	        else if ("DateTime".equalsIgnoreCase(type))
-	          result = df .parse(value);
+	        else if ("DateTime".equalsIgnoreCase(type)){
+	        	synchronized(df){
+	        		result = df.parse(value);
+	        	}
+	        }
 	        else if ("Date".equalsIgnoreCase(type)) {
 	        	GregorianCalendar cal=new GregorianCalendar();
-	        	cal.setTime(df.parse(value));
+	        	synchronized(df){
+		        	Date date = df.parse(value);
+		        	cal.setTime(date);
+	        	}
 	        	result=cal;
 	        }
 	        else if ("Time".equalsIgnoreCase(type)){
@@ -78,9 +84,9 @@ public class SFEEGAHelper {
 	        	result = cal;
 	        }
 	        else if ("Boolean".equalsIgnoreCase(type))
-		          result = new Boolean(value);
+		          result = Boolean.valueOf(value);
 	        else if ("User".equalsIgnoreCase(type))
-		          result = new String(value);
+		          result = value;
 	        else if (!"String".equalsIgnoreCase(type))
 	          throw new RecordFormatException("Type "+type+" unknown to XMLTypeConverter");
 	      } catch (ParseException pe) {

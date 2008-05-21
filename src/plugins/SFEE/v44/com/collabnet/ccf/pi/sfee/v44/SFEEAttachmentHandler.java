@@ -9,8 +9,11 @@ import java.util.TreeMap;
 
 import javax.activation.DataHandler;
 
+import org.apache.commons.codec.binary.Base64;
+
+import com.collabnet.ccf.core.ga.AttachmentMetaData;
 import com.collabnet.ccf.core.ga.GenericArtifact;
-import com.collabnet.ccf.core.ga.GenericArtifactAttachment;
+import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.utils.DateUtil;
 import com.vasoftware.sf.soap44.webservices.ClientSoapStubFactory;
 import com.vasoftware.sf.soap44.webservices.filestorage.IFileStorageAppSoap;
@@ -57,7 +60,7 @@ public class SFEEAttachmentHandler {
 	 *             when an error is encountered in creating the artifact.
 	 * @return Newly created artifact
 	 */
-	public ArtifactSoapDO attachFileToArtifact(String sessionId, ArtifactSoapDO artifact,
+	public void attachFileToArtifact(String sessionId, String artifactId,
 						String comment, String fileName, String mimeType, byte[] data)
 			throws RemoteException {
 		
@@ -66,59 +69,74 @@ public class SFEEAttachmentHandler {
 		fileStorageApp.write(sessionId, fileDescriptor, data);
 		fileStorageApp.endFileUpload(sessionId, fileDescriptor);
 			
-		ArtifactSoapDO soapDo = mTrackerApp.getArtifactData(sessionId, artifact.getId());
+		ArtifactSoapDO soapDo = mTrackerApp.getArtifactData(sessionId, artifactId);
 		mTrackerApp.setArtifactData(sessionId, soapDo, comment,
 					fileName, mimeType, fileDescriptor);
-		return artifact;
 	}
 	public byte[] getAttachmentData(String sessionId, String fileId, long size, String folderId) throws RemoteException{
 		DataHandler dataHandler = fileStorageSoapApp.downloadFileDirect(sessionId, folderId, fileId);
 		byte[] data = null;
+		BufferedInputStream is = null;
 		try {
-			BufferedInputStream is = new BufferedInputStream(dataHandler.getInputStream());
-			 data = new byte[(int)size];
-			is.read(data);
+			is = new BufferedInputStream(dataHandler.getInputStream());
+			//TODO not a safe cast here...
+			data = new byte[(int)size];
+			int readLength = is.read(data);
+			if(readLength == size){
+				//Good that we read all the data
+			}
+			else {
+				//TODO something wrong
+			}
 		} catch (IOException e) {
 			throw new RuntimeException(e);
+		} finally {
+			if(is != null){
+				try {
+					is.close();
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					// Let me digest this
+					e.printStackTrace();
+				}
+			}
 		}
 		return data;
 	}
-	public void handleAttachment(String sessionId, GenericArtifactAttachment att, ArtifactSoapDO artifact, String userName) throws RemoteException {
-		GenericArtifactAttachment.AttachmentContentTypeValue contentType =
-			att.getAttachmentContentType();
-		String attachDescription = att.getAttachmentDescription();
-		//String attachmentId = att.getAttachmentId();
-		String attachmentName = att.getAttachmentName();
+	public void handleAttachment(String sessionId, GenericArtifact att, String artifactId, String userName) throws RemoteException {
+		String contentType = SFEEWriter.getStringGAField(AttachmentMetaData.ATTACHMENT_TYPE, att);
+		String attachDescription = SFEEWriter.getStringGAField(AttachmentMetaData.ATTACHMENT_DESCRIPTION, att);
+		String attachmentMimeType = SFEEWriter.getStringGAField(AttachmentMetaData.ATTACHMENT_MIME_TYPE, att);
+		String attachmentName = SFEEWriter.getStringGAField(AttachmentMetaData.ATTACHMENT_NAME, att);
 		attachmentName = userName + "_" + attachmentName;
-		//long size = att.getAttachmentSize();
-		String attachmentURL = att.getAttachmentSourceUrl();
-		//String attachmentType = att.getAttachmentType();
-		//GenericArtifactAttachment.AttachmentValueTypeValue valueType = att.getAttachmentValueType();
-		byte[] data = att.getRawAttachmentData();
-		GenericArtifactAttachment.AttachmentActionValue attAction = att.getAttachmentAction();
-		if(attAction == GenericArtifactAttachment.AttachmentActionValue.CREATE){
-			if(contentType == GenericArtifactAttachment.AttachmentContentTypeValue.DATA){
-				this.attachFileToArtifact(sessionId, artifact, attachDescription,
-						attachmentName, att.getMimeType(), data);
+		String attachmentURL = SFEEWriter.getStringGAField(AttachmentMetaData.ATTACHMENT_SOURCE_URL, att);
+		byte[] data = Base64.decodeBase64(att.getArtifactValue().getBytes());
+		GenericArtifact.ArtifactActionValue attAction = att.getArtifactAction();
+		if(attAction == GenericArtifact.ArtifactActionValue.CREATE){
+			if(AttachmentMetaData.AttachmentType.valueOf(contentType) ==
+				AttachmentMetaData.AttachmentType.DATA){
+				this.attachFileToArtifact(sessionId, artifactId, attachDescription,
+						attachmentName, attachmentMimeType, data);
 			}
-			else if(contentType == GenericArtifactAttachment.AttachmentContentTypeValue.LINK){
-				this.attachFileToArtifact(sessionId, artifact, attachDescription,
-						attachmentName+"link.txt", GenericArtifactAttachment.TEXT_PLAIN, attachmentURL.getBytes());
+			else if(AttachmentMetaData.AttachmentType.valueOf(contentType) ==
+				AttachmentMetaData.AttachmentType.LINK){
+				this.attachFileToArtifact(sessionId, artifactId, attachDescription,
+						attachmentName+"link.txt", AttachmentMetaData.TEXT_PLAIN, attachmentURL.getBytes());
 			}
-			else if(contentType == GenericArtifactAttachment.AttachmentContentTypeValue.EMPTY){
+			else if(AttachmentMetaData.AttachmentType.valueOf(contentType) == AttachmentMetaData.AttachmentType.EMPTY){
 				//TODO What should I do now?
 			}
-			else if(contentType == GenericArtifactAttachment.AttachmentContentTypeValue.UNKNOWN){
-				//TODO What should I do now?
-			}
+//			else if(contentType == AttachmentMetaData.AttachmentType.UNKNOWN){
+//				//TODO What should I do now?
+//			}
 		}
-		else if(attAction == GenericArtifactAttachment.AttachmentActionValue.DELETE){
+		else if(attAction == GenericArtifact.ArtifactActionValue.DELETE){
 			//TODO not implemented
 		}
-		else if(attAction == GenericArtifactAttachment.AttachmentActionValue.RENAME){
-			//TODO not implemented
-		}
-		else if(attAction == GenericArtifactAttachment.AttachmentActionValue.UNKNOWN){
+//		else if(attAction == GenericArtifact.ArtifactActionValue.RENAME){
+//			//TODO not implemented
+//		}
+		else if(attAction == GenericArtifact.ArtifactActionValue.UNKNOWN){
 			//TODO What should be done if attachment action value is unknown
 			System.out.println("What shout I do now?");
 		}
@@ -141,32 +159,54 @@ public class SFEEAttachmentHandler {
 				Date createdDate = row.getDateCreated();
 				if(createdDate.after(lastModifiedDate)){
 					GenericArtifact ga = new GenericArtifact();
-					ga.setArtifactAction(GenericArtifact.ArtifactActionValue.UPDATE);
+					ga.setArtifactAction(GenericArtifact.ArtifactActionValue.CREATE);
 					ga.setArtifactLastModifiedDate(DateUtil.format(createdDate));
 					ga.setArtifactMode(GenericArtifact.ArtifactModeValue.CHANGEDFIELDSONLY);
 					ga.setArtifactType(GenericArtifact.ArtifactTypeValue.ATTACHMENT);
 					ga.setSourceArtifactId(artifactId);
+					GenericArtifactField contentTypeField = 
+						ga.addNewField(AttachmentMetaData.ATTACHMENT_TYPE, AttachmentMetaData.ATTACHMENT_TYPE,
+								GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
+					contentTypeField.setFieldValue(AttachmentMetaData.AttachmentType.DATA);
+					contentTypeField.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
+					contentTypeField.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
+					GenericArtifactField sourceURLField = 
+						ga.addNewField(AttachmentMetaData.ATTACHMENT_SOURCE_URL, AttachmentMetaData.ATTACHMENT_SOURCE_URL,
+								GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
+					sourceURLField.setFieldValue(AttachmentMetaData.AttachmentType.LINK);
+					sourceURLField.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
+					sourceURLField.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
+					//gaAttachment.setAttachmentAction(GenericArtifactAttachment.AttachmentActionValue.CREATE);
 					
-					GenericArtifactAttachment gaAttachment = new GenericArtifactAttachment();
-					gaAttachment.setAttachmentAction(GenericArtifactAttachment.AttachmentActionValue.CREATE);
-					gaAttachment.setAttachmentContentType(GenericArtifactAttachment.AttachmentContentTypeValue.DATA);
-					gaAttachment.setAttachmentDescription(row.getFileName());
-					gaAttachment.setAttachmentId(row.getAttachmentId());
-					gaAttachment.setAttachmentName(row.getFileName());
-					
-					gaAttachment.setAttachmentSize(Long.parseLong(row.getFileSize()));
+					GenericArtifactField nameField = ga.addNewField(AttachmentMetaData.ATTACHMENT_NAME, AttachmentMetaData.ATTACHMENT_NAME,
+							GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
+					nameField.setFieldValue(row.getFileName());
+					nameField.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
+					nameField.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
+					//gaAttachment.setAttachmentDescription(row.getFileName());
+					GenericArtifactField idField = ga.addNewField(AttachmentMetaData.ATTACHMENT_ID, AttachmentMetaData.ATTACHMENT_ID,
+							GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
+					idField.setFieldValue(row.getAttachmentId());
+					idField.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
+					idField.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
+					GenericArtifactField sizeField = ga.addNewField(AttachmentMetaData.ATTACHMENT_SIZE, AttachmentMetaData.ATTACHMENT_SIZE,
+							GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
+					sizeField.setFieldValue(Long.parseLong(row.getFileSize()));
+					sizeField.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
+					sizeField.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
 					//gaAttachment.setAttachmentType();
-					gaAttachment.setAttachmentValueHasChanged(true);
-					gaAttachment.setAttachmentValueType(GenericArtifactAttachment.AttachmentValueTypeValue.BASE64STRING);
-					gaAttachment.setMimeType(row.getMimetype());
+
+					GenericArtifactField mimeTypeField = ga.addNewField(AttachmentMetaData.ATTACHMENT_MIME_TYPE, AttachmentMetaData.ATTACHMENT_MIME_TYPE,
+							GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
+					mimeTypeField.setFieldValue(row.getMimetype());
+					mimeTypeField.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
 					System.out.println(row.getAttachmentId()+" "+
 							row.getRawFileId()+" "+
 							row.getStoredFileId());
 					byte[] attachmentData = null;
 					 attachmentData = this.getAttachmentData(sessionId, row.getRawFileId(),
 							Long.parseLong(row.getFileSize()), artifactId);
-					gaAttachment.setRawAttachmentData(attachmentData);
-					ga.addNewAttachment(gaAttachment);
+					ga.setArtifactValue(new String(Base64.encodeBase64(attachmentData)));
 					attachmentGAs.put(createdDate, ga);
 				}
 			}
