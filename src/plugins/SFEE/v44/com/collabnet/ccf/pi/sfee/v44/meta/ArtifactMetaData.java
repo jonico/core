@@ -4,7 +4,9 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 
 import com.collabnet.ccf.core.ga.GenericArtifactField.FieldValueTypeValue;
+import com.vasoftware.sf.soap44.types.SoapFieldValues;
 import com.vasoftware.sf.soap44.webservices.sfmain.TrackerFieldSoapDO;
+import com.vasoftware.sf.soap44.webservices.tracker.ArtifactSoapDO;
 
 public class ArtifactMetaData {
 	public enum FIELD_INPUT_TYPE {
@@ -28,48 +30,55 @@ public class ArtifactMetaData {
 	}
 	
 	public enum SFEEFields {
-		id("id", FIELD_TYPE.SYSTEM_DEFINED, FIELD_INPUT_TYPE.TEXT, FIELD_VALUE_TYPE.STRING),
-		actualHours("actualHours",FIELD_TYPE.CONFIGURABLE,FIELD_INPUT_TYPE.TEXT, FIELD_VALUE_TYPE.INTEGER),
-		assignedTo("assignedTo", FIELD_TYPE.SYSTEM_DEFINED, FIELD_INPUT_TYPE.SINGLE_SELECT, FIELD_VALUE_TYPE.USER),
-		lastModifiedBy("lastModifiedBy", FIELD_TYPE.SYSTEM_DEFINED, FIELD_INPUT_TYPE.TEXT, FIELD_VALUE_TYPE.USER),
-		createdBy("createdBy", FIELD_TYPE.SYSTEM_DEFINED, FIELD_INPUT_TYPE.TEXT, FIELD_VALUE_TYPE.USER),
-		folderId("folderId", FIELD_TYPE.SYSTEM_DEFINED, FIELD_INPUT_TYPE.TEXT, FIELD_VALUE_TYPE.STRING),
-		version("version", FIELD_TYPE.SYSTEM_DEFINED, FIELD_INPUT_TYPE.TEXT, FIELD_VALUE_TYPE.STRING),
-		title("title", FIELD_TYPE.SYSTEM_DEFINED, FIELD_INPUT_TYPE.TEXT, FIELD_VALUE_TYPE.STRING),
-		path("path", FIELD_TYPE.SYSTEM_DEFINED, FIELD_INPUT_TYPE.TEXT, FIELD_VALUE_TYPE.STRING),
-		category("category", FIELD_TYPE.CONFIGURABLE, FIELD_INPUT_TYPE.SINGLE_SELECT, FIELD_VALUE_TYPE.STRING),
+		id("id", "ID", FIELD_TYPE.SYSTEM_DEFINED, FIELD_INPUT_TYPE.TEXT, FIELD_VALUE_TYPE.STRING),
+		actualHours("actualHours", "Actual hours", FIELD_TYPE.CONFIGURABLE,FIELD_INPUT_TYPE.TEXT, FIELD_VALUE_TYPE.INTEGER),
+		assignedTo("assignedTo", "Assigned to",FIELD_TYPE.SYSTEM_DEFINED, FIELD_INPUT_TYPE.SINGLE_SELECT, FIELD_VALUE_TYPE.USER),
+		lastModifiedBy("lastModifiedBy", "Last modified by", FIELD_TYPE.SYSTEM_DEFINED, FIELD_INPUT_TYPE.TEXT, FIELD_VALUE_TYPE.USER),
+		createdBy("createdBy", "Created by", FIELD_TYPE.SYSTEM_DEFINED, FIELD_INPUT_TYPE.TEXT, FIELD_VALUE_TYPE.USER),
+		folderId("folderId", "Filder id",FIELD_TYPE.SYSTEM_DEFINED, FIELD_INPUT_TYPE.TEXT, FIELD_VALUE_TYPE.STRING),
+		version("version", "Version", FIELD_TYPE.SYSTEM_DEFINED, FIELD_INPUT_TYPE.TEXT, FIELD_VALUE_TYPE.STRING),
+		title("title", "Title", FIELD_TYPE.SYSTEM_DEFINED, FIELD_INPUT_TYPE.TEXT, FIELD_VALUE_TYPE.STRING),
+		path("path", "Path", FIELD_TYPE.SYSTEM_DEFINED, FIELD_INPUT_TYPE.TEXT, FIELD_VALUE_TYPE.STRING),
+		category("category", "Category", FIELD_TYPE.CONFIGURABLE, FIELD_INPUT_TYPE.SINGLE_SELECT, FIELD_VALUE_TYPE.STRING),
 		/* This field is not set by the user. But SFEE automatically sets it when the state
 		 * changes to CLOSED
 		 * */
-		closeDate("closeDate", FIELD_TYPE.SYSTEM_DEFINED, FIELD_INPUT_TYPE.DATE, FIELD_VALUE_TYPE.DATE),
-		createdDate("createdDate", FIELD_TYPE.SYSTEM_DEFINED, FIELD_INPUT_TYPE.DATE, FIELD_VALUE_TYPE.DATE),
-		lastModifiedDate("lastModifiedDate", FIELD_TYPE.SYSTEM_DEFINED, FIELD_INPUT_TYPE.DATE, FIELD_VALUE_TYPE.DATE),
-		customer("customer", FIELD_TYPE.CONFIGURABLE, FIELD_INPUT_TYPE.SINGLE_SELECT, FIELD_VALUE_TYPE.STRING),
-		description("description", FIELD_TYPE.SYSTEM_DEFINED, FIELD_INPUT_TYPE.TEXT,FIELD_VALUE_TYPE.STRING),
-		estimatedHours("estimatedHours", FIELD_TYPE.CONFIGURABLE, FIELD_INPUT_TYPE.TEXT, FIELD_VALUE_TYPE.INTEGER),
+		closeDate("closeDate", "Close date", FIELD_TYPE.SYSTEM_DEFINED, FIELD_INPUT_TYPE.DATE, FIELD_VALUE_TYPE.DATE),
+		createdDate("createdDate", "Created date", FIELD_TYPE.SYSTEM_DEFINED, FIELD_INPUT_TYPE.DATE, FIELD_VALUE_TYPE.DATE),
+		lastModifiedDate("lastModifiedDate", "Last modified date", FIELD_TYPE.SYSTEM_DEFINED, FIELD_INPUT_TYPE.DATE, FIELD_VALUE_TYPE.DATE),
+		customer("customer", "Customer", FIELD_TYPE.CONFIGURABLE, FIELD_INPUT_TYPE.SINGLE_SELECT, FIELD_VALUE_TYPE.STRING),
+		description("description", "Description", FIELD_TYPE.SYSTEM_DEFINED, FIELD_INPUT_TYPE.TEXT,FIELD_VALUE_TYPE.STRING),
+		estimatedHours("estimatedHours", "Estimated hours", FIELD_TYPE.CONFIGURABLE, FIELD_INPUT_TYPE.TEXT, FIELD_VALUE_TYPE.INTEGER),
 		//flexFields(),
-		group("group", FIELD_TYPE.CONFIGURABLE, FIELD_INPUT_TYPE.SINGLE_SELECT, FIELD_VALUE_TYPE.STRING),
-		priority("priority", FIELD_TYPE.SYSTEM_DEFINED, FIELD_INPUT_TYPE.SINGLE_SELECT, FIELD_VALUE_TYPE.INTEGER), 
-		reportedReleaseId("reportedReleaseId", FIELD_TYPE.CONFIGURABLE, FIELD_INPUT_TYPE.SINGLE_SELECT, FIELD_VALUE_TYPE.STRING),
-		resolvedReleaseId("resolvedReleaseId", FIELD_TYPE.CONFIGURABLE, FIELD_INPUT_TYPE.SINGLE_SELECT, FIELD_VALUE_TYPE.STRING),
-		status("status", FIELD_TYPE.CONFIGURABLE, FIELD_INPUT_TYPE.SINGLE_SELECT, FIELD_VALUE_TYPE.STRING),
-		statusClass("statusClass", FIELD_TYPE.SYSTEM_DEFINED, FIELD_INPUT_TYPE.TEXT, FIELD_VALUE_TYPE.STRING);
+		group("group", "Group", FIELD_TYPE.CONFIGURABLE, FIELD_INPUT_TYPE.SINGLE_SELECT, FIELD_VALUE_TYPE.STRING),
+		priority("priority", "Priority", FIELD_TYPE.SYSTEM_DEFINED, FIELD_INPUT_TYPE.SINGLE_SELECT, FIELD_VALUE_TYPE.INTEGER), 
+		reportedReleaseId("reportedReleaseId", "Reported in release", FIELD_TYPE.CONFIGURABLE, FIELD_INPUT_TYPE.SINGLE_SELECT, FIELD_VALUE_TYPE.STRING),
+		resolvedReleaseId("resolvedReleaseId", "Resolved in release", FIELD_TYPE.CONFIGURABLE, FIELD_INPUT_TYPE.SINGLE_SELECT, FIELD_VALUE_TYPE.STRING),
+		status("status", "Status", FIELD_TYPE.CONFIGURABLE, FIELD_INPUT_TYPE.SINGLE_SELECT, FIELD_VALUE_TYPE.STRING),
+		statusClass("statusClass", "Status class", FIELD_TYPE.SYSTEM_DEFINED, FIELD_INPUT_TYPE.TEXT, FIELD_VALUE_TYPE.STRING),
+		commentText("Comment Text", "Comment Text", FIELD_TYPE.SYSTEM_DEFINED, FIELD_INPUT_TYPE.TEXT, FIELD_VALUE_TYPE.STRING);
 		
 		private String fieldName;
+		private String displayName;
 		private FIELD_TYPE fieldType;
 		private FIELD_INPUT_TYPE inputType;
 		private FIELD_VALUE_TYPE valueType;
 		private SFEEFields(String fieldName,
+				String displayName,
 				FIELD_TYPE fieldType,
 				FIELD_INPUT_TYPE inputType,
 				FIELD_VALUE_TYPE valueType){
 			this.fieldName = fieldName;
+			this.displayName = displayName;
 			this.fieldType = fieldType;
 			this.inputType = inputType;
 			this.valueType = valueType;
 		}
 		public String getFieldName() {
 			return fieldName;
+		}
+		public String getDisplayName(){
+			return displayName;
 		}
 		public FIELD_TYPE getFieldType() {
 			return fieldType;
@@ -130,7 +139,7 @@ public class ArtifactMetaData {
 			}
 		}
 		if(fieldValueType == null){
-			if(fieldName.equals("SF_Comment")){
+			if(fieldName.equals("Comment Text")){
 				return FieldValueTypeValue.STRING;
 			}
 		}
@@ -219,5 +228,75 @@ public class ArtifactMetaData {
 		else {
 			return true;
 		}
+	}
+	public static void addFlexField(String fieldName,
+			ArtifactSoapDO artifactRow, Object value) {
+		SoapFieldValues flexFields = artifactRow.getFlexFields();
+		String[] fieldNames = null;
+		Object[] fieldValues = null;
+		String[] fieldTypes = null;
+		if(flexFields != null){
+			fieldNames = flexFields.getNames();
+			fieldValues = flexFields.getValues();
+			fieldTypes = flexFields.getTypes();
+			for(int i=0; i < fieldNames.length; i++){
+				if(fieldNames[i].equals(fieldName)){
+					fieldValues[i] = value;
+					return;
+				}
+			}
+		}
+		else {
+			flexFields = new SoapFieldValues();
+			fieldNames = flexFields.getNames();
+			fieldValues = flexFields.getValues();
+			fieldTypes = flexFields.getTypes();
+		}
+		if(fieldNames != null){
+			String[] newFieldNames = new String[fieldNames.length+1];
+			System.arraycopy(fieldNames, 0, newFieldNames, 0, fieldNames.length);
+			newFieldNames[fieldNames.length] = fieldName;
+			fieldNames = newFieldNames;
+		}
+		else {
+			fieldNames = new String[]{fieldName};
+		}
+		if(fieldValues != null){
+			Object[] newfieldValues = new Object[fieldValues.length+1];
+			System.arraycopy(fieldValues, 0, newfieldValues, 0, fieldValues.length);
+			newfieldValues[fieldValues.length] = value;
+			fieldValues = newfieldValues;
+		}
+		else {
+			fieldValues = new Object[]{value};
+		}
+		if(fieldTypes != null){
+			String[] newfieldTypes = new String[fieldTypes.length+1];
+			System.arraycopy(fieldTypes, 0, newfieldTypes, 0, fieldTypes.length);
+			if(value instanceof Date){
+				newfieldTypes[fieldTypes.length] = TrackerFieldSoapDO.FIELD_VALUE_TYPE_DATE;
+			}
+			else if(value instanceof String){
+				//TODO Handle user data types
+				newfieldTypes[fieldTypes.length] = TrackerFieldSoapDO.FIELD_VALUE_TYPE_STRING;
+				//TrackerFieldSoapDO.FIELD_VALUE_TYPE_USER
+			}
+			fieldTypes = newfieldTypes;
+		}
+		else {
+			String fieldType = null;
+			if(value instanceof Date){
+				fieldType = TrackerFieldSoapDO.FIELD_VALUE_TYPE_DATE;
+			}
+			else if(value instanceof String){
+				//TODO Handle user data types
+				fieldType = TrackerFieldSoapDO.FIELD_VALUE_TYPE_STRING;
+				//TrackerFieldSoapDO.FIELD_VALUE_TYPE_USER
+			}
+			fieldTypes = new String[]{fieldType};
+		}
+		flexFields.setNames(fieldNames);
+		flexFields.setValues(fieldValues);
+		flexFields.setTypes(fieldTypes);
 	}
 }
