@@ -10,15 +10,15 @@ package com.collabnet.ccf.core.ga;
 public class AttachmentMetaData {
 
 	
-	private static final String ATTACHMENT_NAME = "attachmentName";
-	private static final String ATTACHMENT_ID = "attachmentId";
-	private static final String ATTACHMENT_SIZE = "attachmentSize";
-	private static final String ATTACHMENT_SOURCE_URL = "attachmentSourceUrl";
-	private static final String ATTACHMENT_TYPE = "attachmentType";
-	private static final String ATTACHMENT_DESCRIPTION = "attachmentDescription";
-	private static final String ATTACHMENT_MIME_TYPE = "attachmentMIMEType";
-	private static final String ATTACHMENT_VALUE_HAS_CHANGED = "attachmentValueHasChanged";
-	private static final String ATTACHMENT_VALUE_IS_NULL = "attachmentValueIsNull";
+	public static final String ATTACHMENT_NAME = "attachmentName";
+	public static final String ATTACHMENT_ID = "attachmentId";
+	public static final String ATTACHMENT_SIZE = "attachmentSize";
+	public static final String ATTACHMENT_SOURCE_URL = "attachmentSourceUrl";
+	public static final String ATTACHMENT_TYPE = "attachmentType";
+	public static final String ATTACHMENT_DESCRIPTION = "attachmentDescription";
+	public static final String ATTACHMENT_MIME_TYPE = "attachmentMIMEType";
+	public static final String ATTACHMENT_VALUE_HAS_CHANGED = "attachmentValueHasChanged";
+	public static final String ATTACHMENT_VALUE_IS_NULL = "attachmentValueIsNull";
 	
 	/**
 	 * 
@@ -30,6 +30,7 @@ public class AttachmentMetaData {
 		ATTACHMENT_MIME_TYPE, ATTACHMENT_VALUE_HAS_CHANGED, ATTACHMENT_VALUE_IS_NULL, 
 		ATTACHMENT_DESCRIPTION
 		};
+	public static final String TEXT_PLAIN = "text/plain";
 
 	/**
 	 * 
