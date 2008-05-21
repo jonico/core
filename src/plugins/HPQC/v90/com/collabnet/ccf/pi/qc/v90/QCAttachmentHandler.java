@@ -169,8 +169,16 @@ public class QCAttachmentHandler {
 					.setArtifactAction(GenericArtifact.ArtifactActionValue.CREATE);
 		else
 			latestDefectArtifact
-					.setArtifactAction(GenericArtifact.ArtifactActionValue.UPDATE);
+					.setArtifactAction(GenericArtifact.ArtifactActionValue.CREATE);
 
+		String bgVts = findBgVtsFromQC(qcc, Integer.parseInt(actionId),
+				entityId);
+		Date newBgVts = DateUtil.parseQCDate(bgVts);
+		String lastModifiedDate = DateUtil.format(newBgVts);
+		latestDefectArtifact
+				.setArtifactLastModifiedDate(lastModifiedDate);
+		log.info("The newBgVts=" + newBgVts + ", and lastReadDate="
+				+ lastReadDate);
 		return latestDefectArtifact;
 	}
 
@@ -195,6 +203,15 @@ public class QCAttachmentHandler {
 		return createdOn;
 	}
 
+	public String findBgVtsFromQC(IConnection qcc, int actionId, int entityId) {
+
+		String sql = "SELECT * FROM AUDIT_LOG WHERE AU_ACTION_ID='" + actionId
+				+ "' AND AU_ENTITY_ID='" + entityId + "'";
+		IRecordSet newRs = executeSQL(qcc, sql);
+		String auTime = newRs.getFieldValue("AU_TIME");
+		return auTime;
+	}
+	
 	public static List<String> getFromTable(IConnection qcc, String entityId,
 			String attachmentName) {
 
@@ -202,7 +219,7 @@ public class QCAttachmentHandler {
 		String sql = "SELECT CR_REF_ID, CR_REF_TYPE, CR_DESCRIPTION FROM CROS_REF WHERE CR_KEY_1='"
 				+ entityId + "' AND CR_REFERENCE= '" + attachmentName + "'";
 		IRecordSet newRs = executeSQL(qcc, sql);
-		if (newRs != null) {
+		if (newRs != null && newRs.getRecordCount()!=0) {
 			attachmentDetails = new ArrayList<String>();
 			String crRefId = newRs.getFieldValue("CR_REF_ID");
 			attachmentDetails.add(crRefId);
@@ -221,7 +238,8 @@ public class QCAttachmentHandler {
 		String thisMimeType = null;
 		if (attachmentName != null)
 			genericArtifact = getSchemaAttachment(qcc, entityId, attachmentName);
-
+		if(genericArtifact==null)
+			return null;
 		IFactory bugFactory = qcc.getBugFactory();
 		IBug bug = bugFactory.getItem(entityId);
 
@@ -333,7 +351,7 @@ public class QCAttachmentHandler {
 		GenericArtifact genericArtifact = new GenericArtifact();
 		String [] attachmentMetaData = AttachmentMetaData.getAttachmentMetaData();
 		if (attachmentName != null) {
-			List<String> attachmentIdAndType = QCDefectHandler.getFromTable(
+			List<String> attachmentIdAndType = getFromTable(
 					qcc, entityId, attachmentName);
 			if (attachmentIdAndType != null) {
 				String attachmentId = attachmentIdAndType.get(0); // CR_REF_ID
@@ -366,6 +384,8 @@ public class QCAttachmentHandler {
 					}
 				}
 			}
+			else
+				return null;
 		}
 		return genericArtifact;
 
