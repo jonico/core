@@ -1,18 +1,10 @@
 <?xml version="1.0"?>
 
-<!-- 
-	If there is a need to do so, I can extend the XsltProcessor component
-	that it passes global parameters to this XSLT-Script
-	
-	XSLT allows you to use global variables (stylesheet parameters),
-	template parameters, modes and function parameters  
--->
-
 <xsl:stylesheet version="2.0"
 	xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:ccf="http://ccf.open.collab.net/GenericArtifactV1.0"
 	xmlns:xs="http://www.w3.org/2001/XMLSchema"
 	exclude-result-prefixes="xsl xs">
-	<xsl:template match='/ccf:artifact'>
+	<xsl:template match='/ccf:artifact[@artifactType = "plainArtifact"]'>
 		<artifact xmlns="http://ccf.open.collab.net/GenericArtifactV1.0">
 			<xsl:attribute name="artifactAction"><xsl:value-of select="@artifactAction" /></xsl:attribute>
 			<xsl:attribute name="artifactMode"><xsl:value-of select="@artifactMode" /></xsl:attribute>
@@ -36,11 +28,11 @@
 			<xsl:apply-templates />
 		</artifact>
 	</xsl:template>
-	<xsl:template match="ccf:attachment">
+	<xsl:template match="/ccf:artifact[@artifactType = 'attachment']">
 		<xsl:copy-of select="."/>
 	</xsl:template>
 	<xsl:template
-		match='ccf:field[@fieldName="ActualHours"]'>
+		match='ccf:field[@fieldName="actualHours"]'>
 		<field>
 		    <xsl:attribute name="fieldName">BG_ACTUAL_FIX_TIME</xsl:attribute>
 		    <xsl:attribute name="fieldDisplayName">Actual Fix Time</xsl:attribute>
@@ -53,7 +45,7 @@
 	  	</field>
 	</xsl:template>
 	<xsl:template
-		match='ccf:field[@fieldName="EstimatedHours"]'>
+		match='ccf:field[@fieldName="estimatedHours"]'>
 		<field>
 		    <xsl:attribute name="fieldName">BG_ESTIMATED_FIX_TIME</xsl:attribute>
 		    <xsl:attribute name="fieldDisplayName">Estimated Fix Time</xsl:attribute>
@@ -80,7 +72,7 @@
 	  	</field>
 	</xsl:template>
 	<xsl:template
-		match='ccf:field[@fieldName="Title"]'>
+		match='ccf:field[@fieldName="title"]'>
 		<field>
 		    <xsl:attribute name="fieldName">BG_SUMMARY</xsl:attribute>
 		    <xsl:attribute name="fieldDisplayName">Summary</xsl:attribute>
@@ -93,7 +85,7 @@
 	  	</field>
 	</xsl:template>
 	<xsl:template
-		match='ccf:field[@fieldName="Description"]'>
+		match='ccf:field[@fieldName="description"]'>
 		<field>
 		    <xsl:attribute name="fieldName">BG_DESCRIPTION</xsl:attribute>
 		    <xsl:attribute name="fieldDisplayName">Description</xsl:attribute>
@@ -107,7 +99,7 @@
 	</xsl:template>
 
 	<xsl:template
-		match='ccf:field[@fieldName="Status"]'>
+		match='ccf:field[@fieldName="status"]'>
 		<xsl:variable name="statusValue" as="xs:string" select="." />
 		<field>
 		    <xsl:attribute name="fieldName">BG_STATUS</xsl:attribute>
@@ -125,7 +117,7 @@
 	</xsl:template>
 
 	 <xsl:template
-		match='ccf:field[@fieldName="Category"]'>
+		match='ccf:field[@fieldName="category"]'>
 		<xsl:variable name="typeValue" as="xs:string" select="." />
 		<field>
 		    <xsl:attribute name="fieldName">BG_USER_01</xsl:attribute>
@@ -145,7 +137,7 @@
 	</xsl:template>
 	
 	<xsl:template
-		match='ccf:field[@fieldName="Id"]'>
+		match='ccf:field[@fieldName="id"]'>
 		<field>
 		    <xsl:attribute name="fieldName">BG_USER_02</xsl:attribute>
 		    <xsl:attribute name="fieldDisplayName">SFEE ID</xsl:attribute>
@@ -206,7 +198,7 @@
 	</xsl:template>
 
 	 <xsl:template
-		match='ccf:field[@fieldName="Priority"]'>
+		match='ccf:field[@fieldName="priority"]'>
 		<xsl:variable name="priorityValue" as="xs:string"><xsl:value-of select="." /></xsl:variable>
 		<field>
 		    <xsl:attribute name="fieldName">BG_PRIORITY</xsl:attribute>
@@ -238,7 +230,7 @@
 	  	</field>
 	</xsl:template>
 	<xsl:template
-		match='ccf:field[@fieldName="AssignedTo"]'>
+		match='ccf:field[@fieldName="assignedTo"]'>
 		<xsl:variable name="assignedTo" as="xs:string"><xsl:value-of select="." /></xsl:variable>
 		<field>
 		    <xsl:attribute name="fieldName">BG_RESPONSIBLE</xsl:attribute>
@@ -254,6 +246,19 @@
 			<xsl:if test="$assignedTo = 'none'"><xsl:text>none</xsl:text></xsl:if>
 			<xsl:if test="$assignedTo = 'None'"><xsl:text>None</xsl:text></xsl:if>
 		</field>
+	</xsl:template>
+	<xsl:template
+		match='ccf:field[@fieldName="Comment Text"]'>
+		<field>
+		    <xsl:attribute name="fieldName">BG_DEV_COMMENTS</xsl:attribute>
+		    <xsl:attribute name="fieldDisplayName">Comments</xsl:attribute>
+		    <xsl:attribute name="fieldAction"><xsl:value-of select="@fieldAction" /></xsl:attribute>
+		    <xsl:attribute name="fieldType"><xsl:value-of select="@fieldType" /></xsl:attribute>
+		  	<xsl:attribute name="fieldValueHasChanged"><xsl:value-of select="@fieldValueHasChanged" /></xsl:attribute>
+		  	<xsl:attribute name="fieldValueType"><xsl:value-of select="@fieldValueType" /></xsl:attribute>
+		  	<xsl:attribute name="fieldValueIsNull"><xsl:value-of select="@fieldValueIsNull" /></xsl:attribute>
+		  	<xsl:value-of select="."></xsl:value-of>
+	  	</field>
 	</xsl:template>
 	<xsl:template match="text()" />
 </xsl:stylesheet>

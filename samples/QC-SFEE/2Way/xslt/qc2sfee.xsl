@@ -13,7 +13,7 @@
 	xmlns:xs="http://www.w3.org/2001/XMLSchema"
 	xmlns:stringutil="xalan://com.collabnet.ccf.core.utils.GATransformerUtil"
 	exclude-result-prefixes="xsl xs">
-	<xsl:template match='/ccf:artifact'>
+	<xsl:template match='/ccf:artifact[@artifactType = "plainArtifact"]'>
 		<artifact xmlns="http://ccf.open.collab.net/GenericArtifactV1.0">
 			<xsl:attribute name="artifactAction"><xsl:value-of select="@artifactAction" /></xsl:attribute>
 			<xsl:attribute name="artifactMode"><xsl:value-of select="@artifactMode" /></xsl:attribute>
@@ -35,13 +35,13 @@
 			<xsl:apply-templates />
 		</artifact>
 	</xsl:template>
-	<xsl:template match="ccf:attachment">
+	<xsl:template match="/ccf:artifact[@artifactType = 'attachment']">
 		<xsl:copy-of select="."/>
 	</xsl:template>
 	<xsl:template
 		match='ccf:field[@fieldName="BG_ACTUAL_FIX_TIME"]'>
 		<field>
-		    <xsl:attribute name="fieldName">ActualHours</xsl:attribute>
+		    <xsl:attribute name="fieldName">actualHours</xsl:attribute>
 		    <xsl:attribute name="fieldDisplayName">ActualHours</xsl:attribute>
 		    <xsl:attribute name="fieldAction"><xsl:value-of select="@fieldAction" /></xsl:attribute>
 		    <xsl:attribute name="fieldType"><xsl:value-of select="@fieldType" /></xsl:attribute>
@@ -54,7 +54,7 @@
 	<xsl:template
 		match='ccf:field[@fieldName="BG_ESTIMATED_FIX_TIME"]'>
 		<field>
-		    <xsl:attribute name="fieldName">EstimatedHours</xsl:attribute>
+		    <xsl:attribute name="fieldName">estimatedHours</xsl:attribute>
 		    <xsl:attribute name="fieldDisplayName">EstimatedHours</xsl:attribute>
 		    <xsl:attribute name="fieldAction"><xsl:value-of select="@fieldAction" /></xsl:attribute>
 		    <xsl:attribute name="fieldType"><xsl:value-of select="@fieldType" /></xsl:attribute>
@@ -81,7 +81,7 @@
 	<xsl:template
 		match='ccf:field[@fieldName="BG_SUMMARY"]'>
 		<field>
-		    <xsl:attribute name="fieldName">Title</xsl:attribute>
+		    <xsl:attribute name="fieldName">title</xsl:attribute>
 		    <xsl:attribute name="fieldDisplayName">Title</xsl:attribute>
 		    <xsl:attribute name="fieldAction"><xsl:value-of select="@fieldAction" /></xsl:attribute>
 		    <xsl:attribute name="fieldType"><xsl:value-of select="@fieldType" /></xsl:attribute>
@@ -97,7 +97,7 @@
 			<xsl:value-of select="."></xsl:value-of>
 		</xsl:variable>
 		<field>
-		    <xsl:attribute name="fieldName">Description</xsl:attribute>
+		    <xsl:attribute name="fieldName">description</xsl:attribute>
 		    <xsl:attribute name="fieldDisplayName">Description</xsl:attribute>
 		    <xsl:attribute name="fieldAction"><xsl:value-of select="@fieldAction" /></xsl:attribute>
 		    <xsl:attribute name="fieldType"><xsl:value-of select="@fieldType" /></xsl:attribute>
@@ -119,7 +119,7 @@
 		match='ccf:field[@fieldName="BG_STATUS"]'>
 		<xsl:variable name="statusValue" as="xs:string" select="." />
 		<field>
-		    <xsl:attribute name="fieldName">Status</xsl:attribute>
+		    <xsl:attribute name="fieldName">status</xsl:attribute>
 		    <xsl:attribute name="fieldDisplayName">Status</xsl:attribute>
 		    <xsl:attribute name="fieldAction"><xsl:value-of select="@fieldAction" /></xsl:attribute>
 		    <xsl:attribute name="fieldType"><xsl:value-of select="@fieldType" /></xsl:attribute>
@@ -140,7 +140,7 @@
 		match='ccf:field[@fieldName="BG_USER_01"]'>
 		<xsl:variable name="typeValue" as="xs:string" select="." />
 		<field>
-		    <xsl:attribute name="fieldName">Category</xsl:attribute>
+		    <xsl:attribute name="fieldName">category</xsl:attribute>
 		    <xsl:attribute name="fieldDisplayName">Category</xsl:attribute>
 		    <xsl:attribute name="fieldAction"><xsl:value-of select="@fieldAction" /></xsl:attribute>
 		    <xsl:attribute name="fieldType"><xsl:value-of select="@fieldType" /></xsl:attribute>
@@ -160,7 +160,7 @@
 		match='ccf:field[@fieldName="BG_PRIORITY"]'>
 		<xsl:variable name="priorityValue" as="xs:string"><xsl:value-of select="." /></xsl:variable>
 		<field>
-		    <xsl:attribute name="fieldName">Priority</xsl:attribute>
+		    <xsl:attribute name="fieldName">priority</xsl:attribute>
 		    <xsl:attribute name="fieldDisplayName">Priority</xsl:attribute>
 		    <xsl:attribute name="fieldAction"><xsl:value-of select="@fieldAction" /></xsl:attribute>
 		    <xsl:attribute name="fieldType"><xsl:value-of select="@fieldType" /></xsl:attribute>
@@ -179,7 +179,7 @@
 		match='ccf:field[@fieldName="BG_RESPONSIBLE"]'>
 		<xsl:variable name="qcValue" as="xs:string"><xsl:value-of select="." /></xsl:variable>
 		<field>
-		    <xsl:attribute name="fieldName">AssignedTo</xsl:attribute>
+		    <xsl:attribute name="fieldName">assignedTo</xsl:attribute>
 		    <xsl:attribute name="fieldDisplayName">AssignedTo</xsl:attribute>
 		    <xsl:attribute name="fieldAction"><xsl:value-of select="@fieldAction" /></xsl:attribute>
 		    <xsl:attribute name="fieldType"><xsl:value-of select="@fieldType" /></xsl:attribute>
@@ -249,6 +249,26 @@
 		  	<xsl:attribute name="fieldValueType"><xsl:value-of select="@fieldValueType" /></xsl:attribute>
 		  	<xsl:attribute name="fieldValueIsNull"><xsl:value-of select="@fieldValueIsNull" /></xsl:attribute>
 		  	<xsl:value-of select="."></xsl:value-of>
+	  	</field>
+	</xsl:template>
+	<xsl:template
+		match='ccf:field[@fieldName="BG_DEV_COMMENTS"]'>
+		<field>
+		    <xsl:attribute name="fieldName">Comment Text</xsl:attribute>
+		    <xsl:attribute name="fieldDisplayName">Comments</xsl:attribute>
+		    <xsl:attribute name="fieldAction"><xsl:value-of select="@fieldAction" /></xsl:attribute>
+		    <xsl:attribute name="fieldType"><xsl:value-of select="@fieldType" /></xsl:attribute>
+		  	<xsl:attribute name="fieldValueHasChanged"><xsl:value-of select="@fieldValueHasChanged" /></xsl:attribute>
+		  	<xsl:attribute name="fieldValueType"><xsl:value-of select="@fieldValueType" /></xsl:attribute>
+		  	<xsl:attribute name="fieldValueIsNull"><xsl:value-of select="@fieldValueIsNull" /></xsl:attribute>
+		  	<xsl:choose>
+				<xsl:when test="@fieldValueType='HTMLString'">
+					<xsl:value-of select="stringutil:stripHTML(string(.))"/>
+				</xsl:when>
+				<xsl:otherwise>
+					<xsl:value-of select="."></xsl:value-of>
+				</xsl:otherwise>
+			</xsl:choose>
 	  	</field>
 	</xsl:template>
 	<xsl:template match="text()" />
