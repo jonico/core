@@ -1,6 +1,5 @@
 package com.collabnet.ccf.pi.qc.v90;
 
-import java.io.IOException;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -13,11 +12,14 @@ import org.dom4j.Document;
 import org.dom4j.Node;
 import org.openadaptor.core.IDataProcessor;
 
+import com.collabnet.ccf.core.eis.connection.ConnectionManager;
+import com.collabnet.ccf.core.eis.connection.MaxConnectionsReachedException;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
+import com.collabnet.ccf.pi.qc.v90.api.IConnection;
 
-public class QCReader extends QCConnectHelper implements
+public class QCReader /*extends QCConnectHelper */ implements
 		IDataProcessor {
     
 	private static final Log log = LogFactory.getLog(QCReader.class);
@@ -28,8 +30,16 @@ public class QCReader extends QCConnectHelper implements
 
 	private QCDefectHandler defectHandler;
 	
-	public QCReader(String id) {
-	    super(id);
+	private ConnectionManager<IConnection> connectionManager = null;
+	
+	private String serverUrl;
+
+	private String userName;
+
+	private String password;
+
+    public QCReader(String id) {
+	   // super(id);
 	}
 
 	public Object[] process(Object data) {
@@ -41,8 +51,18 @@ public class QCReader extends QCConnectHelper implements
 			
 		Document document=(Document) data;
 		if(document!=null) log.info(document.getText());
+		
+		String sourceArtifactId = getSourceArtifactId(document); 
+		String sourceRepositoryId = getSourceRepositoryId(document);
+		String sourceRepositoryKind = getSourceRepositoryKind(document);
+		String sourceSystemId = getSourceSystemId(document);
+		String sourceSystemKind = getSourceSystemKind(document);
+		
+		IConnection connection = null;
 		try {
-			connect();
+			connection = connect(sourceSystemId, sourceSystemKind, sourceRepositoryId,
+					sourceRepositoryKind, serverUrl,
+					userName + QCConnectionFactory.PARAM_DELIMITER + password);
 			//qcc.connectProjectEx(getDomain(), getProjectName(), getUserName(), getPassword());
 		} catch (Exception e) {
 			// TODO Declare exception so that it can be processed by OA exception handler
@@ -54,11 +74,7 @@ public class QCReader extends QCConnectHelper implements
 		String fromTimestamp = getFromTime(document);
 		String fromTime = convertIntoString(fromTimestamp);
 		String transactionId = getTransactionId(document);
-		String sourceArtifactId = getSourceArtifactId(document); 
-		String sourceRepositoryId = getSourceRepositoryId(document);
-		String sourceRepositoryKind = getSourceRepositoryKind(document);
-		String sourceSystemId = getSourceSystemId(document);
-		String sourceSystemKind = getSourceSystemKind(document);
+
 		
 		String targetRepositoryId = getTargetRepositoryId(document);
 		String targetRepositoryKind = getTargetRepositoryKind(document);
@@ -66,9 +82,16 @@ public class QCReader extends QCConnectHelper implements
 		String targetSystemKind = getTargetSystemKind(document);
 		
 		log.error(fromTime);
-		Object[] result=readModifiedDefects(transactionId, fromTime, sourceArtifactId, sourceRepositoryId, sourceRepositoryKind, sourceSystemId, sourceSystemKind, targetRepositoryId, targetRepositoryKind, targetSystemId, targetSystemKind);
-		disconnect();
+		Object[] result=readModifiedDefects(transactionId, fromTime, sourceArtifactId, sourceRepositoryId,
+				sourceRepositoryKind, sourceSystemId, sourceSystemKind, targetRepositoryId,
+				targetRepositoryKind, targetSystemId, targetSystemKind, connection);
+		disconnect(connection);
 		return result;
+	}
+
+	private void disconnect(IConnection connection) {
+		// TODO Auto-generated method stub
+		connectionManager.releaseConnection(connection);
 	}
 
 	public Object getReaderContext() {
@@ -79,16 +102,28 @@ public class QCReader extends QCConnectHelper implements
 		return isDry;
 	}
 
-	@Override
-	public void connect() throws IOException {
+	public IConnection connect(String systemId, String systemKind, String repositoryId,
+			String repositoryKind, String connectionInfo, String credentialInfo) {
 		log.info("Before calling the parent connect()");
-		super.connect();
+		//super.connect();
+		IConnection connection = null;
+		try {
+			connection = connectionManager.getConnection(systemId, systemKind, repositoryId,
+					repositoryKind, connectionInfo, credentialInfo);
+		} catch (MaxConnectionsReachedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		isDry=false;
+		return connection;
 	}
 	
 	
 	
-	public Object[] readModifiedDefects(String transactionId, String lastReadTime, String sourceArtifactId, String sourceRepositoryId, String sourceRepositoryKind, String sourceSystemId, String sourceSystemKind, String targetRepositoryId, String targetRepositoryKind, String targetSystemId, String targetSystemKind) {
+	public Object[] readModifiedDefects(String transactionId, String lastReadTime, String sourceArtifactId, 
+			String sourceRepositoryId, String sourceRepositoryKind, String sourceSystemId,
+			String sourceSystemKind, String targetRepositoryId, String targetRepositoryKind,
+			String targetSystemId, String targetSystemKind, IConnection connection) {
 		// TODO Use the information of the firstTimeImport flag
 		
 		//Object[] retObj = new Object[100];
@@ -98,8 +133,7 @@ public class QCReader extends QCConnectHelper implements
 		
 		try {
 			log.error("The transactionId coming from HQSL DB is:" + transactionId);
-			defectRows = defectHandler.getLatestChangedDefects(defectRows, this.getQcc(), getUserName(), transactionId, lastReadTime, sourceArtifactId, sourceRepositoryId, sourceRepositoryKind, sourceSystemId, sourceSystemKind, targetRepositoryId, targetRepositoryKind, targetSystemId, targetSystemKind);
-			//defectRows = attachmentHandler.getLatestChangedAttachments(defectRows, this.getQcc(), getUserName(), transactionId, lastReadTime, sourceArtifactId, sourceRepositoryId, sourceRepositoryKind, sourceSystemId, sourceSystemKind, targetRepositoryId, targetRepositoryKind, targetSystemId, targetSystemKind);
+			defectRows = defectHandler.getLatestChangedDefects(defectRows, connection, getUserName(), transactionId, lastReadTime, sourceArtifactId, sourceRepositoryId, sourceRepositoryKind, sourceSystemId, sourceSystemKind, targetRepositoryId, targetRepositoryKind, targetSystemId, targetSystemKind);
 		} catch (Exception e) {
 			// TODO Throw an exception?
 			log.error("During the artifact retrieval process from QC, an error occured",e);
@@ -112,7 +146,7 @@ public class QCReader extends QCConnectHelper implements
 			// TODO: Should we fill in the latest from and to time?
 			Document document = null;
 			GenericArtifact emptyGenericArtifact = new GenericArtifact();
-			emptyGenericArtifact = populateRequiredFields(emptyGenericArtifact);
+			emptyGenericArtifact = populateRequiredFields(emptyGenericArtifact, connection);
 			
 			try {
 				document = GenericArtifactHelper.createGenericArtifactXMLDocument(emptyGenericArtifact);
@@ -122,7 +156,7 @@ public class QCReader extends QCConnectHelper implements
 				log.error("GenericArtifactParsingException while creating a GenericArtifact XML from an empty GenericArtifact object");
 			}
 			
-			return new Object[]{document};
+			return new Object[]{};
 		}
 		 
 		for (GenericArtifact defectRow: defectRows) {
@@ -157,20 +191,20 @@ public class QCReader extends QCConnectHelper implements
 	}
 	
 	@SuppressWarnings("unchecked")
-	@Override
 	public void validate(List exceptions) {
-		super.validate(exceptions);
+		//super.validate(exceptions);
 		// Capture the return exception list and validate the exceptions
 		
 		defectHandler = new QCDefectHandler();
 	}
 	public String getUserName() {
-		return super.getUserName();		
+		//return super.getUserName();
+		return userName;
 	}
-	public GenericArtifact populateRequiredFields(GenericArtifact emptyGenericArtifact) {
+	public GenericArtifact populateRequiredFields(GenericArtifact emptyGenericArtifact, IConnection connection) {
 		
 		
-		emptyGenericArtifact = QCConfigHelper.getSchemaFields(qcc);
+		emptyGenericArtifact = QCConfigHelper.getSchemaFields(connection);
 		emptyGenericArtifact.setArtifactMode(GenericArtifact.ArtifactModeValue.UNKNOWN);
 		emptyGenericArtifact.setArtifactType(GenericArtifact.ArtifactTypeValue.UNKNOWN);
 		emptyGenericArtifact.setArtifactAction(GenericArtifact.ArtifactActionValue.UNKNOWN);
@@ -319,5 +353,34 @@ public class QCReader extends QCConnectHelper implements
 
 	public QCReader() {
 		super();
+	}
+
+	public ConnectionManager<IConnection> getConnectionManager() {
+		return connectionManager;
+	}
+
+	public void setConnectionManager(
+			ConnectionManager<IConnection> connectionManager) {
+		this.connectionManager = connectionManager;
+	}
+
+	public String getServerUrl() {
+		return serverUrl;
+	}
+
+	public void setServerUrl(String serverUrl) {
+		this.serverUrl = serverUrl;
+	}
+
+	public String getPassword() {
+		return password;
+	}
+
+	public void setPassword(String password) {
+		this.password = password;
+	}
+
+	public void setUserName(String userName) {
+		this.userName = userName;
 	}
 }
