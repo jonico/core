@@ -153,9 +153,6 @@
 		<property name="entityServiceMappingIdReader"
 			ref="EntityServiceMappingIDReader">
 		</property>
-		<property name="entityServiceWriteConnector"
-			ref="EntityServiceWriter">
-		</property>
 	</bean>
 
 	<bean id="QC2SFEEDatabaseReader"
@@ -222,6 +219,13 @@
 			Updates the artifact synchronization info for a repository
 		</description>
 		<property name="mappingWriter" ref="MappingWriter"></property>
+		<property name="entityServiceReader" ref="EntityServiceReader" />
+		<property name="entityServiceMappingIdReader"
+			ref="EntityServiceMappingIDReader">
+		</property>
+		<property name="entityServiceWriteConnector"
+			ref="EntityServiceWriter">
+		</property>
 	</bean>
 	<bean id="QCTransformer"
 		class="com.collabnet.ccf.core.transformer.XsltProcessor">
@@ -236,9 +240,6 @@
 		<property name="entityServiceReader" ref="EntityServiceReader" />
 		<property name="entityServiceMappingIdReader"
 			ref="EntityServiceMappingIDReader">
-		</property>
-		<property name="entityServiceWriteConnector"
-			ref="EntityServiceWriter">
 		</property>
 	</bean>
 	<bean id="QCWriter" class="com.collabnet.ccf.pi.qc.v90.QCWriter">
