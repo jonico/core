@@ -236,11 +236,16 @@ public class SFEEWriter extends SFEEConnectHelper implements
 			for(TrackerFieldSoapDO flexField: flexFields){
 				String fieldName = flexField.getName();
 				List<GenericArtifactField> gaFields = ga.getAllGenericArtifactFieldsWithSameFieldName(fieldName);
-				for(GenericArtifactField gaField:gaFields){
-					flexFieldNames.add(fieldName);
-					flexFieldTypes.add(flexField.getFieldType());
-					Object value = gaField.getFieldValue();
-					flexFieldValues.add(value);
+				if(gaFields != null){
+					for(GenericArtifactField gaField:gaFields){
+						flexFieldNames.add(fieldName);
+						flexFieldTypes.add(flexField.getFieldType());
+						Object value = gaField.getFieldValue();
+						flexFieldValues.add(value);
+					}
+				}
+				else {
+					// Do nothing....
 				}
 			}
 		}
