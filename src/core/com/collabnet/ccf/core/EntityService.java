@@ -53,8 +53,6 @@ public class EntityService implements
 	private JDBCReadConnector entityServiceReader = null;
 	
 	private JDBCReadConnector entityServiceMappingIdReader = null;
-	
-	private JDBCWriteConnector entityServiceWriteConnector = null;
 
 	/**
 	 * SFEE tracker handler instance
@@ -90,7 +88,7 @@ public class EntityService implements
 	 */
 	private Object[] processXMLDocument(Document data) {
 		Document filledArtifactDocument = null;
-		GenericArtifact genericArtifact = new GenericArtifact();
+		GenericArtifact genericArtifact = null;
 		try {
 			genericArtifact = GenericArtifactHelper.createGenericArtifactJavaObject(data);
 		}
@@ -126,20 +124,7 @@ public class EntityService implements
 	    	genericArtifact.setTargetArtifactId(targetArtifactIdFromTable);
 	    }
 		if(targetArtifactIdFromTable==null) {
-			// TODO Review the logic here
-//	    	if(genericArtifact.getArtifactAction().equals(GenericArtifact.ArtifactActionValue.UPDATE)) {
-//	    		//Send this artifact to HOSPITAL
-//	    	}
-//	    	if(genericArtifact.getArtifactAction().equals(GenericArtifact.ArtifactActionValue.CREATE)) {
-	    		Boolean insertStatus = true;
-	    		this.createMapping(mappingId, sourceArtifactId, "NEW");
-	    		if(insertStatus){
-	    			log.debug("Artifact inserted into the mapping table");
-	    		}
-	    		else{
-	    			log.warn("Artifact insertion failed...!");
-	    		}
-//	    	}
+   			genericArtifact.setTargetArtifactId("NEW");
 	    }
 		
 	    try {
@@ -236,18 +221,6 @@ public class EntityService implements
 		return targetArtifactId;
 	}
 	
-	private void createMapping(String mappingId, String sourceArtifactId, String targetArtifactId){
-		IOrderedMap inputParameters = new OrderedHashMap();
-		
-		inputParameters.add(0,"MAPPING_ID",mappingId);
-		inputParameters.add(1,"SOURCE_ARTIFACT_ID",sourceArtifactId);
-		inputParameters.add(2,"TARGET_ARTIFACT_ID",targetArtifactId);
-		IOrderedMap[] data = new IOrderedMap[]{inputParameters};
-		entityServiceWriteConnector.connect();
-		entityServiceWriteConnector.deliver(data);
-		entityServiceWriteConnector.disconnect();
-	}
-
 	/**
 	 * Reset the processor
 	 */
@@ -315,14 +288,5 @@ public class EntityService implements
 	public void setEntityServiceMappingIdReader(
 			JDBCReadConnector entityServiceMappingIdReader) {
 		this.entityServiceMappingIdReader = entityServiceMappingIdReader;
-	}
-
-	public JDBCWriteConnector getEntityServiceWriteConnector() {
-		return entityServiceWriteConnector;
-	}
-
-	public void setEntityServiceWriteConnector(
-			JDBCWriteConnector entityServiceWriteConnector) {
-		this.entityServiceWriteConnector = entityServiceWriteConnector;
 	}
 }
