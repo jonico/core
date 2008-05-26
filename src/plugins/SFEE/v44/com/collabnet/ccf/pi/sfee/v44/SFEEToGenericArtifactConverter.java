@@ -5,7 +5,6 @@ import java.util.Date;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifact.ArtifactActionValue;
-import com.collabnet.ccf.core.ga.GenericArtifactField.FieldValueTypeValue;
 import com.collabnet.ccf.core.utils.DateUtil;
 import com.collabnet.ccf.pi.sfee.v44.meta.ArtifactMetaData;
 import com.vasoftware.sf.soap44.types.SoapFieldValues;
@@ -124,13 +123,13 @@ public class SFEEToGenericArtifactConverter {
 			Object[] flexFieldValues = flexFields.getValues();
 			for(int i=0; i < flexFieldNames.length; i++){
 				System.out.println(flexFieldNames[i]+"-"+flexFieldTypes[i]+"-"+flexFieldValues[i]);
-				if(flexFieldNames[i].equals("ArtifactAction")){
-					genericArtifact.setArtifactAction(GenericArtifact.ArtifactActionValue.CREATE);
-					continue;
-				}
-				else{
-					genericArtifact.setArtifactAction(GenericArtifact.ArtifactActionValue.UPDATE);
-				}
+//				if(flexFieldNames[i].equals("ArtifactAction")){
+//					genericArtifact.setArtifactAction(GenericArtifact.ArtifactActionValue.CREATE);
+//					continue;
+//				}
+//				else{
+//					genericArtifact.setArtifactAction(GenericArtifact.ArtifactActionValue.UPDATE);
+//				}
 				GenericArtifactField field;
 
 				GenericArtifactField.FieldValueTypeValue fieldValueType =
