@@ -7,7 +7,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.TreeSet;
 
 import org.apache.commons.lang.StringUtils;
 import org.dom4j.Document;
@@ -27,8 +26,15 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 	private long sleepInterval;
 	private Comparator<GenericArtifact> genericArtifactComparator = null;
 
+	public AbstractReader(){
+		super();
+		init();
+	}
 	public AbstractReader(String id){
 		super(id);
+		init();
+	}
+	public void init(){
 		repositoryRecordHashMap = new HashMap<String, RepositoryRecord>();
 		repositorySynchronizationWaitingList = new ArrayList<RepositoryRecord>();
 		repositoryRecordsInRepositorySynchronizationWaitingList = new HashSet<String>();
