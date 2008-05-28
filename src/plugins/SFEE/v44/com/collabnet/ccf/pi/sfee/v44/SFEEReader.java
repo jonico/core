@@ -48,10 +48,10 @@ public class SFEEReader extends AbstractReader implements
 
 	private String username;
 	
-//	public SFEEReader() {
-//	    super();
-//	    artifactConverter = new SFEEToGenericArtifactConverter();
-//	}
+	public SFEEReader() {
+	    super();
+	    artifactConverter = new SFEEToGenericArtifactConverter();
+	}
 
     public SFEEReader(String id) {
 	    super(id);
