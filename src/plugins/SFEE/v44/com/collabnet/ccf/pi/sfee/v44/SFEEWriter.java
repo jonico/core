@@ -1,6 +1,5 @@
 package com.collabnet.ccf.pi.sfee.v44;
 
-import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -14,7 +13,10 @@ import org.openadaptor.core.IDataProcessor;
 import org.openadaptor.core.exception.NullRecordException;
 import org.openadaptor.core.exception.RecordFormatException;
 import org.openadaptor.core.exception.ValidationException;
+import org.openadaptor.core.lifecycle.LifecycleComponent;
 
+import com.collabnet.ccf.core.eis.connection.ConnectionManager;
+import com.collabnet.ccf.core.eis.connection.MaxConnectionsReachedException;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
@@ -31,7 +33,7 @@ import com.vasoftware.sf.soap44.webservices.tracker.ArtifactSoapDO;
  * @author jnicolai
  * 
  */
-public class SFEEWriter extends SFEEConnectHelper implements
+public class SFEEWriter extends LifecycleComponent implements
 		IDataProcessor {
 	/**
 	 * log4j logger instance
@@ -67,6 +69,14 @@ public class SFEEWriter extends SFEEConnectHelper implements
 	private String otherSystemVersionInSFEETargetFieldname;
 	
 	private SFEEAttachmentHandler attachmentHandler;
+	
+	private ConnectionManager<Connection> connectionManager = null;
+	
+	private String serverUrl;
+
+	private String password;
+
+	private String username;
 
 	/**
 	 * Main method to handle the creation, updating and deletion of SFEE tracker
@@ -156,11 +166,11 @@ public class SFEEWriter extends SFEEConnectHelper implements
 									+ data.asXML());
 					return null;
 				}
-				connect();
+				Connection connection = connect(ga);
 				// TODO apply a better type conversion concept here
 				try {
 	
-					result = this.createArtifact(ga, tracker);
+					result = this.createArtifact(ga, tracker, connection);
 	
 					// update Id field after creating the artifact
 					targetArtifactId = result.getId();
@@ -171,10 +181,10 @@ public class SFEEWriter extends SFEEConnectHelper implements
 							+ data.asXML(), e);
 					return null;
 				} finally {
-					disconnect();
+					disconnect(connection);
 				}
 			} else {
-				connect();
+				Connection connection = connect(ga);
 				try {
 					if (deleteArtifact.booleanValue()) {
 	//					trackerHandler.removeArtifact(getSessionId(),
@@ -182,11 +192,11 @@ public class SFEEWriter extends SFEEConnectHelper implements
 					} else {
 						// update token or do conflict resolution
 						// TODO apply a better type conversion concept here
-						result = this.updateArtifact(ga, tracker, forceOverride);
+						result = this.updateArtifact(ga, tracker, forceOverride, connection);
 						if (result == null) {
 							// conflict resolution has decided in favor of the
 							// target copy
-							disconnect();
+							disconnect(connection);
 							return new Object[0];
 						}
 					}
@@ -195,17 +205,20 @@ public class SFEEWriter extends SFEEConnectHelper implements
 							+ data.asXML(), e);
 					return null;
 				} finally {
-					disconnect();
+					disconnect(connection);
 				}
 			}
 		}
 		else {
+			Connection connection = connect(ga);
 			try {
-				attachmentHandler.handleAttachment(this.getSessionId(), ga,
+				attachmentHandler.handleAttachment(connection.getSessionId(), ga,
 						targetArtifactId, this.getUsername());
 			} catch (RemoteException e) {
 				e.printStackTrace();
 				throw new RuntimeException(e);
+			} finally {
+				disconnect(connection);
 			}
 		}
 		Document document = null;
@@ -215,16 +228,13 @@ public class SFEEWriter extends SFEEConnectHelper implements
 			throw new RuntimeException(e);
 		}
 		Object[] resultDocs = { document };
-		disconnect();
 		return resultDocs;
 	}
 	
-	private ArtifactSoapDO createArtifact(GenericArtifact ga, String tracker){
+	private ArtifactSoapDO createArtifact(GenericArtifact ga, String tracker, Connection connection){
 		TrackerFieldSoapDO[] flexFields = null;
 		try {
-			connect();
-			flexFields = trackerHandler.getFlexFields(getSessionId(), tracker);
-			disconnect();
+			flexFields = trackerHandler.getFlexFields(connection.getSessionId(), tracker);
 		} catch (RemoteException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
@@ -269,7 +279,7 @@ public class SFEEWriter extends SFEEConnectHelper implements
 		try {
 			result = trackerHandler
 			.createArtifact(
-					getSessionId(),
+					connection.getSessionId(),
 					folderId,
 					description,
 					category,
@@ -298,12 +308,10 @@ public class SFEEWriter extends SFEEConnectHelper implements
 		return result;
 	}
 	
-	private ArtifactSoapDO updateArtifact(GenericArtifact ga, String tracker, boolean forceOverride){
+	private ArtifactSoapDO updateArtifact(GenericArtifact ga, String tracker, boolean forceOverride, Connection connection){
 		TrackerFieldSoapDO[] flexFields = null;
 		try {
-			connect();
-			flexFields = trackerHandler.getFlexFields(getSessionId(), tracker);
-			disconnect();
+			flexFields = trackerHandler.getFlexFields(connection.getSessionId(), tracker);
 		} catch (RemoteException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();
@@ -346,7 +354,7 @@ public class SFEEWriter extends SFEEConnectHelper implements
 		try {
 			result = trackerHandler
 			.updateArtifact(
-					getSessionId(),
+					connection.getSessionId(),
 					folderId,
 					description,
 					category,
@@ -374,20 +382,36 @@ public class SFEEWriter extends SFEEConnectHelper implements
 		}
 		return result;
 	}
-
-	@Override
-	/**
-	 * Connect to SFEE and handle exceptions
-	 */
-	public void connect() {
-		try {
-			super.connect();
-		} catch (IOException e) {
-			// TODO Throw an exception?
-			log.error("Could not login into SFEE: ", e);
-		}
+	
+	public Connection connect(GenericArtifact ga){
+		String targetSystemId = ga.getTargetSystemId();
+		String targetSystemKind = ga.getTargetSystemKind();
+		String targetRepositoryId = ga.getTargetRepositoryId();
+		String targetRepositoryKind = ga.getTargetRepositoryKind();
+		Connection connection = connect(targetSystemId, targetSystemKind, targetRepositoryId,
+				targetRepositoryKind, serverUrl, 
+				username+SFEEConnectionFactory.PARAM_DELIMITER+password);
+		return connection;
 	}
 
+	public Connection connect(String systemId, String systemKind, String repositoryId,
+			String repositoryKind, String connectionInfo, String credentialInfo) {
+		log.info("Before calling the parent connect()");
+		//super.connect();
+		Connection connection = null;
+		try {
+			connection = connectionManager.getConnection(systemId, systemKind, repositoryId,
+					repositoryKind, connectionInfo, credentialInfo);
+		} catch (MaxConnectionsReachedException e) {
+			e.printStackTrace();
+		}
+		return connection;
+	}
+	
+	private void disconnect(Connection connection) {
+		// TODO Auto-generated method stub
+		connectionManager.releaseConnection(connection);
+	}
 	@SuppressWarnings("unchecked")
 	@Override
 	/**
@@ -602,5 +626,37 @@ public class SFEEWriter extends SFEEConnectHelper implements
 	 */
 	public String getLastSynchronizedWithOtherSystemSFEETargetFieldname() {
 		return lastSynchronizedWithOtherSystemSFEETargetFieldname;
+	}
+
+	public String getServerUrl() {
+		return serverUrl;
+	}
+
+	public void setServerUrl(String serverUrl) {
+		this.serverUrl = serverUrl;
+	}
+
+	public String getPassword() {
+		return password;
+	}
+
+	public void setPassword(String password) {
+		this.password = password;
+	}
+
+	public String getUsername() {
+		return username;
+	}
+
+	public void setUsername(String username) {
+		this.username = username;
+	}
+
+	public ConnectionManager<Connection> getConnectionManager() {
+		return connectionManager;
+	}
+
+	public void setConnectionManager(ConnectionManager<Connection> connectionManager) {
+		this.connectionManager = connectionManager;
 	}
 }

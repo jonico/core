@@ -1,30 +1,29 @@
 package com.collabnet.ccf.pi.sfee.v44;
 
-import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.TreeMap;
-import java.util.Map.Entry;
+import java.util.Set;
+import java.util.TreeSet;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dom4j.Document;
-import org.dom4j.Node;
 import org.openadaptor.core.IDataProcessor;
 
+import com.collabnet.ccf.core.AbstractReader;
+import com.collabnet.ccf.core.eis.connection.ConnectionManager;
+import com.collabnet.ccf.core.eis.connection.MaxConnectionsReachedException;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
-import com.collabnet.ccf.core.ga.GenericArtifact.ArtifactActionValue;
-import com.collabnet.ccf.core.utils.DateUtil;
 import com.vasoftware.sf.soap44.webservices.sfmain.TrackerFieldSoapDO;
 import com.vasoftware.sf.soap44.webservices.tracker.ArtifactSoapDO;
 
-public class SFEEReader extends SFEEConnectHelper implements
+public class SFEEReader extends AbstractReader implements
 		IDataProcessor {
     
 	private static final Log log = LogFactory.getLog(SFEEReader.class);
@@ -41,17 +40,25 @@ public class SFEEReader extends SFEEConnectHelper implements
 	
 	private SFEEToGenericArtifactConverter artifactConverter;
 	
-	public SFEEReader() {
-	    super();
-	    artifactConverter = new SFEEToGenericArtifactConverter();
-	}
+	private ConnectionManager<Connection> connectionManager = null;
+	
+	private String serverUrl;
+
+	private String password;
+
+	private String username;
+	
+//	public SFEEReader() {
+//	    super();
+//	    artifactConverter = new SFEEToGenericArtifactConverter();
+//	}
 
     public SFEEReader(String id) {
 	    super(id);
 	    artifactConverter = new SFEEToGenericArtifactConverter();
 	}
     
-	public Object[] process(Object data) {
+	public Object[] processDeprecated(Object data) {
 		if (!(data instanceof Document)) {
 			log.error("Supplied data not in the expected dom4j format: "+data);
 			return null;
@@ -59,38 +66,49 @@ public class SFEEReader extends SFEEConnectHelper implements
 		log.debug("Start Processing");
 		Document document=(Document) data;
 		
-		Date lastModifiedDate;
+		Date lastModifiedDate = this.getLastModifiedDate(document);
 		boolean firstTimeImport=false;
-		String lastModifiedDateString = getLastModifiedDateString(document);
-		if (StringUtils.isEmpty(lastModifiedDateString)) {
-			lastModifiedDate=new Date(0);
-			firstTimeImport=true;
-			log.info("This seems to be a first time import. Fetching artifacts from "+lastModifiedDate);
+		if(lastModifiedDate == null){
+			firstTimeImport = true;
+			lastModifiedDate = new Date(0);
 		}
-		else {
+		
+		Connection connection = null;
+//		try {
+			log.debug("Connecting to SFEE "+this.getServerUrl()+" with user name "+this.getUsername());
+			String sourceSystemId = this.getSourceSystemId(document);
+			String sourceSystemKind = this.getSourceSystemKind(document);
+			String sourceRepositoryId = this.getSourceRepositoryId(document);
+			String sourceRepositoryKind = this.getSourceRepositoryKind(document);
+			connection = connect(sourceSystemId, sourceSystemKind, sourceRepositoryId,
+					sourceRepositoryKind, serverUrl, 
+					username+SFEEConnectionFactory.PARAM_DELIMITER+password);
+//		} catch (RemoteException e) {
+//			// TODO Declare exception so that it can be processed by OA exception handler
+//			log.error("Could not log into SFEE", e);
+//			throw new RuntimeException(e);
+//		}
+//		catch (IOException ex) {
+//			// TODO postpone exception handling to OA framework
+//			log.error("During the connection process to SFEE, an IO-Error occured", ex);
+//			throw new RuntimeException(ex);
+//		}
+		String tracker = this.getSourceRepositoryId(document);
+		Object[] result=readTrackerItems(tracker,lastModifiedDate, firstTimeImport,document, connection);
+		disconnect(connection);
+		log.debug("Disconnected from SFEE");
+		return result;
+	}
+	
+	private Date getLastModifiedDate(Document syncInfo){
+		String lastModifiedDateString = getLastModifiedDateString(syncInfo);
+		Date lastModifiedDate = null; 
+		if (!StringUtils.isEmpty(lastModifiedDateString)) {
 			log.debug("Artifacts to be fetched from "+lastModifiedDateString);
 			lastModifiedDate=(Date)SFEEGAHelper.asTypedValue(lastModifiedDateString, "DateTime");
 			lastModifiedDate.setTime(lastModifiedDate.getTime()+1);
 		}
-
-		try {
-			log.debug("Connecting to SFEE "+this.getServerUrl()+" with user name "+this.getUsername());
-			connect();
-		} catch (RemoteException e) {
-			// TODO Declare exception so that it can be processed by OA exception handler
-			log.error("Could not log into SFEE", e);
-			throw new RuntimeException(e);
-		}
-		catch (IOException ex) {
-			// TODO postpone exception handling to OA framework
-			log.error("During the connection process to SFEE, an IO-Error occured", ex);
-			throw new RuntimeException(ex);
-		}
-		String tracker = this.getSourceRepositoryId(document);
-		Object[] result=readTrackerItems(tracker,lastModifiedDate, firstTimeImport,document);
-		disconnect();
-		log.debug("Disconnected from SFEE");
-		return result;
+		return lastModifiedDate;
 	}
 
 	public Object getReaderContext() {
@@ -101,20 +119,33 @@ public class SFEEReader extends SFEEConnectHelper implements
 		return isDry;
 	}
 
-	@Override
-	public void connect() throws IOException {	
-		super.connect();
-		appHandler = new SFEEAppHandler(getMSfSoap(), getSessionId());
+	public Connection connect(String systemId, String systemKind, String repositoryId,
+			String repositoryKind, String connectionInfo, String credentialInfo) {
+		log.info("Before calling the parent connect()");
+		//super.connect();
+		Connection connection = null;
+		try {
+			connection = connectionManager.getConnection(systemId, systemKind, repositoryId,
+					repositoryKind, connectionInfo, credentialInfo);
+		} catch (MaxConnectionsReachedException e) {
+			e.printStackTrace();
+		}
 		isDry=false;
+		return connection;
 	}
 	
-	public Object[] readTrackerItems(String projectTracker, Date lastModifiedDate, boolean firstTimeImport, Document dbDocument) {
+	public void disconnect(Connection connection) {
+		// TODO Auto-generated method stub
+		connectionManager.releaseConnection(connection);
+	}
+	
+	public Object[] readTrackerItems(String projectTracker, Date lastModifiedDate, boolean firstTimeImport, Document dbDocument, Connection connection) {
 		// TODO Use the information of the firstTimeImport flag
 		
 		List<Document> dataRows=new ArrayList<Document>();
 		List<ArtifactSoapDO> artifactRows;
 		try {
-			artifactRows = trackerHandler.getChangedTrackerItems(getSessionId(), projectTracker,lastModifiedDate);
+			artifactRows = trackerHandler.getChangedTrackerItems(connection.getSessionId(), projectTracker,lastModifiedDate);
 		} catch (RemoteException e) {
 			// TODO Throw an exception?
 			log.error("During the artifact retrieval process to SFEE, an error occured",e);
@@ -122,7 +153,7 @@ public class SFEEReader extends SFEEConnectHelper implements
 		}
 		TrackerFieldSoapDO[] trackerFields = null;
 		try {
-			trackerFields = trackerHandler.getFlexFields(getSessionId(), projectTracker);
+			trackerFields = trackerHandler.getFlexFields(connection.getSessionId(), projectTracker);
 		} catch (RemoteException e1) {
 			e1.printStackTrace();
 			throw new RuntimeException(e1);
@@ -131,7 +162,7 @@ public class SFEEReader extends SFEEConnectHelper implements
 		// List<ArtifactSoapDO> artifactHistoryRows = appHandler.loadArtifactAuditHistory(artifactRows,
 		//		lastModifiedDate,getUsername(), trackerFields);
 		List<ArtifactSoapDO> artifactHistoryRows = null;
-		TreeMap<Date, GenericArtifact> attachments = null;
+		List<GenericArtifact> attachments = null;
 		if(artifactRows != null){
 			for(ArtifactSoapDO artifact:artifactRows){
 				appHandler.addComments(artifact,
@@ -139,8 +170,10 @@ public class SFEEReader extends SFEEConnectHelper implements
 			}
 			artifactHistoryRows = artifactRows;
 			try {
-				attachments = attachmentHandler.listAttachments(getSessionId(),
-						lastModifiedDate,getUsername(),artifactRows, this.getMSfSoap());
+				Set<ArtifactSoapDO> artifactSet = new TreeSet<ArtifactSoapDO>();
+				artifactSet.addAll(artifactRows);
+				attachments = attachmentHandler.listAttachments(connection.getSessionId(),
+						lastModifiedDate,getUsername(),artifactSet, connection.getSfSoap());
 			} catch (RemoteException e1) {
 				e1.printStackTrace();
 				throw new RuntimeException(e1);
@@ -171,8 +204,7 @@ public class SFEEReader extends SFEEConnectHelper implements
 				}
 			}
 			if(attachments != null){
-				for(Entry<Date,GenericArtifact> entry:attachments.entrySet()){
-					GenericArtifact ga = entry.getValue();
+				for(GenericArtifact ga:attachments){
 					if(dbDocument != null){
 						populateSrcAndDest(dbDocument, ga);
 					}
@@ -190,17 +222,17 @@ public class SFEEReader extends SFEEConnectHelper implements
 		return dataRows.toArray();
 	}
 	
-	private void populateSrcAndDest(Document dbDocument, GenericArtifact ga){
+	private void populateSrcAndDest(Document syncInfo, GenericArtifact ga){
 		String sourceArtifactId = ga.getSourceArtifactId();
-		String sourceRepositoryId = this.getSourceRepositoryId(dbDocument);
-		String sourceRepositoryKind = this.getSourceRepositoryKind(dbDocument);
-		String sourceSystemId = this.getSourceSystemId(dbDocument);
-		String sourceSystemKind = this.getSourceSystemKind(dbDocument);
+		String sourceRepositoryId = this.getSourceRepositoryId(syncInfo);
+		String sourceRepositoryKind = this.getSourceRepositoryKind(syncInfo);
+		String sourceSystemId = this.getSourceSystemId(syncInfo);
+		String sourceSystemKind = this.getSourceSystemKind(syncInfo);
 		
-		String targetRepositoryId = this.getTargetRepositoryId(dbDocument);
-		String targetRepositoryKind = this.getTargetRepositoryKind(dbDocument);
-		String targetSystemId = this.getTargetSystemId(dbDocument);
-		String targetSystemKind = this.getTargetSystemKind(dbDocument);
+		String targetRepositoryId = this.getTargetRepositoryId(syncInfo);
+		String targetRepositoryKind = this.getTargetRepositoryKind(syncInfo);
+		String targetSystemId = this.getTargetSystemId(syncInfo);
+		String targetSystemKind = this.getTargetSystemKind(syncInfo);
 		
 		if(StringUtils.isEmpty(sourceArtifactId)){
 			List<GenericArtifactField> fields = ga.getAllGenericArtifactFieldsWithSameFieldName("Id");
@@ -229,92 +261,6 @@ public class SFEEReader extends SFEEConnectHelper implements
 		attachmentHandler = new SFEEAttachmentHandler(getServerUrl());
 	}
 
-	private String getLastModifiedDateString(Document document) {
-		// TODO Let the user specify this value?
-		String dbTime = this.getFromTime(document);
-		if(!StringUtils.isEmpty(dbTime)){
-			java.sql.Timestamp ts = java.sql.Timestamp.valueOf(dbTime);
-			long time = ts.getTime();
-			Date date = new Date(time);
-			return DateUtil.format(date);
-		}
-		return null;
-	}
-	
-	private String getLastArtifactVersionString(Document document) {
-		// TODO I am not reading the artifact version ID from the DB. Refactor this method to DBHelper...?
-		Node node= document.selectSingleNode("//VERSION");
-		if (node==null)
-			return null;
-		return node.getText();
-	}
-	
-	public String getToTime(Document document) {
-		Node node= document.selectSingleNode("//TO_TIME");
-		if (node==null)
-			return null;
-		return node.getText();
-	}
-
-	public String getFromTime(Document document) {
-		Node node= document.selectSingleNode("//FROM_TIME");
-		if (node==null)
-			return null;
-		return node.getText();
-	}
-
-	public String getSourceRepositoryId(Document document) {
-		Node node= document.selectSingleNode("//SOURCE_REPOSITORY_ID");
-		if (node==null)
-			return null;
-		return node.getText();
-	}
-	public String getSourceRepositoryKind(Document document) {
-		Node node= document.selectSingleNode("//SOURCE_REPOSITORY_KIND");
-		if (node==null)
-			return null;
-		return node.getText();
-	}
-
-	public String getSourceSystemId(Document document) {
-		Node node= document.selectSingleNode("//SOURCE_SYSTEM_ID");
-		if (node==null)
-			return null;
-		return node.getText();
-	}
-	public String getSourceSystemKind(Document document) {
-		Node node= document.selectSingleNode("//SOURCE_SYSTEM_KIND");
-		if (node==null)
-			return null;
-		return node.getText();
-	}
-
-	public String getTargetRepositoryId(Document document) {
-		Node node= document.selectSingleNode("//TARGET_REPOSITORY_ID");
-		if (node==null)
-			return null;
-		return node.getText();
-	}
-	public String getTargetRepositoryKind(Document document) {
-		Node node= document.selectSingleNode("//TARGET_REPOSITORY_KIND");
-		if (node==null)
-			return null;
-		return node.getText();
-	}
-
-	public String getTargetSystemId(Document document) {
-		Node node= document.selectSingleNode("//TARGET_SYSTEM_ID");
-		if (node==null)
-			return null;
-		return node.getText();
-	}
-	public String getTargetSystemKind(Document document) {
-		Node node= document.selectSingleNode("//TARGET_SYSTEM_KIND");
-		if (node==null)
-			return null;
-		return node.getText();
-	}
-
 	public void reset(Object context) {
 	}
 
@@ -324,5 +270,138 @@ public class SFEEReader extends SFEEConnectHelper implements
 
 	public void setAttachmentHandler(SFEEAttachmentHandler attachmentHandler) {
 		this.attachmentHandler = attachmentHandler;
+	}
+
+	@Override
+	public List<GenericArtifact> getArtifactAttachments(Document syncInfo,
+			String artifactId) {
+		String sourceSystemId = this.getSourceSystemId(syncInfo);
+		String sourceSystemKind = this.getSourceSystemKind(syncInfo);
+		String sourceRepositoryId = this.getSourceRepositoryId(syncInfo);
+		String sourceRepositoryKind = this.getSourceRepositoryKind(syncInfo);
+		Date lastModifiedDate = this.getLastModifiedDate(syncInfo);
+		Connection connection = connect(sourceSystemId, sourceSystemKind, sourceRepositoryId,
+				sourceRepositoryKind, serverUrl, 
+				username+SFEEConnectionFactory.PARAM_DELIMITER+password);
+		List<String> artifactIds = new ArrayList<String>();
+		artifactIds.add(artifactId);
+		List<GenericArtifact> attachments = null;
+		try {
+			attachments = attachmentHandler.listAttachments(connection.getSessionId(),
+					lastModifiedDate,getUsername(),artifactIds, connection.getSfSoap());
+			for(GenericArtifact attachment:attachments){
+				attachment.setSourceArtifactId(artifactId);
+				populateSrcAndDest(syncInfo, attachment);
+			}
+		} catch (RemoteException e1) {
+			e1.printStackTrace();
+			throw new RuntimeException(e1);
+		} finally {
+			this.disconnect(connection);
+		}
+		return attachments;
+	}
+
+	@Override
+	public List<GenericArtifact> getArtifactData(Document syncInfo,
+			String artifactId) {
+		String sourceSystemId = this.getSourceSystemId(syncInfo);
+		String sourceSystemKind = this.getSourceSystemKind(syncInfo);
+		String sourceRepositoryId = this.getSourceRepositoryId(syncInfo);
+		String sourceRepositoryKind = this.getSourceRepositoryKind(syncInfo);
+		Date lastModifiedDate = this.getLastModifiedDate(syncInfo);
+		Connection connection = connect(sourceSystemId, sourceSystemKind, sourceRepositoryId,
+				sourceRepositoryKind, serverUrl, 
+				username+SFEEConnectionFactory.PARAM_DELIMITER+password);
+		ArrayList<GenericArtifact> gaList = new ArrayList<GenericArtifact>();
+		try {
+			TrackerFieldSoapDO[] trackerFields = null;
+			trackerFields = trackerHandler.getFlexFields(connection.getSessionId(), sourceRepositoryId);
+			ArtifactSoapDO artifact = trackerHandler.getTrackerItem(connection.getSessionId(), artifactId);
+			appHandler.addComments(artifact,
+					lastModifiedDate,this.getUsername());
+			GenericArtifact genericArtifact = artifactConverter.convert(artifact,
+					trackerFields, lastModifiedDate);
+			populateSrcAndDest(syncInfo, genericArtifact);
+			gaList.add(genericArtifact);
+		} catch (RemoteException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} finally {
+			this.disconnect(connection);
+		}
+		return gaList;
+	}
+
+	@Override
+	public List<GenericArtifact> getArtifactDependencies(Document syncInfo,
+			String artifactId) {
+		// TODO Auto-generated method stub
+		return new ArrayList<GenericArtifact>();
+	}
+
+	@Override
+	public List<String> getChangedArtifacts(Document syncInfo) {
+		String sourceSystemId = this.getSourceSystemId(syncInfo);
+		String sourceSystemKind = this.getSourceSystemKind(syncInfo);
+		String sourceRepositoryId = this.getSourceRepositoryId(syncInfo);
+		String sourceRepositoryKind = this.getSourceRepositoryKind(syncInfo);
+		Connection connection = connect(sourceSystemId, sourceSystemKind, sourceRepositoryId,
+				sourceRepositoryKind, serverUrl, 
+				username+SFEEConnectionFactory.PARAM_DELIMITER+password);
+		Date lastModifiedDate = this.getLastModifiedDate(syncInfo);
+		if(lastModifiedDate == null){
+			lastModifiedDate = new Date(0);
+		}
+		ArrayList<String> artifactIds = new ArrayList<String>();
+		List<ArtifactSoapDO> artifactRows = null;
+		try {
+			artifactRows = trackerHandler.getChangedTrackerItems(connection.getSessionId(), sourceRepositoryId,lastModifiedDate);
+		} catch (RemoteException e) {
+			// TODO Throw an exception?
+			log.error("During the artifact retrieval process to SFEE, an error occured",e);
+			return artifactIds;
+		} finally {
+			this.disconnect(connection);
+		}
+		if(artifactRows != null){
+			for(ArtifactSoapDO artifact:artifactRows){
+				String artifactId = artifact.getId();
+				artifactIds.add(artifactId);
+			}
+		}
+		return artifactIds;
+	}
+
+	public String getServerUrl() {
+		return serverUrl;
+	}
+
+	public void setServerUrl(String serverUrl) {
+		this.serverUrl = serverUrl;
+	}
+
+	public String getPassword() {
+		return password;
+	}
+
+	public void setPassword(String password) {
+		this.password = password;
+	}
+
+	public String getUsername() {
+		return username;
+	}
+
+	public void setUsername(String username) {
+		this.username = username;
+	}
+
+	public ConnectionManager<Connection> getConnectionManager() {
+		return connectionManager;
+	}
+
+	public void setConnectionManager(ConnectionManager<Connection> connectionManager) {
+		this.connectionManager = connectionManager;
 	}
 }

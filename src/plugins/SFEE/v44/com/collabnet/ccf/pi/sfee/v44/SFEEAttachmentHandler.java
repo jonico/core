@@ -3,8 +3,10 @@ package com.collabnet.ccf.pi.sfee.v44;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 import java.util.TreeMap;
 
 import javax.activation.DataHandler;
@@ -142,12 +144,25 @@ public class SFEEAttachmentHandler {
 		}
 		
 	}
-	public TreeMap<Date, GenericArtifact> listAttachments(String sessionId,
+	public List<GenericArtifact> listAttachments(String sessionId,
 			Date lastModifiedDate, String username,
-			List<ArtifactSoapDO> artifactRows, ISourceForgeSoap sourceForgeSoap) throws RemoteException {
-		TreeMap<Date, GenericArtifact> attachmentGAs = new TreeMap<Date, GenericArtifact>();
-		for(ArtifactSoapDO artifact:artifactRows){
-			String artifactId = artifact.getId();
+			Set<ArtifactSoapDO> artifactRows, ISourceForgeSoap sourceForgeSoap) throws RemoteException {
+		List<GenericArtifact> gaList = null;
+		List<String> artifactIds = new ArrayList<String>();
+		if(artifactRows != null && (!artifactIds.isEmpty())){
+			for(ArtifactSoapDO artifact:artifactRows){
+				String artifactId = artifact.getId();
+				artifactIds.add(artifactId);
+			}
+			gaList = this.listAttachments(sessionId, lastModifiedDate, username, artifactIds, sourceForgeSoap);
+		}
+		return gaList;
+	}
+	public List<GenericArtifact> listAttachments(String sessionId,
+			Date lastModifiedDate, String username,
+			List<String> artifactIds, ISourceForgeSoap sourceForgeSoap) throws RemoteException {
+		List<GenericArtifact> attachmentGAs = new ArrayList<GenericArtifact>();
+		for(String artifactId:artifactIds){
 			//String folderId = artifact.getFolderId();
 			AttachmentSoapList attachmentsList = sourceForgeSoap.listAttachments(sessionId, artifactId);
 			AttachmentSoapRow[] attachmentRows = attachmentsList.getDataRows();
@@ -207,7 +222,7 @@ public class SFEEAttachmentHandler {
 					 attachmentData = this.getAttachmentData(sessionId, row.getRawFileId(),
 							Long.parseLong(row.getFileSize()), artifactId);
 					ga.setArtifactValue(new String(Base64.encodeBase64(attachmentData)));
-					attachmentGAs.put(createdDate, ga);
+					attachmentGAs.add(ga);
 				}
 			}
 		}
