@@ -5,6 +5,7 @@ import java.util.Date;
 
 import junit.framework.TestCase;
 
+import com.collabnet.ccf.core.eis.connection.ConnectionManager;
 import com.vasoftware.sf.soap44.webservices.ClientSoapStubFactory;
 import com.vasoftware.sf.soap44.webservices.filestorage.ISimpleFileStorageAppSoap;
 import com.vasoftware.sf.soap44.webservices.sfmain.AttachmentSoapList;
@@ -21,32 +22,50 @@ public class SFEEReaderTest extends TestCase {
     String password="password";
     String serverUrl="http://cu074.cubit.maa.collab.net:8080";
     String keepAlive = "true";
+	private String systemKind;
+	private String credentialInfo;
+	private String repositoryKind;
+	private String systemId;
+	private String connectionInfo;
+	private String repositoryId;
 	public void setUp() throws Exception {
 		super.setUp();
-		sfeeReader = new SFEEReader();
+		systemKind = "kind";
+		credentialInfo = username + SFEEConnectionFactory.PARAM_DELIMITER + password;
+		repositoryKind = "repokind";
+		systemId = "sysid";
+		connectionInfo = serverUrl;
+		repositoryId = "tracker1004";
+		sfeeReader = new SFEEReader("SFEEReader");
 		sfeeReader.setUsername(username);
 		sfeeReader.setPassword(password);
 		sfeeReader.setServerUrl(serverUrl);
-		sfeeReader.setKeepAlive(keepAlive);
-		sfeeReader.connect();
+		ConnectionManager<Connection> connectionManager = new ConnectionManager<Connection>();
+		SFEEConnectionFactory connectionFactory = new SFEEConnectionFactory();
+		connectionManager.setConnectionFactory(connectionFactory);
+		sfeeReader.setConnectionManager(connectionManager);
 		sfeeReader.validate(null);
 	}
 
 	@SuppressWarnings("deprecation")
 	public void testReadTrackerItems(){
 		String projectTracker = "tracker1004";
+		repositoryId = projectTracker;
 		//"Mon Nov 05 00:00:00 GMT+05:30 2007"
 		Date lastModifiedDate = new Date(2007-1900,10,05,0,0,0);
 		//Date lastModifiedDate = new Date(2008-1900,4,7,9,10,0);
 		boolean firstTimeImport = false;
-		sfeeReader.readTrackerItems(projectTracker, lastModifiedDate, firstTimeImport, null);
+		Connection connection = sfeeReader.connect(systemId, systemKind, repositoryId, repositoryKind, connectionInfo, credentialInfo);
+		sfeeReader.readTrackerItems(projectTracker, lastModifiedDate, firstTimeImport, null,connection);
+		sfeeReader.disconnect(connection);
 	}
 	
 	public void te2stCommentsList(){
-		ISourceForgeSoap soapApp = sfeeReader.getMSfSoap();
+		Connection connection = sfeeReader.connect(systemId, systemKind, repositoryId, repositoryKind, connectionInfo, credentialInfo);
+		ISourceForgeSoap soapApp = connection.getSfSoap();
 		try {
 			System.out.println(soapApp.getApiVersion());
-			CommentSoapList list = soapApp.getCommentList(sfeeReader.getSessionId(), "artf1054");
+			CommentSoapList list = soapApp.getCommentList(connection.getSessionId(), "artf1054");
 			CommentSoapRow[] comments = list.getDataRows();
 			for(CommentSoapRow row:comments){
 				System.out.println(row.getCreatedBy());
@@ -59,36 +78,41 @@ public class SFEEReaderTest extends TestCase {
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} finally {
+			sfeeReader.disconnect(connection);
 		}
 	}
 	
 	public void te2stWriteAttachment(){
-		
+		Connection connection = sfeeReader.connect(systemId, systemKind, repositoryId, repositoryKind, connectionInfo, credentialInfo);
 		ISimpleFileStorageAppSoap fileStorageApp = (ISimpleFileStorageAppSoap) ClientSoapStubFactory.getSoapStub(
 				ISimpleFileStorageAppSoap.class, serverUrl);
 		ITrackerAppSoap mTrackerApp = (ITrackerAppSoap) ClientSoapStubFactory.getSoapStub(
 				ITrackerAppSoap.class, serverUrl);
 		byte[] b = "Hello this is my simple attachment".getBytes();
 		try {
-			String fileDescriptor = fileStorageApp.startFileUpload(sfeeReader.getSessionId());
+			String fileDescriptor = fileStorageApp.startFileUpload(connection.getSessionId());
 			System.out.println("File descriptor "+fileDescriptor);
-			fileStorageApp.write(sfeeReader.getSessionId(), fileDescriptor, b);
-			fileStorageApp.endFileUpload(sfeeReader.getSessionId(), fileDescriptor);
+			fileStorageApp.write(connection.getSessionId(), fileDescriptor, b);
+			fileStorageApp.endFileUpload(connection.getSessionId(), fileDescriptor);
 			
-			ArtifactSoapDO soapDo = mTrackerApp.getArtifactData(sfeeReader.getSessionId(), "artf1179");
-			mTrackerApp.setArtifactData(sfeeReader.getSessionId(), soapDo, "Adding file via Java",
+			ArtifactSoapDO soapDo = mTrackerApp.getArtifactData(connection.getSessionId(), "artf1179");
+			mTrackerApp.setArtifactData(connection.getSessionId(), soapDo, "Adding file via Java",
 						"myFile.txt", "text/plain", fileDescriptor);
 		} catch (RemoteException e) {
 			e.printStackTrace();
 			fail();
+		} finally{
+			sfeeReader.disconnect(connection);
 		}
 	}
 	
 	public void te2stAttachmentsList(){
-		ISourceForgeSoap soapApp = sfeeReader.getMSfSoap();
+		Connection connection = sfeeReader.connect(systemId, systemKind, repositoryId, repositoryKind, connectionInfo, credentialInfo);
+		ISourceForgeSoap soapApp = connection.getSfSoap();
 		try {
 			
-			AttachmentSoapList list = soapApp.listAttachments(sfeeReader.getSessionId(), "artf1179");
+			AttachmentSoapList list = soapApp.listAttachments(connection.getSessionId(), "artf1179");
 			AttachmentSoapRow[] comments = list.getDataRows();
 			for(AttachmentSoapRow row:comments){
 				System.out.println(row.getAttachmentId());
@@ -98,11 +122,12 @@ public class SFEEReaderTest extends TestCase {
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} finally{
+			sfeeReader.disconnect(connection);
 		}
 	}
 	
 	public void tearDown() throws Exception {
-		sfeeReader.disconnect();
 		super.tearDown();
 	}
 
