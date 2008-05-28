@@ -128,6 +128,17 @@
 		<property name="serverUrl"
 			value="${sfee.server.1.url}" />
 		<property name="keepAlive" value="true" />
+		<property name="connectionManager" ref="SFEEConnectionManager"></property>
+	</bean>
+	<bean id="SFEEConnectionManager"
+		class="com.collabnet.ccf.core.eis.connection.ConnectionManager">
+		<property name="maxConnectionsPerPool" value="5"></property>
+		<property name="maxIdleTimeForConnection" value="600000" />
+		<property name="scavengerInterval" value="120000"></property>
+		<property name="connectionFactory" ref="SFEEConnectionFactory"></property>
+	</bean>
+	<bean id="SFEEConnectionFactory"
+		class="com.collabnet.ccf.pi.sfee.v44.SFEEConnectionFactory">
 	</bean>
 	<bean id="SFEEWriter"
 		class="com.collabnet.ccf.pi.sfee.v44.SFEEWriter">
@@ -142,6 +153,7 @@
 			value="create" />
 		<property name="updateComment"
 			value="Synchronized by Connector user" />
+		<property name="connectionManager" ref="SFEEConnectionManager"></property>
 	</bean>
 	<bean id="SFEEEntityService"
 		class="com.collabnet.ccf.core.EntityService">
