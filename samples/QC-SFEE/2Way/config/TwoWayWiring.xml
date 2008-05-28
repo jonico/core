@@ -127,7 +127,6 @@
 		<property name="password" value="${sfee.server.1.password}" />
 		<property name="serverUrl"
 			value="${sfee.server.1.url}" />
-		<property name="keepAlive" value="true" />
 		<property name="connectionManager" ref="SFEEConnectionManager"></property>
 	</bean>
 	<bean id="SFEEConnectionManager"
@@ -147,7 +146,6 @@
 		<property name="password" value="${sfee.server.1.password}" />
 		<property name="serverUrl"
 			value="${sfee.server.1.url}" />
-		<property name="keepAlive" value="true" />
 		<property name="createToken" value="create" />
 		<property name="otherSystemVersionInSFEETargetFieldname"
 			value="create" />
