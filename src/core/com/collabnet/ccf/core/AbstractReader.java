@@ -70,27 +70,20 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 		};
 	}
 	public Object[] process(Object data) {
-		Document syncInfo = null;
+		Document syncInfoIn = null;
 		if(data instanceof Document){
-			syncInfo = (Document) data;
+			syncInfoIn = (Document) data;
 		} else {
 			return null;
 		}
-		String sourceSystemId = this.getSourceSystemId(syncInfo);
-		String sourceSystemKind = this.getSourceSystemKind(syncInfo);
-		String sourceRepositoryId = this.getSourceRepositoryId(syncInfo);
-		String sourceRepositoryKind = this.getSourceRepositoryKind(syncInfo);
-		String targetSystemId = this.getTargetSystemId(syncInfo);
-		String targetSystemKind = this.getTargetSystemKind(syncInfo);
-		String targetRepositoryId = this.getTargetRepositoryId(syncInfo);
-		String targetRepositoryKind = this.getTargetRepositoryKind(syncInfo);
+		String sourceRepositoryId = this.getSourceRepositoryId(syncInfoIn);
 		RepositoryRecord record = repositoryRecordHashMap.get(sourceRepositoryId);
 		if(record == null){
-			record = new RepositoryRecord(sourceRepositoryId, syncInfo);
+			record = new RepositoryRecord(sourceRepositoryId, syncInfoIn);
 			repositoryRecordHashMap.put(sourceRepositoryId, record);
 		}
 		else {
-			record.setSyncInfo(syncInfo);
+			record.setSyncInfo(syncInfoIn);
 		}
 		if(!repositoryRecordsInRepositorySynchronizationWaitingList.contains(sourceRepositoryId)){
 			repositorySynchronizationWaitingList.add(0, record);
@@ -99,14 +92,17 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 		RepositoryRecord currentRecord = null;
 		while(!repositorySynchronizationWaitingList.isEmpty()){
 			currentRecord = repositorySynchronizationWaitingList.get(0);
+			Document syncInfo = currentRecord.getSyncInfo();
+			RepositoryRecord movedRecord = repositorySynchronizationWaitingList.remove(0);
+			repositorySynchronizationWaitingList.add(movedRecord);
 			List<GenericArtifact> artifactsToBeShippedList = currentRecord.getArtifactsToBeShippedList();
 			List<String> artifactsToBeReadList = currentRecord.getArtifactsToBeReadList();
 			if(!artifactsToBeShippedList.isEmpty()){
 				GenericArtifact genericArtifact = artifactsToBeShippedList.remove(0);
-				if(artifactsToBeShippedList.isEmpty()){
-					repositorySynchronizationWaitingList.remove(currentRecord);
-					repositorySynchronizationWaitingList.add(currentRecord);
-				}
+//				if(artifactsToBeShippedList.isEmpty()){
+//					repositorySynchronizationWaitingList.remove(currentRecord);
+//					repositorySynchronizationWaitingList.add(currentRecord);
+//				}
 				try {
 					Document returnDoc = GenericArtifactHelper.createGenericArtifactXMLDocument(genericArtifact);
 					Object[] returnObjects = new Object[] {returnDoc};
