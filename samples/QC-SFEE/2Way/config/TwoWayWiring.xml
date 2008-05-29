@@ -66,21 +66,25 @@
 				<entry key-ref="SFEEWriter"
 					value-ref="MappingDBUpdater" />
 
-				<entry key-ref="SimplePollingReaderSFEE2QC"
+				 <entry key-ref="SimplePollingReaderSFEE2QC"
 					value-ref="SFEEReader" />
 				<entry key-ref="SFEEReader" value-ref="QCTransformer" />
 				<entry key-ref="QCTransformer"
 					value-ref="QCEntityService" />
 				<entry key-ref="QCEntityService" value-ref="QCWriter" />
-				<entry key-ref="QCWriter" value-ref="MappingDBUpdater" />
+				<entry key-ref="QCWriter" value-ref="MappingDBUpdater" />  
 			</map>
 		</property>
 		<property name="exceptionProcessor" ref="ExceptionHandler" />
 	</bean>
 	<bean id="SFEETransformer"
 		class="com.collabnet.ccf.core.transformer.XsltProcessor">
-
-		<property name="xsltFile" value="${ccf.qc2sfee.xsltFile}" />
+		<description>The xsltDir specifies the directory in which the xsl files are contained. The naming conventions
+		for the xsl files need to be followed. 
+		Name of an xsl file should be: sourceSystem+sourceRepository+targetSystem+targetRepository.xsl 
+		</description>
+		<!--  <property name="xsltFile" value="${ccf.qc2sfee.xsltFile}" /> -->
+		<property name="xsltDir" value="${ccf.xsltDir}" />
 	</bean>
 	<bean id="QCReader" class="com.collabnet.ccf.pi.qc.v90.QCReader">
 		<description>Reads the modified defects from QC</description>
@@ -239,7 +243,12 @@
 	</bean>
 	<bean id="QCTransformer"
 		class="com.collabnet.ccf.core.transformer.XsltProcessor">
-		<property name="xsltFile" value="${ccf.sfee2qc.xsltFile}" />
+		<description>The xsltDir specifies the directory in which the xsl files are contained. The naming conventions
+		for the xsl files need to be followed. 
+		Name of an xsl file should be: sourceSystem+sourceRepository+targetSystem+targetRepository.xsl 
+		</description>
+		<!-- <property name="xsltFile" value="${ccf.sfee2qc.xsltFile}" />  -->
+		<property name="xsltDir" value="${ccf.xsltDir}" />
 	</bean>
 	<bean id="QCEntityService"
 		class="com.collabnet.ccf.core.EntityService">
