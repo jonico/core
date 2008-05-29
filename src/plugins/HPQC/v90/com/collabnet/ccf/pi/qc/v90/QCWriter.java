@@ -75,7 +75,7 @@ public class QCWriter /*extends QCConnectHelper */ implements
 		/*if(stringBugId!=null && (stringBugId!=null && !stringBugId.equals("")) )
 			bugId = Integer.parseInt(stringBugId);
 		*/
-		if(targetArtifactId!=null && (targetArtifactId!=null && !targetArtifactId.equals("unknown")))
+		if(targetArtifactId!=null && (targetArtifactId!=null && (!targetArtifactId.equals("unknown") && !targetArtifactId.equals("NEW"))) )
 				bugId = Integer.parseInt(targetArtifactId);
 		if(bugId!=0)
 			doesBugIdExistsInQC = checkForBugIdInQC(bugId, connection);
@@ -103,8 +103,8 @@ public class QCWriter /*extends QCConnectHelper */ implements
 				}
 				else
 				{
-					if(artifactType.equals("artifact")) {
-						if(targetArtifactId==null || targetArtifactId.equals("unknown")) {
+					if(artifactType.equalsIgnoreCase("plainartifact")) {
+						if(targetArtifactId==null || targetArtifactId.equals("unknown") || targetArtifactId.equals("NEW")) {
 						try {
 						IQCDefect createdArtifact = defectHandler.createDefect(connection, allFields);
 						String targetArtifactIdAfterCreation = createdArtifact.getId();
