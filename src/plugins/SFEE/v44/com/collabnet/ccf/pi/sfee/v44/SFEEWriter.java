@@ -266,7 +266,7 @@ public class SFEEWriter extends LifecycleComponent implements
 		String status = SFEEWriter.getStringGAField(ArtifactMetaData.SFEEFields.status, ga);
 		String statusClass = SFEEWriter.getStringGAField(ArtifactMetaData.SFEEFields.statusClass, ga);
 		String customer = SFEEWriter.getStringGAField(ArtifactMetaData.SFEEFields.customer, ga);
-		int priority = SFEEWriter.getIntGAField(ArtifactMetaData.SFEEFields.category, ga);
+		int priority = SFEEWriter.getIntGAField(ArtifactMetaData.SFEEFields.priority, ga);
 		int estimatedHours = SFEEWriter.getIntGAField(ArtifactMetaData.SFEEFields.estimatedHours, ga);
 		int actualHours = SFEEWriter.getIntGAField(ArtifactMetaData.SFEEFields.actualHours, ga);
 		Date closeDate = SFEEWriter.getDateGAField(ArtifactMetaData.SFEEFields.closeDate, ga);
