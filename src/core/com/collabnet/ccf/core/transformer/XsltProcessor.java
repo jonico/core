@@ -1,6 +1,8 @@
 package com.collabnet.ccf.core.transformer;
 
 import java.net.URL;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 
 import javax.xml.transform.Transformer;
@@ -12,6 +14,7 @@ import javax.xml.transform.stream.StreamSource;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dom4j.Document;
+import org.dom4j.Element;
 import org.dom4j.DocumentException;
 import org.dom4j.DocumentHelper;
 import org.dom4j.io.DocumentResult;
@@ -21,6 +24,10 @@ import org.openadaptor.core.IDataProcessor;
 import org.openadaptor.core.exception.ProcessingException;
 import org.openadaptor.core.exception.ValidationException;
 import org.openadaptor.util.FileUtils;
+
+import com.collabnet.ccf.core.RepositoryRecord;
+import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
+import com.collabnet.ccf.core.utils.XPathUtils;
 
 /**
  * This component is very similar to the standard openAdaptor XSLT processor but
@@ -35,15 +42,34 @@ public class XsltProcessor extends Component implements IDataProcessor {
 	private static final Log log = LogFactory.getLog(XsltProcessor.class);
 
 	/**
+	 * file name of the XSLT dir
+	 */
+	private String xsltDir;
+	
+	/**
 	 * file name of the XSLT file
 	 */
-	private String xsltFile;
+	//private String xsltFile;
 
 	/**
 	 * XSLT transforming component
 	 */
-	private Transformer transform;
-
+	//private Transformer transform;
+	
+	private static final String SOURCE_SYSTEM_ID = "sourceSystemId";
+	private static final String TARGET_SYSTEM_ID = "targetSystemId";
+	private static final String SOURCE_REPOSITORY_ID = "sourceRepositoryId";
+	private static final String TARGET_REPOSITORY_ID = "targetRepositoryId";
+	/**
+	 * Sets the location of the directory containing the XSLT
+	 * 
+	 * @param xsltDir
+	 *            the path to the Directory
+	 */
+	public void setXsltDir(String xsltDir) {
+		this.xsltDir = xsltDir;
+	}
+	
 	/**
 	 * Sets the location of the file containing the XSLT
 	 * 
@@ -51,20 +77,22 @@ public class XsltProcessor extends Component implements IDataProcessor {
 	 *            the path to the file
 	 */
 	public void setXsltFile(String xsltFile) {
-		this.xsltFile = xsltFile;
+		//this.xsltFile = xsltFile;
 	}
-
+	
+	private HashMap<String, Transformer> xsltFileNameTransformerMap = null;
+	
 	/**
 	 * Hook to perform any validation of the component properties required by
 	 * the implementation. Defult behaviour should be a no-op.
 	 */
 	@SuppressWarnings("unchecked")
 	public void validate(List exceptions) {
-		try {
+		/*try {
 			loadXSLT();
 		} catch (RuntimeException ex) {
 			exceptions.add(ex);
-		}
+		}*/
 	}
 
 	/**
@@ -81,12 +109,13 @@ public class XsltProcessor extends Component implements IDataProcessor {
 	 *             if the XSLT file is not defined in the properties, the file
 	 *             cannot be found or there was an error parsing it
 	 */
-	private void loadXSLT() {
+	private Transformer loadXSLT(String xsltFile) {
 		if (xsltFile == null)
 			throw new ValidationException("xsltFile property not set", this);
 
 		// if the file doesn't exist try to get it via the classpath
 		URL url = FileUtils.toURL(xsltFile);
+		Transformer transform = null;
 		if (url == null)
 			throw new ValidationException("File not found: " + xsltFile, this);
 
@@ -104,6 +133,7 @@ public class XsltProcessor extends Component implements IDataProcessor {
 			throw new ValidationException("Failed to load XSLT: "
 					+ e.getMessage(), this);
 		}
+		return transform;
 	}
 
 	/**
@@ -122,11 +152,21 @@ public class XsltProcessor extends Component implements IDataProcessor {
 		if (record == null)
 			return null;
 
-		if (record instanceof String)
-			return transform((String) record);
+		//if (record instanceof String)
+			//return transform((String) record);
 
-		if (record instanceof Document)
-			return transform((Document) record);
+		if (record instanceof Document) {
+			Transformer transform = null;
+			if(xsltFileNameTransformerMap==null)
+				xsltFileNameTransformerMap = new HashMap<String, Transformer>();
+			try {
+				transform = constructFileNameAndFetchTransformer(record);
+			} catch (GenericArtifactParsingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			return transform((Document) record, transform);
+		}
 
 		// if we get this far then we cannot process the record
 		throw new ProcessingException("Invalid record (type: "
@@ -134,6 +174,30 @@ public class XsltProcessor extends Component implements IDataProcessor {
 				this);
 	}
 
+	public Transformer constructFileNameAndFetchTransformer(Object record) throws GenericArtifactParsingException{
+		
+		String fileName = null;
+		Transformer transform = null;
+		Document document = (Document) record;
+		Element element = XPathUtils.getRootElement(document);
+		String sourceSystemId = XPathUtils.getAttributeValue(element, SOURCE_SYSTEM_ID);
+		String targetSystemId = XPathUtils.getAttributeValue(element, TARGET_SYSTEM_ID);
+		String sourceRepositoryId = XPathUtils.getAttributeValue(element, SOURCE_REPOSITORY_ID);
+		String targetRepositoryId = XPathUtils.getAttributeValue(element, TARGET_REPOSITORY_ID);
+		String xsltDir = this.xsltDir;
+		fileName = xsltDir+sourceSystemId+"+"+sourceRepositoryId+"+"+targetSystemId+"+"+targetRepositoryId+".xsl";
+		if(!xsltFileNameTransformerMap.containsKey(fileName)){
+			transform = loadXSLT(fileName);
+			xsltFileNameTransformerMap.put(fileName, transform);
+		}
+		else {
+			transform = xsltFileNameTransformerMap.get(fileName);
+		}
+		
+		return transform;
+	}
+	
+	
 	/**
 	 * Applies the transform to the XML String
 	 * 
@@ -143,8 +207,8 @@ public class XsltProcessor extends Component implements IDataProcessor {
 	 * @return an array containing a single XML string representing the
 	 *         transformed XML string supplied
 	 */
-	private Object[] transform(String s) {
-		return transform(createDOMFromString(s));
+	private Object[] transform(String s, Transformer transform) {
+		return transform(createDOMFromString(s), transform);
 	}
 
 	/**
@@ -156,7 +220,7 @@ public class XsltProcessor extends Component implements IDataProcessor {
 	 * @return an array containing a single XML string representing the
 	 *         transformed document
 	 */
-	private Object[] transform(Document d) {
+	private Object[] transform(Document d, Transformer transform) {
 		try {
 			return new Document[] { transform(transform, d) };
 		} catch (TransformerException e) {
