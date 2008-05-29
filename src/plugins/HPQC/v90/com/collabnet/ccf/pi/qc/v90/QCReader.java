@@ -1,5 +1,6 @@
 package com.collabnet.ccf.pi.qc.v90;
 
+import java.rmi.RemoteException;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -11,6 +12,7 @@ import org.apache.commons.logging.LogFactory;
 import org.dom4j.Document;
 import org.dom4j.Node;
 import org.openadaptor.core.IDataProcessor;
+import com.collabnet.ccf.core.AbstractReader;
 
 import com.collabnet.ccf.core.eis.connection.ConnectionManager;
 import com.collabnet.ccf.core.eis.connection.MaxConnectionsReachedException;
@@ -18,8 +20,12 @@ import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
 import com.collabnet.ccf.pi.qc.v90.api.IConnection;
+import com.collabnet.ccf.pi.sfee.v44.Connection;
+import com.collabnet.ccf.pi.sfee.v44.SFEEConnectionFactory;
+import com.vasoftware.sf.soap44.webservices.sfmain.TrackerFieldSoapDO;
+import com.vasoftware.sf.soap44.webservices.tracker.ArtifactSoapDO;
 
-public class QCReader /*extends QCConnectHelper */ implements
+public class QCReader extends AbstractReader  implements
 		IDataProcessor {
     
 	private static final Log log = LogFactory.getLog(QCReader.class);
@@ -29,7 +35,7 @@ public class QCReader /*extends QCConnectHelper */ implements
 	private Object readerContext;
 
 	private QCDefectHandler defectHandler;
-	
+	private QCAttachmentHandler attachmentHandler;
 	private ConnectionManager<IConnection> connectionManager = null;
 	
 	private String serverUrl;
@@ -37,12 +43,16 @@ public class QCReader /*extends QCConnectHelper */ implements
 	private String userName;
 
 	private String password;
-
-    public QCReader(String id) {
+	
+	private static int testCount = 0;
+	private static int bufferCount = 0;
+	private static Object[] result = {};
+	
+	public QCReader(String id) {
 	   // super(id);
 	}
 
-	public Object[] process(Object data) {
+	public Object[] processDeprecated(Object data) {
 		// TODO evaluate data to decide which items to fetch again
 		if (!(data instanceof Document)) {
 			log.error("Supplied data not in the expected dom4j format: "+data);
@@ -57,6 +67,14 @@ public class QCReader /*extends QCConnectHelper */ implements
 		String sourceRepositoryKind = getSourceRepositoryKind(document);
 		String sourceSystemId = getSourceSystemId(document);
 		String sourceSystemKind = getSourceSystemKind(document);
+		String targetRepositoryId = getTargetRepositoryId(document);
+		String targetRepositoryKind = getTargetRepositoryKind(document);
+		String targetSystemId = getTargetSystemId(document);
+		String targetSystemKind = getTargetSystemKind(document);
+		
+		String fromTimestamp = getFromTime(document);
+		String fromTime = convertIntoString(fromTimestamp);
+		String transactionId = getTransactionId(document);
 		
 		IConnection connection = null;
 		try {
@@ -69,26 +87,199 @@ public class QCReader /*extends QCConnectHelper */ implements
 			log.error("Could not log into QC", e);
 			return null;
 		}
-
 		// Fix these time operations
-		String fromTimestamp = getFromTime(document);
-		String fromTime = convertIntoString(fromTimestamp);
-		String transactionId = getTransactionId(document);
-
-		
-		String targetRepositoryId = getTargetRepositoryId(document);
-		String targetRepositoryKind = getTargetRepositoryKind(document);
-		String targetSystemId = getTargetSystemId(document);
-		String targetSystemKind = getTargetSystemKind(document);
-		
 		log.error(fromTime);
-		Object[] result=readModifiedDefects(transactionId, fromTime, sourceArtifactId, sourceRepositoryId,
+		if(testCount==0) {
+		result=readModifiedDefects(transactionId, fromTime, sourceArtifactId, sourceRepositoryId,
 				sourceRepositoryKind, sourceSystemId, sourceSystemKind, targetRepositoryId,
 				targetRepositoryKind, targetSystemId, targetSystemKind, connection);
 		disconnect(connection);
-		return result;
+		bufferCount = result.length;
+		testCount=bufferCount;
+		}
+		log.info("Testing across multiple runs, #################: bufferCount="+bufferCount+", testCunt="+testCount);
+		
+		if(result!=null) {
+		Object[] oneResult = {result[bufferCount-testCount]};
+		result[bufferCount-testCount] = null;
+		testCount-=1;
+		return oneResult;
+		}
+		else {
+			try {
+				Thread.sleep(10);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			return result;
+		}
+		
 	}
 
+	
+	@Override
+	public List<String> getChangedArtifacts(Document syncInfo) {
+		String sourceArtifactId = getSourceArtifactId(syncInfo); 
+		String sourceRepositoryId = getSourceRepositoryId(syncInfo);
+		String sourceRepositoryKind = getSourceRepositoryKind(syncInfo);
+		String sourceSystemId = getSourceSystemId(syncInfo);
+		String sourceSystemKind = getSourceSystemKind(syncInfo);
+		String targetRepositoryId = getTargetRepositoryId(syncInfo);
+		String targetRepositoryKind = getTargetRepositoryKind(syncInfo);
+		String targetSystemId = getTargetSystemId(syncInfo);
+		String targetSystemKind = getTargetSystemKind(syncInfo);
+		
+		String fromTimestamp = getFromTime(syncInfo);
+		String fromTime = convertIntoString(fromTimestamp);
+		String transactionId = getTransactionId(syncInfo);
+		IConnection connection = null;
+		try {
+			connection = connect(sourceSystemId, sourceSystemKind, sourceRepositoryId,
+					sourceRepositoryKind, serverUrl,
+					userName + QCConnectionFactory.PARAM_DELIMITER + password);
+		} catch (Exception e) {
+			// TODO Declare exception so that it can be processed by OA exception handler
+			log.error("Could not log into QC", e);
+			return null;
+		}
+		List<String> artifactIds = new ArrayList<String>();
+		List<GenericArtifact> artifactRows = new ArrayList<GenericArtifact>();
+		try {
+			artifactIds = defectHandler.getLatestChangedDefects(artifactRows, connection, getUserName(), transactionId, fromTime, sourceArtifactId, sourceRepositoryId, sourceRepositoryKind, sourceSystemId, sourceSystemKind, targetRepositoryId, targetRepositoryKind, targetSystemId, targetSystemKind);
+		} catch (Exception e) {
+			// TODO Throw an exception?
+			log.error("During the artifact retrieval process to SFEE, an error occured",e);
+			return artifactIds;
+		} finally {
+			this.disconnect(connection);
+		}
+		/*if(artifactRows != null){
+			for(GenericArtifact artifact:artifactRows){
+				String artifactId = artifact.getSourceArtifactId();
+				if(!artifactIds.contains(artifactId))
+					artifactIds.add(artifactId);
+			}
+		}*/
+		return artifactIds;
+	}
+	
+	
+	@Override
+	public List<GenericArtifact> getArtifactAttachments(Document syncInfo,
+			String artifactId) {
+		String sourceArtifactId = artifactId; 
+		String sourceRepositoryId = getSourceRepositoryId(syncInfo);
+		String sourceRepositoryKind = getSourceRepositoryKind(syncInfo);
+		String sourceSystemId = getSourceSystemId(syncInfo);
+		String sourceSystemKind = getSourceSystemKind(syncInfo);
+		String targetRepositoryId = getTargetRepositoryId(syncInfo);
+		String targetRepositoryKind = getTargetRepositoryKind(syncInfo);
+		String targetSystemId = getTargetSystemId(syncInfo);
+		String targetSystemKind = getTargetSystemKind(syncInfo);
+		
+		String fromTimestamp = getFromTime(syncInfo);
+		String fromTime = convertIntoString(fromTimestamp);
+		String transactionId = getTransactionId(syncInfo);
+		IConnection connection = null;
+		try {
+			connection = connect(sourceSystemId, sourceSystemKind, sourceRepositoryId,
+					sourceRepositoryKind, serverUrl,
+					userName + QCConnectionFactory.PARAM_DELIMITER + password);
+		} catch (Exception e) {
+			// TODO Declare exception so that it can be processed by OA exception handler
+			log.error("Could not log into QC", e);
+			return null;
+		}
+		List<String> artifactIds = new ArrayList<String>();
+		artifactIds.add(artifactId);
+		List<GenericArtifact> attachments = new ArrayList<GenericArtifact>();
+		try {
+			attachments = attachmentHandler.getLatestChangedAttachments(attachments, connection, getUserName(), transactionId, fromTime, sourceArtifactId, sourceRepositoryId, sourceRepositoryKind, sourceSystemId, sourceSystemKind, targetRepositoryId, targetRepositoryKind, targetSystemId, targetSystemKind);
+		} catch (Exception e1) {
+			e1.printStackTrace();
+			throw new RuntimeException(e1);
+		} finally {
+			this.disconnect(connection);
+		}
+		return attachments;
+	}
+	
+	
+	@Override
+	public List<GenericArtifact> getArtifactData(Document syncInfo,
+			String artifactId) {
+		String sourceArtifactId = artifactId; 
+		String sourceRepositoryId = getSourceRepositoryId(syncInfo);
+		String sourceRepositoryKind = getSourceRepositoryKind(syncInfo);
+		String sourceSystemId = getSourceSystemId(syncInfo);
+		String sourceSystemKind = getSourceSystemKind(syncInfo);
+		String targetRepositoryId = getTargetRepositoryId(syncInfo);
+		String targetRepositoryKind = getTargetRepositoryKind(syncInfo);
+		String targetSystemId = getTargetSystemId(syncInfo);
+		String targetSystemKind = getTargetSystemKind(syncInfo);
+		
+		String fromTimestamp = getFromTime(syncInfo);
+		String fromTime = convertIntoString(fromTimestamp);
+		String transactionId = getTransactionId(syncInfo);
+		IConnection connection = null;
+		try {
+			connection = connect(sourceSystemId, sourceSystemKind, sourceRepositoryId,
+					sourceRepositoryKind, serverUrl,
+					userName + QCConnectionFactory.PARAM_DELIMITER + password);
+		} catch (Exception e) {
+			// TODO Declare exception so that it can be processed by OA exception handler
+			log.error("Could not log into QC", e);
+			return null;
+		}
+		ArrayList<GenericArtifact> modifiedDefectArtifacts = new ArrayList<GenericArtifact>();
+		try {
+			List<Object> transactionIdAndAttachOperation = defectHandler.getTxnIdAndAuDescription(
+					artifactId, transactionId, connection);
+			if(transactionIdAndAttachOperation==null)
+				return null;
+			String lastTransactionId = (String) transactionIdAndAttachOperation
+					.get(0);
+			QCDefect latestDefect = defectHandler.getDefectWithId(connection, Integer.parseInt(artifactId));
+			GenericArtifact latestDefectArtifact = latestDefect
+					.getGenericArtifactObject(connection, lastTransactionId, artifactId,
+							null);
+			//if (latestDefectArtifact == null)
+				//return null;
+			latestDefectArtifact = defectHandler.getArtifactAction(latestDefectArtifact, connection,
+					lastTransactionId, Integer.parseInt(artifactId), fromTime);
+			latestDefectArtifact
+					.setArtifactMode(GenericArtifact.ArtifactModeValue.COMPLETE);
+			latestDefectArtifact
+					.setArtifactType(GenericArtifact.ArtifactTypeValue.PLAINARTIFACT);
+
+			sourceArtifactId = defectHandler.getBugIdValueFromGenericArtifactInDefectHandler(
+					latestDefectArtifact, "BG_BUG_ID");
+			latestDefectArtifact = defectHandler.assignValues(latestDefectArtifact,
+					sourceArtifactId, sourceRepositoryId, sourceRepositoryKind,
+					sourceSystemId, sourceSystemKind, targetRepositoryId,
+					targetRepositoryKind, targetSystemId, targetSystemKind,
+					lastTransactionId);
+			modifiedDefectArtifacts.add(latestDefectArtifact);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} finally {
+			this.disconnect(connection);
+		}
+		return modifiedDefectArtifacts;
+	}
+
+	@Override
+	public List<GenericArtifact> getArtifactDependencies(Document syncInfo,
+			String artifactId) {
+		// TODO Auto-generated method stub
+		return new ArrayList<GenericArtifact>();
+	}
+	
+	
+	
+	
 	private void disconnect(IConnection connection) {
 		// TODO Auto-generated method stub
 		connectionManager.releaseConnection(connection);
@@ -133,7 +324,7 @@ public class QCReader /*extends QCConnectHelper */ implements
 		
 		try {
 			log.error("The transactionId coming from HQSL DB is:" + transactionId);
-			defectRows = defectHandler.getLatestChangedDefects(defectRows, connection, getUserName(), transactionId, lastReadTime, sourceArtifactId, sourceRepositoryId, sourceRepositoryKind, sourceSystemId, sourceSystemKind, targetRepositoryId, targetRepositoryKind, targetSystemId, targetSystemKind);
+			defectRows = defectHandler.getChangedDefects(defectRows, connection, getUserName(), transactionId, lastReadTime, sourceArtifactId, sourceRepositoryId, sourceRepositoryKind, sourceSystemId, sourceSystemKind, targetRepositoryId, targetRepositoryKind, targetSystemId, targetSystemKind);
 		} catch (Exception e) {
 			// TODO Throw an exception?
 			log.error("During the artifact retrieval process from QC, an error occured",e);
@@ -196,6 +387,7 @@ public class QCReader /*extends QCConnectHelper */ implements
 		// Capture the return exception list and validate the exceptions
 		
 		defectHandler = new QCDefectHandler();
+		attachmentHandler = new QCAttachmentHandler();
 	}
 	public String getUserName() {
 		//return super.getUserName();
@@ -272,14 +464,14 @@ public class QCReader /*extends QCConnectHelper */ implements
 			return null;
 		return node.getText();
 	}	
-	private String getFromTime(Document document) {
+	public String getFromTime(Document document) {
 		// TODO Let the user specify this value?
 		Node node= document.selectSingleNode("//FROM_TIME");
 		if (node==null)
 			return null;
 		return node.getText();
 	}
-	private String getSourceArtifactId(Document document) {
+	public String getSourceArtifactId(Document document) {
 		// TODO Let the user specify this value?
 		Node node= document.selectSingleNode("//SOURCE_ARTIFACT_ID");
 		if (node==null)
@@ -287,14 +479,14 @@ public class QCReader /*extends QCConnectHelper */ implements
 		return node.getText();
 	}
 
-	private String getSourceRepositoryId(Document document) {
+	public String getSourceRepositoryId(Document document) {
 		// TODO Let the user specify this value?
 		Node node= document.selectSingleNode("//SOURCE_REPOSITORY_ID");
 		if (node==null)
 			return null;
 		return node.getText();
 	}
-	private String getSourceRepositoryKind(Document document) {
+	public String getSourceRepositoryKind(Document document) {
 		// TODO Let the user specify this value?
 		Node node= document.selectSingleNode("//SOURCE_REPOSITORY_KIND");
 		if (node==null)
@@ -302,14 +494,14 @@ public class QCReader /*extends QCConnectHelper */ implements
 		return node.getText();
 	}
 
-	private String getSourceSystemId(Document document) {
+	public String getSourceSystemId(Document document) {
 		// TODO Let the user specify this value?
 		Node node= document.selectSingleNode("//SOURCE_SYSTEM_ID");
 		if (node==null)
 			return null;
 		return node.getText();
 	}
-	private String getSourceSystemKind(Document document) {
+	public String getSourceSystemKind(Document document) {
 		// TODO Let the user specify this value?
 		Node node= document.selectSingleNode("//SOURCE_SYSTEM_KIND");
 		if (node==null)
@@ -317,14 +509,14 @@ public class QCReader /*extends QCConnectHelper */ implements
 		return node.getText();
 	}
 		
-	private String getTargetRepositoryId(Document document) {
+	public String getTargetRepositoryId(Document document) {
 		// TODO Let the user specify this value?
 		Node node= document.selectSingleNode("//TARGET_REPOSITORY_ID");
 		if (node==null)
 			return null;
 		return node.getText();
 	}
-	private String getTargetRepositoryKind(Document document) {
+	public String getTargetRepositoryKind(Document document) {
 		// TODO Let the user specify this value?
 		Node node= document.selectSingleNode("//TARGET_REPOSITORY_KIND");
 		if (node==null)
@@ -332,14 +524,14 @@ public class QCReader /*extends QCConnectHelper */ implements
 		return node.getText();
 	}
 
-	private String getTargetSystemId(Document document) {
+	public String getTargetSystemId(Document document) {
 		// TODO Let the user specify this value?
 		Node node= document.selectSingleNode("//TARGET_SYSTEM_ID");
 		if (node==null)
 			return null;
 		return node.getText();
 	}
-	private String getTargetSystemKind(Document document) {
+	public String getTargetSystemKind(Document document) {
 		// TODO Let the user specify this value?
 		Node node= document.selectSingleNode("//TARGET_SYSTEM_KIND");
 		if (node==null)
