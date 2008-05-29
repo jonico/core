@@ -239,11 +239,11 @@ public class GenericArtifactHelper {
 		artifactTypeHashMap.put(ARTIFACT_TYPE_UNKNOWN,
 				GenericArtifact.ArtifactTypeValue.UNKNOWN);
 		
-		includesFieldMetaDataHashMap.put(INCLUDES_FIELD_META_DATA,
+		includesFieldMetaDataHashMap.put(INCLUDES_FIELD_META_DATA_TRUE,
 				GenericArtifact.IncludesFieldMetaDataValue.TRUE);
-		includesFieldMetaDataHashMap.put(INCLUDES_FIELD_META_DATA,
+		includesFieldMetaDataHashMap.put(INCLUDES_FIELD_META_DATA_FALSE,
 				GenericArtifact.IncludesFieldMetaDataValue.FALSE);
-		includesFieldMetaDataHashMap.put(INCLUDES_FIELD_META_DATA,
+		includesFieldMetaDataHashMap.put(INCLUDES_FIELD_META_DATA_UNKNOWN,
 				GenericArtifact.IncludesFieldMetaDataValue.UNKNOWN);
 		
 		fieldActionHashMap.put(FIELD_ACTION_APPEND,
