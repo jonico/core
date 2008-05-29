@@ -18,41 +18,58 @@ import org.apache.commons.codec.binary.Base64;
  * @author jnicolai
  */
 public class GenericArtifact {
-	
+
 	/**
 	 * This is a hash map that indexes all contained field elements according to
 	 * their name
 	 */
 	private HashMap<String, List<GenericArtifactField>> fieldNameHashMap = new HashMap<String, List<GenericArtifactField>>();
 	/**
-	 * This is a hash map that indexes all contained attachment elements according to
-	 * their name
+	 * This is a hash map that indexes all contained attachment elements
+	 * according to their name
 	 */
 	private HashMap<String, List<GenericArtifactAttachment>> attachmentNameHashMap = new HashMap<String, List<GenericArtifactAttachment>>();
+
 	/**
 	 * 
 	 * Possible values for the artifact mode, "changedFieldsOnly" and "complete"
 	 * 
 	 * @author jnicolai
 	 */
-	public enum ArtifactModeValue {CHANGEDFIELDSONLY, COMPLETE, UNKNOWN};
-	
+	public enum ArtifactModeValue {
+		CHANGEDFIELDSONLY, COMPLETE, UNKNOWN
+	};
+
 	/**
 	 * 
-	 * Possible values for the artifact action, "create", "delete", "update", "ignore"
+	 * Possible values for the artifact action, "create", "delete", "update",
+	 * "ignore"
 	 * 
 	 * @author jnicolai
 	 */
-	public enum ArtifactActionValue {CREATE, DELETE, UPDATE, IGNORE, UNKNOWN};
-	
+	public enum ArtifactActionValue {
+		CREATE, DELETE, UPDATE, IGNORE, UNKNOWN
+	};
+
 	/**
 	 * 
 	 * Possible values for the artifact mode, "changedFieldsOnly" and "complete"
 	 * 
 	 * @author jnicolai
 	 */
-	public enum ArtifactTypeValue {PLAINARTIFACT, DEPENDENCY, ATTACHMENT, UNKNOWN};
-	
+	public enum ArtifactTypeValue {
+		PLAINARTIFACT, DEPENDENCY, ATTACHMENT, UNKNOWN
+	};
+
+	/**
+	 * 
+	 * Possible values for the includesFieldMetaData, "true" and "false"
+	 * 
+	 * @author jnicolai
+	 */
+	public enum IncludesFieldMetaDataValue {
+		TRUE, FALSE, UNKNOWN
+	};
 
 	/**
 	 * This is a hash map that indexes all contained field elements according to
@@ -75,8 +92,8 @@ public class GenericArtifact {
 	 */
 	private List<GenericArtifactAttachment> allAttachmentList;
 	/**
-	 * The value (content) of the artifact, encoded as BASE64 string. The content is
-	 * typically null unless it is an attachment.
+	 * The value (content) of the artifact, encoded as BASE64 string. The
+	 * content is typically null unless it is an attachment.
 	 */
 	private String artifactValue = null;
 
@@ -85,12 +102,12 @@ public class GenericArtifact {
 	 * (yet) known or the whole functionality is not supported
 	 */
 	public static final String VALUE_UNKNOWN = "unknown";
-	
+
 	/**
 	 * Constant value for conflict resolution policy "always ignore"
 	 */
 	public static final String VALUE_CONFLICT_RESOLUTION_POLICY_ALWAYS_IGNORE = "alwaysIgnore";
-	
+
 	/**
 	 * Constant value for conflict resolution policy "always override"
 	 */
@@ -125,12 +142,11 @@ public class GenericArtifact {
 	 */
 	private String artifactVersion = VALUE_UNKNOWN;
 	/**
-	 * This attribute contains the last transaction that was read. This is updated 
-	 * by the reader and functions similar to lastModifiedDate.
+	 * This attribute contains the last transaction that was read. This is
+	 * updated by the reader and functions similar to lastModifiedDate.
 	 */
-	private String lastReadTransactionId = VALUE_UNKNOWN;
+	private String transactionId = VALUE_UNKNOWN;
 
-	
 	/**
 	 * This attribute contains the date when this artifact was lastly updated.
 	 * The more specific this date is, the better the polling components can do
@@ -154,6 +170,25 @@ public class GenericArtifact {
 	 * association) and "attachment".
 	 */
 	private ArtifactTypeValue artifactType = ArtifactTypeValue.UNKNOWN;
+
+	/**
+	 * This attribute indicates whether field specific meta-data like
+	 * cardinality, nillability and alternative names will be shipped with this
+	 * artifact. In most cases, this data will be ommitted due to performance
+	 * reasons, however this data might be necessary for purposes like
+	 * schema-generation and graphical mapping facilities. The only allowed
+	 * values are "true" and "false".
+	 */
+	private IncludesFieldMetaDataValue includesFieldMetaData = IncludesFieldMetaDataValue.UNKNOWN;
+
+	/**
+	 * This attribute indicates whether an error occured during processing. The
+	 * default value for this field is "ok". If this field is set to another
+	 * value but "ok", components not specialized in handling errors should just
+	 * ignore the artifact, so the artifactAction attribute should be set to
+	 * "ignore".
+	 */
+	private String errorCode = VALUE_UNKNOWN;
 
 	/**
 	 * This attribute contains the nature of the source system of the artifact,
@@ -805,11 +840,13 @@ public class GenericArtifact {
 	}
 
 	/**
-	 * @param attachmentValue the attachmentValue to set
+	 * @param attachmentValue
+	 *            the attachmentValue to set
 	 */
 	public void setRawAttachmentData(byte[] attachmentData) {
 		this.artifactValue = new String(Base64.encodeBase64(attachmentData));
 	}
+
 	/**
 	 * @return the fieldValue
 	 */
@@ -827,11 +864,11 @@ public class GenericArtifact {
 	 *            field type, this value cannot be changed afterwards
 	 * @return the newly added generic artifact field object
 	 */
-	public GenericArtifactField addNewField(String fieldName, String fieldDisplayName, String fieldType) {
-		GenericArtifactField genericArtifactField = new GenericArtifactField(fieldName, 
-																			 fieldDisplayName,
-																			 fieldType);
-		if( allFieldList == null) {
+	public GenericArtifactField addNewField(String fieldName,
+			String fieldDisplayName, String fieldType) {
+		GenericArtifactField genericArtifactField = new GenericArtifactField(
+				fieldName, fieldDisplayName, fieldType);
+		if (allFieldList == null) {
 			allFieldList = new ArrayList<GenericArtifactField>();
 		}
 		allFieldList.add(genericArtifactField);
@@ -839,25 +876,34 @@ public class GenericArtifact {
 		return genericArtifactField;
 	}
 
-	public GenericArtifactAttachment addNewAttachment(String attachmentName, String attachmentID, String attachmentDescription) {
-		GenericArtifactAttachment genericArtifactAttachment = new GenericArtifactAttachment(attachmentName, attachmentID, attachmentDescription);
-		if( allAttachmentList == null) {
+	public GenericArtifactAttachment addNewAttachment(String attachmentName,
+			String attachmentID, String attachmentDescription) {
+		GenericArtifactAttachment genericArtifactAttachment = new GenericArtifactAttachment(
+				attachmentName, attachmentID, attachmentDescription);
+		if (allAttachmentList == null) {
 			allAttachmentList = new ArrayList<GenericArtifactAttachment>();
 		}
 		allAttachmentList.add(genericArtifactAttachment);
-		indexNewAttachmentElement(genericArtifactAttachment.getAttachmentName(), genericArtifactAttachment.getAttachmentType(), genericArtifactAttachment);
+		indexNewAttachmentElement(
+				genericArtifactAttachment.getAttachmentName(),
+				genericArtifactAttachment.getAttachmentType(),
+				genericArtifactAttachment);
 		return genericArtifactAttachment;
 	}
-	
-	public GenericArtifactAttachment addNewAttachment(GenericArtifactAttachment genericArtifactAttachment) {
-		if( allAttachmentList == null) {
+
+	public GenericArtifactAttachment addNewAttachment(
+			GenericArtifactAttachment genericArtifactAttachment) {
+		if (allAttachmentList == null) {
 			allAttachmentList = new ArrayList<GenericArtifactAttachment>();
 		}
 		allAttachmentList.add(genericArtifactAttachment);
-		indexNewAttachmentElement(genericArtifactAttachment.getAttachmentName(), genericArtifactAttachment.getAttachmentType(), genericArtifactAttachment);
+		indexNewAttachmentElement(
+				genericArtifactAttachment.getAttachmentName(),
+				genericArtifactAttachment.getAttachmentType(),
+				genericArtifactAttachment);
 		return genericArtifactAttachment;
 	}
-	
+
 	/**
 	 * Add new field to a number of hash maps to speed up indexing
 	 * 
@@ -912,11 +958,13 @@ public class GenericArtifact {
 		}
 	}
 
-	private void indexNewAttachmentElement(String attachmentName, String attachmentType,
+	private void indexNewAttachmentElement(String attachmentName,
+			String attachmentType,
 			GenericArtifactAttachment genericArtifactAttachment) {
 
 		if (attachmentNameHashMap.containsKey(attachmentName)) {
-			attachmentNameHashMap.get(attachmentName).add(genericArtifactAttachment);
+			attachmentNameHashMap.get(attachmentName).add(
+					genericArtifactAttachment);
 		} else {
 			List<GenericArtifactAttachment> allGenericArtifactAttachmentsWithSameAttachmentNameList = new ArrayList<GenericArtifactAttachment>();
 			allGenericArtifactAttachmentsWithSameAttachmentNameList
@@ -926,7 +974,6 @@ public class GenericArtifact {
 		}
 	}
 
-	
 	/**
 	 * Returns all fields within the generic artifact You may change the
 	 * attributes of the fields but you may not directly add new fields to this
@@ -941,6 +988,7 @@ public class GenericArtifact {
 	public List<GenericArtifactAttachment> getAllGenericArtifactAttachments() {
 		return allAttachmentList;
 	}
+
 	/**
 	 * Returns all fields within the generic artifact that have the specified
 	 * field type You may change the attributes of the fields but you may not
@@ -998,11 +1046,28 @@ public class GenericArtifact {
 	}
 
 	public String getLastReadTransactionId() {
-		return lastReadTransactionId;
+		return transactionId;
 	}
 
-	public void setLastReadTransactionId(String lastReadTransactionId) {
-		this.lastReadTransactionId = lastReadTransactionId;
+	public void setLastReadTransactionId(String transactionId) {
+		this.transactionId = transactionId;
+	}
+
+	public IncludesFieldMetaDataValue getIncludesFieldMetaData() {
+		return includesFieldMetaData;
+	}
+
+	public void setIncludesFieldMetaData(
+			IncludesFieldMetaDataValue includesFieldMetaData) {
+		this.includesFieldMetaData = includesFieldMetaData;
+	}
+
+	public String getErrorCode() {
+		return errorCode;
+	}
+
+	public void setErrorCode(String errorCode) {
+		this.errorCode = errorCode;
 	}
 
 }
