@@ -4,7 +4,9 @@ import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.dom4j.Attribute;
 import org.dom4j.Document;
+import org.dom4j.Element;
 import org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector;
 import org.openadaptor.auxil.connector.jdbc.writer.JDBCWriteConnector;
 import org.openadaptor.auxil.orderedmap.IOrderedMap;
@@ -15,7 +17,8 @@ import org.openadaptor.core.exception.RecordFormatException;
 
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
-
+import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
+import com.collabnet.ccf.core.utils.XPathUtils;
 
 /**
  * This component will find out whether an artifact coming out of a non-SFEE
@@ -36,6 +39,16 @@ public class EntityService implements
 	 * Token used to indicate that the SFEE tracker item has to be created
 	 */
 	private String createToken;
+	private static final String SOURCE_ARTIFACT_ID = "sourceArtifactId";
+	private static final String SOURCE_REPOSITORY_ID = "sourceRepositoryId";
+	private static final String SOURCE_REPOSITORY_KIND = "sourceRepositoryKind";
+	private static final String SOURCE_SYSTEM_ID = "sourceSystemId";
+	private static final String SOURCE_SYSTEM_KIND = "sourceSystemKind";
+	private static final String TARGET_ARTIFACT_ID = "targetArtifactId";
+	private static final String TARGET_REPOSITORY_ID = "targetRepositoryId";
+	private static final String TARGET_REPOSITORY_KIND = "targetRepositoryKind";
+	private static final String TARGET_SYSTEM_ID = "targetSystemId";
+	private static final String TARGET_SYSTEM_KIND = "targetSystemKind";
 
 	/**
 	 * User that was used in the non-SFEE system to store SFEE's tracker items.
@@ -88,24 +101,29 @@ public class EntityService implements
 	 */
 	private Object[] processXMLDocument(Document data) {
 		Document filledArtifactDocument = null;
-		GenericArtifact genericArtifact = null;
+		/*GenericArtifact genericArtifact = null;
 		try {
 			genericArtifact = GenericArtifactHelper.createGenericArtifactJavaObject(data);
 		}
 		catch(Exception e) {
 			System.out.println("GenericArtifact Parsing exception" + e);
-		}
-		String sourceArtifactId = genericArtifact.getSourceArtifactId();
-		String sourceSystemId  = genericArtifact.getSourceSystemId();
-		String sourceSystemKind = genericArtifact.getSourceSystemKind();
-		String sourceRepositoryId = genericArtifact.getSourceRepositoryId();
-		String sourceRepositoryKind = genericArtifact.getSourceRepositoryKind();
+		}*/
+		try {
+		Element element = XPathUtils.getRootElement(data);
 		
-		//String targetArtifactId = genericArtifact.getTargetArtifactId();
-		String targetSystemId = genericArtifact.getTargetSystemId();
-		String targetSystemKind = genericArtifact.getTargetSystemKind();
-		String targetRepositoryId = genericArtifact.getTargetRepositoryId();
-		String targetRepositoryKind = genericArtifact.getTargetRepositoryKind();
+		String sourceArtifactId = XPathUtils.getAttributeValue(element, SOURCE_ARTIFACT_ID);
+		String sourceSystemId  = XPathUtils.getAttributeValue(element, SOURCE_SYSTEM_ID);
+		String sourceSystemKind = XPathUtils.getAttributeValue(element, SOURCE_SYSTEM_KIND);
+		String sourceRepositoryId = XPathUtils.getAttributeValue(element, SOURCE_REPOSITORY_ID);
+		String sourceRepositoryKind = XPathUtils.getAttributeValue(element, SOURCE_REPOSITORY_KIND);
+		
+		String targetSystemId = XPathUtils.getAttributeValue(element, TARGET_SYSTEM_ID);
+		String targetSystemKind = XPathUtils.getAttributeValue(element, TARGET_SYSTEM_KIND);
+		String targetRepositoryId = XPathUtils.getAttributeValue(element, TARGET_REPOSITORY_ID);
+		String targetRepositoryKind = XPathUtils.getAttributeValue(element, TARGET_REPOSITORY_KIND);
+		
+		log.info("The incoming artifact is*****"+data.asXML());
+		
 		if(sourceArtifactId.equalsIgnoreCase("Unknown")){
 			return new Object[]{data};
 		}
@@ -121,21 +139,27 @@ public class EntityService implements
 				mappingId);
 		
 		if(targetArtifactIdFromTable!=null && !(targetArtifactIdFromTable.equals("NEW")) && !(targetArtifactIdFromTable.equals("NULL"))) {
-	    	genericArtifact.setTargetArtifactId(targetArtifactIdFromTable);
+	    	//genericArtifact.setTargetArtifactId(targetArtifactIdFromTable);
+			XPathUtils.addAttribute(element, TARGET_ARTIFACT_ID, targetArtifactIdFromTable);
 	    }
 		if(targetArtifactIdFromTable==null) {
-   			genericArtifact.setTargetArtifactId("NEW");
+   			//genericArtifact.setTargetArtifactId("NEW");
+			XPathUtils.addAttribute(element, TARGET_ARTIFACT_ID, "NEW");
 	    }
+		}
+		catch(GenericArtifactParsingException e) {
+			log.error("There is some problem in extracting attributes from Document in EntityService!!!"+e);
+		}
 		
-	    try {
+	    /*try {
 	    	filledArtifactDocument = GenericArtifactHelper.createGenericArtifactXMLDocument(genericArtifact);
 	    }
 	    catch(Exception e) {
 	    	log.error("Exception while converting the resultantGenericArtifact into the resultDocument in QCEntityService:"+e);
 	    	throw new RuntimeException(e);
-	    }
-		
-	    Object[] result = {filledArtifactDocument};
+	    }*/
+		log.info("After manipulating dom4j document, new artifact is:"+data.asXML());
+	    Object[] result = {data};
 		return result;
 	}
 	
