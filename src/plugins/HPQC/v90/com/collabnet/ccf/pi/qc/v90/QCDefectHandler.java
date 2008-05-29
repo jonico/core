@@ -4,10 +4,16 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.StringTokenizer;
+import java.util.TreeSet;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -310,8 +316,8 @@ public class QCDefectHandler {
 	 * @throws RemoteException (,
 	 *             COMException?)
 	 */
-	public List<GenericArtifact> getChangedDefects(IConnection qcc,
-			String connectorUser, String transactionId,
+	public List<GenericArtifact> getChangedDefects(List<GenericArtifact> modifiedDefectArtifacts, IConnection qcc,
+			String connectorUser, String transactionId, String lastReadTime, 
 			String sourceArtifactId, String sourceRepositoryId,
 			String sourceRepositoryKind, String sourceSystemId,
 			String sourceSystemKind, String targetRepositoryId,
@@ -333,8 +339,6 @@ public class QCDefectHandler {
 		IRecordSet rs = executeSQL(qcc, sql);
 		if (rs != null)
 			rc = rs.getRecordCount();
-		List<GenericArtifact> modifiedDefectArtifacts = new ArrayList<GenericArtifact>();
-
 		for (int cnt = 0; cnt < rc; cnt++, rs.next()) {
 			String thisTransactionId = rs.getFieldValue("AU_ACTION_ID");
 			int actionId = Integer.parseInt(rs.getFieldValue("AU_ACTION_ID"));
@@ -419,7 +423,7 @@ public class QCDefectHandler {
 	 *             COMException?)
 	 */
 	@SuppressWarnings("unchecked")
-	public List<GenericArtifact> getLatestChangedDefects(
+	public List<String> getLatestChangedDefects(
 			List<GenericArtifact> modifiedDefectArtifacts, IConnection qcc,
 			String connectorUser, String transactionId, String lastReadTime,
 			String sourceArtifactId, String sourceRepositoryId,
@@ -434,7 +438,9 @@ public class QCDefectHandler {
 				+ transactionId + "' AND AU_USER != '"+ connectorUser+ "' AND AU_FATHER_ID = '-1'";
 
 		log.info(sql);
-
+		
+		Map<String, String> defectIdTransactionIdMap = new LinkedHashMap<String, String>(); 
+		
 		IRecordSet rs = executeSQL(qcc, sql);
 		if (rs != null)
 			rc = rs.getRecordCount();
@@ -453,6 +459,14 @@ public class QCDefectHandler {
 					.get(0);
 			List<String> attachmentNames = (List<String>) transactionIdAndAttachOperation
 					.get(1);
+			if(bugId!=null) {
+				if(!defectIdTransactionIdMap.containsKey(bugId))
+ 					defectIdTransactionIdMap.put(bugId, thisTransactionId);
+				else{
+					defectIdTransactionIdMap.put(bugId, thisTransactionId);
+				}
+			}
+			/*
 			log.info("In getLatestChangedDefects, txnId=" + thisTransactionId
 					+ " and attachmentNames=" + attachmentNames);
 			QCDefect latestDefect = getDefectWithId(qcc, entityId);
@@ -476,7 +490,7 @@ public class QCDefectHandler {
 					targetRepositoryKind, targetSystemId, targetSystemKind,
 					thisTransactionId);
 			modifiedDefectArtifacts.add(latestDefectArtifact);
-
+			
 			if (attachmentNames != null) {
 				for (int attachCount = 0; attachCount < attachmentNames.size(); attachCount++) {
 
@@ -502,12 +516,33 @@ public class QCDefectHandler {
 
 					modifiedDefectArtifacts.add(latestAttachmentArtifact);
 				}
-			}
-
+			}*/
 		}
-		return modifiedDefectArtifacts;
+		
+		List<String> orderedDefectIds = orderByLatestTransactionIds(defectIdTransactionIdMap);
+		log.info("New ordering of defectIds::"+orderedDefectIds);
+		return orderedDefectIds;
 	}
 
+	public List<String> orderByLatestTransactionIds(Map<String, String> defectIdTransactionIdMap) {
+		
+		List<String> mapKeys = new ArrayList<String>(defectIdTransactionIdMap.keySet());
+		List<String> mapValues = new ArrayList<String>(defectIdTransactionIdMap.values());
+
+		defectIdTransactionIdMap.clear();
+		TreeSet<String> sortedSet = new TreeSet<String>(mapValues);
+		Object[] sortedArray = sortedSet.toArray();
+		int size = sortedArray.length;
+		for (int i=0; i<size; i++)
+		{
+			defectIdTransactionIdMap.put(mapKeys.get(mapValues.indexOf(sortedArray[i])), (String)sortedArray[i]);
+		}
+		
+		List<String> orderedDefectList = new ArrayList<String>(defectIdTransactionIdMap.keySet());
+		return orderedDefectList;
+	}
+	
+	
 	public List<Object> getTxnIdAndAuDescription(String bugId, String txnId,
 			IConnection qcc) {
 
@@ -521,17 +556,19 @@ public class QCDefectHandler {
 		IRecordSet newRs = executeSQL(qcc, sql);
 		int newRc = newRs.getRecordCount();
 		log.info("In QCDefectHandler.getTxnIdAndAuDescription, sql=" + sql);
-		for (int newCnt = 0; newCnt < newRc; newCnt++, newRs.next()) {
-			if (newCnt == 0)
-				transactionId = newRs.getFieldValue("AU_ACTION_ID");
-			String auDescription = newRs.getFieldValue("AU_DESCRIPTION");
-			List<String> attachDescription = getAttachmentOperation(auDescription);
-			if (attachDescription != null && attachDescription.size() > 0) {
-				if (attachDescription.get(1) != null
-						&& attachDescription.get(1).equals("added"))
-					attachmentNames.add(attachDescription.get(2));
-				else
-					return null;
+		if(newRc>0) {
+			for (int newCnt = 0; newCnt < newRc; newCnt++, newRs.next()) {
+				if (newCnt == 0)
+					transactionId = newRs.getFieldValue("AU_ACTION_ID");
+				String auDescription = newRs.getFieldValue("AU_DESCRIPTION");
+				List<String> attachDescription = getAttachmentOperation(auDescription);
+				if (attachDescription != null && attachDescription.size() > 0) {
+					if (attachDescription.get(1) != null
+							&& attachDescription.get(1).equals("added"))
+						attachmentNames.add(attachDescription.get(2));
+					else
+						return null;
+				}
 			}
 		}
 		txnIdAndAuDescription.add((Object) transactionId);
