@@ -25,6 +25,7 @@ import org.openadaptor.auxil.connector.iostream.EncodingAwareObject;
 import com.collabnet.ccf.core.ga.GenericArtifact.ArtifactActionValue;
 import com.collabnet.ccf.core.ga.GenericArtifact.ArtifactModeValue;
 import com.collabnet.ccf.core.ga.GenericArtifact.ArtifactTypeValue;
+import com.collabnet.ccf.core.ga.GenericArtifact.IncludesFieldMetaDataValue;
 import com.collabnet.ccf.core.ga.GenericArtifactAttachment.AttachmentValueTypeValue;
 import com.collabnet.ccf.core.ga.GenericArtifactField.FieldValueTypeValue;
 
@@ -50,7 +51,9 @@ public class GenericArtifactHelper {
 
 	private static final String ARTIFACT_ACTION = "artifactAction";
 	private static final String ARTIFACT_LAST_MODIFIED_DATE = "artifactLastModifiedDate";
-	private static final String ARTIFACT_LAST_READ_TRANSACTION_ID = "artifactLastReadTransactionId";
+	private static final String ARTIFACT_LAST_READ_TRANSACTION_ID = "transactionId";
+	private static final String ERROR_CODE = "errorCode";
+	private static final String INCLUDES_FIELD_META_DATA = "includesFieldMetaData";
 	private static final String ARTIFACT_MODE = "artifactMode";
 	private static final String ARTIFACT_TYPE = "artifactType";
 	private static final String ARTIFACT_VERSION = "artifactVersion";
@@ -88,10 +91,15 @@ public class GenericArtifactHelper {
 	private static final String ARTIFACT_MODE_CHANGED_FIELDS_ONLY = "changedFieldsOnly";
 	private static final String ARTIFACT_MODE_UNKNOWN = "unknown";
 	
-	private static final String ARTIFACT_TYPE_ATTACHMENT = "attachment";
+	private static final String INCLUDES_FIELD_META_DATA_TRUE = "true";
+	private static final String INCLUDES_FIELD_META_DATA_FALSE = "false";
+	private static final String INCLUDES_FIELD_META_DATA_UNKNOWN = "unknown";
+	
 	private static final String ARTIFACT_TYPE_DEPENDENCY = "dependency";
 	private static final String ARTIFACT_TYPE_PLAIN_ARTIFACT = "plainArtifact";
 	private static final String ARTIFACT_TYPE_UNKNOWN = "unknown";
+	
+	private static final String ARTIFACT_TYPE_ATTACHMENT = "attachment";
 	
 	private static final String ARTIFACT_FIELD_ELEMENT_NAME = "field";
 	private static final XPath fieldSelector = new DefaultXPath(
@@ -127,6 +135,11 @@ public class GenericArtifactHelper {
 	private static final String FIELD_VALUE_HAS_CHANGED_TRUE = "true";
 	private static final String FIELD_VALUE_HAS_CHANGED_FALSE = "false";
 
+	private static final String MIN_OCCURS = "minOccurs";
+	private static final String MAX_OCCURS = "maxOccurs";
+	private static final String NULL_VALUE_SUPPORTED = "nullValueSupported";
+	private static final String ALTERNATIVE_FIELD_NAME = "alternativeFieldName";
+	
 	//for atachments
 	private static final String ARTIFACT_ATTACHMENT_ELEMENT_NAME = "attachment";
 	private static final XPath attachmentSelector = new DefaultXPath(
@@ -173,6 +186,8 @@ public class GenericArtifactHelper {
 	private static HashMap<String, GenericArtifact.ArtifactActionValue> artifactActionHashMap = new HashMap<String, GenericArtifact.ArtifactActionValue>(
 			4);
 	private static HashMap<String, GenericArtifact.ArtifactTypeValue> artifactTypeHashMap = new HashMap<String, GenericArtifact.ArtifactTypeValue>(
+			4);
+	private static HashMap<String, GenericArtifact.IncludesFieldMetaDataValue> includesFieldMetaDataHashMap = new HashMap<String, GenericArtifact.IncludesFieldMetaDataValue>(
 			3);
 	
 	private static HashMap<String, GenericArtifactField.FieldActionValue> fieldActionHashMap = new HashMap<String, GenericArtifactField.FieldActionValue>(
@@ -223,6 +238,13 @@ public class GenericArtifactHelper {
 				GenericArtifact.ArtifactTypeValue.PLAINARTIFACT);
 		artifactTypeHashMap.put(ARTIFACT_TYPE_UNKNOWN,
 				GenericArtifact.ArtifactTypeValue.UNKNOWN);
+		
+		includesFieldMetaDataHashMap.put(INCLUDES_FIELD_META_DATA,
+				GenericArtifact.IncludesFieldMetaDataValue.TRUE);
+		includesFieldMetaDataHashMap.put(INCLUDES_FIELD_META_DATA,
+				GenericArtifact.IncludesFieldMetaDataValue.FALSE);
+		includesFieldMetaDataHashMap.put(INCLUDES_FIELD_META_DATA,
+				GenericArtifact.IncludesFieldMetaDataValue.UNKNOWN);
 		
 		fieldActionHashMap.put(FIELD_ACTION_APPEND,
 				GenericArtifactField.FieldActionValue.APPEND);
@@ -337,7 +359,9 @@ public class GenericArtifactHelper {
 				ARTIFACT_LAST_MODIFIED_DATE));
 		genericArtifact.setLastReadTransactionId(getAttributeValue(root,
 				ARTIFACT_LAST_READ_TRANSACTION_ID));
-
+		genericArtifact.setErrorCode(getAttributeValue(root,
+				ERROR_CODE));
+		
 		ArtifactModeValue artifactMode = translateAttributeValue(root,
 				ARTIFACT_MODE, artifactModeHashMap);
 		genericArtifact.setArtifactMode(artifactMode);
@@ -346,6 +370,10 @@ public class GenericArtifactHelper {
 				ARTIFACT_TYPE, artifactTypeHashMap);
 		genericArtifact.setArtifactType(artifactType);
 
+		IncludesFieldMetaDataValue includesFieldMetaData = translateAttributeValue(root,
+				INCLUDES_FIELD_META_DATA, includesFieldMetaDataHashMap);
+		genericArtifact.setIncludesFieldMetaData(includesFieldMetaData);
+		
 		if (artifactType == GenericArtifact.ArtifactTypeValue.ATTACHMENT) {
 			genericArtifact.setArtifactValue(getValue(root));
 		}
@@ -431,6 +459,19 @@ public class GenericArtifactHelper {
 			genericArtifactField.setFieldAction(fieldAction);
 			genericArtifactField.setFieldValueType(fieldValueType);
 			genericArtifactField.setFieldValueHasChanged(fieldValueHasChanged);
+			
+			if(includesFieldMetaData.equals(GenericArtifact.IncludesFieldMetaDataValue.TRUE)) {
+				String minOccurs = getAttributeValue(field, MIN_OCCURS);
+				String maxOccurs = getAttributeValue(field, MAX_OCCURS);
+				String nullValueSupported = getAttributeValue(field, NULL_VALUE_SUPPORTED);
+				String alternativeFieldName = getAttributeValue(field, ALTERNATIVE_FIELD_NAME);
+				
+				genericArtifactField.setMinOccurs(minOccurs);
+				genericArtifactField.setMaxOccurs(maxOccurs);
+				genericArtifactField.setNullValueSupported(nullValueSupported);
+				genericArtifactField.setAlternativeFieldName(alternativeFieldName);
+			}
+			
 			try {
 				convertFieldValue(genericArtifactField, fieldValueIsNull,
 						fieldValueType, fieldValue);
@@ -832,10 +873,33 @@ public class GenericArtifactHelper {
 		}
 		}
 
+		switch (genericArtifact.getIncludesFieldMetaData()) {
+		case TRUE: {
+			addAttribute(root, INCLUDES_FIELD_META_DATA, INCLUDES_FIELD_META_DATA_TRUE);
+			break;
+		}
+		case FALSE: {
+			addAttribute(root, INCLUDES_FIELD_META_DATA, INCLUDES_FIELD_META_DATA_FALSE);
+			break;
+		}
+		case UNKNOWN: {
+			addAttribute(root, INCLUDES_FIELD_META_DATA, INCLUDES_FIELD_META_DATA_UNKNOWN);
+			break;
+		}
+		default: {
+			throw new GenericArtifactParsingException(
+					"Non valid value for root-attribute " + ARTIFACT_MODE
+							+ "specified.");
+		}
+		}
+		
+		
 		addAttribute(root, ARTIFACT_LAST_MODIFIED_DATE, genericArtifact
 				.getArtifactLastModifiedDate());
 		addAttribute(root, ARTIFACT_LAST_READ_TRANSACTION_ID, genericArtifact
 				.getLastReadTransactionId());
+		addAttribute(root, ERROR_CODE, genericArtifact
+				.getErrorCode());
 		addAttribute(root, ARTIFACT_VERSION, genericArtifact
 				.getArtifactVersion());
 		addAttribute(root, CONFLICT_RESOLUTION_POLICY, genericArtifact
@@ -939,6 +1003,13 @@ public class GenericArtifactHelper {
 						FIELD_VALUE_HAS_CHANGED_FALSE);
 			}
 
+			if(genericArtifact.getIncludesFieldMetaData().equals(GenericArtifact.IncludesFieldMetaDataValue.TRUE)) {
+				addAttribute(field, MIN_OCCURS, genericArtifactField.getMinOccurs());
+				addAttribute(field, MAX_OCCURS, genericArtifactField.getMaxOccurs());
+				addAttribute(field, NULL_VALUE_SUPPORTED, genericArtifactField.getNullValueSupported());
+				addAttribute(field, ALTERNATIVE_FIELD_NAME, genericArtifactField.getAlternativeFieldName());
+			}
+			
 			setFieldValue(field, genericArtifactField.getFieldValue(),
 					genericArtifactField.getFieldValueType());
 		}
