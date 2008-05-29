@@ -6,7 +6,6 @@ package com.collabnet.ccf.pi.qc.v90;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
-import java.io.FileNotFoundException;
 
 import javax.activation.MimetypesFileTypeMap;
 
@@ -31,7 +30,7 @@ public class QCDefect extends Bug implements IQCDefect {
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-	GenericArtifact genericArtifact;
+	private GenericArtifact genericArtifact;
 	List<byte[]> attachmentData;
 
 	private static final Log log = LogFactory.getLog(QCDefect.class);
@@ -157,7 +156,7 @@ public class QCDefect extends Bug implements IQCDefect {
 				 * appropriately.
 				 */
 				String fieldName = thisField.getFieldName();
-				String fieldValueAsString = new String();
+				String fieldValueAsString = null;
 				if (fieldName.equals("BG_VTS")) {
 					String fieldValue = getFieldAsString(fieldName);
 					thisField.setFieldValue(fieldValue);
