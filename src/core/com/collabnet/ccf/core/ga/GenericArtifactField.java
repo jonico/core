@@ -1,6 +1,5 @@
 package com.collabnet.ccf.core.ga;
 
-
 /**
  * A field has a name and a field type and contains a typed value for the
  * property of the artifact that is described by this field. If a field with the
@@ -12,8 +11,9 @@ package com.collabnet.ccf.core.ga;
  * @author jnicolai
  */
 public class GenericArtifactField {
-	
-	// TODO: Change the below fieldType Strings to enum and use only enums everywhere
+
+	// TODO: Change the below fieldType Strings to enum and use only enums
+	// everywhere
 	/**
 	 * Constant value for field type "mandatoryField"
 	 */
@@ -55,14 +55,14 @@ public class GenericArtifactField {
 	 * @author jnicolai
 	 */
 	public enum FieldValueTypeValue {
-		INTEGER, DOUBLE, DATETIME, DATE, STRING, HTMLSTRING, BASE64STRING, BOOLEAN, USER,
-		LIST, MULTI_SELECT_LIST, UNKNOWN
+		INTEGER, DOUBLE, DATETIME, DATE, STRING, HTMLSTRING, BASE64STRING, BOOLEAN, USER, LIST, MULTI_SELECT_LIST, UNKNOWN
 	};
 
-	public void getStringRepresentationOfFieldValueTypeValue(GenericArtifactField.FieldValueTypeValue fieldValueTypeValue) {
+	public void getStringRepresentationOfFieldValueTypeValue(
+			GenericArtifactField.FieldValueTypeValue fieldValueTypeValue) {
 		fieldValueTypeValue.toString();
 	}
-	
+
 	/**
 	 * This attribute contains the name of the field.
 	 */
@@ -105,11 +105,45 @@ public class GenericArtifactField {
 	 * HTMLString, Base64String, Boolean and User.
 	 */
 	private FieldValueTypeValue fieldValueType = FieldValueTypeValue.UNKNOWN;
-	
+
 	/**
-	 * The content of the field-element is the value of the property that is described by this field-element.
+	 * This optional attribute describes the minimal occurence of this field
+	 * element. Typical values are "0", "1" and "unknown". For mandatory fields,
+	 * the value is at least "1", for optional fields the value has to be set to
+	 * "0". This attribute is typically only set if the root element attribute
+	 * "includesFieldMetaData" is set to "true".
 	 */
-	private Object fieldValue=null;
+	private String minOccurs = VALUE_UNKNOWN;
+	/**
+	 * This optional attribute describes the maximal occurence of this field
+	 * element. Typical values are "1", any number greater one, "unknown" and
+	 * "unbounded". This attribute is typically only set if the root element
+	 * attribute "includesFieldMetaData" is set to "true".
+	 */
+	private String maxOccurs = VALUE_UNKNOWN;
+	/**
+	 * This optional attribute indicates whether this property of the artifact
+	 * supports a null value as field value. Allowed values are "true", "false"
+	 * and "unknown". This attribute is typically only set if the root element
+	 * attribute "includesFieldMetaData" is set to "true".
+	 */
+	private String nullValueSupported = VALUE_UNKNOWN;
+	/**
+	 * This optional attribute is used to have another option to uniquely
+	 * identify the field with another name but the field name. This option
+	 * might be used by systems where the actual field name is very technical
+	 * and not directly displayed to the user or if the field name should be
+	 * converted to an XML-element name to facilitate graphical mapings. This
+	 * attribute is typically only set if the root element attribute
+	 * "includesFieldMetaData" is set to "true".
+	 */
+	private String alternativeFieldName = VALUE_UNKNOWN;
+
+	/**
+	 * The content of the field-element is the value of the property that is
+	 * described by this field-element.
+	 */
+	private Object fieldValue = null;
 
 	/**
 	 * Creates a new generic artifact field with all attributes but field name
@@ -119,7 +153,8 @@ public class GenericArtifactField {
 	 * @param fieldName
 	 * @param fieldType
 	 */
-	protected GenericArtifactField(String fieldName, String fieldDisplayName, String fieldType) {
+	protected GenericArtifactField(String fieldName, String fieldDisplayName,
+			String fieldType) {
 		this.setFieldName(fieldName);
 		this.setFieldDisplayName(fieldDisplayName);
 		this.setFieldType(fieldType);
@@ -192,7 +227,8 @@ public class GenericArtifactField {
 	}
 
 	/**
-	 * @param fieldValueType the fieldValueType to set
+	 * @param fieldValueType
+	 *            the fieldValueType to set
 	 */
 	public void setFieldValueType(FieldValueTypeValue fieldValueType) {
 		this.fieldValueType = fieldValueType;
@@ -206,7 +242,8 @@ public class GenericArtifactField {
 	}
 
 	/**
-	 * @param fieldValue the fieldValue to set
+	 * @param fieldValue
+	 *            the fieldValue to set
 	 */
 	public void setFieldValue(Object fieldValue) {
 		this.fieldValue = fieldValue;
@@ -226,5 +263,37 @@ public class GenericArtifactField {
 	public void setFieldDisplayName(String fieldDisplayName) {
 		this.fieldDisplayName = fieldDisplayName;
 	}
-	
+
+	public String getMinOccurs() {
+		return minOccurs;
+	}
+
+	public void setMinOccurs(String minOccurs) {
+		this.minOccurs = minOccurs;
+	}
+
+	public String getMaxOccurs() {
+		return maxOccurs;
+	}
+
+	public void setMaxOccurs(String maxOccurs) {
+		this.maxOccurs = maxOccurs;
+	}
+
+	public String getNullValueSupported() {
+		return nullValueSupported;
+	}
+
+	public void setNullValueSupported(String nullValueSupported) {
+		this.nullValueSupported = nullValueSupported;
+	}
+
+	public String getAlternativeFieldName() {
+		return alternativeFieldName;
+	}
+
+	public void setAlternativeFieldName(String alternativeFieldName) {
+		this.alternativeFieldName = alternativeFieldName;
+	}
+
 }
