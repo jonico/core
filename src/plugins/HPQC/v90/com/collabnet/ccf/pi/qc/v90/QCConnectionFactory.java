@@ -9,7 +9,7 @@ import com.collabnet.ccf.pi.qc.v90.api.IConnection;
  */
 public class QCConnectionFactory implements ConnectionFactory<IConnection> {
 	
-	public static final String PARAM_DELIMITER = ":";
+	public static final String PARAM_DELIMITER = "-";
 
 	public void closeConnection(IConnection connection) {
 		connection.logout();
