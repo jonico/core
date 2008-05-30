@@ -260,6 +260,8 @@ public class QCAttachmentHandler {
 							.setArtifactMode(GenericArtifact.ArtifactModeValue.COMPLETE);
 					latestAttachmentArtifact
 							.setArtifactType(GenericArtifact.ArtifactTypeValue.ATTACHMENT);
+					latestAttachmentArtifact.setErrorCode("ok");
+					latestAttachmentArtifact.setIncludesFieldMetaData(GenericArtifact.IncludesFieldMetaDataValue.FALSE);
 
 					latestAttachmentArtifact = assignValues(
 							latestAttachmentArtifact, sourceArtifactId,
