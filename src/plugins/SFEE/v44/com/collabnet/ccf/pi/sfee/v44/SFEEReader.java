@@ -12,6 +12,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dom4j.Document;
 import org.openadaptor.core.IDataProcessor;
+import org.openadaptor.core.exception.ValidationException;
 
 import com.collabnet.ccf.core.AbstractReader;
 import com.collabnet.ccf.core.eis.connection.ConnectionManager;
@@ -30,33 +31,36 @@ public class SFEEReader extends AbstractReader implements
 	
 	private boolean isDry=true;
 
-	private Object readerContext;
+	private Object readerContext = null;
 
-	private SFEETrackerHandler trackerHandler;
-	
-	private SFEEAppHandler appHandler;
+	private SFEETrackerHandler trackerHandler = null;
 	
 	private SFEEAttachmentHandler attachmentHandler = null;
 	
-	private SFEEToGenericArtifactConverter artifactConverter;
+	private SFEEToGenericArtifactConverter artifactConverter = null;
 	
 	private ConnectionManager<Connection> connectionManager = null;
 	
-	private String serverUrl;
+	private String serverUrl = null;
 
-	private String password;
+	private String password = null;
 
-	private String username;
+	private String username = null;
 	
 	public SFEEReader() {
 	    super();
-	    artifactConverter = new SFEEToGenericArtifactConverter();
+	    init();
 	}
 
     public SFEEReader(String id) {
 	    super(id);
-	    artifactConverter = new SFEEToGenericArtifactConverter();
+	    init();
 	}
+    
+    public void init(){
+    	super.init();
+    	artifactConverter = new SFEEToGenericArtifactConverter();
+    }
     
 	public Object[] processDeprecated(Object data) {
 		if (!(data instanceof Document)) {
@@ -163,6 +167,7 @@ public class SFEEReader extends AbstractReader implements
 		//		lastModifiedDate,getUsername(), trackerFields);
 		List<ArtifactSoapDO> artifactHistoryRows = null;
 		List<GenericArtifact> attachments = null;
+		SFEEAppHandler appHandler = new SFEEAppHandler(connection.getSfSoap(), connection.getSessionId());
 		if(artifactRows != null){
 			for(ArtifactSoapDO artifact:artifactRows){
 				appHandler.addComments(artifact,
@@ -256,9 +261,23 @@ public class SFEEReader extends AbstractReader implements
 	@Override
 	public void validate(List exceptions) {
 		super.validate(exceptions);
-		
-		trackerHandler = new SFEETrackerHandler(getServerUrl());
-		attachmentHandler = new SFEEAttachmentHandler(getServerUrl());
+		boolean exceptionsPresent = false;
+		if(StringUtils.isEmpty(serverUrl)){
+			exceptions.add(new ValidationException("serverUrl-property not set",this));
+			exceptionsPresent = true;
+		}
+		if(StringUtils.isEmpty(username)){
+			exceptions.add(new ValidationException("username-property not set",this));
+			exceptionsPresent = true;
+		}
+		if(password == null){
+			exceptions.add(new ValidationException("password-property not set",this));
+			exceptionsPresent = true;
+		}
+		if(!exceptionsPresent){
+			trackerHandler = new SFEETrackerHandler(getServerUrl());
+			attachmentHandler = new SFEEAttachmentHandler(getServerUrl());
+		}
 	}
 
 	public void reset(Object context) {
@@ -318,12 +337,15 @@ public class SFEEReader extends AbstractReader implements
 			TrackerFieldSoapDO[] trackerFields = null;
 			trackerFields = trackerHandler.getFlexFields(connection.getSessionId(), sourceRepositoryId);
 			ArtifactSoapDO artifact = trackerHandler.getTrackerItem(connection.getSessionId(), artifactId);
-			appHandler.addComments(artifact,
-					lastModifiedDate,this.getUsername());
-			GenericArtifact genericArtifact = artifactConverter.convert(artifact,
-					trackerFields, lastModifiedDate);
-			populateSrcAndDest(syncInfo, genericArtifact);
-			gaList.add(genericArtifact);
+			if(lastModifiedDate.before(artifact.getLastModifiedDate())){
+				SFEEAppHandler appHandler = new SFEEAppHandler(connection.getSfSoap(), connection.getSessionId());
+				appHandler.addComments(artifact,
+						lastModifiedDate,this.getUsername());
+				GenericArtifact genericArtifact = artifactConverter.convert(artifact,
+						trackerFields, lastModifiedDate);
+				populateSrcAndDest(syncInfo, genericArtifact);
+				gaList.add(genericArtifact);
+			}
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
