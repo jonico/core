@@ -252,6 +252,8 @@ public class QCReader extends AbstractReader  implements
 					.setArtifactMode(GenericArtifact.ArtifactModeValue.COMPLETE);
 			latestDefectArtifact
 					.setArtifactType(GenericArtifact.ArtifactTypeValue.PLAINARTIFACT);
+			latestDefectArtifact.setErrorCode("ok");
+			latestDefectArtifact.setIncludesFieldMetaData(GenericArtifact.IncludesFieldMetaDataValue.FALSE);
 
 			sourceArtifactId = defectHandler.getBugIdValueFromGenericArtifactInDefectHandler(
 					latestDefectArtifact, "BG_BUG_ID");
