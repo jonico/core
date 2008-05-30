@@ -12,6 +12,7 @@ import org.apache.commons.lang.StringUtils;
 import org.dom4j.Document;
 import org.dom4j.Node;
 import org.openadaptor.core.IDataProcessor;
+import org.openadaptor.core.exception.ValidationException;
 import org.openadaptor.core.lifecycle.LifecycleComponent;
 
 import com.collabnet.ccf.core.ga.GenericArtifact;
@@ -23,7 +24,7 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 	private HashMap<String, RepositoryRecord> repositoryRecordHashMap = null;
 	private ArrayList<RepositoryRecord> repositorySynchronizationWaitingList = null;
 	private HashSet<String> repositoryRecordsInRepositorySynchronizationWaitingList = null;
-	private long sleepInterval;
+	private long sleepInterval = -1;
 	private Comparator<GenericArtifact> genericArtifactComparator = null;
 
 	public AbstractReader(){
@@ -175,12 +176,12 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 
 	@SuppressWarnings("unchecked")
 	public void validate(List exceptions) {
-		// TODO Auto-generated method stub
-
+		if(sleepInterval == -1){
+			exceptions.add(new ValidationException("sleepInterval is not set",this));
+		}
 	}
 	
 	public String getLastModifiedDateString(Document syncInfo) {
-		// TODO Let the user specify this value?
 		String dbTime = this.getFromTime(syncInfo);
 		if(!StringUtils.isEmpty(dbTime)){
 			java.sql.Timestamp ts = java.sql.Timestamp.valueOf(dbTime);
@@ -262,5 +263,4 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 	public void setSleepInterval(long sleepInterval) {
 		this.sleepInterval = sleepInterval;
 	}
-
 }
