@@ -388,8 +388,10 @@ public class SFEEReader extends AbstractReader implements
 		}
 		if(artifactRows != null){
 			for(ArtifactSoapDO artifact:artifactRows){
-				String artifactId = artifact.getId();
-				artifactIds.add(artifactId);
+				if(!artifact.getLastModifiedBy().equals(this.username)){
+					String artifactId = artifact.getId();
+					artifactIds.add(artifactId);
+				}
 			}
 		}
 		return artifactIds;
