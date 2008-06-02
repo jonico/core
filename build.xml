@@ -85,7 +85,7 @@
 		<mkdir dir="build/classes" />
 	</target>
 	<target depends="clean" name="cleanall" />
-	<target depends="init, build.core, build.sfee.plugin, build.qc.plugin, build.junit.tests, junit" name="build" />
+	<target depends="init, build.core, build.sfee.plugin, build.junit.tests, junit" name="build" />
 
 	<target name="build.core">
 		<antcall target="clean">
@@ -101,7 +101,7 @@
 		</jar>
 	</target>
 
-	<target name="build.qc.plugin">
+<!-- <target name="build.qc.plugin">
 		<antcall target="clean">
 		</antcall>
 		<javac debug="true" debuglevel="${debuglevel}" destdir="build/classes" source="${source}" target="${target}">
@@ -109,7 +109,6 @@
 			<classpath refid="CCFJ.classpath" />
 			<classpath>
 				<fileset dir="build/jars">
-					<include name="CCFSFEEPluginV44.jar" />
 					<include name="CCFCoreV10.jar" />
 				</fileset>
 			</classpath>
@@ -119,7 +118,7 @@
 				<include name="**/*.class" />
 			</fileset>
 		</jar>
-	</target>
+	</target> -->
 	<target name="build.sfee.plugin">
 		<antcall target="clean">
 		</antcall>
@@ -142,8 +141,11 @@
 	<target name="build.junit.tests">
 		<antcall target="clean">
 		</antcall>
-		<javac debug="true" debuglevel="${debuglevel}" destdir="build/classes" source="${source}" target="${target}">
-			<src path="tests" />
+		<javac debug="true" debuglevel="${debuglevel}"
+			destdir="build/classes"
+			source="${source}" target="${target}"
+			srcdir="tests"
+			excludes="**/QCReader*.java">
 			<classpath refid="CCFJ.classpath" />
 			<classpath>
 				<fileset dir="build/jars">
@@ -171,6 +173,7 @@
 			<batchtest todir="${junit.output.dir}">
 				<fileset dir="tests">
 					<include name="**/*Test*.java" />
+					<exclude name="**/QCReader*.java" />
 				</fileset>
 			</batchtest>
 		</junit>
