@@ -30,5 +30,11 @@
     <directory>Community Support</directory>
     <ordinal>5</ordinal>
   </page>
+  <page>
+    <id>96qoEn</id>
+    <name>Roadmap</name>
+    <directory>Roadmap</directory>
+    <ordinal>6</ordinal>
+  </page>
 </structure>
 
