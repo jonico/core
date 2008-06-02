@@ -24,5 +24,11 @@
     <directory>Downloads</directory>
     <ordinal>4</ordinal>
   </page>
+  <page>
+    <id>R8t1Km</id>
+    <name>Community Support</name>
+    <directory>Community Support</directory>
+    <ordinal>5</ordinal>
+  </page>
 </structure>
 
