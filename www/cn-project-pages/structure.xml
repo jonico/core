@@ -12,5 +12,11 @@
     <directory>Setting up the dev environment</directory>
     <ordinal>2</ordinal>
   </page>
+  <page>
+    <id>aT1rGG</id>
+    <name>Documentation</name>
+    <directory>Documentation</directory>
+    <ordinal>3</ordinal>
+  </page>
 </structure>
 
