@@ -44,6 +44,7 @@ public class SFEEReaderTest extends TestCase {
 		SFEEConnectionFactory connectionFactory = new SFEEConnectionFactory();
 		connectionManager.setConnectionFactory(connectionFactory);
 		sfeeReader.setConnectionManager(connectionManager);
+		sfeeReader.setSleepInterval(1000L);
 		sfeeReader.validate(null);
 	}
 
