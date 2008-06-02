@@ -36,5 +36,11 @@
     <directory>Roadmap</directory>
     <ordinal>6</ordinal>
   </page>
+  <page>
+    <id>e2uPUq</id>
+    <name>Development</name>
+    <directory>Development</directory>
+    <ordinal>7</ordinal>
+  </page>
 </structure>
 
