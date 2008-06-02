@@ -232,33 +232,44 @@ public class SFEEWriter extends LifecycleComponent implements
 	}
 	
 	private ArtifactSoapDO createArtifact(GenericArtifact ga, String tracker, Connection connection){
-		TrackerFieldSoapDO[] flexFields = null;
-		try {
-			flexFields = trackerHandler.getFlexFields(connection.getSessionId(), tracker);
-		} catch (RemoteException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
+//		TrackerFieldSoapDO[] flexFields = null;
+//		try {
+//			flexFields = trackerHandler.getFlexFields(connection.getSessionId(), tracker);
+//		} catch (RemoteException e1) {
+//			// TODO Auto-generated catch block
+//			e1.printStackTrace();
+//		}
 		ArrayList<String> flexFieldNames = new ArrayList<String>();
 		ArrayList<String> flexFieldTypes = new ArrayList<String>();
 		ArrayList<Object> flexFieldValues = new ArrayList<Object>();
-		if(flexFields != null) {
-			for(TrackerFieldSoapDO flexField: flexFields){
-				String fieldName = flexField.getName();
-				List<GenericArtifactField> gaFields = ga.getAllGenericArtifactFieldsWithSameFieldName(fieldName);
+//		if(flexFields != null){
+//			for(TrackerFieldSoapDO flexField: flexFields){
+//				String fieldName = flexField.getName();
+				List<GenericArtifactField> gaFields = ga.getAllGenericArtifactFields();
 				if(gaFields != null){
 					for(GenericArtifactField gaField:gaFields){
-						flexFieldNames.add(fieldName);
-						flexFieldTypes.add(flexField.getFieldType());
-						Object value = gaField.getFieldValue();
-						flexFieldValues.add(value);
+						if(gaField.getFieldType().equals(GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD)){
+							String fieldName = gaField.getFieldName();
+							String trackerFieldValueType = null;
+							if(gaField.getFieldValueType().equals(GenericArtifactField.FieldValueTypeValue.DATE) ||
+									gaField.getFieldValueType().equals(GenericArtifactField.FieldValueTypeValue.DATETIME)){
+								trackerFieldValueType = TrackerFieldSoapDO.FIELD_VALUE_TYPE_DATE;
+							}
+							else if(gaField.getFieldValueType().equals(GenericArtifactField.FieldValueTypeValue.USER)){
+								trackerFieldValueType = TrackerFieldSoapDO.FIELD_VALUE_TYPE_USER;
+							}
+							else {
+								trackerFieldValueType = TrackerFieldSoapDO.FIELD_VALUE_TYPE_STRING;
+							}
+							flexFieldNames.add(fieldName);
+							flexFieldTypes.add(trackerFieldValueType);
+							Object value = gaField.getFieldValue();
+							flexFieldValues.add(value);
+						}
 					}
 				}
-				else {
-					// Do nothing....
-				}
-			}
-		}
+//			}
+//		}
 		String folderId = getStringGAField(ArtifactMetaData.SFEEFields.folderId, ga);
 		String description = SFEEWriter.getStringGAField(ArtifactMetaData.SFEEFields.description, ga);
 		String category = SFEEWriter.getStringGAField(ArtifactMetaData.SFEEFields.category, ga);
@@ -309,30 +320,44 @@ public class SFEEWriter extends LifecycleComponent implements
 	}
 	
 	private ArtifactSoapDO updateArtifact(GenericArtifact ga, String tracker, boolean forceOverride, Connection connection){
-		TrackerFieldSoapDO[] flexFields = null;
-		try {
-			flexFields = trackerHandler.getFlexFields(connection.getSessionId(), tracker);
-		} catch (RemoteException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		}
+//		TrackerFieldSoapDO[] flexFields = null;
+//		try {
+//			flexFields = trackerHandler.getFlexFields(connection.getSessionId(), tracker);
+//		} catch (RemoteException e1) {
+//			// TODO Auto-generated catch block
+//			e1.printStackTrace();
+//		}
 		ArrayList<String> flexFieldNames = new ArrayList<String>();
 		ArrayList<String> flexFieldTypes = new ArrayList<String>();
 		ArrayList<Object> flexFieldValues = new ArrayList<Object>();
-		if(flexFields != null){
-			for(TrackerFieldSoapDO flexField: flexFields){
-				String fieldName = flexField.getName();
-				List<GenericArtifactField> gaFields = ga.getAllGenericArtifactFieldsWithSameFieldName(fieldName);
+//		if(flexFields != null){
+//			for(TrackerFieldSoapDO flexField: flexFields){
+//				String fieldName = flexField.getName();
+				List<GenericArtifactField> gaFields = ga.getAllGenericArtifactFields();
 				if(gaFields != null){
 					for(GenericArtifactField gaField:gaFields){
-						flexFieldNames.add(fieldName);
-						flexFieldTypes.add(flexField.getFieldType());
-						Object value = gaField.getFieldValue();
-						flexFieldValues.add(value);
+						if(gaField.getFieldType().equals(GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD)){
+							String fieldName = gaField.getFieldName();
+							String trackerFieldValueType = null;
+							if(gaField.getFieldValueType().equals(GenericArtifactField.FieldValueTypeValue.DATE) ||
+									gaField.getFieldValueType().equals(GenericArtifactField.FieldValueTypeValue.DATETIME)){
+								trackerFieldValueType = TrackerFieldSoapDO.FIELD_VALUE_TYPE_DATE;
+							}
+							else if(gaField.getFieldValueType().equals(GenericArtifactField.FieldValueTypeValue.USER)){
+								trackerFieldValueType = TrackerFieldSoapDO.FIELD_VALUE_TYPE_USER;
+							}
+							else {
+								trackerFieldValueType = TrackerFieldSoapDO.FIELD_VALUE_TYPE_STRING;
+							}
+							flexFieldNames.add(fieldName);
+							flexFieldTypes.add(trackerFieldValueType);
+							Object value = gaField.getFieldValue();
+							flexFieldValues.add(value);
+						}
 					}
 				}
-			}
-		}
+//			}
+//		}
 		String id = getStringGAField(ArtifactMetaData.SFEEFields.id, ga);
 		String folderId = getStringGAField(ArtifactMetaData.SFEEFields.folderId, ga);
 		String description = this.getStringGAField(ArtifactMetaData.SFEEFields.description, ga);
