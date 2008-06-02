@@ -18,5 +18,11 @@
     <directory>Documentation</directory>
     <ordinal>3</ordinal>
   </page>
+  <page>
+    <id>Q4UQCF</id>
+    <name>Downloads</name>
+    <directory>Downloads</directory>
+    <ordinal>4</ordinal>
+  </page>
 </structure>
 
