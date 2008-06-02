@@ -46,7 +46,7 @@ public class DateUtil {
 	public static Date convertDate(Date date, String toTimeZone) throws ParseException{
 		Calendar cal = new GregorianCalendar(TimeZone.getTimeZone(toTimeZone));
 		cal.setTime(date);
-		DateFormat df = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss Z");
+		DateFormat df = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss.SSS Z");
 		df.setCalendar(cal);
 		System.out.println(df.format(cal.getTime()));
 		
