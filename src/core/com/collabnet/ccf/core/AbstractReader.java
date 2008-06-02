@@ -90,12 +90,12 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 			repositorySynchronizationWaitingList.add(0, record);
 			repositoryRecordsInRepositorySynchronizationWaitingList.add(sourceRepositoryId);
 		}
-		RepositoryRecord currentRecord = null;
+		RepositoryRecord currentRecord = record;
 		while(!repositorySynchronizationWaitingList.isEmpty()){
-			currentRecord = repositorySynchronizationWaitingList.get(0);
+			//currentRecord = repositorySynchronizationWaitingList.get(0);
 			Document syncInfo = currentRecord.getSyncInfo();
-			RepositoryRecord movedRecord = repositorySynchronizationWaitingList.remove(0);
-			repositorySynchronizationWaitingList.add(movedRecord);
+			//RepositoryRecord movedRecord = repositorySynchronizationWaitingList.remove(0);
+			//repositorySynchronizationWaitingList.add(movedRecord);
 			List<GenericArtifact> artifactsToBeShippedList = currentRecord.getArtifactsToBeShippedList();
 			List<String> artifactsToBeReadList = currentRecord.getArtifactsToBeReadList();
 			if(!artifactsToBeShippedList.isEmpty()){
