@@ -106,7 +106,7 @@ Section "MainSection" SEC02
   ${EndIf}
 
   SetOutPath "$INSTDIR\lib"
-  File "$0\..\..\build\jars\CCFQCPluginV90.jar"
+  ;File "$0\..\..\build\jars\CCFQCPluginV90.jar"
   File "$0\..\..\build\jars\CCF-JUnit-V10.jar"
   File "$0\..\..\build\jars\CCFSFEEPluginV44.jar"
   File "$0\..\..\build\jars\CCFCoreV10.jar"
@@ -322,7 +322,7 @@ Section Uninstall
 
   Delete "$INSTDIR\CCFDBService\db\CCFDB.script"
 
-  Delete "$INSTDIR\lib\CCFQCPluginV90.jar"
+  ;Delete "$INSTDIR\lib\CCFQCPluginV90.jar"
   Delete "$INSTDIR\lib\CCF-JUnit-V10.jar"
   Delete "$INSTDIR\lib\CCFSFEEPluginV44.jar"
   Delete "$INSTDIR\lib\CCFCoreV10.jar"
