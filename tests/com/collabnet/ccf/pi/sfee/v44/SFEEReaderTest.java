@@ -20,7 +20,7 @@ public class SFEEReaderTest extends TestCase {
 	SFEEReader sfeeReader = null;
 	String username="mseethar";
     String password="password";
-    String serverUrl="http://cu074.cubit.maa.collab.net:8080";
+    String serverUrl="http://cu011.cubit.maa.collab.net:8080";
     String keepAlive = "true";
 	private String systemKind;
 	private String credentialInfo;
@@ -50,7 +50,7 @@ public class SFEEReaderTest extends TestCase {
 
 	@SuppressWarnings("deprecation")
 	public void testReadTrackerItems(){
-		String projectTracker = "tracker1004";
+		String projectTracker = "tracker1001";
 		repositoryId = projectTracker;
 		//"Mon Nov 05 00:00:00 GMT+05:30 2007"
 		Date lastModifiedDate = new Date(2007-1900,10,05,0,0,0);
