@@ -111,6 +111,8 @@ public class SFEEReader extends AbstractReader implements
 			log.debug("Artifacts to be fetched from "+lastModifiedDateString);
 			lastModifiedDate=(Date)SFEEGAHelper.asTypedValue(lastModifiedDateString, "DateTime");
 			lastModifiedDate.setTime(lastModifiedDate.getTime()+1);
+		} else {
+			lastModifiedDate = new Date(0);
 		}
 		return lastModifiedDate;
 	}
