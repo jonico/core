@@ -9,6 +9,9 @@
 	<configs>
 		<config>samples/CSV2CSV/config/csv2csv.xml</config>
 		<config>samples/CSV2CSV/config/csv2genericartifact.xml</config>
+		<config>samples/SFEE2SFEE/bidirectional-mirroring/config/SFEE2SFEE.xml</config>
+		<config>samples/SFEE2SFEE/combined-bidirectional-mirroring-with-unidirectional-transformation/config/SFEE2SFEE.xml</config>
+		<config>samples/SFEE2SFEE/unidirectional-transformation/config/UnidirectionalTransformationWiring.xml</config>
 	</configs>
 	<configSets>
 	</configSets>
