@@ -248,16 +248,54 @@ Section "MainSection" SEC02
 
   SetOutPath "$INSTDIR\samples\QC2QC\db"
   File "$0\..\..\samples\QC2QC\db\QC2QC-1Way.script"
-
+  
   SetOutPath "$INSTDIR\samples\SFEE2SFEE"
   File "$0\..\..\samples\SFEE2SFEE\README.txt"
 
-  SetOutPath "$INSTDIR\samples\SFEE2SFEE\config"
-  File "$0\..\..\samples\SFEE2SFEE\config\SFEE2SFEE.xml"
+  SetOutPath "$INSTDIR\samples\SFEE2SFEE\bidirectional-mirroring\config"
+  File "$0\..\..\samples\SFEE2SFEE\bidirectional-mirroring\config\ccf.properties"
+  File "$0\..\..\samples\SFEE2SFEE\bidirectional-mirroring\config\sfee.properties"
+  File "$0\..\..\samples\SFEE2SFEE\bidirectional-mirroring\config\SFEE2SFEE.xml"
+  File "$0\..\..\samples\SFEE2SFEE\bidirectional-mirroring\config\wrapper.conf"
 
-  SetOutPath "$INSTDIR\samples\SFEE2SFEE\db"
-  File "$0\..\..\samples\SFEE2SFEE\db\SFEE2SFEE.script"
+  SetOutPath "$INSTDIR\samples\SFEE2SFEE\bidirectional-mirroring"
+  File "$0\..\..\samples\SFEE2SFEE\bidirectional-mirroring\RunCCFService.bat"
 
+  SetOutPath "$INSTDIR\samples\SFEE2SFEE\bidirectional-mirroring\db"
+  File "$0\..\..\samples\SFEE2SFEE\bidirectional-mirroring\db\SFEE2SFEE.script"
+
+  SetOutPath "$INSTDIR\samples\SFEE2SFEE\combined-bidirectional-mirroring-with-unidirectional-transformation"
+  File "$0\..\..\samples\SFEE2SFEE\combined-bidirectional-mirroring-with-unidirectional-transformation\RunCCFService.bat"
+
+  SetOutPath "$INSTDIR\samples\SFEE2SFEE\combined-bidirectional-mirroring-with-unidirectional-transformation\config"
+  File "$0\..\..\samples\SFEE2SFEE\combined-bidirectional-mirroring-with-unidirectional-transformation\config\ccf.properties"
+  File "$0\..\..\samples\SFEE2SFEE\combined-bidirectional-mirroring-with-unidirectional-transformation\config\sfee.properties"
+  File "$0\..\..\samples\SFEE2SFEE\combined-bidirectional-mirroring-with-unidirectional-transformation\config\SFEE2SFEE.xml"
+  File "$0\..\..\samples\SFEE2SFEE\combined-bidirectional-mirroring-with-unidirectional-transformation\config\wrapper.conf"
+
+  SetOutPath "$INSTDIR\samples\SFEE2SFEE\combined-bidirectional-mirroring-with-unidirectional-transformation\db"
+  File "$0\..\..\samples\SFEE2SFEE\combined-bidirectional-mirroring-with-unidirectional-transformation\db\SFEE2SFEE.script"
+
+  SetOutPath "$INSTDIR\samples\SFEE2SFEE\combined-bidirectional-mirroring-with-unidirectional-transformation\xslt"
+  File "$0\..\..\samples\SFEE2SFEE\combined-bidirectional-mirroring-with-unidirectional-transformation\xslt\cu074+tracker1013+cu074+tracker1014.xsl"
+  File "$0\..\..\samples\SFEE2SFEE\combined-bidirectional-mirroring-with-unidirectional-transformation\xslt\cu074+tracker1014+cu074+tracker1013.xsl"
+  File "$0\..\..\samples\SFEE2SFEE\combined-bidirectional-mirroring-with-unidirectional-transformation\xslt\cu074+tracker1016+cu074+tracker1017.xsl"
+
+  SetOutPath "$INSTDIR\samples\SFEE2SFEE\unidirectional-transformation"
+  File "$0\..\..\samples\SFEE2SFEE\unidirectional-transformation\RunCCFService.bat"
+
+  SetOutPath "$INSTDIR\samples\SFEE2SFEE\unidirectional-transformation\config"
+  File "$0\..\..\samples\SFEE2SFEE\unidirectional-transformation\config\ccf.properties"
+  File "$0\..\..\samples\SFEE2SFEE\unidirectional-transformation\config\sfee.properties"
+  File "$0\..\..\samples\SFEE2SFEE\unidirectional-transformation\config\UnidirectionalTransformationWiring.xml"
+  File "$0\..\..\samples\SFEE2SFEE\unidirectional-transformation\config\wrapper.conf"
+
+  SetOutPath "$INSTDIR\samples\SFEE2SFEE\unidirectional-transformation\db"
+  File "$0\..\..\samples\SFEE2SFEE\unidirectional-transformation\db\SFEE2SFEE_Unidirectional.script"
+
+  SetOutPath "$INSTDIR\samples\SFEE2SFEE\unidirectional-transformation\xslt"
+  File "$0\..\..\samples\SFEE2SFEE\unidirectional-transformation\xslt\cu074+tracker1016+cu074+tracker1017.xsl"
+  
   CreateDirectory "$SMPROGRAMS\Collabnet Connector Framework"
   CreateShortCut "$SMPROGRAMS\Collabnet Connector Framework\Uninstall.lnk" "$INSTDIR\uninst.exe"
 SectionEnd
@@ -444,14 +482,44 @@ Section Uninstall
 
   Delete "$INSTDIR\samples\QC2QC\db\QC2QC-1Way.script"
 
+  Delete "$INSTDIR\samples\SFEE2SFEE\unidirectional-transformation\xslt\cu074+tracker1016+cu074+tracker1017.xsl"
+  Delete "$INSTDIR\samples\SFEE2SFEE\unidirectional-transformation\RunCCFService.bat"
+  Delete "$INSTDIR\samples\SFEE2SFEE\unidirectional-transformation\db\SFEE2SFEE_Unidirectional.script"
+  Delete "$INSTDIR\samples\SFEE2SFEE\unidirectional-transformation\config\wrapper.conf"
+  Delete "$INSTDIR\samples\SFEE2SFEE\unidirectional-transformation\config\UnidirectionalTransformationWiring.xml"
+  Delete "$INSTDIR\samples\SFEE2SFEE\unidirectional-transformation\config\sfee.properties"
+  Delete "$INSTDIR\samples\SFEE2SFEE\unidirectional-transformation\config\ccf.properties"
   Delete "$INSTDIR\samples\SFEE2SFEE\README.txt"
-
-  Delete "$INSTDIR\samples\SFEE2SFEE\config\SFEE2SFEE.xml"
-
-  Delete "$INSTDIR\samples\SFEE2SFEE\db\SFEE2SFEE.script"
+  Delete "$INSTDIR\samples\SFEE2SFEE\combined-bidirectional-mirroring-with-unidirectional-transformation\xslt\cu074+tracker1016+cu074+tracker1017.xsl"
+  Delete "$INSTDIR\samples\SFEE2SFEE\combined-bidirectional-mirroring-with-unidirectional-transformation\xslt\cu074+tracker1014+cu074+tracker1013.xsl"
+  Delete "$INSTDIR\samples\SFEE2SFEE\combined-bidirectional-mirroring-with-unidirectional-transformation\xslt\cu074+tracker1013+cu074+tracker1014.xsl"
+  Delete "$INSTDIR\samples\SFEE2SFEE\combined-bidirectional-mirroring-with-unidirectional-transformation\RunCCFService.bat"
+  Delete "$INSTDIR\samples\SFEE2SFEE\combined-bidirectional-mirroring-with-unidirectional-transformation\db\SFEE2SFEE.script"
+  Delete "$INSTDIR\samples\SFEE2SFEE\combined-bidirectional-mirroring-with-unidirectional-transformation\config\wrapper.conf"
+  Delete "$INSTDIR\samples\SFEE2SFEE\combined-bidirectional-mirroring-with-unidirectional-transformation\config\SFEE2SFEE.xml"
+  Delete "$INSTDIR\samples\SFEE2SFEE\combined-bidirectional-mirroring-with-unidirectional-transformation\config\sfee.properties"
+  Delete "$INSTDIR\samples\SFEE2SFEE\combined-bidirectional-mirroring-with-unidirectional-transformation\config\ccf.properties"
+  Delete "$INSTDIR\samples\SFEE2SFEE\bidirectional-mirroring\RunCCFService.bat"
+  Delete "$INSTDIR\samples\SFEE2SFEE\bidirectional-mirroring\db\SFEE2SFEE.script"
+  Delete "$INSTDIR\samples\SFEE2SFEE\bidirectional-mirroring\config\wrapper.conf"
+  Delete "$INSTDIR\samples\SFEE2SFEE\bidirectional-mirroring\config\SFEE2SFEE.xml"
+  Delete "$INSTDIR\samples\SFEE2SFEE\bidirectional-mirroring\config\sfee.properties"
+  Delete "$INSTDIR\samples\SFEE2SFEE\bidirectional-mirroring\config\ccf.properties"
 
   Delete "$INSTDIR\License.html"
   Delete "$INSTDIR\README.txt"
+
+  RMDir "$INSTDIR\samples\SFEE2SFEE\unidirectional-transformation\xslt"
+  RMDir "$INSTDIR\samples\SFEE2SFEE\unidirectional-transformation\db"
+  RMDir "$INSTDIR\samples\SFEE2SFEE\unidirectional-transformation\config"
+  RMDir "$INSTDIR\samples\SFEE2SFEE\unidirectional-transformation"
+  RMDir "$INSTDIR\samples\SFEE2SFEE\combined-bidirectional-mirroring-with-unidirectional-transformation\xslt"
+  RMDir "$INSTDIR\samples\SFEE2SFEE\combined-bidirectional-mirroring-with-unidirectional-transformation\db"
+  RMDir "$INSTDIR\samples\SFEE2SFEE\combined-bidirectional-mirroring-with-unidirectional-transformation\config"
+  RMDir "$INSTDIR\samples\SFEE2SFEE\combined-bidirectional-mirroring-with-unidirectional-transformation"
+  RMDir "$INSTDIR\samples\SFEE2SFEE\bidirectional-mirroring\db"
+  RMDir "$INSTDIR\samples\SFEE2SFEE\bidirectional-mirroring\config"
+  RMDir "$INSTDIR\samples\SFEE2SFEE\bidirectional-mirroring"
 
   RMDir "$INSTDIR\CCFDBService\config"
   RMDir "$INSTDIR\CCFDBService\lib"
@@ -487,8 +555,6 @@ Section Uninstall
   RMDir "$INSTDIR\samples\QC2QC\db"
   RMDir "$INSTDIR\samples\QC2QC"
 
-  RMDir "$INSTDIR\samples\SFEE2SFEE\config"
-  RMDir "$INSTDIR\samples\SFEE2SFEE\db"
   RMDir "$INSTDIR\samples\SFEE2SFEE"
 
   RMDir "$INSTDIR\samples"
