@@ -452,7 +452,7 @@ public class QCDefectHandler {
 			int entityId = Integer.parseInt(rs.getFieldValue("AU_ENTITY_ID"));
 			String bugId = rs.getFieldValue("AU_ENTITY_ID");
 			List<Object> transactionIdAndAttachOperation = getTxnIdAndAuDescription(
-					bugId, transactionId, qcc);
+					bugId, transactionId, qcc, connectorUser);
 			if(transactionIdAndAttachOperation==null)
 				continue;
 			String thisTransactionId = (String) transactionIdAndAttachOperation
@@ -544,14 +544,14 @@ public class QCDefectHandler {
 	
 	
 	public List<Object> getTxnIdAndAuDescription(String bugId, String txnId,
-			IConnection qcc) {
+			IConnection qcc, String connectorUser) {
 
 		List<Object> txnIdAndAuDescription = new ArrayList<Object>();
 		String transactionId = null;
 		List<String> attachmentNames = new ArrayList<String>();
 		String sql = "select AU_ACTION_ID, AU_DESCRIPTION from audit_log where au_entity_id = '"
 				+ bugId
-				+ "' and au_entity_type='BUG' and au_father_id='-1' and au_action_id > '"
+				+ "' and au_entity_type='BUG' and au_user !='"+connectorUser+"' and au_father_id='-1' and au_action_id > '"
 				+ txnId + "' order by au_action_id desc";
 		IRecordSet newRs = executeSQL(qcc, sql);
 		int newRc = newRs.getRecordCount();
