@@ -108,6 +108,7 @@ public class SFEEAttachmentHandler {
 	public void handleAttachment(String sessionId, GenericArtifact att, String artifactId, String userName) throws RemoteException {
 		String contentType = SFEEWriter.getStringGAField(AttachmentMetaData.ATTACHMENT_TYPE, att);
 		String attachDescription = SFEEWriter.getStringGAField(AttachmentMetaData.ATTACHMENT_DESCRIPTION, att);
+		System.out.println();
 		String attachmentMimeType = SFEEWriter.getStringGAField(AttachmentMetaData.ATTACHMENT_MIME_TYPE, att);
 		String attachmentName = SFEEWriter.getStringGAField(AttachmentMetaData.ATTACHMENT_NAME, att);
 		attachmentName = userName + "_" + attachmentName;
@@ -215,6 +216,7 @@ public class SFEEAttachmentHandler {
 							GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
 					mimeTypeField.setFieldValue(row.getMimetype());
 					mimeTypeField.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
+					mimeTypeField.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
 					System.out.println(row.getAttachmentId()+" "+
 							row.getRawFileId()+" "+
 							row.getStoredFileId());
