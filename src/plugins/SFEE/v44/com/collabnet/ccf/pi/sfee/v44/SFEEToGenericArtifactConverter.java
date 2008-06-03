@@ -18,6 +18,9 @@ public class SFEEToGenericArtifactConverter {
 			GenericArtifact genericArtifact = new GenericArtifact();
 			genericArtifact.setArtifactType(GenericArtifact.ArtifactTypeValue.PLAINARTIFACT);
 			genericArtifact.setArtifactMode(GenericArtifact.ArtifactModeValue.COMPLETE);
+			genericArtifact.setErrorCode("ok");
+			genericArtifact.setIncludesFieldMetaData(GenericArtifact.IncludesFieldMetaDataValue.FALSE);
+
 			int actualHours = artifactRow.getActualHours();
 			this.createGenericArtifactField(ArtifactMetaData.SFEEFields.actualHours.getFieldName(),
 					ArtifactMetaData.SFEEFields.actualHours.getDisplayName(),
