@@ -1,0 +1,258 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
+	<description><![CDATA[
+  Simple test wiring to write out the first generic artifact!
+  ]]></description>
+
+	<bean class="org.openadaptor.core.jmx.MBeanServer">
+		<description>
+			Embed this in your config to expose jmx interface via http
+			and rmi.
+		</description>
+		<constructor-arg value="8082" />
+	</bean>
+
+	<bean id="SystemUtil" class="org.openadaptor.util.SystemUtil">
+		<description>
+			Embed this in your config to expose useful management bean.
+		</description>
+	</bean>
+
+	<bean id="LogAdmin"
+		class="org.openadaptor.thirdparty.log4j.LogAdmin">
+		<description>
+			Embed this in your config to expose log4j management.
+		</description>
+	</bean>
+	<bean id="SystemPropertyConfigurer"
+		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="ignoreResourceNotFound" value="false" />
+		<property name="systemPropertiesMode">
+			<bean
+				id="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer.SYSTEM_PROPERTIES_MODE_OVERRIDE"
+				class="org.springframework.beans.factory.config.FieldRetrievingFactoryBean" />
+		</property>
+		<property name="locations">
+			<description>
+				Properties set by a file in list below are supposedly
+				overridden by settings in a file later in list below.
+			</description>
+			<list>
+				<value>classpath:ccf.properties</value>
+				<value>classpath:sfee.properties</value>
+			</list>
+		</property>
+	</bean>
+	<bean id="Adaptor" class="org.openadaptor.core.adaptor.Adaptor">
+		<property name="messageProcessor" ref="Router" />
+	</bean>
+
+	<bean id="Router" class="org.openadaptor.core.router.Router">
+
+		<property name="processMap">
+			<map>
+				<entry key-ref="SimplePollingReaderSFEE2SFEE" value-ref="SFEEReader" />
+				<entry key-ref="SFEEReader"	value-ref="SFEEEntityService" />
+				<entry key-ref="SFEEEntityService" value-ref="SFEEWriter" />
+				<entry key-ref="SFEEWriter" value-ref="MappingDBUpdater" />
+			</map>
+		</property>
+		<property name="exceptionProcessor" ref="ExceptionHandler" />
+	</bean>
+	<bean id="SimplePollingReaderSFEE2SFEE"
+		class="com.collabnet.ccf.core.test.plugins.SimpleLoopingPollingReadConnector">
+		<description>
+			Poller which wraps QCReader and every 5 seconds.
+		</description>
+		<property name="pollLimit" value="-1" />
+		<property name="delegate" ref="SFEEDatabaseReader" />
+		<property name="pollIntervalSecs" value="0" />
+	</bean>
+	<bean id="SFEEDatabaseReader"
+		class="org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector">
+		<description>
+			Reader which polls database using configured SQL.
+		</description>
+		<property name="jdbcConnection" ref="JdbcConnectionReadSFEE" />
+		<!-- batch size of 0 or less means process all rows in one message batch. -->
+		<!-- batch size of one means process one row per message and so on -->
+		<property name="batchSize" value="1" />
+		<property name="resultSetConverter" ref="ResultSetConverter" />
+		<property name="sql">
+			<value>${ccf.sfeereader.poller.sql}</value>
+		</property>
+	</bean>
+	<bean id="JdbcConnectionReadSFEE"
+		class="org.openadaptor.auxil.connector.jdbc.JDBCConnection">
+		<description>
+			This defines jdbc connection that will be used by the
+			SimplePollingReaderSFEE2QC
+		</description>
+		<property name="driver" value="${ccf.db.driver}" />
+		<property name="url" value="${ccf.db.url}" />
+		<property name="username" value="${ccf.db.username}" />
+		<property name="password" value="${ccf.db.password}" />
+	</bean>
+
+	<bean id="ResultSetConverter"
+		class="org.openadaptor.auxil.connector.jdbc.reader.xml.ResultSetToXMLConverter">
+		<property name="convertToString" value="false" />
+		<property name="rootElement" value="EmptySyncInf" />
+	</bean>
+	
+<bean id="SFEEReader"
+		class="com.collabnet.ccf.pi.sfee.v44.SFEEReader">
+		<description>Reads the modified defects from SFEE</description>
+		<property name="username" value="${sfee.server.1.username}" />
+		<property name="password" value="${sfee.server.1.password}" />
+		<property name="serverUrl"
+			value="${sfee.server.1.url}" />
+		<property name="connectionManager" ref="SFEEConnectionManager"></property>
+		<property name="sleepInterval" value="1000"></property>
+	</bean>
+	<bean id="SFEEConnectionManager"
+		class="com.collabnet.ccf.core.eis.connection.ConnectionManager">
+		<property name="maxConnectionsPerPool" value="5"></property>
+		<property name="maxIdleTimeForConnection" value="600000" />
+		<property name="scavengerInterval" value="120000"></property>
+		<property name="connectionFactory" ref="SFEEConnectionFactory"></property>
+	</bean>
+	<bean id="SFEEConnectionFactory"
+		class="com.collabnet.ccf.pi.sfee.v44.SFEEConnectionFactory">
+	</bean>
+	<bean id="SFEEWriter"
+		class="com.collabnet.ccf.pi.sfee.v44.SFEEWriter">
+		<description>Writes the modified defects to SFEE</description>
+		<property name="username" value="${sfee.server.1.username}" />
+		<property name="password" value="${sfee.server.1.password}" />
+		<property name="serverUrl"
+			value="${sfee.server.1.url}" />
+		<property name="createToken" value="create" />
+		<property name="otherSystemVersionInSFEETargetFieldname"
+			value="create" />
+		<property name="updateComment"
+			value="Synchronized by Connector user" />
+		<property name="connectionManager" ref="SFEEConnectionManager"></property>
+	</bean>
+	<bean id="SFEEEntityService"
+		class="com.collabnet.ccf.core.EntityService">
+		<description>
+			Determines if the incoming artifact should be created or
+			updated in the target system
+		</description>
+		<property name="entityServiceReader" ref="EntityServiceReader" />
+		<property name="entityServiceMappingIdReader"
+			ref="EntityServiceMappingIDReader">
+		</property>
+	</bean>
+
+	
+	<bean id="MappingDBUpdater"
+		class="com.collabnet.ccf.core.config.MappingDBUpdater">
+		<description>
+			Updates the artifact synchronization info for a repository
+		</description>
+		<property name="mappingWriter" ref="MappingWriter"></property>
+		<property name="entityServiceReader" ref="EntityServiceReader" />
+		<property name="entityServiceMappingIdReader"
+			ref="EntityServiceMappingIDReader">
+		</property>
+		<property name="entityServiceWriteConnector"
+			ref="EntityServiceWriter">
+		</property>
+	</bean>
+	<bean id="EntityServiceMappingIDReader"
+		class="org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector">
+		<description>
+			Reader which polls database using configured SQL.
+		</description>
+		<property name="jdbcConnection"
+			ref="EntityServiceJdbcConnection" />
+		<!-- batch size of 0 or less means process all rows in one message batch. -->
+		<!-- batch size of one means process one row per message and so on -->
+		<property name="batchSize" value="0" />
+		<property name="sql">
+			<value>${ccf.mappingid.sql}</value>
+		</property>
+	</bean>
+	<bean id="EntityServiceReader"
+		class="org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector">
+		<description>
+			Reader which polls database using configured SQL.
+		</description>
+		<property name="jdbcConnection"
+			ref="EntityServiceJdbcConnection" />
+		<!-- batch size of 0 or less means process all rows in one message batch. -->
+		<!-- batch size of one means process one row per message and so on -->
+		<property name="batchSize" value="0" />
+		<property name="sql">
+			<value>${ccf.targetartifactid.sql}</value>
+		</property>
+	</bean>
+	<bean id="EntityServiceJdbcConnection"
+		class="org.openadaptor.auxil.connector.jdbc.JDBCConnection">
+		<description>
+			This defines jdbc connection that will be used by the
+			SimplePollingReaderSFEE2QC
+		</description>
+		<property name="driver" value="${ccf.db.driver}" />
+		<property name="url" value="${ccf.db.url}" />
+		<property name="username" value="${ccf.db.username}" />
+		<property name="password" value="${ccf.db.password}" />
+	</bean>
+	<bean id="EntityServiceWriter"
+		class="org.openadaptor.auxil.connector.jdbc.writer.JDBCWriteConnector">
+		<property name="writer" ref="EntityServiceMapTableWriter"></property>
+		<property name="jdbcConnection"
+			ref="EntityServiceJdbcConnection">
+		</property>
+	</bean>
+	<bean id="EntityServiceMapTableWriter"
+		class="org.openadaptor.auxil.connector.jdbc.writer.MapTableWriter">
+		<description>
+			This is the writer object that writes the artifact mapping
+			information into the database table.
+		</description>
+		<property name="tableName" value="ARTIFACT_MAPPING"></property>
+		<property name="outputColumns">
+			<list>
+				<value>MAPPING_ID</value>
+				<value>SOURCE_ARTIFACT_ID</value>
+				<value>TARGET_ARTIFACT_ID</value>
+			</list>
+		</property>
+	</bean>
+	<bean id="MappingWriter"
+		class="org.openadaptor.auxil.connector.jdbc.writer.JDBCWriteConnector">
+		<property name="writer" ref="MappingMapTableUpdater"></property>
+		<property name="jdbcConnection"
+			ref="EntityServiceJdbcConnection">
+		</property>
+	</bean>
+	<bean id="MappingMapTableUpdater"
+		class="com.collabnet.ccf.core.db.MapTableUpdater">
+		<description>
+			This is the writer object that writes the artifact mapping
+			information into the database table.
+		</description>
+		<property name="tableName" value="ARTIFACT_MAPPING"></property>
+		<property name="sql" value="${ccf.mapping.updater.sql}"></property>
+		<property name="outputColumns">
+			<list>
+				<value>LAST_READ_TIME</value>
+				<value>TRANSACTION_ID</value>
+				<value>VERSION</value>
+				<value>A.REPOSITORY_ID</value>
+				<value>B.REPOSITORY_ID</value>
+				<value>ARTIFACT_MAPPING.SOURCE_ARTIFACT_ID</value>
+				<value>ARTIFACT_MAPPING.TARGET_ARTIFACT_ID</value>
+			</list>
+		</property>
+	</bean>
+	<bean id="ExceptionHandler" class="com.collabnet.ccf.core.hospital.Ambulance">
+  		<property name="hospitalFileName" value="C:/hospital.txt"/>
+  	</bean>
+</beans>
