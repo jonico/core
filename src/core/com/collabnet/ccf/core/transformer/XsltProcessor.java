@@ -60,6 +60,9 @@ public class XsltProcessor extends Component implements IDataProcessor {
 	private static final String TARGET_SYSTEM_ID = "targetSystemId";
 	private static final String SOURCE_REPOSITORY_ID = "sourceRepositoryId";
 	private static final String TARGET_REPOSITORY_ID = "targetRepositoryId";
+	
+	public static final String PARAM_DELIMITER = "+";
+	
 	/**
 	 * Sets the location of the directory containing the XSLT
 	 * 
@@ -93,6 +96,8 @@ public class XsltProcessor extends Component implements IDataProcessor {
 		} catch (RuntimeException ex) {
 			exceptions.add(ex);
 		}*/
+		if(xsltFileNameTransformerMap==null)
+			xsltFileNameTransformerMap = new HashMap<String, Transformer>();
 	}
 
 	/**
@@ -157,8 +162,6 @@ public class XsltProcessor extends Component implements IDataProcessor {
 
 		if (record instanceof Document) {
 			Transformer transform = null;
-			if(xsltFileNameTransformerMap==null)
-				xsltFileNameTransformerMap = new HashMap<String, Transformer>();
 			try {
 				transform = constructFileNameAndFetchTransformer(record);
 			} catch (GenericArtifactParsingException e) {
@@ -185,7 +188,7 @@ public class XsltProcessor extends Component implements IDataProcessor {
 		String sourceRepositoryId = XPathUtils.getAttributeValue(element, SOURCE_REPOSITORY_ID);
 		String targetRepositoryId = XPathUtils.getAttributeValue(element, TARGET_REPOSITORY_ID);
 		String xsltDir = this.xsltDir;
-		fileName = xsltDir+sourceSystemId+"+"+sourceRepositoryId+"+"+targetSystemId+"+"+targetRepositoryId+".xsl";
+		fileName = xsltDir+sourceSystemId+PARAM_DELIMITER+sourceRepositoryId+PARAM_DELIMITER+targetSystemId+PARAM_DELIMITER+targetRepositoryId+".xsl";
 		if(!xsltFileNameTransformerMap.containsKey(fileName)){
 			transform = loadXSLT(fileName);
 			xsltFileNameTransformerMap.put(fileName, transform);
