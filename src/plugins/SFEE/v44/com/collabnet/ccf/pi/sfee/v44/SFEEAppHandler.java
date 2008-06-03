@@ -36,14 +36,15 @@ public class SFEEAppHandler {
 					if(createdBy.equals(connectorUser)){
 						continue;
 					}
-					if(lastModifiedDate.before(createdDate)){
+					if(lastModifiedDate.after(createdDate)){
 						continue;
 					}
 					String description = comment.getDescription();
 					boolean commentSet = false;
 					for(ArtifactSoapDO artifactDO:artifactHistory){
 						//TODO If nothing is matching what will happen?
-						if(artifactDO.getLastModifiedDate().after(createdDate)){
+						if(artifactDO.getLastModifiedDate().after(createdDate) ||
+								artifactDO.getLastModifiedDate().equals(createdDate)){
 							//TODO If more than one comment is added, How this will behave?
 							ArtifactMetaData.addFlexField("Comment Text", artifactDO, description);
 							commentSet = true;
