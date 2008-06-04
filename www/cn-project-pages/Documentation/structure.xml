@@ -12,5 +12,11 @@
     <directory>Generic Artifact XML Format</directory>
     <ordinal>2</ordinal>
   </subpage>
+  <subpage>
+    <id>u0EQt1</id>
+    <name>FAQ</name>
+    <directory>FAQ</directory>
+    <ordinal>3</ordinal>
+  </subpage>
 </structure>
 
