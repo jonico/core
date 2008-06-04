@@ -210,10 +210,6 @@
 				<include name="SFEE2SFEE/**/*"/>
 			</fileset>
 		</copy>
-		<mkdir dir="build/dist"/>
-		<zip destfile="build/dist/ccf.zip"
-		       basedir="build/package"/>
-		<delete dir="build/package"/>
 	</target>
 
         <!--Installer Deployment-->
@@ -231,13 +227,13 @@
               <delete dir="production_installer"/>        
         </target>
 
-        <target name="deploy" depends="sanity,cleanup,build,create_installer">
+        <target name="deploy" depends="sanity,cleanup,build">
               <property file="default.properties"/>
-              <mkdir dir="deploy"/>
-              <zip destfile="deploy/PI-${tool.name}-${tool.version}.${tool.buildnumber}.zip">
-   	          <!--<zipfileset dir="Documentation" includes="*"/>-->
-	          <zipfileset dir="production_installer" includes="*" />
-              </zip>	
+             
+	      <mkdir dir="deploy"/>
+	      <zip destfile="deploy/PI-${tool.name}-${tool.version}.${tool.buildnumber}.zip" 
+		       basedir="build/package"/>
+              <delete dir="build/package"/>
         </target>
 
         <target name="create_installer">
