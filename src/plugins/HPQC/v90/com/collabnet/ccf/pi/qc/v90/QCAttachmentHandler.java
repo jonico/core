@@ -220,60 +220,64 @@ public class QCAttachmentHandler {
 			String targetRepositoryKind, String targetSystemId,
 			String targetSystemKind) throws Exception {
 
-		int rc = 0;
-		String sql = "SELECT DISTINCT(AU_ENTITY_ID) FROM AUDIT_LOG WHERE AU_ENTITY_TYPE = 'BUG' AND AU_ACTION_ID > '"
-				+ transactionId
-				+ "' AND AU_USER != '"
-				+ connectorUser
-				+ "' AND AU_FATHER_ID = '-1'";
+		// int rc = 0;
+		// String sql = "SELECT DISTINCT(AU_ENTITY_ID) FROM AUDIT_LOG WHERE
+		// AU_ENTITY_TYPE = 'BUG' AND AU_ACTION_ID > '"
+		// + transactionId
+		// + "' AND AU_USER != '"
+		// + connectorUser
+		// + "' AND AU_FATHER_ID = '-1'";
+		//
+		// log.info(sql);
+		//
+		// IRecordSet rs = executeSQL(qcc, sql);
+		// if (rs != null)
+		// rc = rs.getRecordCount();
 
-		log.info(sql);
+		// for (int cnt = 0; cnt < rc; cnt++, rs.next()) {
+		// int entityId = Integer.parseInt(rs.getFieldValue("AU_ENTITY_ID"));
+		String bugId = sourceArtifactId;
+		int entityId = Integer.parseInt(bugId);
+		List<Object> transactionIdAndAttachOperation = getTxnIdAndAuDescription(
+				bugId, transactionId, qcc);
+		if (transactionIdAndAttachOperation == null)
+			return modifiedAttachmentArtifacts;
+		String thisTransactionId = (String) transactionIdAndAttachOperation
+				.get(0);
+		List<String> attachmentNames = (List<String>) transactionIdAndAttachOperation
+				.get(1);
+		log.info("In getLatestChangedDefects, txnId=" + thisTransactionId
+				+ " and attachmentNames=" + attachmentNames);
 
-		IRecordSet rs = executeSQL(qcc, sql);
-		if (rs != null)
-			rc = rs.getRecordCount();
+		if (attachmentNames != null) {
+			for (int attachCount = 0; attachCount < attachmentNames.size(); attachCount++) {
 
-		for (int cnt = 0; cnt < rc; cnt++, rs.next()) {
-			int entityId = Integer.parseInt(rs.getFieldValue("AU_ENTITY_ID"));
-			String bugId = rs.getFieldValue("AU_ENTITY_ID");
-			List<Object> transactionIdAndAttachOperation = getTxnIdAndAuDescription(
-					bugId, transactionId, qcc);
-			if (transactionIdAndAttachOperation == null)
-				continue;
-			String thisTransactionId = (String) transactionIdAndAttachOperation
-					.get(0);
-			List<String> attachmentNames = (List<String>) transactionIdAndAttachOperation.get(1);
-			log.info("In getLatestChangedDefects, txnId=" + thisTransactionId
-					+ " and attachmentNames=" + attachmentNames);
+				GenericArtifact latestAttachmentArtifact = getGenericArtifactObjectOfAttachment(
+						qcc, bugId, attachmentNames.get(attachCount));
+				if (latestAttachmentArtifact == null)
+					continue;
+				latestAttachmentArtifact = getArtifactAction(
+						latestAttachmentArtifact, qcc, thisTransactionId,
+						entityId, lastReadTime);
+				latestAttachmentArtifact
+						.setArtifactMode(GenericArtifact.ArtifactModeValue.COMPLETE);
+				latestAttachmentArtifact
+						.setArtifactType(GenericArtifact.ArtifactTypeValue.ATTACHMENT);
+				latestAttachmentArtifact.setErrorCode("ok");
+				latestAttachmentArtifact
+						.setIncludesFieldMetaData(GenericArtifact.IncludesFieldMetaDataValue.FALSE);
 
-			if (attachmentNames != null) {
-				for (int attachCount = 0; attachCount < attachmentNames.size(); attachCount++) {
+				latestAttachmentArtifact = assignValues(
+						latestAttachmentArtifact, sourceArtifactId,
+						sourceRepositoryId, sourceRepositoryKind,
+						sourceSystemId, sourceSystemKind, targetRepositoryId,
+						targetRepositoryKind, targetSystemId, targetSystemKind,
+						thisTransactionId);
 
-					GenericArtifact latestAttachmentArtifact = getGenericArtifactObjectOfAttachment(
-							qcc, bugId, attachmentNames.get(attachCount));
-					if (latestAttachmentArtifact == null)
-						continue;
-					latestAttachmentArtifact = getArtifactAction(
-							latestAttachmentArtifact, qcc, thisTransactionId,
-							entityId, lastReadTime);
-					latestAttachmentArtifact
-							.setArtifactMode(GenericArtifact.ArtifactModeValue.COMPLETE);
-					latestAttachmentArtifact
-							.setArtifactType(GenericArtifact.ArtifactTypeValue.ATTACHMENT);
-					latestAttachmentArtifact.setErrorCode("ok");
-					latestAttachmentArtifact.setIncludesFieldMetaData(GenericArtifact.IncludesFieldMetaDataValue.FALSE);
-
-					latestAttachmentArtifact = assignValues(
-							latestAttachmentArtifact, sourceArtifactId,
-							sourceRepositoryId, sourceRepositoryKind,
-							sourceSystemId, sourceSystemKind,
-							targetRepositoryId, targetRepositoryKind,
-							targetSystemId, targetSystemKind, thisTransactionId);
-
-					modifiedAttachmentArtifacts.add(latestAttachmentArtifact);
-				}
+				modifiedAttachmentArtifacts.add(latestAttachmentArtifact);
 			}
 		}
+		// }
 		return modifiedAttachmentArtifacts;
 	}
 
