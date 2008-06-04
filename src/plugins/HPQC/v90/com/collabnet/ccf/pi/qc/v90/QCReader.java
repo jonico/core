@@ -235,7 +235,7 @@ public class QCReader extends AbstractReader  implements
 		ArrayList<GenericArtifact> modifiedDefectArtifacts = new ArrayList<GenericArtifact>();
 		try {
 			List<Object> transactionIdAndAttachOperation = defectHandler.getTxnIdAndAuDescription(
-					artifactId, transactionId, connection, userName);
+					artifactId, transactionId, connection, getUserName());
 			if(transactionIdAndAttachOperation==null)
 				return null;
 			String lastTransactionId = (String) transactionIdAndAttachOperation
