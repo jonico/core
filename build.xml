@@ -85,7 +85,7 @@
 		<mkdir dir="build/classes" />
 	</target>
 	<target depends="clean" name="cleanall" />
-	<target depends="init, build.core, build.sfee.plugin, build.junit.tests, junit" name="build" />
+	<target depends="init, build.core, build.sfee.plugin, build.junit.tests, junit, package" name="build" />
 
 	<target name="build.core">
 		<antcall target="clean">
@@ -177,6 +177,43 @@
 				</fileset>
 			</batchtest>
 		</junit>
+	</target>
+	<target name="package">
+		<delete dir="build/package"></delete>
+		<mkdir dir="build/package/CCFDBService/db"/>
+		<mkdir dir="build/package/CCFDBService/logs"/>
+		<copy todir="build/package/CCFDBService/db">
+			<fileset dir="config/db-schema">
+				<include name="*.script" />
+			</fileset>
+		</copy>
+		<mkdir dir="build/package/lib"/>
+		<copy todir="build/package/lib">
+			<fileset dir="build/jars">
+				<include name="*.jar" />
+				<exclude name="*JUnit*.jar"/>
+			</fileset>
+		</copy>
+		<mkdir dir="build/package/lib/extlib"/>
+		<copy todir="build/package/lib/extlib">
+			<fileset dir="src/core/lib/openadaptor-3.4">
+				<include name="*.jar" />
+			</fileset>
+			<fileset dir="src/core/lib/openadaptor-3.4/3rdparty">
+				<include name="*.jar" />
+			</fileset>
+		</copy>
+		<mkdir dir="build/package/samples"/>
+		<copy todir="build/package/samples">
+			<fileset dir="samples">
+				<include name="CSV2CSV/**/*"/>
+				<include name="SFEE2SFEE/**/*"/>
+			</fileset>
+		</copy>
+		<mkdir dir="build/dist"/>
+		<zip destfile="build/dist/ccf.zip"
+		       basedir="build/package"/>
+		<delete dir="build/package"/>
 	</target>
 
         <!--Installer Deployment-->
