@@ -193,6 +193,9 @@
 				<include name="*.jar" />
 				<exclude name="*JUnit*.jar"/>
 			</fileset>
+			<fileset dir="config">
+				<include name="log4j.properties" />
+			</fileset>
 		</copy>
 		<mkdir dir="build/package/lib/extlib"/>
 		<copy todir="build/package/lib/extlib">
