@@ -107,6 +107,7 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 				try {
 					Document returnDoc = GenericArtifactHelper.createGenericArtifactXMLDocument(genericArtifact);
 					Object[] returnObjects = new Object[] {returnDoc};
+					removeFromWaitingList(currentRecord);
 					return returnObjects;
 				} catch (GenericArtifactParsingException e) {
 					// TODO Auto-generated catch block
@@ -129,6 +130,7 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 				try {
 					Document returnDoc = GenericArtifactHelper.createGenericArtifactXMLDocument(genericArtifact);
 					Object[] returnObjects = new Object[] {returnDoc};
+					removeFromWaitingList(currentRecord);
 					return returnObjects;
 				} catch (GenericArtifactParsingException e) {
 					// TODO Auto-generated catch block
@@ -136,9 +138,7 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 				}
 			}
 			else {
-				repositorySynchronizationWaitingList.remove(currentRecord);
-				String currentSourceRepositoryId = currentRecord.getRepositoryId(); 
-				repositoryRecordsInRepositorySynchronizationWaitingList.remove(currentSourceRepositoryId);
+				removeFromWaitingList(currentRecord);
 			}
 		}
 		try {
@@ -150,6 +150,11 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 		return new Object[]{};
 	}
 
+	private void removeFromWaitingList(RepositoryRecord currentRecord) {
+		repositorySynchronizationWaitingList.remove(currentRecord);
+		String currentSourceRepositoryId = currentRecord.getRepositoryId(); 
+		repositoryRecordsInRepositorySynchronizationWaitingList.remove(currentSourceRepositoryId);
+	}
 	private List<GenericArtifact> combineAndSort(
 			List<GenericArtifact> artifactData,
 			List<GenericArtifact> artifactAttachments,
