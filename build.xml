@@ -180,11 +180,22 @@
 	</target>
 	<target name="package">
 		<delete dir="build/package"></delete>
+		<mkdir dir="build/package/bin"/>
+		<copy todir="build/package/bin">
+			<fileset dir="scripts">
+				<include name="setEnv.bat" />
+			</fileset>
+		</copy>
 		<mkdir dir="build/package/CCFDBService/db"/>
 		<mkdir dir="build/package/CCFDBService/logs"/>
 		<copy todir="build/package/CCFDBService/db">
 			<fileset dir="config/db-schema">
 				<include name="*.script" />
+			</fileset>
+		</copy>
+		<copy todir="build/package/CCFDBService">
+			<fileset dir="scripts">
+				<include name="startDB.bat" />
 			</fileset>
 		</copy>
 		<mkdir dir="build/package/lib"/>
@@ -203,6 +214,9 @@
 				<include name="*.jar" />
 			</fileset>
 			<fileset dir="src/core/lib/openadaptor-3.4/3rdparty">
+				<include name="*.jar" />
+			</fileset>
+			<fileset dir="src/plugins/SFEE/v44/lib">
 				<include name="*.jar" />
 			</fileset>
 		</copy>
