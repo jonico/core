@@ -4,7 +4,7 @@
 	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
 
 	<description><![CDATA[
-  Simple test wiring to write out the first generic artifact!
+  Sample wiring to test Unidirectional SFEE to SFEE shipment of artifacts and attachments.
   ]]></description>
 
 	<bean class="org.openadaptor.core.jmx.MBeanServer">
@@ -42,7 +42,6 @@
 			</description>
 			<list>
 				<value>classpath:ccf.properties</value>
-				<value>classpath:qc.properties</value>
 				<value>classpath:sfee.properties</value>
 			</list>
 		</property>
@@ -56,8 +55,7 @@
 		<property name="processMap">
 			<map>
 
-				<entry key-ref="SimplePollingReaderSFEE2QC"
-					value-ref="SFEEReader" />
+				<entry key-ref="SimplePollingReaderSFEE2SFEE" value-ref="SFEEReader" />
 				<entry key-ref="SFEEReader" value-ref="SFEETransformer" />
 				<entry key-ref="SFEETransformer" value-ref="SFEEEntityService" />
 				<entry key-ref="SFEEEntityService" value-ref="SFEEWriter" />
@@ -72,44 +70,15 @@
 		for the xsl files need to be followed. 
 		Name of an xsl file should be: sourceSystem+sourceRepository+targetSystem+targetRepository.xsl 
 		</description>
-		<!--  <property name="xsltFile" value="${ccf.qc2sfee.xsltFile}" /> -->
 		<property name="xsltDir" value="${ccf.xsltDir}" />
 	</bean>
-	<bean id="QCReader" class="com.collabnet.ccf.pi.qc.v90.QCReader">
-		<description>Reads the modified defects from QC</description>
-		<property name="serverUrl" value="${qc.system.1.url}" />
-		<property name="userName" value="${qc.system.1.username}" />
-		<property name="password" value="${qc.system.1.password}" />
-		<property name="connectionManager" ref="QCConnectionManager"></property>
-	</bean>
-	<bean id="QCConnectionManager"
-		class="com.collabnet.ccf.core.eis.connection.ConnectionManager">
-		<property name="maxConnectionsPerPool" value="5"></property>
-		<property name="maxIdleTimeForConnection" value="600000" />
-		<property name="scavengerInterval" value="120000"></property>
-		<property name="connectionFactory" ref="QCConnectionFactory"></property>
-	</bean>
-	<bean id="QCConnectionFactory"
-		class="com.collabnet.ccf.pi.qc.v90.QCConnectionFactory">
-	</bean>
-
-	<bean id="SimplePollingReaderQC2SFEE"
-		class="com.collabnet.ccf.core.test.plugins.SimpleLoopingPollingReadConnector">
-		<description>
-			Poller which wraps QCReader every 10 seconds.
-		</description>
-		<property name="pollLimit" value="-1" />
-		<property name="delegate" ref="QC2SFEEDatabaseReader" />
-		<property name="pollIntervalSecs" value="10" />
-	</bean>
-
-	<bean id="SimplePollingReaderSFEE2QC"
+	<bean id="SimplePollingReaderSFEE2SFEE"
 		class="com.collabnet.ccf.core.test.plugins.SimpleLoopingPollingReadConnector">
 		<description>
 			Poller which wraps SFEEReader every 10 seconds.
 		</description>
 		<property name="pollLimit" value="-1" />
-		<property name="delegate" ref="SFEE2QCDatabaseReader" />
+		<property name="delegate" ref="SFEE2SFEEDatabaseReader" />
 		<property name="pollIntervalSecs" value="10" />
 	</bean>
 
@@ -158,28 +127,12 @@
 			ref="EntityServiceMappingIDReader">
 		</property>
 	</bean>
-
-	<bean id="QC2SFEEDatabaseReader"
+	<bean id="SFEE2SFEEDatabaseReader"
 		class="org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector">
 		<description>
 			Reader which polls database using configured SQL.
 		</description>
-		<property name="jdbcConnection" ref="JdbcConnectionReadQC2SFEE" />
-		<!-- batch size of 0 or less means process all rows in one message batch. -->
-		<!-- batch size of one means process one row per message and so on -->
-		<property name="batchSize" value="0" />
-		<property name="resultSetConverter" ref="ResultSetConverter" />
-		<property name="sql">
-			<value>${ccf.qcreader.poller.sql}</value>
-		</property>
-	</bean>
-
-	<bean id="SFEE2QCDatabaseReader"
-		class="org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector">
-		<description>
-			Reader which polls database using configured SQL.
-		</description>
-		<property name="jdbcConnection" ref="JdbcConnectionReadSFEE2QC" />
+		<property name="jdbcConnection" ref="JdbcConnectionReadSFEE2SFEE" />
 		<!-- batch size of 0 or less means process all rows in one message batch. -->
 		<!-- batch size of one means process one row per message and so on -->
 		<property name="batchSize" value="0" />
@@ -188,19 +141,7 @@
 			<value>${ccf.sfeereader.poller.sql}</value>
 		</property>
 	</bean>
-
-	<bean id="JdbcConnectionReadQC2SFEE"
-		class="org.openadaptor.auxil.connector.jdbc.JDBCConnection">
-		<description>
-			This defines jdbc connection that will be used by the
-			SimplePollingReaderQC2SFEE
-		</description>
-		<property name="driver" value="${ccf.db.driver}" />
-		<property name="url" value="${ccf.db.url}" />
-		<property name="username" value="${ccf.db.username}" />
-		<property name="password" value="${ccf.db.password}" />
-	</bean>
-	<bean id="JdbcConnectionReadSFEE2QC"
+	<bean id="JdbcConnectionReadSFEE2SFEE"
 		class="org.openadaptor.auxil.connector.jdbc.JDBCConnection">
 		<description>
 			This defines jdbc connection that will be used by the
@@ -231,40 +172,10 @@
 			ref="EntityServiceWriter">
 		</property>
 	</bean>
-	<bean id="QCTransformer"
-		class="com.collabnet.ccf.core.transformer.XsltProcessor">
-		<description>The xsltDir specifies the directory in which the xsl files are contained. The naming conventions
-		for the xsl files need to be followed. 
-		Name of an xsl file should be: sourceSystem+sourceRepository+targetSystem+targetRepository.xsl 
-		</description>
-		<!-- <property name="xsltFile" value="${ccf.sfee2qc.xsltFile}" />  -->
-		<property name="xsltDir" value="${ccf.xsltDir}" />
-	</bean>
-	<bean id="QCEntityService"
-		class="com.collabnet.ccf.core.EntityService">
-		<description>
-			This QCEntityService fills the targetArtifactId in the
-			GenericArtifact and forwards it to the QCWriter.
-		</description>
-		<property name="entityServiceReader" ref="EntityServiceReader" />
-		<property name="entityServiceMappingIdReader"
-			ref="EntityServiceMappingIDReader">
-		</property>
-	</bean>
-	<bean id="QCWriter" class="com.collabnet.ccf.pi.qc.v90.QCWriter">
-		<description>
-			This QCWriter will write the data contained in the incoming
-			document to QC.
-		</description>
-		<property name="serverUrl" value="${qc.system.1.url}" />
-		<property name="userName" value="${qc.system.1.username}" />
-		<property name="password" value="${qc.system.1.password}" />
-		<property name="connectionManager" ref="QCConnectionManager"></property>
-	</bean>
 	<bean id="EntityServiceMappingIDReader"
 		class="org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector">
 		<description>
-			Reader which polls database using configured SQL.
+			Reader which queries and obtains the mapping ID from the REPOSITORY_MAPPING table using configured SQL.
 		</description>
 		<property name="jdbcConnection"
 			ref="EntityServiceJdbcConnection" />
@@ -332,7 +243,7 @@
 	<bean id="MappingMapTableUpdater"
 		class="com.collabnet.ccf.core.db.MapTableUpdater">
 		<description>
-			This is the writer object that writes the artifact mapping
+			This is the writer object that updates the synchronization
 			information into the database table.
 		</description>
 		<property name="tableName" value="ARTIFACT_MAPPING"></property>
