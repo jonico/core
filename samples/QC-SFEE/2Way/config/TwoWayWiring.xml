@@ -66,13 +66,13 @@
 				<entry key-ref="SFEEWriter"
 					value-ref="MappingDBUpdater" />
 
-				 <entry key-ref="SimplePollingReaderSFEE2QC"
+				<entry key-ref="SimplePollingReaderSFEE2QC"
 					value-ref="SFEEReader" />
 				<entry key-ref="SFEEReader" value-ref="QCTransformer" />
 				<entry key-ref="QCTransformer"
 					value-ref="QCEntityService" />
 				<entry key-ref="QCEntityService" value-ref="QCWriter" />
-				<entry key-ref="QCWriter" value-ref="MappingDBUpdater" />  
+				<entry key-ref="QCWriter" value-ref="MappingDBUpdater" /> 
 			</map>
 		</property>
 		<property name="exceptionProcessor" ref="ExceptionHandler" />
@@ -92,6 +92,7 @@
 		<property name="userName" value="${qc.system.1.username}" />
 		<property name="password" value="${qc.system.1.password}" />
 		<property name="connectionManager" ref="QCConnectionManager"></property>
+		<property name="sleepInterval" value="100"></property>
 	</bean>
 	<bean id="QCConnectionManager"
 		class="com.collabnet.ccf.core.eis.connection.ConnectionManager">
@@ -132,6 +133,7 @@
 		<property name="serverUrl"
 			value="${sfee.server.1.url}" />
 		<property name="connectionManager" ref="SFEEConnectionManager"></property>
+		<property name="sleepInterval" value="100"></property>
 	</bean>
 	<bean id="SFEEConnectionManager"
 		class="com.collabnet.ccf.core.eis.connection.ConnectionManager">
@@ -177,7 +179,7 @@
 		<property name="jdbcConnection" ref="JdbcConnectionReadQC2SFEE" />
 		<!-- batch size of 0 or less means process all rows in one message batch. -->
 		<!-- batch size of one means process one row per message and so on -->
-		<property name="batchSize" value="0" />
+		<property name="batchSize" value="1" />
 		<property name="resultSetConverter" ref="ResultSetConverter" />
 		<property name="sql">
 			<value>${ccf.qcreader.poller.sql}</value>
