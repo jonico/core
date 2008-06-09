@@ -127,7 +127,7 @@ public class EntityService implements
 		if(sourceArtifactId.equalsIgnoreCase("Unknown")){
 			return new Object[]{data};
 		}
-		String mappingId = lookupMappingId(sourceRepositoryId,
+		/*String mappingId = lookupMappingId(sourceRepositoryId,
 				sourceRepositoryKind,
 				sourceSystemId,
 				sourceSystemKind,
@@ -135,9 +135,10 @@ public class EntityService implements
 				targetRepositoryKind,
 				targetSystemId,
 				targetSystemKind);
-		String targetArtifactIdFromTable = lookupTargetArtifactId(sourceArtifactId,
-				mappingId);
-		
+		*/
+		String targetArtifactIdFromTable = lookupTargetArtifactId(sourceArtifactId, sourceSystemId, sourceRepositoryId, 
+				targetSystemId, targetRepositoryId);
+		log.info("The targetArtifactId in EntityService==="+targetArtifactIdFromTable);
 		if(targetArtifactIdFromTable!=null && !(targetArtifactIdFromTable.equals("NEW")) && !(targetArtifactIdFromTable.equals("NULL"))) {
 	    	//genericArtifact.setTargetArtifactId(targetArtifactIdFromTable);
 			XPathUtils.addAttribute(element, TARGET_ARTIFACT_ID, targetArtifactIdFromTable);
@@ -163,6 +164,7 @@ public class EntityService implements
 		return result;
 	}
 	
+	/*
 	private String lookupMappingId(String sourceRepositoryId, String sourceRepositoryKind,
 			String sourceSystemId, String sourceSystemKind,
 			String targetRepositoryId, String targetRepositoryKind,
@@ -209,15 +211,19 @@ public class EntityService implements
 		
 		return mappingId;
 	}
-
-	private String lookupTargetArtifactId(String sourceArtifactId,
-			String mappingId) {
+	*/
+	
+	private String lookupTargetArtifactId(String sourceArtifactId, String sourceSystemId, String sourceRepositoryId, 
+			String targetSystemId, String targetRepositoryId) {
 		String targetArtifactId = null;
 		IOrderedMap inputParameters = new OrderedHashMap();
 		
+		inputParameters.add(sourceSystemId);
+		inputParameters.add(sourceRepositoryId);
+		inputParameters.add(targetSystemId);
+		inputParameters.add(targetRepositoryId);
 		inputParameters.add(sourceArtifactId);
-		inputParameters.add(mappingId);
-
+	
 		entityServiceReader.connect();
 		Object[] resultSet = entityServiceReader.next(inputParameters, 1000);
 		entityServiceReader.disconnect();
@@ -232,7 +238,7 @@ public class EntityService implements
 					targetArtifactId = result.get(0).toString();
 				}
 				else if(result.size() > 1){
-					log.warn("There are more than one target artifact ids returned from the table for "+sourceArtifactId);
+					log.info("There are more than one target artifact ids returned from the table for "+sourceArtifactId);
 				}
 				else {
 					targetArtifactId = null;
