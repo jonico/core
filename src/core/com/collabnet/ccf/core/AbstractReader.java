@@ -20,11 +20,27 @@ import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
 import com.collabnet.ccf.core.utils.DateUtil;
 
+/**
+ * AbstractReader provides the abstraction of shipping Generic Artifacts through
+ * the wiring components.
+ * 	It provides three methods for the plugin developers to implement. The plugin
+ * developer should implement these methods by extending the AbstractReader.
+ * 
+ * The AbstractReader then gets the changed artifacts from the implemented methods
+ * and sorts them according to their last modified date and sends them across.
+ * It sends the artifacts one per Open Adaptor cycle.
+ * 
+ * The process method implements the streaming logic.
+ * 
+ * @author madhusuthanan (madhusuthanan@collab.net)
+ *
+ */
 public abstract class AbstractReader extends LifecycleComponent implements IDataProcessor {
 	private HashMap<String, RepositoryRecord> repositoryRecordHashMap = null;
 	private ArrayList<RepositoryRecord> repositorySynchronizationWaitingList = null;
 	private HashSet<String> repositoryRecordsInRepositorySynchronizationWaitingList = null;
 	private long sleepInterval = -1;
+	private boolean shipAttachments = true;
 	private Comparator<GenericArtifact> genericArtifactComparator = null;
 
 	public AbstractReader(){
@@ -35,7 +51,8 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 		super(id);
 		init();
 	}
-	public void init(){
+	
+	protected void init(){
 		repositoryRecordHashMap = new HashMap<String, RepositoryRecord>();
 		repositorySynchronizationWaitingList = new ArrayList<RepositoryRecord>();
 		repositoryRecordsInRepositorySynchronizationWaitingList = new HashSet<String>();
@@ -70,6 +87,22 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 			}
 		};
 	}
+	
+	/** 
+	 * The process method queues the sync info documents from the sync info
+	 * readers. It then takes each repository one by one and asks the repository
+	 * reader (which is a sub class to this AbstractReader) if there are any
+	 * changed artifacts.
+	 * If the reader gives a list of artifacts that are changed then the AbstractReader
+	 * requests the repository reader to get the data of the changed artifacts one by one
+	 * along with the dependent artifact data such as attachments and dependent artifacts
+	 * in the Generic Artifact xml format.
+	 * On getting these data the abstract reader emits the artifacts one by one to the next
+	 * component in the pipeline. It does this for each repository alternatively so that all
+	 * the repositories get equal chance to ship their artifacts.
+	 * If there are no artifacts to be shipped for all of the repositories configured
+	 * then the AbstractReader pauses the processing for sleepInterval milliseconds.
+	 */
 	public Object[] process(Object data) {
 		Document syncInfoIn = null;
 		if(data instanceof Document){
@@ -155,6 +188,18 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 		String currentSourceRepositoryId = currentRecord.getRepositoryId(); 
 		repositoryRecordsInRepositorySynchronizationWaitingList.remove(currentSourceRepositoryId);
 	}
+	
+	/**
+	 * All the artifact data and dependent data generic artifacts are accumulated in
+	 * a single List and are sorted according to their last modified date so that
+	 * the artifact that was changed early will ship first.
+	 * 
+	 * @param artifactData - The artifact's data
+	 * @param artifactAttachments - Attachments of an artifact
+	 * @param artifactDependencies - Dependent artifacts
+	 * 
+	 * @return - The sorted list of Generic Artifact objects
+	 */
 	private List<GenericArtifact> combineAndSort(
 			List<GenericArtifact> artifactData,
 			List<GenericArtifact> artifactAttachments,
@@ -166,12 +211,58 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 		Collections.sort(gaList, genericArtifactComparator);
 		return gaList;
 	}
+	
+	/**
+	 * Sub classes should implement this method.
+	 * The implemented method should get all the dependent artifacts of the artifact
+	 * with the artifact id artifactId and convert them into Generic Artifact
+	 * object and return.
+	 * 
+	 * If there are no dependent artifacts to be returned the implemented method
+	 * should return an empty List. It should not return null.
+	 * 
+	 * @param syncInfo - The synchronization info against which the changed artifacts 
+	 * 					to be fetched
+	 * @param artifactId - The id of the artifact whose dependent artifacts should be
+	 * 					retrieved and returned.
+	 * @return - A List of dependent artifacts of this artifactId that are changed
+	 */
 	public abstract List<GenericArtifact> getArtifactDependencies(Document syncInfo,
 			String artifactId);
+	
+	/**
+	 * Queries the source repository for any attachment changes for the given artifactId
+	 * and returns the changed attachments in a GenericArtifact object. If there are
+	 * no attachments changed an empty list is returned.
+	 * 
+	 * @param syncInfo
+	 * @param artifactId
+	 * @return
+	 */
 	public abstract List<GenericArtifact> getArtifactAttachments(Document syncInfo,
 			String artifactId);
+	
+	/**
+	 * Returns the artifact data for the artifactId in a GenericArtifact
+	 * object. If the reader can return the artifact change history it
+	 * should be returned in the list.
+	 * If the reader doesn't have the capability of returning the artifact
+	 * change history it should return a list that contains the latest artifact
+	 *  data in a single GenericArtifact object added to the list.
+	 *  
+	 * @param syncInfo
+	 * @param artifactId
+	 * @return
+	 */
 	public abstract List<GenericArtifact> getArtifactData(Document syncInfo,
 			String artifactId);
+	
+	/**
+	 * Returns a list of changed artifacts' ids.
+	 * 
+	 * @param syncInfo
+	 * @return
+	 */
 	public abstract List<String> getChangedArtifacts(Document syncInfo);
 	
 	public void reset(Object context) {
@@ -186,6 +277,11 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 		}
 	}
 	
+	/**
+	 * Extracts and returns the last read time from the sync info.
+	 * @param syncInfo
+	 * @return
+	 */
 	public String getLastModifiedDateString(Document syncInfo) {
 		String dbTime = this.getFromTime(syncInfo);
 		if(!StringUtils.isEmpty(dbTime)){
@@ -210,13 +306,24 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 			return null;
 		return node.getText();
 	}
-
+	
+	/**
+	 * Extracts and returns the Source repository id from the sync info.
+	 * @param syncInfo
+	 * @return
+	 */
 	public String getSourceRepositoryId(Document syncInfo) {
 		Node node= syncInfo.selectSingleNode("//SOURCE_REPOSITORY_ID");
 		if (node==null)
 			return null;
 		return node.getText();
 	}
+	
+	/**
+	 * Extracts and returns the Source repository kind from the sync info.
+	 * @param syncInfo
+	 * @return
+	 */
 	public String getSourceRepositoryKind(Document syncInfo) {
 		Node node= syncInfo.selectSingleNode("//SOURCE_REPOSITORY_KIND");
 		if (node==null)
@@ -224,12 +331,23 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 		return node.getText();
 	}
 
+	/**
+	 * Extracts and returns the Source system id from the sync info.
+	 * @param syncInfo
+	 * @return
+	 */
 	public String getSourceSystemId(Document syncInfo) {
 		Node node= syncInfo.selectSingleNode("//SOURCE_SYSTEM_ID");
 		if (node==null)
 			return null;
 		return node.getText();
 	}
+	
+	/**
+	 * Extracts and returns the source system kind from the sync info.
+	 * @param syncInfo
+	 * @return
+	 */
 	public String getSourceSystemKind(Document syncInfo) {
 		Node node= syncInfo.selectSingleNode("//SOURCE_SYSTEM_KIND");
 		if (node==null)
@@ -237,12 +355,23 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 		return node.getText();
 	}
 
+	/**
+	 * Extracts and returns the target repository id from the sync info.
+	 * @param syncInfo
+	 * @return
+	 */
 	public String getTargetRepositoryId(Document syncInfo) {
 		Node node= syncInfo.selectSingleNode("//TARGET_REPOSITORY_ID");
 		if (node==null)
 			return null;
 		return node.getText();
 	}
+	
+	/**
+	 * Extracts and returns the target repository kind from the sync info.
+	 * @param syncInfo
+	 * @return
+	 */
 	public String getTargetRepositoryKind(Document syncInfo) {
 		Node node= syncInfo.selectSingleNode("//TARGET_REPOSITORY_KIND");
 		if (node==null)
@@ -250,22 +379,52 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 		return node.getText();
 	}
 
+	/**
+	 * Extracts and returns the Target system id from the sync info.
+	 * @param syncInfo
+	 * @return
+	 */
 	public String getTargetSystemId(Document syncInfo) {
 		Node node= syncInfo.selectSingleNode("//TARGET_SYSTEM_ID");
 		if (node==null)
 			return null;
 		return node.getText();
 	}
+	
+	/**
+	 * Extracts and returns the target system kind from the sync info.
+	 * @param syncInfo
+	 * @return
+	 */
 	public String getTargetSystemKind(Document syncInfo) {
 		Node node= syncInfo.selectSingleNode("//TARGET_SYSTEM_KIND");
 		if (node==null)
 			return null;
 		return node.getText();
 	}
+	
+	/**
+	 * Returns the configured sleep interval in milliseconds
+	 * @return
+	 */
 	public long getSleepInterval() {
 		return sleepInterval;
 	}
+	
+	/**
+	 * Sets the sleep interval in milliseconds. Sleep interval is the time
+	 * lag introduced by the AbstractReader when there are no artifacts
+	 * to be shipped in any of the repositories configured.
+	 * 
+	 * @param sleepInterval
+	 */
 	public void setSleepInterval(long sleepInterval) {
 		this.sleepInterval = sleepInterval;
+	}
+	public boolean isShipAttachments() {
+		return shipAttachments;
+	}
+	public void setShipAttachments(boolean shipAttachments) {
+		this.shipAttachments = shipAttachments;
 	}
 }
