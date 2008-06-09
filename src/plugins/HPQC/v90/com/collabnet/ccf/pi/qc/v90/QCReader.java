@@ -1,6 +1,5 @@
 package com.collabnet.ccf.pi.qc.v90;
 
-import java.rmi.RemoteException;
 import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -12,19 +11,22 @@ import org.apache.commons.logging.LogFactory;
 import org.dom4j.Document;
 import org.dom4j.Node;
 import org.openadaptor.core.IDataProcessor;
-import com.collabnet.ccf.core.AbstractReader;
 
+import com.collabnet.ccf.core.AbstractReader;
 import com.collabnet.ccf.core.eis.connection.ConnectionManager;
 import com.collabnet.ccf.core.eis.connection.MaxConnectionsReachedException;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
 import com.collabnet.ccf.pi.qc.v90.api.IConnection;
-import com.collabnet.ccf.pi.sfee.v44.Connection;
-import com.collabnet.ccf.pi.sfee.v44.SFEEConnectionFactory;
-import com.vasoftware.sf.soap44.webservices.sfmain.TrackerFieldSoapDO;
-import com.vasoftware.sf.soap44.webservices.tracker.ArtifactSoapDO;
 
+/**
+ * QCReader is responsible for reading the defect data from
+ * HP Quality Center systems for a domain & project combination.
+ * 
+ * @author Venugopal Ananthakrishnan
+ *
+ */
 public class QCReader extends AbstractReader  implements
 		IDataProcessor {
     
