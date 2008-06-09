@@ -42,5 +42,11 @@
     <directory>Development</directory>
     <ordinal>7</ordinal>
   </page>
+  <page>
+    <id>rVUY6r</id>
+    <name>Tools &amp; Admin</name>
+    <directory>Tools &amp; Admin</directory>
+    <ordinal>8</ordinal>
+  </page>
 </structure>
 
