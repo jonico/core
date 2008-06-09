@@ -16,6 +16,14 @@ import org.openadaptor.core.Component;
 import org.openadaptor.core.IDataProcessor;
 import org.openadaptor.core.exception.MessageException;
 
+/**
+ * This is the exception handler class that catches
+ * and logs the exception, the origin of the exception
+ * and the input xml document that resulted these exceptions
+ * 
+ * @author madhusuthanan (madhusuthanan@collab.net)
+ *
+ */
 public class Ambulance extends Component implements
 		IDataProcessor {
     
@@ -36,7 +44,7 @@ public class Ambulance extends Component implements
 		return document;
 	}
 	public Object[] process(Object data) {
-		log.debug("Artifact reached ambulance");
+		log.info("Artifact reached ambulance");
 		if(data instanceof MessageException){
 					MessageException exception = (MessageException) data;
 					Object dataObj = exception.getData();
