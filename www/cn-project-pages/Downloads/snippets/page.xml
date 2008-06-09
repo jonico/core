@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <page visibility="1">
-  <component_list />
+  <component_list>
+    <component visibility="1" type="TaskMilestones" order="1">
+      <title localize="false" />
+    </component>
+  </component_list>
 </page>
 
