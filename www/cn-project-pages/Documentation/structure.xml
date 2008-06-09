@@ -18,5 +18,11 @@
     <directory>Generic Artifact XML Format</directory>
     <ordinal>3</ordinal>
   </subpage>
+  <subpage>
+    <id>C1X0GO</id>
+    <name>Quick Reference</name>
+    <directory>Quick Reference</directory>
+    <ordinal>4</ordinal>
+  </subpage>
 </structure>
 
