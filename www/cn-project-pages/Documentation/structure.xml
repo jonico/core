@@ -1,27 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <structure>
   <subpage>
+    <id>C1X0GO</id>
+    <name>Quick Reference</name>
+    <directory>Quick Reference</directory>
+    <ordinal>1</ordinal>
+  </subpage>
+  <subpage>
     <id>lTTUmC</id>
     <name>How to get started with the CCF</name>
     <directory>How to get started with the CCF</directory>
-    <ordinal>1</ordinal>
+    <ordinal>2</ordinal>
   </subpage>
   <subpage>
     <id>u0EQt1</id>
     <name>FAQ</name>
     <directory>FAQ</directory>
-    <ordinal>2</ordinal>
+    <ordinal>3</ordinal>
   </subpage>
   <subpage>
     <id>nLKvgT</id>
     <name>Generic Artifact XML Format</name>
     <directory>Generic Artifact XML Format</directory>
-    <ordinal>3</ordinal>
-  </subpage>
-  <subpage>
-    <id>C1X0GO</id>
-    <name>Quick Reference</name>
-    <directory>Quick Reference</directory>
     <ordinal>4</ordinal>
   </subpage>
 </structure>
