@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Set;
-import java.util.TreeMap;
 
 import javax.activation.DataHandler;
 
@@ -28,8 +27,10 @@ import com.vasoftware.sf.soap44.webservices.tracker.ITrackerAppSoap;
 
 
 /**
- * The tracker handler class provides support for listing and/or edit trackers
- * and artifacts.
+ * This class is responsible for retrieving attachment data for an
+ * artifact from a Source SFEE repository.
+ * 
+ * @author madhusuthanan
  */
 public class SFEEAttachmentHandler {
 	/** Tracker Soap API handle */
@@ -39,8 +40,6 @@ public class SFEEAttachmentHandler {
 	
 	private IFileStorageAppSoap fileStorageSoapApp = null;
 	
-	//private static final Log log = LogFactory.getLog(SFEETrackerHandler.class);
-
 	/**
 	 * Class constructor.
 	 * 
@@ -55,12 +54,20 @@ public class SFEEAttachmentHandler {
 		fileStorageSoapApp = (IFileStorageAppSoap) ClientSoapStubFactory.getSoapStub(
 				IFileStorageAppSoap.class, serverUrl);
 	}
+
 	/**
-	 * Updates an artifact.
+	 * This method uploads the file and gets the new file descriptor returned
+	 * from the SFEE system. It then associates the file descriptor to the 
+	 * artifact there by adding the attachment to the artifact.
 	 * 
-	 * @throws RemoteException
-	 *             when an error is encountered in creating the artifact.
-	 * @return Newly created artifact
+	 * @param sessionId - The current session id
+	 * @param artifactId - The artifact's id to which the attachment should be added.
+	 * @param comment - Comment for the attachment addition
+	 * @param fileName - Name of the file that is attached to this artifact
+	 * @param mimeType - MIME type of the file that is being attached.
+	 * @param data - the file content
+	 * 
+	 * @throws RemoteException - if any SOAP api call fails
 	 */
 	public void attachFileToArtifact(String sessionId, String artifactId,
 						String comment, String fileName, String mimeType, byte[] data)
@@ -75,6 +82,17 @@ public class SFEEAttachmentHandler {
 		mTrackerApp.setArtifactData(sessionId, soapDo, comment,
 					fileName, mimeType, fileDescriptor);
 	}
+	
+	/**
+	 * Retrieves the attachment data for a given file id.
+	 * 
+	 * @param sessionId
+	 * @param fileId
+	 * @param size
+	 * @param folderId
+	 * @return
+	 * @throws RemoteException
+	 */
 	public byte[] getAttachmentData(String sessionId, String fileId, long size, String folderId) throws RemoteException{
 		DataHandler dataHandler = fileStorageSoapApp.downloadFileDirect(sessionId, folderId, fileId);
 		byte[] data = null;
@@ -105,6 +123,18 @@ public class SFEEAttachmentHandler {
 		}
 		return data;
 	}
+	
+	/**
+	 * This method decodes the attachment data from the incoming
+	 * GenericArtifact object and adds to the target SFEE system tracker's
+	 * artifact.
+	 * 
+	 * @param sessionId
+	 * @param att
+	 * @param artifactId
+	 * @param userName
+	 * @throws RemoteException
+	 */
 	public void handleAttachment(String sessionId, GenericArtifact att, String artifactId, String userName) throws RemoteException {
 		String contentType = SFEEWriter.getStringGAField(AttachmentMetaData.ATTACHMENT_TYPE, att);
 		String attachDescription = SFEEWriter.getStringGAField(AttachmentMetaData.ATTACHMENT_DESCRIPTION, att);
@@ -145,6 +175,19 @@ public class SFEEAttachmentHandler {
 		}
 		
 	}
+	
+	/**
+	 * This method retrieves all the attachments for all the artifacts present in the 
+	 * artifactRows Set and encoded them into GenericArtifact attachment format.
+	 * 
+	 * @param sessionId
+	 * @param lastModifiedDate
+	 * @param username
+	 * @param artifactRows
+	 * @param sourceForgeSoap
+	 * @return
+	 * @throws RemoteException
+	 */
 	public List<GenericArtifact> listAttachments(String sessionId,
 			Date lastModifiedDate, String username,
 			Set<ArtifactSoapDO> artifactRows, ISourceForgeSoap sourceForgeSoap) throws RemoteException {
@@ -159,6 +202,19 @@ public class SFEEAttachmentHandler {
 		}
 		return gaList;
 	}
+	
+	/**
+	 * This method retrieves all the attachments for all the artifacts present in the 
+	 * artifactRows Set and encoded them into GenericArtifact attachment format.
+	 * 
+	 * @param sessionId
+	 * @param lastModifiedDate
+	 * @param username
+	 * @param artifactRows
+	 * @param sourceForgeSoap
+	 * @return
+	 * @throws RemoteException
+	 */
 	public List<GenericArtifact> listAttachments(String sessionId,
 			Date lastModifiedDate, String username,
 			List<String> artifactIds, ISourceForgeSoap sourceForgeSoap) throws RemoteException {
@@ -230,5 +286,4 @@ public class SFEEAttachmentHandler {
 		}
 		return attachmentGAs;
 	}
-
 }

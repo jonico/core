@@ -11,7 +11,6 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dom4j.Document;
-import org.openadaptor.core.IDataProcessor;
 import org.openadaptor.core.exception.ValidationException;
 
 import com.collabnet.ccf.core.AbstractReader;
@@ -24,8 +23,22 @@ import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
 import com.vasoftware.sf.soap44.webservices.sfmain.TrackerFieldSoapDO;
 import com.vasoftware.sf.soap44.webservices.tracker.ArtifactSoapDO;
 
-public class SFEEReader extends AbstractReader implements
-		IDataProcessor {
+/**
+ * This class retrieves the changed artifact details from an SFEE
+ * system repository.
+ * 
+ *  It uses the last read time of the sync info and fetches all the 
+ *  artifact data that are changed after the last read time of the
+ *  particular repository.
+ *  
+ * @author madhusuthanan (madhusuthanan@collab.net)
+ *
+ */
+/**
+ * @author madhusuthanan
+ *
+ */
+public class SFEEReader extends AbstractReader {
     
 	private static final Log log = LogFactory.getLog(SFEEReader.class);
 	
@@ -62,7 +75,12 @@ public class SFEEReader extends AbstractReader implements
     	artifactConverter = new SFEEToGenericArtifactConverter();
     }
     
-	public Object[] processDeprecated(Object data) {
+    /**
+     * @deprecated
+     * @param data
+     * @return
+     */
+    public Object[] processDeprecated(Object data) {
 		if (!(data instanceof Document)) {
 			log.error("Supplied data not in the expected dom4j format: "+data);
 			return null;
@@ -125,6 +143,21 @@ public class SFEEReader extends AbstractReader implements
 		return isDry;
 	}
 
+	/**
+	 * Connects to the source SFEE system using the connectionInfo and credentialInfo
+	 * details.
+	 * 
+	 * This method uses the ConnectionManager configured in the wiring file
+	 * for the SFEEReader
+	 *  
+	 * @param systemId - The system id of the source SFEE system
+	 * @param systemKind - The system kind of the source SFEE system
+	 * @param repositoryId - The tracker id in the source SFEE system
+	 * @param repositoryKind - The repository kind for the tracker
+	 * @param connectionInfo - The SFEE server URL
+	 * @param credentialInfo - User name and password concatenated with a delimiter.
+	 * @return - The connection object obtained from the ConnectionManager
+	 */
 	public Connection connect(String systemId, String systemKind, String repositoryId,
 			String repositoryKind, String connectionInfo, String credentialInfo) {
 		log.info("Before calling the parent connect()");
@@ -140,11 +173,25 @@ public class SFEEReader extends AbstractReader implements
 		return connection;
 	}
 	
+	/**
+	 * Releases the connection to the ConnectionManager.
+	 * 
+	 * @param connection - The connection to be released to the ConnectionManager
+	 */
 	public void disconnect(Connection connection) {
 		// TODO Auto-generated method stub
 		connectionManager.releaseConnection(connection);
 	}
 	
+	/**
+	 * @deprecated
+	 * @param projectTracker
+	 * @param lastModifiedDate
+	 * @param firstTimeImport
+	 * @param dbDocument
+	 * @param connection
+	 * @return
+	 */
 	public Object[] readTrackerItems(String projectTracker, Date lastModifiedDate, boolean firstTimeImport, Document dbDocument, Connection connection) {
 		// TODO Use the information of the firstTimeImport flag
 		
@@ -229,6 +276,13 @@ public class SFEEReader extends AbstractReader implements
 		return dataRows.toArray();
 	}
 	
+	/**
+	 * Populates the source and destination attributes for this GenericArtifact
+	 * object from the Sync Info database document.
+	 * 
+	 * @param syncInfo
+	 * @param ga
+	 */
 	private void populateSrcAndDest(Document syncInfo, GenericArtifact ga){
 		String sourceArtifactId = ga.getSourceArtifactId();
 		String sourceRepositoryId = this.getSourceRepositoryId(syncInfo);
@@ -293,6 +347,18 @@ public class SFEEReader extends AbstractReader implements
 		this.attachmentHandler = attachmentHandler;
 	}
 
+	/**
+	 * Queries the artifact with the artifactId to find out if there are any
+	 * attachments added to the artifact after the last read time in the 
+	 * Sync Info object.
+	 * If there are attachments added to this artifact after the last
+	 * read time for this tracker then the attachment data is retrieved 
+	 * and returned as a GenericArtifact object.
+	 * If there are multiple attachments each of them are encoded in a
+	 * separate GenericArtifact object and returned in the list.
+	 * 
+	 * @see com.collabnet.ccf.core.AbstractReader#getArtifactAttachments(org.dom4j.Document, java.lang.String)
+	 */
 	@Override
 	public List<GenericArtifact> getArtifactAttachments(Document syncInfo,
 			String artifactId) {
@@ -323,6 +389,14 @@ public class SFEEReader extends AbstractReader implements
 		return attachments;
 	}
 
+	/**
+	 * Queries the tracker for the artifact with artifactId and returns its latest
+	 * data encoded in an GenericArtifact object.
+	 * The SFEEReader is capable of retrieving the artifact change history. But this
+	 * feature is turned off as of now.
+	 * 
+	 * @see com.collabnet.ccf.core.AbstractReader#getArtifactData(org.dom4j.Document, java.lang.String)
+	 */
 	@Override
 	public List<GenericArtifact> getArtifactData(Document syncInfo,
 			String artifactId) {
@@ -357,6 +431,12 @@ public class SFEEReader extends AbstractReader implements
 		return gaList;
 	}
 
+	/**
+	 * This method is supposed to return all the artifacts that are associated
+	 * with this artifact. But not implemented yet.
+	 * Returns an empty list.
+	 * @see com.collabnet.ccf.core.AbstractReader#getArtifactDependencies(org.dom4j.Document, java.lang.String)
+	 */
 	@Override
 	public List<GenericArtifact> getArtifactDependencies(Document syncInfo,
 			String artifactId) {
@@ -364,6 +444,15 @@ public class SFEEReader extends AbstractReader implements
 		return new ArrayList<GenericArtifact>();
 	}
 
+	/**
+	 * This method queries the particular tracker in the source SFEE system
+	 * to check if there are artifacts changed/created after the last read time
+	 * coming in, in the Sync Info object.
+	 * 
+	 * If there are changed artifacts their ids are returned in a List.
+	 * 
+	 * @see com.collabnet.ccf.core.AbstractReader#getChangedArtifacts(org.dom4j.Document)
+	 */
 	@Override
 	public List<String> getChangedArtifacts(Document syncInfo) {
 		String sourceSystemId = this.getSourceSystemId(syncInfo);
@@ -399,34 +488,75 @@ public class SFEEReader extends AbstractReader implements
 		return artifactIds;
 	}
 
+	/**
+	 * Returns the server URL of the source SFEE system that is
+	 * configured in the wiring file.
+	 * @return
+	 */
 	public String getServerUrl() {
 		return serverUrl;
 	}
 
+	/**
+	 * Sets the source SFEE system's SOAP server URL.
+	 * 
+	 * @param serverUrl - the URL of the source SFEE system.
+	 */
 	public void setServerUrl(String serverUrl) {
 		this.serverUrl = serverUrl;
 	}
 
+	/**
+	 * Returns the password configured for this source SFEE system
+	 * @return
+	 */
 	public String getPassword() {
 		return password;
 	}
 
+	/**
+	 * Sets the password of the user that is used to connect to the source SFEE system.
+	 * 
+	 * @param password
+	 */
 	public void setPassword(String password) {
 		this.password = password;
 	}
 
+	/**
+	 * Gives the username configured to connect to the source SFEE system.
+	 * 
+	 * @return - The user name configured for this source SFEE system
+	 */
 	public String getUsername() {
 		return username;
 	}
 
+	/**
+	 * Sets the username used to connect to the source SFEE system.
+	 * 
+	 * @param username - the username to connect to the source SFEE system.
+	 */
 	public void setUsername(String username) {
 		this.username = username;
 	}
 
+	/**
+	 * Gives the ConnectionManager object from which the SFEEReader
+	 * gets the connections from.
+	 * 
+	 * @return - the ConnectionManager
+	 */
 	public ConnectionManager<Connection> getConnectionManager() {
 		return connectionManager;
 	}
 
+	/**
+	 * Sets the ConnectionManager object that is used to retrieve connections
+	 * from by the SFEEReader.
+	 * 
+	 * @param connectionManager
+	 */
 	public void setConnectionManager(ConnectionManager<Connection> connectionManager) {
 		this.connectionManager = connectionManager;
 	}

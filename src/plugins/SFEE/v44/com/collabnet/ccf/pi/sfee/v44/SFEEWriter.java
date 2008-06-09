@@ -61,13 +61,6 @@ public class SFEEWriter extends LifecycleComponent implements
 	 */
 	private String lastSynchronizedWithOtherSystemSFEETargetFieldname;
 
-	/**
-	 * name of flex field in this tracker used to store the non-SFEE-version
-	 * (version in the other system) of this tracker item (this is the typically
-	 * the fallbackVersion for the other system)
-	 */
-	private String otherSystemVersionInSFEETargetFieldname;
-	
 	private SFEEAttachmentHandler attachmentHandler;
 	
 	private ConnectionManager<Connection> connectionManager = null;
@@ -111,19 +104,23 @@ public class SFEEWriter extends LifecycleComponent implements
 		}
 		
 
-		if(!SFEEGAHelper.containsSingleField(ga, ArtifactMetaData.SFEEFields.id.getFieldName())){
-			SFEEGAHelper.addField(ga, ArtifactMetaData.SFEEFields.id.getFieldName(), getCreateToken(), "String");
+		if(!SFEEGAHelper.containsSingleMandatoryField(ga, ArtifactMetaData.SFEEFields.id.getFieldName())){
+			SFEEGAHelper.addField(ga, ArtifactMetaData.SFEEFields.id.getFieldName(),
+					getCreateToken(), GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD,
+					GenericArtifactField.FieldValueTypeValue.STRING);
 		}
 		if(!StringUtils.isEmpty(targetArtifactId)){
-			SFEEGAHelper.updateSingleField(ga, 
+			SFEEGAHelper.updateSingleMandatoryField(ga, 
 					ArtifactMetaData.SFEEFields.id.getFieldName(), targetArtifactId);
 			ga.setTargetArtifactId(targetArtifactId);
 		}
-		if(SFEEGAHelper.containsSingleField(ga, ArtifactMetaData.SFEEFields.folderId.getFieldName())){
-			SFEEGAHelper.updateSingleField(ga, ArtifactMetaData.SFEEFields.folderId.getFieldName(), tracker);
+		if(SFEEGAHelper.containsSingleMandatoryField(ga, ArtifactMetaData.SFEEFields.folderId.getFieldName())){
+			SFEEGAHelper.updateSingleMandatoryField(ga, ArtifactMetaData.SFEEFields.folderId.getFieldName(), tracker);
 		}
 		else {
-			SFEEGAHelper.addField(ga, ArtifactMetaData.SFEEFields.folderId.getFieldName(), tracker, "String");
+			SFEEGAHelper.addField(ga, ArtifactMetaData.SFEEFields.folderId.getFieldName(), tracker,
+					GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD,
+					GenericArtifactField.FieldValueTypeValue.STRING);
 		}
 
 		
@@ -231,6 +228,15 @@ public class SFEEWriter extends LifecycleComponent implements
 		return resultDocs;
 	}
 	
+	/**
+	 * Creates the artifact represented by the GenericArtifact object
+	 * on the target SFEE system
+	 * 
+	 * @param ga - the GenericArtifact object
+	 * @param tracker - The target SFEE tracker ID
+	 * @param connection - The Connection object for the target SFEE system
+	 * @return - the newly created artifact's ArtifactSoapDO object
+	 */
 	private ArtifactSoapDO createArtifact(GenericArtifact ga, String tracker, Connection connection){
 //		TrackerFieldSoapDO[] flexFields = null;
 //		try {
@@ -319,6 +325,16 @@ public class SFEEWriter extends LifecycleComponent implements
 		return result;
 	}
 	
+	/**
+	 * Creates the artifact represented by the GenericArtifact object
+	 * on the target SFEE system
+	 * 
+	 * @param ga
+	 * @param tracker
+	 * @param forceOverride
+	 * @param connection
+	 * @return - returns the updated artifact's ArtifactSoapDO object
+	 */
 	private ArtifactSoapDO updateArtifact(GenericArtifact ga, String tracker, boolean forceOverride, Connection connection){
 //		TrackerFieldSoapDO[] flexFields = null;
 //		try {
@@ -358,22 +374,22 @@ public class SFEEWriter extends LifecycleComponent implements
 				}
 //			}
 //		}
-		String id = getStringGAField(ArtifactMetaData.SFEEFields.id, ga);
-		String folderId = getStringGAField(ArtifactMetaData.SFEEFields.folderId, ga);
-		String description = this.getStringGAField(ArtifactMetaData.SFEEFields.description, ga);
-		String category = this.getStringGAField(ArtifactMetaData.SFEEFields.category, ga);
-		String group = this.getStringGAField(ArtifactMetaData.SFEEFields.group, ga);
-		String status = this.getStringGAField(ArtifactMetaData.SFEEFields.status, ga);
-		String statusClass = this.getStringGAField(ArtifactMetaData.SFEEFields.statusClass, ga);
-		String customer = this.getStringGAField(ArtifactMetaData.SFEEFields.customer, ga);
-		int priority = this.getIntGAField(ArtifactMetaData.SFEEFields.priority, ga);
-		int estimatedHours = this.getIntGAField(ArtifactMetaData.SFEEFields.estimatedHours, ga);
-		int actualHours = this.getIntGAField(ArtifactMetaData.SFEEFields.actualHours, ga);
-		Date closeDate = this.getDateGAField(ArtifactMetaData.SFEEFields.closeDate, ga);
-		String assignedTo = this.getStringGAField(ArtifactMetaData.SFEEFields.assignedTo, ga);
-		String reportedReleaseId = this.getStringGAField(ArtifactMetaData.SFEEFields.reportedReleaseId, ga);
-		String resolvedReleaseId = this.getStringGAField(ArtifactMetaData.SFEEFields.resolvedReleaseId, ga);
-		String title = this.getStringGAField(ArtifactMetaData.SFEEFields.title, ga);
+		String id = SFEEWriter.getStringGAField(ArtifactMetaData.SFEEFields.id, ga);
+		String folderId = SFEEWriter.getStringGAField(ArtifactMetaData.SFEEFields.folderId, ga);
+		String description = SFEEWriter.getStringGAField(ArtifactMetaData.SFEEFields.description, ga);
+		String category = SFEEWriter.getStringGAField(ArtifactMetaData.SFEEFields.category, ga);
+		String group = SFEEWriter.getStringGAField(ArtifactMetaData.SFEEFields.group, ga);
+		String status = SFEEWriter.getStringGAField(ArtifactMetaData.SFEEFields.status, ga);
+		String statusClass = SFEEWriter.getStringGAField(ArtifactMetaData.SFEEFields.statusClass, ga);
+		String customer = SFEEWriter.getStringGAField(ArtifactMetaData.SFEEFields.customer, ga);
+		int priority = SFEEWriter.getIntGAField(ArtifactMetaData.SFEEFields.priority, ga);
+		int estimatedHours = SFEEWriter.getIntGAField(ArtifactMetaData.SFEEFields.estimatedHours, ga);
+		int actualHours = SFEEWriter.getIntGAField(ArtifactMetaData.SFEEFields.actualHours, ga);
+		Date closeDate = SFEEWriter.getDateGAField(ArtifactMetaData.SFEEFields.closeDate, ga);
+		String assignedTo = SFEEWriter.getStringGAField(ArtifactMetaData.SFEEFields.assignedTo, ga);
+		String reportedReleaseId = SFEEWriter.getStringGAField(ArtifactMetaData.SFEEFields.reportedReleaseId, ga);
+		String resolvedReleaseId = SFEEWriter.getStringGAField(ArtifactMetaData.SFEEFields.resolvedReleaseId, ga);
+		String title = SFEEWriter.getStringGAField(ArtifactMetaData.SFEEFields.title, ga);
 		String[] comments = this.getComments(ga);
 		ArtifactSoapDO result = null;
 		try {
@@ -457,14 +473,6 @@ public class SFEEWriter extends LifecycleComponent implements
 					"updateComment-property not set", this));
 		}
 
-		if (getOtherSystemVersionInSFEETargetFieldname() == null) {
-			log
-					.error("otherSystemVersionInSFEETargetFieldname-property no set");
-			exceptions.add(new ValidationException(
-					"otherSystemVersionInSFEETargetFieldname-property no set",
-					this));
-		}
-
 		trackerHandler = new SFEETrackerHandler(getServerUrl());
 		attachmentHandler = new SFEEAttachmentHandler(getServerUrl());
 	}
@@ -528,6 +536,9 @@ public class SFEEWriter extends LifecycleComponent implements
 	
 	public static String getStringGAField(ArtifactMetaData.SFEEFields field, GenericArtifact ga){
 		String fieldValue = SFEEWriter.getStringGAField(field.getFieldName(), ga);
+		if(StringUtils.isEmpty(fieldValue)){
+			return null;
+		}
 		return fieldValue;
 	}
 	
@@ -611,26 +622,6 @@ public class SFEEWriter extends LifecycleComponent implements
 	 */
 	public String getUpdateComment() {
 		return updateComment;
-	}
-
-	/**
-	 * Set otherSystemVersionInSFEETargetFieldname
-	 * 
-	 * @param otherSystemVersionInSFEETargetFieldname
-	 *            see private attribute doc
-	 */
-	public void setOtherSystemVersionInSFEETargetFieldname(
-			String otherSystemVersionInSFEETargetFieldname) {
-		this.otherSystemVersionInSFEETargetFieldname = otherSystemVersionInSFEETargetFieldname;
-	}
-
-	/**
-	 * Get otherSystemVersionInSFEETargetFieldname
-	 * 
-	 * @return see private attribute doc
-	 */
-	public String getOtherSystemVersionInSFEETargetFieldname() {
-		return otherSystemVersionInSFEETargetFieldname;
 	}
 
 	/**

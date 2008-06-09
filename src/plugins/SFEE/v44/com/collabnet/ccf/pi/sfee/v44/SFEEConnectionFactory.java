@@ -9,6 +9,10 @@ import com.vasoftware.sf.soap44.webservices.ClientSoapStubFactory;
 import com.vasoftware.sf.soap44.webservices.sfmain.ISourceForgeSoap;
 
 /**
+ * This is an implementation of the com.collabnet.ccf.core.eis.connection.ConnectionFactory
+ * that will be used by the ConnectionManager to create, close and check if the connection
+ * is live and the session id is not invalid.
+ * 
  * @author madhusuthanan
  * 
  */
@@ -16,6 +20,11 @@ public class SFEEConnectionFactory implements ConnectionFactory<Connection> {
 	
 	public static final String PARAM_DELIMITER = ":";
 
+	/**
+	 * Logs out from the SFEE system and invalidates the session id.
+	 * 
+	 * @see com.collabnet.ccf.core.eis.connection.ConnectionFactory#closeConnection(java.lang.Object)
+	 */
 	public void closeConnection(Connection connection) {
 		ISourceForgeSoap sfSoap = connection.getSfSoap();
 		String sessionId = connection.getSessionId();
@@ -30,9 +39,8 @@ public class SFEEConnectionFactory implements ConnectionFactory<Connection> {
 
 	/**
 	 * Connection Factory implementation for the SFEE adaptor. 
-	 * 1. connectionInfo
-	 * contains the server URL.
-	 * 2. credentialInfo contains the user name and
+	 * 1. connectionInfo - contains the server URL.
+	 * 2. credentialInfo  - contains the user name and
 	 * password delimited by ':'
 	 * 
 	 * The Repository ID contains the SFEE tracker ID
@@ -78,7 +86,7 @@ public class SFEEConnectionFactory implements ConnectionFactory<Connection> {
 	/**
 	 * Logins the user and save the session id.
 	 * 
-	 * @param sfSoap2
+	 * @param sfSoap
 	 * @param username
 	 *            User name.
 	 * @param password
@@ -95,6 +103,11 @@ public class SFEEConnectionFactory implements ConnectionFactory<Connection> {
 		}
 	}
 
+	/** 
+	 * Checks if the session id associated with this connection obejct is
+	 * valid. 
+	 * @see com.collabnet.ccf.core.eis.connection.ConnectionFactory#isAlive(java.lang.Object)
+	 */
 	public boolean isAlive(Connection connection) {
 		ISourceForgeSoap sfSoap = connection.getSfSoap();
 		String sessionId = connection.getSessionId();

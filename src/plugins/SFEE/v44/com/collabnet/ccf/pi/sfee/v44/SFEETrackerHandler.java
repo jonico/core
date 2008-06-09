@@ -34,8 +34,7 @@ public class SFEETrackerHandler {
 	/**
 	 * Class constructor.
 	 * 
-	 * @param serverUrl
-	 *            Soap server URL.
+	 * @param serverUrl - The source SFEE SOAP server URL
 	 */
 	public SFEETrackerHandler(String serverUrl) {
 		mTrackerApp = (ITrackerAppSoap) ClientSoapStubFactory.getSoapStub(
@@ -100,7 +99,7 @@ public class SFEETrackerHandler {
 	}
 
 	/**
-	 * Return all changed tracker items in a map
+	 * Return all changed tracker items in a List
 	 * 
 	 * @param sessionID
 	 * @param trackerId
@@ -130,20 +129,6 @@ public class SFEETrackerHandler {
 		// retrieve artifact details
 		// TODO Change this if user story is implemented
 
-		/**
-		 * We try to find the last entry from the last call of this function
-		 * again If it is not in the list, then this artifact changed again and
-		 * we have to return the whole list (this may result in some duplicates
-		 * [artifacts modified before but in the same second, as our last item]
-		 * we cannot detect currently) If it is unchanged in the list, we can
-		 * ignore all items before (they are even older) If it is the last in
-		 * the list, we will return null so that the calling component has the
-		 * chance to increment the queuing time (it is all about performance)
-		 * 
-		 * Alternative: Increment lastModifedDate a second, but this may result
-		 * in lost artifacts (that were created or modified in the same second
-		 * the last call took place)
-		 */
 		log.debug("Getting the details of the changed artifacts");
 		boolean duplicateFound = false;
 		if(rows != null) {
@@ -171,10 +156,10 @@ public class SFEETrackerHandler {
 	}
 
 	/**
-	 * Return all changed tracker items in a map
+	 * Returns the artifact with the artifactId as id.
 	 * 
 	 * @param sessionID
-	 * @param trackerId
+	 * @param artifactId
 	 * @return
 	 * @throws RemoteException
 	 */
@@ -200,7 +185,7 @@ public class SFEETrackerHandler {
 	}
 
 	/**
-	 * Return all tracker items that have the value fieldValue in field field
+	 * Return all tracker items that have the value fieldValue in field
 	 * 
 	 * @param sessionID
 	 * @param trackerId
@@ -221,6 +206,14 @@ public class SFEETrackerHandler {
 		return rows;
 	}
 	
+	/**
+	 * Returns the custom or flex fields for a particular tracker
+	 * 
+	 * @param sessionID
+	 * @param trackerId
+	 * @return
+	 * @throws RemoteException
+	 */
 	public TrackerFieldSoapDO[] getFlexFields(String sessionID,
 			String trackerId)
 			throws RemoteException {
@@ -246,22 +239,11 @@ public class SFEETrackerHandler {
 			String lastSynchronizedWithOtherSystemSFEETargetFieldname)
 			throws RemoteException {
 
-		// TODO: Make conflict detection optional?
-		
-		// first of all, the lastSynchronized flexField to the existing
-		// values
-//		flexFieldNames.add(lastSynchronizedWithOtherSystemSFEETargetFieldname);
-		// TODO: Only works if created artifacts starts with number 100
-//		flexFieldValues.add("100");
-//		flexFieldTypes.add("String");
-
-		// construct SOAPFieldValues
 		SoapFieldValues flexFields = new SoapFieldValues();
 		flexFields.setNames(flexFieldNames.toArray(new String[0]));
 		flexFields.setValues(flexFieldValues.toArray());
 		flexFields.setTypes(flexFieldTypes.toArray(new String[0]));
 
-		// TODO Support attachments, consider setting version as well?
 		ArtifactSoapDO artifactData = mTrackerApp.createArtifact(sessionId,
 				trackerId, title, description, group, category, // category
 				status, // status
@@ -271,17 +253,10 @@ public class SFEETrackerHandler {
 				assignedTo, // assigned user name
 				reportedReleaseId, flexFields, null, null, null);
 
-		// update missing fields and adjust lastSynchronizedValue
-		// TODO This is not atomic, and may override changes in the target system, wait for better API on SFEE 5.c
 		artifactData.setActualHours(actualHours);
 		artifactData.setStatusClass(statusClass);
 		artifactData.setCloseDate(closeDate);
 		artifactData.setResolvedReleaseId(resolvedReleaseId);
-		// adjust the lastSynchronizedValue
-		// NOTE Commented out
-		//flexFieldValues.remove(flexFieldValues.size() - 1);
-		//flexFieldValues.add(Integer.toString(artifactData.getVersion()+1));
-		// construct new flex fields
 		SoapFieldValues newFlexFields = new SoapFieldValues();
 		newFlexFields.setNames(flexFieldNames.toArray(new String[0]));
 		newFlexFields.setValues(flexFieldValues.toArray());
@@ -300,7 +275,7 @@ public class SFEETrackerHandler {
 	 * 
 	 * @throws RemoteException
 	 *             when an error is encountered in creating the artifact.
-	 * @return Newly created artifact
+	 * @return the Updated artifact's ArtifactSoapDO object
 	 */
 	public ArtifactSoapDO updateArtifact(String sessionId, String trackerId,
 			String description, String category, String group, String status,
@@ -310,137 +285,15 @@ public class SFEETrackerHandler {
 			String resolvedReleaseId, List<String> flexFieldNames,
 			List<Object> flexFieldValues, List<String> flexFieldTypes,
 			String title, String Id, String[] comments,
-//			String lastSynchronizedWithOtherSystemSFEETargetFieldname,
-//			String otherSystemVersion,
-//			String otherSystemVersionFieldName,
-//			String fallbackVersion,
 			boolean forceOverride)
 			throws RemoteException {
 		
-		// TODO: Make conflict detection optional?
-		
-		
 		boolean tryItAgain = true;
 		ArtifactSoapDO artifactData = null;
-//		int fallbackVersionInt=-1;
-//		if (StringUtils.isNotEmpty(fallbackVersion)) {
-//			try {
-//				fallbackVersionInt=Integer.parseInt(fallbackVersion);
-//			}
-//			catch (NumberFormatException e) {
-//				log.error("version-field for artifact with id "+Id+" in tracker "+trackerId+" contained non-numeric value",e);
-//				return null;
-//			}
-//		}
-//		else {
-//			fallbackVersion="-1";
-//		}
-		
-		// this loop enables us to update even if a stale update method occured
 		while (tryItAgain) {
 			try {
 				tryItAgain = false;
-				// TODO Support attachments
 				artifactData = mTrackerApp.getArtifactData(sessionId, Id);
-				/**
-				 * Only after having retrieved the artifact data, we can be sure
-				 * that it we do not miss a change on it This is very important
-				 * for atomic updates
-				 */
-				try {
-					/**
-					 * Compare versions of the software artifacts
-					 */
-//					String version=(String)getFlexFieldValue(lastSynchronizedWithOtherSystemSFEETargetFieldname, artifactData, "String");
-//					if (StringUtils.isEmpty(version)) {
-//						log
-//						.warn("Seems as if we lost version-information in flexField "+lastSynchronizedWithOtherSystemSFEETargetFieldname+ " in the target system for artifact with id: "
-//								+ artifactData.getId()+ " in tracker "+artifactData.getFolderId()+" or it is the first resync, falling back to value in the version-Field");
-//						version=fallbackVersion;
-//						if (fallbackVersionInt==-1) {
-//							log
-//							.error("Seems as if we lost version-information in version-Field in the source system for target artifact with id: "
-//									+ artifactData.getId()+" in tracker "+artifactData.getFolderId());
-//							if (forceOverride) {
-//								log.warn("Since we should override changes, we still try to update the artifact with id: "+artifactData.getId());
-//								version="-1";
-//							}
-//							else {
-//								log.error("Since we should not override changes, we do not update the artifact with id: "+artifactData.getId()+" in tracker "+artifactData.getFolderId());
-//								return null;
-//							}
-//						}
-//					}
-					
-//					int versionInt = Integer.parseInt(version);
-					// version is the max(ourOwnLastSynchronizedVersionWithOtherSystem,otherSystemLastSynchronizedVersionWithUs)
-//					versionInt=versionInt>fallbackVersionInt?versionInt:fallbackVersionInt;
-//					if (versionInt < artifactData.getVersion()) {
-//						// TODO Rethink conflict resolution
-//						if (forceOverride) {
-//							log
-//									.warn("Seems as if we are going to override a change for artifact with id: "
-//											+ artifactData.getId()
-//											+ " in tracker " + artifactData.getFolderId()
-//											+ " and version: "
-//											+ artifactData.getVersion()
-//											+ ", last synchronized version: "
-//											+ versionInt);
-//						} else {
-//							log
-//									.warn("Seems as if our copy of the artifact is too old to override a change for artifact with id: "
-//											+ artifactData.getId()
-//											+ " in tracker " + artifactData.getFolderId()
-//											+ " and version: "
-//											+ artifactData.getVersion()
-//											+ ", last synchronized version: "
-//											+ versionInt);
-//							return null;
-//						}
-//					}
-					
-//					String currentOtherSystemVersion = (String) getFlexFieldValue(
-//							otherSystemVersionFieldName, artifactData, "String");
-//					if (StringUtils.isEmpty(currentOtherSystemVersion)
-//							|| StringUtils.isEmpty(otherSystemVersion)) {
-//						log
-//								.warn("Seems as if we lost version-information in the target system for artifact with id: "
-//										+ artifactData.getId()
-//										+ " in tracker " + artifactData.getFolderId()
-//										+ " or it is the first resync.");
-//					} else {
-//						int currentOtherSystemVersionInt = Integer
-//								.parseInt(currentOtherSystemVersion);
-//						int otherSystemVersionInt = Integer
-//								.parseInt(otherSystemVersion);
-//						if (otherSystemVersionInt <= currentOtherSystemVersionInt) {
-//							log
-//									.warn("Seems as if we updated the target system before for artifact with id: "
-//											+ artifactData.getId()
-//											+ " in tracker " + artifactData.getFolderId()
-//											+ " and current other system version: "
-//											+ currentOtherSystemVersionInt
-//											+ ", stored in flexField "
-//											+ otherSystemVersionFieldName
-//											+ " ,older or equal version: "
-//											+ otherSystemVersionInt);
-//							return null;
-//						}
-//					}
-				} catch (NumberFormatException e) {
-					log.error(
-							"Version information not in numerical format for artifact with id: "
-									+ artifactData.getId()+ " in tracker " + artifactData.getFolderId(), e);
-					return null;
-				}
-				
-				// add the lastSynchronized flexField to the existing
-				// values
-//				flexFieldNames.add(lastSynchronizedWithOtherSystemSFEETargetFieldname);
-//				flexFieldValues.add(Integer.toString(artifactData.getVersion()+1));
-//				flexFieldTypes.add("String");
-
-				// construct SOAPFieldValues
 				SoapFieldValues flexFields = new SoapFieldValues();
 				flexFields.setNames(flexFieldNames.toArray(new String[0]));
 				flexFields.setValues(flexFieldValues.toArray());
@@ -469,7 +322,6 @@ public class SFEETrackerHandler {
 			} catch (com.vasoftware.sf.soap44.fault.VersionMismatchFault e) {
 				if (forceOverride) {
 					log.warn("Stale update, trying again ...:", e);
-					// remove lastSynchronized flexField again
 					flexFieldNames.remove(flexFieldNames.size() - 1);
 					flexFieldValues.remove(flexFieldValues.size() - 1);
 					flexFieldTypes.remove(flexFieldTypes.size() - 1);
@@ -487,13 +339,33 @@ public class SFEETrackerHandler {
 		return artifactData;
 	}
 
+	/**
+	 * Returns the value of the flex field with the name fieldName
+	 * for the artifact with the artifact id artifactId
+	 * 
+	 * @param sessionID
+	 * @param fieldName
+	 * @param artifactID
+	 * @param fieldType
+	 * @return
+	 * @throws RemoteException
+	 */
 	public Object getFlexFieldValue(String sessionID, String fieldName,
 			String artifactID, String fieldType) throws RemoteException {
-		// first retrieve artifact
 		ArtifactSoapDO artifact = getTrackerItem(sessionID, artifactID);
 		return getFlexFieldValue(fieldName, artifact, fieldType);
 	}
 
+	/**
+	 * Returns the value of the flex field with the name fieldName
+	 * from the ArtifactSoapDO object
+	 * 
+	 * @param fieldName
+	 * @param artifact
+	 * @param fieldType
+	 * @return
+	 * @throws RemoteException
+	 */
 	public Object getFlexFieldValue(String fieldName, ArtifactSoapDO artifact,
 			String fieldType) throws RemoteException {
 		SoapFieldValues flexFields = artifact.getFlexFields();

@@ -11,13 +11,33 @@ import org.openadaptor.core.exception.RecordFormatException;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
+import com.collabnet.ccf.core.ga.GenericArtifactField.FieldValueTypeValue;
 
+/**
+ * This is a utility class that is used to extract fields from
+ * Generic artifact, get the value of a field, etc.
+ * 
+ * @author madhusuthanan
+ *
+ */
 public class SFEEGAHelper {
 	private static final DateFormat df = GenericArtifactHelper.df;
 
 	public static boolean containsSingleField(GenericArtifact ga, String fieldName){
 		List<GenericArtifactField> gaFolderIDs = ga.getAllGenericArtifactFieldsWithSameFieldName(fieldName);
 		return gaFolderIDs!=null && gaFolderIDs.size() == 1;
+	}
+	
+	public static boolean containsSingleMandatoryField(GenericArtifact ga, String fieldName){
+		List<GenericArtifactField> gaFolderIDs = ga.getAllGenericArtifactFieldsWithSameFieldName(fieldName);
+		if(gaFolderIDs != null){
+			for(GenericArtifactField field:gaFolderIDs){
+				if(field.getFieldType() == GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD){
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 
 	public static void updateSingleField(GenericArtifact ga, String fieldName,
@@ -33,6 +53,24 @@ public class SFEEGAHelper {
 		}
 	}
 	
+	public static void updateSingleMandatoryField(GenericArtifact ga, String fieldName,
+			String fieldValue) {
+		boolean fieldUpdated = false;
+		List<GenericArtifactField> gaFolderIDs = ga.getAllGenericArtifactFieldsWithSameFieldName(fieldName);
+		if(gaFolderIDs != null){
+			for(GenericArtifactField field:gaFolderIDs){
+				if(field.getFieldType() == GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD){
+					field.setFieldValue(fieldValue);
+					fieldUpdated = true;
+				}
+			}
+		}
+		if(gaFolderIDs == null || (!fieldUpdated)){
+			throw new RuntimeException("Field "+fieldName
+					+" does not exist in Generic Artifact. Cannot update field");
+		}
+	}
+	
 	public static Object getSingleValue(GenericArtifact ga, String fieldName) {
 		List<GenericArtifactField> fields = ga.getAllGenericArtifactFieldsWithSameFieldName(fieldName);
 		if(fields != null && fields.size() == 1){
@@ -43,6 +81,13 @@ public class SFEEGAHelper {
 	}
 
 	public static void addField(GenericArtifact ga, String fieldName,
+			String fieldValue, String fieldType, FieldValueTypeValue fieldValueTypeValue) {
+		GenericArtifactField newField = ga.addNewField(fieldName, fieldName, fieldType);
+		newField.setFieldValueType(fieldValueTypeValue);
+		newField.setFieldValue(fieldValue);
+	}
+	
+	public static void addMandatoryField(GenericArtifact ga, String fieldName,
 			String fieldValue, String fieldType) {
 		GenericArtifactField newField = ga.addNewField(fieldName, fieldName, fieldType);
 		newField.setFieldValue(fieldValue);

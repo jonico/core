@@ -11,6 +11,14 @@ import com.vasoftware.sf.soap44.webservices.sfmain.CommentSoapRow;
 import com.vasoftware.sf.soap44.webservices.sfmain.ISourceForgeSoap;
 import com.vasoftware.sf.soap44.webservices.tracker.ArtifactSoapDO;
 
+/**
+ * This class works with the ISourceForgeSoap object for the source
+ * SFEE system to get the Comment Texts entered by the users for an
+ * artifact.
+ * 
+ * @author madhusuthanan (madhusuthanan@collab.net)
+ *
+ */
 public class SFEEAppHandler {
 	private ISourceForgeSoap mSfSoap;
 	private String mSessionId;
@@ -19,6 +27,24 @@ public class SFEEAppHandler {
 		this.mSessionId = sessionId;
 	}
 
+	/**
+	 * This method retrieves all the comments added to a particular artifact
+	 * (represented by the ArtofactSoapDO) and adds all the comments that are
+	 * added after the lastModifiedDate into the ArtifatSoapDO's flex fields
+	 * with the field name as "Comment Text" [as this is the name displayed
+	 * in the SFEE trackers for the Comments]
+	 * 
+	 * It calls the private method addComments which can add comments for a list
+	 * of artifacts by querying the ISourceForgeSoap object for this particular
+	 * SFEE system.
+	 * 
+	 * The comments added by the connector user are ignored by this method.
+	 * 
+	 * @param artifact - The AritfactSoapDO object whose comments need to be added
+	 * @param lastModifiedDate - The last read time of this tracker
+	 * @param connectorUser - The username that is configured to log into the SFEE
+	 * 						to retrieve the artifact data.
+	 */
 	public void addComments(ArtifactSoapDO artifact, Date lastModifiedDate, String connectorUser){
 		List<ArtifactSoapDO> artifactList = new ArrayList<ArtifactSoapDO>();
 		artifactList.add(artifact);
@@ -46,7 +72,7 @@ public class SFEEAppHandler {
 						if(artifactDO.getLastModifiedDate().after(createdDate) ||
 								artifactDO.getLastModifiedDate().equals(createdDate)){
 							//TODO If more than one comment is added, How this will behave?
-							ArtifactMetaData.addFlexField("Comment Text", artifactDO, description);
+							ArtifactMetaData.addFlexField(ArtifactMetaData.SFEEFields.commentText.getFieldName(), artifactDO, description);
 							commentSet = true;
 							break;
 						}

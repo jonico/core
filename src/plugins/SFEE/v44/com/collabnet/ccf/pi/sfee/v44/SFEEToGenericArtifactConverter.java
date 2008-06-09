@@ -11,7 +11,24 @@ import com.vasoftware.sf.soap44.types.SoapFieldValues;
 import com.vasoftware.sf.soap44.webservices.sfmain.TrackerFieldSoapDO;
 import com.vasoftware.sf.soap44.webservices.tracker.ArtifactSoapDO;
 
+/**
+ * The artifact data from the SFEE SOAP API calls are in the
+ * ArtifactSoapDO object. This class converts the artifact data
+ * contained in the ArtifactSoapDO objects into GenericArtifact object 
+ * @author madhusuthanan
+ *
+ */
 public class SFEEToGenericArtifactConverter {
+	/**
+	 * Converts the artifact data contained in the ArtifactSoapDO object
+	 * into a GenricArtifact object
+	 * 
+	 * @param dataObject - The ArtifactSoapDO object that needs to be converted into
+	 * 						a GenericArtifact object
+	 * @param trackerFields - The custom/flex fields defined in the tracker
+	 * @param lastReadDate - Last read date for this tracker.
+	 * @return - The converted GenericArtifact object
+	 */
 	public GenericArtifact convert(ArtifactSoapDO dataObject, TrackerFieldSoapDO[] trackerFields, Date lastReadDate) {
 		if(dataObject != null){
 			ArtifactSoapDO artifactRow = dataObject;
@@ -151,6 +168,17 @@ public class SFEEToGenericArtifactConverter {
 		return null;
 	}
 	
+	/**
+	 * Creates a GenericArtifactField object with the appropriate values provided
+	 * in the method call.
+	 * 
+	 * @param fieldName - Name of the field
+	 * @param displayName - The field's display name
+	 * @param value - Value of the field
+	 * @param genericArtifact - The GenericArtifact object on which the new field should be created
+	 * @param trackerFields - The custom/flex fields defined for this tracker.
+	 * @return - Returns the newly created GenericArtifactField object
+	 */
 	private GenericArtifactField createGenericArtifactField(String fieldName, String displayName, Object value, GenericArtifact genericArtifact, TrackerFieldSoapDO[] trackerFields){
 		GenericArtifactField field = genericArtifact.addNewField(fieldName, displayName, GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD);
 		GenericArtifactField.FieldValueTypeValue fieldValueType = ArtifactMetaData.getFieldValueType(ArtifactMetaData.SFEEFields.actualHours.getFieldName(), trackerFields);
@@ -164,6 +192,6 @@ public class SFEEToGenericArtifactConverter {
 		else {
 			
 		}
-		return null;
+		return field;
 	}
 }
