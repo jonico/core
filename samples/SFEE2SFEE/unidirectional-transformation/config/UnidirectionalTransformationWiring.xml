@@ -122,10 +122,7 @@
 			Determines if the incoming artifact should be created or
 			updated in the target system
 		</description>
-		<property name="entityServiceReader" ref="EntityServiceReader" />
-		<property name="entityServiceMappingIdReader"
-			ref="EntityServiceMappingIDReader">
-		</property>
+		<property name="entityServiceReader" ref="EntityServiceReader" ></property>
 	</bean>
 	<bean id="SFEE2SFEEDatabaseReader"
 		class="org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector">
@@ -135,7 +132,7 @@
 		<property name="jdbcConnection" ref="JdbcConnectionReadSFEE2SFEE" />
 		<!-- batch size of 0 or less means process all rows in one message batch. -->
 		<!-- batch size of one means process one row per message and so on -->
-		<property name="batchSize" value="0" />
+		<property name="batchSize" value="1" />
 		<property name="resultSetConverter" ref="ResultSetConverter" />
 		<property name="sql">
 			<value>${ccf.sfeereader.poller.sql}</value>
@@ -164,27 +161,8 @@
 			Updates the artifact synchronization info for a repository
 		</description>
 		<property name="mappingWriter" ref="MappingWriter"></property>
-		<property name="entityServiceReader" ref="EntityServiceReader" />
-		<property name="entityServiceMappingIdReader"
-			ref="EntityServiceMappingIDReader">
-		</property>
-		<property name="entityServiceWriteConnector"
-			ref="EntityServiceWriter">
-		</property>
-	</bean>
-	<bean id="EntityServiceMappingIDReader"
-		class="org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector">
-		<description>
-			Reader which queries and obtains the mapping ID from the REPOSITORY_MAPPING table using configured SQL.
-		</description>
-		<property name="jdbcConnection"
-			ref="EntityServiceJdbcConnection" />
-		<!-- batch size of 0 or less means process all rows in one message batch. -->
-		<!-- batch size of one means process one row per message and so on -->
-		<property name="batchSize" value="0" />
-		<property name="sql">
-			<value>${ccf.mappingid.sql}</value>
-		</property>
+		<property name="entityServiceReader" ref="EntityServiceReader"></property>
+		<property name="entityServiceWriteConnector" ref="EntityServiceWriter"></property>
 	</bean>
 	<bean id="EntityServiceReader"
 		class="org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector">
@@ -195,7 +173,7 @@
 			ref="EntityServiceJdbcConnection" />
 		<!-- batch size of 0 or less means process all rows in one message batch. -->
 		<!-- batch size of one means process one row per message and so on -->
-		<property name="batchSize" value="0" />
+		<!-- <property name="batchSize" value="0" />  -->
 		<property name="sql">
 			<value>${ccf.targetartifactid.sql}</value>
 		</property>
@@ -224,10 +202,13 @@
 			This is the writer object that writes the artifact mapping
 			information into the database table.
 		</description>
-		<property name="tableName" value="ARTIFACT_MAPPING"></property>
+		<property name="tableName" value="IDENTITY_MAPPING"></property>
 		<property name="outputColumns">
 			<list>
-				<value>MAPPING_ID</value>
+				<value>SOURCE_SYSTEM_ID</value>
+				<value>SOURCE_REPOSITORY_ID</value>
+				<value>TARGET_SYSTEM_ID</value>
+				<value>TARGET_REPOSITORY_ID</value>
 				<value>SOURCE_ARTIFACT_ID</value>
 				<value>TARGET_ARTIFACT_ID</value>
 			</list>
@@ -246,17 +227,17 @@
 			This is the writer object that updates the synchronization
 			information into the database table.
 		</description>
-		<property name="tableName" value="ARTIFACT_MAPPING"></property>
+		<property name="tableName" value="SYNCHRONIZATION_STATUS"></property>
 		<property name="sql" value="${ccf.mapping.updater.sql}"></property>
 		<property name="outputColumns">
 			<list>
 				<value>LAST_READ_TIME</value>
-				<value>TRANSACTION_ID</value>
 				<value>VERSION</value>
-				<value>A.REPOSITORY_ID</value>
-				<value>B.REPOSITORY_ID</value>
-				<value>ARTIFACT_MAPPING.SOURCE_ARTIFACT_ID</value>
-				<value>ARTIFACT_MAPPING.TARGET_ARTIFACT_ID</value>
+				<value>TRANSACTION_ID</value>
+				<value>SOURCE_SYSTEM_ID</value>
+				<value>SOURCE_REPOSITORY_ID</value>
+				<value>TARGET_SYSTEM_ID</value>
+				<value>TARGET_REPOSITORY_ID</value>
 			</list>
 		</property>
 	</bean>
