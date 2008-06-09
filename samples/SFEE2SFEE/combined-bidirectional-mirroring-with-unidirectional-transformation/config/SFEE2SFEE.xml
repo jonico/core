@@ -5,7 +5,8 @@
 
 	<description><![CDATA[
    This is the configuration for the CollabNet Connector Framework sample 
-   "Combined Bidirectional Mirroring Scenario". This wiring file configures two SFEE trackers
+   "Combined Bidirectional Mirroring and Unidirectional transformation
+    Scenario". This wiring file configures two SFEE trackers
    on the same SFEE system to sync with each other.]]>
    </description>
 
@@ -114,7 +115,7 @@
 		class="org.openadaptor.auxil.connector.jdbc.JDBCConnection">
 		<description>
 			This defines jdbc connection that will be used by the
-			SimplePollingReaderSFEE2QC
+			SynchronizationStatusPollingReader
 		</description>
 		<property name="driver" value="${ccf.db.driver}" />
 		<property name="url" value="${ccf.db.url}" />
@@ -188,8 +189,6 @@
 		<property name="serverUrl"
 			value="${sfee.server.1.url}" />
 		<property name="createToken" value="create" />
-		<property name="otherSystemVersionInSFEETargetFieldname"
-			value="create" />
 		<property name="updateComment"
 			value="Synchronized by Connector user" />
 		<property name="connectionManager" ref="SFEEConnectionManager"></property>
