@@ -194,9 +194,6 @@
 			component.
 		</description>
 		<property name="entityServiceReader" ref="SynchronizationStatusDatabaseReader" />
-		<property name="entityServiceMappingIdReader"
-			ref="IdentityMappingDatabaseReader">
-		</property>
 	</bean>
 
 	
@@ -216,26 +213,8 @@
 		</description>
 		<property name="mappingWriter" ref="MappingWriter"></property>
 		<property name="entityServiceReader" ref="SynchronizationStatusDatabaseReader" />
-		<property name="entityServiceMappingIdReader"
-			ref="IdentityMappingDatabaseReader">
-		</property>
 		<property name="entityServiceWriteConnector"
 			ref="SynchronizationStatusDatabaseWriter">
-		</property>
-	</bean>
-	<bean id="IdentityMappingDatabaseReader"
-		class="org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector">
-		<description>
-			This database reader component reads the identity mapping id for a
-			a source and target repository mapping.
-		</description>
-		<property name="jdbcConnection"
-			ref="JDBCConnection" />
-		<!-- batch size of 0 or less means process all rows in one message batch. -->
-		<!-- batch size of one means process one row per message and so on -->
-		<property name="batchSize" value="0" />
-		<property name="sql">
-			<value>${ccf.mappingid.sql}</value>
 		</property>
 	</bean>
 	<bean id="SynchronizationStatusDatabaseReader"
@@ -281,10 +260,13 @@
 			This is the writer object that writes the artifact mapping
 			information into the database table.
 		</description>
-		<property name="tableName" value="ARTIFACT_MAPPING"></property>
+		<property name="tableName" value="IDENTITY_MAPPING"></property>
 		<property name="outputColumns">
 			<list>
-				<value>MAPPING_ID</value>
+				<value>SOURCE_SYSTEM_ID</value>
+				<value>SOURCE_REPOSITORY_ID</value>
+				<value>TARGET_SYSTEM_ID</value>
+				<value>TARGET_REPOSITORY_ID</value>
 				<value>SOURCE_ARTIFACT_ID</value>
 				<value>TARGET_ARTIFACT_ID</value>
 			</list>
@@ -303,17 +285,17 @@
 			This is the writer object that writes the artifact mapping
 			information into the database table.
 		</description>
-		<property name="tableName" value="ARTIFACT_MAPPING"></property>
+		<property name="tableName" value="SYNCHRONIZATION_STATUS"></property>
 		<property name="sql" value="${ccf.mapping.updater.sql}"></property>
 		<property name="outputColumns">
 			<list>
 				<value>LAST_READ_TIME</value>
-				<value>TRANSACTION_ID</value>
 				<value>VERSION</value>
-				<value>A.REPOSITORY_ID</value>
-				<value>B.REPOSITORY_ID</value>
-				<value>ARTIFACT_MAPPING.SOURCE_ARTIFACT_ID</value>
-				<value>ARTIFACT_MAPPING.TARGET_ARTIFACT_ID</value>
+				<value>TRANSACTION_ID</value>
+				<value>SOURCE_SYSTEM_ID</value>
+				<value>SOURCE_REPOSITORY_ID</value>
+				<value>TARGET_SYSTEM_ID</value>
+				<value>TARGET_REPOSITORY_ID</value>
 			</list>
 		</property>
 	</bean>
