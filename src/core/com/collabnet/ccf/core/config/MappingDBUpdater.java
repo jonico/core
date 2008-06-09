@@ -90,6 +90,7 @@ public class MappingDBUpdater implements IDataProcessor{
 			
 			IOrderedMap inputParameters = new OrderedHashMap();
 			inputParameters.add(0,"LAST_READ_TIME",time);
+			log.info("Inside MappingDBUpdator, ##### proper formatted Last_read_time="+time);
 			int transactionId = 0;
 			if(StringUtils.isEmpty(lastReadTransactionId) || lastReadTransactionId.equals("unknown")){
 				transactionId = 0;
@@ -102,12 +103,12 @@ public class MappingDBUpdater implements IDataProcessor{
 					e.printStackTrace();
 				}
 			}
-			inputParameters.add(1,"TRANSACTION_ID",transactionId);
-			inputParameters.add(2,"VERSION",version);
-			inputParameters.add(3,"A.REPOSITORY_ID",sourceRepositoryId);
-			inputParameters.add(4,"B.REPOSITORY_ID",targetRepositoryId);
-			inputParameters.add(5,"ARTIFACT_MAPPING.SOURCE_ARTIFACT_ID",sourceArtifactId);
-			inputParameters.add(6,"ARTIFACT_MAPPING.TARGET_ARTIFACT_ID",targetArtifactId);
+			inputParameters.add(1,"VERSION",version);
+			inputParameters.add(2,"TRANSACTION_ID",transactionId);
+			inputParameters.add(3,"SOURCE_SYSTEM_ID",sourceSystemId);
+			inputParameters.add(4,"SOURCE_REPOSITORY_ID",sourceRepositoryId);
+			inputParameters.add(5,"TARGET_SYSTEM_ID",targetSystemId);
+			inputParameters.add(6,"TARGET_REPOSITORY_ID",targetRepositoryId);
 
 			IOrderedMap[] params = new IOrderedMap[]{inputParameters};
 			mappingWriter.connect();
@@ -128,7 +129,7 @@ public class MappingDBUpdater implements IDataProcessor{
 			String sourceSystemKind, String targetArtifactId, String targetRepositoryId,
 			String targetRepositoryKind, String targetSystemId,
 			String targetSystemKind) {
-		String mappingId = lookupMappingId(sourceRepositoryId,
+		/*String mappingId = lookupMappingId(sourceRepositoryId,
 				sourceRepositoryKind,
 				sourceSystemId,
 				sourceSystemKind,
@@ -136,17 +137,20 @@ public class MappingDBUpdater implements IDataProcessor{
 				targetRepositoryKind,
 				targetSystemId,
 				targetSystemKind);
-		String targetArtifactIdFromTable = lookupTargetArtifactId(sourceArtifactId,
-				mappingId);
+		*/
+		String targetArtifactIdFromTable = lookupTargetArtifactId(sourceArtifactId, sourceSystemId, sourceRepositoryId, 
+				targetSystemId, targetRepositoryId);
 		if(targetArtifactIdFromTable == null) {
-			this.createMapping(mappingId, sourceArtifactId, targetArtifactId);
+			this.createIdentityMapping(sourceSystemId, sourceRepositoryId, 
+					targetSystemId, targetRepositoryId, sourceArtifactId, targetArtifactId);
 	    } else {
 	    	log.info("Mapping already exists for source artifact id "+ sourceArtifactId+
-	    			" target artifact id "+ targetArtifactId + " for mapping id " + mappingId);
+	    			" target artifact id "+ targetArtifactId + " for repository info " + sourceArtifactId+"+"+ sourceSystemId+"+"+ sourceRepositoryId+"+"+ 
+					targetSystemId);
 	    }
 		
 	}
-
+/*
 	private String lookupMappingId(String sourceRepositoryId, String sourceRepositoryKind,
 			String sourceSystemId, String sourceSystemKind,
 			String targetRepositoryId, String targetRepositoryKind,
@@ -193,14 +197,18 @@ public class MappingDBUpdater implements IDataProcessor{
 		
 		return mappingId;
 	}
-
-	private String lookupTargetArtifactId(String sourceArtifactId,
-			String mappingId) {
+*/
+	private String lookupTargetArtifactId(String sourceArtifactId, String sourceSystemId, String sourceRepositoryId, 
+			String targetSystemId, String targetRepositoryId) {
 		String targetArtifactId = null;
 		IOrderedMap inputParameters = new OrderedHashMap();
 		
+		inputParameters.add(sourceSystemId);
+		inputParameters.add(sourceRepositoryId);
+		inputParameters.add(targetSystemId);
+		inputParameters.add(targetRepositoryId);
 		inputParameters.add(sourceArtifactId);
-		inputParameters.add(mappingId);
+		
 
 		entityServiceReader.connect();
 		Object[] resultSet = entityServiceReader.next(inputParameters, 1000);
@@ -229,12 +237,16 @@ public class MappingDBUpdater implements IDataProcessor{
 		return targetArtifactId;
 	}
 	
-	private void createMapping(String mappingId, String sourceArtifactId, String targetArtifactId){
+	private void createIdentityMapping(String sourceSystemId, String sourceRepositoryId, 
+			String targetSystemId, String targetRepositoryId, String sourceArtifactId, String targetArtifactId){
 		IOrderedMap inputParameters = new OrderedHashMap();
 		
-		inputParameters.add(0,"MAPPING_ID",mappingId);
-		inputParameters.add(1,"SOURCE_ARTIFACT_ID",sourceArtifactId);
-		inputParameters.add(2,"TARGET_ARTIFACT_ID",targetArtifactId);
+		inputParameters.add(0,"SOURCE_SYSTEM_ID",sourceSystemId);
+		inputParameters.add(1,"SOURCE_REPOSITORY_ID",sourceRepositoryId);
+		inputParameters.add(2,"TARGET_SYSTEM_ID",targetSystemId);
+		inputParameters.add(3,"TARGET_REPOSITORY_ID",targetRepositoryId);
+		inputParameters.add(4,"SOURCE_ARTIFACT_ID",sourceArtifactId);
+		inputParameters.add(5,"TARGET_ARTIFACT_ID",targetArtifactId);
 		IOrderedMap[] data = new IOrderedMap[]{inputParameters};
 		entityServiceWriteConnector.connect();
 		entityServiceWriteConnector.deliver(data);
