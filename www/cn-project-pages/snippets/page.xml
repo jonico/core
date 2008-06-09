@@ -5,7 +5,7 @@
       <title localize="false" />
     </component>
     <component visibility="1" type="Html" order="2">
-      <title localize="false">Collabnet Connector Framework</title>
+      <title localize="false" />
       <filename>index.html</filename>
     </component>
     <component visibility="1" type="Subproject" order="3">
