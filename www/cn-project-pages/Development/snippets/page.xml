@@ -5,6 +5,10 @@
       <title localize="false" />
       <filename>HtmlSnippet1.html</filename>
     </component>
+    <component visibility="1" type="ArtifactReport" order="2" layout="1">
+      <title localize="false" />
+      <report title="" view_link="" />
+    </component>
   </component_list>
 </page>
 
