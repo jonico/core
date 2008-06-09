@@ -2,7 +2,6 @@ package com.collabnet.ccf.core.transformer;
 
 import java.net.URL;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 
 import javax.xml.transform.Transformer;
@@ -11,12 +10,13 @@ import javax.xml.transform.TransformerException;
 import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.stream.StreamSource;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dom4j.Document;
-import org.dom4j.Element;
 import org.dom4j.DocumentException;
 import org.dom4j.DocumentHelper;
+import org.dom4j.Element;
 import org.dom4j.io.DocumentResult;
 import org.dom4j.io.DocumentSource;
 import org.openadaptor.core.Component;
@@ -25,7 +25,6 @@ import org.openadaptor.core.exception.ProcessingException;
 import org.openadaptor.core.exception.ValidationException;
 import org.openadaptor.util.FileUtils;
 
-import com.collabnet.ccf.core.RepositoryRecord;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
 import com.collabnet.ccf.core.utils.XPathUtils;
 
@@ -49,12 +48,12 @@ public class XsltProcessor extends Component implements IDataProcessor {
 	/**
 	 * file name of the XSLT file
 	 */
-	//private String xsltFile;
+	private String xsltFile;
 
 	/**
 	 * XSLT transforming component
 	 */
-	//private Transformer transform;
+	private Transformer transform;
 	
 	private static final String SOURCE_SYSTEM_ID = "sourceSystemId";
 	private static final String TARGET_SYSTEM_ID = "targetSystemId";
@@ -80,7 +79,7 @@ public class XsltProcessor extends Component implements IDataProcessor {
 	 *            the path to the file
 	 */
 	public void setXsltFile(String xsltFile) {
-		//this.xsltFile = xsltFile;
+		this.xsltFile = xsltFile;
 	}
 	
 	private HashMap<String, Transformer> xsltFileNameTransformerMap = null;
@@ -92,7 +91,7 @@ public class XsltProcessor extends Component implements IDataProcessor {
 	@SuppressWarnings("unchecked")
 	public void validate(List exceptions) {
 		/*try {
-			loadXSLT();
+			transform = loadXSLT(xsltFile);
 		} catch (RuntimeException ex) {
 			exceptions.add(ex);
 		}*/
@@ -181,14 +180,19 @@ public class XsltProcessor extends Component implements IDataProcessor {
 		
 		String fileName = null;
 		Transformer transform = null;
-		Document document = (Document) record;
-		Element element = XPathUtils.getRootElement(document);
-		String sourceSystemId = XPathUtils.getAttributeValue(element, SOURCE_SYSTEM_ID);
-		String targetSystemId = XPathUtils.getAttributeValue(element, TARGET_SYSTEM_ID);
-		String sourceRepositoryId = XPathUtils.getAttributeValue(element, SOURCE_REPOSITORY_ID);
-		String targetRepositoryId = XPathUtils.getAttributeValue(element, TARGET_REPOSITORY_ID);
-		String xsltDir = this.xsltDir;
-		fileName = xsltDir+sourceSystemId+PARAM_DELIMITER+sourceRepositoryId+PARAM_DELIMITER+targetSystemId+PARAM_DELIMITER+targetRepositoryId+".xsl";
+		if(!StringUtils.isEmpty(this.xsltDir)){
+			Document document = (Document) record;
+			Element element = XPathUtils.getRootElement(document);
+			String sourceSystemId = XPathUtils.getAttributeValue(element, SOURCE_SYSTEM_ID);
+			String targetSystemId = XPathUtils.getAttributeValue(element, TARGET_SYSTEM_ID);
+			String sourceRepositoryId = XPathUtils.getAttributeValue(element, SOURCE_REPOSITORY_ID);
+			String targetRepositoryId = XPathUtils.getAttributeValue(element, TARGET_REPOSITORY_ID);
+			String xsltDir = this.xsltDir;
+			fileName = xsltDir+sourceSystemId+PARAM_DELIMITER+sourceRepositoryId+PARAM_DELIMITER+targetSystemId+PARAM_DELIMITER+targetRepositoryId+".xsl";
+		}
+		else if(!StringUtils.isEmpty(this.xsltFile)){
+			fileName = this.xsltFile;
+		}
 		if(!xsltFileNameTransformerMap.containsKey(fileName)){
 			transform = loadXSLT(fileName);
 			xsltFileNameTransformerMap.put(fileName, transform);
@@ -196,7 +200,6 @@ public class XsltProcessor extends Component implements IDataProcessor {
 		else {
 			transform = xsltFileNameTransformerMap.get(fileName);
 		}
-		
 		return transform;
 	}
 	
@@ -271,5 +274,9 @@ public class XsltProcessor extends Component implements IDataProcessor {
 			throw new ProcessingException("Failed to parse XML: "
 					+ e.getMessage(), this);
 		}
+	}
+
+	public String getXsltFile() {
+		return xsltFile;
 	}
 }
