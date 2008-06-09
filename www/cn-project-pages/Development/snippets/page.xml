@@ -7,7 +7,7 @@
     </component>
     <component visibility="1" type="ArtifactReport" order="2" layout="1">
       <title localize="false" />
-      <report title="Subversion Activity" view_link="ReportView?acttype=false&amp;at=Commit&amp;reportId=1&amp;saved=true&amp;reportTitle=Subversion+Activity&amp;reportType=trend&amp;p6=false&amp;tl=svn&amp;scope=Project&amp;mt=ProjectActivity&amp;rel=true&amp;tf=LastFourWeeks">ReportLetView?acttype=false&amp;at=Commit&amp;reportId=1&amp;saved=true&amp;reportTitle=Subversion+Activity&amp;reportType=trend&amp;p6=false&amp;tl=svn&amp;scope=Project&amp;mt=ProjectActivity&amp;rel=true&amp;tf=LastFourWeeks</report>
+      <report title="Subversion Activity" view_link="ReportView?acttype=false&amp;at=Commit&amp;reportId=1&amp;saved=true&amp;reportTitle=Subversion+Activity&amp;reportType=trend&amp;p6=false&amp;tl=svn&amp;scope=Project&amp;mt=ProjectActivity&amp;rel=true&amp;tf=LastFourteenDays">ReportLetView?acttype=false&amp;at=Commit&amp;reportId=1&amp;saved=true&amp;reportTitle=Subversion+Activity&amp;reportType=trend&amp;p6=false&amp;tl=svn&amp;scope=Project&amp;mt=ProjectActivity&amp;rel=true&amp;tf=LastFourteenDays</report>
     </component>
   </component_list>
 </page>
