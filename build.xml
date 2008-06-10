@@ -205,7 +205,7 @@
 				<exclude name="*JUnit*.jar"/>
 			</fileset>
 			<fileset dir="config">
-				<include name="log4j.properties" />
+				<include name="log4j.xml" />
 			</fileset>
 		</copy>
 		<mkdir dir="build/package/lib/extlib"/>
