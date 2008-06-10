@@ -29,8 +29,8 @@ import com.collabnet.ccf.pi.qc.v90.api.IRecordSet;
 import com.collabnet.ccf.pi.qc.v90.api.dcom.Bug;
 
 /**
- * The tracker handler class provides support for listing and/or edit trackers
- * and artifacts.
+ * The attachment handler class provides support for listing and/or create attachments.
+ * 
  */
 public class QCAttachmentHandler {
 
@@ -43,18 +43,22 @@ public class QCAttachmentHandler {
 	private static final long maxAttachmentSizePerCycle = 5000000;
 	private static long cumulativeAttachmentSize = 0;
 
-	// private static final String[] attachmentMetaData = {
-	// "attachmentName", "attachmentId", "attachmentSize",
-	// "attachmentSourceUrl", "attachmentType",
-	// "attachmentMIMEType", "attachmentValueHasChanged",
-	// "attachmentValueType", "attachmentValueIsNull"};
-
 	public static IRecordSet executeSQL(IConnection qcc, String sql) {
 		ICommand command = qcc.getCommand();
 		command.setCommandText(sql);
 		return command.execute();
 	}
-
+	/**
+	 * Fetches the QC defect given the connection object and the defect ID to be fetched.
+	 * 
+	 * @param qcc
+	 *            The Connection object
+	 * @param id
+	 *            The defect ID which needs to be fetched             
+	 * @return QCDefect
+	 * 			  QCDefect object that represents a QC Defect	
+	 * 
+	 */
 	public QCDefect getDefectWithId(IConnection qcc, int id) {
 		IFactory bf = qcc.getBugFactory();
 		IFilter filter = bf.getFilter();
@@ -79,6 +83,17 @@ public class QCAttachmentHandler {
 		return defect;
 	}
 
+	/**
+	 * Stores the incoming data with the given file name
+	 * 
+	 * @param data array
+	 *            The data to be stored
+	 * @param fileName
+	 *            The Name of the file in a temp Dir to hold the data             
+	 * @return File object
+	 * 			  Pointing to the created File	
+	 * 
+	 */
 	public File writeDataIntoFile(byte[] data, String fileName) {
 		File attachmentFile = null;
 		String tempDir = System.getProperty("java.io.tmpdir");
@@ -94,7 +109,24 @@ public class QCAttachmentHandler {
 
 		return attachmentFile;
 	}
-
+	/**
+	 * Create the attachment for the defect identified by the incoming bugId in QC
+	 * 
+	 * @param qcc
+	 *            The Connection object
+	 * @param entityId
+	 *            The ID of the defect to which the attachment need to be created
+	 * @param attachmentName
+	 * 			  The name of the file as attachment found in the source system's defect.
+	 * @param contentTypeValue
+	 * 			  Indicates if this is a DATA or LINK
+	 * @param data
+	 * 			  The byte[] of data
+	 * @param attachmentSourceUrl
+	 * 			  Link as attachment containing the exact link found in the source system's defect
+	 *          
+	 * 
+	 */
 	public void createAttachment(IConnection qcc, String entityId,
 			String attachmentName, String contentTypeValue, byte[] data,
 			String attachmentSourceUrl) {
@@ -127,7 +159,11 @@ public class QCAttachmentHandler {
 
 		return;
 	}
-
+	/**
+	 * Deletes the temporary file that was used to store the content of the data and use the fileName of that temporary file
+	 * to actually ship the attachment(s).
+	 *
+	 */
 	public boolean deleteTempFile(String fileName) {
 
 		File f = new File(fileName);
@@ -157,7 +193,21 @@ public class QCAttachmentHandler {
 
 		return success;
 	}
-
+	/**
+	 * Obtains the artifactAction based on the date at which that defect was created and the lastReadTime synchronization parameter.
+	 * @param entityId
+	 * 			The defectId for which the search has to be made in QC
+	 * @param actionId
+	 * 			The transactionId at which it needs to be determined if the defect is a create or update.
+	 * @param qcc
+	 *          The Connection object
+	 * @param latestDefectArtifact
+	 *          The GenericArtifact into which the artifactAction is populated after it is determined.
+	 * @param lastReadTime
+	 * 			This is synchronization parameter used to compare with the defect created date and find out the artifactAction.
+	 * @return GenericArtifact
+	 * 			Updated artifact
+	 */
 	public GenericArtifact getArtifactAction(
 			GenericArtifact latestDefectArtifact, IConnection qcc,
 			String actionId, int entityId, String lastReadTime) {
@@ -180,7 +230,13 @@ public class QCAttachmentHandler {
 				+ lastReadDate);
 		return latestDefectArtifact;
 	}
-
+	/**
+	 * Obtains the date at which the defect identified by the entityId was created
+	 * 
+	 * @param qcc
+	 * @param entityId
+	 * @return
+	 */
 	public Date getDefectCreatedDate(IConnection qcc, int entityId) {
 
 		String sql = "SELECT AU_TIME FROM AUDIT_LOG WHERE AU_ENTITY_TYPE='BUG' AND AU_ENTITY_ID= '"
@@ -201,7 +257,13 @@ public class QCAttachmentHandler {
 
 		return createdOn;
 	}
-
+	/**
+	 * Gets the BG_VTS value for the given defect from QC as the value is not populated in the GenericArtifact
+	 * @param qcc
+	 * @param actionId
+	 * @param entityId
+	 * @return
+	 */
 	public String findBgVtsFromQC(IConnection qcc, int actionId, int entityId) {
 
 		String sql = "SELECT * FROM AUDIT_LOG WHERE AU_ACTION_ID='" + actionId
@@ -211,6 +273,28 @@ public class QCAttachmentHandler {
 		return auTime;
 	}
 
+	/**
+	 * Used by the QCReader's getArtifactAttachments which is an implementation of the AbstractReader method. This method
+	 * gets the attachment data as c(s) for a given defectId after a particular transaction.
+	 * 
+	 * @param modifiedAttachmentArtifacts
+	 * 			This list of GenericArtifacts is used to store the obtained attachments as GenericArtifacts and returned
+	 * @param qcc
+	 * @param connectorUser
+	 * @param transactionId
+	 * @param lastReadTime
+	 * @param sourceArtifactId
+	 * @param sourceRepositoryId
+	 * @param sourceRepositoryKind
+	 * @param sourceSystemId
+	 * @param sourceSystemKind
+	 * @param targetRepositoryId
+	 * @param targetRepositoryKind
+	 * @param targetSystemId
+	 * @param targetSystemKind
+	 * @return
+	 * @throws RemoteException
+	 */
 	public List<GenericArtifact> getLatestChangedAttachments(
 			List<GenericArtifact> modifiedAttachmentArtifacts, IConnection qcc,
 			String connectorUser, String transactionId, String lastReadTime,
@@ -280,7 +364,14 @@ public class QCAttachmentHandler {
 		// }
 		return modifiedAttachmentArtifacts;
 	}
-
+	/**
+	 * Obtains the attachment ID, attachment Type (data or link) and attachment description for a given defectId
+	 * 
+	 * @param qcc
+	 * @param entityId
+	 * @param attachmentName
+	 * @return
+	 */
 	public static List<String> getFromTable(IConnection qcc, String entityId,
 			String attachmentName) {
 
@@ -300,7 +391,24 @@ public class QCAttachmentHandler {
 
 		return attachmentDetails;
 	}
-
+	/**
+	 * Assigns values of the incoming parameters to the incoming genericArtifact and returns the updated one.
+	 * 
+	 * @param latestDefectArtifact
+	 * 		The GenericArtifact to which the following values need to be assigned.
+	 * @param sourceArtifactId
+	 * @param sourceRepositoryId
+	 * @param sourceRepositoryKind
+	 * @param sourceSystemId
+	 * @param sourceSystemKind
+	 * @param targetRepositoryId
+	 * @param targetRepositoryKind
+	 * @param targetSystemId
+	 * @param targetSystemKind
+	 * @param thisTransactionId
+	 * @return
+	 * 		Assigned GenericArtifact
+	 */
 	public GenericArtifact assignValues(GenericArtifact latestDefectArtifact,
 			String sourceArtifactId, String sourceRepositoryId,
 			String sourceRepositoryKind, String sourceSystemId,
@@ -323,6 +431,16 @@ public class QCAttachmentHandler {
 		return latestDefectArtifact;
 	}
 
+	/**
+	 * Constructs the GenericArtifact Java object for the attachment after getting the schema from getSchemaAttachment method
+	 * It also populates all the values into the attachment artifact.
+	 *  
+	 * @param qcc
+	 * @param entityId
+	 * @param attachmentName
+	 * @return GenericArtifact
+	 * 			Containing all the field values.
+	 */
 	public GenericArtifact getGenericArtifactObjectOfAttachment(
 			IConnection qcc, String entityId, String attachmentName) {
 		long attachmentSize = 0;
@@ -428,7 +546,19 @@ public class QCAttachmentHandler {
 
 		return genericArtifact;
 	}
-
+	/**
+	 * Gets the value of the lastTransactionId of a defect and a list of descriptions for attachments (if any)
+	 * 
+	 * @param bugId
+	 * 			The defectId for which the search has to be made in QC
+	 * @param txnId
+	 * 			The transactionId starting from which the search has to be made for a particular defectId in QC
+	 * @param qcc
+	 *            The Connection object
+	 * @param connectorUser
+	 *            The connectorUser name used while updating the comments
+	 * @return List<Object> -> String TransactionId and List of attachment names for the given defectId after the given transactionId              
+	 */
 	public List<Object> getTxnIdAndAuDescription(String bugId, String txnId,
 			IConnection qcc) {
 
@@ -460,7 +590,14 @@ public class QCAttachmentHandler {
 
 		return txnIdAndAuDescription;
 	}
-
+	/**
+	 * Gets the exact operation of the attachment i.e, added, deleted or updated
+	 * 
+	 * @param auDescription
+	 * 			This is the field denoting the attachment operation in CROS_REF table of QC.
+	 * @return List<String>
+	 * 			This list contains 1. attachLabel ("attachment") 2. exact operation("added" or "updated") 3. attachment ID
+	 */
 	public List<String> getAttachmentOperation(String auDescription) {
 
 		List<String> attachDescription = new ArrayList<String>();
@@ -505,6 +642,14 @@ public class QCAttachmentHandler {
 			return false;
 	}
 
+	/**
+	 * Creates the schema for the attachment artifact based on the fields that need to be added from the attachmentMetaData.
+	 * It also initializes the attachmentId, attachmentType and attachmentDescription
+	 * @param qcc
+	 * @param entityId
+	 * @param attachmentName
+	 * @return
+	 */
 	public static GenericArtifact getSchemaAttachment(IConnection qcc,
 			String entityId, String attachmentName) {
 
