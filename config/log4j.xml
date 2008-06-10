@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/">
+  <appender name="console" class="org.apache.log4j.ConsoleAppender"> 
+    <param name="Target" value="System.out"/> 
+    <layout class="org.apache.log4j.PatternLayout"> 
+      <param name="ConversionPattern" value="%5p [%t] (%F:%L) - %m%n"/> 
+    </layout> 
+  </appender>
+
+  <appender name="R" class="org.apache.log4j.RollingFileAppender"> 
+    <param name="File" value="logs/ccf.log"/> 
+	<param name="MaxFileSize" value="1024KB"/>
+	<param name="MaxBackupIndex" value="10"/>
+    <layout class="org.apache.log4j.PatternLayout"> 
+      <param name="ConversionPattern" value="%p %t %c - %m%n"/> 
+    </layout> 
+  </appender>
+  <appender name="SMTPAppender" class="org.apache.log4j.net.SMTPAppender"> 
+    <param name="Threshold" value="ERROR"/> 
+	<param name="To" value="madhusuthanan@collab.net"/>
+	<param name="From" value="madhusuthanan@collab.net"/>
+	<param name="SMTPHost" value="maa-exchmb.maa.corp.collab.net"/>
+	<param name="BufferSize" value="100"/>
+	<param name="Subject" value="CCF Error Notification"/>
+    <layout class="org.apache.log4j.PatternLayout"> 
+      <param name="ConversionPattern" value="%-5p %d{ISO8601} - %m%n"/> 
+    </layout> 
+  </appender>
+
+  <root> 
+    <priority value ="warn" /> 
+    <appender-ref ref="console" />
+	<appender-ref ref="R" />
+  </root>
+  <logger name="com.collabnet">
+    <level value="debug"/>
+	<appender-ref ref="console" />
+	<appender-ref ref="R" />
+	<appender-ref ref="SMTPAppender" />
+  </logger>
+</log4j:configuration>
