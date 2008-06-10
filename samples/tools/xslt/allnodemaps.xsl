@@ -66,7 +66,7 @@
           a.th:link {color: white; }
           a.th:visited {color: white; }
         </style>
-        <title>ImagesIndex</title>
+        <title>Graphical View of Integration Scenarios</title>
       </head>
 
       <body>
@@ -74,11 +74,11 @@
           <tr>
             <th>
               <font color="white">
-                <a class="th" href="./config2beans.html">ConfigToBeans</a>
+                <a class="th" href="./config2beans.html">Integration Scenario To Used CCF Components</a>
                 <xsl:text> | </xsl:text>
-                <a class="th" href="./beans2config.html">BeansToConfig</a>
+                <a class="th" href="./beans2config.html">CCF component to Integration Scenarios</a>
                 <xsl:text> | </xsl:text>
-                <xsl:text>ImagesIndex</xsl:text>
+                <xsl:text>Graphical View of Integration Scenarios</xsl:text>
               </font>
             </th>
           </tr>
@@ -109,7 +109,7 @@
                       <xsl:text> | </xsl:text>
                       <a class="th" href="./{$idAsRelativePath}.xml">XML</a>
                       <xsl:text> | </xsl:text>
-                      <a class="th" href="./config2beans.html#{@id}">ConfigToBeans</a>
+                      <a class="th" href="./config2beans.html#{@id}">Integration Scenario To Used CCF Components</a>
                     </font>
                   </th>
                 </tr>

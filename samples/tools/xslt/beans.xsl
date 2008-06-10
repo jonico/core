@@ -119,9 +119,9 @@
             <a class="th" href="{$baseRelativeDotDot}{$xmlRelative}{$thisExample}.xml">XML</a>
             <xsl:if test="$showConfigIndexLinks='true'">
               <xsl:text> | </xsl:text>
-              <a class="th" href="{$baseRelativeDotDot}config2beans.html#{translate(translate($thisExample,'_','-'),'/','_')}">ConfigToBeans</a>
+              <a class="th" href="{$baseRelativeDotDot}config2beans.html#{translate(translate($thisExample,'_','-'),'/','_')}">Integration Scenario To Used CCF Components</a>
               <xsl:text> | </xsl:text>
-              <a class="th" href="{$baseRelativeDotDot}allimages.html#{translate(translate($thisExample,'_','-'),'/','_')}">ImagesIndex</a>
+              <a class="th" href="{$baseRelativeDotDot}allimages.html#{translate(translate($thisExample,'_','-'),'/','_')}">Graphical View of Integration Scenarios</a>
             </xsl:if>
           </font>
         </th>
