@@ -1,6 +1,8 @@
 package com.collabnet.ccf.pi.qc.v90;
 
+import java.rmi.RemoteException;
 import java.sql.Timestamp;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -11,14 +13,18 @@ import org.apache.commons.logging.LogFactory;
 import org.dom4j.Document;
 import org.dom4j.Node;
 import org.openadaptor.core.IDataProcessor;
-
 import com.collabnet.ccf.core.AbstractReader;
+
 import com.collabnet.ccf.core.eis.connection.ConnectionManager;
 import com.collabnet.ccf.core.eis.connection.MaxConnectionsReachedException;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
 import com.collabnet.ccf.pi.qc.v90.api.IConnection;
+import com.collabnet.ccf.pi.sfee.v44.Connection;
+import com.collabnet.ccf.pi.sfee.v44.SFEEConnectionFactory;
+import com.vasoftware.sf.soap44.webservices.sfmain.TrackerFieldSoapDO;
+import com.vasoftware.sf.soap44.webservices.tracker.ArtifactSoapDO;
 
 /**
  * QCReader is responsible for reading the defect data from
@@ -53,7 +59,11 @@ public class QCReader extends AbstractReader  implements
 	public QCReader(String id) {
 	   // super(id);
 	}
-
+	/**
+	 * Deprecated process method. Since QCReader extends AbstractReader, the process method of the AbstractReader is executed in
+	 * the openadaptor wiring.
+	 * 
+	 */
 	public Object[] processDeprecated(Object data) {
 		// TODO evaluate data to decide which items to fetch again
 		if (!(data instanceof Document)) {
@@ -119,7 +129,17 @@ public class QCReader extends AbstractReader  implements
 		
 	}
 
-	
+	/**
+	 * Fetches the defect IDs that are changed depending on the synchronization parameters.
+	 * 
+	 * @param syncInfo
+	 *            Document given by the polling reader of QC system containing the source & target system and
+	 *            synchronization information.
+	 *             
+	 * @return List<String>
+	 * 			  List of strings that contains the defect ID(s)	
+	 * 
+	 */
 	@Override
 	public List<String> getChangedArtifacts(Document syncInfo) {
 		String sourceArtifactId = getSourceArtifactId(syncInfo); 
@@ -167,6 +187,18 @@ public class QCReader extends AbstractReader  implements
 	}
 	
 	
+	/**
+	 * Fetches the attachment(s) for a given artifactId from the system.	 * 
+	 * 
+	 * @param syncInfo
+	 *            Document given by the polling reader of QC system containing the source & target system and
+	 *            synchronization information.
+	 * @param artifactId
+	 *            A string that represents the defectId for which the attachments need to be fetched.            
+	 * @return List<GenericArtifact>
+	 * 			  List of GenericArtifact Java Object that contains the complete information abou the attachment(s)	
+	 * 
+	 */
 	@Override
 	public List<GenericArtifact> getArtifactAttachments(Document syncInfo,
 			String artifactId) {
@@ -207,7 +239,20 @@ public class QCReader extends AbstractReader  implements
 		return attachments;
 	}
 	
-	
+	/**
+	 * Fetches the defect(s) data for a given artifactId from the system. In the case of shipping only the latest state of a defect, 
+	 * it returns only 1 artifact element in the list. Whereas in the case of shipping the history or incremental updates, it 
+	 * ships the history information as individual GenericArtifacts. 
+	 * 
+	 * @param syncInfo
+	 *            Document given by the polling reader of QC system containing the source & target system and
+	 *            synchronization information.
+	 * @param artifactId
+	 *            A string that represents the defectId for which the defects need to be fetched.            
+	 * @return List<GenericArtifact>
+	 * 			  List of GenericArtifact Java Object that contains the complete information about the defect(s)	
+	 * 
+	 */
 	@Override
 	public List<GenericArtifact> getArtifactData(Document syncInfo,
 			String artifactId) {
@@ -274,6 +319,18 @@ public class QCReader extends AbstractReader  implements
 		return modifiedDefectArtifacts;
 	}
 
+	/**
+	 * TO BE DONE: Fetches the dependencies that are changed depending on the synchronization parameters.
+	 * 
+	 * @param syncInfo
+	 *            Document given by the polling reader of QC system containing the source & target system and
+	 *            synchronization information.
+	 *             
+	 * @return List<GenericArtifact>
+	 * 			  List of strings that contains the GenericArtifact Java objects containing the complete information 
+	 * 			  about the dependencies.	
+	 * 
+	 */
 	@Override
 	public List<GenericArtifact> getArtifactDependencies(Document syncInfo,
 			String artifactId) {
@@ -284,6 +341,11 @@ public class QCReader extends AbstractReader  implements
 	
 	
 	
+	/**
+	 * Disconnects from the QC using the ConnectionManager.
+	 * 
+	 * @param connection
+	 */
 	private void disconnect(IConnection connection) {
 		// TODO Auto-generated method stub
 		connectionManager.releaseConnection(connection);
@@ -297,6 +359,25 @@ public class QCReader extends AbstractReader  implements
 		return isDry;
 	}
 
+	/**
+	 * Establish a connection with QC system
+	 * 
+	 * @param systemId
+	 *            Id indicating a QC system.
+	 * @param systemKind
+	 *            Indicates whether it is a DEFECT or TEST and so on.
+	 * @param repositoryId
+	 *            Specifies the name of DOMAIN and PROJECT in QC system to which connection needs to established.
+	 * @param repositoryKind
+	 *            Indicates which version of QC like QC 9.0, QC9.2.
+	 * @param connectionInfo
+	 *            The server URL     
+	 * @param credentialInfo
+	 *            Username and password needed for establishing a connection  
+	 * @return IConnection
+	 *            The connection object                           
+	 *
+	 */
 	public IConnection connect(String systemId, String systemKind, String repositoryId,
 			String repositoryKind, String connectionInfo, String credentialInfo) {
 		log.info("Before calling the parent connect()");
@@ -314,7 +395,10 @@ public class QCReader extends AbstractReader  implements
 	}
 	
 	
-	
+	/**
+	 * Deprecated method that was previously used along with the process method of this class which is also deprecated now.
+	 * 
+	 */
 	public Object[] readModifiedDefects(String transactionId, String lastReadTime, String sourceArtifactId, 
 			String sourceRepositoryId, String sourceRepositoryKind, String sourceSystemId,
 			String sourceSystemKind, String targetRepositoryId, String targetRepositoryKind,
@@ -397,31 +481,35 @@ public class QCReader extends AbstractReader  implements
 		//return super.getUserName();
 		return userName;
 	}
+	
+	/**
+	 * To assign values to mandatory artifact properties in the case of an empty artifact.
+	 * 
+	 * @param emptyGenericArtifact
+	 * 					The GenericArtifact Java object to be populated
+	 * @param connection
+	 * 					The IConnection object
+	 * @return GenericArtifact after populating the required fields.
+	 * 
+	 */
 	public GenericArtifact populateRequiredFields(GenericArtifact emptyGenericArtifact, IConnection connection) {
-		
 		
 		emptyGenericArtifact = QCConfigHelper.getSchemaFields(connection);
 		emptyGenericArtifact.setArtifactMode(GenericArtifact.ArtifactModeValue.UNKNOWN);
 		emptyGenericArtifact.setArtifactType(GenericArtifact.ArtifactTypeValue.UNKNOWN);
 		emptyGenericArtifact.setArtifactAction(GenericArtifact.ArtifactActionValue.UNKNOWN);
 		
-		/*List<GenericArtifactField> allFields = emptyGenericArtifact.getAllGenericArtifactFields();
-		for (GenericArtifactField thisField : allFields) {
-			thisField.setFieldAction(GenericArtifactField.FieldActionValue.UNKNOWN);
-		}
-		*/
 		return emptyGenericArtifact;
 	}
-	
-	public String getLastTransactionIdFromLastArtifact(List<GenericArtifact> defectRows) {
-		
-		String newTransactionId = "";
-		int size = defectRows.size();
-		GenericArtifact thisArtifact = defectRows.get(size-1);
-		newTransactionId = thisArtifact.getLastReadTransactionId();
-		return newTransactionId;
-	}
-	
+	/**
+	 * To convert a string into QC specific timestamp
+	 * 
+	 * @param string newFromTime
+	 * 					The string to be converted
+	 * @return Timestamp 
+	 * 					The converted timestamp corresponding to string
+	 * 
+	 */
 	public Timestamp convertIntoTimestamp(String newFromTime) {
 		Timestamp fromDateInTimestamp=null;
 		try {
@@ -436,7 +524,14 @@ public class QCReader extends AbstractReader  implements
 		}
 		return fromDateInTimestamp;
 	}
-	
+	/**
+	 * To convert a QC specific timestamp into a string
+	 * 
+	 * @param String fromTimestamp 
+	 * 					The timestamp to be converted into its corresponding string value
+	 * @return string 
+	 * 					The string representation of the incoming timeStamp
+	 */
 	public String convertIntoString(String fromTimeStamp) {
 		String finalString=null;
 		try {
@@ -453,30 +548,36 @@ public class QCReader extends AbstractReader  implements
 		return finalString;		
 	}
 	
+	
+	/**
+	 * To extract values from the incoming Document
+	 * 
+	 * @param Document 
+	 * 					
+	 * @return String 
+	 * 				The required value from the Document. For example, the getVersion method extracts VERSION from the Document.
+	 */
+	
 	@SuppressWarnings("unused")
 	private String getVersion(Document document) {
-		// TODO Let the user specify this value?
 		Node node= document.selectSingleNode("//VERSION");
 		if (node==null)
 			return null;
 		return node.getText();
 	}
 	private String getTransactionId(Document document) {
-		// TODO Let the user specify this value?
 		Node node= document.selectSingleNode("//TRANSACTION_ID");
 		if (node==null)
 			return null;
 		return node.getText();
 	}	
 	public String getFromTime(Document document) {
-		// TODO Let the user specify this value?
 		Node node= document.selectSingleNode("//FROM_TIME");
 		if (node==null)
 			return null;
 		return node.getText();
 	}
 	public String getSourceArtifactId(Document document) {
-		// TODO Let the user specify this value?
 		Node node= document.selectSingleNode("//SOURCE_ARTIFACT_ID");
 		if (node==null)
 			return null;
@@ -484,14 +585,12 @@ public class QCReader extends AbstractReader  implements
 	}
 
 	public String getSourceRepositoryId(Document document) {
-		// TODO Let the user specify this value?
 		Node node= document.selectSingleNode("//SOURCE_REPOSITORY_ID");
 		if (node==null)
 			return null;
 		return node.getText();
 	}
 	public String getSourceRepositoryKind(Document document) {
-		// TODO Let the user specify this value?
 		Node node= document.selectSingleNode("//SOURCE_REPOSITORY_KIND");
 		if (node==null)
 			return null;
@@ -499,14 +598,12 @@ public class QCReader extends AbstractReader  implements
 	}
 
 	public String getSourceSystemId(Document document) {
-		// TODO Let the user specify this value?
 		Node node= document.selectSingleNode("//SOURCE_SYSTEM_ID");
 		if (node==null)
 			return null;
 		return node.getText();
 	}
 	public String getSourceSystemKind(Document document) {
-		// TODO Let the user specify this value?
 		Node node= document.selectSingleNode("//SOURCE_SYSTEM_KIND");
 		if (node==null)
 			return null;
@@ -514,14 +611,12 @@ public class QCReader extends AbstractReader  implements
 	}
 		
 	public String getTargetRepositoryId(Document document) {
-		// TODO Let the user specify this value?
 		Node node= document.selectSingleNode("//TARGET_REPOSITORY_ID");
 		if (node==null)
 			return null;
 		return node.getText();
 	}
 	public String getTargetRepositoryKind(Document document) {
-		// TODO Let the user specify this value?
 		Node node= document.selectSingleNode("//TARGET_REPOSITORY_KIND");
 		if (node==null)
 			return null;
@@ -529,14 +624,12 @@ public class QCReader extends AbstractReader  implements
 	}
 
 	public String getTargetSystemId(Document document) {
-		// TODO Let the user specify this value?
 		Node node= document.selectSingleNode("//TARGET_SYSTEM_ID");
 		if (node==null)
 			return null;
 		return node.getText();
 	}
 	public String getTargetSystemKind(Document document) {
-		// TODO Let the user specify this value?
 		Node node= document.selectSingleNode("//TARGET_SYSTEM_KIND");
 		if (node==null)
 			return null;
