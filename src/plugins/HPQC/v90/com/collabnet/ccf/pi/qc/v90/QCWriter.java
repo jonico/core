@@ -38,6 +38,19 @@ public class QCWriter /*extends QCConnectHelper */ implements
 	   // super(id);
 	}
 
+	/**
+	 * This is the crutial method to process the incoming dom4j Document, extract the fields from the converted 
+	 * GenericArtifact format, creating or updating defects or attachments for the defectId in the target system 
+	 * contained in the targetArtifactId field. If it is a create operation, the defect is created and the id thus obtained
+	 * is populated in the targetArtifactId field so as to update the SYNCHRONIZATION_STATUS and IDENITY_MAPPING tables
+	 * of the database.
+	 * 
+	 * Defect artifacts and attachment artifacts are handled separately after distinguishing them based on the artifactType
+	 * field of the GenericArtifact.
+	 * 
+	 * @param data
+	 * @return
+	 */
 	private Object[] processXMLDocument(Object data) {
 		
 		Document genericArtifactDocument = (Document) data;
@@ -206,6 +219,13 @@ public class QCWriter /*extends QCConnectHelper */ implements
 		return result;
 	}
 	
+	/**
+	 * Converts the genericArtifactDocument into GenericArtifact Java object using the GenericArtifactHelper methods.
+	 * 
+	 * @param genericArtifactDocument
+	 * @return GenericArtifact
+	 * 			The converted GenericArtifact from the dom4j Document.
+	 */
 	public static GenericArtifact getArtifactFromDocument(Document genericArtifactDocument) {
 		
 		GenericArtifact genericArtifact = new GenericArtifact();
@@ -220,6 +240,11 @@ public class QCWriter /*extends QCConnectHelper */ implements
 		return genericArtifact;
 	}
 	
+	/**
+	 * In the case of memo fields like Comments, the multiple values are concatinated before writing them into the target system.
+	 * @param genericArtifact
+	 * @return
+	 */
 	public GenericArtifact concatValuesOfSameFieldNames(GenericArtifact genericArtifact) {
 		
 		List<GenericArtifactField> allFields = genericArtifact.getAllGenericArtifactFields();
@@ -245,12 +270,13 @@ public class QCWriter /*extends QCConnectHelper */ implements
 	}
 	
 	
-//	public void connectProperly() {
-//		
-//		connect();
-//		//qcc.connectProjectEx(getDomain(), getProjectName(), getUserName(), getPassword());
-//		return;
-//	}
+	/**
+	 * Obtains the value of the specified field from the incoming Document.
+	 * 
+	 * @param individualGenericArtifact
+	 * @param fieldName
+	 * @return String
+	 */
 	public static String getFieldValueFromGenericArtifact(GenericArtifact individualGenericArtifact, String fieldName) {
 		
 		String fieldValue = null;
@@ -260,6 +286,14 @@ public class QCWriter /*extends QCConnectHelper */ implements
 		return fieldValue;
 	}
 	
+	/**
+	 * Checks if defect with the incoming defectId exists in the target system. 
+	 * 
+	 * @param bugId
+	 * @param connection
+	 * @return boolean
+	 * 			Returns true if the defect exists, false otherwise.
+	 */
 	public boolean checkForBugIdInQC(int bugId, IConnection connection) {
 		
 		QCDefect thisDefect = defectHandler.getDefectWithId(connection, bugId);
@@ -269,7 +303,25 @@ public class QCWriter /*extends QCConnectHelper */ implements
 		else
 			return false;
 	}
-	
+	/**
+	 * Establish a connection with QC system
+	 * 
+	 * @param systemId
+	 *            Id indicating a QC system.
+	 * @param systemKind
+	 *            Indicates whether it is a DEFECT or TEST and so on.
+	 * @param repositoryId
+	 *            Specifies the name of DOMAIN and PROJECT in QC system to which connection needs to established.
+	 * @param repositoryKind
+	 *            Indicates which version of QC like QC 9.0, QC9.2.
+	 * @param connectionInfo
+	 *            The server URL     
+	 * @param credentialInfo
+	 *            Username and password needed for establishing a connection  
+	 * @return IConnection
+	 *            The connection object                           
+	 *
+	 */
 	public IConnection connect(String systemId, String systemKind, String repositoryId,
 			String repositoryKind, String connectionInfo, String credentialInfo) {
 		log.info("Before calling the parent connect()");
@@ -285,7 +337,11 @@ public class QCWriter /*extends QCConnectHelper */ implements
 		//isDry=false;
 		return connection;
 	}
-	
+	/**
+	 * Disconnects from the QC using the ConnectionManager.
+	 * 
+	 * @param connection
+	 */
 	private void disconnect(IConnection connection) {
 		// TODO Auto-generated method stub
 		if(connection != null)
@@ -312,6 +368,12 @@ public class QCWriter /*extends QCConnectHelper */ implements
 		    return processXMLDocument((Object) data);
 	}
 
+	/**
+	 * Setters and geters for various private variables of this class.
+	 * 
+	 * 
+	 */
+	
 	public void reset(Object context) {
 	}
 
