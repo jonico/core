@@ -85,7 +85,7 @@
 		<mkdir dir="build/classes" />
 	</target>
 	<target depends="clean" name="cleanall" />
-	<target depends="init, build.core, build.sfee.plugin, build.junit.tests, junit, package" name="build" />
+	<target depends="init, build.core, build.sfee.plugin, build.sample, build.junit.tests, junit, package" name="build" />
 
 	<target name="build.core">
 		<antcall target="clean">
@@ -138,6 +138,27 @@
 			</fileset>
 		</jar>
 	</target>
+	<target name="build.sample">
+			<antcall target="clean">
+			</antcall>
+			<javac debug="true" debuglevel="${debuglevel}" 
+				destdir="samples/SFEE2SFEE/custom-reader/bin"
+				source="${source}" target="${target}">
+				<src path="samples/SFEE2SFEE/custom-reader/src" />
+				<classpath refid="CCFJ.classpath" />
+				<classpath>
+					<fileset dir="build/jars">
+						<include name="CCFCoreV10.jar" />
+					</fileset>
+				</classpath>
+
+			</javac>
+			<jar destfile="build/jars/CCFSFEEPluginV44.jar">
+				<fileset dir="build/classes">
+					<include name="**/*.class" />
+				</fileset>
+			</jar>
+		</target>
 	<target name="build.junit.tests">
 		<antcall target="clean">
 		</antcall>
