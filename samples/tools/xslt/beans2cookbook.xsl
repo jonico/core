@@ -31,7 +31,7 @@
   Software with other software or hardware.
   ]]
   
-  $HeadURL: https://openadaptor3.openadaptor.org/svn/openadaptor3/tags/3.4/example/tools/xslt/beans2cookbook.xsl $
+  $HeadURL$
   
   @author Andrew Shire
   
@@ -121,7 +121,7 @@
                             <xsl:text> | </xsl:text>
                             <a href="./{$exampleAsRelativePath}.html">Documentation</a>
                             <xsl:text> | </xsl:text>
-                            <a href="../{$exampleAsRelativePath}.xml">XML</a>
+                            <a href="./{$exampleAsRelativePath}.xml">XML</a>
                             <xsl:text> | </xsl:text>
                             <a href="./config2beans.html#{$thisExample}">ConfigToBeans</a>
                           </td>

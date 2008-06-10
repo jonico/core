@@ -53,7 +53,7 @@
   <property name="src.examples.dir" value=".." />
   <property name="src.examples.tools.dir" value="." />
 
-  <property name="build.examples.docs.dir" value="../../www/sample-scenario-docs" />
+  <property name="build.examples.docs.dir" value="../../www/exampleScenarioDocs" />
   <property name="build.examples.images.dir" value="${build.examples.docs.dir}" />
 
   <property name="filecomment.path.pattern1" value="$HeadURL: http://ccf.open.collab.net/svn/ccf/trunk/samples/"/>
@@ -64,7 +64,7 @@
 
     <!-- Include all of the XML example files, except the ones that are not Spring XML config: -->
   <patternset id="example.xml.config.files">
-    <include name="CSV2CSV/**/*.xml" />
+    <include name="SFEE2SFEE/**/*.xml" />
     <exclude name="**/input/*.xml" />
     <exclude name="**/output/*.xml" />
   </patternset>
@@ -189,11 +189,11 @@
       <param name="filepathGlobPrefix3" expression="${filecomment.path.pattern3}" />
       <param name="filepathGlobPrefix4" expression="${filecomment.path.pattern4}" />
       <param name="showJavaDocLinks" expression="true" />
-      <param name="docsRelativeToTools" expression="../../../www/sample-scenario-docs/" />
+      <param name="docsRelativeToTools" expression="../../../www/exampleScenarioDocs/" />
       <param name="showConfigIndexLinks" expression="true" />
       <!-- JavaDoc relative path or an http(s) URL: (must have trailing slash) -->
       <param name="javaDocPath" expression="../javadocs/" />
-      
+      <param name="xmlRelative" expression="./" />
       <xmlcatalog refid="oa3XmlCatalog" />
       <mapper type="glob" from="*.xml" to="*.html" />
     </xslt>
@@ -255,6 +255,16 @@
         </tokenfilter>
       </filterchain>
     </copy>
+    
+    <!-- Copy the XML files: -->
+    <mkdir dir="${build.examples.docs.dir}" />
+    <copy todir="${build.examples.docs.dir}" overwrite="true" failonerror="true" flatten="false">
+		<fileset dir="../">		
+    		<include name="SFEE2SFEE/**/*.xml" />
+    		<exclude name="**/input/*.xml" />
+    		<exclude name="**/output/*.xml" />
+  		</fileset>      
+    </copy>
 
 
     <!-- Generate html page using XSLT: mapping cookbook examples to beans -->
@@ -275,7 +285,7 @@
     <xslt basedir="${build.examples.docs.dir}" destdir="${build.examples.images.dir}" includes="cookbook_combined.xml" style="${src.examples.tools.dir}/xslt/allnodemaps.xsl">
       <param name="oaVersion" expression="${ant.project.name} version ${oa3.version.major} ${oa3.version.minor} build ${build.number}" />
       <param name="imageFileExtension" expression="${graphviz.image.fileextension}" />
-      <param name="docsRelativeToTools" expression="../../../www/sample-scenario-docs/" />
+      <param name="docsRelativeToTools" expression="../../../www/exampleScenarioDocs/" />
       <xmlcatalog refid="oa3XmlCatalog" />
       <mapper type="glob" from="cookbook_combined.xml" to="allimages.html" />
     </xslt>

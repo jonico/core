@@ -31,7 +31,7 @@
   Software with other software or hardware.
   ]]
   
-  $HeadURL: https://openadaptor3.openadaptor.org/svn/openadaptor3/tags/3.4/example/tools/xslt/cookbook2beans.xsl $
+  $HeadURL$
   
   @author Andrew Shire
   
@@ -99,7 +99,7 @@
                       <xsl:text> | </xsl:text>
                       <a class="th" href="./{$idAsRelativePath}.html">Documentation</a>
                       <xsl:text> | </xsl:text>
-                      <a class="th" href="../{$idAsRelativePath}.xml">XML</a>
+                      <a class="th" href="./{$idAsRelativePath}.xml">XML</a>
                     </xsl:when>
                     <!-- Anonymous cookbook example ("Header" filename is missing from comment block)-->
                     <xsl:otherwise>

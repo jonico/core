@@ -31,7 +31,7 @@
   Software with other software or hardware.
   ]]
   
-  $HeadURL: https://openadaptor3.openadaptor.org/svn/openadaptor3/tags/3.4/example/tools/xslt/allnodemaps.xsl $
+  $HeadURL$
   
   @author Andrew Shire
   
@@ -107,7 +107,7 @@
                       <xsl:text> | </xsl:text>
                       <a class="th" href="./{$idAsRelativePath}.html">Documentation</a>
                       <xsl:text> | </xsl:text>
-                      <a class="th" href="../{$idAsRelativePath}.xml">XML</a>
+                      <a class="th" href="./{$idAsRelativePath}.xml">XML</a>
                       <xsl:text> | </xsl:text>
                       <a class="th" href="./config2beans.html#{@id}">ConfigToBeans</a>
                     </font>

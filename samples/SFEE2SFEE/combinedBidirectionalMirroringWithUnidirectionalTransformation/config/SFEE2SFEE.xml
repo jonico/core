@@ -14,25 +14,6 @@ $HeadURL$
    on the same SFEE system to sync with each other.]]>
    </description>
 
-	<bean class="org.openadaptor.core.jmx.MBeanServer">
-		<description>
-			This bean exposes jxm interface via http and rmi.
-		</description>
-		<constructor-arg value="8082" />
-	</bean>
-
-	<bean id="SystemUtil" class="org.openadaptor.util.SystemUtil">
-		<description>
-			This is the open adaptor system utils management bean.
-		</description>
-	</bean>
-
-	<bean id="LogAdmin"
-		class="org.openadaptor.thirdparty.log4j.LogAdmin">
-		<description>
-			Bean that exposes log4j administration interfaces.
-		</description>
-	</bean>
 	<bean id="SystemPropertyConfigurer"
 		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
 		<property name="ignoreResourceNotFound" value="false" />

@@ -31,7 +31,7 @@
   Software with other software or hardware.
   ]]
   
-  $HeadURL: https://openadaptor3.openadaptor.org/svn/openadaptor3/tags/3.4/example/tools/xslt/adaptorDoc.xsl $
+  $HeadURL$
   
   @author Andrew Shire
   
