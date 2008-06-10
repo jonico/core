@@ -61,7 +61,20 @@ public class QCDefect extends Bug implements IQCDefect {
 		GenericArtifact dummyArtifact = new GenericArtifact();
 		return dummyArtifact;
 	}
-
+	/**
+	 * Constructs the GenericArtifact Java object for the defect after getting the schema from getSchemaAttachment method
+	 * It also populates all the values into the defect artifact.
+	 * 
+	 * The logic for including attachment fields have been DEPRECATED and not used. This piece of the code, however, has not been
+	 * removed since it might be needed in future if there are any changes with respect to making attachments as first class citizens.
+	 * 
+	 * @param qcc
+	 * @param actionId
+	 * @param entityId
+	 * @param attachmentNames (DEPRECATED)
+	 * @return GenericArtifact
+	 * 			Containing all the field values.
+	 */
 	public GenericArtifact getGenericArtifactObject(IConnection qcc,
 			String actionId, String entityId, List<String> attachmentNames) {
 		genericArtifact = QCConfigHelper.getSchemaFields(qcc);
@@ -223,7 +236,19 @@ public class QCDefect extends Bug implements IQCDefect {
 		return genericArtifact;
 
 	}
-
+	/**
+	 * DEPRECATED: As the function is done by the QCAttachmentHandler class, this method is  not used right now.
+	 * 
+	 * Constructs the GenericArtifact Java object for the attachment after getting the schema from getSchemaAttachment method
+	 * of the QCConfigHelper. It also populates all the values into the attachment artifact.
+	 *  
+	 * @param qcc
+	 * @param actionId
+	 * @param entityId
+	 * @param attachmentNames
+	 * @return GenericArtifact
+	 * 			Containing all the field values.
+	 */
 	public GenericArtifact getGenericArtifactObjectWithOnlyAttachments(
 			IConnection qcc, String actionId, String entityId,
 			List<String> attachmentNames) {
