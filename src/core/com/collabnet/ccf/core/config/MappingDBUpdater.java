@@ -58,6 +58,15 @@ public class MappingDBUpdater implements IDataProcessor{
 			String sourceArtifactId = ga.getSourceArtifactId();
 			String targetArtifactId = ga.getTargetArtifactId();
 			
+			java.util.Date lastModifiedDate = null;
+			if(lastModifiedDateString.equalsIgnoreCase("Unknown")){
+				return new Object[]{};
+			}
+			else {
+				lastModifiedDate = DateUtil.parse(lastModifiedDateString);
+			}
+			java.sql.Timestamp time = new java.sql.Timestamp(lastModifiedDate.getTime());
+			
 			createMapping(sourceArtifactId,
 					sourceRepositoryId,
 					sourceRepositoryKind,
@@ -67,7 +76,9 @@ public class MappingDBUpdater implements IDataProcessor{
 					targetRepositoryId,
 					targetRepositoryKind,
 					targetSystemId,
-					targetSystemKind);
+					targetSystemKind,
+					time,
+					version);
 			createMapping(targetArtifactId,
 					targetRepositoryId,
 					targetRepositoryKind,
@@ -77,16 +88,10 @@ public class MappingDBUpdater implements IDataProcessor{
 					sourceRepositoryId,
 					sourceRepositoryKind,
 					sourceSystemId,
-					sourceSystemKind);
+					sourceSystemKind,
+					time,
+					version);
 
-			java.util.Date lastModifiedDate = null;
-			if(lastModifiedDateString.equalsIgnoreCase("Unknown")){
-				return new Object[]{};
-			}
-			else {
-				lastModifiedDate = DateUtil.parse(lastModifiedDateString);
-			}
-			java.sql.Timestamp time = new java.sql.Timestamp(lastModifiedDate.getTime());
 			
 			IOrderedMap inputParameters = new OrderedHashMap();
 			inputParameters.add(0,"LAST_READ_TIME",time);
@@ -128,7 +133,7 @@ public class MappingDBUpdater implements IDataProcessor{
 			String sourceRepositoryKind, String sourceSystemId,
 			String sourceSystemKind, String targetArtifactId, String targetRepositoryId,
 			String targetRepositoryKind, String targetSystemId,
-			String targetSystemKind) {
+			String targetSystemKind, java.sql.Timestamp time, String version) {
 		/*String mappingId = lookupMappingId(sourceRepositoryId,
 				sourceRepositoryKind,
 				sourceSystemId,
@@ -142,7 +147,7 @@ public class MappingDBUpdater implements IDataProcessor{
 				targetSystemId, targetRepositoryId);
 		if(targetArtifactIdFromTable == null) {
 			this.createIdentityMapping(sourceSystemId, sourceRepositoryId, 
-					targetSystemId, targetRepositoryId, sourceArtifactId, targetArtifactId);
+					targetSystemId, targetRepositoryId, sourceArtifactId, targetArtifactId,time, version);
 	    } else {
 	    	log.info("Mapping already exists for source artifact id "+ sourceArtifactId+
 	    			" target artifact id "+ targetArtifactId + " for repository info " + sourceArtifactId+"+"+ sourceSystemId+"+"+ sourceRepositoryId+"+"+ 
@@ -238,7 +243,8 @@ public class MappingDBUpdater implements IDataProcessor{
 	}
 	
 	private void createIdentityMapping(String sourceSystemId, String sourceRepositoryId, 
-			String targetSystemId, String targetRepositoryId, String sourceArtifactId, String targetArtifactId){
+			String targetSystemId, String targetRepositoryId, String sourceArtifactId, String targetArtifactId,
+			java.sql.Timestamp time, String version){
 		IOrderedMap inputParameters = new OrderedHashMap();
 		
 		inputParameters.add(0,"SOURCE_SYSTEM_ID",sourceSystemId);
@@ -247,6 +253,9 @@ public class MappingDBUpdater implements IDataProcessor{
 		inputParameters.add(3,"TARGET_REPOSITORY_ID",targetRepositoryId);
 		inputParameters.add(4,"SOURCE_ARTIFACT_ID",sourceArtifactId);
 		inputParameters.add(5,"TARGET_ARTIFACT_ID",targetArtifactId);
+		inputParameters.add(6,"LAST_READ_TIME",time);
+		inputParameters.add(7,"VERSION",version);
+		
 		IOrderedMap[] data = new IOrderedMap[]{inputParameters};
 		entityServiceWriteConnector.connect();
 		entityServiceWriteConnector.deliver(data);
