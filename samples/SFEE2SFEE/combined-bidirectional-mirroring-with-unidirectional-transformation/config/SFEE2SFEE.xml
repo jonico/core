@@ -279,6 +279,8 @@
 				<value>TARGET_REPOSITORY_ID</value>
 				<value>SOURCE_ARTIFACT_ID</value>
 				<value>TARGET_ARTIFACT_ID</value>
+				<value>LAST_READ_TIME</value>
+				<value>VERSION</value>
 			</list>
 		</property>
 	</bean>
