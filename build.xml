@@ -142,9 +142,9 @@
 			<antcall target="clean">
 			</antcall>
 			<javac debug="true" debuglevel="${debuglevel}" 
-				destdir="samples/SFEE2SFEE/custom-reader/bin"
+				destdir="samples/SFEE2SFEE/customReader/bin"
 				source="${source}" target="${target}">
-				<src path="samples/SFEE2SFEE/custom-reader/src" />
+				<src path="samples/SFEE2SFEE/customReader/src" />
 				<classpath refid="CCFJ.classpath" />
 				<classpath>
 					<fileset dir="build/jars">
