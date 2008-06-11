@@ -1,0 +1,160 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+$Author $
+$HeadURL $
+ -->
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
+	<description><![CDATA[
+  This is the configuration for the CollabNet Connector Framework sample 
+   "Database table import Scenario". This wiring file configures an SFEE tracker
+   to get synced with a database table.
+  ]]></description>
+
+	<bean id="SystemPropertyConfigurer"
+		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="ignoreResourceNotFound" value="false" />
+		<property name="systemPropertiesMode">
+			<bean
+				id="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer.SYSTEM_PROPERTIES_MODE_OVERRIDE"
+				class="org.springframework.beans.factory.config.FieldRetrievingFactoryBean" />
+		</property>
+		<property name="locations">
+			<description>
+				Properties configured in these property files will be imported into the wiring file.
+				The file ccf.properties contains the properties for the CCF core components.
+				sfee.properties file contains the properties for the SFEE plugin classes.
+			</description>
+			<list>
+				<value>classpath:ccf.properties</value>
+				<value>classpath:sfee.properties</value>
+			</list>
+		</property>
+	</bean>
+	<bean id="Adaptor" class="org.openadaptor.core.adaptor.Adaptor">
+		<property name="messageProcessor" ref="Router" />
+	</bean>
+
+	<bean id="Router" class="org.openadaptor.core.router.Router">
+		<description>
+			The processMap property of this Router bean configures the processors
+			that are wired together to ship the artifacts from the source repository
+			to the target repository.
+		</description>
+		<property name="processMap">
+			<map>
+				<entry key-ref="DatabaseTableReader" value-ref="Transformer" />
+				<entry key-ref="Transformer" value-ref="SFEEWriter" />
+			</map>
+		</property>
+		<property name="exceptionProcessor" ref="ExceptionHandler" />
+	</bean>
+	<bean id="Transformer"
+		class="com.collabnet.ccf.core.transformer.XsltProcessor">
+		<description>
+			This transformer transforms the database xml output records into
+			Generic Artifact xml documents and feeds them to the EntityService.
+		</description>
+		<property name="xsltFile" value="${ccf.xsltFile}" />
+	</bean>
+	<bean id="DatabaseTableReader"
+		class="org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector">
+		<description>
+			This is the JDBC read connector used by the SynchronizationStatusPollingReader to read the
+			repository mapping and the synchronization info.
+		</description>
+		<property name="jdbcConnection" ref="JdbcConnection" />
+		<property name="batchSize" value="1" />
+		<property name="resultSetConverter" ref="ResultSetConverter" />
+		<property name="sql">
+			<value>SELECT * FROM ARTIFACTS</value>
+		</property>
+	</bean>
+	<bean id="JdbcConnection"
+		class="org.openadaptor.auxil.connector.jdbc.JDBCConnection">
+		<description>
+			This defines jdbc connection that will be used by the
+			SynchronizationStatusPollingReader
+		</description>
+		<property name="driver" value="${ccf.db.driver}" />
+		<property name="url" value="${ccf.db.url}" />
+		<property name="username" value="${ccf.db.username}" />
+		<property name="password" value="${ccf.db.password}" />
+	</bean>
+
+	<bean id="ResultSetConverter"
+		class="org.openadaptor.auxil.connector.jdbc.reader.xml.ResultSetToXMLConverter">
+		<description>
+			Converts the synchronization info in the database into XML sync info
+			document.
+		</description>
+		<property name="convertToString" value="false" />
+		<property name="rootElement" value="record" />
+	</bean>
+	
+	<bean id="SFEEConnectionManager"
+		class="com.collabnet.ccf.core.eis.connection.ConnectionManager">
+		<description>
+			The connection manager implements a connection pooling mechanism where the 
+			connections to multiple systems are cached for the readers and writers
+			to retrieve when needed. Before returning the connection to the client
+			the connection manager checks if the connection is live and only returns 
+			valid connections.
+			It assigns and manages one pool per repository.
+		</description>
+		<property name="maxConnectionsPerPool" value="5"></property>
+		<property name="maxIdleTimeForConnection" value="600000" />
+		<property name="scavengerInterval" value="120000"></property>
+		<property name="connectionFactory" ref="SFEEConnectionFactory"></property>
+	</bean>
+	<bean id="SFEEConnectionFactory"
+		class="com.collabnet.ccf.pi.sfee.v44.SFEEConnectionFactory">
+		<description>
+			This bean is an implementation of the com.collabnet.ccf.core.eis.connection.ConnectionFactory
+			interface. It is responsible to create and close an connection for a given
+			repository.
+			In this case SFEEConnectionFactory manages com.collabnet.ccf.pi.sfee.v44.Connection
+			objects.
+		</description>
+	</bean>
+	<bean id="SFEEWriter"
+		class="com.collabnet.ccf.pi.sfee.v44.SFEEWriter">
+		<description>
+			This data processor is responsible for writing the artifacts coming from the
+			EntitySerive into the target SFEE system.
+			It converts/extracts the data from the Generic Artifact XML and pushes to the
+			target SFEE system.
+		</description>
+		<property name="username" value="${sfee.server.1.username}" />
+		<property name="password" value="${sfee.server.1.password}" />
+		<property name="serverUrl"
+			value="${sfee.server.1.url}" />
+		<property name="createToken" value="create" />
+		<property name="updateComment"
+			value="Synchronized by Connector user" />
+		<property name="connectionManager" ref="SFEEConnectionManager"></property>
+	</bean>
+	<bean id="JDBCConnection"
+		class="org.openadaptor.auxil.connector.jdbc.JDBCConnection">
+		<description>
+			This defines a jdbc connection that will be used by the
+			SynchronizationStatusDatabaseReader, IdentityMappingDatabaseReader and
+			SynchronizationStatusDatabaseWriter
+		</description>
+		<property name="driver" value="${ccf.db.driver}" />
+		<property name="url" value="${ccf.db.url}" />
+		<property name="username" value="${ccf.db.username}" />
+		<property name="password" value="${ccf.db.password}" />
+	</bean>
+	<bean id="ExceptionHandler" class="com.collabnet.ccf.core.hospital.Ambulance">
+		<description>
+			The ambulance class catches all the exceptions that are thrown and not caught
+			by any of the components in the pipe and logs the infromation such as the component
+			that threw this exception and the input Generic Artifact xml document or the
+			sync info db xml document.
+		</description>
+  		<property name="hospitalFileName" value="C:/hospital.txt"/>
+  	</bean>
+</beans>
