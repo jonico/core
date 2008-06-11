@@ -135,7 +135,7 @@ public class SFEEToGenericArtifactConverter {
 					ArtifactMetaData.SFEEFields.version.getDisplayName(),
 					version, genericArtifact, trackerFields);
 			
-			
+			genericArtifact.setArtifactVersion(Integer.toString(version));
 			
 			SoapFieldValues flexFields = artifactRow.getFlexFields();
 			String[] flexFieldNames = flexFields.getNames();
