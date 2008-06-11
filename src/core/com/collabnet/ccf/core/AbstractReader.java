@@ -117,7 +117,7 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 			repositoryRecordHashMap.put(sourceRepositoryId, record);
 		}
 		else {
-			record.setSyncInfo(syncInfoIn);
+//			record.setSyncInfo(syncInfoIn);
 		}
 		if(!repositoryRecordsInRepositorySynchronizationWaitingList.contains(sourceRepositoryId)){
 			repositorySynchronizationWaitingList.add(0, record);
@@ -148,6 +148,8 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 				}
 			}
 			else if(artifactsToBeReadList.isEmpty()){
+				currentRecord.setSyncInfo(syncInfoIn);
+				syncInfo = currentRecord.getSyncInfo();
 				List<String> artifactsToBeRead = this.getChangedArtifacts(syncInfo);
 				artifactsToBeReadList.addAll(artifactsToBeRead);
 			}
