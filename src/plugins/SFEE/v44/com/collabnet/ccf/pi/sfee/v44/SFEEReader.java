@@ -413,7 +413,7 @@ public class SFEEReader extends AbstractReader {
 			TrackerFieldSoapDO[] trackerFields = null;
 			trackerFields = trackerHandler.getFlexFields(connection.getSessionId(), sourceRepositoryId);
 			ArtifactSoapDO artifact = trackerHandler.getTrackerItem(connection.getSessionId(), artifactId);
-			if(lastModifiedDate.before(artifact.getLastModifiedDate())){
+//			if(lastModifiedDate.before(artifact.getLastModifiedDate())){
 				SFEEAppHandler appHandler = new SFEEAppHandler(connection.getSfSoap(), connection.getSessionId());
 				appHandler.addComments(artifact,
 						lastModifiedDate,this.getUsername());
@@ -421,7 +421,7 @@ public class SFEEReader extends AbstractReader {
 						trackerFields, lastModifiedDate);
 				populateSrcAndDest(syncInfo, genericArtifact);
 				gaList.add(genericArtifact);
-			}
+//			}
 		} catch (RemoteException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
