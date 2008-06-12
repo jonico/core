@@ -69,13 +69,13 @@ public class SFEEAppHandler {
 					boolean commentSet = false;
 					for(ArtifactSoapDO artifactDO:artifactHistory){
 						//TODO If nothing is matching what will happen?
-						if(artifactDO.getLastModifiedDate().after(createdDate) ||
-								artifactDO.getLastModifiedDate().equals(createdDate)){
+//						if(artifactDO.getLastModifiedDate().after(createdDate) ||
+//								artifactDO.getLastModifiedDate().equals(createdDate)){
 							//TODO If more than one comment is added, How this will behave?
 							ArtifactMetaData.addFlexField(ArtifactMetaData.SFEEFields.commentText.getFieldName(), artifactDO, description);
 							commentSet = true;
 							break;
-						}
+//						}
 					}
 					if(!commentSet){
 						System.out.println("Comment "+description+" Could not be set "+createdDate);
