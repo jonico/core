@@ -211,7 +211,7 @@
 	</xsl:template> 
 	<xsl:template
 		match='ccf:field[@fieldName="BG_RESPONSIBLE"]'>
-		<xsl:variable name="qcValue" as="xs:string"><xsl:value-of select="." /></xsl:variable>
+		<!-- <xsl:variable name="qcValue" as="xs:string"><xsl:value-of select="." /></xsl:variable>  -->
 		<field>
 		    <xsl:attribute name="fieldName">assignedTo</xsl:attribute>
 		    <xsl:attribute name="fieldDisplayName">AssignedTo</xsl:attribute>
@@ -224,16 +224,17 @@
 		  	<xsl:attribute name="maxOccurs"><xsl:value-of select="@maxOccurs" /></xsl:attribute>
 		  	<xsl:attribute name="nullValueSupported"><xsl:value-of select="@nullValueSupported" /></xsl:attribute>
 		  	<xsl:attribute name="alternativeFieldName"><xsl:value-of select="@alternativeFieldName" /></xsl:attribute>
-		  	<xsl:if test="$qcValue = 'alex_qc'"><xsl:text>connector</xsl:text></xsl:if>
+		  	<xsl:value-of select="."></xsl:value-of>
+		  	<!-- <xsl:if test="$qcValue = 'alex_qc'"><xsl:text>connector</xsl:text></xsl:if>
 		  	<xsl:if test="$qcValue = 'cecil_qc'"><xsl:text>mseethar</xsl:text></xsl:if>
 			<xsl:if test="$qcValue = 'admin'"><xsl:text>admin</xsl:text></xsl:if>
 			<xsl:if test="$qcValue = 'none'"><xsl:text>none</xsl:text></xsl:if>
-			<xsl:if test="$qcValue = 'None'"><xsl:text>None</xsl:text></xsl:if>
+			<xsl:if test="$qcValue = 'None'"><xsl:text>None</xsl:text></xsl:if>  -->
 		</field>
 	</xsl:template>
 	<xsl:template
 		match='ccf:field[@fieldName="BG_DETECTED_BY"]'>
-		<xsl:variable name="detectedBy" as="xs:string"><xsl:value-of select="." /></xsl:variable>
+		<!-- <xsl:variable name="detectedBy" as="xs:string"><xsl:value-of select="." /></xsl:variable>  -->
 		<field>
 		    <xsl:attribute name="fieldName">Detected By</xsl:attribute>
 		    <xsl:attribute name="fieldDisplayName">Detected By</xsl:attribute>
@@ -246,14 +247,36 @@
 		  	<xsl:attribute name="maxOccurs"><xsl:value-of select="@maxOccurs" /></xsl:attribute>
 		  	<xsl:attribute name="nullValueSupported"><xsl:value-of select="@nullValueSupported" /></xsl:attribute>
 		  	<xsl:attribute name="alternativeFieldName"><xsl:value-of select="@alternativeFieldName" /></xsl:attribute>
-		  	<xsl:if test="$detectedBy = 'alex_qc'"><xsl:text>connector</xsl:text></xsl:if>
+		  	<xsl:value-of select="."></xsl:value-of>
+		  	<!-- <xsl:if test="$detectedBy = 'alex_qc'"><xsl:text>connector</xsl:text></xsl:if>
 		  	<xsl:if test="$detectedBy = 'cecil_qc'"><xsl:text>mseethar</xsl:text></xsl:if>
 			<xsl:if test="$detectedBy = 'admin'"><xsl:text>admin</xsl:text></xsl:if>
 			<xsl:if test="$detectedBy = 'none'"><xsl:text>none</xsl:text></xsl:if>
-			<xsl:if test="$detectedBy = 'None'"><xsl:text>None</xsl:text></xsl:if>
+			<xsl:if test="$detectedBy = 'None'"><xsl:text>None</xsl:text></xsl:if>  -->
 	  	</field>
 	</xsl:template>
-	
+	<xsl:template
+		match='ccf:field[@fieldName="BG_DETECTION_VERSION"]'>
+		<xsl:variable name="detectedIn" as="xs:string"><xsl:value-of select="." /></xsl:variable>
+		<field>
+		    <xsl:attribute name="fieldName">Detected in Version</xsl:attribute>
+		    <xsl:attribute name="fieldDisplayName">Detected in Version</xsl:attribute>
+		    <xsl:attribute name="fieldAction"><xsl:value-of select="@fieldAction" /></xsl:attribute>
+		    <xsl:attribute name="fieldType"><xsl:value-of select="@fieldType" /></xsl:attribute>
+		  	<xsl:attribute name="fieldValueHasChanged"><xsl:value-of select="@fieldValueHasChanged" /></xsl:attribute>
+		  	<xsl:attribute name="fieldValueType"><xsl:value-of select="@fieldValueType" /></xsl:attribute>
+		  	<xsl:attribute name="fieldValueIsNull"><xsl:value-of select="@fieldValueIsNull" /></xsl:attribute>
+		  	<xsl:attribute name="minOccurs"><xsl:value-of select="@minOccurs" /></xsl:attribute>
+		  	<xsl:attribute name="maxOccurs"><xsl:value-of select="@maxOccurs" /></xsl:attribute>
+		  	<xsl:attribute name="nullValueSupported"><xsl:value-of select="@nullValueSupported" /></xsl:attribute>
+		  	<xsl:attribute name="alternativeFieldName"><xsl:value-of select="@alternativeFieldName" /></xsl:attribute>
+		  	
+		  	<xsl:if test="$detectedIn = '1.0'"><xsl:text>1.0</xsl:text></xsl:if>
+		  	<xsl:if test="$detectedIn = '1.1'"><xsl:text>1.1</xsl:text></xsl:if>
+			<xsl:if test="$detectedIn = '1.2'"><xsl:text>1.2</xsl:text></xsl:if>
+			<xsl:if test="$detectedIn = '2.0'"><xsl:text>2.0</xsl:text></xsl:if>
+	  	</field>
+	</xsl:template>
 	<xsl:template
 		match='ccf:field[@fieldName="BG_SEVERITY"]'>
 		<field>
