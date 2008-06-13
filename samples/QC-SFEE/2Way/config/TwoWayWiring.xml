@@ -163,6 +163,7 @@
 		<property name="password" value="${qc.system.1.password}" />
 		<property name="connectionManager" ref="QCConnectionManager"></property>
 		<property name="sleepInterval" value="100"></property>
+		<property name="maxAttachmentSizePerArtifact" value="${qc.max.attachmentsize.per.artifact}" />
 	</bean>
 	<bean id="QCConnectionManager"
 		class="com.collabnet.ccf.core.eis.connection.ConnectionManager">
@@ -184,6 +185,7 @@
 			value="${sfee.server.1.url}" />
 		<property name="connectionManager" ref="SFEEConnectionManager"></property>
 		<property name="sleepInterval" value="100"></property>
+		<property name="maxAttachmentSizePerArtifact" value="${sfee.max.attachmentsize.per.artifact}" />
 	</bean>
 	<bean id="SFEEConnectionManager"
 		class="com.collabnet.ccf.core.eis.connection.ConnectionManager">
