@@ -4,26 +4,22 @@ import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.dom4j.Attribute;
 import org.dom4j.Document;
 import org.dom4j.Element;
 import org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector;
-import org.openadaptor.auxil.connector.jdbc.writer.JDBCWriteConnector;
 import org.openadaptor.auxil.orderedmap.IOrderedMap;
 import org.openadaptor.auxil.orderedmap.OrderedHashMap;
 import org.openadaptor.core.IDataProcessor;
 import org.openadaptor.core.exception.NullRecordException;
 import org.openadaptor.core.exception.RecordFormatException;
 
-import com.collabnet.ccf.core.ga.GenericArtifact;
-import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
 import com.collabnet.ccf.core.utils.XPathUtils;
 
 /**
- * This component will find out whether an artifact coming out of a non-SFEE
- * system has to be created, updated, deleted or ignored within SFEE. It will
- * also try to find out the correct SFEE id for the artifact in question.
+ * This component will find out whether an artifact coming out of the source
+ * system has to be created, updated, deleted or ignored within the target system.
+ * It will also try to find out the correct id of the artifact on the target system.
  * 
  * @author jnicolai
  * 
@@ -36,7 +32,7 @@ public class EntityService implements
 	private static final Log log = LogFactory.getLog(EntityService.class);
 
 	/**
-	 * Token used to indicate that the SFEE tracker item has to be created
+	 * Token used to indicate that the target repository item has to be created
 	 */
 	private String createToken;
 	private static final String SOURCE_ARTIFACT_ID = "sourceArtifactId";
@@ -50,27 +46,9 @@ public class EntityService implements
 	private static final String TARGET_SYSTEM_ID = "targetSystemId";
 	private static final String TARGET_SYSTEM_KIND = "targetSystemKind";
 
-	/**
-	 * User that was used in the non-SFEE system to store SFEE's tracker items.
-	 * If an artifact was lastly modified by this user and not just created, it
-	 * will be ignored to prevent endless update loops.
-	 */
-	//private String synchronizationUser;
-
-	/**
-	 * field name that is used within SFEE to store the artifact id used in the
-	 * source (non-SFEE) system
-	 */
-	private String otherSystemInSFEETargetFieldname;
-	
 	private JDBCReadConnector entityServiceReader = null;
 	
 	private JDBCReadConnector entityServiceMappingIdReader = null;
-
-	/**
-	 * SFEE tracker handler instance
-	 */
-	
 
 	/**
 	 * openAdaptor Method to process all input and puts out the results This
@@ -91,8 +69,8 @@ public class EntityService implements
 	}
 
 	/**
-	 * Main method to handle the mapping and filtering of non-SFEE artifacts to
-	 * SFEE tracker items
+	 * Main method to handle the mapping and filtering of source artifacts to
+	 * target repository artifact items
 	 * 
 	 * @param data
 	 *            input XML document in generic XML artifact format
@@ -100,14 +78,6 @@ public class EntityService implements
 	 *         artifact schema
 	 */
 	private Object[] processXMLDocument(Document data) {
-		Document filledArtifactDocument = null;
-		/*GenericArtifact genericArtifact = null;
-		try {
-			genericArtifact = GenericArtifactHelper.createGenericArtifactJavaObject(data);
-		}
-		catch(Exception e) {
-			System.out.println("GenericArtifact Parsing exception" + e);
-		}*/
 		try {
 		Element element = XPathUtils.getRootElement(data);
 		
@@ -127,24 +97,13 @@ public class EntityService implements
 		if(sourceArtifactId.equalsIgnoreCase("Unknown")){
 			return new Object[]{data};
 		}
-		/*String mappingId = lookupMappingId(sourceRepositoryId,
-				sourceRepositoryKind,
-				sourceSystemId,
-				sourceSystemKind,
-				targetRepositoryId,
-				targetRepositoryKind,
-				targetSystemId,
-				targetSystemKind);
-		*/
 		String targetArtifactIdFromTable = lookupTargetArtifactId(sourceArtifactId, sourceSystemId, sourceRepositoryId, 
 				targetSystemId, targetRepositoryId);
 		log.info("The targetArtifactId in EntityService==="+targetArtifactIdFromTable);
 		if(targetArtifactIdFromTable!=null && !(targetArtifactIdFromTable.equals("NEW")) && !(targetArtifactIdFromTable.equals("NULL"))) {
-	    	//genericArtifact.setTargetArtifactId(targetArtifactIdFromTable);
 			XPathUtils.addAttribute(element, TARGET_ARTIFACT_ID, targetArtifactIdFromTable);
 	    }
 		if(targetArtifactIdFromTable==null) {
-   			//genericArtifact.setTargetArtifactId("NEW");
 			XPathUtils.addAttribute(element, TARGET_ARTIFACT_ID, "NEW");
 	    }
 		}
@@ -152,66 +111,11 @@ public class EntityService implements
 			log.error("There is some problem in extracting attributes from Document in EntityService!!!"+e);
 		}
 		
-	    /*try {
-	    	filledArtifactDocument = GenericArtifactHelper.createGenericArtifactXMLDocument(genericArtifact);
-	    }
-	    catch(Exception e) {
-	    	log.error("Exception while converting the resultantGenericArtifact into the resultDocument in QCEntityService:"+e);
-	    	throw new RuntimeException(e);
-	    }*/
-		log.info("After manipulating dom4j document, new artifact is:"+data.asXML());
+		log.debug("After manipulating dom4j document, new artifact is:"+data.asXML());
 	    Object[] result = {data};
 		return result;
 	}
 	
-	/*
-	private String lookupMappingId(String sourceRepositoryId, String sourceRepositoryKind,
-			String sourceSystemId, String sourceSystemKind,
-			String targetRepositoryId, String targetRepositoryKind,
-			String targetSystemId, String targetSystemKind){
-		String mappingId = null;
-		IOrderedMap inputParameters = new OrderedHashMap();
-		inputParameters.add(sourceRepositoryId);
-		inputParameters.add(sourceRepositoryKind);
-		inputParameters.add(sourceSystemId);
-		inputParameters.add(sourceSystemKind);
-		inputParameters.add(targetRepositoryId);
-		inputParameters.add(targetRepositoryKind);
-		inputParameters.add(targetSystemId);
-		inputParameters.add(targetSystemKind);
-		
-		entityServiceMappingIdReader.connect();
-		Object[] resultSet = entityServiceMappingIdReader.next(inputParameters, 1000);
-		entityServiceMappingIdReader.disconnect();
-		
-		if(resultSet == null || resultSet.length == 0){
-			mappingId = null;
-		}
-		else if(resultSet.length == 1){
-			if(resultSet[0] instanceof OrderedHashMap){
-				OrderedHashMap result = (OrderedHashMap) resultSet[0];
-				if(result.size() == 1){
-					mappingId = result.get(0).toString();
-				}
-				else if(result.size() > 1){
-					log.warn("There are more than one mapping ids returned from the tables"
-							+" for source repository "+sourceRepositoryId
-							+" and target repository "+targetRepositoryId);
-				}
-				else {
-					mappingId = null;
-				}
-			}
-		}
-		else {
-			log.warn("There are more than one mapping ids returned from the tables"
-					+" for source repository "+sourceRepositoryId
-					+" and target repository "+targetRepositoryId);
-		}
-		
-		return mappingId;
-	}
-	*/
 	
 	private String lookupTargetArtifactId(String sourceArtifactId, String sourceSystemId, String sourceRepositoryId, 
 			String targetSystemId, String targetRepositoryId) {
@@ -263,25 +167,6 @@ public class EntityService implements
 	 */
 	public void validate(List exceptions) {
 		
-	}
-
-	/**
-	 * Set otherSystemInSFEETargetFieldName
-	 * 
-	 * @param otherSystemInSFEETargetFieldName
-	 *            see private attribute doc
-	 */
-	public void setOtherSystemInSFEETargetFieldname(String otherSystemInSFEETargetFieldName) {
-		this.otherSystemInSFEETargetFieldname = otherSystemInSFEETargetFieldName;
-	}
-
-	/**
-	 * Get otherSystemInSFEETargetFieldname
-	 * 
-	 * @return see private attribute doc
-	 */
-	public String getOtherSystemInSFEETargetFieldname() {
-		return otherSystemInSFEETargetFieldname;
 	}
 
 	/**
