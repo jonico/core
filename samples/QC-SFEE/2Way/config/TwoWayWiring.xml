@@ -4,7 +4,9 @@
 	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
 
 	<description><![CDATA[
-  Simple test wiring to write out the first generic artifact!
+   This is the configuration for the CollabNet Connector Framework sample 
+   "Two way wiring Scenario". This wiring file configures a QC tracker and a SFEE tracker
+   to sync with each other.
   ]]></description>
 
 	<bean class="org.openadaptor.core.jmx.MBeanServer">
@@ -37,8 +39,10 @@
 		</property>
 		<property name="locations">
 			<description>
-				Properties set by a file in list below are supposedly
-				overridden by settings in a file later in list below.
+				Properties configured in these property files will be imported into the wiring file.
+				The file ccf.properties contains the properties for the CCF core components.
+				sfee.properties file contains the properties for the SFEE plugin classes and
+				qc.properties file contains the properties for the QC plugin classes.
 			</description>
 			<list>
 				<value>classpath:ccf.properties</value>
@@ -52,7 +56,11 @@
 	</bean>
 
 	<bean id="Router" class="org.openadaptor.core.router.Router">
-
+		<description>
+			The processMap property of this Router bean configures the processors
+			that are wired together to ship the artifacts from the source repository
+			to the target repository.
+		</description>
 		<property name="processMap">
 			<map>
 
@@ -157,7 +165,15 @@
 		<property name="xsltDir" value="${ccf.xsltDir}" />
 	</bean>
 	<bean id="QCReader" class="com.collabnet.ccf.pi.qc.v90.QCReader">
-		<description>Reads the modified defects from QC</description>
+		<description>
+			This reader reads the modified artifacts in the QC system's tracker configured in the
+			${qc.server.1.url} and the sync info tables. It reads all the related dependent artifact details
+			and converts them into Generic Artifact XML document format and sends to the
+			next component in the pipeline. The next component in the pipeline may be
+			an XSLT transformer component such as com.collabnet.ccf.core.transformer.XsltProcessor
+			or an EntityService component depending on the target SFEE tracker needs the data
+			to be translated to fit into its fields or not.
+		</description>
 		<property name="serverUrl" value="${qc.system.1.url}" />
 		<property name="userName" value="${qc.system.1.username}" />
 		<property name="password" value="${qc.system.1.password}" />
@@ -178,7 +194,15 @@
 
 	<bean id="SFEEReader"
 		class="com.collabnet.ccf.pi.sfee.v44.SFEEReader">
-		<description>Reads the modified defects from SFEE</description>
+		<description>
+			This reader reads the modified artifacts in the SFEE system's tracker configured in the
+			${sfee.server.1.url} and the sync info tables. It also reads all the related dependent artifact details
+			and converts them into Generic Artifact XML document format and sends to the
+			next component in the pipeline. The next component in the piple line may be
+			an XSLT transformer component such as com.collabnet.ccf.core.transformer.XsltProcessor
+			or an EntityService component depending on the target SFEE tracker needs the data
+			to be translated to fit into its fields or not.
+		</description>
 		<property name="username" value="${sfee.server.1.username}" />
 		<property name="password" value="${sfee.server.1.password}" />
 		<property name="serverUrl"
@@ -189,6 +213,14 @@
 	</bean>
 	<bean id="SFEEConnectionManager"
 		class="com.collabnet.ccf.core.eis.connection.ConnectionManager">
+		<description>
+			The connection manager implements a connection pooling mechanism where the 
+			connections to multiple systems are cached for the readers and writers
+			to retrieve when needed. Before returning the connection to the client
+			the connection manager checks if the connection is live and only returns 
+			valid connections.
+			It assigns and manages one pool per repository.
+		</description>
 		<property name="maxConnectionsPerPool" value="5"></property>
 		<property name="maxIdleTimeForConnection" value="600000" />
 		<property name="scavengerInterval" value="120000"></property>
@@ -196,6 +228,13 @@
 	</bean>
 	<bean id="SFEEConnectionFactory"
 		class="com.collabnet.ccf.pi.sfee.v44.SFEEConnectionFactory">
+		<description>
+			This bean is an implementation of the com.collabnet.ccf.core.eis.connection.ConnectionFactory
+			interface. It is responsible to create and close an connection for a given
+			repository.
+			In this case SFEEConnectionFactory manages com.collabnet.ccf.pi.sfee.v44.Connection
+			objects.
+		</description>
 	</bean>
 	<bean id="SFEEWriter"
 		class="com.collabnet.ccf.pi.sfee.v44.SFEEWriter">
@@ -230,8 +269,9 @@
 	<bean id="JdbcConnectionReadQC2SFEE"
 		class="org.openadaptor.auxil.connector.jdbc.JDBCConnection">
 		<description>
-			This defines jdbc connection that will be used by the
-			SimplePollingReaderQC2SFEE
+			This defines a jdbc connection that will be used by the
+			SynchronizationStatusDatabaseReaderQC2SFEE, IdentityMappingDatabaseReader and
+			SynchronizationStatusDatabaseWriter
 		</description>
 		<property name="driver" value="${ccf.db.driver}" />
 		<property name="url" value="${ccf.db.url}" />
@@ -241,8 +281,9 @@
 	<bean id="JdbcConnectionReadSFEE2QC"
 		class="org.openadaptor.auxil.connector.jdbc.JDBCConnection">
 		<description>
-			This defines jdbc connection that will be used by the
-			SimplePollingReaderSFEE2QC
+			This defines a jdbc connection that will be used by the
+			SynchronizationStatusDatabaseReaderSFEE2QC, IdentityMappingDatabaseReader and
+			SynchronizationStatusDatabaseWriter
 		</description>
 		<property name="driver" value="${ccf.db.driver}" />
 		<property name="url" value="${ccf.db.url}" />
@@ -409,6 +450,12 @@
 		</property>
 	</bean>
 	<bean id="ExceptionHandler" class="com.collabnet.ccf.core.hospital.Ambulance">
+  		<description>
+			The ambulance class catches all the exceptions that are thrown and not caught
+			by any of the components in the pipe and logs the infromation such as the component
+			that threw this exception and the input Generic Artifact xml document or the
+			sync info db xml document.
+		</description>
   		<property name="hospitalFileName" value="C:/hospital.txt"/>
   	</bean>
 </beans>
