@@ -39,5 +39,8 @@
 		<xsl:if test="@fieldName = 'estimatedHours'">
 			<xsl:element name="ESTIMATED_HOURS"><xsl:value-of select="text()"/></xsl:element>
 		</xsl:if>
+		<xsl:if test="@fieldName = 'Comment Text'">
+			<xsl:element name="COMMENT_TEXT"><xsl:value-of select="text()"/></xsl:element>
+		</xsl:if>
 	</xsl:template>
 </xsl:stylesheet>
