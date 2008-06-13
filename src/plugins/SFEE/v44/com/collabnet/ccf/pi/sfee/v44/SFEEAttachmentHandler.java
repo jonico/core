@@ -190,7 +190,8 @@ public class SFEEAttachmentHandler {
 	 */
 	public List<GenericArtifact> listAttachments(String sessionId,
 			Date lastModifiedDate, String username,
-			Set<ArtifactSoapDO> artifactRows, ISourceForgeSoap sourceForgeSoap) throws RemoteException {
+			Set<ArtifactSoapDO> artifactRows, ISourceForgeSoap sourceForgeSoap,
+			long maxAttachmentSizePerArtifact) throws RemoteException {
 		List<GenericArtifact> gaList = null;
 		List<String> artifactIds = new ArrayList<String>();
 		if(artifactRows != null && (!artifactIds.isEmpty())){
@@ -198,7 +199,8 @@ public class SFEEAttachmentHandler {
 				String artifactId = artifact.getId();
 				artifactIds.add(artifactId);
 			}
-			gaList = this.listAttachments(sessionId, lastModifiedDate, username, artifactIds, sourceForgeSoap);
+			gaList = this.listAttachments(sessionId, lastModifiedDate, username, artifactIds,
+					sourceForgeSoap, maxAttachmentSizePerArtifact);
 		}
 		return gaList;
 	}
@@ -212,12 +214,13 @@ public class SFEEAttachmentHandler {
 	 * @param username
 	 * @param artifactRows
 	 * @param sourceForgeSoap
+	 * @param maxAttachmentSizePerArtifact 
 	 * @return
 	 * @throws RemoteException
 	 */
 	public List<GenericArtifact> listAttachments(String sessionId,
 			Date lastModifiedDate, String username,
-			List<String> artifactIds, ISourceForgeSoap sourceForgeSoap) throws RemoteException {
+			List<String> artifactIds, ISourceForgeSoap sourceForgeSoap, long maxAttachmentSizePerArtifact) throws RemoteException {
 		List<GenericArtifact> attachmentGAs = new ArrayList<GenericArtifact>();
 		for(String artifactId:artifactIds){
 			//String folderId = artifact.getFolderId();
@@ -225,7 +228,14 @@ public class SFEEAttachmentHandler {
 			AttachmentSoapRow[] attachmentRows = attachmentsList.getDataRows();
 			for(AttachmentSoapRow row:attachmentRows){
 				String fileName = row.getFileName();
+				String attachmentSizeStr = row.getFileSize();
+				long attachmentSize = Long.parseLong(attachmentSizeStr);
 				if(fileName.startsWith(username+"_")){
+					continue;
+				}
+				if(attachmentSize > maxAttachmentSizePerArtifact){
+					System.err.println("attachment size is more than the configured maxAttachmentSizePerArtifact "
+							+attachmentSizeStr);
 					continue;
 				}
 				Date createdDate = row.getDateCreated();
