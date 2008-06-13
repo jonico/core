@@ -21,10 +21,6 @@ import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
 import com.collabnet.ccf.pi.qc.v90.api.IConnection;
-import com.collabnet.ccf.pi.sfee.v44.Connection;
-import com.collabnet.ccf.pi.sfee.v44.SFEEConnectionFactory;
-import com.vasoftware.sf.soap44.webservices.sfmain.TrackerFieldSoapDO;
-import com.vasoftware.sf.soap44.webservices.tracker.ArtifactSoapDO;
 
 /**
  * QCReader is responsible for reading the defect data from
@@ -229,7 +225,7 @@ public class QCReader extends AbstractReader  implements
 		artifactIds.add(artifactId);
 		List<GenericArtifact> attachments = new ArrayList<GenericArtifact>();
 		try {
-			attachments = attachmentHandler.getLatestChangedAttachments(attachments, connection, getUserName(), transactionId, fromTime, sourceArtifactId, sourceRepositoryId, sourceRepositoryKind, sourceSystemId, sourceSystemKind, targetRepositoryId, targetRepositoryKind, targetSystemId, targetSystemKind);
+			attachments = attachmentHandler.getLatestChangedAttachments(attachments, connection, getUserName(), transactionId, fromTime, sourceArtifactId, sourceRepositoryId, sourceRepositoryKind, sourceSystemId, sourceSystemKind, targetRepositoryId, targetRepositoryKind, targetSystemId, targetSystemKind, this.getMaxAttachmentSizePerArtifact());
 		} catch (Exception e1) {
 			e1.printStackTrace();
 			throw new RuntimeException(e1);
