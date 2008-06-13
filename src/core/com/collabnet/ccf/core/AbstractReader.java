@@ -47,8 +47,7 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 	private Comparator<GenericArtifact> genericArtifactComparator = null;
 	public static final long DEFAULT_MAX_ATTACHMENT_SIZE_PER_ARTIFACT = 10 * 1024 * 1024;
 	private long maxAttachmentSizePerArtifact = DEFAULT_MAX_ATTACHMENT_SIZE_PER_ARTIFACT;
-	private boolean exportAttachments = true;
-		
+
 	public AbstractReader(){
 		super();
 		init();
@@ -177,7 +176,7 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 				log.debug("Getting the data for artifact "+artifactId);
 				List<GenericArtifact> artifactData = this.getArtifactData(syncInfo, artifactId);
 				List<GenericArtifact> artifactAttachments = null;
-				if(!exportAttachments){
+				if(shipAttachments){
 					artifactAttachments = this.getArtifactAttachments(syncInfo, artifactId);
 				} else {
 					artifactAttachments = new ArrayList<GenericArtifact>();
@@ -466,11 +465,5 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 	}
 	public void setMaxAttachmentSizePerArtifact(long maxAttachmentPerArtifact) {
 		this.maxAttachmentSizePerArtifact = maxAttachmentPerArtifact;
-	}
-	public boolean isExportAttachments() {
-		return exportAttachments;
-	}
-	public void setExportAttachments(boolean exportAttachments) {
-		this.exportAttachments = exportAttachments;
 	}
 }
