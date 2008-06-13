@@ -9,6 +9,8 @@ import java.util.HashSet;
 import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.dom4j.Document;
 import org.dom4j.Node;
 import org.openadaptor.core.IDataProcessor;
@@ -36,13 +38,17 @@ import com.collabnet.ccf.core.utils.DateUtil;
  *
  */
 public abstract class AbstractReader extends LifecycleComponent implements IDataProcessor {
+	private static final Log log = LogFactory.getLog(AbstractReader.class);
 	private HashMap<String, RepositoryRecord> repositoryRecordHashMap = null;
 	private ArrayList<RepositoryRecord> repositorySynchronizationWaitingList = null;
 	private HashSet<String> repositoryRecordsInRepositorySynchronizationWaitingList = null;
 	private long sleepInterval = -1;
 	private boolean shipAttachments = true;
 	private Comparator<GenericArtifact> genericArtifactComparator = null;
-
+	public static final long DEFAULT_MAX_ATTACHMENT_SIZE_PER_ARTIFACT = 10 * 1024 * 1024;
+	private long maxAttachmentSizePerArtifact = DEFAULT_MAX_ATTACHMENT_SIZE_PER_ARTIFACT;
+	private boolean exportAttachments = true;
+		
 	public AbstractReader(){
 		super();
 		init();
@@ -53,6 +59,7 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 	}
 	
 	protected void init(){
+		log.debug("Initializing the AbstractReader");
 		repositoryRecordHashMap = new HashMap<String, RepositoryRecord>();
 		repositorySynchronizationWaitingList = new ArrayList<RepositoryRecord>();
 		repositoryRecordsInRepositorySynchronizationWaitingList = new HashSet<String>();
@@ -104,6 +111,7 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 	 * then the AbstractReader pauses the processing for sleepInterval milliseconds.
 	 */
 	public Object[] process(Object data) {
+		log.debug("Entering process method of AbstractReader");
 		Document syncInfoIn = null;
 		if(data instanceof Document){
 			syncInfoIn = (Document) data;
@@ -111,8 +119,11 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 			return null;
 		}
 		String sourceRepositoryId = this.getSourceRepositoryId(syncInfoIn);
+		log.debug("Received the SyncInfo for repository with id " + sourceRepositoryId);
 		RepositoryRecord record = repositoryRecordHashMap.get(sourceRepositoryId);
 		if(record == null){
+			log.debug("No RepositoryRecord available for "+sourceRepositoryId
+					+". Creating one and registering");
 			record = new RepositoryRecord(sourceRepositoryId, syncInfoIn);
 			repositoryRecordHashMap.put(sourceRepositoryId, record);
 		}
@@ -120,18 +131,22 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 //			record.setSyncInfo(syncInfoIn);
 		}
 		if(!repositoryRecordsInRepositorySynchronizationWaitingList.contains(sourceRepositoryId)){
+			log.debug(sourceRepositoryId + " is not on the waiting list. Adding....");
 			repositorySynchronizationWaitingList.add(0, record);
 			repositoryRecordsInRepositorySynchronizationWaitingList.add(sourceRepositoryId);
 		}
-		RepositoryRecord currentRecord = record;
+		RepositoryRecord currentRecord = null;
 		while(!repositorySynchronizationWaitingList.isEmpty()){
 			//currentRecord = repositorySynchronizationWaitingList.get(0);
+			currentRecord = repositorySynchronizationWaitingList.get(0);
+			log.debug("Processing the current repository " + sourceRepositoryId +" record");
 			Document syncInfo = currentRecord.getSyncInfo();
 			//RepositoryRecord movedRecord = repositorySynchronizationWaitingList.remove(0);
 			//repositorySynchronizationWaitingList.add(movedRecord);
 			List<GenericArtifact> artifactsToBeShippedList = currentRecord.getArtifactsToBeShippedList();
 			List<String> artifactsToBeReadList = currentRecord.getArtifactsToBeReadList();
 			if(!artifactsToBeShippedList.isEmpty()){
+				log.debug("There are "+artifactsToBeShippedList.size()+" artifacts to be shipped.");
 				GenericArtifact genericArtifact = artifactsToBeShippedList.remove(0);
 //				if(artifactsToBeShippedList.isEmpty()){
 //					repositorySynchronizationWaitingList.remove(currentRecord);
@@ -140,7 +155,7 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 				try {
 					Document returnDoc = GenericArtifactHelper.createGenericArtifactXMLDocument(genericArtifact);
 					Object[] returnObjects = new Object[] {returnDoc};
-					removeFromWaitingList(currentRecord);
+					moveToTail(currentRecord);
 					return returnObjects;
 				} catch (GenericArtifactParsingException e) {
 					// TODO Auto-generated catch block
@@ -148,15 +163,25 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 				}
 			}
 			else if(artifactsToBeReadList.isEmpty()){
+				log.debug("There are no artifacts to be read. Checking if there are"+
+						" changed artifacts in repository " + sourceRepositoryId);
 				currentRecord.setSyncInfo(syncInfoIn);
 				syncInfo = currentRecord.getSyncInfo();
 				List<String> artifactsToBeRead = this.getChangedArtifacts(syncInfo);
 				artifactsToBeReadList.addAll(artifactsToBeRead);
 			}
 			if(!artifactsToBeReadList.isEmpty()) {
+				log.debug("There are "+artifactsToBeReadList.size()+
+						"artifacts to be read.");
 				String artifactId = artifactsToBeReadList.remove(0);
+				log.debug("Getting the data for artifact "+artifactId);
 				List<GenericArtifact> artifactData = this.getArtifactData(syncInfo, artifactId);
-				List<GenericArtifact> artifactAttachments = this.getArtifactAttachments(syncInfo, artifactId);
+				List<GenericArtifact> artifactAttachments = null;
+				if(!exportAttachments){
+					artifactAttachments = this.getArtifactAttachments(syncInfo, artifactId);
+				} else {
+					artifactAttachments = new ArrayList<GenericArtifact>();
+				}
 				List<GenericArtifact> artifactDependencies = this.getArtifactDependencies(syncInfo, artifactId);
 				
 				List<GenericArtifact> sortedGAs = combineAndSort(artifactData,artifactAttachments,artifactDependencies);
@@ -165,21 +190,23 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 				try {
 					Document returnDoc = GenericArtifactHelper.createGenericArtifactXMLDocument(genericArtifact);
 					Object[] returnObjects = new Object[] {returnDoc};
-					removeFromWaitingList(currentRecord);
+					moveToTail(currentRecord);
 					return returnObjects;
 				} catch (GenericArtifactParsingException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					log.error("Could not parse the artifact for "+artifactId,e);
+					throw new RuntimeException(e);
 				}
 			}
 			else {
+				log.info("No changed artifacts reported for "+sourceRepositoryId
+						+". Removing it from the waiting list");
 				removeFromWaitingList(currentRecord);
 			}
 		}
 		try {
+			log.info("There are no artifacts to be shipped from any of the repositories. Sleeping");
 			Thread.sleep(sleepInterval);
 		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		return new Object[]{};
@@ -189,6 +216,11 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 		repositorySynchronizationWaitingList.remove(currentRecord);
 		String currentSourceRepositoryId = currentRecord.getRepositoryId(); 
 		repositoryRecordsInRepositorySynchronizationWaitingList.remove(currentSourceRepositoryId);
+	}
+	
+	private void moveToTail(RepositoryRecord currentRecord){
+		repositorySynchronizationWaitingList.remove(currentRecord);
+		repositorySynchronizationWaitingList.add(currentRecord);
 	}
 	
 	/**
@@ -428,5 +460,17 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 	}
 	public void setShipAttachments(boolean shipAttachments) {
 		this.shipAttachments = shipAttachments;
+	}
+	public long getMaxAttachmentSizePerArtifact() {
+		return maxAttachmentSizePerArtifact;
+	}
+	public void setMaxAttachmentSizePerArtifact(long maxAttachmentPerArtifact) {
+		this.maxAttachmentSizePerArtifact = maxAttachmentPerArtifact;
+	}
+	public boolean isExportAttachments() {
+		return exportAttachments;
+	}
+	public void setExportAttachments(boolean exportAttachments) {
+		this.exportAttachments = exportAttachments;
 	}
 }
