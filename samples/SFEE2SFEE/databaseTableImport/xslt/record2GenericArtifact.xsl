@@ -145,5 +145,17 @@
 				  	<xsl:value-of select="text()"/>
 				</field>
 			</xsl:if>
+			<xsl:if test="$fieldName = 'COMMENT_TEXT'">
+				<field>
+					<xsl:attribute name="fieldName">Comment Text</xsl:attribute>
+				    <xsl:attribute name="fieldDisplayName"><xsl:value-of select="$fieldName"/></xsl:attribute>
+				    <xsl:attribute name="fieldAction">replace</xsl:attribute>
+				    <xsl:attribute name="fieldType">flexField</xsl:attribute>
+				  	<xsl:attribute name="fieldValueHasChanged">true</xsl:attribute>
+				  	<xsl:attribute name="fieldValueType">Integer</xsl:attribute>
+				  	<xsl:attribute name="fieldValueIsNull">false</xsl:attribute>
+				  	<xsl:value-of select="text()"/>
+				</field>
+			</xsl:if>
 	</xsl:template>
 </xsl:stylesheet>
