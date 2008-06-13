@@ -16,6 +16,8 @@
 		<config>samples/SFEE2SFEE/flatFileImport/config/FLATFILE2SFEE.xml</config>
 		<config>samples/SFEE2SFEE/genericArtifactExport/config/sfee2genericartifact.xml</config>
 		<config>samples/SFEE2SFEE/unidirectionalTransformation/config/UnidirectionalTransformationWiring.xml</config>
+		<config>samples/SFEE2SFEE/databaseTableExport/config/database-table-export.xml</config>
+		<config>samples/SFEE2SFEE/databaseTableImport/config/database-table-import.xml</config>
 	</configs>
 	<configSets>
 	</configSets>
