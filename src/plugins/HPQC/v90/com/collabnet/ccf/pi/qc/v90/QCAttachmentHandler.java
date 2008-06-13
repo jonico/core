@@ -302,7 +302,7 @@ public class QCAttachmentHandler {
 			String sourceRepositoryKind, String sourceSystemId,
 			String sourceSystemKind, String targetRepositoryId,
 			String targetRepositoryKind, String targetSystemId,
-			String targetSystemKind) throws Exception {
+			String targetSystemKind, long maxAttachmentSizePerArtifact) throws Exception {
 
 		// int rc = 0;
 		// String sql = "SELECT DISTINCT(AU_ENTITY_ID) FROM AUDIT_LOG WHERE
@@ -337,7 +337,7 @@ public class QCAttachmentHandler {
 			for (int attachCount = 0; attachCount < attachmentNames.size(); attachCount++) {
 
 				GenericArtifact latestAttachmentArtifact = getGenericArtifactObjectOfAttachment(
-						qcc, bugId, attachmentNames.get(attachCount));
+						qcc, bugId, attachmentNames.get(attachCount), maxAttachmentSizePerArtifact);
 				if (latestAttachmentArtifact == null)
 					continue;
 				latestAttachmentArtifact = getArtifactAction(
@@ -442,7 +442,7 @@ public class QCAttachmentHandler {
 	 * 			Containing all the field values.
 	 */
 	public GenericArtifact getGenericArtifactObjectOfAttachment(
-			IConnection qcc, String entityId, String attachmentName) {
+			IConnection qcc, String entityId, String attachmentName, long maxAttachmentSizePerArtifact) {
 		long attachmentSize = 0;
 		String thisMimeType = null;
 		if (attachmentName != null)
@@ -484,6 +484,12 @@ public class QCAttachmentHandler {
 				}
 				// log.info("************************************************");
 				attachmentSize = (long) data.length;
+				
+				if(attachmentSize > maxAttachmentSizePerArtifact) {
+					log.error("The attachment "+attachmentName+" is bigger than our maxAttachmentSizePerArtifact, so cannot ship.");
+					return null;
+				}
+				
 			} else {
 				thisField
 						.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
