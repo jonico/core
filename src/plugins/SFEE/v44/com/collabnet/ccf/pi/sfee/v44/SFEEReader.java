@@ -227,7 +227,8 @@ public class SFEEReader extends AbstractReader {
 				Set<ArtifactSoapDO> artifactSet = new TreeSet<ArtifactSoapDO>();
 				artifactSet.addAll(artifactRows);
 				attachments = attachmentHandler.listAttachments(connection.getSessionId(),
-						lastModifiedDate,getUsername(),artifactSet, connection.getSfSoap());
+						lastModifiedDate,getUsername(),artifactSet, connection.getSfSoap(),
+						this.getMaxAttachmentSizePerArtifact());
 			} catch (RemoteException e1) {
 				e1.printStackTrace();
 				throw new RuntimeException(e1);
@@ -375,7 +376,8 @@ public class SFEEReader extends AbstractReader {
 		List<GenericArtifact> attachments = null;
 		try {
 			attachments = attachmentHandler.listAttachments(connection.getSessionId(),
-					lastModifiedDate,getUsername(),artifactIds, connection.getSfSoap());
+					lastModifiedDate,getUsername(),artifactIds, connection.getSfSoap(),
+					this.getMaxAttachmentSizePerArtifact());
 			for(GenericArtifact attachment:attachments){
 				attachment.setSourceArtifactId(artifactId);
 				populateSrcAndDest(syncInfo, attachment);
