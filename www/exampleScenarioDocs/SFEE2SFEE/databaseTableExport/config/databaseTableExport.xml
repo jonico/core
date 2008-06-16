@@ -9,7 +9,7 @@ $HeadURL$
 	<description>
 		<![CDATA[    
   This sample exports the tracker artifacts from an SFEE system into
-  a CSV file or some other file with a non-comma separator.
+  a database table.
     
   You need the following in your classpath
   
@@ -57,9 +57,7 @@ $HeadURL$
 				<entry key-ref="GenericArtifact2XmlMapConverter"
 					value-ref="XmlMap2OrderedMapConverter" />
 				<entry key-ref="XmlMap2OrderedMapConverter"
-					value-ref="OrderedMap2OutputCSVStringConverter" />
-				<entry key-ref="OrderedMap2OutputCSVStringConverter"
-					value-ref="OutputCSVFileWriter" />
+					value-ref="DatabaseWriter" />
 			</map>
 		</property>
 	</bean>
@@ -77,7 +75,7 @@ $HeadURL$
 			Polling interval seconds is configured as 0 to indicate that the polling reader should
 			read from the database read connector continuously without and pauses in between.
 		</description>
-		<property name="pollLimit" value="1" />
+		<property name="pollLimit" value="2" />
 		<property name="delegate" ref="SynchronizationStatusPollingReaderJdbcConnection" />
 		<property name="pollIntervalSecs" value="0" />
 	</bean>
@@ -97,6 +95,18 @@ $HeadURL$
 		</property>
 	</bean>
 	<bean id="JdbcConnectionReadSFEE"
+		class="org.openadaptor.auxil.connector.jdbc.JDBCConnection">
+		<description>
+			This defines jdbc connection that will be used by the
+			SynchronizationStatusPollingReader
+		</description>
+		<property name="driver" value="${ccf.db.driver}" />
+		<property name="url" value="${ccf.db.url}" />
+		<property name="username" value="${ccf.db.username}" />
+		<property name="password" value="${ccf.db.password}" />
+	</bean>
+	
+	<bean id="JdbcConnection"
 		class="org.openadaptor.auxil.connector.jdbc.JDBCConnection">
 		<description>
 			This defines jdbc connection that will be used by the
@@ -163,24 +173,37 @@ $HeadURL$
 	</bean>
 	
 	<bean id="GenericArtifact2XmlMapConverter" class="com.collabnet.ccf.core.transformer.XsltProcessor">
-		<property name="xsltDir" value="${ccf.xsltDir}" />
+		<property name="xsltFile" value="${ccf.xsltFile}" />
 	</bean>
 	
 	<bean id="XmlMap2OrderedMapConverter"
 		class="org.openadaptor.auxil.convertor.xml.XmlToOrderedMapConvertor">
 		<property name="omitTopLevelElementTag" value="true"/>
 	</bean>
-	
-	<bean id="OrderedMap2OutputCSVStringConverter"
-		class="org.openadaptor.auxil.convertor.delimited.OrderedMapToDelimitedStringConvertor">
-		<property name="quoteChar" value='"'/>
-		<property name="outputHeader" value="true"/>
-		<property name="forceEnclosingQuotes" value="true"/>
+	<bean id="DatabaseWriter" class="org.openadaptor.auxil.connector.jdbc.writer.JDBCWriteConnector">
+		<property name="writer" ref="DatabaseTableWriter"/>
+		<property name="jdbcConnection" ref="JdbcConnection" />
 	</bean>
-	
-	<bean id="OutputCSVFileWriter"
-		class="org.openadaptor.auxil.connector.iostream.writer.FileWriteConnector">
-		<property name="filename" value="output/csvoutputfile.dat" />
-		<property name="append" value="true" />
+	<bean id="DatabaseTableWriter"
+		class="org.openadaptor.auxil.connector.jdbc.writer.MapTableWriter">
+		<description>
+			This is the writer object that writes the artifact data
+			into the database table.
+		</description>
+		<property name="tableName" value="ARTIFACTS"></property>
+		<property name="outputColumns">
+			<list>
+				<value>TITLE</value>
+				<value>DESCRIPTION</value>
+				<value>GROUP_VAL</value>
+				<value>STATUS</value>
+				<value>CATEGORY</value>
+				<value>CUSTOMER</value>
+				<value>PRIORITY</value>
+				<value>ASSIGNED_TO</value>
+				<value>REPORTED_IN_RELEASE</value>
+				<value>ESTIMATED_HOURS</value>
+			</list>
+		</property>
 	</bean>
 </beans>
