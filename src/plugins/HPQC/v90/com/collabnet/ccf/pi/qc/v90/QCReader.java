@@ -264,7 +264,7 @@ public class QCReader extends AbstractReader  implements
 		
 		String fromTimestamp = getFromTime(syncInfo);
 		String fromTime = convertIntoString(fromTimestamp);
-		String transactionId = getTransactionId(syncInfo);
+		String syncInfoTransactionId = getTransactionId(syncInfo);
 		IConnection connection = null;
 		try {
 			connection = connect(sourceSystemId, sourceSystemKind, sourceRepositoryId,
@@ -278,7 +278,7 @@ public class QCReader extends AbstractReader  implements
 		ArrayList<GenericArtifact> modifiedDefectArtifacts = new ArrayList<GenericArtifact>();
 		try {
 			List<Object> transactionIdAndAttachOperation = defectHandler.getTxnIdAndAuDescription(
-					artifactId, transactionId, connection, getUserName());
+					artifactId, syncInfoTransactionId, connection, getUserName());
 			if(transactionIdAndAttachOperation==null)
 				return null;
 			String lastTransactionId = (String) transactionIdAndAttachOperation
@@ -289,7 +289,7 @@ public class QCReader extends AbstractReader  implements
 							null);
 			//if (latestDefectArtifact == null)
 				//return null;
-			latestDefectArtifact = defectHandler.getArtifactAction(latestDefectArtifact, connection,
+			latestDefectArtifact = defectHandler.getArtifactAction(latestDefectArtifact, connection, syncInfoTransactionId, 
 					lastTransactionId, Integer.parseInt(artifactId), fromTime);
 			latestDefectArtifact
 					.setArtifactMode(GenericArtifact.ArtifactModeValue.COMPLETE);
