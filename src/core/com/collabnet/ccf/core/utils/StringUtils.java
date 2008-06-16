@@ -80,6 +80,8 @@ public class StringUtils {
 	 */
 	private final static String HTML_PATTERN = "(<[^>]+>)";
     
+	private final static String UNDERSCORE_PATTERN = "________________________________________";
+	
     /** <p> Constant for the empty <code>String</code> </p> */
     public final static String EMPTY_STRING = "";
     
@@ -730,7 +732,26 @@ public class StringUtils {
 	 */
     public static String stripHTML(String text) {
     	if (text != null) {
-    		return (text.replaceAll(HTML_PATTERN, EMPTY_STRING));
+    		text = text.replaceAll(HTML_PATTERN, EMPTY_STRING);
+    		return stripSpecificDelimiter(text);
+    	} else {
+    		return (null);
+    	}
+    } // end method stripHTML(String)
+    
+    /**
+	 * <p>
+	 * Strips off all Underscore tags from the specified <code>text</code>.
+	 * </p>
+	 * 
+	 * @param text the raw text to strip Underscore tags from
+	 * 
+	 * @return the text with all Underscore tags stripped of; if <code>null</code>
+	 * is specified <code>null</code> is also returned
+	 */
+    public static String stripSpecificDelimiter(String text) {
+    	if (text != null) {
+    		return (text.replaceAll(UNDERSCORE_PATTERN, EMPTY_STRING));
     	} else {
     		return (null);
     	}
