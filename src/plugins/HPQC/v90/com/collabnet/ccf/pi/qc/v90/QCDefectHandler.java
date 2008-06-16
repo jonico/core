@@ -17,6 +17,7 @@ import java.util.TreeSet;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.commons.lang.StringUtils;
 
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactAttachment;
@@ -720,7 +721,7 @@ public class QCDefectHandler {
 			}
 
 		}
-		String deltaComment = getDeltaOfComment(qcc, actionId);
+		String deltaComment = getDeltaOfComment(qcc, actionId, actionId);
 		if (deltaComment != null) {
 			List<GenericArtifactField> genArtifactFieldsForComments = latestDefectArtifact
 					.getAllGenericArtifactFieldsWithSameFieldName("BG_DEV_COMMENTS");
@@ -861,7 +862,7 @@ public class QCDefectHandler {
 	 * 			Updated artifact
 	 */
 	public GenericArtifact getArtifactAction(
-			GenericArtifact latestDefectArtifact, IConnection qcc,
+			GenericArtifact latestDefectArtifact, IConnection qcc, String syncInfoTransactionId, 
 			String actionId, int entityId, String lastReadTime) {
 
 		List<GenericArtifactField> genArtifactFields = latestDefectArtifact
@@ -903,12 +904,13 @@ public class QCDefectHandler {
 							.setArtifactAction(GenericArtifact.ArtifactActionValue.UPDATE);
 			}
 		}
-
-		String deltaComment = getDeltaOfComment(qcc, Integer.parseInt(actionId));
-		if (deltaComment != null) {
-			List<GenericArtifactField> genArtifactFieldsForComments = latestDefectArtifact
-					.getAllGenericArtifactFieldsWithSameFieldName("BG_DEV_COMMENTS");
-			genArtifactFieldsForComments.get(0).setFieldValue(deltaComment);
+		if(latestDefectArtifact.getArtifactAction().equals(GenericArtifact.ArtifactActionValue.UPDATE)) {
+			String deltaComment = getDeltaOfComment(qcc, Integer.parseInt(syncInfoTransactionId), Integer.parseInt(actionId));
+			if (deltaComment != null) {
+				List<GenericArtifactField> genArtifactFieldsForComments = latestDefectArtifact
+						.getAllGenericArtifactFieldsWithSameFieldName("BG_DEV_COMMENTS");
+				genArtifactFieldsForComments.get(0).setFieldValue(deltaComment);
+			}
 		}
 
 		return latestDefectArtifact;
@@ -920,12 +922,13 @@ public class QCDefectHandler {
 	 * @param actionId
 	 * @return
 	 */
-	public String getDeltaOfComment(IConnection qcc, int actionId) {
+	public String getDeltaOfComment(IConnection qcc, int syncInfoTransactionId, int actionId) {
 
-		String deltaComment = null;
-
-		String sql = "SELECT * FROM AUDIT_PROPERTIES WHERE AP_ACTION_ID= '"
-				+ actionId + "'";
+		String deltaComment = "";
+		String newFieldValue = null;
+		String emptyString = "";
+		
+		String sql = "SELECT * FROM AUDIT_PROPERTIES WHERE AP_ACTION_ID > '"+syncInfoTransactionId+ "' AND AP_ACTION_ID <= '"+actionId+ "'";
 		IRecordSet newRs = executeSQL(qcc, sql);
 		int newRc = newRs.getRecordCount();
 
@@ -933,16 +936,16 @@ public class QCDefectHandler {
 			String fieldName = newRs.getFieldValue("AP_FIELD_NAME");
 			if (fieldName.equals("BG_DEV_COMMENTS")) {
 				String oldFieldValue = newRs.getFieldValue("AP_OLD_LONG_VALUE");
-				String newFieldValue = newRs.getFieldValue("AP_NEW_LONG_VALUE");
-				if (oldFieldValue != null
-						&& (oldFieldValue != null && !oldFieldValue.equals("")))
-					deltaComment = (newFieldValue.substring(0, oldFieldValue
-							.length()));
+				newFieldValue = newRs.getFieldValue("AP_NEW_LONG_VALUE");
+				if (!StringUtils.isEmpty(oldFieldValue))
+					deltaComment+= (newFieldValue.substring(oldFieldValue.length()));
 				log.info(deltaComment);
 			}
 		}
-
-		return deltaComment;
+		if(StringUtils.isEmpty(newFieldValue))
+			return emptyString;
+		else
+			return deltaComment;
 	}
 
 	/**
