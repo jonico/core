@@ -79,6 +79,8 @@ public class MappingDBUpdater implements IDataProcessor{
 					targetSystemKind,
 					time,
 					version);
+			// we also have to create the opposite mapping,
+			// but we do not know the version yet
 			createMapping(targetArtifactId,
 					targetRepositoryId,
 					targetRepositoryKind,
@@ -90,7 +92,7 @@ public class MappingDBUpdater implements IDataProcessor{
 					sourceSystemId,
 					sourceSystemKind,
 					time,
-					version);
+					"unknown");
 
 			
 			IOrderedMap inputParameters = new OrderedHashMap();
