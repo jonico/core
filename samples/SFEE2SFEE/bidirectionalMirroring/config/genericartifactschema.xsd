@@ -1,0 +1,635 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- edited with XMLSpy v2008 sp1 (http://www.altova.com) by victor madrigal (collabnet) -->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:ccf="http://ccf.open.collab.net/GenericArtifactV1.0" targetNamespace="http://ccf.open.collab.net/GenericArtifactV1.0" elementFormDefault="qualified" attributeFormDefault="unqualified">
+	<xs:element name="artifact">
+		<xs:annotation>
+			<xs:documentation>
+This is the root element for every entity that is transported through the CCF pipeline. If the artifact's mode is not "attachment", the element will typically only contain field-sub-elements. If it is an attachment, it may also contain a BASE64 encoded text-string, describing the content of the attachment. The content of an attachment does not have to be shipped if the artifactMode is set to "changedFieldsOnly".
+</xs:documentation>
+		</xs:annotation>
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="field" minOccurs="0" maxOccurs="unbounded">
+					<xs:annotation>
+						<xs:documentation>
+A field has a name and a field type and contains a typed value for the property of the artifact that is described by this field. If a field with the same name and field type occurs more than once, this indicates a multi-value property within the
+artifact. The content of the field element varies from value type to value type, but it is always encoded as a string, so structured values are currently not allowed.
+</xs:documentation>
+					</xs:annotation>
+					<xs:complexType>
+						<xs:attribute name="fieldName" type="xs:string" use="required">
+							<xs:annotation>
+								<xs:documentation>
+This attribute contains the name of the field.
+</xs:documentation>
+							</xs:annotation>
+						</xs:attribute>
+						<xs:attribute name="fieldType" type="xs:string" use="required">
+							<xs:annotation>
+								<xs:documentation>
+This attribute contains the type of the field. This is not the type of
+the field's value but a mechanism to
+differentiate different artifact
+properties with the same name.
+Values might be "mandatoryField",
+"flexField", "integrationData" or
+just a plain number.
+</xs:documentation>
+							</xs:annotation>
+						</xs:attribute>
+						<xs:attribute name="fieldValueHasChanged" use="required">
+							<xs:annotation>
+								<xs:documentation>
+This attribute may have the values
+"true" or "false" to state whether
+this property has been changed since
+the last update. This attribute can
+be used by the target system as a
+hint which fields to update.
+</xs:documentation>
+							</xs:annotation>
+							<xs:simpleType>
+								<xs:restriction base="xs:string">
+									<xs:enumeration value="true"/>
+									<xs:enumeration value="false"/>
+								</xs:restriction>
+							</xs:simpleType>
+						</xs:attribute>
+						<xs:attribute name="fieldAction" use="required">
+							<xs:annotation>
+								<xs:documentation>
+This attribute determines whether
+the content of the value tag should
+be "append"ed, "replace"d, or
+"delete"d. Valid values are
+"append", "replace" and "delete".
+Note that most systems will only
+support the "replace"-action and
+that source systems usually do not
+know anything about the
+characteristics of the target
+system.
+</xs:documentation>
+							</xs:annotation>
+							<xs:simpleType>
+								<xs:restriction base="xs:string">
+									<xs:enumeration value="append"/>
+									<xs:enumeration value="replace"/>
+									<xs:enumeration value="delete"/>
+								</xs:restriction>
+							</xs:simpleType>
+						</xs:attribute>
+						<xs:attribute name="fieldValueType" type="ccf:fieldValueTypeSimpleType" use="required">
+							<xs:annotation>
+								<xs:documentation>
+This element contains the type of
+the value of the surrounding field
+element. If there are multiple
+occurrences of the field element
+with the same name and field type,
+their values may have different
+types. Currently supported types are
+Integer, Double, DateTime, Date,
+String, HTMLString, Base64String,
+Boolean and User.
+</xs:documentation>
+							</xs:annotation>
+						</xs:attribute>
+						<xs:attribute name="fieldValueisNull" type="xs:string" use="required">
+							<xs:annotation>
+								<xs:documentation>
+This attribute may have the values
+"true" or "false" to differentiate
+between an empty string and a null
+value for the content of the field
+element.
+</xs:documentation>
+							</xs:annotation>
+						</xs:attribute>
+						<xs:attribute name="minOccurs" type="xs:string" use="optional">
+							<xs:annotation>
+								<xs:documentation>
+This optional attribute describes
+the minimal occurence of this field
+element. Typical values are "0", "1"
+and "unknown". For mandatory fields,
+the value is at least "1", for
+optional fields the value has to be
+set to "0". This attribute is
+typically only set if the root
+element attribute
+"includesFieldMetaData" is set to
+"true".
+</xs:documentation>
+							</xs:annotation>
+						</xs:attribute>
+						<xs:attribute name="maxOccurs" type="xs:string" use="optional">
+							<xs:annotation>
+								<xs:documentation>
+This optional attribute describes
+the maximal occurence of this field
+element. Typical values are "1", any
+number greater one, "unknown" and
+"unbounded". This attribute is
+typically only set if the root
+element attribute
+"includesFieldMetaData" is set to
+"true".
+</xs:documentation>
+							</xs:annotation>
+						</xs:attribute>
+						<xs:attribute name="nullValueSupported" type="xs:string" use="optional">
+							<xs:annotation>
+								<xs:documentation>
+This optional attribute indicates
+whether this property of the
+artifact supports a null value as
+field value. Allowed values are
+"true", "false" and "unknown". This
+attribute is typically only set if
+the root element attribute
+"includesFieldMetaData" is set to
+"true".
+
+</xs:documentation>
+							</xs:annotation>
+						</xs:attribute>
+						<xs:attribute name="alternativeFieldName" type="xs:string" use="optional">
+							<xs:annotation>
+								<xs:documentation>
+This optional attribute is used to
+have another option to uniquely
+identify the field with another name
+but the field name. This option
+might be used by systems where the
+actual field name is very technical
+and not directly displayed to the
+user or if the field name should be
+converted to an XML-element name to
+facilitate graphical mapings. This
+attribute is typically only set if
+the root element attribute
+"includesFieldMetaData" is set to
+"true".
+</xs:documentation>
+							</xs:annotation>
+						</xs:attribute>
+					</xs:complexType>
+				</xs:element>
+			</xs:sequence>
+			<xs:attribute name="artifactMode" use="required">
+				<xs:annotation>
+					<xs:documentation>
+The value of this attribute could be either
+“complete” or “changedFieldsOnly” – which denote
+how the source system has formed this artifact.
+Typically, source systems are expected to
+provide a complete artifact, but in some cases,
+this may not be possible or might be very
+imperformant (e. g. updated meta-data for
+attachments), and when that happens, the source
+system should set this mode value to
+“changedFieldsOnly".
+</xs:documentation>
+				</xs:annotation>
+				<xs:simpleType>
+					<xs:restriction base="xs:string">
+						<xs:enumeration value="changedFieldsOnly"/>
+						<xs:enumeration value="complete"/>
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:attribute>
+			<xs:attribute name="artifactAction" use="required">
+				<xs:annotation>
+					<xs:documentation>
+This attribute defines if this artifact should
+be "create"d, "update"d, "delete"d or "ignore"d
+by the target system. As long the artifact has
+not yet passed the entity service (that may
+change the value), the value will typically be
+"create" or "delete", since the source system
+does not know whether the artifact has been
+already created in the target system. The four
+possible values of action are "create",
+"update", "delete", and "ignore".
+</xs:documentation>
+				</xs:annotation>
+				<xs:simpleType>
+					<xs:restriction base="xs:string">
+						<xs:enumeration value="delete"/>
+						<xs:enumeration value="update"/>
+						<xs:enumeration value="create"/>
+						<xs:enumeration value="ignore"/>
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:attribute>
+			<xs:attribute name="artifactVersion" type="xs:string" use="required">
+				<xs:annotation>
+					<xs:documentation>
+This attribute contains the version of the
+artifact in the target system. There is one
+reserved value "unknown" that is used if the
+source system does not support version control.
+</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+			<xs:attribute name="artifactLastModifiedDate" type="xs:string" use="required">
+				<xs:annotation>
+					<xs:documentation>
+This attribute contains the date when this
+artifact was lastly updated.
+</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+			<xs:attribute name="conflictResolutionPriority" type="xs:string" use="required">
+				<xs:annotation>
+					<xs:documentation>
+If a conflict is detected in the target system,
+the value of this attribute will be used to
+determine, whether the target artifact should be
+overriden or not. Reserved values are
+"alwaysIgnore" and "alwaysOverride".
+</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+			<xs:attribute name="artifactType" use="required">
+				<xs:annotation>
+					<xs:documentation>
+This attribute determines, whether this is a
+plain artifact that contains actual data,
+whether it is a dependency or association
+between two artifacts or whether it is an
+attachment that belongs to a parent artifact.
+Supported values: "plainArtifact", "dependency"
+(dependency or association) and "attachment".
+</xs:documentation>
+				</xs:annotation>
+				<xs:simpleType>
+					<xs:restriction base="xs:string">
+						<xs:enumeration value="plainArtifact"/>
+						<xs:enumeration value="dependency"/>
+						<xs:enumeration value="attachment"/>
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:attribute>
+			<xs:attribute name="sourceSystemKind" type="xs:string" use="required">
+				<xs:annotation>
+					<xs:documentation>
+This attribute contains the nature of the source
+system of the artifact, e. g. SourceForge
+EnterpriseEdition 4.4, CollabNet Enterprise
+Edition 5.1, HP Quality Center 9.1, Conigma CCM.
+</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+			<xs:attribute name="sourceSystemId" type="xs:string" use="required">
+				<xs:annotation>
+					<xs:documentation>
+This attribute contains the id of the source
+system. This id, together with the source system
+kind, should be unique in the whole system
+landscape.
+</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+			<xs:attribute name="sourceRepositoryKind" type="xs:string" use="required">
+				<xs:annotation>
+					<xs:documentation>
+This attribute contains the nature of the source
+repository of the artifact, e. g. SourceForge
+EnterpriseEdition 4.4 Tracker, SourceForge
+EnterpriseEdition 4.4 Tracker Dependency, HP
+Quality Center 9.1 Defect, Conigma CCM SWFM_CR.
+</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+			<xs:attribute name="sourceRepositoryId" type="xs:string" use="required">
+				<xs:annotation>
+					<xs:documentation>
+This attribute contains the id of the source
+repository where this artifact is coming from.
+This id, together with the source system id,
+should be sufficient to determine the source
+repository. There is one reserved value
+"unknown" that is used if the artifact cannot be
+directly associated to a source repository (this
+might be the case for dependencies, associations
+and attachments).
+</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+			<xs:attribute name="sourceArtifactId" type="xs:string" use="required">
+				<xs:annotation>
+					<xs:documentation>
+This attribute contains the id of the artifact
+in the source system. There is one reserved
+value named "unknown" that should be used, if
+the artifact has no direct id in the source
+system (this might be the case for dependencies,
+associations and attachments).
+</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+			<xs:attribute name="targetSystemKind" type="xs:string" use="required">
+				<xs:annotation>
+					<xs:documentation>
+This attribute contains the nature of the target
+system of the artifact, e. g. SourceForge
+EnterpriseEdition 4.4, CollabNet Enterprise
+Edition 5.1, HP Quality Center 9.1, Conigma CCM.
+</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+			<xs:attribute name="targetSystemId" type="xs:string" use="required">
+				<xs:annotation>
+					<xs:documentation>
+This attribute contains the id of the target
+system. This id, together with the target system
+kind, should be unique in the whole system
+landscape.
+</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+			<xs:attribute name="targetRepositoryKind" type="xs:string" use="required">
+				<xs:annotation>
+					<xs:documentation>
+This attribute contains the nature of the target
+repository of the artifact, e. g. SourceForge
+EnterpriseEdition 4.4 Tracker, SourceForge
+EnterpriseEdition 4.4 Task Dependency, HP
+Quality Center 9.1 Defect Attachment, Conigma
+CCM SWFM_CR.
+</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+			<xs:attribute name="targetRepositoryId" type="xs:string" use="required">
+				<xs:annotation>
+					<xs:documentation>
+This attribute contains the id of the target
+repository where this artifact should go. This
+id, together with the target system id, should
+be sufficient to determine the target
+repository. There is one reserved value
+"unknown" that should be used if the artifact
+cannot be directly associated to a target
+repository this might be the case for
+dependencies , associations or attachments).
+</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+			<xs:attribute name="targetArtifactId" type="xs:string" use="required">
+				<xs:annotation>
+					<xs:documentation>
+This attribute contains the id of the artifact
+in the target system. There is one reserved
+value "unknown" that should be used if the
+artifact cannot be associated to a target id
+(this might be the case for dependencies,
+associations and attachments), the target
+artifact id is unknown at this stage and/or it
+has not been created yet in the target
+repository. Typically, the value will be
+"unknown" until this artifact passed the entity
+service.
+</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+			<xs:attribute name="depParentSourceRepositoryKind" type="xs:string" use="optional">
+				<xs:annotation>
+					<xs:documentation>
+This attribute is only used if the artifact type
+is "dependency" or "attachment". In this case,
+it contains the nature of the source repository
+of the parent artifact that takes part in this
+association/dependency respectively the nature
+of the source repository of the parent of this
+attachment.
+</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+			<xs:attribute name="depParentSourceRepositoryId" type="xs:string" use="optional">
+				<xs:annotation>
+					<xs:documentation>
+This attribute is only used if the artifact type
+is "dependency" or "attachment". In this case,
+it contains the id of the source repository
+where the parent artifact that takes part in
+this association/dependency respectively the
+parent artifact of this attachment comes from.
+This id, together with the source system id,
+should be sufficient to determine the source
+repository.
+</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+			<xs:attribute name="depParentSourceArtifactId" type="xs:string" use="optional">
+				<xs:annotation>
+					<xs:documentation>
+This attribute is only used if the artifact type
+is "dependency" or "attachment". In this case,
+this attribute contains the id of the parent
+artifact that takes part in the defined
+association/dependency , respectively the id of
+the parent of this attachment in the source
+system.
+</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+			<xs:attribute name="depChildSourceRepositoryKind" type="xs:string" use="optional">
+				<xs:annotation>
+					<xs:documentation>
+This attribute is only used if the artifact type
+is "dependency", therefore defines a dependency
+or association. In this case, it contains the
+nature of the source repository of the child
+artifact that takes part in this association or
+dependency, e. g. SourceForge EnterpriseEdition
+4.4 Tracker, SourceForge EnterpriseEdition 4.4
+Task, HP Quality Center 9.1 Defect, Conigma CCM
+SWFM_CR.
+</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+			<xs:attribute name="depChildSourceRepositoryId" type="xs:string" use="optional">
+				<xs:annotation>
+					<xs:documentation>
+This attribute is only used if the artifact type
+is "dependency", therefore defines a dependency
+or association. In this case, it contains the id
+of the source repository where the child
+artifact that takes part in this association or
+dependency is coming from. This id, together
+with the source system id, should be sufficient
+to determine the source repository.
+</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+			<xs:attribute name="depChildSourceArtifactId" type="xs:string" use="optional">
+				<xs:annotation>
+					<xs:documentation>
+This attribute is only used if the artifact type
+is "dependency", therefore defines a dependency
+or association. In this case, this attribute
+contains the id of the child artifact that takes
+part in the defined association or dependency in
+the source system.
+</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+			<xs:attribute name="depParentTargetRepositoryKind" type="xs:string" use="optional">
+				<xs:annotation>
+					<xs:documentation>
+This attribute is only used if the artifact type
+is "dependency" or "attachment". In this case,
+it contains the nature of the target repository
+of the parent artifact that takes part in this
+association/dependency respectively the nature of the target repository of the parent artifact
+of this attachment. Typically, the value will be
+"unknown" until this artifact passes the entity
+service.
+</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+			<xs:attribute name="depParentTargetRepositoryId" type="xs:string" use="optional">
+				<xs:annotation>
+					<xs:documentation>
+This attribute is only used if the artifact type
+is "dependency" or "attachment". In this case,
+it contains the id of the target repository
+where the parent artifact that takes part in
+this association/dependency respectively the
+parent artifact of this attachment should go.
+This id, together with the target system id,
+should be sufficient to determine the target
+repository. Typically, the value will be
+"unknown" until this artifact passes the entity
+service.
+</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+			<xs:attribute name="depParentTargetArtifactId" type="xs:string" use="optional">
+				<xs:annotation>
+					<xs:documentation>
+This attribute is only used if the artifact type
+is "dependency" or "attachment". In this case,
+this attribute contains the id of the parent
+artifact that takes part in the defined
+association/dependency respectively the id of
+the parent artifact of this attachment in the
+target system. Typically, the value will be
+"unknown" until this artifact passes the entity
+service.
+</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+			<xs:attribute name="depChildTargetRepositoryKind" type="xs:string" use="optional">
+				<xs:annotation>
+					<xs:documentation>
+This attribute is only used if the artifact type
+is "dependency", therefore defines a dependency
+or association. In this case, it contains the
+nature of the target repository of the child
+artifact that takes part in this association or
+dependency, e. g. SourceForge EnterpriseEdition
+4.4 Tracker, SourceForge EnterpriseEdition 4.4
+Task, HP Quality Center 9.1 Defect, Conigma CCM
+SWFM_CR. Typically, the value will be "unknown"
+until this artifact passes the entity service.
+</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+			<xs:attribute name="depChildTargetRepositoryId" type="xs:string" use="optional">
+				<xs:annotation>
+					<xs:documentation>
+This attribute is only used if the artifact type
+is "dependency", therefore defines a dependency
+or association. In this case, it contains the id
+of the target repository where the child
+artifact that takes part in this association or
+dependency should go. This id, together with the
+target system id, should be sufficient to
+determine the target repository. Typically, the
+value will be "unknown" until this artifact
+passes the entity service.
+</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+			<xs:attribute name="depChildTargetArtifactId" type="xs:string" use="optional">
+				<xs:annotation>
+					<xs:documentation>
+This attribute is only used if the artifact type
+is "dependency", therefore defines a dependency
+or association. In this case, this attribute
+contains the id of the child artifact that takes
+part in the defined association or dependency in
+the target system. Typically, the value will be
+"unknown" until this artifact passes the entity
+service.
+</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+			<xs:attribute name="errorCode" type="xs:string" use="required">
+				<xs:annotation>
+					<xs:documentation>
+This attribute indicates whether an error
+occured during processing. The default value for
+this field is "ok". If this field is set to
+another value but "ok", components not
+specialized in handling errors should just
+ignore the artifact, so the artifactAction
+attribute should be set to "ignore".
+</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+			<xs:attribute name="transactionId" type="xs:string" use="required">
+				<xs:annotation>
+					<xs:documentation>
+This attribute defines the current transaction
+id. If multiple artifacts belong to the same
+transaction, this indicates that the data of
+these artifacts has been changed during one
+logical unit of work and that these changes
+belong semantically together. If the target
+system supports it, it should try to update all
+changes of one transaction at once and rollback
+partial changes if it is not able to replay all
+changes. The default value of this attribute is
+"unknown".</xs:documentation>
+				</xs:annotation>
+			</xs:attribute>
+			<xs:attribute name="includesFieldMetaData" use="required">
+				<xs:annotation>
+					<xs:documentation>
+This attribute indicates whether field specific
+meta-data like cardinality, nillability and
+alternative names will be shipped with this
+artifact. In most cases, this data will be
+ommitted due to performance reasons, however
+this data might be necessary for purposes like
+schema-generation and graphical mapping
+facilities. The only allowed values are "true"
+and "false".
+</xs:documentation>
+				</xs:annotation>
+				<xs:simpleType>
+					<xs:restriction base="xs:string">
+						<xs:enumeration value="true"/>
+						<xs:enumeration value="false"/>
+					</xs:restriction>
+				</xs:simpleType>
+			</xs:attribute>
+		</xs:complexType>
+	</xs:element>
+	<xs:simpleType name="fieldValueTypeSimpleType">
+		<xs:restriction base="xs:string">
+			<xs:enumeration value="Integer"/>
+			<xs:enumeration value="Double"/>
+			<xs:enumeration value="DateTime"/>
+			<xs:enumeration value="Date"/>
+			<xs:enumeration value="String"/>
+			<xs:enumeration value="HTMLString"/>
+			<xs:enumeration value="Base64String"/>
+			<xs:enumeration value="Boolean"/>
+		</xs:restriction>
+	</xs:simpleType>
+</xs:schema>

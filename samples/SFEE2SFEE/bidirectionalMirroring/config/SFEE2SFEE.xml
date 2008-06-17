@@ -36,6 +36,11 @@ $HeadURL$
 	<bean id="Adaptor" class="org.openadaptor.core.adaptor.Adaptor">
 		<property name="messageProcessor" ref="Router" />
 	</bean>
+	
+	<bean id="GenericArtifactSchemaValidator" class="com.collabnet.ccf.core.utils.XmlValidator">
+    	<description>This processor validates whether the artifacts produced by the SFEE reader are generic artifact schema compliant.</description>
+    	<property name="schemaURL" value="config/genericartifactschema.xsd"/>
+  	</bean>
 
 	<bean id="Router" class="org.openadaptor.core.router.Router">
 		<description>
@@ -46,7 +51,9 @@ $HeadURL$
 		<property name="processMap">
 			<map>
 				<entry key-ref="SynchronizationStatusPollingReader" value-ref="SFEEReader" />
-				<entry key-ref="SFEEReader"	value-ref="EntityService" />
+			<!--	<entry key-ref="SFEEReader"	value-ref="EntityService" /> -->
+				<entry key-ref="SFEEReader"	value-ref="GenericArtifactSchemaValidator" />
+				<entry key-ref="GenericArtifactSchemaValidator"	value-ref="EntityService" />
 				<entry key-ref="EntityService" value-ref="SFEEWriter" />
 				<entry key-ref="SFEEWriter" value-ref="SynchronizationStatusAndIdentityMappingTableUpdater" />
 			</map>
