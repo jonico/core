@@ -57,6 +57,7 @@ $HeadURL$
 					value-ref="SFEEWriter" />
 			</map>
 		</property>
+		<property name="exceptionProcessor" ref="ExceptionHandler" />
 	</bean>
 
 	<bean id="InputCSVFileReader"
@@ -143,4 +144,13 @@ $HeadURL$
 			value="Synchronized by Connector user" />
 		<property name="connectionManager" ref="SFEEConnectionManager"></property>
 	</bean>
+	<bean id="ExceptionHandler" class="com.collabnet.ccf.core.hospital.Ambulance">
+		<description>
+			The ambulance class catches all the exceptions that are thrown and not caught
+			by any of the components in the pipe and logs the infromation such as the component
+			that threw this exception and the input Generic Artifact xml document or the
+			sync info db xml document.
+		</description>
+  		<property name="hospitalFileName" value="${ccf.hospital.file}"/>
+  	</bean>
 </beans>
