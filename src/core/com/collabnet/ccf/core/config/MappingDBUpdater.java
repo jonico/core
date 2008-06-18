@@ -6,6 +6,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dom4j.Document;
+import org.dom4j.Element;
 import org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector;
 import org.openadaptor.auxil.connector.jdbc.writer.JDBCWriteConnector;
 import org.openadaptor.auxil.orderedmap.IOrderedMap;
@@ -17,46 +18,84 @@ import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
 import com.collabnet.ccf.core.utils.DateUtil;
+import com.collabnet.ccf.core.utils.XPathUtils;
 
 public class MappingDBUpdater implements IDataProcessor{
 	private static final Log log = LogFactory.getLog(MappingDBUpdater.class);
 	private JDBCWriteConnector mappingWriter = null;
 	private JDBCReadConnector entityServiceReader = null;
+	private JDBCWriteConnector identityMappingUpdater = null;
 	
 	private JDBCReadConnector entityServiceMappingIdReader = null;
 	private JDBCWriteConnector entityServiceWriteConnector = null;
+	
+	private static final String SOURCE_ARTIFACT_ID = "sourceArtifactId";
+	private static final String SOURCE_REPOSITORY_ID = "sourceRepositoryId";
+	private static final String SOURCE_REPOSITORY_KIND = "sourceRepositoryKind";
+	private static final String SOURCE_SYSTEM_ID = "sourceSystemId";
+	private static final String SOURCE_SYSTEM_KIND = "sourceSystemKind";
+	private static final String TARGET_ARTIFACT_ID = "targetArtifactId";
+	private static final String TARGET_REPOSITORY_ID = "targetRepositoryId";
+	private static final String TARGET_REPOSITORY_KIND = "targetRepositoryKind";
+	private static final String TARGET_SYSTEM_ID = "targetSystemId";
+	private static final String TARGET_SYSTEM_KIND = "targetSystemKind";
+	private static final String LAST_READ_TIME = "artifactLastModifiedDate";
+	private static final String VERSION = "artifactVersion";
+	private static final String ARTIFACT_TYPE = "artifactType";
+	private static final String TRANSACTION_ID = "transactionId";
 	
 	public Object[] process(Object data) {
 		// I will expect a Generic Artifact object
 		if(data instanceof Document){
 			System.out.println(((Document)data).asXML());
-			GenericArtifact ga = null;
+			
+//			GenericArtifact ga = null;
+//			try {
+//				ga = GenericArtifactHelper.createGenericArtifactJavaObject((Document)data);
+//			} catch (GenericArtifactParsingException e1) {
+//				throw new RuntimeException(e1);
+//			}
+//			
+//			if(ga.getArtifactAction().equals(GenericArtifact.ArtifactActionValue.UNKNOWN)) {
+//				Object [] result = {data};
+//				return result;
+//			}
+//			
+//			String lastModifiedDateString = ga.getArtifactLastModifiedDate();
+//			String lastReadTransactionId = ga.getLastReadTransactionId();
+//			String version = ga.getArtifactVersion();
+//			String sourceRepositoryId = ga.getSourceRepositoryId();
+//			String sourceSystemId  = ga.getSourceSystemId();
+//			String sourceSystemKind = ga.getSourceSystemKind();
+//			String sourceRepositoryKind = ga.getSourceRepositoryKind();
+//			
+//			String targetRepositoryId = ga.getTargetRepositoryId();
+//			String targetSystemId = ga.getTargetSystemId();
+//			String targetSystemKind = ga.getTargetSystemKind();
+//			String targetRepositoryKind = ga.getTargetRepositoryKind();
+//			
+//			String sourceArtifactId = ga.getSourceArtifactId();
+//			String targetArtifactId = ga.getTargetArtifactId();
+//			
 			try {
-				ga = GenericArtifactHelper.createGenericArtifactJavaObject((Document)data);
-			} catch (GenericArtifactParsingException e1) {
-				throw new RuntimeException(e1);
-			}
+			Element element = XPathUtils.getRootElement((Document)data);
 			
-			if(ga.getArtifactAction().equals(GenericArtifact.ArtifactActionValue.UNKNOWN)) {
-				Object [] result = {data};
-				return result;
-			}
+			String sourceArtifactId = XPathUtils.getAttributeValue(element, SOURCE_ARTIFACT_ID);
+			String sourceSystemId  = XPathUtils.getAttributeValue(element, SOURCE_SYSTEM_ID);
+			String sourceSystemKind = XPathUtils.getAttributeValue(element, SOURCE_SYSTEM_KIND);
+			String sourceRepositoryId = XPathUtils.getAttributeValue(element, SOURCE_REPOSITORY_ID);
+			String sourceRepositoryKind = XPathUtils.getAttributeValue(element, SOURCE_REPOSITORY_KIND);
 			
-			String lastModifiedDateString = ga.getArtifactLastModifiedDate();
-			String lastReadTransactionId = ga.getLastReadTransactionId();
-			String version = ga.getArtifactVersion();
-			String sourceRepositoryId = ga.getSourceRepositoryId();
-			String sourceSystemId  = ga.getSourceSystemId();
-			String sourceSystemKind = ga.getSourceSystemKind();
-			String sourceRepositoryKind = ga.getSourceRepositoryKind();
+			String targetArtifactId = XPathUtils.getAttributeValue(element, TARGET_ARTIFACT_ID);
+			String targetSystemId = XPathUtils.getAttributeValue(element, TARGET_SYSTEM_ID);
+			String targetSystemKind = XPathUtils.getAttributeValue(element, TARGET_SYSTEM_KIND);
+			String targetRepositoryId = XPathUtils.getAttributeValue(element, TARGET_REPOSITORY_ID);
+			String targetRepositoryKind = XPathUtils.getAttributeValue(element, TARGET_REPOSITORY_KIND);
 			
-			String targetRepositoryId = ga.getTargetRepositoryId();
-			String targetSystemId = ga.getTargetSystemId();
-			String targetSystemKind = ga.getTargetSystemKind();
-			String targetRepositoryKind = ga.getTargetRepositoryKind();
-			
-			String sourceArtifactId = ga.getSourceArtifactId();
-			String targetArtifactId = ga.getTargetArtifactId();
+			String lastModifiedDateString = XPathUtils.getAttributeValue(element, LAST_READ_TIME);
+			String version = XPathUtils.getAttributeValue(element, VERSION);
+			String artifactType = XPathUtils.getAttributeValue(element, ARTIFACT_TYPE);
+			String lastReadTransactionId = XPathUtils.getAttributeValue(element, TRANSACTION_ID);
 			
 			java.util.Date lastModifiedDate = null;
 			if(lastModifiedDateString.equalsIgnoreCase("Unknown")){
@@ -122,11 +161,16 @@ public class MappingDBUpdater implements IDataProcessor{
 			mappingWriter.deliver(params);
 			mappingWriter.disconnect();
 		}
+		catch(GenericArtifactParsingException e) {
+			log.error("There is some problem in extracting attributes from Document in EntityService!!!"+e);
+		}
+		}
 		else {
 			String message = "The Mapping updater needs a GenericArtifact object";
 			message += " But it got something else.";
 			throw new RuntimeException(message);
 		}
+		
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -151,6 +195,7 @@ public class MappingDBUpdater implements IDataProcessor{
 			this.createIdentityMapping(sourceSystemId, sourceRepositoryId, 
 					targetSystemId, targetRepositoryId, sourceArtifactId, targetArtifactId,time, version);
 	    } else {
+	    	this.updateIdentityMapping(sourceSystemId, sourceRepositoryId, targetSystemId, targetRepositoryId, sourceArtifactId, time, version);
 	    	log.info("Mapping already exists for source artifact id "+ sourceArtifactId+
 	    			" target artifact id "+ targetArtifactId + " for repository info " + sourceArtifactId+"+"+ sourceSystemId+"+"+ sourceRepositoryId+"+"+ 
 					targetSystemId);
@@ -264,6 +309,26 @@ public class MappingDBUpdater implements IDataProcessor{
 		entityServiceWriteConnector.disconnect();
 	}
 
+	private void updateIdentityMapping(String sourceSystemId, String sourceRepositoryId, 
+			String targetSystemId, String targetRepositoryId, String sourceArtifactId, 
+			java.sql.Timestamp time, String version){
+		IOrderedMap inputParameters = new OrderedHashMap();
+		
+		inputParameters.add(0,"LAST_READ_TIME",time);
+		inputParameters.add(1,"VERSION",version);
+		inputParameters.add(2,"SOURCE_SYSTEM_ID",sourceSystemId);
+		inputParameters.add(3,"SOURCE_REPOSITORY_ID",sourceRepositoryId);
+		inputParameters.add(4,"TARGET_SYSTEM_ID",targetSystemId);
+		inputParameters.add(5,"TARGET_REPOSITORY_ID",targetRepositoryId);
+		inputParameters.add(6,"SOURCE_ARTIFACT_ID",sourceArtifactId);
+		
+		IOrderedMap[] params = new IOrderedMap[]{inputParameters};
+		identityMappingUpdater.connect();
+		identityMappingUpdater.deliver(params);
+		identityMappingUpdater.disconnect();
+	}
+	
+	
 	public void reset(Object context) {
 		// TODO Auto-generated method stub
 		
@@ -306,6 +371,14 @@ public class MappingDBUpdater implements IDataProcessor{
 	public void setEntityServiceMappingIdReader(
 			JDBCReadConnector entityServiceMappingIdReader) {
 		this.entityServiceMappingIdReader = entityServiceMappingIdReader;
+	}
+
+	public JDBCWriteConnector getIdentityMappingUpdater() {
+		return identityMappingUpdater;
+	}
+
+	public void setIdentityMappingUpdater(JDBCWriteConnector identityMappingUpdater) {
+		this.identityMappingUpdater = identityMappingUpdater;
 	}
 
 }
