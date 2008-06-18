@@ -34,7 +34,7 @@ public class EntityService implements
 	/**
 	 * Token used to indicate that the target repository item has to be created
 	 */
-	private String createToken;
+	private String createToken = "NEW";
 	private static final String SOURCE_ARTIFACT_ID = "sourceArtifactId";
 	private static final String SOURCE_REPOSITORY_ID = "sourceRepositoryId";
 	private static final String SOURCE_REPOSITORY_KIND = "sourceRepositoryKind";
@@ -100,11 +100,11 @@ public class EntityService implements
 		String targetArtifactIdFromTable = lookupTargetArtifactId(sourceArtifactId, sourceSystemId, sourceRepositoryId, 
 				targetSystemId, targetRepositoryId);
 		log.info("The targetArtifactId in EntityService==="+targetArtifactIdFromTable);
-		if(targetArtifactIdFromTable!=null && !(targetArtifactIdFromTable.equals("NEW")) && !(targetArtifactIdFromTable.equals("NULL"))) {
+		if(targetArtifactIdFromTable!=null && !(targetArtifactIdFromTable.equals(createToken)) && !(targetArtifactIdFromTable.equals("NULL"))) {
 			XPathUtils.addAttribute(element, TARGET_ARTIFACT_ID, targetArtifactIdFromTable);
 	    }
 		if(targetArtifactIdFromTable==null) {
-			XPathUtils.addAttribute(element, TARGET_ARTIFACT_ID, "NEW");
+			XPathUtils.addAttribute(element, TARGET_ARTIFACT_ID, createToken);
 	    }
 		}
 		catch(GenericArtifactParsingException e) {
