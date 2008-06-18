@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
+	<description><![CDATA[
+  Simple test wiring to write out the first generic artifact!
+  ]]></description>
+
+	<bean class="org.openadaptor.core.jmx.MBeanServer">
+		<description>
+			Embed this in your config to expose jmx interface via http
+			and rmi.
+		</description>
+		<constructor-arg value="8082" />
+	</bean>
+
+	<bean id="SystemUtil" class="org.openadaptor.util.SystemUtil">
+		<description>
+			Embed this in your config to expose useful management bean.
+		</description>
+	</bean>
+
+	<bean id="LogAdmin"
+		class="org.openadaptor.thirdparty.log4j.LogAdmin">
+		<description>
+			Embed this in your config to expose log4j management.
+		</description>
+	</bean>
+
+	<bean id="Adaptor" class="org.openadaptor.core.adaptor.Adaptor">
+		<property name="messageProcessor" ref="Router" />
+	</bean>
+
+	<bean id="Router" class="org.openadaptor.core.router.Router">
+
+		<property name="processMap">
+			<map>
+				<entry key-ref="SimplePollingReaderSFEE2QC" value-ref="PTReader" />
+				
+				<!--  <entry key-ref="SFEEReader"	value-ref="SFEEEntityService" />
+				<entry key-ref="SFEEEntityService" value-ref="SFEEWriter" />
+				<entry key-ref="SFEEWriter" value-ref="MappingDBUpdater" /> -->
+			</map>
+		</property>
+		<property name="exceptionProcessor" ref="ExceptionHandler" />
+	</bean>
+
+    <bean id="ExceptionHandler" class="com.collabnet.ccf.core.hospital.Ambulance">
+        <property name="hospitalFileName" value="C:/hospital.txt"/>
+    </bean>
+
+	 <bean id="PTReader" class="com.collabnet.ccf.pi.cee.pt.v50.PTReader">
+	     <description>
+	       Reads the modified defects from PT
+	     </description>              
+  	 </bean>
+	
+	<bean id="SimplePollingReaderSFEE2QC"
+		class="com.collabnet.ccf.core.test.plugins.SimpleLoopingPollingReadConnector">
+		<description>
+			Poller which wraps QCReader and every 5 seconds.
+		</description>
+		<property name="pollLimit" value="-1" />
+		<property name="delegate" ref="SFEE2QCDatabaseReader" />
+		<property name="pollIntervalSecs" value="10" />
+	</bean>
+
+	
+	<bean id="SFEE2QCDatabaseReader"
+		class="org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector">
+		<description>
+			Reader which polls database using configured SQL.
+		</description>
+		<property name="jdbcConnection" ref="JdbcConnectionReadSFEE2QC" />
+		<!-- batch size of 0 or less means process all rows in one message batch. -->
+		<!-- batch size of one means process one row per message and so on -->
+		<property name="batchSize" value="0" />
+		<property name="resultSetConverter"
+			ref="ResultSetConverter" />
+		<property name="sql">
+			<value>
+				select A.REPOSITORY_ID AS SOURCE_REPOSITORY_ID,
+                A.REPOSITORY_KIND AS SOURCE_REPOSITORY_KIND, C.SYSTEM_ID
+                AS SOURCE_SYSTEM_ID, C.SYSTEM_KIND AS
+                SOURCE_SYSTEM_KIND, B.REPOSITORY_ID AS
+                TARGET_REPOSITORY_ID, B.REPOSITORY_KIND AS
+                TARGET_REPOSITORY_KIND, D.SYSTEM_ID AS TARGET_SYSTEM_ID,
+                D.SYSTEM_KIND AS TARGET_SYSTEM_KIND,
+                REPOSITORY_MAPPING.LAST_READ_TIME AS FROM_TIME,
+                REPOSITORY_MAPPING.VERSION AS VERSION,
+                REPOSITORY_MAPPING.TRANSACTION_ID AS TRANSACTION_ID from
+                REPOSITORY_INFO A,REPOSITORY_INFO B, SYSTEM_INFO C,
+                SYSTEM_INFO D, REPOSITORY_MAPPING
+                WHERE REPOSITORY_MAPPING.SOURCE_REPOSITORY_INFO_ID =
+                A.ID AND REPOSITORY_MAPPING.TARGET_REPOSITORY_INFO_ID =
+                B.ID AND A.SYSTEM_INFO_ID = C.ID AND B.SYSTEM_INFO_ID =
+                D.ID AND REPOSITORY_MAPPING.ID = 2
+			</value>
+		</property>
+	</bean>
+
+	<bean id="JdbcConnectionReadSFEE2QC"
+		class="org.openadaptor.auxil.connector.jdbc.JDBCConnection">
+		<description>This defines jdbc connection.</description>
+		<property name="driver" value="org.hsqldb.jdbcDriver" />
+		<property name="url" value="jdbc:hsqldb:hsql://localhost/xdb" />
+		<property name="username" value="sa" />
+		<property name="password" value="" />
+	</bean>
+
+	<bean id="ResultSetConverter"
+		class="org.openadaptor.auxil.connector.jdbc.reader.xml.ResultSetToXMLConverter">
+		<property name="convertToString" value="false" />
+		<property name="rootElement" value="EmptySyncInf" />
+	</bean>
+</beans>
