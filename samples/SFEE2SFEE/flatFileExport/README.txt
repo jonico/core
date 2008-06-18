@@ -27,8 +27,9 @@ artifacts in an SFEE tracker into a CSV file.
 			In this case this polling reader reads the synchronization status using the database
 			read connector configured in the property delegate.
 			
-			Polling interval seconds is configured as 0 to indicate that the polling reader should
-			read from the database read connector continuously without and pauses in between.
+			Polling interval seconds is configured as n to indicate that the polling reader should
+			read from the database read connector n number of times in order to ship all the
+			SFEE tracker artifacts.
 		</description>
 		<property name="pollLimit" value="n" />
 		<property name="delegate" ref="SynchronizationStatusPollingReaderJdbcConnection" />
