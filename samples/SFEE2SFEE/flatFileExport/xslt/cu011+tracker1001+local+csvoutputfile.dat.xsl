@@ -9,6 +9,14 @@
 		</record>
 	</xsl:template>
 	<xsl:template match='ccf:field'>
-		<xsl:element name="{@fieldName}"><xsl:value-of select="text()"/></xsl:element>
+		<xsl:variable name="fieldName" as="xs:string"><xsl:value-of select="@fieldName" /></xsl:variable>
+		<xsl:choose>
+			<xsl:when test="$fieldName = 'id' and @fieldType = 'mandatoryField'">
+			</xsl:when>
+			<xsl:otherwise>
+				<xsl:element name="{$fieldName}"><xsl:value-of select="text()"/></xsl:element>
+			</xsl:otherwise>
+		</xsl:choose>
+		
 	</xsl:template>
 </xsl:stylesheet>
