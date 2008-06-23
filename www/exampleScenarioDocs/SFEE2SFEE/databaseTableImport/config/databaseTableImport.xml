@@ -155,6 +155,6 @@ $HeadURL$
 			that threw this exception and the input Generic Artifact xml document or the
 			sync info db xml document.
 		</description>
-  		<property name="hospitalFileName" value="C:/hospital.txt"/>
+  		<property name="hospitalFileName" value="${ccf.hospital.file}"/>
   	</bean>
 </beans>

@@ -36,6 +36,11 @@ $HeadURL$
 	<bean id="Adaptor" class="org.openadaptor.core.adaptor.Adaptor">
 		<property name="messageProcessor" ref="Router" />
 	</bean>
+	
+	<bean id="GenericArtifactSchemaValidator" class="com.collabnet.ccf.core.utils.XmlValidator">
+    	<description>This processor validates whether the artifacts produced by the SFEE reader are generic artifact schema compliant.</description>
+    	<property name="schemaURL" value="config/genericartifactschema.xsd"/>
+  	</bean>
 
 	<bean id="Router" class="org.openadaptor.core.router.Router">
 		<description>
@@ -47,6 +52,8 @@ $HeadURL$
 			<map>
 				<entry key-ref="SynchronizationStatusPollingReader" value-ref="SFEEReader" />
 				<entry key-ref="SFEEReader"	value-ref="EntityService" />
+			<!-- 	<entry key-ref="SFEEReader"	value-ref="GenericArtifactSchemaValidator" />
+				<entry key-ref="GenericArtifactSchemaValidator"	value-ref="EntityService" /> -->
 				<entry key-ref="EntityService" value-ref="SFEEWriter" />
 				<entry key-ref="SFEEWriter" value-ref="SynchronizationStatusAndIdentityMappingTableUpdater" />
 			</map>
@@ -199,6 +206,7 @@ $HeadURL$
 		</description>
 		<property name="mappingWriter" ref="MappingWriter"></property>
 		<property name="entityServiceReader" ref="SynchronizationStatusDatabaseReader" />
+		<property name="identityMappingUpdater" ref="IdentityMappingUpdater" />
 		<property name="entityServiceWriteConnector"
 			ref="SynchronizationStatusDatabaseWriter">
 		</property>
@@ -260,6 +268,33 @@ $HeadURL$
 			</list>
 		</property>
 	</bean>
+	<bean id="IdentityMappingUpdater"
+		class="org.openadaptor.auxil.connector.jdbc.writer.JDBCWriteConnector">
+		<property name="writer" ref="IdentityMappingSyncUpdater"></property>
+		<property name="jdbcConnection"
+			ref="JDBCConnection">
+		</property>
+	</bean>
+	<bean id="IdentityMappingSyncUpdater"
+		class="com.collabnet.ccf.core.db.MapTableUpdater">
+		<description>
+			This is the writer object that writes the artifact mapping
+			information into the database table.
+		</description>
+		<property name="tableName" value="IDENTITY_MAPPING"></property>
+		<property name="sql" value="${ccf.identity.mapping.updater.sql}"></property>
+		<property name="outputColumns">
+			<list>
+				<value>LAST_READ_TIME</value>
+				<value>VERSION</value>
+				<value>SOURCE_SYSTEM_ID</value>
+				<value>SOURCE_REPOSITORY_ID</value>
+				<value>TARGET_SYSTEM_ID</value>
+				<value>TARGET_REPOSITORY_ID</value>
+				<value>SOURCE_ARTIFACT_ID</value>
+			</list>
+		</property>
+	</bean>
 	<bean id="MappingWriter"
 		class="org.openadaptor.auxil.connector.jdbc.writer.JDBCWriteConnector">
 		<property name="writer" ref="IdentityMappingDatabaseUpdater"></property>
@@ -294,6 +329,6 @@ $HeadURL$
 			that threw this exception and the input Generic Artifact xml document or the
 			sync info db xml document.
 		</description>
-  		<property name="hospitalFileName" value="C:/hospital.txt"/>
+  		<property name="hospitalFileName" value="${ccf.hospital.file}"/>
   	</bean>
 </beans>

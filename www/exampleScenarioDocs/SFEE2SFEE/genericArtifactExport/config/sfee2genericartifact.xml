@@ -58,6 +58,7 @@ $HeadURL$
 					value-ref="FileWriter" />
 			</map>
 		</property>
+		<property name="exceptionProcessor" ref="ExceptionHandler" />
 	</bean>
 	<bean id="SynchronizationStatusPollingReader"
 		class="com.collabnet.ccf.core.test.plugins.SimpleLoopingPollingReadConnector">
@@ -166,4 +167,13 @@ $HeadURL$
 		<property name="filename" value="output/genericartifact.xml" />
 		<property name="append" value="true" />
 	</bean>
+	<bean id="ExceptionHandler" class="com.collabnet.ccf.core.hospital.Ambulance">
+		<description>
+			The ambulance class catches all the exceptions that are thrown and not caught
+			by any of the components in the pipe and logs the infromation such as the component
+			that threw this exception and the input Generic Artifact xml document or the
+			sync info db xml document.
+		</description>
+  		<property name="hospitalFileName" value="${ccf.hospital.file}"/>
+  	</bean>
 </beans>
