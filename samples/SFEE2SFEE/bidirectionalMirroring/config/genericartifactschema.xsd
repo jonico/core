@@ -12,73 +12,77 @@
 						<xs:documentation>A field has a name and a field type and contains a typed value for the property of the artifact that is described by this field. If a field with the same name and field type occurs more than once, this indicates a multi-value property within the artifact. The content of the field element varies from value type to value type, but it is always encoded as a string, so structured values are currently not allowed.</xs:documentation>
 					</xs:annotation>
 					<xs:complexType>
-						<xs:attribute name="fieldName" type="xs:string" use="required">
-							<xs:annotation>
-								<xs:documentation>This attribute contains the name of the field.</xs:documentation>
-							</xs:annotation>
-						</xs:attribute>
-						<xs:attribute name="fieldType" type="xs:string" use="required">
-							<xs:annotation>
-								<xs:documentation>This attribute contains the type of the field. This is not the type of the field's value but a mechanism to differentiate different artifact properties with the same name. Values might be "mandatoryField", "flexField", "integrationData" or just a plain number.</xs:documentation>
-							</xs:annotation>
-						</xs:attribute>
-						<xs:attribute name="fieldValueHasChanged" use="required">
-							<xs:annotation>
-								<xs:documentation>This attribute may have the values "true" or "false" to state whether this property has been changed since the last update. This attribute can be used by the target system as a hint which fields to update.</xs:documentation>
-							</xs:annotation>
-							<xs:simpleType>
-								<xs:restriction base="xs:string">
-									<xs:enumeration value="true"/>
-									<xs:enumeration value="false"/>
-								</xs:restriction>
-							</xs:simpleType>
-						</xs:attribute>
-						<xs:attribute name="fieldAction" use="required">
-							<xs:annotation>
-								<xs:documentation>This attribute determines whether the content of the value tag should be "append"ed, "replace"d, or "delete"d. Valid values are "append", "replace" and "delete". Note that most systems will only support the "replace"-action and that source systems usually do not know anything about the characteristics of the target system. </xs:documentation>
-							</xs:annotation>
-							<xs:simpleType>
-								<xs:restriction base="xs:string">
-									<xs:enumeration value="append"/>
-									<xs:enumeration value="replace"/>
-									<xs:enumeration value="delete"/>
-								</xs:restriction>
-							</xs:simpleType>
-						</xs:attribute>
-						<xs:attribute name="fieldValueType" type="ccf:fieldValueTypeSimpleType" use="required">
-							<xs:annotation>
-								<xs:documentation>This element contains the type of the value of the surrounding field element. If there are multiple occurrences of the field element with the same name and field type, their values may have different types. Currently supported types are Integer, Double, DateTime, Date, String, HTMLString, Base64String, Boolean and User. </xs:documentation>
-							</xs:annotation>
-						</xs:attribute>
-						<xs:attribute name="fieldValueisNull" type="xs:string" use="required">
-							<xs:annotation>
-								<xs:documentation>This attribute may have the values "true" or "false" to differentiate between an empty string and a null value for the content of the field element.</xs:documentation>
-							</xs:annotation>
-						</xs:attribute>
-						<xs:attribute name="minOccurs" type="xs:string" use="optional">
-							<xs:annotation>
-								<xs:documentation>This optional attribute describes the minimal occurence of this field element. Typical values are "0", "1" and "unknown". For mandatory fields, the value is at least "1", for optional fields the value has to be set to "0". This attribute is typically only set if the root element attribute "includesFieldMetaData" is set to "true".</xs:documentation>
-							</xs:annotation>
-						</xs:attribute>
-						<xs:attribute name="maxOccurs" type="xs:string" use="optional">
-							<xs:annotation>
-								<xs:documentation>This optional attribute describes the maximal occurence of this field element. Typical values are "1", any number greater one, "unknown" and "unbounded". This attribute is typically only set if the root element attribute "includesFieldMetaData" is set to "true".</xs:documentation>
-							</xs:annotation>
-						</xs:attribute>
-						<xs:attribute name="nullValueSupported" type="xs:string" use="optional">
-							<xs:annotation>
-								<xs:documentation>This optional attribute indicates whether this property of the artifact supports a null value as field value. Allowed values are "true", "false" and "unknown". This attribute is typically only set if the root element attribute "includesFieldMetaData" is set to "true".</xs:documentation>
-							</xs:annotation>
-						</xs:attribute>
-						<xs:attribute name="alternativeFieldName" type="xs:string" use="optional">
-							<xs:annotation>
-								<xs:documentation>This optional attribute is used to have another option to uniquely identify the field with another name but the field name. This option might be used by systems where the actual field name is very technical and not directly displayed to the user or if the field name should be converted to an XML-element name to facilitate graphical mapings. This attribute is typically only set if the root element attribute "includesFieldMetaData" is set to "true".</xs:documentation>
-							</xs:annotation>
-						</xs:attribute>
+						<xs:simpleContent>
+							<xs:extension base="xs:string">
+								<xs:attribute name="fieldName" type="xs:string" use="required">
+									<xs:annotation>
+										<xs:documentation>This attribute contains the name of the field.</xs:documentation>
+									</xs:annotation>
+								</xs:attribute>
+								<xs:attribute name="fieldType" type="xs:string" use="required">
+									<xs:annotation>
+										<xs:documentation>This attribute contains the type of the field. This is not the type of the field's value but a mechanism to differentiate different artifact properties with the same name. Values might be "mandatoryField", "flexField", "integrationData" or just a plain number.</xs:documentation>
+									</xs:annotation>
+								</xs:attribute>
+								<xs:attribute name="fieldValueHasChanged" use="required">
+									<xs:annotation>
+										<xs:documentation>This attribute may have the values "true" or "false" to state whether this property has been changed since the last update. This attribute can be used by the target system as a hint which fields to update.</xs:documentation>
+									</xs:annotation>
+									<xs:simpleType>
+										<xs:restriction base="xs:string">
+											<xs:enumeration value="true"/>
+											<xs:enumeration value="false"/>
+										</xs:restriction>
+									</xs:simpleType>
+								</xs:attribute>
+								<xs:attribute name="fieldAction" use="required">
+									<xs:annotation>
+										<xs:documentation>This attribute determines whether the content of the value tag should be "append"ed, "replace"d, or "delete"d. Valid values are "append", "replace" and "delete". Note that most systems will only support the "replace"-action and that source systems usually do not know anything about the characteristics of the target system. </xs:documentation>
+									</xs:annotation>
+									<xs:simpleType>
+										<xs:restriction base="xs:string">
+											<xs:enumeration value="append"/>
+											<xs:enumeration value="replace"/>
+											<xs:enumeration value="delete"/>
+										</xs:restriction>
+									</xs:simpleType>
+								</xs:attribute>
+								<xs:attribute name="fieldValueType" type="ccf:fieldValueTypeSimpleType" use="required">
+									<xs:annotation>
+										<xs:documentation>This element contains the type of the value of the surrounding field element. If there are multiple occurrences of the field element with the same name and field type, their values may have different types. Currently supported types are Integer, Double, DateTime, Date, String, HTMLString, Base64String, Boolean and User. </xs:documentation>
+									</xs:annotation>
+								</xs:attribute>
+								<xs:attribute name="fieldValueIsNull" type="xs:string" use="required">
+									<xs:annotation>
+										<xs:documentation>This attribute may have the values "true" or "false" to differentiate between an empty string and a null value for the content of the field element.</xs:documentation>
+									</xs:annotation>
+								</xs:attribute>
+								<xs:attribute name="minOccurs" type="xs:string" use="optional">
+									<xs:annotation>
+										<xs:documentation>This optional attribute describes the minimal occurence of this field element. Typical values are "0", "1" and "unknown". For mandatory fields, the value is at least "1", for optional fields the value has to be set to "0". This attribute is typically only set if the root element attribute "includesFieldMetaData" is set to "true".</xs:documentation>
+									</xs:annotation>
+								</xs:attribute>
+								<xs:attribute name="maxOccurs" type="xs:string" use="optional">
+									<xs:annotation>
+										<xs:documentation>This optional attribute describes the maximal occurence of this field element. Typical values are "1", any number greater one, "unknown" and "unbounded". This attribute is typically only set if the root element attribute "includesFieldMetaData" is set to "true".</xs:documentation>
+									</xs:annotation>
+								</xs:attribute>
+								<xs:attribute name="nullValueSupported" type="xs:string" use="optional">
+									<xs:annotation>
+										<xs:documentation>This optional attribute indicates whether this property of the artifact supports a null value as field value. Allowed values are "true", "false" and "unknown". This attribute is typically only set if the root element attribute "includesFieldMetaData" is set to "true".</xs:documentation>
+									</xs:annotation>
+								</xs:attribute>
+								<xs:attribute name="alternativeFieldName" type="xs:string" use="optional">
+									<xs:annotation>
+										<xs:documentation>This optional attribute is used to have another option to uniquely identify the field with another name but the field name. This option might be used by systems where the actual field name is very technical and not directly displayed to the user or if the field name should be converted to an XML-element name to facilitate graphical mapings. This attribute is typically only set if the root element attribute "includesFieldMetaData" is set to "true".</xs:documentation>
+									</xs:annotation>
+								</xs:attribute>
+							</xs:extension>
+						</xs:simpleContent>
 					</xs:complexType>
 				</xs:element>
 			</xs:sequence>
-			<xs:attribute name="ccf:artifactMode" use="required">
+			<xs:attribute name="artifactMode" use="required">
 				<xs:annotation>
 					<xs:documentation>The value of this attribute could be either “complete” or “changedFieldsOnly” – which denotes how the source system has formed this artifact. Typically, source systems are expected to provide a complete artifact, but in some cases, this may not be possible or might be very imperformant (e. g. updated meta-data for
 attachments), and when that happens, the source system should set this mode value to “changedFieldsOnly".</xs:documentation>
