@@ -140,7 +140,13 @@ public class GenericArtifact {
 	 * There is one reserved value "unknown" that is used if the source system
 	 * does not support version control.
 	 */
-	private String artifactVersion = VALUE_UNKNOWN;
+	private String sourceArtifactVersion = VALUE_UNKNOWN;
+	/**
+	 * This attribute contains the version of the artifact in the target system.
+	 * There is one reserved value "unknown" that is used if the source system
+	 * does not support version control.
+	 */
+	private String targetArtifactVersion = VALUE_UNKNOWN;
 	/**
 	 * This attribute contains the last transaction that was read. This is
 	 * updated by the reader and functions similar to lastModifiedDate.
@@ -152,7 +158,13 @@ public class GenericArtifact {
 	 * The more specific this date is, the better the polling components can do
 	 * its job.
 	 */
-	private String artifactLastModifiedDate = VALUE_UNKNOWN;
+	private String sourceArtifactLastModifiedDate = VALUE_UNKNOWN;
+	/**
+	 * This attribute contains the date when this artifact was lastly updated.
+	 * The more specific this date is, the better the polling components can do
+	 * its job.
+	 */
+	private String targetArtifactLastModifiedDate = VALUE_UNKNOWN;
 
 	/**
 	 * If a conflict is detected in the target system, the value of this
@@ -424,36 +436,6 @@ public class GenericArtifact {
 	 */
 	public ArtifactActionValue getArtifactAction() {
 		return artifactAction;
-	}
-
-	/**
-	 * @param artifactVersion
-	 *            the artifactVersion to set
-	 */
-	public void setArtifactVersion(String artifactVersion) {
-		this.artifactVersion = artifactVersion;
-	}
-
-	/**
-	 * @return the artifactVersion
-	 */
-	public String getArtifactVersion() {
-		return artifactVersion;
-	}
-
-	/**
-	 * @param artifactLastModifiedDate
-	 *            the artifactLastModifiedDate to set
-	 */
-	public void setArtifactLastModifiedDate(String artifactLastModifiedDate) {
-		this.artifactLastModifiedDate = artifactLastModifiedDate;
-	}
-
-	/**
-	 * @return the artifactLastModifiedDate
-	 */
-	public String getArtifactLastModifiedDate() {
-		return artifactLastModifiedDate;
 	}
 
 	/**
@@ -1045,13 +1027,13 @@ public class GenericArtifact {
 		}
 	}
 
-	public String getLastReadTransactionId() {
+	/*public String getLastReadTransactionId() {
 		return transactionId;
 	}
 
 	public void setLastReadTransactionId(String transactionId) {
 		this.transactionId = transactionId;
-	}
+	}*/
 
 	public IncludesFieldMetaDataValue getIncludesFieldMetaData() {
 		return includesFieldMetaData;
@@ -1068,6 +1050,40 @@ public class GenericArtifact {
 
 	public void setErrorCode(String errorCode) {
 		this.errorCode = errorCode;
+	}
+
+	public String getSourceArtifactVersion() {
+		return sourceArtifactVersion;
+	}
+
+	public void setSourceArtifactVersion(String sourceArtifactVersion) {
+		this.sourceArtifactVersion = sourceArtifactVersion;
+	}
+
+	public String getTargetArtifactVersion() {
+		return targetArtifactVersion;
+	}
+
+	public void setTargetArtifactVersion(String targetArtifactVersion) {
+		this.targetArtifactVersion = targetArtifactVersion;
+	}
+
+	public String getSourceArtifactLastModifiedDate() {
+		return sourceArtifactLastModifiedDate;
+	}
+
+	public void setSourceArtifactLastModifiedDate(
+			String sourceArtifactLastModifiedDate) {
+		this.sourceArtifactLastModifiedDate = sourceArtifactLastModifiedDate;
+	}
+
+	public String getTargetArtifactLastModifiedDate() {
+		return targetArtifactLastModifiedDate;
+	}
+
+	public void setTargetArtifactLastModifiedDate(
+			String targetArtifactLastModifiedDate) {
+		this.targetArtifactLastModifiedDate = targetArtifactLastModifiedDate;
 	}
 
 }
