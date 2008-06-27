@@ -58,34 +58,6 @@ public class MappingDBUpdater implements IDataProcessor{
 		if(data instanceof Document){
 			System.out.println(((Document)data).asXML());
 			
-//			GenericArtifact ga = null;
-//			try {
-//				ga = GenericArtifactHelper.createGenericArtifactJavaObject((Document)data);
-//			} catch (GenericArtifactParsingException e1) {
-//				throw new RuntimeException(e1);
-//			}
-//			
-//			if(ga.getArtifactAction().equals(GenericArtifact.ArtifactActionValue.UNKNOWN)) {
-//				Object [] result = {data};
-//				return result;
-//			}
-//			
-//			String lastModifiedDateString = ga.getArtifactLastModifiedDate();
-//			String lastReadTransactionId = ga.getLastReadTransactionId();
-//			String version = ga.getArtifactVersion();
-//			String sourceRepositoryId = ga.getSourceRepositoryId();
-//			String sourceSystemId  = ga.getSourceSystemId();
-//			String sourceSystemKind = ga.getSourceSystemKind();
-//			String sourceRepositoryKind = ga.getSourceRepositoryKind();
-//			
-//			String targetRepositoryId = ga.getTargetRepositoryId();
-//			String targetSystemId = ga.getTargetSystemId();
-//			String targetSystemKind = ga.getTargetSystemKind();
-//			String targetRepositoryKind = ga.getTargetRepositoryKind();
-//			
-//			String sourceArtifactId = ga.getSourceArtifactId();
-//			String targetArtifactId = ga.getTargetArtifactId();
-//			
 			String depParentSourceArtifactId = null;
 			String depParentSourceRepositoryId = null;
 			String depParentSourceRepositoryKind = null;
@@ -220,21 +192,6 @@ public class MappingDBUpdater implements IDataProcessor{
 			mappingWriter.connect();
 			mappingWriter.deliver(params);
 			mappingWriter.disconnect();
-			
-			/*int transactionId = 0;
-			if(StringUtils.isEmpty(lastReadTransactionId) || lastReadTransactionId.equals("unknown")){
-				transactionId = 0;
-			}
-			else {
-				try{
-					transactionId = Integer.parseInt(lastReadTransactionId);
-				}
-				catch(NumberFormatException e){
-					e.printStackTrace();
-				}
-			}*/
-			
-			
 		}
 		catch(GenericArtifactParsingException e) {
 			log.error("There is some problem in extracting attributes from Document in EntityService!!!"+e);
@@ -281,54 +238,7 @@ public class MappingDBUpdater implements IDataProcessor{
 	    }
 		
 	}
-/*
-	private String lookupMappingId(String sourceRepositoryId, String sourceRepositoryKind,
-			String sourceSystemId, String sourceSystemKind,
-			String targetRepositoryId, String targetRepositoryKind,
-			String targetSystemId, String targetSystemKind){
-		String mappingId = null;
-		IOrderedMap inputParameters = new OrderedHashMap();
-		inputParameters.add(sourceRepositoryId);
-		inputParameters.add(sourceRepositoryKind);
-		inputParameters.add(sourceSystemId);
-		inputParameters.add(sourceSystemKind);
-		inputParameters.add(targetRepositoryId);
-		inputParameters.add(targetRepositoryKind);
-		inputParameters.add(targetSystemId);
-		inputParameters.add(targetSystemKind);
-		
-		entityServiceMappingIdReader.connect();
-		Object[] resultSet = entityServiceMappingIdReader.next(inputParameters, 1000);
-		entityServiceMappingIdReader.disconnect();
-		
-		if(resultSet == null || resultSet.length == 0){
-			mappingId = null;
-		}
-		else if(resultSet.length == 1){
-			if(resultSet[0] instanceof OrderedHashMap){
-				OrderedHashMap result = (OrderedHashMap) resultSet[0];
-				if(result.size() == 1){
-					mappingId = result.get(0).toString();
-				}
-				else if(result.size() > 1){
-					log.warn("There are more than one mapping ids returned from the tables"
-							+" for source repository "+sourceRepositoryId
-							+" and target repository "+targetRepositoryId);
-				}
-				else {
-					mappingId = null;
-				}
-			}
-		}
-		else {
-			log.warn("There are more than one mapping ids returned from the tables"
-					+" for source repository "+sourceRepositoryId
-					+" and target repository "+targetRepositoryId);
-		}
-		
-		return mappingId;
-	}
-*/
+
 	private String lookupTargetArtifactId(String sourceArtifactId, String sourceSystemId, String sourceRepositoryId, 
 			String targetSystemId, String targetRepositoryId, String artifactType) {
 		String targetArtifactId = null;
