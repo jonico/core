@@ -103,10 +103,10 @@ public class ArtifactMetaData {
 			ArtifactMetaData.FIELD_VALUE_TYPE valueType = field.getValueType();
 			ArtifactMetaData.FIELD_INPUT_TYPE inputType = field.getInputType();
 			if(inputType == ArtifactMetaData.FIELD_INPUT_TYPE.MULTI_SELECT){
-				return FieldValueTypeValue.MULTI_SELECT_LIST;
+				return FieldValueTypeValue.STRING;
 			}
 			else if(valueType == ArtifactMetaData.FIELD_VALUE_TYPE.USER){
-				return FieldValueTypeValue.USER;
+				return FieldValueTypeValue.STRING;
 			}
 			else if(valueType == ArtifactMetaData.FIELD_VALUE_TYPE.DATE){
 				return FieldValueTypeValue.DATE;
@@ -118,7 +118,7 @@ public class ArtifactMetaData {
 				return FieldValueTypeValue.STRING;
 			}
 			else if(inputType == ArtifactMetaData.FIELD_INPUT_TYPE.SINGLE_SELECT){
-				return FieldValueTypeValue.LIST;
+				return FieldValueTypeValue.STRING;
 			}
 		}
 		return null;
@@ -164,7 +164,7 @@ public class ArtifactMetaData {
 	}
 	public static FieldValueTypeValue getGAFieldValueType(String fieldType, String valueType){
 		if(fieldType.equals(TrackerFieldSoapDO.FIELD_TYPE_MULTISELECT)){
-			return FieldValueTypeValue.MULTI_SELECT_LIST;
+			return FieldValueTypeValue.STRING;
 		}
 		else if(valueType.equals(TrackerFieldSoapDO.FIELD_VALUE_TYPE_DATE) ||
 				fieldType.equals(TrackerFieldSoapDO.FIELD_TYPE_DATE)){
@@ -175,13 +175,13 @@ public class ArtifactMetaData {
 		}
 		else if(fieldType.equals(TrackerFieldSoapDO.FIELD_TYPE_MULTISELECT_USER)
 				|| valueType.equals(TrackerFieldSoapDO.FIELD_VALUE_TYPE_USER)){
-			return FieldValueTypeValue.USER;
+			return FieldValueTypeValue.STRING;
 		}
 		else if(valueType.equals(TrackerFieldSoapDO.FIELD_VALUE_TYPE_STRING)){
 			return FieldValueTypeValue.STRING;
 		}
 		else if(fieldType.equals(TrackerFieldSoapDO.FIELD_TYPE_SINGLE_SELECT)){
-			return FieldValueTypeValue.LIST;
+			return FieldValueTypeValue.STRING;
 		}
 		else if(fieldType.equals(TrackerFieldSoapDO.FIELD_TYPE_TEXT)){
 			return FieldValueTypeValue.STRING;
