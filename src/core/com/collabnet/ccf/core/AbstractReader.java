@@ -64,10 +64,10 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 		repositoryRecordsInRepositorySynchronizationWaitingList = new HashSet<String>();
 		genericArtifactComparator = new Comparator<GenericArtifact>(){
 			public int compare(GenericArtifact first, GenericArtifact second) {
-				String firstLastModifiedDateStr = first.getArtifactLastModifiedDate();
+				String firstLastModifiedDateStr = first.getSourceArtifactLastModifiedDate();
 				Date firstLastModifiedDate = DateUtil.parse(firstLastModifiedDateStr);
 				
-				String secondLastModifiedDateStr = first.getArtifactLastModifiedDate();
+				String secondLastModifiedDateStr = first.getSourceArtifactLastModifiedDate();
 				Date secondLastModifiedDate = DateUtil.parse(secondLastModifiedDateStr);
 				if(firstLastModifiedDate.after(secondLastModifiedDate)){
 					return 1;
