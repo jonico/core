@@ -151,14 +151,16 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 //					repositorySynchronizationWaitingList.remove(currentRecord);
 //					repositorySynchronizationWaitingList.add(currentRecord);
 //				}
+				String artifactId = genericArtifact.getSourceArtifactId();
 				try {
 					Document returnDoc = GenericArtifactHelper.createGenericArtifactXMLDocument(genericArtifact);
 					Object[] returnObjects = new Object[] {returnDoc};
 					moveToTail(currentRecord);
 					return returnObjects;
 				} catch (GenericArtifactParsingException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					String cause = "Could not parse the artifact for "+artifactId;
+					log.error(cause,e);
+					throw new CCFRuntimeException(cause, e);
 				}
 			}
 			else if(artifactsToBeReadList.isEmpty()){
@@ -192,8 +194,9 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 					moveToTail(currentRecord);
 					return returnObjects;
 				} catch (GenericArtifactParsingException e) {
-					log.error("Could not parse the artifact for "+artifactId,e);
-					throw new RuntimeException(e);
+					String cause = "Could not parse the artifact for "+artifactId;
+					log.error(cause, e);
+					throw new CCFRuntimeException(cause, e);
 				}
 			}
 			else {
@@ -206,6 +209,8 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 			log.info("There are no artifacts to be shipped from any of the repositories. Sleeping");
 			Thread.sleep(sleepInterval);
 		} catch (InterruptedException e) {
+			String cause = "Thread is interrupted";
+			log.warn(cause, e);
 			e.printStackTrace();
 		}
 		return new Object[]{};
@@ -315,8 +320,12 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 	 * @param syncInfo
 	 * @return
 	 */
-	public String getLastModifiedDateString(Document syncInfo) {
-		String dbTime = this.getFromTime(syncInfo);
+	public String getLastSourceArtifactModificationDate(Document syncInfo) {
+		//LAST_SOURCE_ARTIFACT_MODIFICATION_DATE
+		Node node= syncInfo.selectSingleNode("//LAST_SOURCE_ARTIFACT_MODIFICATION_DATE");
+		if (node == null)
+			return null;
+		String dbTime = node.getText();
 		if(!StringUtils.isEmpty(dbTime)){
 			java.sql.Timestamp ts = java.sql.Timestamp.valueOf(dbTime);
 			long time = ts.getTime();
@@ -326,19 +335,21 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 		return null;
 	}
 	
-	public String getToTime(Document syncInfo) {
-		Node node= syncInfo.selectSingleNode("//TO_TIME");
+
+	protected String getLastSourceVersion(Document syncInfo) {
+		Node node= syncInfo.selectSingleNode("//LAST_SOURCE_ARTIFACT_VERSION");
 		if (node==null)
 			return null;
 		return node.getText();
 	}
 
-	public String getFromTime(Document syncInfo) {
-		Node node= syncInfo.selectSingleNode("//FROM_TIME");
+	protected String getLastSourceArtifactId(Document syncInfo) {
+		Node node= syncInfo.selectSingleNode("//LAST_SOURCE_ARTIFACT_ID");
 		if (node==null)
 			return null;
 		return node.getText();
 	}
+
 	
 	/**
 	 * Extracts and returns the Source repository id from the sync info.
