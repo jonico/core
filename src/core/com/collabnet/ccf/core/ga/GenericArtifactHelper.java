@@ -50,13 +50,15 @@ public class GenericArtifactHelper {
 			.singletonMap(CCF_NAMESPACE_PREFIX, CCF_ARTIFACT_NAMESPACE);
 
 	private static final String ARTIFACT_ACTION = "artifactAction";
-	private static final String ARTIFACT_LAST_MODIFIED_DATE = "artifactLastModifiedDate";
+	private static final String SOURCE_ARTIFACT_LAST_MODIFICATION_DATE = "sourceArtifactLastModifiedDate";
+	private static final String TARGET_ARTIFACT_LAST_MODIFICATION_DATE = "targetArtifactLastModifiedDate";
 	private static final String ARTIFACT_LAST_READ_TRANSACTION_ID = "transactionId";
 	private static final String ERROR_CODE = "errorCode";
 	private static final String INCLUDES_FIELD_META_DATA = "includesFieldMetaData";
 	private static final String ARTIFACT_MODE = "artifactMode";
 	private static final String ARTIFACT_TYPE = "artifactType";
-	private static final String ARTIFACT_VERSION = "artifactVersion";
+	private static final String SOURCE_ARTIFACT_VERSION = "sourceArtifactVersion";
+	private static final String TARGET_ARTIFACT_VERSION = "targetArtifactVersion";
 	private static final String CONFLICT_RESOLUTION_POLICY = "conflicResolutionPolicy";
 	private static final String DEP_CHILD_SOURCE_ARTIFACT_ID = "depChildSourceArtifactId";
 	private static final String DEP_CHILD_SOURCE_REPOSITORY_ID = "depChildSourceRepositoryId";
@@ -355,10 +357,12 @@ public class GenericArtifactHelper {
 				ARTIFACT_ACTION, artifactActionHashMap);
 		genericArtifact.setArtifactAction(artifactAction);
 
-		genericArtifact.setArtifactLastModifiedDate(getAttributeValue(root,
-				ARTIFACT_LAST_MODIFIED_DATE));
-		genericArtifact.setLastReadTransactionId(getAttributeValue(root,
-				ARTIFACT_LAST_READ_TRANSACTION_ID));
+		genericArtifact.setSourceArtifactLastModifiedDate(getAttributeValue(root,
+				SOURCE_ARTIFACT_LAST_MODIFICATION_DATE));
+		genericArtifact.setTargetArtifactLastModifiedDate(getAttributeValue(root,
+				TARGET_ARTIFACT_LAST_MODIFICATION_DATE));
+		//genericArtifact.setLastReadTransactionId(getAttributeValue(root,
+		//		ARTIFACT_LAST_READ_TRANSACTION_ID));
 		genericArtifact.setErrorCode(getAttributeValue(root,
 				ERROR_CODE));
 		
@@ -378,14 +382,16 @@ public class GenericArtifactHelper {
 			genericArtifact.setArtifactValue(getValue(root));
 		}
 
-		genericArtifact.setArtifactVersion(getAttributeValue(root,
-				ARTIFACT_VERSION));
+		genericArtifact.setSourceArtifactVersion(getAttributeValue(root,
+				SOURCE_ARTIFACT_VERSION));
+		genericArtifact.setTargetArtifactVersion(getAttributeValue(root,
+				TARGET_ARTIFACT_VERSION));
 		genericArtifact.setConflictResolutionPolicy(getAttributeValue(root,
 				CONFLICT_RESOLUTION_POLICY));
 
 		// only read optional attributes if necessary
-		if (artifactType == ArtifactTypeValue.DEPENDENCY) {
-		//		|| artifactType == ArtifactTypeValue.ATTACHMENT) {
+		if (artifactType == ArtifactTypeValue.DEPENDENCY 
+				|| artifactType == ArtifactTypeValue.ATTACHMENT) {
 			genericArtifact.setDepParentSourceArtifactId(getAttributeValue(
 					root, DEP_PARENT_SOURCE_ARTIFACT_ID));
 			genericArtifact.setDepParentSourceRepositoryId(getAttributeValue(
@@ -894,20 +900,24 @@ public class GenericArtifactHelper {
 		}
 		
 		
-		addAttribute(root, ARTIFACT_LAST_MODIFIED_DATE, genericArtifact
-				.getArtifactLastModifiedDate());
-		addAttribute(root, ARTIFACT_LAST_READ_TRANSACTION_ID, genericArtifact
-				.getLastReadTransactionId());
+		addAttribute(root, SOURCE_ARTIFACT_LAST_MODIFICATION_DATE, genericArtifact
+				.getSourceArtifactLastModifiedDate());
+		addAttribute(root, TARGET_ARTIFACT_LAST_MODIFICATION_DATE, genericArtifact
+				.getTargetArtifactLastModifiedDate());
+		//addAttribute(root, ARTIFACT_LAST_READ_TRANSACTION_ID, genericArtifact
+		//		.getLastReadTransactionId());
 		addAttribute(root, ERROR_CODE, genericArtifact
 				.getErrorCode());
-		addAttribute(root, ARTIFACT_VERSION, genericArtifact
-				.getArtifactVersion());
+		addAttribute(root, SOURCE_ARTIFACT_VERSION, genericArtifact
+				.getSourceArtifactVersion());
+		addAttribute(root, TARGET_ARTIFACT_VERSION, genericArtifact
+				.getTargetArtifactVersion());
 		addAttribute(root, CONFLICT_RESOLUTION_POLICY, genericArtifact
 				.getConflictResolutionPolicy());
 
 		// only create optional attributes if necessary
-		if (artifactType == ArtifactTypeValue.DEPENDENCY) {
-		//		|| artifactType == ArtifactTypeValue.ATTACHMENT) {
+		if (artifactType == ArtifactTypeValue.DEPENDENCY
+				|| artifactType == ArtifactTypeValue.ATTACHMENT) {
 			addAttribute(root, DEP_PARENT_SOURCE_ARTIFACT_ID, genericArtifact
 					.getDepParentSourceArtifactId());
 			addAttribute(root, DEP_PARENT_SOURCE_REPOSITORY_ID, genericArtifact
