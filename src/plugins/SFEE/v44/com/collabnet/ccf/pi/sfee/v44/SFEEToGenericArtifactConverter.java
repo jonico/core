@@ -37,7 +37,7 @@ public class SFEEToGenericArtifactConverter {
 			genericArtifact.setArtifactMode(GenericArtifact.ArtifactModeValue.COMPLETE);
 			genericArtifact.setErrorCode("ok");
 			genericArtifact.setIncludesFieldMetaData(GenericArtifact.IncludesFieldMetaDataValue.FALSE);
-
+			
 			int actualHours = artifactRow.getActualHours();
 			this.createGenericArtifactField(ArtifactMetaData.SFEEFields.actualHours.getFieldName(),
 					ArtifactMetaData.SFEEFields.actualHours.getDisplayName(),
@@ -129,13 +129,13 @@ public class SFEEToGenericArtifactConverter {
 			this.createGenericArtifactField(ArtifactMetaData.SFEEFields.lastModifiedDate.getFieldName(),
 					ArtifactMetaData.SFEEFields.lastModifiedDate.getDisplayName(),
 					lastModifiedDate, genericArtifact, trackerFields);
-			genericArtifact.setArtifactLastModifiedDate(DateUtil.format(lastModifiedDate));
+			genericArtifact.setSourceArtifactLastModifiedDate(DateUtil.format(lastModifiedDate));
 			int version = artifactRow.getVersion();
 			this.createGenericArtifactField(ArtifactMetaData.SFEEFields.version.getFieldName(),
 					ArtifactMetaData.SFEEFields.version.getDisplayName(),
 					version, genericArtifact, trackerFields);
 			
-			genericArtifact.setArtifactVersion(Integer.toString(version));
+			genericArtifact.setSourceArtifactVersion(Integer.toString(version));
 			
 			SoapFieldValues flexFields = artifactRow.getFlexFields();
 			String[] flexFieldNames = flexFields.getNames();
