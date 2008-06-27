@@ -106,12 +106,12 @@ public class GenericArtifact {
 	/**
 	 * Constant value for conflict resolution policy "always ignore"
 	 */
-	public static final String VALUE_CONFLICT_RESOLUTION_POLICY_ALWAYS_IGNORE = "alwaysIgnore";
+	public static final String VALUE_CONFLICT_RESOLUTION_PRIORITY_ALWAYS_IGNORE = "alwaysIgnore";
 
 	/**
 	 * Constant value for conflict resolution policy "always override"
 	 */
-	public static final String VALUE_CONFLICT_RESOLUTION_POLICY_ALWAYS_OVERRIDE = "alwaysOverride";
+	public static final String VALUE_CONFLICT_RESOLUTION_PRIORITY_ALWAYS_OVERRIDE = "alwaysOverride";
 
 	/**
 	 * The value of this attribute could be either “complete” or
@@ -172,7 +172,7 @@ public class GenericArtifact {
 	 * be overriden or not. Reserved values are "alwaysIgnore" and
 	 * "alwaysOverride".
 	 */
-	private String conflictResolutionPolicy = VALUE_UNKNOWN;
+	private String conflictResolutionPriority = VALUE_UNKNOWN;
 
 	/**
 	 * This attribute determines, whether this is a plain artifact that contains
@@ -442,15 +442,15 @@ public class GenericArtifact {
 	 * @param conflictResolutionPolicy
 	 *            the conflictResolutionPolicy to set
 	 */
-	public void setConflictResolutionPolicy(String conflictResolutionPolicy) {
-		this.conflictResolutionPolicy = conflictResolutionPolicy;
+	public void setConflictResolutionPriority(String conflictResolutionPolicy) {
+		this.conflictResolutionPriority = conflictResolutionPolicy;
 	}
 
 	/**
 	 * @return the conflictResolutionPolicy
 	 */
-	public String getConflictResolutionPolicy() {
-		return conflictResolutionPolicy;
+	public String getConflictResolutionPriority() {
+		return conflictResolutionPriority;
 	}
 
 	/**
@@ -846,10 +846,9 @@ public class GenericArtifact {
 	 *            field type, this value cannot be changed afterwards
 	 * @return the newly added generic artifact field object
 	 */
-	public GenericArtifactField addNewField(String fieldName,
-			String fieldDisplayName, String fieldType) {
+	public GenericArtifactField addNewField(String fieldName, String fieldType) {
 		GenericArtifactField genericArtifactField = new GenericArtifactField(
-				fieldName, fieldDisplayName, fieldType);
+				fieldName, fieldType);
 		if (allFieldList == null) {
 			allFieldList = new ArrayList<GenericArtifactField>();
 		}
@@ -1084,6 +1083,14 @@ public class GenericArtifact {
 	public void setTargetArtifactLastModifiedDate(
 			String targetArtifactLastModifiedDate) {
 		this.targetArtifactLastModifiedDate = targetArtifactLastModifiedDate;
+	}
+
+	public String getTransactionId() {
+		return transactionId;
+	}
+
+	public void setTransactionId(String transactionId) {
+		this.transactionId = transactionId;
 	}
 
 }
