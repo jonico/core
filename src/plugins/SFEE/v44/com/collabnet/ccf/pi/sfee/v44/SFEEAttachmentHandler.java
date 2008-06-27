@@ -242,7 +242,7 @@ public class SFEEAttachmentHandler {
 				if(createdDate.after(lastModifiedDate)){
 					GenericArtifact ga = new GenericArtifact();
 					ga.setArtifactAction(GenericArtifact.ArtifactActionValue.CREATE);
-					ga.setArtifactLastModifiedDate(DateUtil.format(createdDate));
+					ga.setSourceArtifactLastModifiedDate(DateUtil.format(createdDate));
 					ga.setArtifactMode(GenericArtifact.ArtifactModeValue.CHANGEDFIELDSONLY);
 					ga.setArtifactType(GenericArtifact.ArtifactTypeValue.ATTACHMENT);
 					ga.setSourceArtifactId(artifactId);
