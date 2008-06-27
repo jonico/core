@@ -162,7 +162,7 @@ public class XmlValidator extends Component implements IDataProcessor {
       parser.setFeature("http://xml.org/sax/features/validation", true);
       parser.setFeature("http://apache.org/xml/features/validation/schema", true);
       parser.setFeature("http://apache.org/xml/features/validation/schema-full-checking", true);
-      parser.setProperty("http://apache.org/xml/properties/schema/external-noNamespaceSchemaLocation", schemaURL);
+      parser.setProperty("http://apache.org/xml/properties/schema/external-schemaLocation","http://ccf.open.collab.net/GenericArtifactV1.0 " + schemaURL);
     } catch (Exception e) {
       exceptions.add(e);
     }
