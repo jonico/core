@@ -9,6 +9,7 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.vasoftware.sf.soap44.types.SoapFieldValues;
 import com.vasoftware.sf.soap44.types.SoapFilter;
 import com.vasoftware.sf.soap44.types.SoapSortKey;
@@ -108,7 +109,8 @@ public class SFEETrackerHandler {
 	 * @throws RemoteException
 	 */
 	public List<ArtifactSoapDO> getChangedTrackerItems(String sessionID,
-			String trackerId, Date lastModifiedDate) throws RemoteException {
+			String trackerId, Date lastModifiedDate, String lastArtifactId,
+			int lastArtifactVersion) throws RemoteException {
 		log.debug("Getting the changed artifacts from "+lastModifiedDate);
 		// only select ID of row because we have to get the details in any case
 		String[] selectedColumns = { ArtifactSoapDO.COLUMN_ID,
@@ -127,24 +129,22 @@ public class SFEETrackerHandler {
 		ArrayList<ArtifactSoapDO> detailRowsFull = new ArrayList<ArtifactSoapDO>();
 		ArrayList<ArtifactSoapDO> detailRowsNew = new ArrayList<ArtifactSoapDO>();
 		// retrieve artifact details
-		// TODO Change this if user story is implemented
-
 		log.debug("Getting the details of the changed artifacts");
 		boolean duplicateFound = false;
 		if(rows != null) {
 			for (int i = 0; i < rows.length; ++i) {
 				String id = rows[i].getId();
-	//			if (id.equals(lastArtifactId)
-	//					&& lastArtifactVersion == rows[i].getVersion()) {
-	//				duplicateFound = true;
-	//			} else {
+				if (id.equals(lastArtifactId)
+						&& lastArtifactVersion == rows[i].getVersion()) {
+					duplicateFound = true;
+				} else {
 					ArtifactSoapDO artifactData = mTrackerApp.getArtifactData(
 							sessionID, id);
 					if (duplicateFound) {
 						detailRowsNew.add(artifactData);
 					}
 					detailRowsFull.add(artifactData);
-	//			}
+				}
 			}
 		}
 		if (!duplicateFound)
@@ -388,5 +388,20 @@ public class SFEETrackerHandler {
 		log.warn("flexField " + fieldName + " with type " + fieldType
 				+ " is missing for artifact with ID " + artifact.getId());
 		return null;
+	}
+
+	public GenericArtifact createGenericArtifactsForChild(String sessionId,
+			ArtifactDependencySoapRow child, SFEEToGenericArtifactConverter artifactConverter,
+			Date lastModifiedDate) throws RemoteException {
+		String childArtifactId = child.getTargetId();
+		String parentArtifactId = child.getOriginId();
+		ArtifactSoapDO artifact = this.getTrackerItem(sessionId, childArtifactId);
+		TrackerFieldSoapDO[] trackerFields = this.getFlexFields(sessionId, artifact.getFolderId());
+		GenericArtifact ga = artifactConverter.convert(artifact, trackerFields, lastModifiedDate);
+		ga.setDepParentSourceArtifactId(parentArtifactId);
+		ga.setSourceArtifactId(childArtifactId);
+		ga.setSourceRepositoryId(artifact.getFolderId());
+		ga.setArtifactType(GenericArtifact.ArtifactTypeValue.DEPENDENCY);
+		return ga;
 	}
 }

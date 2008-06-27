@@ -155,7 +155,7 @@ public class SFEEToGenericArtifactConverter {
 				GenericArtifactField.FieldValueTypeValue fieldValueType =
 					ArtifactMetaData.getFieldValueType(flexFieldNames[i], trackerFields);
 //				 CHANGE Field display name is not correct here.
-				field = genericArtifact.addNewField(flexFieldNames[i], flexFieldNames[i], GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
+				field = genericArtifact.addNewField(flexFieldNames[i], GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
 				genericArtifact.setArtifactType(GenericArtifact.ArtifactTypeValue.PLAINARTIFACT);
 				genericArtifact.setArtifactMode(GenericArtifact.ArtifactModeValue.COMPLETE);
 				field.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
@@ -180,7 +180,7 @@ public class SFEEToGenericArtifactConverter {
 	 * @return - Returns the newly created GenericArtifactField object
 	 */
 	private GenericArtifactField createGenericArtifactField(String fieldName, String displayName, Object value, GenericArtifact genericArtifact, TrackerFieldSoapDO[] trackerFields){
-		GenericArtifactField field = genericArtifact.addNewField(fieldName, displayName, GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD);
+		GenericArtifactField field = genericArtifact.addNewField(fieldName, GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD);
 		GenericArtifactField.FieldValueTypeValue fieldValueType = ArtifactMetaData.getFieldValueType(ArtifactMetaData.SFEEFields.actualHours.getFieldName(), trackerFields);
 		field.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
 		field.setFieldValueType(fieldValueType);

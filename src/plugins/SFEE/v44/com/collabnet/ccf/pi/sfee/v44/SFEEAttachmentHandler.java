@@ -247,38 +247,38 @@ public class SFEEAttachmentHandler {
 					ga.setArtifactType(GenericArtifact.ArtifactTypeValue.ATTACHMENT);
 					ga.setSourceArtifactId(artifactId);
 					GenericArtifactField contentTypeField = 
-						ga.addNewField(AttachmentMetaData.ATTACHMENT_TYPE, AttachmentMetaData.ATTACHMENT_TYPE,
+						ga.addNewField(AttachmentMetaData.ATTACHMENT_TYPE,
 								GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
 					contentTypeField.setFieldValue(AttachmentMetaData.AttachmentType.DATA);
 					contentTypeField.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
 					contentTypeField.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
 					GenericArtifactField sourceURLField = 
-						ga.addNewField(AttachmentMetaData.ATTACHMENT_SOURCE_URL, AttachmentMetaData.ATTACHMENT_SOURCE_URL,
+						ga.addNewField(AttachmentMetaData.ATTACHMENT_SOURCE_URL,
 								GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
 					sourceURLField.setFieldValue(AttachmentMetaData.AttachmentType.LINK);
 					sourceURLField.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
 					sourceURLField.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
 					//gaAttachment.setAttachmentAction(GenericArtifactAttachment.AttachmentActionValue.CREATE);
 					
-					GenericArtifactField nameField = ga.addNewField(AttachmentMetaData.ATTACHMENT_NAME, AttachmentMetaData.ATTACHMENT_NAME,
+					GenericArtifactField nameField = ga.addNewField(AttachmentMetaData.ATTACHMENT_NAME,
 							GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
 					nameField.setFieldValue(row.getFileName());
 					nameField.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
 					nameField.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
 					//gaAttachment.setAttachmentDescription(row.getFileName());
-					GenericArtifactField idField = ga.addNewField(AttachmentMetaData.ATTACHMENT_ID, AttachmentMetaData.ATTACHMENT_ID,
+					GenericArtifactField idField = ga.addNewField(AttachmentMetaData.ATTACHMENT_ID,
 							GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
 					idField.setFieldValue(row.getAttachmentId());
 					idField.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
 					idField.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
-					GenericArtifactField sizeField = ga.addNewField(AttachmentMetaData.ATTACHMENT_SIZE, AttachmentMetaData.ATTACHMENT_SIZE,
+					GenericArtifactField sizeField = ga.addNewField(AttachmentMetaData.ATTACHMENT_SIZE,
 							GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
 					sizeField.setFieldValue(Long.parseLong(row.getFileSize()));
 					sizeField.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
 					sizeField.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
 					//gaAttachment.setAttachmentType();
 
-					GenericArtifactField mimeTypeField = ga.addNewField(AttachmentMetaData.ATTACHMENT_MIME_TYPE, AttachmentMetaData.ATTACHMENT_MIME_TYPE,
+					GenericArtifactField mimeTypeField = ga.addNewField(AttachmentMetaData.ATTACHMENT_MIME_TYPE,
 							GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
 					mimeTypeField.setFieldValue(row.getMimetype());
 					mimeTypeField.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);

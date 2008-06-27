@@ -3,6 +3,7 @@ package com.collabnet.ccf.pi.sfee.v44;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
@@ -205,6 +206,9 @@ public class SFEEWriter extends LifecycleComponent implements
 					disconnect(connection);
 				}
 			}
+			if(result != null){
+				this.populateTargetArtifactAttributes(ga, result);
+			}
 		}
 		else {
 			Connection connection = connect(ga);
@@ -228,6 +232,41 @@ public class SFEEWriter extends LifecycleComponent implements
 		return resultDocs;
 	}
 	
+	private HashMap<String, List<TrackerFieldSoapDO>> loadTrackerFieldsInHashMap(TrackerFieldSoapDO[] flexFields){
+		HashMap<String, List<TrackerFieldSoapDO>> fieldsMap = 
+							new HashMap<String, List<TrackerFieldSoapDO>>();
+		for(TrackerFieldSoapDO field:flexFields){
+			String fieldName = field.getName();
+			if(fieldsMap.containsKey(fieldName)){
+				List<TrackerFieldSoapDO> fieldsList = fieldsMap.get(fieldName);
+				fieldsList.add(field);
+			}
+			else {
+				List<TrackerFieldSoapDO> fieldsList = new ArrayList<TrackerFieldSoapDO>();
+				fieldsList.add(field);
+				fieldsMap.put(fieldName, fieldsList);
+			}
+		}
+		return fieldsMap;
+	}
+	
+	private TrackerFieldSoapDO getTrackerFieldSoapDOForFlexField(
+			HashMap<String, List<TrackerFieldSoapDO>> fieldsMap, String fieldName){
+		List<TrackerFieldSoapDO> fieldsList = fieldsMap.get(fieldName);
+		if(fieldsList.size() == 1){
+			return fieldsList.get(0);
+		}
+		else if(fieldsList.size() > 1){
+			// TODO We are in trouble. We have a configurable field and a
+			// flex field with the same name
+		}
+		else if(fieldsList.size() == 0){
+			// No way. This should never happen.
+		}
+		// TODO We should not return null here of course
+		return null;
+	}
+	
 	/**
 	 * Creates the artifact represented by the GenericArtifact object
 	 * on the target SFEE system
@@ -238,44 +277,33 @@ public class SFEEWriter extends LifecycleComponent implements
 	 * @return - the newly created artifact's ArtifactSoapDO object
 	 */
 	private ArtifactSoapDO createArtifact(GenericArtifact ga, String tracker, Connection connection){
-//		TrackerFieldSoapDO[] flexFields = null;
-//		try {
-//			flexFields = trackerHandler.getFlexFields(connection.getSessionId(), tracker);
-//		} catch (RemoteException e1) {
-//			// TODO Auto-generated catch block
-//			e1.printStackTrace();
-//		}
+		TrackerFieldSoapDO[] flexFields = null;
+		try {
+			flexFields = trackerHandler.getFlexFields(connection.getSessionId(), tracker);
+		} catch (RemoteException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		HashMap<String, List<TrackerFieldSoapDO>> fieldsMap = 
+							this.loadTrackerFieldsInHashMap(flexFields);
 		ArrayList<String> flexFieldNames = new ArrayList<String>();
 		ArrayList<String> flexFieldTypes = new ArrayList<String>();
 		ArrayList<Object> flexFieldValues = new ArrayList<Object>();
-//		if(flexFields != null){
-//			for(TrackerFieldSoapDO flexField: flexFields){
-//				String fieldName = flexField.getName();
-				List<GenericArtifactField> gaFields = ga.getAllGenericArtifactFields();
-				if(gaFields != null){
-					for(GenericArtifactField gaField:gaFields){
-						if(gaField.getFieldType().equals(GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD)){
-							String fieldName = gaField.getFieldName();
-							String trackerFieldValueType = null;
-							if(gaField.getFieldValueType().equals(GenericArtifactField.FieldValueTypeValue.DATE) ||
-									gaField.getFieldValueType().equals(GenericArtifactField.FieldValueTypeValue.DATETIME)){
-								trackerFieldValueType = TrackerFieldSoapDO.FIELD_VALUE_TYPE_DATE;
-							}
-							else if(gaField.getFieldValueType().equals(GenericArtifactField.FieldValueTypeValue.USER)){
-								trackerFieldValueType = TrackerFieldSoapDO.FIELD_VALUE_TYPE_USER;
-							}
-							else {
-								trackerFieldValueType = TrackerFieldSoapDO.FIELD_VALUE_TYPE_STRING;
-							}
-							flexFieldNames.add(fieldName);
-							flexFieldTypes.add(trackerFieldValueType);
-							Object value = gaField.getFieldValue();
-							flexFieldValues.add(value);
-						}
-					}
+		List<GenericArtifactField> gaFields = ga.getAllGenericArtifactFields();
+		if(gaFields != null){
+			for(GenericArtifactField gaField:gaFields){
+				if(gaField.getFieldType().equals(GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD)){
+					String fieldName = gaField.getFieldName();
+					TrackerFieldSoapDO fieldSoapDO = 
+						this.getTrackerFieldSoapDOForFlexField(fieldsMap, fieldName);
+					String trackerFieldValueType = fieldSoapDO.getValueType();
+					flexFieldNames.add(fieldName);
+					flexFieldTypes.add(trackerFieldValueType);
+					Object value = gaField.getFieldValue();
+					flexFieldValues.add(value);
 				}
-//			}
-//		}
+			}
+		}
 		String folderId = getStringGAField(ArtifactMetaData.SFEEFields.folderId, ga);
 		String description = SFEEWriter.getStringGAField(ArtifactMetaData.SFEEFields.description, ga);
 		String category = SFEEWriter.getStringGAField(ArtifactMetaData.SFEEFields.category, ga);
@@ -325,6 +353,15 @@ public class SFEEWriter extends LifecycleComponent implements
 		return result;
 	}
 	
+	private void populateTargetArtifactAttributes(GenericArtifact ga,
+			ArtifactSoapDO result) {
+		ga.setTargetArtifactId(result.getId());
+		Date targetArtifactLastModifiedDate = result.getLastModifiedDate();
+		String targetArtifactLastModifiedDateStr = DateUtil.format(targetArtifactLastModifiedDate);
+		ga.setTargetArtifactLastModifiedDate(targetArtifactLastModifiedDateStr);
+		ga.setTargetArtifactVersion(Integer.toString(result.getVersion()));
+	}
+
 	/**
 	 * Creates the artifact represented by the GenericArtifact object
 	 * on the target SFEE system
@@ -336,44 +373,33 @@ public class SFEEWriter extends LifecycleComponent implements
 	 * @return - returns the updated artifact's ArtifactSoapDO object
 	 */
 	private ArtifactSoapDO updateArtifact(GenericArtifact ga, String tracker, boolean forceOverride, Connection connection){
-//		TrackerFieldSoapDO[] flexFields = null;
-//		try {
-//			flexFields = trackerHandler.getFlexFields(connection.getSessionId(), tracker);
-//		} catch (RemoteException e1) {
-//			// TODO Auto-generated catch block
-//			e1.printStackTrace();
-//		}
+		TrackerFieldSoapDO[] flexFields = null;
+		try {
+			flexFields = trackerHandler.getFlexFields(connection.getSessionId(), tracker);
+		} catch (RemoteException e1) {
+			// TODO Auto-generated catch block
+			e1.printStackTrace();
+		}
+		HashMap<String, List<TrackerFieldSoapDO>> fieldsMap = 
+			this.loadTrackerFieldsInHashMap(flexFields);
 		ArrayList<String> flexFieldNames = new ArrayList<String>();
 		ArrayList<String> flexFieldTypes = new ArrayList<String>();
 		ArrayList<Object> flexFieldValues = new ArrayList<Object>();
-//		if(flexFields != null){
-//			for(TrackerFieldSoapDO flexField: flexFields){
-//				String fieldName = flexField.getName();
-				List<GenericArtifactField> gaFields = ga.getAllGenericArtifactFields();
-				if(gaFields != null){
-					for(GenericArtifactField gaField:gaFields){
-						if(gaField.getFieldType().equals(GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD)){
-							String fieldName = gaField.getFieldName();
-							String trackerFieldValueType = null;
-							if(gaField.getFieldValueType().equals(GenericArtifactField.FieldValueTypeValue.DATE) ||
-									gaField.getFieldValueType().equals(GenericArtifactField.FieldValueTypeValue.DATETIME)){
-								trackerFieldValueType = TrackerFieldSoapDO.FIELD_VALUE_TYPE_DATE;
-							}
-							else if(gaField.getFieldValueType().equals(GenericArtifactField.FieldValueTypeValue.USER)){
-								trackerFieldValueType = TrackerFieldSoapDO.FIELD_VALUE_TYPE_USER;
-							}
-							else {
-								trackerFieldValueType = TrackerFieldSoapDO.FIELD_VALUE_TYPE_STRING;
-							}
-							flexFieldNames.add(fieldName);
-							flexFieldTypes.add(trackerFieldValueType);
-							Object value = gaField.getFieldValue();
-							flexFieldValues.add(value);
-						}
-					}
+		List<GenericArtifactField> gaFields = ga.getAllGenericArtifactFields();
+		if(gaFields != null){
+			for(GenericArtifactField gaField:gaFields){
+				if(gaField.getFieldType().equals(GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD)){
+					String fieldName = gaField.getFieldName();
+					TrackerFieldSoapDO fieldSoapDO = 
+						this.getTrackerFieldSoapDOForFlexField(fieldsMap, fieldName);
+					String trackerFieldValueType = fieldSoapDO.getValueType();
+					flexFieldNames.add(fieldName);
+					flexFieldTypes.add(trackerFieldValueType);
+					Object value = gaField.getFieldValue();
+					flexFieldValues.add(value);
 				}
-//			}
-//		}
+			}
+		}
 		String id = SFEEWriter.getStringGAField(ArtifactMetaData.SFEEFields.id, ga);
 		String folderId = SFEEWriter.getStringGAField(ArtifactMetaData.SFEEFields.folderId, ga);
 		String description = SFEEWriter.getStringGAField(ArtifactMetaData.SFEEFields.description, ga);

@@ -14,6 +14,7 @@ import org.dom4j.Document;
 import org.openadaptor.core.exception.ValidationException;
 
 import com.collabnet.ccf.core.AbstractReader;
+import com.collabnet.ccf.core.CCFRuntimeException;
 import com.collabnet.ccf.core.eis.connection.ConnectionManager;
 import com.collabnet.ccf.core.eis.connection.MaxConnectionsReachedException;
 import com.collabnet.ccf.core.ga.GenericArtifact;
@@ -21,6 +22,7 @@ import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
 import com.vasoftware.sf.soap44.webservices.sfmain.TrackerFieldSoapDO;
+import com.vasoftware.sf.soap44.webservices.tracker.ArtifactDependencySoapRow;
 import com.vasoftware.sf.soap44.webservices.tracker.ArtifactSoapDO;
 
 /**
@@ -123,7 +125,7 @@ public class SFEEReader extends AbstractReader {
 	}
 	
 	private Date getLastModifiedDate(Document syncInfo){
-		String lastModifiedDateString = getLastModifiedDateString(syncInfo);
+		String lastModifiedDateString = this.getLastSourceArtifactModificationDate(syncInfo);
 		Date lastModifiedDate = null; 
 		if (!StringUtils.isEmpty(lastModifiedDateString)) {
 			log.debug("Artifacts to be fetched from "+lastModifiedDateString);
@@ -167,7 +169,10 @@ public class SFEEReader extends AbstractReader {
 			connection = connectionManager.getConnection(systemId, systemKind, repositoryId,
 					repositoryKind, connectionInfo, credentialInfo);
 		} catch (MaxConnectionsReachedException e) {
-			e.printStackTrace();
+			String cause = "Could not create connection to the SFEE system "+
+							connectionInfo;
+			log.error(cause, e);
+			throw new CCFRuntimeException(cause, e);
 		}
 		isDry=false;
 		return connection;
@@ -179,7 +184,6 @@ public class SFEEReader extends AbstractReader {
 	 * @param connection - The connection to be released to the ConnectionManager
 	 */
 	public void disconnect(Connection connection) {
-		// TODO Auto-generated method stub
 		connectionManager.releaseConnection(connection);
 	}
 	
@@ -198,7 +202,7 @@ public class SFEEReader extends AbstractReader {
 		List<Document> dataRows=new ArrayList<Document>();
 		List<ArtifactSoapDO> artifactRows;
 		try {
-			artifactRows = trackerHandler.getChangedTrackerItems(connection.getSessionId(), projectTracker,lastModifiedDate);
+			artifactRows = trackerHandler.getChangedTrackerItems(connection.getSessionId(), projectTracker,lastModifiedDate,null,0);
 		} catch (RemoteException e) {
 			// TODO Throw an exception?
 			log.error("During the artifact retrieval process to SFEE, an error occured",e);
@@ -382,9 +386,10 @@ public class SFEEReader extends AbstractReader {
 				attachment.setSourceArtifactId(artifactId);
 				populateSrcAndDest(syncInfo, attachment);
 			}
-		} catch (RemoteException e1) {
-			e1.printStackTrace();
-			throw new RuntimeException(e1);
+		} catch (RemoteException e) {
+			String cause = "During the attachment retrieval process from SFEE, an error occured";
+			log.error(cause, e);
+			throw new CCFRuntimeException(cause, e);
 		} finally {
 			this.disconnect(connection);
 		}
@@ -425,8 +430,9 @@ public class SFEEReader extends AbstractReader {
 				gaList.add(genericArtifact);
 //			}
 		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			String cause = "During the artifact retrieval process from SFEE, an error occured";
+			log.error(cause, e);
+			throw new CCFRuntimeException(cause, e);
 		} finally {
 			this.disconnect(connection);
 		}
@@ -461,6 +467,14 @@ public class SFEEReader extends AbstractReader {
 		String sourceSystemKind = this.getSourceSystemKind(syncInfo);
 		String sourceRepositoryId = this.getSourceRepositoryId(syncInfo);
 		String sourceRepositoryKind = this.getSourceRepositoryKind(syncInfo);
+		String lastSynchronizedArtifactId = this.getLastSourceArtifactId(syncInfo);
+		String lastSynchronizedVersion = this.getLastSourceVersion(syncInfo);
+		int version = 0;
+		try{
+			version = Integer.parseInt(lastSynchronizedVersion);
+		}catch(NumberFormatException e){
+			log.warn("Version string is not a number "+lastSynchronizedVersion, e);
+		}
 		Connection connection = connect(sourceSystemId, sourceSystemKind, sourceRepositoryId,
 				sourceRepositoryKind, serverUrl, 
 				username+SFEEConnectionFactory.PARAM_DELIMITER+password);
@@ -471,11 +485,12 @@ public class SFEEReader extends AbstractReader {
 		ArrayList<String> artifactIds = new ArrayList<String>();
 		List<ArtifactSoapDO> artifactRows = null;
 		try {
-			artifactRows = trackerHandler.getChangedTrackerItems(connection.getSessionId(), sourceRepositoryId,lastModifiedDate);
+			artifactRows = trackerHandler.getChangedTrackerItems(connection.getSessionId(),
+					sourceRepositoryId,lastModifiedDate,lastSynchronizedArtifactId,version);
 		} catch (RemoteException e) {
-			// TODO Throw an exception?
-			log.error("During the artifact retrieval process to SFEE, an error occured",e);
-			return artifactIds;
+			String cause = "During the changed artifacts retrieval process from SFEE, an error occured";
+			log.error(cause, e);
+			throw new CCFRuntimeException(cause, e);
 		} finally {
 			this.disconnect(connection);
 		}

@@ -82,14 +82,14 @@ public class SFEEGAHelper {
 
 	public static void addField(GenericArtifact ga, String fieldName,
 			String fieldValue, String fieldType, FieldValueTypeValue fieldValueTypeValue) {
-		GenericArtifactField newField = ga.addNewField(fieldName, fieldName, fieldType);
+		GenericArtifactField newField = ga.addNewField(fieldName, fieldType);
 		newField.setFieldValueType(fieldValueTypeValue);
 		newField.setFieldValue(fieldValue);
 	}
 	
 	public static void addMandatoryField(GenericArtifact ga, String fieldName,
 			String fieldValue, String fieldType) {
-		GenericArtifactField newField = ga.addNewField(fieldName, fieldName, fieldType);
+		GenericArtifactField newField = ga.addNewField(fieldName, fieldType);
 		newField.setFieldValue(fieldValue);
 	}
 	
