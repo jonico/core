@@ -28,7 +28,7 @@ public class MappingDBUpdater implements IDataProcessor{
 	
 	private JDBCReadConnector entityServiceMappingIdReader = null;
 	private JDBCWriteConnector entityServiceWriteConnector = null;
-	
+	private static final String NULL_VALUE = null;
 	private static final String SOURCE_ARTIFACT_ID = "sourceArtifactId";
 	private static final String SOURCE_REPOSITORY_ID = "sourceRepositoryId";
 	private static final String SOURCE_REPOSITORY_KIND = "sourceRepositoryKind";
@@ -39,10 +39,19 @@ public class MappingDBUpdater implements IDataProcessor{
 	private static final String TARGET_REPOSITORY_KIND = "targetRepositoryKind";
 	private static final String TARGET_SYSTEM_ID = "targetSystemId";
 	private static final String TARGET_SYSTEM_KIND = "targetSystemKind";
-	private static final String LAST_READ_TIME = "artifactLastModifiedDate";
-	private static final String VERSION = "artifactVersion";
+	private static final String SOURCE_LAST_READ_TIME = "sourceArtifactLastModifiedDate";
+	private static final String TARGET_LAST_READ_TIME = "targetArtifactLastModifiedDate";
+	private static final String SOURCE_ARTIFACT_VERSION = "sourceArtifactVersion";
+	private static final String TARGET_ARTIFACT_VERSION = "targetArtifactVersion";
 	private static final String ARTIFACT_TYPE = "artifactType";
+	private static final String ARTIFACT_TYPE_ATTACHMENT = "attachment";
 	private static final String TRANSACTION_ID = "transactionId";
+	private static final String DEP_PARENT_SOURCE_ARTIFACT_ID = "depParentSourceArtifactId";
+	private static final String DEP_PARENT_SOURCE_REPOSITORY_ID = "depParentSourceRepositoryId";
+	private static final String DEP_PARENT_SOURCE_REPOSITORY_KIND = "depParentSourceRepositoryKind";
+	private static final String DEP_PARENT_TARGET_ARTIFACT_ID = "depParentTargetArtifactId";;
+	private static final String DEP_PARENT_TARGET_REPOSITORY_ID = "depParentTargetRepositoryId";;
+	private static final String DEP_PARENT_TARGET_REPOSITORY_KIND = "depParentTargetRepositoryKind";;
 	
 	public Object[] process(Object data) {
 		// I will expect a Generic Artifact object
@@ -77,6 +86,13 @@ public class MappingDBUpdater implements IDataProcessor{
 //			String sourceArtifactId = ga.getSourceArtifactId();
 //			String targetArtifactId = ga.getTargetArtifactId();
 //			
+			String depParentSourceArtifactId = null;
+			String depParentSourceRepositoryId = null;
+			String depParentSourceRepositoryKind = null;
+			String depParentTargetArtifactId = null;
+			String depParentTargetRepositoryId = null;
+			String depParentTargetRepositoryKind = null;
+			
 			try {
 			Element element = XPathUtils.getRootElement((Document)data);
 			
@@ -92,19 +108,44 @@ public class MappingDBUpdater implements IDataProcessor{
 			String targetRepositoryId = XPathUtils.getAttributeValue(element, TARGET_REPOSITORY_ID);
 			String targetRepositoryKind = XPathUtils.getAttributeValue(element, TARGET_REPOSITORY_KIND);
 			
-			String lastModifiedDateString = XPathUtils.getAttributeValue(element, LAST_READ_TIME);
-			String version = XPathUtils.getAttributeValue(element, VERSION);
+			String sourceArtifactLastModifiedDateString = XPathUtils.getAttributeValue(element, SOURCE_LAST_READ_TIME);
+			String targetArtifactLastModifiedDateString = XPathUtils.getAttributeValue(element, TARGET_LAST_READ_TIME);
+			String sourceArtifactVersion = XPathUtils.getAttributeValue(element, SOURCE_ARTIFACT_VERSION);
+			String targetArtifactVersion = XPathUtils.getAttributeValue(element, TARGET_ARTIFACT_VERSION);
 			String artifactType = XPathUtils.getAttributeValue(element, ARTIFACT_TYPE);
-			String lastReadTransactionId = XPathUtils.getAttributeValue(element, TRANSACTION_ID);
+			//String lastReadTransactionId = XPathUtils.getAttributeValue(element, TRANSACTION_ID);
 			
-			java.util.Date lastModifiedDate = null;
-			if(lastModifiedDateString.equalsIgnoreCase("Unknown")){
+			if(artifactType.equals(ARTIFACT_TYPE_ATTACHMENT)) {
+			depParentSourceArtifactId = XPathUtils.getAttributeValue(element, DEP_PARENT_SOURCE_ARTIFACT_ID);
+			depParentSourceRepositoryId = XPathUtils.getAttributeValue(element, DEP_PARENT_SOURCE_REPOSITORY_ID);
+			depParentSourceRepositoryKind = XPathUtils.getAttributeValue(element, DEP_PARENT_SOURCE_REPOSITORY_KIND);
+			depParentTargetArtifactId = XPathUtils.getAttributeValue(element, DEP_PARENT_TARGET_ARTIFACT_ID);
+			depParentTargetRepositoryId = XPathUtils.getAttributeValue(element, DEP_PARENT_TARGET_REPOSITORY_ID);
+			depParentTargetRepositoryKind = XPathUtils.getAttributeValue(element, DEP_PARENT_TARGET_REPOSITORY_KIND);
+			}
+			
+			java.util.Date sourceLastModifiedDate = null;
+			if(sourceArtifactLastModifiedDateString.equalsIgnoreCase("Unknown")){
 				return new Object[]{};
 			}
 			else {
-				lastModifiedDate = DateUtil.parse(lastModifiedDateString);
+				sourceLastModifiedDate = DateUtil.parse(sourceArtifactLastModifiedDateString);
 			}
-			java.sql.Timestamp time = new java.sql.Timestamp(lastModifiedDate.getTime());
+			java.sql.Timestamp sourceTime = new java.sql.Timestamp(sourceLastModifiedDate.getTime());
+			
+			java.util.Date targetLastModifiedDate = null;
+			
+			if(targetArtifactLastModifiedDateString.equalsIgnoreCase("Unknown")){
+				return new Object[]{};
+			}
+			else {
+			//targetArtifactLastModifiedDateString = "June 26, 2008 11:02:26 AM GMT+05:30";
+			targetLastModifiedDate = DateUtil.parse(targetArtifactLastModifiedDateString);
+			}
+			
+			java.sql.Timestamp targetTime = new java.sql.Timestamp(targetLastModifiedDate.getTime());
+			
+			log.info("Inside MappingDBUpdator, ##### proper formatted Last_read_time="+sourceTime);
 			
 			createMapping(sourceArtifactId,
 					sourceRepositoryId,
@@ -116,8 +157,23 @@ public class MappingDBUpdater implements IDataProcessor{
 					targetRepositoryKind,
 					targetSystemId,
 					targetSystemKind,
-					time,
-					version);
+					sourceTime,
+					sourceArtifactVersion,
+					targetTime,
+					targetArtifactVersion,
+					artifactType,
+					depParentSourceArtifactId,
+					depParentSourceRepositoryId,
+					depParentSourceRepositoryKind,
+					depParentTargetArtifactId,
+					depParentTargetRepositoryId,
+					depParentTargetRepositoryKind,
+					NULL_VALUE,
+					NULL_VALUE,
+					NULL_VALUE,
+					NULL_VALUE,
+					NULL_VALUE,
+					NULL_VALUE);
 			// we also have to create the opposite mapping,
 			// but we do not know the version yet
 			createMapping(targetArtifactId,
@@ -130,14 +186,42 @@ public class MappingDBUpdater implements IDataProcessor{
 					sourceRepositoryKind,
 					sourceSystemId,
 					sourceSystemKind,
-					time,
-					"unknown");
+					sourceTime,
+					sourceArtifactVersion,
+					targetTime,
+					targetArtifactVersion,
+					artifactType,
+					depParentSourceArtifactId,
+					depParentSourceRepositoryId,
+					depParentSourceRepositoryKind,
+					depParentTargetArtifactId,
+					depParentTargetRepositoryId,
+					depParentTargetRepositoryKind,
+					NULL_VALUE,
+					NULL_VALUE,
+					NULL_VALUE,
+					NULL_VALUE,
+					NULL_VALUE,
+					NULL_VALUE);
 
 			
 			IOrderedMap inputParameters = new OrderedHashMap();
-			inputParameters.add(0,"LAST_READ_TIME",time);
-			log.info("Inside MappingDBUpdator, ##### proper formatted Last_read_time="+time);
-			int transactionId = 0;
+			
+			log.info("Second time......Inside MappingDBUpdator, ##### proper formatted Last_read_time="+sourceTime);
+			inputParameters.add(0,"LAST_SOURCE_ARTIFACT_MODIFICATION_DATE",sourceTime);
+			inputParameters.add(1,"LAST_SOURCE_ARTIFACT_VERSION",sourceArtifactVersion);
+			inputParameters.add(2,"LAST_SOURCE_ARTIFACT_ID",sourceArtifactId);
+			inputParameters.add(3,"SOURCE_SYSTEM_ID",sourceSystemId);
+			inputParameters.add(4,"SOURCE_REPOSITORY_ID",sourceRepositoryId);
+			inputParameters.add(5,"TARGET_SYSTEM_ID",targetSystemId);
+			inputParameters.add(6,"TARGET_REPOSITORY_ID",targetRepositoryId);
+			
+			IOrderedMap[] params = new IOrderedMap[]{inputParameters};
+			mappingWriter.connect();
+			mappingWriter.deliver(params);
+			mappingWriter.disconnect();
+			
+			/*int transactionId = 0;
 			if(StringUtils.isEmpty(lastReadTransactionId) || lastReadTransactionId.equals("unknown")){
 				transactionId = 0;
 			}
@@ -148,18 +232,9 @@ public class MappingDBUpdater implements IDataProcessor{
 				catch(NumberFormatException e){
 					e.printStackTrace();
 				}
-			}
-			inputParameters.add(1,"VERSION",version);
-			inputParameters.add(2,"TRANSACTION_ID",transactionId);
-			inputParameters.add(3,"SOURCE_SYSTEM_ID",sourceSystemId);
-			inputParameters.add(4,"SOURCE_REPOSITORY_ID",sourceRepositoryId);
-			inputParameters.add(5,"TARGET_SYSTEM_ID",targetSystemId);
-			inputParameters.add(6,"TARGET_REPOSITORY_ID",targetRepositoryId);
-
-			IOrderedMap[] params = new IOrderedMap[]{inputParameters};
-			mappingWriter.connect();
-			mappingWriter.deliver(params);
-			mappingWriter.disconnect();
+			}*/
+			
+			
 		}
 		catch(GenericArtifactParsingException e) {
 			log.error("There is some problem in extracting attributes from Document in EntityService!!!"+e);
@@ -179,23 +254,27 @@ public class MappingDBUpdater implements IDataProcessor{
 			String sourceRepositoryKind, String sourceSystemId,
 			String sourceSystemKind, String targetArtifactId, String targetRepositoryId,
 			String targetRepositoryKind, String targetSystemId,
-			String targetSystemKind, java.sql.Timestamp time, String version) {
-		/*String mappingId = lookupMappingId(sourceRepositoryId,
-				sourceRepositoryKind,
-				sourceSystemId,
-				sourceSystemKind,
-				targetRepositoryId,
-				targetRepositoryKind,
-				targetSystemId,
-				targetSystemKind);
-		*/
+			String targetSystemKind, java.sql.Timestamp sourceTime, String sourceArtifactVersion,java.sql.Timestamp targetTime, String targetArtifactVersion,
+			String artifactType,String depParentSourceArtifactId,String depParentSourceRepositoryId,String depParentSourceRepositoryKind,
+			String depParentTargetArtifactId,String depParentTargetRepositoryId,String depParentTargetRepositoryKind,
+			String depChildSourceArtifactId,String depChildSourceRepositoryId,String depChildSourceRepositoryKind,
+			String depChildTargetArtifactId,String depChildTargetRepositoryId,String depChildTargetRepositoryKind) {
+		
 		String targetArtifactIdFromTable = lookupTargetArtifactId(sourceArtifactId, sourceSystemId, sourceRepositoryId, 
-				targetSystemId, targetRepositoryId);
+				targetSystemId, targetRepositoryId, artifactType);
 		if(targetArtifactIdFromTable == null) {
-			this.createIdentityMapping(sourceSystemId, sourceRepositoryId, 
-					targetSystemId, targetRepositoryId, sourceArtifactId, targetArtifactId,time, version);
+				this.createIdentityMapping(sourceSystemId, sourceRepositoryId, 
+						targetSystemId, targetRepositoryId, sourceSystemKind, sourceRepositoryKind, 
+						targetSystemKind, targetRepositoryKind, sourceArtifactId, targetArtifactId,
+						sourceTime, targetTime, sourceArtifactVersion, targetArtifactVersion,
+						artifactType, depParentSourceArtifactId, depParentSourceRepositoryId, depParentSourceRepositoryKind,
+						 depParentTargetArtifactId, depParentTargetRepositoryId, depParentTargetRepositoryKind,
+						 depChildSourceArtifactId, depChildSourceRepositoryId, depChildSourceRepositoryKind,
+						 depChildTargetArtifactId, depChildTargetRepositoryId, depChildTargetRepositoryKind );
 	    } else {
-	    	this.updateIdentityMapping(sourceSystemId, sourceRepositoryId, targetSystemId, targetRepositoryId, sourceArtifactId, time, version);
+	    	this.updateIdentityMapping(sourceSystemId, sourceRepositoryId, 
+			 targetSystemId,  targetRepositoryId,  sourceArtifactId, 
+			 sourceTime, targetTime,  sourceArtifactVersion, targetArtifactVersion, artifactType);
 	    	log.info("Mapping already exists for source artifact id "+ sourceArtifactId+
 	    			" target artifact id "+ targetArtifactId + " for repository info " + sourceArtifactId+"+"+ sourceSystemId+"+"+ sourceRepositoryId+"+"+ 
 					targetSystemId);
@@ -251,7 +330,7 @@ public class MappingDBUpdater implements IDataProcessor{
 	}
 */
 	private String lookupTargetArtifactId(String sourceArtifactId, String sourceSystemId, String sourceRepositoryId, 
-			String targetSystemId, String targetRepositoryId) {
+			String targetSystemId, String targetRepositoryId, String artifactType) {
 		String targetArtifactId = null;
 		IOrderedMap inputParameters = new OrderedHashMap();
 		
@@ -260,11 +339,12 @@ public class MappingDBUpdater implements IDataProcessor{
 		inputParameters.add(targetSystemId);
 		inputParameters.add(targetRepositoryId);
 		inputParameters.add(sourceArtifactId);
-		
+		inputParameters.add(artifactType);		
 
 		entityServiceReader.connect();
 		Object[] resultSet = entityServiceReader.next(inputParameters, 1000);
 		entityServiceReader.disconnect();
+		
 		
 		if(resultSet == null || resultSet.length == 0){
 			targetArtifactId = null;
@@ -274,6 +354,8 @@ public class MappingDBUpdater implements IDataProcessor{
 				OrderedHashMap result = (OrderedHashMap) resultSet[0];
 				if(result.size() == 1){
 					targetArtifactId = result.get(0).toString();
+					log.info("The value of targetArtifactId="+targetArtifactId);
+					return targetArtifactId;
 				}
 				else if(result.size() > 1){
 					log.warn("There are more than one target artifact ids returned from the table for "+sourceArtifactId);
@@ -290,18 +372,42 @@ public class MappingDBUpdater implements IDataProcessor{
 	}
 	
 	private void createIdentityMapping(String sourceSystemId, String sourceRepositoryId, 
-			String targetSystemId, String targetRepositoryId, String sourceArtifactId, String targetArtifactId,
-			java.sql.Timestamp time, String version){
+			String targetSystemId, String targetRepositoryId, String sourceSystemKind, String sourceRepositoryKind, 
+			String targetSystemKind, String targetRepositoryKind, String sourceArtifactId, String targetArtifactId,
+			java.sql.Timestamp sourceTime, java.sql.Timestamp targetTime, String sourceArtifactVersion, String targetArtifactVersion,
+			String artifactType, String depParentSourceArtifactId, String depParentSourceRepositoryId,String depParentSourceRepositoryKind,
+			String depParentTargetArtifactId, String depParentTargetRepositoryId, String depParentTargetRepositoryKind,
+			String depChildSourceArtifactId, String depChildSourceRepositoryId, String depChildSourceRepositoryKind,
+			String depChildTargetArtifactId, String depChildTargetRepositoryId, String depChildTargetRepositoryKind ){
 		IOrderedMap inputParameters = new OrderedHashMap();
 		
 		inputParameters.add(0,"SOURCE_SYSTEM_ID",sourceSystemId);
 		inputParameters.add(1,"SOURCE_REPOSITORY_ID",sourceRepositoryId);
 		inputParameters.add(2,"TARGET_SYSTEM_ID",targetSystemId);
 		inputParameters.add(3,"TARGET_REPOSITORY_ID",targetRepositoryId);
-		inputParameters.add(4,"SOURCE_ARTIFACT_ID",sourceArtifactId);
-		inputParameters.add(5,"TARGET_ARTIFACT_ID",targetArtifactId);
-		inputParameters.add(6,"LAST_READ_TIME",time);
-		inputParameters.add(7,"VERSION",version);
+		inputParameters.add(4,"SOURCE_SYSTEM_KIND",sourceSystemId);
+		inputParameters.add(5,"SOURCE_REPOSITORY_KIND",sourceRepositoryId);
+		inputParameters.add(6,"TARGET_SYSTEM_KIND",targetSystemId);
+		inputParameters.add(7,"TARGET_REPOSITORY_KIND",targetRepositoryId);
+		inputParameters.add(8,"SOURCE_ARTIFACT_ID",sourceArtifactId);
+		inputParameters.add(9,"TARGET_ARTIFACT_ID",targetArtifactId);
+		inputParameters.add(10,"SOURCE_LAST_MODIFICATION_TIME",sourceTime);
+		inputParameters.add(11,"TARGET_LAST_MODIFICATION_TIME",targetTime);
+		inputParameters.add(12,"SOURCE_ARTIFACT_VERSION",sourceArtifactVersion);
+		inputParameters.add(13,"TARGET_ARTIFACT_VERSION",targetArtifactVersion);
+		inputParameters.add(14,"ARTIFACT_TYPE",artifactType);
+		inputParameters.add(15,"DEP_CHILD_SOURCE_ARTIFACT_ID", depChildSourceArtifactId);
+		inputParameters.add(16,"DEP_CHILD_SOURCE_REPOSITORY_ID", depChildSourceRepositoryId);
+		inputParameters.add(17,"DEP_CHILD_SOURCE_REPOSITORY_KIND", depChildSourceRepositoryKind);
+		inputParameters.add(18,"DEP_CHILD_TARGET_ARTIFACT_ID", depChildTargetArtifactId);
+		inputParameters.add(19,"DEP_CHILD_TARGET_REPOSITORY_ID", depChildTargetRepositoryId);
+		inputParameters.add(20,"DEP_CHILD_TARGET_REPOSITORY_KIND", depChildTargetRepositoryKind);		
+		inputParameters.add(21,"DEP_PARENT_SOURCE_ARTIFACT_ID", depParentSourceArtifactId);
+		inputParameters.add(22,"DEP_PARENT_SOURCE_REPOSITORY_ID", depParentSourceRepositoryId);
+		inputParameters.add(23,"DEP_PARENT_SOURCE_REPOSITORY_KIND", depParentSourceRepositoryKind);
+		inputParameters.add(24,"DEP_PARENT_TARGET_ARTIFACT_ID", depParentTargetArtifactId);
+		inputParameters.add(25,"DEP_PARENT_TARGET_REPOSITORY_ID", depParentTargetRepositoryId);
+		inputParameters.add(26,"DEP_PARENT_TARGET_REPOSITORY_KIND", depParentTargetRepositoryKind);
 		
 		IOrderedMap[] data = new IOrderedMap[]{inputParameters};
 		entityServiceWriteConnector.connect();
@@ -311,16 +417,20 @@ public class MappingDBUpdater implements IDataProcessor{
 
 	private void updateIdentityMapping(String sourceSystemId, String sourceRepositoryId, 
 			String targetSystemId, String targetRepositoryId, String sourceArtifactId, 
-			java.sql.Timestamp time, String version){
+			java.sql.Timestamp sourceTime,java.sql.Timestamp targetTime, String sourceArtifactVersion,
+			String targetArtifactVersion, String artifactType){
 		IOrderedMap inputParameters = new OrderedHashMap();
 		
-		inputParameters.add(0,"LAST_READ_TIME",time);
-		inputParameters.add(1,"VERSION",version);
-		inputParameters.add(2,"SOURCE_SYSTEM_ID",sourceSystemId);
-		inputParameters.add(3,"SOURCE_REPOSITORY_ID",sourceRepositoryId);
-		inputParameters.add(4,"TARGET_SYSTEM_ID",targetSystemId);
-		inputParameters.add(5,"TARGET_REPOSITORY_ID",targetRepositoryId);
-		inputParameters.add(6,"SOURCE_ARTIFACT_ID",sourceArtifactId);
+		inputParameters.add(0,"SOURCE_LAST_MODIFICATION_TIME",sourceTime);
+		inputParameters.add(1,"TARGET_LAST_MODIFICATION_TIME",targetTime);
+		inputParameters.add(2,"SOURCE_ARTIFACT_VERSION",sourceArtifactVersion);
+		inputParameters.add(3,"TARGET_ARTIFACT_VERSION",targetArtifactVersion);
+		inputParameters.add(4,"SOURCE_SYSTEM_ID",sourceSystemId);
+		inputParameters.add(5,"SOURCE_REPOSITORY_ID",sourceRepositoryId);
+		inputParameters.add(6,"TARGET_SYSTEM_ID",targetSystemId);
+		inputParameters.add(7,"TARGET_REPOSITORY_ID",targetRepositoryId);
+		inputParameters.add(8,"SOURCE_ARTIFACT_ID",sourceArtifactId);
+		inputParameters.add(9,"ARTIFACT_TYPE",sourceArtifactId);
 		
 		IOrderedMap[] params = new IOrderedMap[]{inputParameters};
 		identityMappingUpdater.connect();
