@@ -55,7 +55,7 @@ public class GenericArtifactField {
 	 * @author jnicolai
 	 */
 	public enum FieldValueTypeValue {
-		INTEGER, DOUBLE, DATETIME, DATE, STRING, HTMLSTRING, BASE64STRING, BOOLEAN, USER, LIST, MULTI_SELECT_LIST, UNKNOWN
+		INTEGER, DOUBLE, DATETIME, DATE, STRING, HTMLSTRING, BASE64STRING, BOOLEAN
 	};
 
 	public void getStringRepresentationOfFieldValueTypeValue(
@@ -67,11 +67,6 @@ public class GenericArtifactField {
 	 * This attribute contains the name of the field.
 	 */
 	private String fieldName = VALUE_UNKNOWN;
-
-	/**
-	 * This attribute contains the display name of the field.
-	 */
-	private String fieldDisplayName = VALUE_UNKNOWN;
 
 	/**
 	 * This attribute contains the type of the field. This is not the type of
@@ -104,7 +99,7 @@ public class GenericArtifactField {
 	 * Currently supported types are Integer, Double, DateTime, Date, String,
 	 * HTMLString, Base64String, Boolean and User.
 	 */
-	private FieldValueTypeValue fieldValueType = FieldValueTypeValue.UNKNOWN;
+	private FieldValueTypeValue fieldValueType = FieldValueTypeValue.STRING;
 
 	/**
 	 * This optional attribute describes the minimal occurence of this field
@@ -153,10 +148,9 @@ public class GenericArtifactField {
 	 * @param fieldName
 	 * @param fieldType
 	 */
-	protected GenericArtifactField(String fieldName, String fieldDisplayName,
+	protected GenericArtifactField(String fieldName,
 			String fieldType) {
 		this.setFieldName(fieldName);
-		this.setFieldDisplayName(fieldDisplayName);
 		this.setFieldType(fieldType);
 	}
 
@@ -254,14 +248,6 @@ public class GenericArtifactField {
 	 */
 	public Object getFieldValue() {
 		return fieldValue;
-	}
-
-	public String getFieldDisplayName() {
-		return fieldDisplayName;
-	}
-
-	public void setFieldDisplayName(String fieldDisplayName) {
-		this.fieldDisplayName = fieldDisplayName;
 	}
 
 	public String getMinOccurs() {

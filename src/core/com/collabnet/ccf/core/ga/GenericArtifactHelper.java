@@ -52,14 +52,14 @@ public class GenericArtifactHelper {
 	private static final String ARTIFACT_ACTION = "artifactAction";
 	private static final String SOURCE_ARTIFACT_LAST_MODIFICATION_DATE = "sourceArtifactLastModifiedDate";
 	private static final String TARGET_ARTIFACT_LAST_MODIFICATION_DATE = "targetArtifactLastModifiedDate";
-	private static final String ARTIFACT_LAST_READ_TRANSACTION_ID = "transactionId";
+	private static final String TRANSACTION_ID = "transactionId";
 	private static final String ERROR_CODE = "errorCode";
 	private static final String INCLUDES_FIELD_META_DATA = "includesFieldMetaData";
 	private static final String ARTIFACT_MODE = "artifactMode";
 	private static final String ARTIFACT_TYPE = "artifactType";
 	private static final String SOURCE_ARTIFACT_VERSION = "sourceArtifactVersion";
 	private static final String TARGET_ARTIFACT_VERSION = "targetArtifactVersion";
-	private static final String CONFLICT_RESOLUTION_POLICY = "conflicResolutionPolicy";
+	private static final String CONFLICT_RESOLUTION_PRIORITY = "conflictResolutionPriority";
 	private static final String DEP_CHILD_SOURCE_ARTIFACT_ID = "depChildSourceArtifactId";
 	private static final String DEP_CHILD_SOURCE_REPOSITORY_ID = "depChildSourceRepositoryId";
 	private static final String DEP_CHILD_SOURCE_REPOSITORY_KIND = "depChildSourceRepositoryKind";
@@ -127,10 +127,10 @@ public class GenericArtifactHelper {
 	private static final String FIELD_VALUE_TYPE_HTML_STRING = "HTMLString";
 	private static final String FIELD_VALUE_TYPE_INTEGER = "Integer";
 	private static final String FIELD_VALUE_TYPE_STRING = "String";
-	private static final String FIELD_VALUE_TYPE_USER = "User";
-	private static final String FIELD_VALUE_TYPE_LIST = "List";
-	private static final String FIELD_VALUE_TYPE_MULTI_SELECT_LIST = "Multi_Select_String";
-	private static final String FIELD_VALUE_TYPE_UNKNOWN = "Unknown";
+//	private static final String FIELD_VALUE_TYPE_USER = "User";
+//	private static final String FIELD_VALUE_TYPE_LIST = "List";
+//	private static final String FIELD_VALUE_TYPE_MULTI_SELECT_LIST = "Multi_Select_String";
+//	private static final String FIELD_VALUE_TYPE_UNKNOWN = "Unknown";
 	private static final String FIELD_VALUE_IS_NULL_TRUE = "true";
 	private static final String FIELD_VALUE_IS_NULL_FALSE = "false";
 	private static final String FIELD_VALUE_HAS_CHANGED = "fieldValueHasChanged";
@@ -273,14 +273,14 @@ public class GenericArtifactHelper {
 				GenericArtifactField.FieldValueTypeValue.INTEGER);
 		fieldValueTypeHashMap.put(FIELD_VALUE_TYPE_STRING,
 				GenericArtifactField.FieldValueTypeValue.STRING);
-		fieldValueTypeHashMap.put(FIELD_VALUE_TYPE_USER,
-				GenericArtifactField.FieldValueTypeValue.USER);
-		fieldValueTypeHashMap.put(FIELD_VALUE_TYPE_LIST,
-				GenericArtifactField.FieldValueTypeValue.LIST);
-		fieldValueTypeHashMap.put(FIELD_VALUE_TYPE_MULTI_SELECT_LIST,
-				GenericArtifactField.FieldValueTypeValue.MULTI_SELECT_LIST);
-		fieldValueTypeHashMap.put(FIELD_VALUE_TYPE_UNKNOWN,
-				GenericArtifactField.FieldValueTypeValue.UNKNOWN);
+//		fieldValueTypeHashMap.put(FIELD_VALUE_TYPE_USER,
+//				GenericArtifactField.FieldValueTypeValue.USER);
+//		fieldValueTypeHashMap.put(FIELD_VALUE_TYPE_LIST,
+//				GenericArtifactField.FieldValueTypeValue.LIST);
+//		fieldValueTypeHashMap.put(FIELD_VALUE_TYPE_MULTI_SELECT_LIST,
+//				GenericArtifactField.FieldValueTypeValue.MULTI_SELECT_LIST);
+//		fieldValueTypeHashMap.put(FIELD_VALUE_TYPE_UNKNOWN,
+//				GenericArtifactField.FieldValueTypeValue.UNKNOWN);
 		
 		fieldValueIsNullHashMap.put(FIELD_VALUE_IS_NULL_TRUE, Boolean.TRUE);
 		fieldValueIsNullHashMap.put(FIELD_VALUE_IS_NULL_FALSE, Boolean.FALSE);
@@ -386,9 +386,10 @@ public class GenericArtifactHelper {
 				SOURCE_ARTIFACT_VERSION));
 		genericArtifact.setTargetArtifactVersion(getAttributeValue(root,
 				TARGET_ARTIFACT_VERSION));
-		genericArtifact.setConflictResolutionPolicy(getAttributeValue(root,
-				CONFLICT_RESOLUTION_POLICY));
-
+		genericArtifact.setConflictResolutionPriority(getAttributeValue(root,
+				CONFLICT_RESOLUTION_PRIORITY));
+		genericArtifact.setTransactionId(getAttributeValue(root,
+				TRANSACTION_ID));
 		// only read optional attributes if necessary
 		if (artifactType == ArtifactTypeValue.DEPENDENCY 
 				|| artifactType == ArtifactTypeValue.ATTACHMENT) {
@@ -451,7 +452,6 @@ public class GenericArtifactHelper {
 			GenericArtifactField.FieldValueTypeValue fieldValueType = translateAttributeValue(
 					field, FIELD_VALUE_TYPE, fieldValueTypeHashMap);
 			String fieldName = getAttributeValue(field, FIELD_NAME);
-			String fieldDisplayName = getAttributeValue(field, FIELD_DISPLAY_NAME);
 			String fieldType = getAttributeValue(field, FIELD_TYPE);
 			Boolean fieldValueIsNull = translateAttributeValue(field,
 					FIELD_VALUE_IS_NULL, fieldValueIsNullHashMap);
@@ -461,7 +461,7 @@ public class GenericArtifactHelper {
 
 			// we cannot change these two attributes later because this would
 			// influence the indexing data structures for fast lookup
-			GenericArtifactField genericArtifactField = genericArtifact.addNewField(fieldName, fieldDisplayName, fieldType);
+			GenericArtifactField genericArtifactField = genericArtifact.addNewField(fieldName, fieldType);
 			genericArtifactField.setFieldAction(fieldAction);
 			genericArtifactField.setFieldValueType(fieldValueType);
 			genericArtifactField.setFieldValueHasChanged(fieldValueHasChanged);
@@ -612,18 +612,18 @@ public class GenericArtifactHelper {
 				genericArtifactField.setFieldValue(value);
 				break;
 			}
-			case USER: {
-				genericArtifactField.setFieldValue(value);
-				break;
-			}
-			case LIST: {
-				genericArtifactField.setFieldValue(value);
-				break;
-			}
-			case MULTI_SELECT_LIST: {
-				genericArtifactField.setFieldValue(value);
-				break;
-			}
+//			case USER: {
+//				genericArtifactField.setFieldValue(value);
+//				break;
+//			}
+//			case LIST: {
+//				genericArtifactField.setFieldValue(value);
+//				break;
+//			}
+//			case MULTI_SELECT_LIST: {
+//				genericArtifactField.setFieldValue(value);
+//				break;
+//			}
 			}
 	}
 
@@ -912,8 +912,8 @@ public class GenericArtifactHelper {
 				.getSourceArtifactVersion());
 		addAttribute(root, TARGET_ARTIFACT_VERSION, genericArtifact
 				.getTargetArtifactVersion());
-		addAttribute(root, CONFLICT_RESOLUTION_POLICY, genericArtifact
-				.getConflictResolutionPolicy());
+		addAttribute(root, CONFLICT_RESOLUTION_PRIORITY, genericArtifact
+				.getConflictResolutionPriority());
 
 		// only create optional attributes if necessary
 		if (artifactType == ArtifactTypeValue.DEPENDENCY
@@ -968,6 +968,8 @@ public class GenericArtifactHelper {
 				.getTargetSystemId());
 		addAttribute(root, TARGET_SYSTEM_KIND, genericArtifact
 				.getTargetSystemKind());
+		addAttribute(root, TRANSACTION_ID, genericArtifact
+				.getTransactionId());
 		
 		if(genericArtifact.getAllGenericArtifactFields()!=null) {
 		// now add fields
@@ -1001,10 +1003,6 @@ public class GenericArtifactHelper {
 
 			addAttribute(field, FIELD_NAME, genericArtifactField.getFieldName());
 			addAttribute(field, FIELD_TYPE, genericArtifactField.getFieldType());
-			if(genericArtifactField.getFieldDisplayName()==null)
-				addAttribute(field, FIELD_DISPLAY_NAME, "Unknown");
-			else
-				addAttribute(field, FIELD_DISPLAY_NAME, genericArtifactField.getFieldDisplayName());
 			if (genericArtifactField.getFieldValueHasChanged()) {
 				addAttribute(field, FIELD_VALUE_HAS_CHANGED,
 						FIELD_VALUE_HAS_CHANGED_TRUE);
@@ -1220,22 +1218,22 @@ public class GenericArtifactHelper {
 			addAttribute(field, FIELD_VALUE_TYPE, FIELD_VALUE_TYPE_STRING);
 			break;
 		}
-		case USER: {
-			addAttribute(field, FIELD_VALUE_TYPE, FIELD_VALUE_TYPE_USER);
-			break;
-		}
-		case LIST: {
-			addAttribute(field, FIELD_VALUE_TYPE, FIELD_VALUE_TYPE_LIST);
-			break;
-		}
-		case MULTI_SELECT_LIST: {
-			addAttribute(field, FIELD_VALUE_TYPE, FIELD_VALUE_TYPE_MULTI_SELECT_LIST);
-			break;
-		}
-		case UNKNOWN: {
-			addAttribute(field, FIELD_VALUE_TYPE, FIELD_VALUE_TYPE_UNKNOWN);
-			break;
-		}
+//		case USER: {
+//			addAttribute(field, FIELD_VALUE_TYPE, FIELD_VALUE_TYPE_USER);
+//			break;
+//		}
+//		case LIST: {
+//			addAttribute(field, FIELD_VALUE_TYPE, FIELD_VALUE_TYPE_LIST);
+//			break;
+//		}
+//		case MULTI_SELECT_LIST: {
+//			addAttribute(field, FIELD_VALUE_TYPE, FIELD_VALUE_TYPE_MULTI_SELECT_LIST);
+//			break;
+//		}
+//		case UNKNOWN: {
+//			addAttribute(field, FIELD_VALUE_TYPE, FIELD_VALUE_TYPE_UNKNOWN);
+//			break;
+//		}
 		default: {
 			throw new GenericArtifactParsingException(
 					"Non valid value for field-attribute " + FIELD_VALUE_TYPE
