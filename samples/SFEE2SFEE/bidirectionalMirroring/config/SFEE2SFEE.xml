@@ -261,10 +261,29 @@ $HeadURL$
 				<value>SOURCE_REPOSITORY_ID</value>
 				<value>TARGET_SYSTEM_ID</value>
 				<value>TARGET_REPOSITORY_ID</value>
+				<value>SOURCE_SYSTEM_KIND</value>
+				<value>SOURCE_REPOSITORY_KIND</value>
+				<value>TARGET_SYSTEM_KIND</value>
+				<value>TARGET_REPOSITORY_KIND</value>
 				<value>SOURCE_ARTIFACT_ID</value>
 				<value>TARGET_ARTIFACT_ID</value>
-				<value>LAST_READ_TIME</value>
-				<value>VERSION</value>
+				<value>SOURCE_LAST_MODIFICATION_TIME</value>
+				<value>TARGET_LAST_MODIFICATION_TIME</value>
+				<value>SOURCE_ARTIFACT_VERSION</value>
+				<value>TARGET_ARTIFACT_VERSION</value>
+				<value>ARTIFACT_TYPE</value>
+				<value>DEP_CHILD_SOURCE_ARTIFACT_ID</value>
+				<value>DEP_CHILD_SOURCE_REPOSITORY_ID</value>
+				<value>DEP_CHILD_SOURCE_REPOSITORY_KIND</value>
+				<value>DEP_CHILD_TARGET_ARTIFACT_ID</value>
+				<value>DEP_CHILD_TARGET_REPOSITORY_ID</value>
+				<value>DEP_CHILD_TARGET_REPOSITORY_KIND</value>
+				<value>DEP_PARENT_SOURCE_ARTIFACT_ID</value>
+				<value>DEP_PARENT_SOURCE_REPOSITORY_ID</value>
+				<value>DEP_PARENT_SOURCE_REPOSITORY_KIND</value>
+				<value>DEP_PARENT_TARGET_ARTIFACT_ID</value>
+				<value>DEP_PARENT_TARGET_REPOSITORY_ID</value>
+				<value>DEP_PARENT_TARGET_REPOSITORY_KIND</value>
 			</list>
 		</property>
 	</bean>
@@ -285,13 +304,16 @@ $HeadURL$
 		<property name="sql" value="${ccf.identity.mapping.updater.sql}"></property>
 		<property name="outputColumns">
 			<list>
-				<value>LAST_READ_TIME</value>
-				<value>VERSION</value>
+				<value>SOURCE_LAST_MODIFICATION_TIME</value>
+				<value>TARGET_LAST_MODIFICATION_TIME</value>
+				<value>SOURCE_ARTIFACT_VERSION</value>
+				<value>TARGET_ARTIFACT_VERSION</value>
 				<value>SOURCE_SYSTEM_ID</value>
 				<value>SOURCE_REPOSITORY_ID</value>
 				<value>TARGET_SYSTEM_ID</value>
 				<value>TARGET_REPOSITORY_ID</value>
 				<value>SOURCE_ARTIFACT_ID</value>
+				<value>ARTIFACT_TYPE</value>
 			</list>
 		</property>
 	</bean>
@@ -312,9 +334,9 @@ $HeadURL$
 		<property name="sql" value="${ccf.mapping.updater.sql}"></property>
 		<property name="outputColumns">
 			<list>
-				<value>LAST_READ_TIME</value>
-				<value>VERSION</value>
-				<value>TRANSACTION_ID</value>
+				<value>LAST_SOURCE_ARTIFACT_MODIFICATION_DATE</value>
+				<value>LAST_SOURCE_ARTIFACT_VERSION</value>
+				<value>LAST_SOURCE_ARTIFACT_ID</value>
 				<value>SOURCE_SYSTEM_ID</value>
 				<value>SOURCE_REPOSITORY_ID</value>
 				<value>TARGET_SYSTEM_ID</value>
