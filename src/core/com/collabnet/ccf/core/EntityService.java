@@ -45,7 +45,8 @@ public class EntityService implements
 	private static final String TARGET_REPOSITORY_KIND = "targetRepositoryKind";
 	private static final String TARGET_SYSTEM_ID = "targetSystemId";
 	private static final String TARGET_SYSTEM_KIND = "targetSystemKind";
-
+	private static final String ARTIFACT_TYPE = "artifactType";
+	
 	private JDBCReadConnector entityServiceReader = null;
 	
 	private JDBCReadConnector entityServiceMappingIdReader = null;
@@ -81,6 +82,7 @@ public class EntityService implements
 		try {
 		Element element = XPathUtils.getRootElement(data);
 		
+		String artifactType = XPathUtils.getAttributeValue(element, ARTIFACT_TYPE);
 		String sourceArtifactId = XPathUtils.getAttributeValue(element, SOURCE_ARTIFACT_ID);
 		String sourceSystemId  = XPathUtils.getAttributeValue(element, SOURCE_SYSTEM_ID);
 		String sourceSystemKind = XPathUtils.getAttributeValue(element, SOURCE_SYSTEM_KIND);
@@ -98,7 +100,7 @@ public class EntityService implements
 			return new Object[]{data};
 		}
 		String targetArtifactIdFromTable = lookupTargetArtifactId(sourceArtifactId, sourceSystemId, sourceRepositoryId, 
-				targetSystemId, targetRepositoryId);
+				targetSystemId, targetRepositoryId, artifactType);
 		log.info("The targetArtifactId in EntityService==="+targetArtifactIdFromTable);
 		if(targetArtifactIdFromTable!=null && !(targetArtifactIdFromTable.equals(createToken)) && !(targetArtifactIdFromTable.equals("NULL"))) {
 			XPathUtils.addAttribute(element, TARGET_ARTIFACT_ID, targetArtifactIdFromTable);
@@ -118,7 +120,7 @@ public class EntityService implements
 	
 	
 	private String lookupTargetArtifactId(String sourceArtifactId, String sourceSystemId, String sourceRepositoryId, 
-			String targetSystemId, String targetRepositoryId) {
+			String targetSystemId, String targetRepositoryId, String artifactType) {
 		String targetArtifactId = null;
 		IOrderedMap inputParameters = new OrderedHashMap();
 		
@@ -127,6 +129,7 @@ public class EntityService implements
 		inputParameters.add(targetSystemId);
 		inputParameters.add(targetRepositoryId);
 		inputParameters.add(sourceArtifactId);
+		inputParameters.add(artifactType);
 	
 		entityServiceReader.connect();
 		Object[] resultSet = entityServiceReader.next(inputParameters, 1000);
