@@ -68,7 +68,7 @@ public class GenericArtifact {
 	 * @author jnicolai
 	 */
 	public enum IncludesFieldMetaDataValue {
-		TRUE, FALSE, UNKNOWN
+		TRUE, FALSE
 	};
 
 	/**
@@ -191,7 +191,7 @@ public class GenericArtifact {
 	 * schema-generation and graphical mapping facilities. The only allowed
 	 * values are "true" and "false".
 	 */
-	private IncludesFieldMetaDataValue includesFieldMetaData = IncludesFieldMetaDataValue.UNKNOWN;
+	private IncludesFieldMetaDataValue includesFieldMetaData = IncludesFieldMetaDataValue.FALSE;
 
 	/**
 	 * This attribute indicates whether an error occured during processing. The

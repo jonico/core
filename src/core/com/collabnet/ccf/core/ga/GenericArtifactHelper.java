@@ -43,141 +43,140 @@ public class GenericArtifactHelper {
 	// timezone and seconds
 	public static final DateFormat df = DateFormat.getDateTimeInstance(
 			DateFormat.LONG, DateFormat.LONG, new Locale("en"));
-	private static final String ARTIFACT_ROOT_ELEMENT_NAME = "artifact";
-	private static final String CCF_ARTIFACT_NAMESPACE = "http://ccf.open.collab.net/GenericArtifactV1.0";
-	private static final String CCF_NAMESPACE_PREFIX = "ccf";
+	public static final String ARTIFACT_ROOT_ELEMENT_NAME = "artifact";
+	public static final String CCF_ARTIFACT_NAMESPACE = "http://ccf.open.collab.net/GenericArtifactV1.0";
+	public static final String CCF_NAMESPACE_PREFIX = "ccf";
 	private static Map<String, String> ccfNamespaceMap = Collections
 			.singletonMap(CCF_NAMESPACE_PREFIX, CCF_ARTIFACT_NAMESPACE);
 
-	private static final String ARTIFACT_ACTION = "artifactAction";
-	private static final String SOURCE_ARTIFACT_LAST_MODIFICATION_DATE = "sourceArtifactLastModifiedDate";
-	private static final String TARGET_ARTIFACT_LAST_MODIFICATION_DATE = "targetArtifactLastModifiedDate";
-	private static final String TRANSACTION_ID = "transactionId";
-	private static final String ERROR_CODE = "errorCode";
-	private static final String INCLUDES_FIELD_META_DATA = "includesFieldMetaData";
-	private static final String ARTIFACT_MODE = "artifactMode";
-	private static final String ARTIFACT_TYPE = "artifactType";
-	private static final String SOURCE_ARTIFACT_VERSION = "sourceArtifactVersion";
-	private static final String TARGET_ARTIFACT_VERSION = "targetArtifactVersion";
-	private static final String CONFLICT_RESOLUTION_PRIORITY = "conflictResolutionPriority";
-	private static final String DEP_CHILD_SOURCE_ARTIFACT_ID = "depChildSourceArtifactId";
-	private static final String DEP_CHILD_SOURCE_REPOSITORY_ID = "depChildSourceRepositoryId";
-	private static final String DEP_CHILD_SOURCE_REPOSITORY_KIND = "depChildSourceRepositoryKind";
-	private static final String DEP_CHILD_TARGET_ARTIFACT_ID = "depChildTargetArtifactId";;
-	private static final String DEP_CHILD_TARGET_REPOSITORY_ID = "depChildTargetRepositoryId";;
-	private static final String DEP_CHILD_TARGET_REPOSITORY_KIND = "depChildTargetRepositoryKind";;
-	private static final String DEP_PARENT_SOURCE_ARTIFACT_ID = "depParentSourceArtifactId";
-	private static final String DEP_PARENT_SOURCE_REPOSITORY_ID = "depParentSourceRepositoryId";
-	private static final String DEP_PARENT_SOURCE_REPOSITORY_KIND = "depParentSourceRepositoryKind";
-	private static final String DEP_PARENT_TARGET_ARTIFACT_ID = "depParentTargetArtifactId";;
-	private static final String DEP_PARENT_TARGET_REPOSITORY_ID = "depParentTargetRepositoryId";;
-	private static final String DEP_PARENT_TARGET_REPOSITORY_KIND = "depParentTargetRepositoryKind";;
-	private static final String SOURCE_ARTIFACT_ID = "sourceArtifactId";
-	private static final String SOURCE_REPOSITORY_ID = "sourceRepositoryId";
-	private static final String SOURCE_REPOSITORY_KIND = "sourceRepositoryKind";
-	private static final String SOURCE_SYSTEM_ID = "sourceSystemId";
-	private static final String SOURCE_SYSTEM_KIND = "sourceSystemKind";
-	private static final String TARGET_ARTIFACT_ID = "targetArtifactId";
-	private static final String TARGET_REPOSITORY_ID = "targetRepositoryId";
-	private static final String TARGET_REPOSITORY_KIND = "targetRepositoryKind";
-	private static final String TARGET_SYSTEM_ID = "targetSystemId";
-	private static final String TARGET_SYSTEM_KIND = "targetSystemKind";
+	public static final String ARTIFACT_ACTION = "artifactAction";
+	public static final String SOURCE_ARTIFACT_LAST_MODIFICATION_DATE = "sourceArtifactLastModifiedDate";
+	public static final String TARGET_ARTIFACT_LAST_MODIFICATION_DATE = "targetArtifactLastModifiedDate";
+	public static final String TRANSACTION_ID = "transactionId";
+	public static final String ERROR_CODE = "errorCode";
+	public static final String INCLUDES_FIELD_META_DATA = "includesFieldMetaData";
+	public static final String ARTIFACT_MODE = "artifactMode";
+	public static final String ARTIFACT_TYPE = "artifactType";
+	public static final String SOURCE_ARTIFACT_VERSION = "sourceArtifactVersion";
+	public static final String TARGET_ARTIFACT_VERSION = "targetArtifactVersion";
+	public static final String CONFLICT_RESOLUTION_PRIORITY = "conflictResolutionPriority";
+	public static final String DEP_CHILD_SOURCE_ARTIFACT_ID = "depChildSourceArtifactId";
+	public static final String DEP_CHILD_SOURCE_REPOSITORY_ID = "depChildSourceRepositoryId";
+	public static final String DEP_CHILD_SOURCE_REPOSITORY_KIND = "depChildSourceRepositoryKind";
+	public static final String DEP_CHILD_TARGET_ARTIFACT_ID = "depChildTargetArtifactId";;
+	public static final String DEP_CHILD_TARGET_REPOSITORY_ID = "depChildTargetRepositoryId";;
+	public static final String DEP_CHILD_TARGET_REPOSITORY_KIND = "depChildTargetRepositoryKind";;
+	public static final String DEP_PARENT_SOURCE_ARTIFACT_ID = "depParentSourceArtifactId";
+	public static final String DEP_PARENT_SOURCE_REPOSITORY_ID = "depParentSourceRepositoryId";
+	public static final String DEP_PARENT_SOURCE_REPOSITORY_KIND = "depParentSourceRepositoryKind";
+	public static final String DEP_PARENT_TARGET_ARTIFACT_ID = "depParentTargetArtifactId";;
+	public static final String DEP_PARENT_TARGET_REPOSITORY_ID = "depParentTargetRepositoryId";;
+	public static final String DEP_PARENT_TARGET_REPOSITORY_KIND = "depParentTargetRepositoryKind";;
+	public static final String SOURCE_ARTIFACT_ID = "sourceArtifactId";
+	public static final String SOURCE_REPOSITORY_ID = "sourceRepositoryId";
+	public static final String SOURCE_REPOSITORY_KIND = "sourceRepositoryKind";
+	public static final String SOURCE_SYSTEM_ID = "sourceSystemId";
+	public static final String SOURCE_SYSTEM_KIND = "sourceSystemKind";
+	public static final String TARGET_ARTIFACT_ID = "targetArtifactId";
+	public static final String TARGET_REPOSITORY_ID = "targetRepositoryId";
+	public static final String TARGET_REPOSITORY_KIND = "targetRepositoryKind";
+	public static final String TARGET_SYSTEM_ID = "targetSystemId";
+	public static final String TARGET_SYSTEM_KIND = "targetSystemKind";
 
-	private static final String ARTIFACT_ACTION_CREATE = "create";
-	private static final String ARTIFACT_ACTION_DELETE = "delete";
-	private static final String ARTIFACT_ACTION_IGNORE = "ignore";
-	private static final String ARTIFACT_ACTION_UPDATE = "update";
-	private static final String ARTIFACT_ACTION_UNKNOWN = "Unknown";
+	public static final String ARTIFACT_ACTION_CREATE = "create";
+	public static final String ARTIFACT_ACTION_DELETE = "delete";
+	public static final String ARTIFACT_ACTION_IGNORE = "ignore";
+	public static final String ARTIFACT_ACTION_UPDATE = "update";
+	public static final String ARTIFACT_ACTION_UNKNOWN = "Unknown";
 
-	private static final String ARTIFACT_MODE_COMPLETE = "complete";
-	private static final String ARTIFACT_MODE_CHANGED_FIELDS_ONLY = "changedFieldsOnly";
-	private static final String ARTIFACT_MODE_UNKNOWN = "unknown";
+	public static final String ARTIFACT_MODE_COMPLETE = "complete";
+	public static final String ARTIFACT_MODE_CHANGED_FIELDS_ONLY = "changedFieldsOnly";
+	public static final String ARTIFACT_MODE_UNKNOWN = "unknown";
 	
-	private static final String INCLUDES_FIELD_META_DATA_TRUE = "true";
-	private static final String INCLUDES_FIELD_META_DATA_FALSE = "false";
-	private static final String INCLUDES_FIELD_META_DATA_UNKNOWN = "unknown";
+	public static final String INCLUDES_FIELD_META_DATA_TRUE = "true";
+	public static final String INCLUDES_FIELD_META_DATA_FALSE = "false";
+//	public static final String INCLUDES_FIELD_META_DATA_UNKNOWN = "unknown";
 	
-	private static final String ARTIFACT_TYPE_DEPENDENCY = "dependency";
-	private static final String ARTIFACT_TYPE_PLAIN_ARTIFACT = "plainArtifact";
-	private static final String ARTIFACT_TYPE_UNKNOWN = "unknown";
+	public static final String ARTIFACT_TYPE_DEPENDENCY = "dependency";
+	public static final String ARTIFACT_TYPE_PLAIN_ARTIFACT = "plainArtifact";
+	public static final String ARTIFACT_TYPE_UNKNOWN = "unknown";
 	
-	private static final String ARTIFACT_TYPE_ATTACHMENT = "attachment";
+	public static final String ARTIFACT_TYPE_ATTACHMENT = "attachment";
 	
-	private static final String ARTIFACT_FIELD_ELEMENT_NAME = "field";
+	public static final String ARTIFACT_FIELD_ELEMENT_NAME = "field";
 	private static final XPath fieldSelector = new DefaultXPath(
 			CCF_NAMESPACE_PREFIX + ":" + ARTIFACT_FIELD_ELEMENT_NAME);
 
-	private static final String FIELD_ACTION = "fieldAction";
+	public static final String FIELD_ACTION = "fieldAction";
 
-	private static final String FIELD_ACTION_APPEND = "append";
-	private static final String FIELD_ACTION_DELETE = "delete";
-	private static final String FIELD_ACTION_REPLACE = "replace";
-	private static final String FIELD_ACTION_UNKNOWN = "unknown";
+	public static final String FIELD_ACTION_APPEND = "append";
+	public static final String FIELD_ACTION_DELETE = "delete";
+	public static final String FIELD_ACTION_REPLACE = "replace";
+	public static final String FIELD_ACTION_UNKNOWN = "unknown";
 	
-	private static final String FIELD_NAME = "fieldName";
-	private static final String FIELD_DISPLAY_NAME = "fieldDisplayName";
-	private static final String FIELD_TYPE = "fieldType";
-	private static final String FIELD_VALUE_IS_NULL = "fieldValueIsNull";
-	private static final String FIELD_VALUE_TYPE = "fieldValueType";
-	private static final String FIELD_VALUE_TYPE_BASE64STRING = "Base64String";
-	private static final String FIELD_VALUE_TYPE_BOOLEAN = "Boolean";
-	private static final String FIELD_VALUE_TYPE_DATE = "Date";
-	private static final String FIELD_VALUE_TYPE_DATETIME = "DateTime";
-	private static final String FIELD_VALUE_TYPE_DOUBLE = "Double";
-	private static final String FIELD_VALUE_TYPE_HTML_STRING = "HTMLString";
-	private static final String FIELD_VALUE_TYPE_INTEGER = "Integer";
-	private static final String FIELD_VALUE_TYPE_STRING = "String";
+	public static final String FIELD_NAME = "fieldName";
+	public static final String FIELD_TYPE = "fieldType";
+	public static final String FIELD_VALUE_IS_NULL = "fieldValueIsNull";
+	public static final String FIELD_VALUE_TYPE = "fieldValueType";
+	public static final String FIELD_VALUE_TYPE_BASE64STRING = "Base64String";
+	public static final String FIELD_VALUE_TYPE_BOOLEAN = "Boolean";
+	public static final String FIELD_VALUE_TYPE_DATE = "Date";
+	public static final String FIELD_VALUE_TYPE_DATETIME = "DateTime";
+	public static final String FIELD_VALUE_TYPE_DOUBLE = "Double";
+	public static final String FIELD_VALUE_TYPE_HTML_STRING = "HTMLString";
+	public static final String FIELD_VALUE_TYPE_INTEGER = "Integer";
+	public static final String FIELD_VALUE_TYPE_STRING = "String";
 //	private static final String FIELD_VALUE_TYPE_USER = "User";
 //	private static final String FIELD_VALUE_TYPE_LIST = "List";
 //	private static final String FIELD_VALUE_TYPE_MULTI_SELECT_LIST = "Multi_Select_String";
 //	private static final String FIELD_VALUE_TYPE_UNKNOWN = "Unknown";
-	private static final String FIELD_VALUE_IS_NULL_TRUE = "true";
-	private static final String FIELD_VALUE_IS_NULL_FALSE = "false";
-	private static final String FIELD_VALUE_HAS_CHANGED = "fieldValueHasChanged";
-	private static final String FIELD_VALUE_HAS_CHANGED_TRUE = "true";
-	private static final String FIELD_VALUE_HAS_CHANGED_FALSE = "false";
+	public static final String FIELD_VALUE_IS_NULL_TRUE = "true";
+	public static final String FIELD_VALUE_IS_NULL_FALSE = "false";
+	public static final String FIELD_VALUE_HAS_CHANGED = "fieldValueHasChanged";
+	public static final String FIELD_VALUE_HAS_CHANGED_TRUE = "true";
+	public static final String FIELD_VALUE_HAS_CHANGED_FALSE = "false";
 
-	private static final String MIN_OCCURS = "minOccurs";
-	private static final String MAX_OCCURS = "maxOccurs";
-	private static final String NULL_VALUE_SUPPORTED = "nullValueSupported";
-	private static final String ALTERNATIVE_FIELD_NAME = "alternativeFieldName";
+	public static final String MIN_OCCURS = "minOccurs";
+	public static final String MAX_OCCURS = "maxOccurs";
+	public static final String NULL_VALUE_SUPPORTED = "nullValueSupported";
+	public static final String ALTERNATIVE_FIELD_NAME = "alternativeFieldName";
 	
 	//for atachments
 	private static final String ARTIFACT_ATTACHMENT_ELEMENT_NAME = "attachment";
 	private static final XPath attachmentSelector = new DefaultXPath(
 			CCF_NAMESPACE_PREFIX + ":" + ARTIFACT_ATTACHMENT_ELEMENT_NAME);
 
-	private static final String ATTACHMENT_ACTION = "attachmentAction";
-	private static final String ATTACHMENT_ACTION_CREATE = "create";
-	private static final String ATTACHMENT_ACTION_DELETE = "delete";
-	private static final String ATTACHMENT_ACTION_RENAME = "rename";
-	private static final String ATTACHMENT_ACTION_UNKNOWN = "unknown";
+	public static final String ATTACHMENT_ACTION = "attachmentAction";
+	public static final String ATTACHMENT_ACTION_CREATE = "create";
+	public static final String ATTACHMENT_ACTION_DELETE = "delete";
+	public static final String ATTACHMENT_ACTION_RENAME = "rename";
+	public static final String ATTACHMENT_ACTION_UNKNOWN = "unknown";
 	
-	private static final String ATTACHMENT_NAME = "attachmentName";
-	private static final String ATTACHMENT_ID = "attachmentId";
-	private static final String ATTACHMENT_DESCRIPTION = "attachmentDescription";
-	private static final String ATTACHMENT_SIZE = "attachmentSize";
-	private static final String ATTACHMENT_SOURCE_URL = "attachmentSourceUrl";
+	public static final String ATTACHMENT_NAME = "attachmentName";
+	public static final String ATTACHMENT_ID = "attachmentId";
+	public static final String ATTACHMENT_DESCRIPTION = "attachmentDescription";
+	public static final String ATTACHMENT_SIZE = "attachmentSize";
+	public static final String ATTACHMENT_SOURCE_URL = "attachmentSourceUrl";
 	
-	private static final String ATTACHMENT_CONTENT_TYPE = "attachmentContentType";
-	private static final String ATTACHMENT_CONTENT_TYPE_DATA = "data";
-	private static final String ATTACHMENT_CONTENT_TYPE_LINK = "link";
-	private static final String ATTACHMENT_CONTENT_TYPE_EMPTY = "empty";
-	private static final String ATTACHMENT_CONTENT_TYPE_UNKNOWN = "unknown";
+	public static final String ATTACHMENT_CONTENT_TYPE = "attachmentContentType";
+	public static final String ATTACHMENT_CONTENT_TYPE_DATA = "data";
+	public static final String ATTACHMENT_CONTENT_TYPE_LINK = "link";
+	public static final String ATTACHMENT_CONTENT_TYPE_EMPTY = "empty";
+	public static final String ATTACHMENT_CONTENT_TYPE_UNKNOWN = "unknown";
 	
-	private static final String ATTACHMENT_TYPE = "attachmentType";
-	private static final String ATTACHMENT_MIME_TYPE = "attachmentMIMEType";
-	private static final String ATTACHMENT_VALUE_TYPE_BASE64STRING = "Base64String";
-	private static final String ATTACHMENT_VALUE_TYPE_UNKNOWN = "Unknown";
+	public static final String ATTACHMENT_TYPE = "attachmentType";
+	public static final String ATTACHMENT_MIME_TYPE = "attachmentMIMEType";
+	public static final String ATTACHMENT_VALUE_TYPE_BASE64STRING = "Base64String";
+	public static final String ATTACHMENT_VALUE_TYPE_UNKNOWN = "Unknown";
 	
-	private static final String ATTACHMENT_VALUE_IS_NULL = "attachmentValueIsNull";
-	private static final String ATTACHMENT_VALUE_TYPE = "attachmentValueType";
+	public static final String ATTACHMENT_VALUE_IS_NULL = "attachmentValueIsNull";
+	public static final String ATTACHMENT_VALUE_TYPE = "attachmentValueType";
 	
-	private static final String ATTACHMENT_VALUE_IS_NULL_TRUE = "true";
-	private static final String ATTACHMENT_VALUE_IS_NULL_FALSE = "false";
-	private static final String ATTACHMENT_VALUE_HAS_CHANGED = "attachmentValueHasChanged";
-	private static final String ATTACHMENT_VALUE_HAS_CHANGED_TRUE = "true";
-	private static final String ATTACHMENT_VALUE_HAS_CHANGED_FALSE = "false";
+	public static final String ATTACHMENT_VALUE_IS_NULL_TRUE = "true";
+	public static final String ATTACHMENT_VALUE_IS_NULL_FALSE = "false";
+	public static final String ATTACHMENT_VALUE_HAS_CHANGED = "attachmentValueHasChanged";
+	public static final String ATTACHMENT_VALUE_HAS_CHANGED_TRUE = "true";
+	public static final String ATTACHMENT_VALUE_HAS_CHANGED_FALSE = "false";
 
 	
 	
@@ -245,8 +244,8 @@ public class GenericArtifactHelper {
 				GenericArtifact.IncludesFieldMetaDataValue.TRUE);
 		includesFieldMetaDataHashMap.put(INCLUDES_FIELD_META_DATA_FALSE,
 				GenericArtifact.IncludesFieldMetaDataValue.FALSE);
-		includesFieldMetaDataHashMap.put(INCLUDES_FIELD_META_DATA_UNKNOWN,
-				GenericArtifact.IncludesFieldMetaDataValue.UNKNOWN);
+//		includesFieldMetaDataHashMap.put(INCLUDES_FIELD_META_DATA_UNKNOWN,
+//				GenericArtifact.IncludesFieldMetaDataValue.UNKNOWN);
 		
 		fieldActionHashMap.put(FIELD_ACTION_APPEND,
 				GenericArtifactField.FieldActionValue.APPEND);
@@ -886,10 +885,6 @@ public class GenericArtifactHelper {
 		}
 		case FALSE: {
 			addAttribute(root, INCLUDES_FIELD_META_DATA, INCLUDES_FIELD_META_DATA_FALSE);
-			break;
-		}
-		case UNKNOWN: {
-			addAttribute(root, INCLUDES_FIELD_META_DATA, INCLUDES_FIELD_META_DATA_UNKNOWN);
 			break;
 		}
 		default: {
