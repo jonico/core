@@ -50,10 +50,6 @@ public class XsltProcessor extends Component implements IDataProcessor {
 	 */
 	private String xsltFile;
 
-	/**
-	 * XSLT transforming component
-	 */
-	private Transformer transform;
 	
 	private static final String SOURCE_SYSTEM_ID = "sourceSystemId";
 	private static final String TARGET_SYSTEM_ID = "targetSystemId";
@@ -213,6 +209,7 @@ public class XsltProcessor extends Component implements IDataProcessor {
 	 * @return an array containing a single XML string representing the
 	 *         transformed XML string supplied
 	 */
+	@SuppressWarnings("unused")
 	private Object[] transform(String s, Transformer transform) {
 		return transform(createDOMFromString(s), transform);
 	}

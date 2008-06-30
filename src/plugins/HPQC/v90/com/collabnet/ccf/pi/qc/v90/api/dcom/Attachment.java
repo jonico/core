@@ -7,6 +7,10 @@ import com.jacob.activeX.ActiveXComponent;
 import com.jacob.com.Dispatch;
 
 public class Attachment extends ActiveXComponent implements IAttachment {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
 	public static Logger logger = Logger.getLogger(Attachment.class);
 
     public Attachment(Dispatch arg0)

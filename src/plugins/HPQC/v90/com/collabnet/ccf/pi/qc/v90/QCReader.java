@@ -1,8 +1,6 @@
 package com.collabnet.ccf.pi.qc.v90;
 
-import java.rmi.RemoteException;
 import java.sql.Timestamp;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -192,7 +190,7 @@ public class QCReader extends AbstractReader  implements
 	 * @param artifactId
 	 *            A string that represents the defectId for which the attachments need to be fetched.            
 	 * @return List<GenericArtifact>
-	 * 			  List of GenericArtifact Java Object that contains the complete information abou the attachment(s)	
+	 * 			  List of GenericArtifact Java Object that contains the complete information about the attachment(s)	
 	 * 
 	 */
 	@Override
@@ -217,18 +215,17 @@ public class QCReader extends AbstractReader  implements
 					sourceRepositoryKind, serverUrl,
 					userName + QCConnectionFactory.PARAM_DELIMITER + password);
 		} catch (Exception e) {
-			// TODO Declare exception so that it can be processed by OA exception handler
 			log.error("Could not log into QC", e);
 			return null;
 		}
 		List<String> artifactIds = new ArrayList<String>();
 		artifactIds.add(artifactId);
-		List<GenericArtifact> attachments = new ArrayList<GenericArtifact>();
+		List<GenericArtifact> attachments = null;
 		try {
 			attachments = attachmentHandler.getLatestChangedAttachments(attachments, connection, getUserName(), transactionId, fromTime, sourceArtifactId, sourceRepositoryId, sourceRepositoryKind, sourceSystemId, sourceSystemKind, targetRepositoryId, targetRepositoryKind, targetSystemId, targetSystemKind, this.getMaxAttachmentSizePerArtifact());
 		} catch (Exception e1) {
-			e1.printStackTrace();
-			throw new RuntimeException(e1);
+			log.error("An exception occured while trying to retrieve the attachments: "+e1.getMessage());
+			return null;
 		} finally {
 			this.disconnect(connection);
 		}
@@ -307,8 +304,8 @@ public class QCReader extends AbstractReader  implements
 					lastTransactionId);
 			modifiedDefectArtifacts.add(latestDefectArtifact);
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.error("An error occured during QC-artifact retrieval: "+e.getMessage());
+			return null;
 		} finally {
 			this.disconnect(connection);
 		}

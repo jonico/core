@@ -15,6 +15,7 @@ public class ConnectionManagerTest extends MockObjectTestCase {
 	public void setUp(){
 		
 	}
+	@SuppressWarnings("unchecked")
 	public void testGetConnection() throws MaxConnectionsReachedException {
 		Mock context = new Mock(ConnectionFactory.class);
 		String systemId = "sid";
@@ -45,6 +46,7 @@ public class ConnectionManagerTest extends MockObjectTestCase {
 		connection = manager.getConnection(systemId, systemKind, repositoryId,
 				repositoryKind, connectionInfo, credentialInfo);
 	}
+	@SuppressWarnings("unchecked")
 	public void testMultipleGetConnectionWithoutMaxConnectionsReached(){
 		
 		Mock context = new Mock(ConnectionFactory.class);
@@ -79,6 +81,7 @@ public class ConnectionManagerTest extends MockObjectTestCase {
 			}
 		}
 	}
+	@SuppressWarnings("unchecked")
 	public void testMultipleGetConnectionWithMaxConnectionsReached(){
 		Mock context = new Mock(ConnectionFactory.class);
 		String systemId = "sid";

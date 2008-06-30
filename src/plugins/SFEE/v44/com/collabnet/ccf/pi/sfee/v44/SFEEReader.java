@@ -21,8 +21,6 @@ import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
-import com.vasoftware.sf.soap44.webservices.sfmain.TrackerFieldSoapDO;
-import com.vasoftware.sf.soap44.webservices.tracker.ArtifactDependencySoapRow;
 import com.vasoftware.sf.soap44.webservices.tracker.ArtifactSoapDO;
 
 /**

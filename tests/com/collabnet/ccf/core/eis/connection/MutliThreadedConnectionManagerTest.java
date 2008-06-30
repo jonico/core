@@ -45,6 +45,7 @@ public class MutliThreadedConnectionManagerTest extends MockObjectTestCase {
 	      }
 	      threads = null;
 	}
+	@SuppressWarnings("unchecked")
 	public void testMultipleGetConnectionWithMultiThreads(){
 		Mock context = new Mock(ConnectionFactory.class);
 		final String systemId = "sid";

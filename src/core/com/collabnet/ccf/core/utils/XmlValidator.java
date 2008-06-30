@@ -34,7 +34,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.xerces.parsers.SAXParser;
 import org.dom4j.Document;
-import org.openadaptor.auxil.processor.xml.XsltProcessor;
 import org.openadaptor.core.Component;
 import org.openadaptor.core.IDataProcessor;
 import org.openadaptor.core.exception.ProcessingException;
@@ -147,7 +146,8 @@ public class XmlValidator extends Component implements IDataProcessor {
    * Hook to perform any validation of the component properties required by the
    * implementation. Defult behaviour should be a no-op.
    */
-  public void validate(List exceptions) {
+  @SuppressWarnings("unchecked")
+public void validate(List exceptions) {
 
     if (forcingURLValidation) {
       try {

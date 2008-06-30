@@ -4,11 +4,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Set;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
-import com.collabnet.ccf.core.hospital.Ambulance;
 
 /**
  * This class implements the Connection pooling mechanism for the

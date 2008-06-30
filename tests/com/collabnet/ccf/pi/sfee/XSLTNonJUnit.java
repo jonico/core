@@ -85,7 +85,6 @@ public class XSLTNonJUnit extends TestCase {
 			Document doc = transform(transform, source);
 			System.out.println(doc.asXML());
 		} catch (TransformerException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}

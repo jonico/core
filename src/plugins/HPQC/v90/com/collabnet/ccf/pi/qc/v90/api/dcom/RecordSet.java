@@ -3,8 +3,6 @@ package com.collabnet.ccf.pi.qc.v90.api.dcom;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-
-import com.collabnet.ccf.core.EntityService;
 import com.collabnet.ccf.pi.qc.v90.api.IRecordSet;
 import com.jacob.activeX.ActiveXComponent;
 import com.jacob.com.Dispatch;

@@ -8,7 +8,12 @@ import com.jacob.com.Variant;
 
 public class AttachmentFactory extends ActiveXComponent implements IAttachmentFactory
 {
-    public AttachmentFactory(Dispatch arg0){
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+
+	public AttachmentFactory(Dispatch arg0){
         super(arg0);
     }
 
