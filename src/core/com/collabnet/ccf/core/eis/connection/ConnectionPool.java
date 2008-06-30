@@ -5,6 +5,11 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Set;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.collabnet.ccf.core.hospital.Ambulance;
+
 /**
  * This class implements the Connection pooling mechanism for the
  * connection manager. It caches connection for each repository. It can be thought
@@ -25,6 +30,7 @@ import java.util.Set;
  * @param <T>
  */
 public final class ConnectionPool<T> {
+	private static final Log log = LogFactory.getLog(ConnectionPool.class);
 	private ConnectionFactory<T> factory = null;
 	private HashMap<String, ArrayList<ConnectionInfo>> connectionPool 
 					= new HashMap<String, ArrayList<ConnectionInfo>>();
@@ -72,11 +78,11 @@ public final class ConnectionPool<T> {
 		if(factory == null){
 			throw new IllegalArgumentException("Connection Factory is not set");
 		}
-		System.err.println("Requesting a free connection");
+		log.debug("Requesting a free connection");
 		T connection = getFreeConnectionForKey(systemId, systemKind, repositoryId,
 				repositoryKind, connectionInfo, credentialInfo);
 		if(connection == null){
-			System.err.println("No free connection... Creating a connection");
+			log.debug("No free connection... Creating a connection");
 			connection = createConnection(systemId, systemKind, repositoryId,
 					repositoryKind, connectionInfo, credentialInfo);
 		}
@@ -138,11 +144,11 @@ public final class ConnectionPool<T> {
 		if(connections != null){
 			synchronized(connections){
 				int connectionsCount = connections.size();
-				System.err.println("Number of connections for pool "+key+" is "+connectionsCount);
 				if(connectionsCount < maxConnectionsPerPool){
 					return false;
 				}
 				else {
+					log.info("Number of connections for pool "+key+" is "+connectionsCount+" and currently used up to the maximum.");
 					return true;
 				}
 			}
@@ -197,11 +203,9 @@ public final class ConnectionPool<T> {
 				for(ConnectionInfo info: connectionInfos){
 					boolean isConnectionFree = info.isFree();
 					if(isConnectionFree){
-						System.err.println("Connection is free");
 						T retreivedConnection = info.getConnection();
 						boolean isConnectionAlive = factory.isAlive(retreivedConnection);
 						if(isConnectionAlive){
-							System.err.println("Connection is live, popping out");
 							info.poppedFromPool();
 							connection = retreivedConnection;
 							break;
@@ -224,7 +228,7 @@ public final class ConnectionPool<T> {
 		ConnectionInfo info = reversePoolMap.get(connection);
 		String key = info.getKey();
 		ArrayList<ConnectionInfo> connectionInfos = connectionPool.get(key);
-		System.err.println("Returning connection to pool...!");
+		log.debug("Returning connection to pool...!");
 		synchronized(connectionInfos){
 			info.returnedToPool();
 		}

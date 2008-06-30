@@ -3,12 +3,16 @@ package com.collabnet.ccf.pi.sfee.v44.meta;
 import java.util.Date;
 import java.util.GregorianCalendar;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.collabnet.ccf.core.ga.GenericArtifactField.FieldValueTypeValue;
 import com.vasoftware.sf.soap44.types.SoapFieldValues;
 import com.vasoftware.sf.soap44.webservices.sfmain.TrackerFieldSoapDO;
 import com.vasoftware.sf.soap44.webservices.tracker.ArtifactSoapDO;
 
 public class ArtifactMetaData {
+	private static final Log log = LogFactory.getLog(ArtifactMetaData.class);
 	public enum FIELD_INPUT_TYPE {
 		TEXT,
 		DATE,
@@ -97,7 +101,7 @@ public class ArtifactMetaData {
 			field = SFEEFields.valueOf(Character.toLowerCase(fieldName.charAt(0))+fieldName.substring(1));
 		}
 		catch(IllegalArgumentException e){
-			System.out.println("Field "+fieldName+" is not found in ArtifactMetaData");
+			log.error("Field "+fieldName+" is not found in ArtifactMetaData");
 		}
 		if(field != null){
 			ArtifactMetaData.FIELD_VALUE_TYPE valueType = field.getValueType();
@@ -220,7 +224,7 @@ public class ArtifactMetaData {
 			field = SFEEFields.valueOf(Character.toLowerCase(fieldName.charAt(0))+fieldName.substring(1));
 		}
 		catch(IllegalArgumentException e){
-			System.out.println("Field "+fieldName+" is not found in ArtifactMetaData");
+			log.error("Field "+fieldName+" is not found in ArtifactMetaData");
 		}
 		if(field != null){
 			return false;

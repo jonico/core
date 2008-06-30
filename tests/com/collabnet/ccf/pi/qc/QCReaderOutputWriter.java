@@ -53,7 +53,7 @@ public class QCReaderOutputWriter extends QCConnectHelper implements IDataProces
 			s.writeObject(incomingDoc);
 			}
 		catch(IOException e) {
-			System.out.println("File handling exception" + e);		
+			log.error("File handling exception" + e);		
 		}
 		
 		Object[] result = {incomingDoc};
@@ -69,13 +69,12 @@ public class QCReaderOutputWriter extends QCConnectHelper implements IDataProces
 		GenericArtifact changedArtifact= new GenericArtifact();
 		@SuppressWarnings("unused")
 		String bugId = new String();
-		System.out.println("------------------------------------------------------------");
 		
 		try {
 			changedArtifact = GenericArtifactHelper.createGenericArtifactJavaObject((Document) incomingObj);
 		}
 		catch(Exception e) {
-			System.out.println("GenericArtifact Parsing exception" + e);
+			log.error("GenericArtifact Parsing exception" + e);
 		}		
 		//intBugId = Integer.parseInt(QCWriter.getFieldValueFromGenericArtifact(changedArtifact, "BG_BUG_ID"));
 		//intBugId = intBugId+100;

@@ -142,7 +142,6 @@ public class SFEEToGenericArtifactConverter {
 			String[] flexFieldTypes = flexFields.getTypes();
 			Object[] flexFieldValues = flexFields.getValues();
 			for(int i=0; i < flexFieldNames.length; i++){
-				System.out.println(flexFieldNames[i]+"-"+flexFieldTypes[i]+"-"+flexFieldValues[i]);
 //				if(flexFieldNames[i].equals("ArtifactAction")){
 //					genericArtifact.setArtifactAction(GenericArtifact.ArtifactActionValue.CREATE);
 //					continue;

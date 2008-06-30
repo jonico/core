@@ -1,6 +1,10 @@
 package com.collabnet.ccf.pi.qc.v90.api.dcom;
 
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import com.collabnet.ccf.core.EntityService;
 import com.collabnet.ccf.pi.qc.v90.api.IRecordSet;
 import com.jacob.activeX.ActiveXComponent;
 import com.jacob.com.Dispatch;
@@ -8,6 +12,7 @@ import com.jacob.com.Variant;
 
 public class RecordSet extends ActiveXComponent implements IRecordSet
 {
+	private static final Log log = LogFactory.getLog(RecordSet.class);
     /**
 	 * 
 	 */
@@ -28,7 +33,7 @@ public class RecordSet extends ActiveXComponent implements IRecordSet
     public String getFieldAsString(String field) {
         Variant res = Dispatch.call(this, "FieldValue", field);
         if(res.getvt() != 8 && res.getvt() != 0)
-            System.err.println("Field is not a String type "+field+" "+res.getvt());
+            log.error("Field is not a String type "+field+" "+res.getvt());
         return res.getString();
     }
 
@@ -39,7 +44,7 @@ public class RecordSet extends ActiveXComponent implements IRecordSet
     public String getColNameAsString(int index) {
         Variant res = Dispatch.call(this, "ColName", index);
         if(res.getvt() != 8 && res.getvt() != 0)
-            System.err.println("Col Name is not a String type index:"+index+" "+res.getvt());
+            log.error("Col Name is not a String type index:"+index+" "+res.getvt());
         return res.getString();
     }
 

@@ -88,7 +88,6 @@ public class Bug extends ActiveXComponent implements IBugActions {
         OleDate oleDate = new OleDate(); 
         oleDate.setDate(ddate);
         Date d = (Date) oleDate;
-        System.out.println("For the field:"+field+", the value is: "+d);
         return d;
     }
 
@@ -252,7 +251,6 @@ public class Bug extends ActiveXComponent implements IBugActions {
 		attachment.putType(type);
 		attachment.post();
 		
-		System.out.println("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
 		return;
 	}
 	

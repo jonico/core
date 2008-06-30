@@ -5,6 +5,9 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.collabnet.ccf.pi.sfee.v44.meta.ArtifactMetaData;
 import com.vasoftware.sf.soap44.webservices.sfmain.CommentSoapList;
 import com.vasoftware.sf.soap44.webservices.sfmain.CommentSoapRow;
@@ -20,8 +23,14 @@ import com.vasoftware.sf.soap44.webservices.tracker.ArtifactSoapDO;
  *
  */
 public class SFEEAppHandler {
+	
+	
 	private ISourceForgeSoap mSfSoap;
 	private String mSessionId;
+	/**
+	 * log4j logger instance
+	 */
+	private static final Log log = LogFactory.getLog(SFEEAppHandler.class);
 	public SFEEAppHandler(ISourceForgeSoap sfSoap, String sessionId) {
 		this.mSfSoap = sfSoap;
 		this.mSessionId = sessionId;
@@ -29,8 +38,8 @@ public class SFEEAppHandler {
 
 	/**
 	 * This method retrieves all the comments added to a particular artifact
-	 * (represented by the ArtofactSoapDO) and adds all the comments that are
-	 * added after the lastModifiedDate into the ArtifatSoapDO's flex fields
+	 * (represented by the ArtifactSoapDO) and adds all the comments that are
+	 * added after the lastModifiedDate into the ArtifcatSoapDO's flex fields
 	 * with the field name as "Comment Text" [as this is the name displayed
 	 * in the SFEE trackers for the Comments]
 	 * 
@@ -78,14 +87,12 @@ public class SFEEAppHandler {
 //						}
 					}
 					if(!commentSet){
-						System.out.println("Comment "+description+" Could not be set "+createdDate);
+						log.error("Comment "+description+" Could not be set "+createdDate);
 					}
 				}
 			}
 		} catch (RemoteException e) {
-			System.out.println("Could not get Comments list for artifact "+artifact.getId());
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.error("Could not get comments list for artifact "+artifact.getId());
 		}
 	}
 }

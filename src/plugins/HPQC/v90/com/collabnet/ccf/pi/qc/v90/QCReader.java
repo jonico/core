@@ -535,7 +535,6 @@ public class QCReader extends AbstractReader  implements
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSS");
 		Date fromDate = sdf.parse(fromTimeStamp);
 		finalString=ft.format(fromDate);
-		System.out.println(finalString);
 		}
 		catch(Exception e) {
 			log.error("Exception while parsing the string into Date"+e);

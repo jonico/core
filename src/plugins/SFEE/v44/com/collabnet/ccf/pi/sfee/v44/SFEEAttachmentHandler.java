@@ -11,6 +11,8 @@ import java.util.Set;
 import javax.activation.DataHandler;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import com.collabnet.ccf.core.ga.AttachmentMetaData;
 import com.collabnet.ccf.core.ga.GenericArtifact;
@@ -33,6 +35,10 @@ import com.vasoftware.sf.soap44.webservices.tracker.ITrackerAppSoap;
  * @author madhusuthanan
  */
 public class SFEEAttachmentHandler {
+	/**
+	 * log4j logger instance
+	 */
+	private static final Log log = LogFactory.getLog(SFEEAttachmentHandler.class);
 	/** Tracker Soap API handle */
 	private ITrackerAppSoap mTrackerApp;
 	
@@ -74,7 +80,6 @@ public class SFEEAttachmentHandler {
 			throws RemoteException {
 		
 		String fileDescriptor = fileStorageApp.startFileUpload(sessionId);
-		System.out.println("File descriptor "+fileDescriptor);
 		fileStorageApp.write(sessionId, fileDescriptor, data);
 		fileStorageApp.endFileUpload(sessionId, fileDescriptor);
 			
@@ -175,7 +180,7 @@ public class SFEEAttachmentHandler {
 //		}
 		else if(attAction == GenericArtifact.ArtifactActionValue.UNKNOWN){
 			//TODO What should be done if attachment action value is unknown
-			System.out.println("What shout I do now?");
+			log.error("What shout I do now?");
 		}
 		if(artifact != null){
 			Date attachmentLastModifiedDate = artifact.getLastModifiedDate();
@@ -258,7 +263,7 @@ public class SFEEAttachmentHandler {
 					continue;
 				}
 				if(attachmentSize > maxAttachmentSizePerArtifact){
-					System.err.println("attachment size is more than the configured maxAttachmentSizePerArtifact "
+					log.warn("attachment size is more than the configured maxAttachmentSizePerArtifact "
 							+attachmentSizeStr);
 					continue;
 				}

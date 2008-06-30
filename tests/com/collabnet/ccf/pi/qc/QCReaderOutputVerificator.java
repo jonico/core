@@ -87,10 +87,10 @@ public class QCReaderOutputVerificator extends QCConnectHelper implements IDataP
 	        }
 		}
 		catch(IOException e) {
-			System.out.println("File handling exception" + e);		
+			log.error("File handling exception" + e);		
 		}
 		catch(ClassNotFoundException e) {
-			System.out.println("Class not found exception" + e);		
+			log.error("Class not found exception" + e);		
 		}
 		
 		if (runStatus==0) return failure.toArray();
