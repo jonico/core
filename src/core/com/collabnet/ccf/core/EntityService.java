@@ -2,6 +2,7 @@ package com.collabnet.ccf.core;
 
 import java.util.List;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dom4j.Document;
@@ -13,6 +14,7 @@ import org.openadaptor.core.IDataProcessor;
 import org.openadaptor.core.exception.NullRecordException;
 import org.openadaptor.core.exception.RecordFormatException;
 
+import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
 import com.collabnet.ccf.core.utils.XPathUtils;
 
@@ -35,17 +37,6 @@ public class EntityService implements
 	 * Token used to indicate that the target repository item has to be created
 	 */
 	private String createToken = "NEW";
-	private static final String SOURCE_ARTIFACT_ID = "sourceArtifactId";
-	private static final String SOURCE_REPOSITORY_ID = "sourceRepositoryId";
-	private static final String SOURCE_REPOSITORY_KIND = "sourceRepositoryKind";
-	private static final String SOURCE_SYSTEM_ID = "sourceSystemId";
-	private static final String SOURCE_SYSTEM_KIND = "sourceSystemKind";
-	private static final String TARGET_ARTIFACT_ID = "targetArtifactId";
-	private static final String TARGET_REPOSITORY_ID = "targetRepositoryId";
-	private static final String TARGET_REPOSITORY_KIND = "targetRepositoryKind";
-	private static final String TARGET_SYSTEM_ID = "targetSystemId";
-	private static final String TARGET_SYSTEM_KIND = "targetSystemKind";
-	private static final String ARTIFACT_TYPE = "artifactType";
 	
 	private JDBCReadConnector entityServiceReader = null;
 	
@@ -82,17 +73,17 @@ public class EntityService implements
 		try {
 		Element element = XPathUtils.getRootElement(data);
 		
-		String artifactType = XPathUtils.getAttributeValue(element, ARTIFACT_TYPE);
-		String sourceArtifactId = XPathUtils.getAttributeValue(element, SOURCE_ARTIFACT_ID);
-		String sourceSystemId  = XPathUtils.getAttributeValue(element, SOURCE_SYSTEM_ID);
-		String sourceSystemKind = XPathUtils.getAttributeValue(element, SOURCE_SYSTEM_KIND);
-		String sourceRepositoryId = XPathUtils.getAttributeValue(element, SOURCE_REPOSITORY_ID);
-		String sourceRepositoryKind = XPathUtils.getAttributeValue(element, SOURCE_REPOSITORY_KIND);
+		String artifactType = XPathUtils.getAttributeValue(element, GenericArtifactHelper.ARTIFACT_TYPE);
+		String sourceArtifactId = XPathUtils.getAttributeValue(element, GenericArtifactHelper.SOURCE_ARTIFACT_ID);
+		String sourceSystemId  = XPathUtils.getAttributeValue(element, GenericArtifactHelper.SOURCE_SYSTEM_ID);
+		String sourceSystemKind = XPathUtils.getAttributeValue(element, GenericArtifactHelper.SOURCE_SYSTEM_KIND);
+		String sourceRepositoryId = XPathUtils.getAttributeValue(element, GenericArtifactHelper.SOURCE_REPOSITORY_ID);
+		String sourceRepositoryKind = XPathUtils.getAttributeValue(element, GenericArtifactHelper.SOURCE_REPOSITORY_KIND);
 		
-		String targetSystemId = XPathUtils.getAttributeValue(element, TARGET_SYSTEM_ID);
-		String targetSystemKind = XPathUtils.getAttributeValue(element, TARGET_SYSTEM_KIND);
-		String targetRepositoryId = XPathUtils.getAttributeValue(element, TARGET_REPOSITORY_ID);
-		String targetRepositoryKind = XPathUtils.getAttributeValue(element, TARGET_REPOSITORY_KIND);
+		String targetSystemId = XPathUtils.getAttributeValue(element, GenericArtifactHelper.TARGET_SYSTEM_ID);
+		String targetSystemKind = XPathUtils.getAttributeValue(element, GenericArtifactHelper.TARGET_SYSTEM_KIND);
+		String targetRepositoryId = XPathUtils.getAttributeValue(element, GenericArtifactHelper.TARGET_REPOSITORY_ID);
+		String targetRepositoryKind = XPathUtils.getAttributeValue(element, GenericArtifactHelper.TARGET_REPOSITORY_KIND);
 		
 		log.info("The incoming artifact is*****"+data.asXML());
 		
@@ -101,12 +92,32 @@ public class EntityService implements
 		}
 		String targetArtifactIdFromTable = lookupTargetArtifactId(sourceArtifactId, sourceSystemId, sourceRepositoryId, 
 				targetSystemId, targetRepositoryId, artifactType);
+		if(artifactType.equals(GenericArtifactHelper.ARTIFACT_TYPE_ATTACHMENT)){
+			String sourceParentArtifactId = XPathUtils.getAttributeValue(element,
+					GenericArtifactHelper.DEP_PARENT_SOURCE_ARTIFACT_ID);
+			String sourceParentRepositoryId = XPathUtils.getAttributeValue(element,
+					GenericArtifactHelper.DEP_PARENT_SOURCE_REPOSITORY_ID);
+			String targetParentRepositoryId = XPathUtils.getAttributeValue(element,
+					GenericArtifactHelper.DEP_PARENT_TARGET_REPOSITORY_ID);
+			String targetParentArtifactId = lookupTargetArtifactId(sourceParentArtifactId, sourceSystemId, sourceParentRepositoryId, 
+					targetSystemId, targetParentRepositoryId, GenericArtifactHelper.ARTIFACT_TYPE_PLAIN_ARTIFACT);
+			if(StringUtils.isEmpty(targetParentArtifactId)){
+				String cause = "Parent artifact "+sourceParentArtifactId+" for attachment "+
+									sourceArtifactId +" is not created on the target";
+				Throwable e = new CCFRuntimeException(cause);
+				log.error(cause, e);
+			}
+			else {
+				XPathUtils.addAttribute(element, GenericArtifactHelper.DEP_PARENT_TARGET_ARTIFACT_ID,
+						targetParentArtifactId);
+			}
+		}
 		log.info("The targetArtifactId in EntityService==="+targetArtifactIdFromTable);
 		if(targetArtifactIdFromTable!=null && !(targetArtifactIdFromTable.equals(createToken)) && !(targetArtifactIdFromTable.equals("NULL"))) {
-			XPathUtils.addAttribute(element, TARGET_ARTIFACT_ID, targetArtifactIdFromTable);
+			XPathUtils.addAttribute(element, GenericArtifactHelper.TARGET_ARTIFACT_ID, targetArtifactIdFromTable);
 	    }
 		if(targetArtifactIdFromTable==null) {
-			XPathUtils.addAttribute(element, TARGET_ARTIFACT_ID, createToken);
+			XPathUtils.addAttribute(element, GenericArtifactHelper.TARGET_ARTIFACT_ID, createToken);
 	    }
 		}
 		catch(GenericArtifactParsingException e) {
