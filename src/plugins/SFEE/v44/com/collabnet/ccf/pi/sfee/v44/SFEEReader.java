@@ -318,6 +318,42 @@ public class SFEEReader extends AbstractReader {
 		ga.setTargetSystemKind(targetSystemKind);
 	}
 	
+	/**
+	 * Populates the source and destination attributes for this GenericArtifact
+	 * object from the Sync Info database document.
+	 * 
+	 * @param syncInfo
+	 * @param ga
+	 */
+	private void populateSrcAndDestForAttachment(Document syncInfo, GenericArtifact ga){
+
+		String sourceRepositoryId = this.getSourceRepositoryId(syncInfo);
+		String sourceRepositoryKind = this.getSourceRepositoryKind(syncInfo);
+		String sourceSystemId = this.getSourceSystemId(syncInfo);
+		String sourceSystemKind = this.getSourceSystemKind(syncInfo);
+		
+		String targetRepositoryId = this.getTargetRepositoryId(syncInfo);
+		String targetRepositoryKind = this.getTargetRepositoryKind(syncInfo);
+		String targetSystemId = this.getTargetSystemId(syncInfo);
+		String targetSystemKind = this.getTargetSystemKind(syncInfo);
+		
+		ga.setSourceRepositoryId(sourceRepositoryId);
+		ga.setSourceRepositoryKind(sourceRepositoryKind);
+		ga.setSourceSystemId(sourceSystemId);
+		ga.setSourceSystemKind(sourceSystemKind);
+		
+		ga.setDepParentSourceRepositoryId(sourceRepositoryId);
+		ga.setDepParentSourceRepositoryKind(sourceRepositoryKind);
+		
+		ga.setTargetRepositoryId(targetRepositoryId);
+		ga.setTargetRepositoryKind(targetRepositoryKind);
+		ga.setTargetSystemId(targetSystemId);
+		ga.setTargetSystemKind(targetSystemKind);
+		
+		ga.setDepParentTargetRepositoryId(targetRepositoryId);
+		ga.setDepParentTargetRepositoryKind(targetRepositoryKind);
+	}
+	
 	@SuppressWarnings("unchecked")
 	@Override
 	public void validate(List exceptions) {
@@ -383,8 +419,7 @@ public class SFEEReader extends AbstractReader {
 					lastModifiedDate,getUsername(),artifactIds, connection.getSfSoap(),
 					this.getMaxAttachmentSizePerArtifact());
 			for(GenericArtifact attachment:attachments){
-				attachment.setSourceArtifactId(artifactId);
-				populateSrcAndDest(syncInfo, attachment);
+				populateSrcAndDestForAttachment(syncInfo, attachment);
 			}
 		} catch (RemoteException e) {
 			String cause = "During the attachment retrieval process from SFEE, an error occured";

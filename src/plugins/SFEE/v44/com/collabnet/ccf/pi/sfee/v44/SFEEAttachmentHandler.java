@@ -69,7 +69,7 @@ public class SFEEAttachmentHandler {
 	 * 
 	 * @throws RemoteException - if any SOAP api call fails
 	 */
-	public void attachFileToArtifact(String sessionId, String artifactId,
+	public ArtifactSoapDO attachFileToArtifact(String sessionId, String artifactId,
 						String comment, String fileName, String mimeType, byte[] data)
 			throws RemoteException {
 		
@@ -81,6 +81,8 @@ public class SFEEAttachmentHandler {
 		ArtifactSoapDO soapDo = mTrackerApp.getArtifactData(sessionId, artifactId);
 		mTrackerApp.setArtifactData(sessionId, soapDo, comment,
 					fileName, mimeType, fileDescriptor);
+		soapDo = mTrackerApp.getArtifactData(sessionId, artifactId);
+		return soapDo;
 	}
 	
 	/**
@@ -133,9 +135,10 @@ public class SFEEAttachmentHandler {
 	 * @param att
 	 * @param artifactId
 	 * @param userName
+	 * @param sourceForgeSoap 
 	 * @throws RemoteException
 	 */
-	public void handleAttachment(String sessionId, GenericArtifact att, String artifactId, String userName) throws RemoteException {
+	public void handleAttachment(String sessionId, GenericArtifact att, String artifactId, String userName, ISourceForgeSoap sourceForgeSoap) throws RemoteException {
 		String contentType = SFEEWriter.getStringGAField(AttachmentMetaData.ATTACHMENT_TYPE, att);
 		String attachDescription = SFEEWriter.getStringGAField(AttachmentMetaData.ATTACHMENT_DESCRIPTION, att);
 		System.out.println();
@@ -145,15 +148,16 @@ public class SFEEAttachmentHandler {
 		String attachmentURL = SFEEWriter.getStringGAField(AttachmentMetaData.ATTACHMENT_SOURCE_URL, att);
 		byte[] data = Base64.decodeBase64(att.getArtifactValue().getBytes());
 		GenericArtifact.ArtifactActionValue attAction = att.getArtifactAction();
+		ArtifactSoapDO artifact = null;
 		if(attAction == GenericArtifact.ArtifactActionValue.CREATE){
 			if(AttachmentMetaData.AttachmentType.valueOf(contentType) ==
 				AttachmentMetaData.AttachmentType.DATA){
-				this.attachFileToArtifact(sessionId, artifactId, attachDescription,
+				artifact = this.attachFileToArtifact(sessionId, artifactId, attachDescription,
 						attachmentName, attachmentMimeType, data);
 			}
 			else if(AttachmentMetaData.AttachmentType.valueOf(contentType) ==
 				AttachmentMetaData.AttachmentType.LINK){
-				this.attachFileToArtifact(sessionId, artifactId, attachDescription,
+				artifact = this.attachFileToArtifact(sessionId, artifactId, attachDescription,
 						attachmentName+"link.txt", AttachmentMetaData.TEXT_PLAIN, attachmentURL.getBytes());
 			}
 			else if(AttachmentMetaData.AttachmentType.valueOf(contentType) == AttachmentMetaData.AttachmentType.EMPTY){
@@ -173,7 +177,26 @@ public class SFEEAttachmentHandler {
 			//TODO What should be done if attachment action value is unknown
 			System.out.println("What shout I do now?");
 		}
-		
+		if(artifact != null){
+			Date attachmentLastModifiedDate = artifact.getLastModifiedDate();
+			AttachmentSoapRow attachmentRow = getAttachmentMetaData(attachmentName,
+					attachmentLastModifiedDate, sourceForgeSoap, sessionId, artifactId);
+			att.setTargetArtifactLastModifiedDate(DateUtil.format(attachmentRow.getDateCreated()));
+			att.setTargetArtifactVersion("1");
+			att.setTargetArtifactId(attachmentRow.getAttachmentId());
+		}
+	}
+	
+	private AttachmentSoapRow getAttachmentMetaData(String fileName, Date createdDate,
+			ISourceForgeSoap sourceForgeSoap, String sessionId, String artifactId) throws RemoteException{
+		AttachmentSoapList attachmentsList = sourceForgeSoap.listAttachments(sessionId, artifactId);
+		AttachmentSoapRow[] attachmentRows = attachmentsList.getDataRows();
+		for(AttachmentSoapRow row:attachmentRows){
+			if(row.getFileName().equals(fileName) && createdDate.equals(row.getDateCreated())){
+				return row;
+			}
+		}
+		return null;
 	}
 	
 	/**
@@ -229,6 +252,7 @@ public class SFEEAttachmentHandler {
 			for(AttachmentSoapRow row:attachmentRows){
 				String fileName = row.getFileName();
 				String attachmentSizeStr = row.getFileSize();
+				String attachmentId = row.getStoredFileId();
 				long attachmentSize = Long.parseLong(attachmentSizeStr);
 				if(fileName.startsWith(username+"_")){
 					continue;
@@ -241,11 +265,14 @@ public class SFEEAttachmentHandler {
 				Date createdDate = row.getDateCreated();
 				if(createdDate.after(lastModifiedDate)){
 					GenericArtifact ga = new GenericArtifact();
+					ga.setIncludesFieldMetaData(GenericArtifact.IncludesFieldMetaDataValue.FALSE);
 					ga.setArtifactAction(GenericArtifact.ArtifactActionValue.CREATE);
 					ga.setSourceArtifactLastModifiedDate(DateUtil.format(createdDate));
 					ga.setArtifactMode(GenericArtifact.ArtifactModeValue.CHANGEDFIELDSONLY);
 					ga.setArtifactType(GenericArtifact.ArtifactTypeValue.ATTACHMENT);
-					ga.setSourceArtifactId(artifactId);
+					ga.setDepParentSourceArtifactId(artifactId);
+					ga.setSourceArtifactId(row.getAttachmentId());
+					ga.setSourceArtifactVersion("1");
 					GenericArtifactField contentTypeField = 
 						ga.addNewField(AttachmentMetaData.ATTACHMENT_TYPE,
 								GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);

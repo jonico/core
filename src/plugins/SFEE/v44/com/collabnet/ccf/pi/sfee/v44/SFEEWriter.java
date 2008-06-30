@@ -16,6 +16,7 @@ import org.openadaptor.core.exception.RecordFormatException;
 import org.openadaptor.core.exception.ValidationException;
 import org.openadaptor.core.lifecycle.LifecycleComponent;
 
+import com.collabnet.ccf.core.CCFRuntimeException;
 import com.collabnet.ccf.core.eis.connection.ConnectionManager;
 import com.collabnet.ccf.core.eis.connection.MaxConnectionsReachedException;
 import com.collabnet.ccf.core.ga.GenericArtifact;
@@ -212,9 +213,10 @@ public class SFEEWriter extends LifecycleComponent implements
 		}
 		else {
 			Connection connection = connect(ga);
+			String targetParentArtifactId = ga.getDepParentTargetArtifactId();
 			try {
 				attachmentHandler.handleAttachment(connection.getSessionId(), ga,
-						targetArtifactId, this.getUsername());
+						targetParentArtifactId, this.getUsername(),connection.getSfSoap());
 			} catch (RemoteException e) {
 				e.printStackTrace();
 				throw new RuntimeException(e);
@@ -253,15 +255,20 @@ public class SFEEWriter extends LifecycleComponent implements
 	private TrackerFieldSoapDO getTrackerFieldSoapDOForFlexField(
 			HashMap<String, List<TrackerFieldSoapDO>> fieldsMap, String fieldName){
 		List<TrackerFieldSoapDO> fieldsList = fieldsMap.get(fieldName);
-		if(fieldsList.size() == 1){
-			return fieldsList.get(0);
+		if(fieldsList != null){
+			if(fieldsList.size() == 1){
+				return fieldsList.get(0);
+			}
+			else if(fieldsList.size() > 1){
+				// TODO We are in trouble. We have a configurable field and a
+				// flex field with the same name
+			}
+			else if(fieldsList.size() == 0){
+				// No way. This should never happen.
+			}
 		}
-		else if(fieldsList.size() > 1){
-			// TODO We are in trouble. We have a configurable field and a
-			// flex field with the same name
-		}
-		else if(fieldsList.size() == 0){
-			// No way. This should never happen.
+		else {
+			log.warn("Field for "+fieldName+" does not exist.");
 		}
 		// TODO We should not return null here of course
 		return null;
@@ -376,9 +383,10 @@ public class SFEEWriter extends LifecycleComponent implements
 		TrackerFieldSoapDO[] flexFields = null;
 		try {
 			flexFields = trackerHandler.getFlexFields(connection.getSessionId(), tracker);
-		} catch (RemoteException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
+		} catch (RemoteException e) {
+			String cause = "Exception while retrieving flex fields";
+			log.error(cause, e);
+			throw new CCFRuntimeException(cause, e);
 		}
 		HashMap<String, List<TrackerFieldSoapDO>> fieldsMap = 
 			this.loadTrackerFieldsInHashMap(flexFields);
@@ -392,6 +400,10 @@ public class SFEEWriter extends LifecycleComponent implements
 					String fieldName = gaField.getFieldName();
 					TrackerFieldSoapDO fieldSoapDO = 
 						this.getTrackerFieldSoapDOForFlexField(fieldsMap, fieldName);
+					if(fieldSoapDO == null){
+						log.warn("No field for "+fieldName);
+						continue;
+					}
 					String trackerFieldValueType = fieldSoapDO.getValueType();
 					flexFieldNames.add(fieldName);
 					flexFieldTypes.add(trackerFieldValueType);
