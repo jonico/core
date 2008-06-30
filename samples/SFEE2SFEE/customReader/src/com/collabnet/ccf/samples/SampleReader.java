@@ -77,7 +77,7 @@ public class SampleReader extends AbstractReader {
 		// Let us assume that our repository supports versioning of the
 		// artifacts. Of course it does a very trivial versioning by marking 
 		// all the artifact's version as 1. 
-		ga.setArtifactVersion("1");
+		ga.setSourceArtifactVersion("1");
 		// The artifacts that we are emitting does not include field
 		// metadata.
 		ga.setIncludesFieldMetaData(GenericArtifact.IncludesFieldMetaDataValue.FALSE);
@@ -103,7 +103,7 @@ public class SampleReader extends AbstractReader {
 		ga.setTargetSystemKind(targetSystemKind);
 		// Let us set the artifactLastModifiedDate to current time always.
 		String artifactLastModifiedDate = DateUtil.format(new Date());
-		ga.setArtifactLastModifiedDate(artifactLastModifiedDate);
+		ga.setSourceArtifactLastModifiedDate(artifactLastModifiedDate);
 
 		// Let us add the following fields into the Generic artifact.
 		// These are the typical fields that can be found in any SFEE
@@ -114,33 +114,33 @@ public class SampleReader extends AbstractReader {
 		// 4. Priority
 		// 5. Assigned To
 		
-		GenericArtifactField titleField = ga.addNewField("Title", "Title", GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD);
+		GenericArtifactField titleField = ga.addNewField("Title", GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD);
 		titleField.setFieldValueHasChanged(true);
 		titleField.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
 		titleField.setFieldValue("Sample artifact");
 		titleField.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
 		
-		GenericArtifactField summaryField = ga.addNewField("Summary", "Summary", GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD);
+		GenericArtifactField summaryField = ga.addNewField("Summary", GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD);
 		summaryField.setFieldValueHasChanged(true);
 		summaryField.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
 		summaryField.setFieldValue("This is the summary of the Sample artifact");
 		summaryField.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
 		
-		GenericArtifactField statusField = ga.addNewField("Status", "Status", GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD);
+		GenericArtifactField statusField = ga.addNewField("Status", GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD);
 		statusField.setFieldValueHasChanged(true);
 		statusField.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
 		statusField.setFieldValue("Open");
 		statusField.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
 		
-		GenericArtifactField priorityField = ga.addNewField("Priority", "Priority", GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD);
+		GenericArtifactField priorityField = ga.addNewField("Priority", GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD);
 		priorityField.setFieldValueHasChanged(true);
 		priorityField.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
 		priorityField.setFieldValue("Highest");
 		priorityField.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
 		
-		GenericArtifactField assignedToField = ga.addNewField("Assigned To", "Assigned To", GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD);
+		GenericArtifactField assignedToField = ga.addNewField("Assigned To", GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD);
 		assignedToField.setFieldValueHasChanged(true);
-		assignedToField.setFieldValueType(GenericArtifactField.FieldValueTypeValue.USER);
+		assignedToField.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
 		assignedToField.setFieldValue("martian");
 		assignedToField.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
 		
