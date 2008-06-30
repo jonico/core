@@ -5,7 +5,7 @@
 		<xs:annotation>
 			<xs:documentation>This is the root element for every entity that is transported through the CCF pipeline. If the artifact's mode is not "attachment", the element will typically only contain field-sub-elements. If it is an attachment, it may also contain a BASE64 encoded text-string, describing the content of the attachment. The content of an attachment does not have to be shipped if theartifactMode is set to "changedFieldsOnly".</xs:documentation>
 		</xs:annotation>
-		<xs:complexType>
+		<xs:complexType mixed="true">
 			<xs:sequence>
 				<xs:element name="field" minOccurs="0" maxOccurs="unbounded">
 					<xs:annotation>
