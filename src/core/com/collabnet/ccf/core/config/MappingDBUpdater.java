@@ -56,7 +56,6 @@ public class MappingDBUpdater implements IDataProcessor{
 	public Object[] process(Object data) {
 		// I will expect a Generic Artifact object
 		if(data instanceof Document){
-			System.out.println(((Document)data).asXML());
 			
 			String depParentSourceArtifactId = null;
 			String depParentSourceRepositoryId = null;

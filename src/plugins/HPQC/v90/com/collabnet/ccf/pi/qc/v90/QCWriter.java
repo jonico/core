@@ -213,7 +213,6 @@ public class QCWriter /*extends QCConnectHelper */ implements
 		catch(GenericArtifactParsingException e) {
 			log.error("Exception occured while parsing the GenericArtifact into a Document:" + e);
 		}
-		log.info("***"+resultDoc.asXML());
 		Object[] result={resultDoc};
 		disconnect(connection);
 		return result;

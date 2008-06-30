@@ -85,8 +85,6 @@ public class EntityService implements
 		String targetRepositoryId = XPathUtils.getAttributeValue(element, GenericArtifactHelper.TARGET_REPOSITORY_ID);
 		String targetRepositoryKind = XPathUtils.getAttributeValue(element, GenericArtifactHelper.TARGET_REPOSITORY_KIND);
 		
-		log.info("The incoming artifact is*****"+data.asXML());
-		
 		if(sourceArtifactId.equalsIgnoreCase("Unknown")){
 			return new Object[]{data};
 		}
