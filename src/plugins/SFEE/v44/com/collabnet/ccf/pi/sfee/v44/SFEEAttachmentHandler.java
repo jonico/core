@@ -122,9 +122,7 @@ public class SFEEAttachmentHandler {
 				try {
 					is.close();
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					// Let me digest this
-					e.printStackTrace();
+					log.error("By closing the attachment stream, an errr occured: "+e.getMessage());
 				}
 			}
 		}

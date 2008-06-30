@@ -3,6 +3,8 @@ package com.collabnet.ccf.pi.sfee.v44;
 import java.rmi.RemoteException;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import com.collabnet.ccf.core.eis.connection.ConnectionFactory;
 import com.vasoftware.sf.soap44.webservices.ClientSoapStubFactory;
@@ -17,7 +19,10 @@ import com.vasoftware.sf.soap44.webservices.sfmain.ISourceForgeSoap;
  * 
  */
 public class SFEEConnectionFactory implements ConnectionFactory<Connection> {
-	
+	/**
+	 * log4j logger instance
+	 */
+	private static final Log log = LogFactory.getLog(SFEEConnectionFactory.class);
 	public static final String PARAM_DELIMITER = ":";
 
 	/**
@@ -32,8 +37,7 @@ public class SFEEConnectionFactory implements ConnectionFactory<Connection> {
 		try {
 			sfSoap.logoff(username, sessionId);
 		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.error("An error occured while trying to close the connection: "+e.getMessage());
 		}
 	}
 
@@ -77,8 +81,7 @@ public class SFEEConnectionFactory implements ConnectionFactory<Connection> {
 			sessionId = login(sfSoap, username, password);
 			connection = new Connection(username, sfSoap, sessionId);
 		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.error("While trying to login into SFEE an exception occured: "+e.getMessage());
 		}
 		return connection;
 	}

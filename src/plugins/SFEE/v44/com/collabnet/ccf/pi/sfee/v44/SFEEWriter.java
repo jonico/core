@@ -105,10 +105,9 @@ public class SFEEWriter extends LifecycleComponent implements
 			return new Object[]{data};
 		}
 		
-
 		if(!SFEEGAHelper.containsSingleMandatoryField(ga, ArtifactMetaData.SFEEFields.id.getFieldName())){
 			SFEEGAHelper.addField(ga, ArtifactMetaData.SFEEFields.id.getFieldName(),
-					getCreateToken(), GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD,
+					"NEW", GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD,
 					GenericArtifactField.FieldValueTypeValue.STRING);
 		}
 		if(!StringUtils.isEmpty(targetArtifactId)){
@@ -125,33 +124,15 @@ public class SFEEWriter extends LifecycleComponent implements
 					GenericArtifactField.FieldValueTypeValue.STRING);
 		}
 
-		
-		Boolean duplicateArtifact = false;
-//			(Boolean) SFEEXMLHelper
-//				.asTypedValue(SFEEXMLHelper.getSingleValue(data,
-//						"isDuplicate", false), "Boolean");
-		if (duplicateArtifact)
-			// do not suppress it anymore, but pass it unchanged
-			// return new Object[0];
-			return new Object[] { data };
 
 		// this field is probably added from a read processor or read connector
 		// component
 		Boolean deleteArtifact = false;
-//			(Boolean) SFEEXMLHelper
-//				.asTypedValue(SFEEXMLHelper.getSingleValue(data,
-//						"deleteFlag", false), "Boolean");
-		// this field is probably added by a dedicated conflict resolution
-		// policy processor or a generic processor
-		// TODO Let user specify this field?
-		Boolean forceOverride = false;
-//			(Boolean) SFEEXMLHelper
-//				.asTypedValue(SFEEXMLHelper.getSingleValue(data,
-//						"forceOverride", false), "Boolean");
-		// fill flexFieldNames and flexFieldValue arrays
+		Boolean forceOverride = true;
 		
 
 		// check whether we should create or update the artifact
+		// TODO This has to be done on the artifactAction, not on the id value
 		String id = (String) SFEEGAHelper.getSingleValue(ga, ArtifactMetaData.SFEEFields.id.getFieldName());
 		ArtifactSoapDO result = null;
 		if(ga.getArtifactType() != GenericArtifact.ArtifactTypeValue.ATTACHMENT){
@@ -166,7 +147,6 @@ public class SFEEWriter extends LifecycleComponent implements
 					return null;
 				}
 				Connection connection = connect(ga);
-				// TODO apply a better type conversion concept here
 				try {
 	
 					result = this.createArtifact(ga, tracker, connection);
@@ -190,7 +170,6 @@ public class SFEEWriter extends LifecycleComponent implements
 	//							soapDoObj.getId());
 					} else {
 						// update token or do conflict resolution
-						// TODO apply a better type conversion concept here
 						result = this.updateArtifact(ga, tracker, forceOverride, connection);
 						if (result == null) {
 							// conflict resolution has decided in favor of the
@@ -288,8 +267,7 @@ public class SFEEWriter extends LifecycleComponent implements
 		try {
 			flexFields = trackerHandler.getFlexFields(connection.getSessionId(), tracker);
 		} catch (RemoteException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
+			log.error("While fetching the flex field values within SFEE, an error occured: "+e1.getMessage());
 		}
 		HashMap<String, List<TrackerFieldSoapDO>> fieldsMap = 
 							this.loadTrackerFieldsInHashMap(flexFields);
@@ -350,12 +328,9 @@ public class SFEEWriter extends LifecycleComponent implements
 					flexFieldValues,
 					flexFieldTypes,
 					title,
-					// TODO - Don't know what these mean
-					comments,
-					getLastSynchronizedWithOtherSystemSFEETargetFieldname());
+					comments);
 		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.error("While trying to create an artifact within SFEE, an error occured: "+e.getMessage());
 		}
 		return result;
 	}
@@ -456,8 +431,7 @@ public class SFEEWriter extends LifecycleComponent implements
 					comments,
 					forceOverride);
 		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.error("While trying to update an artifact, an error occured: "+e.getMessage());
 		}
 		return result;
 	}
@@ -499,12 +473,6 @@ public class SFEEWriter extends LifecycleComponent implements
 	public void validate(List exceptions) {
 		super.validate(exceptions);
 
-		if (getCreateToken() == null) {
-			log.error("createToken-property no set");
-			exceptions.add(new ValidationException(
-					"createToken-property not set", this));
-		}
-
 		if (getUpdateComment() == null) {
 			log.error("updateComment-property no set");
 			exceptions.add(new ValidationException(
@@ -513,25 +481,6 @@ public class SFEEWriter extends LifecycleComponent implements
 
 		trackerHandler = new SFEETrackerHandler(getServerUrl());
 		attachmentHandler = new SFEEAttachmentHandler(getServerUrl());
-	}
-
-	/**
-	 * Set the create token
-	 * 
-	 * @param createToken
-	 *            see private attribute doc
-	 */
-	public void setCreateToken(String createToken) {
-		this.createToken = createToken;
-	}
-
-	/**
-	 * Get create token
-	 * 
-	 * @return see private attribute doc
-	 */
-	public String getCreateToken() {
-		return createToken;
 	}
 
 	/**
@@ -660,26 +609,6 @@ public class SFEEWriter extends LifecycleComponent implements
 	 */
 	public String getUpdateComment() {
 		return updateComment;
-	}
-
-	/**
-	 * Set lastSynchronizedWithOtherSystemSFEETargetFieldname
-	 * 
-	 * @param lastSynchronizedWithOtherSystemSFEETargetFieldname
-	 *            see private attribute doc
-	 */
-	public void setLastSynchronizedWithOtherSystemSFEETargetFieldname(
-			String lastSynchronizedWithOtherSystemSFEETargetFieldname) {
-		this.lastSynchronizedWithOtherSystemSFEETargetFieldname = lastSynchronizedWithOtherSystemSFEETargetFieldname;
-	}
-
-	/**
-	 * Get getLastSynchronizedWithOtherSystemSFEETargetFieldname
-	 * 
-	 * @return see private attribute doc
-	 */
-	public String getLastSynchronizedWithOtherSystemSFEETargetFieldname() {
-		return lastSynchronizedWithOtherSystemSFEETargetFieldname;
 	}
 
 	public String getServerUrl() {

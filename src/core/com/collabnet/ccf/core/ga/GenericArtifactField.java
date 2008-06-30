@@ -12,8 +12,6 @@ package com.collabnet.ccf.core.ga;
  */
 public class GenericArtifactField {
 
-	// TODO: Change the below fieldType Strings to enum and use only enums
-	// everywhere
 	/**
 	 * Constant value for field type "mandatoryField"
 	 */

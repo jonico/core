@@ -235,8 +235,7 @@ public class SFEETrackerHandler {
 			String assignedTo, String reportedReleaseId,
 			String resolvedReleaseId, List<String> flexFieldNames,
 			List<Object> flexFieldValues, List<String> flexFieldTypes,
-			String title, String[] comments,
-			String lastSynchronizedWithOtherSystemSFEETargetFieldname)
+			String title, String[] comments)
 			throws RemoteException {
 
 		SoapFieldValues flexFields = new SoapFieldValues();
@@ -322,9 +321,6 @@ public class SFEETrackerHandler {
 			} catch (com.vasoftware.sf.soap44.fault.VersionMismatchFault e) {
 				if (forceOverride) {
 					log.warn("Stale update, trying again ...:", e);
-					flexFieldNames.remove(flexFieldNames.size() - 1);
-					flexFieldValues.remove(flexFieldValues.size() - 1);
-					flexFieldTypes.remove(flexFieldTypes.size() - 1);
 					tryItAgain = true;
 				}
 				else {

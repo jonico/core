@@ -15,6 +15,7 @@ import org.dom4j.Element;
 import org.openadaptor.core.Component;
 import org.openadaptor.core.IDataProcessor;
 import org.openadaptor.core.exception.MessageException;
+import org.openadaptor.core.exception.ValidationException;
 
 /**
  * This is the exception handler class that catches
@@ -71,8 +72,8 @@ public class Ambulance extends Component implements
 						fos.write("\n".getBytes());
 						fos.flush();
 					} catch (IOException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
+						log.error("An IO-Exception occured in the hospital: "+e.getMessage());
+						return null;
 					}
 				}
 		return new Object[0];
@@ -85,7 +86,10 @@ public class Ambulance extends Component implements
 
 	@SuppressWarnings("unchecked")
 	public void validate(List exceptions) {
-		// TODO Auto-generated method stub
+		if (hospitalFileName==null) {
+			exceptions.add(new ValidationException(
+					"Not able to open hosipital filename", this));
+		}
 		
 	}
 
@@ -98,8 +102,7 @@ public class Ambulance extends Component implements
 		try {
 			fos = new FileOutputStream(hospitalFileName);
 		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.error("Could not open hospital file "+hospitalFileName+ " :"+hospitalFileName);
 		}
 	}
 

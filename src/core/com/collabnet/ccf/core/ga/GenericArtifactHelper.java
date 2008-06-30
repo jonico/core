@@ -38,8 +38,6 @@ import com.collabnet.ccf.core.ga.GenericArtifactField.FieldValueTypeValue;
  */
 public class GenericArtifactHelper {
 
-	// TODO: Think about a more compact datetime format that still preserves
-	// timezone and seconds
 	public static final DateFormat df = DateFormat.getDateTimeInstance(
 			DateFormat.LONG, DateFormat.LONG, new Locale("en"));
 	public static final String ARTIFACT_ROOT_ELEMENT_NAME = "artifact";
@@ -841,7 +839,6 @@ public class GenericArtifactHelper {
 	 */
 	private static void setValue(Element element, String content,
 			boolean useCDATASection) {
-		// TODO TODO: Do the Base64 conversion here or in GenericArtifact?
 		if (useCDATASection)
 			element.addCDATA(content);
 		else
@@ -856,7 +853,6 @@ public class GenericArtifactHelper {
 	 * @return Content of the element encoded as String
 	 */
 	private static String getValue(Element element) {
-		// TODO: Do the Base64 conversion here or in GenericArtifactXMLHelper?
 		return element.getText();
 	}
 

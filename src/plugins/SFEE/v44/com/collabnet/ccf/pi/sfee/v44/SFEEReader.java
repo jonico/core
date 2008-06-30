@@ -21,6 +21,7 @@ import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
+import com.vasoftware.sf.soap44.webservices.sfmain.TrackerFieldSoapDO;
 import com.vasoftware.sf.soap44.webservices.tracker.ArtifactSoapDO;
 
 /**
@@ -75,53 +76,6 @@ public class SFEEReader extends AbstractReader {
     	artifactConverter = new SFEEToGenericArtifactConverter();
     }
     
-    /**
-     * @deprecated
-     * @param data
-     * @return
-     */
-    public Object[] processDeprecated(Object data) {
-		if (!(data instanceof Document)) {
-			log.error("Supplied data not in the expected dom4j format: "+data);
-			return null;
-		}
-		log.debug("Start Processing");
-		Document document=(Document) data;
-		
-		Date lastModifiedDate = this.getLastModifiedDate(document);
-		boolean firstTimeImport=false;
-		if(lastModifiedDate == null){
-			firstTimeImport = true;
-			lastModifiedDate = new Date(0);
-		}
-		
-		Connection connection = null;
-//		try {
-			log.debug("Connecting to SFEE "+this.getServerUrl()+" with user name "+this.getUsername());
-			String sourceSystemId = this.getSourceSystemId(document);
-			String sourceSystemKind = this.getSourceSystemKind(document);
-			String sourceRepositoryId = this.getSourceRepositoryId(document);
-			String sourceRepositoryKind = this.getSourceRepositoryKind(document);
-			connection = connect(sourceSystemId, sourceSystemKind, sourceRepositoryId,
-					sourceRepositoryKind, serverUrl, 
-					username+SFEEConnectionFactory.PARAM_DELIMITER+password);
-//		} catch (RemoteException e) {
-//			// TODO Declare exception so that it can be processed by OA exception handler
-//			log.error("Could not log into SFEE", e);
-//			throw new RuntimeException(e);
-//		}
-//		catch (IOException ex) {
-//			// TODO postpone exception handling to OA framework
-//			log.error("During the connection process to SFEE, an IO-Error occured", ex);
-//			throw new RuntimeException(ex);
-//		}
-		String tracker = this.getSourceRepositoryId(document);
-		Object[] result=readTrackerItems(tracker,lastModifiedDate, firstTimeImport,document, connection);
-		disconnect(connection);
-		log.debug("Disconnected from SFEE");
-		return result;
-	}
-	
 	private Date getLastModifiedDate(Document syncInfo){
 		String lastModifiedDateString = this.getLastSourceArtifactModificationDate(syncInfo);
 		Date lastModifiedDate = null; 
@@ -185,99 +139,7 @@ public class SFEEReader extends AbstractReader {
 		connectionManager.releaseConnection(connection);
 	}
 	
-	/**
-	 * @deprecated
-	 * @param projectTracker
-	 * @param lastModifiedDate
-	 * @param firstTimeImport
-	 * @param dbDocument
-	 * @param connection
-	 * @return
-	 */
-	public Object[] readTrackerItems(String projectTracker, Date lastModifiedDate, boolean firstTimeImport, Document dbDocument, Connection connection) {
-		// TODO Use the information of the firstTimeImport flag
-		
-		List<Document> dataRows=new ArrayList<Document>();
-		List<ArtifactSoapDO> artifactRows;
-		try {
-			artifactRows = trackerHandler.getChangedTrackerItems(connection.getSessionId(), projectTracker,lastModifiedDate,null,0);
-		} catch (RemoteException e) {
-			// TODO Throw an exception?
-			log.error("During the artifact retrieval process to SFEE, an error occured",e);
-			return null;
-		}
-		TrackerFieldSoapDO[] trackerFields = null;
-		try {
-			trackerFields = trackerHandler.getFlexFields(connection.getSessionId(), projectTracker);
-		} catch (RemoteException e1) {
-			e1.printStackTrace();
-			throw new RuntimeException(e1);
-		}
-		// Now we load the history of each artifact that got changed
-		// List<ArtifactSoapDO> artifactHistoryRows = appHandler.loadArtifactAuditHistory(artifactRows,
-		//		lastModifiedDate,getUsername(), trackerFields);
-		List<ArtifactSoapDO> artifactHistoryRows = null;
-		List<GenericArtifact> attachments = null;
-		SFEEAppHandler appHandler = new SFEEAppHandler(connection.getSfSoap(), connection.getSessionId());
-		if(artifactRows != null){
-			for(ArtifactSoapDO artifact:artifactRows){
-				appHandler.addComments(artifact,
-						lastModifiedDate,this.getUsername());
-			}
-			artifactHistoryRows = artifactRows;
-			try {
-				Set<ArtifactSoapDO> artifactSet = new TreeSet<ArtifactSoapDO>();
-				artifactSet.addAll(artifactRows);
-				attachments = attachmentHandler.listAttachments(connection.getSessionId(),
-						lastModifiedDate,getUsername(),artifactSet, connection.getSfSoap(),
-						this.getMaxAttachmentSizePerArtifact());
-			} catch (RemoteException e1) {
-				e1.printStackTrace();
-				throw new RuntimeException(e1);
-			}
-		}
-		
-		if (artifactHistoryRows == null && (attachments==null || attachments.size() == 0)) {
-			return new Object[]{};
-		} else {
-			if(artifactHistoryRows != null){
-				for(ArtifactSoapDO artifactRow:artifactHistoryRows)
-				{
-					if(artifactRow.getCreatedBy().equals(this.getUsername())){
-						continue;
-					}
-					GenericArtifact genericArtifact = artifactConverter.convert(artifactRow, trackerFields, lastModifiedDate);
-					
-					if(dbDocument != null)
-						populateSrcAndDest(dbDocument, genericArtifact);
-					Document document = null;
-					try {
-						document = GenericArtifactHelper.createGenericArtifactXMLDocument(genericArtifact);
-					} catch (GenericArtifactParsingException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-					dataRows.add(document);
-				}
-			}
-			if(attachments != null){
-				for(GenericArtifact ga:attachments){
-					if(dbDocument != null){
-						populateSrcAndDest(dbDocument, ga);
-					}
-					Document document = null;
-					try {
-						document = GenericArtifactHelper.createGenericArtifactXMLDocument(ga);
-					} catch (GenericArtifactParsingException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-					dataRows.add(document);
-				}
-			}
-		}
-		return dataRows.toArray();
-	}
+	
 	
 	/**
 	 * Populates the source and destination attributes for this GenericArtifact
@@ -481,7 +343,6 @@ public class SFEEReader extends AbstractReader {
 	@Override
 	public List<GenericArtifact> getArtifactDependencies(Document syncInfo,
 			String artifactId) {
-		// TODO Auto-generated method stub
 		return new ArrayList<GenericArtifact>();
 	}
 
