@@ -110,7 +110,7 @@ public class EntityService implements
 						targetParentArtifactId);
 			}
 		}
-		log.info("The targetArtifactId in EntityService==="+targetArtifactIdFromTable);
+		
 		if(targetArtifactIdFromTable!=null && !(targetArtifactIdFromTable.equals(createToken)) && !(targetArtifactIdFromTable.equals("NULL"))) {
 			XPathUtils.addAttribute(element, GenericArtifactHelper.TARGET_ARTIFACT_ID, targetArtifactIdFromTable);
 	    }
@@ -122,7 +122,6 @@ public class EntityService implements
 			log.error("There is some problem in extracting attributes from Document in EntityService!!!"+e);
 		}
 		
-		log.debug("After manipulating dom4j document, new artifact is:"+data.asXML());
 	    Object[] result = {data};
 		return result;
 	}
