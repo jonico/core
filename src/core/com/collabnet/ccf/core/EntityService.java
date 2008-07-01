@@ -13,6 +13,8 @@ import org.openadaptor.auxil.orderedmap.OrderedHashMap;
 import org.openadaptor.core.IDataProcessor;
 import org.openadaptor.core.exception.NullRecordException;
 import org.openadaptor.core.exception.RecordFormatException;
+import org.openadaptor.core.exception.ValidationException;
+import org.openadaptor.core.lifecycle.LifecycleComponent;
 
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
@@ -26,8 +28,8 @@ import com.collabnet.ccf.core.utils.XPathUtils;
  * @author jnicolai
  * 
  */
-public class EntityService implements
-		IDataProcessor {
+public class EntityService extends LifecycleComponent implements
+		IDataProcessor  {
 	/**
 	 * log4j logger instance
 	 */
@@ -176,7 +178,11 @@ public class EntityService implements
 	 * Validate whether all mandatory properties are set correctly
 	 */
 	public void validate(List exceptions) {
-		// TODO check whether all data base readers and writers are set correctly
+		if (getIdentityMappingDatabaseReader() == null) {
+			log.error("identityMappingDatabaseReader-property no set");
+			exceptions.add(new ValidationException(
+					"identityMappingDatabaseReader-property no set", this));
+		}
 	}
 
 	public JDBCReadConnector getIdentityMappingDatabaseReader() {
