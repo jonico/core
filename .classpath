@@ -2,7 +2,6 @@
 <classpath>
 	<classpathentry excluding="lib/**" kind="src" path="src/plugins/SFEE/v44"/>
 	<classpathentry kind="src" path="samples/SFEE2SFEE/customReader/src"/>
-	<classpathentry kind="src" path="src/plugins/HPQC/v90"/>
 	<classpathentry kind="src" path="tests"/>
 	<classpathentry excluding="lib/**" kind="src" path="src/core"/>
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/bootstrap.jar"/>
@@ -69,7 +68,6 @@
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/XmlSchema_1.1.jar"/>
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/xstream-1.2.1.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/J2SE-1.5"/>
-	<classpathentry kind="lib" path="src/plugins/HPQC/lib/jacob/jacob.jar"/>
 	<classpathentry kind="lib" path="src/plugins/SFEE/v44/lib/sf_soap44_sdk.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
