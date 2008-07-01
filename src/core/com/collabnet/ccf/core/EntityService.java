@@ -38,9 +38,8 @@ public class EntityService implements
 	 */
 	private String createToken = "NEW";
 	
-	private JDBCReadConnector entityServiceReader = null;
+	private JDBCReadConnector identityMappingDatabaseReader = null;
 	
-	private JDBCReadConnector entityServiceMappingIdReader = null;
 
 	/**
 	 * openAdaptor Method to process all input and puts out the results This
@@ -139,9 +138,9 @@ public class EntityService implements
 		inputParameters.add(sourceArtifactId);
 		inputParameters.add(artifactType);
 	
-		entityServiceReader.connect();
-		Object[] resultSet = entityServiceReader.next(inputParameters, 1000);
-		entityServiceReader.disconnect();
+		identityMappingDatabaseReader.connect();
+		Object[] resultSet = identityMappingDatabaseReader.next(inputParameters, 1000);
+		identityMappingDatabaseReader.disconnect();
 		
 		if(resultSet == null || resultSet.length == 0){
 			targetArtifactId = null;
@@ -177,42 +176,15 @@ public class EntityService implements
 	 * Validate whether all mandatory properties are set correctly
 	 */
 	public void validate(List exceptions) {
-		
+		// TODO check whether all data base readers and writers are set correctly
 	}
 
-	/**
-	 * Set create token
-	 * 
-	 * @param createToken
-	 *            see private attribute doc
-	 */
-	public void setCreateToken(String createToken) {
-		this.createToken = createToken;
+	public JDBCReadConnector getIdentityMappingDatabaseReader() {
+		return identityMappingDatabaseReader;
 	}
 
-	/**
-	 * Get create token
-	 * 
-	 * @return see private attribute doc
-	 */
-	public String getCreateToken() {
-		return createToken;
+	public void setIdentityMappingDatabaseReader(JDBCReadConnector entityServiceReader) {
+		this.identityMappingDatabaseReader = entityServiceReader;
 	}
 
-	public JDBCReadConnector getEntityServiceReader() {
-		return entityServiceReader;
-	}
-
-	public void setEntityServiceReader(JDBCReadConnector entityServiceReader) {
-		this.entityServiceReader = entityServiceReader;
-	}
-
-	public JDBCReadConnector getEntityServiceMappingIdReader() {
-		return entityServiceMappingIdReader;
-	}
-
-	public void setEntityServiceMappingIdReader(
-			JDBCReadConnector entityServiceMappingIdReader) {
-		this.entityServiceMappingIdReader = entityServiceMappingIdReader;
-	}
 }
