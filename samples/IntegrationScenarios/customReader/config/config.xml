@@ -153,7 +153,7 @@ $HeadURL$
 			This is the JDBC read connector used by the SynchronizationStatusPollingReader to read the
 			repository mapping and the synchronization info.
 		</description>
-		<property name="jdbcConnection" ref="JdbcConnectionReadSFEE" />
+		<property name="jdbcConnection" ref="JDBCConnection" />
 		<!-- batch size of 0 or less means process all rows in one message batch. -->
 		<!-- batch size of one means process one row per message and so on -->
 		<property name="batchSize" value="1" />
@@ -162,7 +162,7 @@ $HeadURL$
 			<value>${ccf.sfeereader.poller.sql}</value>
 		</property>
 	</bean>
-	<bean id="JdbcConnectionReadSFEE"
+	<bean id="JDBCConnection"
 		class="org.openadaptor.auxil.connector.jdbc.JDBCConnection">
 		<description>
 			This defines jdbc connection that will be used by the
@@ -218,18 +218,7 @@ $HeadURL$
 			<value>${ccf.targetartifactid.sql}</value>
 		</property>
 	</bean>
-	<bean id="JDBCConnection"
-		class="org.openadaptor.auxil.connector.jdbc.JDBCConnection">
-		<description>
-			This defines a jdbc connection that will be used by the
-			IndentityMappingDatabaseReader, IdentityMappingDatabaseReader and
-			IdentityMappingDatabaseInserter
-		</description>
-		<property name="driver" value="${ccf.db.driver}" />
-		<property name="url" value="${ccf.db.url}" />
-		<property name="username" value="${ccf.db.username}" />
-		<property name="password" value="${ccf.db.password}" />
-	</bean>
+	
 	<bean id="IdentityMappingDatabaseInserter"
 		class="org.openadaptor.auxil.connector.jdbc.writer.JDBCWriteConnector">
 		<description>
