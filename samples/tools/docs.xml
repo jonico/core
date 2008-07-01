@@ -64,7 +64,7 @@
 
     <!-- Include all of the XML example files, except the ones that are not Spring XML config: -->
   <patternset id="example.xml.config.files">
-    <include name="SFEE2SFEE/**/*.xml" />
+    <include name="IntegrationScenarios/**/*.xml" />
     <exclude name="**/input/*.xml" />
     <exclude name="**/output/*.xml" />
   </patternset>
@@ -260,7 +260,7 @@
     <mkdir dir="${build.examples.docs.dir}" />
     <copy todir="${build.examples.docs.dir}" overwrite="true" failonerror="true" flatten="false">
 		<fileset dir="../">		
-    		<include name="SFEE2SFEE/**/*.xml" />
+    		<include name="IntegrationScenarios/**/*.xml" />
     		<exclude name="**/input/*.xml" />
     		<exclude name="**/output/*.xml" />
   		</fileset>      
