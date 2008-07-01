@@ -281,6 +281,10 @@ public class SFEEWriter extends LifecycleComponent implements
 					String fieldName = gaField.getFieldName();
 					TrackerFieldSoapDO fieldSoapDO = 
 						this.getTrackerFieldSoapDOForFlexField(fieldsMap, fieldName);
+					if(fieldSoapDO == null){
+						log.warn("No field for "+fieldName);
+						continue;
+					}
 					String trackerFieldValueType = fieldSoapDO.getValueType();
 					flexFieldNames.add(fieldName);
 					flexFieldTypes.add(trackerFieldValueType);
