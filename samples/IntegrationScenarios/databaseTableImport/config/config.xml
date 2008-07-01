@@ -67,7 +67,7 @@ $HeadURL$
 		</description>
 		<property name="jdbcConnection" ref="JdbcConnection" />
 		<property name="batchSize" value="1" />
-		<property name="resultSetConverter" ref="ResultSetConverter" />
+		<property name="resultSetConverter" ref="SynchronizationStatusXMLConverter" />
 		<property name="sql">
 			<value>SELECT * FROM ARTIFACTS</value>
 		</property>
@@ -84,7 +84,7 @@ $HeadURL$
 		<property name="password" value="${ccf.db.password}" />
 	</bean>
 
-	<bean id="ResultSetConverter"
+	<bean id="SynchronizationStatusXMLConverter"
 		class="org.openadaptor.auxil.connector.jdbc.reader.xml.ResultSetToXMLConverter">
 		<description>
 			Converts the synchronization info in the database into XML sync info

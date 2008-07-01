@@ -77,7 +77,7 @@ $HeadURL$
 			read from the database read connector continuously without and pauses in between.
 		</description>
 		<property name="pollLimit" value="-1" />
-		<property name="delegate" ref="SynchronizationStatusPollingReaderJdbcConnection" />
+		<property name="delegate" ref="SynchronizationStatusDatabaseReader" />
 		<property name="pollIntervalSecs" value="0" />
 	</bean>
 
@@ -153,7 +153,7 @@ $HeadURL$
 		</description>
 		<property name="identityMappingDatabaseReader" ref="IndentityMappingDatabaseReader" />
 	</bean>
-	<bean id="SynchronizationStatusPollingReaderJdbcConnection"
+	<bean id="SynchronizationStatusDatabaseReader"
 		class="org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector">
 		<description>
 			This is the JDBC read connector used by the SynchronizationStatusPollingReader to read the
@@ -163,7 +163,7 @@ $HeadURL$
 		<!-- batch size of 0 or less means process all rows in one message batch. -->
 		<!-- batch size of one means process one row per message and so on -->
 		<property name="batchSize" value="1" />
-		<property name="resultSetConverter" ref="ResultSetConverter" />
+		<property name="resultSetConverter" ref="SynchronizationStatusXMLConverter" />
 		<property name="sql">
 			<value>${ccf.sfeereader.poller.sql}</value>
 		</property>
@@ -180,7 +180,7 @@ $HeadURL$
 		<property name="password" value="${ccf.db.password}" />
 	</bean>
 
-	<bean id="ResultSetConverter"
+	<bean id="SynchronizationStatusXMLConverter"
 		class="org.openadaptor.auxil.connector.jdbc.reader.xml.ResultSetToXMLConverter">
 		<description>
 			Converts the synchronization info in the database into XML sync info
