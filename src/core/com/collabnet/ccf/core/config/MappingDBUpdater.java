@@ -404,7 +404,7 @@ public class MappingDBUpdater extends LifecycleComponent implements IDataProcess
 		return identityMappingDatabaseReader;
 	}
 
-	public void setIdentityMappingReader(JDBCReadConnector identityMappingDatabaseReader) {
+	public void setIdentityMappingDatabaseReader(JDBCReadConnector identityMappingDatabaseReader) {
 		this.identityMappingDatabaseReader = identityMappingDatabaseReader;
 	}
 

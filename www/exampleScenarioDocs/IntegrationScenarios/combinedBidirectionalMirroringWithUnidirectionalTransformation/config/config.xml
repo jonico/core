@@ -245,12 +245,12 @@ $HeadURL$
 		<description>
 			This component updates the synchronization status for the current artifact.
 		</description>
-		<property name="writer" ref="EntityServiceMapTableWriter"></property>
+		<property name="writer" ref="IdentityMappingTableInserter"></property>
 		<property name="jdbcConnection"
 			ref="JDBCConnection">
 		</property>
 	</bean>
-	<bean id="EntityServiceMapTableWriter"
+	<bean id="IdentityMappingTableInserter"
 		class="org.openadaptor.auxil.connector.jdbc.writer.MapTableWriter">
 		<description>
 			This is the writer object that writes the artifact mapping
@@ -292,12 +292,12 @@ $HeadURL$
 	
 	<bean id="IdentityMappingDatabaseUpdater"
 		class="org.openadaptor.auxil.connector.jdbc.writer.JDBCWriteConnector">
-		<property name="writer" ref="IdentityMappingSyncUpdater"></property>
+		<property name="writer" ref="IdentityMappingTableUpdater"></property>
 		<property name="jdbcConnection"
 			ref="JDBCConnection">
 		</property>
 	</bean>
-	<bean id="IdentityMappingSyncUpdater"
+	<bean id="IdentityMappingTableUpdater"
 		class="com.collabnet.ccf.core.db.MapTableUpdater">
 		<description>
 			This is the writer object that writes the artifact mapping
