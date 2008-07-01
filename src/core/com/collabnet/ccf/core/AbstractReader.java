@@ -44,6 +44,7 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 	private HashSet<String> repositoryRecordsInRepositorySynchronizationWaitingList = null;
 	private long sleepInterval = -1;
 	private boolean shipAttachments = true;
+	private boolean includeFieldMetaData = false;
 	private Comparator<GenericArtifact> genericArtifactComparator = null;
 	public static final long DEFAULT_MAX_ATTACHMENT_SIZE_PER_ARTIFACT = 10 * 1024 * 1024;
 	private long maxAttachmentSizePerArtifact = DEFAULT_MAX_ATTACHMENT_SIZE_PER_ARTIFACT;
@@ -476,5 +477,11 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 	}
 	public void setMaxAttachmentSizePerArtifact(long maxAttachmentPerArtifact) {
 		this.maxAttachmentSizePerArtifact = maxAttachmentPerArtifact;
+	}
+	public boolean isIncludeFieldMetaData() {
+		return includeFieldMetaData;
+	}
+	public void setIncludeFieldMetaData(boolean includeFieldMetaData) {
+		this.includeFieldMetaData = includeFieldMetaData;
 	}
 }
