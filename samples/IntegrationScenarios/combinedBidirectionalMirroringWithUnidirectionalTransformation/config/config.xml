@@ -188,7 +188,7 @@ $HeadURL$
 			action as create otherwise update. Please refer the SynchronizationStatusAndIdentityMappingTableUpdater
 			component.
 		</description>
-		<property name="entityServiceReader" ref="IndentityMappingDatabaseReader" />
+		<property name="identityMappingDatabaseReader" ref="IndentityMappingDatabaseReader" />
 	</bean>
 
 	
@@ -206,10 +206,10 @@ $HeadURL$
 			The SynchronizationStatusAndIdentityMappingTableUpdater then takes the target artifact
 			id and creates an identity mapping entry for the source and target artifact ids.
 		</description>
-		<property name="mappingWriter" ref="MappingWriter"></property>
-		<property name="entityServiceReader" ref="IndentityMappingDatabaseReader" />
-		<property name="identityMappingUpdater" ref="IdentityMappingUpdater" />
-		<property name="entityServiceWriteConnector"
+		<property name="synchronizationStatusDatabaseUpdater" ref="MappingWriter"></property>
+		<property name="identityMappingReader" ref="IndentityMappingDatabaseReader" />
+		<property name="identityMappingDatabaseUpdater" ref="IdentityMappingUpdater" />
+		<property name="identityMappingDatabaseInserter"
 			ref="SynchronizationStatusDatabaseWriter">
 		</property>
 	</bean>
