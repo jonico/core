@@ -11,7 +11,6 @@ public class AttachmentMetaData {
 
 	
 	public static final String ATTACHMENT_NAME = "attachmentName";
-	public static final String ATTACHMENT_ID = "attachmentId";
 	public static final String ATTACHMENT_SIZE = "attachmentSize";
 	public static final String ATTACHMENT_SOURCE_URL = "attachmentSourceUrl";
 	public static final String ATTACHMENT_TYPE = "attachmentType";
@@ -26,7 +25,7 @@ public class AttachmentMetaData {
 	 * 
 	 */
 	private static final String[] attachmentMetaData = {
-		ATTACHMENT_NAME, ATTACHMENT_ID, ATTACHMENT_SIZE, ATTACHMENT_SOURCE_URL, ATTACHMENT_TYPE,
+		ATTACHMENT_NAME, ATTACHMENT_SIZE, ATTACHMENT_SOURCE_URL, ATTACHMENT_TYPE,
 		ATTACHMENT_MIME_TYPE, ATTACHMENT_VALUE_HAS_CHANGED, ATTACHMENT_VALUE_IS_NULL, 
 		ATTACHMENT_DESCRIPTION
 		};
@@ -51,10 +50,6 @@ public class AttachmentMetaData {
 
 	public static String getAttachmentName() {
 		return ATTACHMENT_NAME;
-	}
-
-	public static String getAttachmentId() {
-		return ATTACHMENT_ID;
 	}
 
 	public static String getAttachmentSize() {
