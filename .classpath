@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry excluding="lib/**" kind="src" path="src/plugins/SFEE/v44"/>
-	<classpathentry kind="src" path="samples/SFEE2SFEE/customReader/src"/>
+	<classpathentry kind="src" path="samples/IntegrationScenarios/customReader/src"/>
 	<classpathentry kind="src" path="tests"/>
 	<classpathentry excluding="lib/**" kind="src" path="src/core"/>
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/bootstrap.jar"/>

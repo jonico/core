@@ -131,7 +131,6 @@ $HeadURL$
 		<property name="password" value="${sfee.server.1.password}" />
 		<property name="serverUrl"
 			value="${sfee.server.1.url}" />
-		<property name="createToken" value="create" />
 		<property name="updateComment"
 			value="Synchronized by Connector user" />
 		<property name="connectionManager" ref="SFEEConnectionManager"></property>
@@ -140,7 +139,7 @@ $HeadURL$
 		class="org.openadaptor.auxil.connector.jdbc.JDBCConnection">
 		<description>
 			This defines a jdbc connection that will be used by the
-			SynchronizationStatusDatabaseReader, IdentityMappingDatabaseReader and
+			IndentityMappingDatabaseReader, IdentityMappingDatabaseReader and
 			SynchronizationStatusDatabaseWriter
 		</description>
 		<property name="driver" value="${ccf.db.driver}" />

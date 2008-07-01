@@ -140,7 +140,7 @@ $HeadURL$
 		class="org.openadaptor.auxil.connector.jdbc.JDBCConnection">
 		<description>
 			This defines a jdbc connection that will be used by the
-			SynchronizationStatusDatabaseReader, IdentityMappingDatabaseReader and
+			IndentityMappingDatabaseReader, IdentityMappingDatabaseReader and
 			SynchronizationStatusDatabaseWriter
 		</description>
 		<property name="driver" value="${ccf.db.driver}" />

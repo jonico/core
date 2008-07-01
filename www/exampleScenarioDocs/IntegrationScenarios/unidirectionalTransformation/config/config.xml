@@ -151,7 +151,7 @@ $HeadURL$
 			action as create otherwise update. Please refer the SynchronizationStatusAndIdentityMappingTableUpdater
 			component.
 		</description>
-		<property name="entityServiceReader" ref="SynchronizationStatusDatabaseReader" />
+		<property name="entityServiceReader" ref="IndentityMappingDatabaseReader" />
 	</bean>
 	<bean id="SynchronizationStatusPollingReaderJdbcConnection"
 		class="org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector">
@@ -204,13 +204,13 @@ $HeadURL$
 			id and creates an identity mapping entry for the source and target artifact ids.
 		</description>
 		<property name="mappingWriter" ref="MappingWriter"></property>
-		<property name="entityServiceReader" ref="SynchronizationStatusDatabaseReader" />
+		<property name="entityServiceReader" ref="IndentityMappingDatabaseReader" />
 		<property name="identityMappingUpdater" ref="IdentityMappingUpdater" />
 		<property name="entityServiceWriteConnector"
 			ref="SynchronizationStatusDatabaseWriter">
 		</property>
 	</bean>
-	<bean id="SynchronizationStatusDatabaseReader"
+	<bean id="IndentityMappingDatabaseReader"
 		class="org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector">
 		<description>
 			This database reader component reads the target artifact id from the databse
@@ -229,7 +229,7 @@ $HeadURL$
 		class="org.openadaptor.auxil.connector.jdbc.JDBCConnection">
 		<description>
 			This defines a jdbc connection that will be used by the
-			SynchronizationStatusDatabaseReader, IdentityMappingDatabaseReader and
+			IndentityMappingDatabaseReader, IdentityMappingDatabaseReader and
 			SynchronizationStatusDatabaseWriter
 		</description>
 		<property name="driver" value="${ccf.db.driver}" />
