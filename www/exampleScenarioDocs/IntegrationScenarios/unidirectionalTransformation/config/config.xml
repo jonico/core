@@ -1,0 +1,357 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+$Author$
+$HeadURL$
+ -->
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
+	<description><![CDATA[
+   This is the configuration for the CollabNet Connector Framework sample 
+   "Unidirectional transformation Scenario". This wiring file configures two SFEE trackers
+   on the same SFEE system to sync with each other.]]>
+   </description>
+
+		<bean id="SystemPropertyConfigurer"
+		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="ignoreResourceNotFound" value="false" />
+		<property name="systemPropertiesMode">
+			<bean
+				id="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer.SYSTEM_PROPERTIES_MODE_OVERRIDE"
+				class="org.springframework.beans.factory.config.FieldRetrievingFactoryBean" />
+		</property>
+		<property name="locations">
+			<description>
+				Properties configured in these property files will be imported into the wiring file.
+				The file ccf.properties contains the properties for the CCF core components.
+				sfee.properties file contains the properties for the SFEE plugin classes.
+			</description>
+			<list>
+				<value>classpath:ccf.properties</value>
+				<value>classpath:sfee.properties</value>
+			</list>
+		</property>
+	</bean>
+	<bean id="Adaptor" class="org.openadaptor.core.adaptor.Adaptor">
+		<property name="messageProcessor" ref="Router" />
+	</bean>
+
+	<bean id="Router" class="org.openadaptor.core.router.Router">
+		<description>
+			The processMap property of this Router bean configures the processors
+			that are wired together to ship the artifacts from the source repository
+			to the target repository.
+		</description>
+		<property name="processMap">
+			<map>
+				<entry key-ref="SynchronizationStatusPollingReader" value-ref="SFEEReader" />
+				<entry key-ref="SFEEReader" value-ref="Transformer" />
+				<entry key-ref="Transformer" value-ref="EntityService" />
+				<entry key-ref="EntityService" value-ref="SFEEWriter" />
+				<entry key-ref="SFEEWriter" value-ref="SynchronizationStatusAndIdentityMappingTableUpdater" /> 
+			</map>
+		</property>
+		<property name="exceptionProcessor" ref="ExceptionHandler" />
+	</bean>
+	<bean id="Transformer"
+		class="com.collabnet.ccf.core.transformer.XsltProcessor">
+		<description>The xsltDir specifies the directory in which the xsl files are contained. The naming conventions
+		for the xsl files need to be followed. 
+		Name of an xsl file should be: sourceSystem+sourceRepository+targetSystem+targetRepository.xsl 
+		</description>
+		<property name="xsltDir" value="${ccf.xsltDir}" />
+	</bean>
+	<bean id="SynchronizationStatusPollingReader"
+		class="com.collabnet.ccf.core.test.plugins.SimpleLoopingPollingReadConnector">
+		<description>
+			This polling connector polls the CCF database tables that contain the repository
+			mapping and the synchronization info and feeds the details to the source repository
+			reader piped down the line. Please refer the processMap configuration for the Router
+			bean.
+			
+			In this case this polling reader reads the synchronization status using the database
+			read connector configured in the property delegate.
+			
+			Polling interval seconds is configured as 0 to indicate that the polling reader should
+			read from the database read connector continuously without and pauses in between.
+		</description>
+		<property name="pollLimit" value="-1" />
+		<property name="delegate" ref="SynchronizationStatusPollingReaderJdbcConnection" />
+		<property name="pollIntervalSecs" value="0" />
+	</bean>
+
+	<bean id="SFEEReader"
+		class="com.collabnet.ccf.pi.sfee.v44.SFEEReader">
+		<description>
+			This reader reads the modified artifacts in the SFEE system's tracker configured in the
+			${sfee.server.1.url} and the sync info tables. It also reads all the related dependent artifact details
+			and converts them into Generic Artifact XML document format and sends to the
+			next component in the pipeline. The next component in the piple line may be
+			an XSLT transformer component such as com.collabnet.ccf.core.transformer.XsltProcessor
+			or an EntityService component depending on the target SFEE tracker needs the data
+			to be translated to fit into its fields or not.
+		</description>
+		<property name="username" value="${sfee.server.1.username}" />
+		<property name="password" value="${sfee.server.1.password}" />
+		<property name="serverUrl"
+			value="${sfee.server.1.url}" />
+		<property name="connectionManager" ref="SFEEConnectionManager"></property>
+		<property name="sleepInterval" value="1000"></property>
+		<property name="maxAttachmentSizePerArtifact" value="${sfee.max.attachmentsize.per.artifact}" />
+	</bean>
+	<bean id="SFEEConnectionManager"
+		class="com.collabnet.ccf.core.eis.connection.ConnectionManager">
+		<description>
+			The connection manager implements a connection pooling mechanism where the 
+			connections to multiple systems are cached for the readers and writers
+			to retrieve when needed. Before returning the connection to the client
+			the connection manager checks if the connection is live and only returns 
+			valid connections.
+			It assigns and manages one pool per repository.
+		</description>
+		<property name="maxConnectionsPerPool" value="5"></property>
+		<property name="maxIdleTimeForConnection" value="600000" />
+		<property name="scavengerInterval" value="120000"></property>
+		<property name="connectionFactory" ref="SFEEConnectionFactory"></property>
+	</bean>
+	<bean id="SFEEConnectionFactory"
+		class="com.collabnet.ccf.pi.sfee.v44.SFEEConnectionFactory">
+		<description>
+			This bean is an implementation of the com.collabnet.ccf.core.eis.connection.ConnectionFactory
+			interface. It is responsible to create and close an connection for a given
+			repository.
+			In this case SFEEConnectionFactory manages com.collabnet.ccf.pi.sfee.v44.Connection
+			objects.
+		</description>
+	</bean>
+	<bean id="SFEEWriter"
+		class="com.collabnet.ccf.pi.sfee.v44.SFEEWriter">
+		<description>
+			This data processor is responsible for writing the artifacts coming from the
+			EntitySerive into the target SFEE system.
+			It converts/extracts the data from the Generic Artifact XML and pushes to the
+			target SFEE system.
+		</description>
+		<property name="username" value="${sfee.server.1.username}" />
+		<property name="password" value="${sfee.server.1.password}" />
+		<property name="serverUrl"
+			value="${sfee.server.1.url}" />
+		<property name="updateComment"
+			value="Synchronized by Connector user" />
+		<property name="connectionManager" ref="SFEEConnectionManager"></property>
+	</bean>
+	<bean id="EntityService"
+		class="com.collabnet.ccf.core.EntityService">
+		<description>
+			This component is responsible for determining if the current artifact that is being
+			shipped is to be created or updated in the target SFEE system. It determines the artifact
+			action by checking if the artifact has an identity mapping already.
+			If the identity mapping does not exist then the EntityService marks this artifact
+			action as create otherwise update. Please refer the SynchronizationStatusAndIdentityMappingTableUpdater
+			component.
+		</description>
+		<property name="entityServiceReader" ref="SynchronizationStatusDatabaseReader" />
+	</bean>
+	<bean id="SynchronizationStatusPollingReaderJdbcConnection"
+		class="org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector">
+		<description>
+			This is the JDBC read connector used by the SynchronizationStatusPollingReader to read the
+			repository mapping and the synchronization info.
+		</description>
+		<property name="jdbcConnection" ref="JdbcConnectionReadSFEE" />
+		<!-- batch size of 0 or less means process all rows in one message batch. -->
+		<!-- batch size of one means process one row per message and so on -->
+		<property name="batchSize" value="1" />
+		<property name="resultSetConverter" ref="ResultSetConverter" />
+		<property name="sql">
+			<value>${ccf.sfeereader.poller.sql}</value>
+		</property>
+	</bean>
+	<bean id="JdbcConnectionReadSFEE"
+		class="org.openadaptor.auxil.connector.jdbc.JDBCConnection">
+		<description>
+			This defines jdbc connection that will be used by the
+			SynchronizationStatusPollingReader
+		</description>
+		<property name="driver" value="${ccf.db.driver}" />
+		<property name="url" value="${ccf.db.url}" />
+		<property name="username" value="${ccf.db.username}" />
+		<property name="password" value="${ccf.db.password}" />
+	</bean>
+
+	<bean id="ResultSetConverter"
+		class="org.openadaptor.auxil.connector.jdbc.reader.xml.ResultSetToXMLConverter">
+		<description>
+			Converts the synchronization info in the database into XML sync info
+			document.
+		</description>
+		<property name="convertToString" value="false" />
+		<property name="rootElement" value="EmptySyncInf" />
+	</bean>
+	<bean id="SynchronizationStatusAndIdentityMappingTableUpdater"
+		class="com.collabnet.ccf.core.config.MappingDBUpdater">
+		<description>
+			This component is responsible for creating the identity mapping for newly created
+			artifacts in the target system. It also updates the synchronization status for a 
+			particular repository. For SFEE systems the synchronization info is the last
+			modified time of the last shipped artifact.
+			If the EntityService determines the artifact action as create (that is this artifact
+			is a new artifact in the source system and doesn't have its identity mapping filled
+			in the Sync info tables) then the writer component creates the artifact in the target
+			system and populates the target artifact id in the Generic Artifact XML.
+			The SynchronizationStatusAndIdentityMappingTableUpdater then takes the target artifact
+			id and creates an identity mapping entry for the source and target artifact ids.
+		</description>
+		<property name="mappingWriter" ref="MappingWriter"></property>
+		<property name="entityServiceReader" ref="SynchronizationStatusDatabaseReader" />
+		<property name="identityMappingUpdater" ref="IdentityMappingUpdater" />
+		<property name="entityServiceWriteConnector"
+			ref="SynchronizationStatusDatabaseWriter">
+		</property>
+	</bean>
+	<bean id="SynchronizationStatusDatabaseReader"
+		class="org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector">
+		<description>
+			This database reader component reads the target artifact id from the databse
+			for a given source artifact id and the target repository and system information.
+		</description>
+		<property name="jdbcConnection"
+			ref="JDBCConnection" />
+		<!-- batch size of 0 or less means process all rows in one message batch. -->
+		<!-- batch size of one means process one row per message and so on -->
+		<property name="batchSize" value="0" />
+		<property name="sql">
+			<value>${ccf.targetartifactid.sql}</value>
+		</property>
+	</bean>
+	<bean id="JDBCConnection"
+		class="org.openadaptor.auxil.connector.jdbc.JDBCConnection">
+		<description>
+			This defines a jdbc connection that will be used by the
+			SynchronizationStatusDatabaseReader, IdentityMappingDatabaseReader and
+			SynchronizationStatusDatabaseWriter
+		</description>
+		<property name="driver" value="${ccf.db.driver}" />
+		<property name="url" value="${ccf.db.url}" />
+		<property name="username" value="${ccf.db.username}" />
+		<property name="password" value="${ccf.db.password}" />
+	</bean>
+	<bean id="SynchronizationStatusDatabaseWriter"
+		class="org.openadaptor.auxil.connector.jdbc.writer.JDBCWriteConnector">
+		<description>
+			This component updates the synchronization status for the current artifact.
+		</description>
+		<property name="writer" ref="EntityServiceMapTableWriter"></property>
+		<property name="jdbcConnection"
+			ref="JDBCConnection">
+		</property>
+	</bean>
+	<bean id="EntityServiceMapTableWriter"
+		class="org.openadaptor.auxil.connector.jdbc.writer.MapTableWriter">
+		<description>
+			This is the writer object that writes the artifact mapping
+			information into the database table.
+		</description>
+		<property name="tableName" value="IDENTITY_MAPPING"></property>
+		<property name="outputColumns">
+			<list>
+				<value>SOURCE_SYSTEM_ID</value>
+				<value>SOURCE_REPOSITORY_ID</value>
+				<value>TARGET_SYSTEM_ID</value>
+				<value>TARGET_REPOSITORY_ID</value>
+				<value>SOURCE_SYSTEM_KIND</value>
+				<value>SOURCE_REPOSITORY_KIND</value>
+				<value>TARGET_SYSTEM_KIND</value>
+				<value>TARGET_REPOSITORY_KIND</value>
+				<value>SOURCE_ARTIFACT_ID</value>
+				<value>TARGET_ARTIFACT_ID</value>
+				<value>SOURCE_LAST_MODIFICATION_TIME</value>
+				<value>TARGET_LAST_MODIFICATION_TIME</value>
+				<value>SOURCE_ARTIFACT_VERSION</value>
+				<value>TARGET_ARTIFACT_VERSION</value>
+				<value>ARTIFACT_TYPE</value>
+				<value>DEP_CHILD_SOURCE_ARTIFACT_ID</value>
+				<value>DEP_CHILD_SOURCE_REPOSITORY_ID</value>
+				<value>DEP_CHILD_SOURCE_REPOSITORY_KIND</value>
+				<value>DEP_CHILD_TARGET_ARTIFACT_ID</value>
+				<value>DEP_CHILD_TARGET_REPOSITORY_ID</value>
+				<value>DEP_CHILD_TARGET_REPOSITORY_KIND</value>
+				<value>DEP_PARENT_SOURCE_ARTIFACT_ID</value>
+				<value>DEP_PARENT_SOURCE_REPOSITORY_ID</value>
+				<value>DEP_PARENT_SOURCE_REPOSITORY_KIND</value>
+				<value>DEP_PARENT_TARGET_ARTIFACT_ID</value>
+				<value>DEP_PARENT_TARGET_REPOSITORY_ID</value>
+				<value>DEP_PARENT_TARGET_REPOSITORY_KIND</value>
+			</list>
+		</property>
+	</bean>
+	
+	<bean id="IdentityMappingUpdater"
+		class="org.openadaptor.auxil.connector.jdbc.writer.JDBCWriteConnector">
+		<property name="writer" ref="IdentityMappingSyncUpdater"></property>
+		<property name="jdbcConnection"
+			ref="JDBCConnection">
+		</property>
+	</bean>
+	<bean id="IdentityMappingSyncUpdater"
+		class="com.collabnet.ccf.core.db.MapTableUpdater">
+		<description>
+			This is the writer object that writes the artifact mapping
+			information into the database table.
+		</description>
+		<property name="tableName" value="IDENTITY_MAPPING"></property>
+		<property name="sql" value="${ccf.identity.mapping.updater.sql}"></property>
+		<property name="outputColumns">
+			<list>
+				<value>SOURCE_LAST_MODIFICATION_TIME</value>
+				<value>TARGET_LAST_MODIFICATION_TIME</value>
+				<value>SOURCE_ARTIFACT_VERSION</value>
+				<value>TARGET_ARTIFACT_VERSION</value>
+				<value>SOURCE_SYSTEM_ID</value>
+				<value>SOURCE_REPOSITORY_ID</value>
+				<value>TARGET_SYSTEM_ID</value>
+				<value>TARGET_REPOSITORY_ID</value>
+				<value>SOURCE_ARTIFACT_ID</value>
+				<value>ARTIFACT_TYPE</value>
+			</list>
+		</property>
+	</bean>
+	
+	<bean id="MappingWriter"
+		class="org.openadaptor.auxil.connector.jdbc.writer.JDBCWriteConnector">
+		<property name="writer" ref="IdentityMappingDatabaseUpdater"></property>
+		<property name="jdbcConnection"
+			ref="JDBCConnection">
+		</property>
+	</bean>
+	<bean id="IdentityMappingDatabaseUpdater"
+		class="com.collabnet.ccf.core.db.MapTableUpdater">
+		<description>
+			This is the writer object that writes the artifact mapping
+			information into the database table.
+		</description>
+		<property name="tableName" value="SYNCHRONIZATION_STATUS"></property>
+		<property name="sql" value="${ccf.mapping.updater.sql}"></property>
+		<property name="outputColumns">
+			<list>
+				<value>LAST_SOURCE_ARTIFACT_MODIFICATION_DATE</value>
+				<value>LAST_SOURCE_ARTIFACT_VERSION</value>
+				<value>LAST_SOURCE_ARTIFACT_ID</value>
+				<value>SOURCE_SYSTEM_ID</value>
+				<value>SOURCE_REPOSITORY_ID</value>
+				<value>TARGET_SYSTEM_ID</value>
+				<value>TARGET_REPOSITORY_ID</value>
+			</list>
+		</property>
+	</bean>
+	<bean id="ExceptionHandler" class="com.collabnet.ccf.core.hospital.Ambulance">
+		<description>
+			The ambulance class catches all the exceptions that are thrown and not caught
+			by any of the components in the pipe and logs the infromation such as the component
+			that threw this exception and the input Generic Artifact xml document or the
+			sync info db xml document.
+		</description>
+  		<property name="hospitalFileName" value="${ccf.hospital.file}"/>
+  	</bean>
+</beans>
