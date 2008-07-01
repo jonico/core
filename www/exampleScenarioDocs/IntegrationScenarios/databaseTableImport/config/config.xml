@@ -131,7 +131,6 @@ $HeadURL$
 		<property name="password" value="${sfee.server.1.password}" />
 		<property name="serverUrl"
 			value="${sfee.server.1.url}" />
-		<property name="createToken" value="create" />
 		<property name="updateComment"
 			value="Synchronized by Connector user" />
 		<property name="connectionManager" ref="SFEEConnectionManager"></property>
@@ -141,7 +140,7 @@ $HeadURL$
 		<description>
 			This defines a jdbc connection that will be used by the
 			IndentityMappingDatabaseReader, IdentityMappingDatabaseReader and
-			SynchronizationStatusDatabaseWriter
+			IdentityMappingDatabaseWriter
 		</description>
 		<property name="driver" value="${ccf.db.driver}" />
 		<property name="url" value="${ccf.db.url}" />
