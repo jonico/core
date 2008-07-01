@@ -140,7 +140,7 @@ $HeadURL$
 		<description>
 			This defines a jdbc connection that will be used by the
 			IndentityMappingDatabaseReader, IdentityMappingDatabaseReader and
-			IdentityMappingDatabaseWriter
+			SynchronizationStatusDatabaseWriter
 		</description>
 		<property name="driver" value="${ccf.db.driver}" />
 		<property name="url" value="${ccf.db.url}" />

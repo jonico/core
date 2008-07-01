@@ -203,11 +203,11 @@ $HeadURL$
 			The SynchronizationStatusAndIdentityMappingTableUpdater then takes the target artifact
 			id and creates an identity mapping entry for the source and target artifact ids.
 		</description>
-		<property name="mappingWriter" ref="SynchronizationStatusDatabaseWriter"></property>
+		<property name="mappingWriter" ref="MappingWriter"></property>
 		<property name="entityServiceReader" ref="IndentityMappingDatabaseReader" />
 		<property name="identityMappingUpdater" ref="IdentityMappingUpdater" />
 		<property name="entityServiceWriteConnector"
-			ref="IdentityMappingDatabaseWriter">
+			ref="SynchronizationStatusDatabaseWriter">
 		</property>
 	</bean>
 	<bean id="IndentityMappingDatabaseReader"
@@ -230,24 +230,24 @@ $HeadURL$
 		<description>
 			This defines a jdbc connection that will be used by the
 			IndentityMappingDatabaseReader, IdentityMappingDatabaseReader and
-			IdentityMappingDatabaseWriter
+			SynchronizationStatusDatabaseWriter
 		</description>
 		<property name="driver" value="${ccf.db.driver}" />
 		<property name="url" value="${ccf.db.url}" />
 		<property name="username" value="${ccf.db.username}" />
 		<property name="password" value="${ccf.db.password}" />
 	</bean>
-	<bean id="IdentityMappingDatabaseWriter"
+	<bean id="SynchronizationStatusDatabaseWriter"
 		class="org.openadaptor.auxil.connector.jdbc.writer.JDBCWriteConnector">
 		<description>
 			This component updates the synchronization status for the current artifact.
 		</description>
-		<property name="writer" ref="IdentityMappingTableWriter"></property>
+		<property name="writer" ref="EntityServiceMapTableWriter"></property>
 		<property name="jdbcConnection"
 			ref="JDBCConnection">
 		</property>
 	</bean>
-	<bean id="IdentityMappingTableWriter"
+	<bean id="EntityServiceMapTableWriter"
 		class="org.openadaptor.auxil.connector.jdbc.writer.MapTableWriter">
 		<description>
 			This is the writer object that writes the artifact mapping
@@ -318,14 +318,14 @@ $HeadURL$
 		</property>
 	</bean>
 	
-	<bean id="SynchronizationStatusDatabaseWriter"
+	<bean id="MappingWriter"
 		class="org.openadaptor.auxil.connector.jdbc.writer.JDBCWriteConnector">
-		<property name="writer" ref="SynchronizationStatusTableWriter"></property>
+		<property name="writer" ref="IdentityMappingDatabaseUpdater"></property>
 		<property name="jdbcConnection"
 			ref="JDBCConnection">
 		</property>
 	</bean>
-	<bean id="SynchronizationStatusTableWriter"
+	<bean id="IdentityMappingDatabaseUpdater"
 		class="com.collabnet.ccf.core.db.MapTableUpdater">
 		<description>
 			This is the writer object that writes the artifact mapping
