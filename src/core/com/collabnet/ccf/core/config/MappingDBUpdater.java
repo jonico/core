@@ -11,18 +11,20 @@ import org.openadaptor.auxil.connector.jdbc.writer.JDBCWriteConnector;
 import org.openadaptor.auxil.orderedmap.IOrderedMap;
 import org.openadaptor.auxil.orderedmap.OrderedHashMap;
 import org.openadaptor.core.IDataProcessor;
+import org.openadaptor.core.exception.ValidationException;
+import org.openadaptor.core.lifecycle.LifecycleComponent;
+
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
 import com.collabnet.ccf.core.utils.DateUtil;
 import com.collabnet.ccf.core.utils.XPathUtils;
 
-public class MappingDBUpdater implements IDataProcessor{
+public class MappingDBUpdater extends LifecycleComponent implements IDataProcessor{
 	private static final Log log = LogFactory.getLog(MappingDBUpdater.class);
-	private JDBCWriteConnector mappingWriter = null;
-	private JDBCReadConnector entityServiceReader = null;
-	private JDBCWriteConnector identityMappingUpdater = null;
+	private JDBCWriteConnector synchronizationStatusDatabaseUpdater = null;
+	private JDBCReadConnector identityMappingDatabaseReader = null;
+	private JDBCWriteConnector identityMappingDatabaseUpdater = null;
 	
-	private JDBCReadConnector entityServiceMappingIdReader = null;
-	private JDBCWriteConnector entityServiceWriteConnector = null;
+	private JDBCWriteConnector identityMappingDatabaseInserter = null;
 	private static final String NULL_VALUE = null;
 	private static final String SOURCE_ARTIFACT_ID = "sourceArtifactId";
 	private static final String SOURCE_REPOSITORY_ID = "sourceRepositoryId";
@@ -183,9 +185,9 @@ public class MappingDBUpdater implements IDataProcessor{
 			inputParameters.add(6,"TARGET_REPOSITORY_ID",targetRepositoryId);
 			
 			IOrderedMap[] params = new IOrderedMap[]{inputParameters};
-			mappingWriter.connect();
-			mappingWriter.deliver(params);
-			mappingWriter.disconnect();
+			synchronizationStatusDatabaseUpdater.connect();
+			synchronizationStatusDatabaseUpdater.deliver(params);
+			synchronizationStatusDatabaseUpdater.disconnect();
 		}
 		catch(GenericArtifactParsingException e) {
 			log.error("There is some problem in extracting attributes from Document in EntityService!!!"+e);
@@ -226,7 +228,7 @@ public class MappingDBUpdater implements IDataProcessor{
 	    	this.updateIdentityMapping(sourceSystemId, sourceRepositoryId, 
 			 targetSystemId,  targetRepositoryId,  sourceArtifactId, 
 			 sourceTime, targetTime,  sourceArtifactVersion, targetArtifactVersion, artifactType);
-	    	log.info("Mapping already exists for source artifact id "+ sourceArtifactId+
+	    	log.debug("Mapping already exists for source artifact id "+ sourceArtifactId+
 	    			" target artifact id "+ targetArtifactId + " for repository info " + sourceArtifactId+"+"+ sourceSystemId+"+"+ sourceRepositoryId+"+"+ 
 					targetSystemId);
 	    }
@@ -245,9 +247,9 @@ public class MappingDBUpdater implements IDataProcessor{
 		inputParameters.add(sourceArtifactId);
 		inputParameters.add(artifactType);		
 
-		entityServiceReader.connect();
-		Object[] resultSet = entityServiceReader.next(inputParameters, 1000);
-		entityServiceReader.disconnect();
+		identityMappingDatabaseReader.connect();
+		Object[] resultSet = identityMappingDatabaseReader.next(inputParameters, 1000);
+		identityMappingDatabaseReader.disconnect();
 		
 		
 		if(resultSet == null || resultSet.length == 0){
@@ -314,9 +316,9 @@ public class MappingDBUpdater implements IDataProcessor{
 		inputParameters.add(26,"DEP_PARENT_TARGET_REPOSITORY_KIND", depParentTargetRepositoryKind);
 		
 		IOrderedMap[] data = new IOrderedMap[]{inputParameters};
-		entityServiceWriteConnector.connect();
-		entityServiceWriteConnector.deliver(data);
-		entityServiceWriteConnector.disconnect();
+		identityMappingDatabaseInserter.connect();
+		identityMappingDatabaseInserter.deliver(data);
+		identityMappingDatabaseInserter.disconnect();
 	}
 
 	private void updateIdentityMapping(String sourceSystemId, String sourceRepositoryId, 
@@ -337,9 +339,9 @@ public class MappingDBUpdater implements IDataProcessor{
 		inputParameters.add(9,"ARTIFACT_TYPE",sourceArtifactId);
 		
 		IOrderedMap[] params = new IOrderedMap[]{inputParameters};
-		identityMappingUpdater.connect();
-		identityMappingUpdater.deliver(params);
-		identityMappingUpdater.disconnect();
+		identityMappingDatabaseUpdater.connect();
+		identityMappingDatabaseUpdater.deliver(params);
+		identityMappingDatabaseUpdater.disconnect();
 	}
 	
 	
@@ -350,49 +352,68 @@ public class MappingDBUpdater implements IDataProcessor{
 
 	@SuppressWarnings("unchecked")
 	public void validate(List exceptions) {
-		// TODO Auto-generated method stub
+		if (getSynchronizationStatusDatabaseUpdater() == null) {
+			log.error("synchronizationStatusDatabaseUpdater-property not set");
+			exceptions.add(new ValidationException(
+					"synchronizationStatusDatabaseUpdater-property not set", this));
+		}
+		
+		if (getIdentityMappingDatabaseReader() == null) {
+			log.error("identityMappingDatabaseReader-property not set");
+			exceptions.add(new ValidationException(
+					"identityMappingDatabaseReader-property not set", this));
+		}
+		
+		if (getSynchronizationStatusDatabaseUpdater() == null) {
+			log.error("synchronizationStatusDatabaseUpdater-property not set");
+			exceptions.add(new ValidationException(
+					"synchronizationStatusDatabaseUpdater-property not set", this));
+		}
+		
+		if (getIdentityMappingDatabaseUpdater() == null) {
+			log.error("getIdentityMappingDatabaseUpdater-property not set");
+			exceptions.add(new ValidationException(
+					"getIdentityMappingDatabaseUpdater-property not set", this));
+		}
+		
+		if (getIdentityMappingDatabaseInserter() == null) {
+			log.error("getIdentityMappingDatabaseInserter-property not set");
+			exceptions.add(new ValidationException(
+					"getIdentityMappingDatabaseInserter-property not set", this));
+		}
 		
 	}
 
-	public JDBCWriteConnector getMappingWriter() {
-		return mappingWriter;
+	public JDBCWriteConnector getSynchronizationStatusDatabaseUpdater() {
+		return synchronizationStatusDatabaseUpdater;
 	}
 
-	public void setMappingWriter(JDBCWriteConnector mappingWriter) {
-		this.mappingWriter = mappingWriter;
+	public void setSynchronizationStatusDatabaseUpdater(JDBCWriteConnector synchronizationStatusDatabaseUpdater) {
+		this.synchronizationStatusDatabaseUpdater = synchronizationStatusDatabaseUpdater;
 	}
-	public JDBCWriteConnector getEntityServiceWriteConnector() {
-		return entityServiceWriteConnector;
-	}
-
-	public void setEntityServiceWriteConnector(
-			JDBCWriteConnector entityServiceWriteConnector) {
-		this.entityServiceWriteConnector = entityServiceWriteConnector;
+	public JDBCWriteConnector getIdentityMappingDatabaseInserter() {
+		return identityMappingDatabaseInserter;
 	}
 
-	public JDBCReadConnector getEntityServiceReader() {
-		return entityServiceReader;
+	public void setIdentityMappingDatabaseInserter(
+			JDBCWriteConnector identityMappingDatabaseInserter) {
+		this.identityMappingDatabaseInserter = identityMappingDatabaseInserter;
 	}
 
-	public void setEntityServiceReader(JDBCReadConnector entityServiceReader) {
-		this.entityServiceReader = entityServiceReader;
+	public JDBCReadConnector getIdentityMappingDatabaseReader() {
+		return identityMappingDatabaseReader;
 	}
 
-	public JDBCReadConnector getEntityServiceMappingIdReader() {
-		return entityServiceMappingIdReader;
+	public void setIdentityMappingReader(JDBCReadConnector identityMappingDatabaseReader) {
+		this.identityMappingDatabaseReader = identityMappingDatabaseReader;
 	}
 
-	public void setEntityServiceMappingIdReader(
-			JDBCReadConnector entityServiceMappingIdReader) {
-		this.entityServiceMappingIdReader = entityServiceMappingIdReader;
+	public JDBCWriteConnector getIdentityMappingDatabaseUpdater() {
+		return identityMappingDatabaseUpdater;
 	}
 
-	public JDBCWriteConnector getIdentityMappingUpdater() {
-		return identityMappingUpdater;
-	}
-
-	public void setIdentityMappingUpdater(JDBCWriteConnector identityMappingUpdater) {
-		this.identityMappingUpdater = identityMappingUpdater;
+	public void setIdentityMappingDatabaseUpdater(JDBCWriteConnector identityMappingUpdater) {
+		this.identityMappingDatabaseUpdater = identityMappingUpdater;
 	}
 
 }

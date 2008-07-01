@@ -179,9 +179,9 @@ public class EntityService extends LifecycleComponent implements
 	 */
 	public void validate(List exceptions) {
 		if (getIdentityMappingDatabaseReader() == null) {
-			log.error("identityMappingDatabaseReader-property no set");
+			log.error("identityMappingDatabaseReader-property not set");
 			exceptions.add(new ValidationException(
-					"identityMappingDatabaseReader-property no set", this));
+					"identityMappingDatabaseReader-property not set", this));
 		}
 	}
 
@@ -189,8 +189,8 @@ public class EntityService extends LifecycleComponent implements
 		return identityMappingDatabaseReader;
 	}
 
-	public void setIdentityMappingDatabaseReader(JDBCReadConnector entityServiceReader) {
-		this.identityMappingDatabaseReader = entityServiceReader;
+	public void setIdentityMappingDatabaseReader(JDBCReadConnector identityMappingDatabaseReader) {
+		this.identityMappingDatabaseReader = identityMappingDatabaseReader;
 	}
 
 }
