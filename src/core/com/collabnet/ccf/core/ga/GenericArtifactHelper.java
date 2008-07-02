@@ -382,8 +382,8 @@ public class GenericArtifactHelper {
 				String alternativeFieldName = getAttributeValue(field,
 						ALTERNATIVE_FIELD_NAME);
 
-				genericArtifactField.setMinOccurs(minOccurs);
-				genericArtifactField.setMaxOccurs(maxOccurs);
+				genericArtifactField.setMinOccursValue(minOccurs);
+				genericArtifactField.setMaxOccursValue(maxOccurs);
 				genericArtifactField.setNullValueSupported(nullValueSupported);
 				genericArtifactField
 						.setAlternativeFieldName(alternativeFieldName);
@@ -810,9 +810,9 @@ public class GenericArtifactHelper {
 				if (genericArtifact.getIncludesFieldMetaData().equals(
 						GenericArtifact.IncludesFieldMetaDataValue.TRUE)) {
 					addAttribute(field, MIN_OCCURS, genericArtifactField
-							.getMinOccurs());
+							.getMinOccursValue());
 					addAttribute(field, MAX_OCCURS, genericArtifactField
-							.getMaxOccurs());
+							.getMaxOccursValue());
 					addAttribute(field, NULL_VALUE_SUPPORTED,
 							genericArtifactField.getNullValueSupported());
 					addAttribute(field, ALTERNATIVE_FIELD_NAME,

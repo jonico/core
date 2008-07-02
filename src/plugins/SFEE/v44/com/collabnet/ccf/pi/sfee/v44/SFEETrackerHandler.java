@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
@@ -375,7 +376,7 @@ public class SFEETrackerHandler {
 				else {
 					log.error("Wrong type of flexField " + fieldName
 							+ ", expected: " + fieldType + " received: "
-							+ flexFieldTypes[i] + " artifactID: "
+							+ flexFieldTypes[i] + " for artifactID: "
 							+ artifact.getId());
 					return null;
 				}
@@ -393,7 +394,11 @@ public class SFEETrackerHandler {
 		String parentArtifactId = child.getOriginId();
 		ArtifactSoapDO artifact = this.getTrackerItem(sessionId, childArtifactId);
 		TrackerFieldSoapDO[] trackerFields = this.getFlexFields(sessionId, artifact.getFolderId());
-		GenericArtifact ga = artifactConverter.convert(artifact, trackerFields, lastModifiedDate);
+		HashMap<String, List<TrackerFieldSoapDO>> fieldsMap = 
+			SFEEAppHandler.loadTrackerFieldsInHashMap(trackerFields);
+		//TODO As of now hard coding includeFieldMetaData to false. Should be changed when we include
+		// dependencies.
+		GenericArtifact ga = artifactConverter.convert(artifact, fieldsMap, lastModifiedDate, false);
 		ga.setDepParentSourceArtifactId(parentArtifactId);
 		ga.setSourceArtifactId(childArtifactId);
 		ga.setSourceRepositoryId(artifact.getFolderId());

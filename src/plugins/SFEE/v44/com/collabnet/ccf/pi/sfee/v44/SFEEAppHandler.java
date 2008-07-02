@@ -3,6 +3,7 @@ package com.collabnet.ccf.pi.sfee.v44;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
@@ -12,6 +13,7 @@ import com.collabnet.ccf.pi.sfee.v44.meta.ArtifactMetaData;
 import com.vasoftware.sf.soap44.webservices.sfmain.CommentSoapList;
 import com.vasoftware.sf.soap44.webservices.sfmain.CommentSoapRow;
 import com.vasoftware.sf.soap44.webservices.sfmain.ISourceForgeSoap;
+import com.vasoftware.sf.soap44.webservices.sfmain.TrackerFieldSoapDO;
 import com.vasoftware.sf.soap44.webservices.tracker.ArtifactSoapDO;
 
 /**
@@ -95,4 +97,45 @@ public class SFEEAppHandler {
 			log.error("Could not get comments list for artifact "+artifact.getId());
 		}
 	}
+	
+	public static HashMap<String, List<TrackerFieldSoapDO>> loadTrackerFieldsInHashMap(TrackerFieldSoapDO[] flexFields){
+		HashMap<String, List<TrackerFieldSoapDO>> fieldsMap = 
+							new HashMap<String, List<TrackerFieldSoapDO>>();
+		for(TrackerFieldSoapDO field:flexFields){
+			String fieldName = field.getName();
+			if(fieldsMap.containsKey(fieldName)){
+				List<TrackerFieldSoapDO> fieldsList = fieldsMap.get(fieldName);
+				fieldsList.add(field);
+			}
+			else {
+				List<TrackerFieldSoapDO> fieldsList = new ArrayList<TrackerFieldSoapDO>();
+				fieldsList.add(field);
+				fieldsMap.put(fieldName, fieldsList);
+			}
+		}
+		return fieldsMap;
+	}
+	
+	public static TrackerFieldSoapDO getTrackerFieldSoapDOForFlexField(
+			HashMap<String, List<TrackerFieldSoapDO>> fieldsMap, String fieldName){
+		List<TrackerFieldSoapDO> fieldsList = fieldsMap.get(fieldName);
+		if(fieldsList != null){
+			if(fieldsList.size() == 1){
+				return fieldsList.get(0);
+			}
+			else if(fieldsList.size() > 1){
+				// TODO We are in trouble. We have a configurable field and a
+				// flex field with the same name
+			}
+			else if(fieldsList.size() == 0){
+				// No way. This should never happen.
+			}
+		}
+		else {
+			log.warn("Field for "+fieldName+" does not exist.");
+		}
+		// TODO Should we return null here?
+		return null;
+	}
+
 }

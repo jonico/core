@@ -139,7 +139,7 @@ public class EntityService extends LifecycleComponent implements
 		inputParameters.add(targetRepositoryId);
 		inputParameters.add(sourceArtifactId);
 		inputParameters.add(artifactType);
-	
+		identityMappingDatabaseReader.disconnect();
 		identityMappingDatabaseReader.connect();
 		Object[] resultSet = identityMappingDatabaseReader.next(inputParameters, 1000);
 		identityMappingDatabaseReader.disconnect();

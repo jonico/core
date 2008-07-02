@@ -67,11 +67,12 @@ public final class ConnectionPool<T> {
 	 * @throws MaxConnectionsReachedException - If the configured maximum connections per
 	 * 										pool is reached for this system and repository
 	 * 										combination. 
+	 * @throws ConnectionException 
 	 */
 	public T getConnection(String systemId,
 			String systemKind, String repositoryId,
 			String repositoryKind, String connectionInfo,
-			String credentialInfo) throws MaxConnectionsReachedException {
+			String credentialInfo) throws MaxConnectionsReachedException, ConnectionException {
 		if(factory == null){
 			throw new IllegalArgumentException("Connection Factory is not set");
 		}
@@ -107,11 +108,12 @@ public final class ConnectionPool<T> {
 	 * @throws MaxConnectionsReachedException - If the configured maximum connections per
 	 * 										pool is reached for this system and repository
 	 * 										combination. 
+	 * @throws ConnectionException 
 	 */
 	private T createConnection(String systemId,
 			String systemKind, String repositoryId,
 			String repositoryKind, String connectionInfo,
-			String credentialInfo) throws MaxConnectionsReachedException {
+			String credentialInfo) throws MaxConnectionsReachedException, ConnectionException {
 		String key = generateKey(systemId,
 				systemKind, repositoryId,
 				repositoryKind, connectionInfo,

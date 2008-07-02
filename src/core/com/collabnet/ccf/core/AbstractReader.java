@@ -20,6 +20,7 @@ import org.openadaptor.core.lifecycle.LifecycleComponent;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
+import com.collabnet.ccf.core.hospital.CCFErrorCode;
 import com.collabnet.ccf.core.utils.DateUtil;
 
 /**
@@ -173,6 +174,7 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 				} catch (GenericArtifactParsingException e) {
 					String cause = "Could not parse the artifact for "+artifactId;
 					log.error(cause,e);
+					genericArtifact.setErrorCode(Integer.toString(CCFErrorCode.GENERIC_ARTIFACT_PARSING_ERROR));
 					throw new CCFRuntimeException(cause, e);
 				}
 			}
@@ -209,6 +211,7 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 				} catch (GenericArtifactParsingException e) {
 					String cause = "Could not parse the artifact for "+artifactId;
 					log.error(cause, e);
+					genericArtifact.setErrorCode(Integer.toString(CCFErrorCode.GENERIC_ARTIFACT_PARSING_ERROR));
 					throw new CCFRuntimeException(cause, e);
 				}
 			}
@@ -224,7 +227,6 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 		} catch (InterruptedException e) {
 			String cause = "Thread is interrupted";
 			log.warn(cause, e);
-			e.printStackTrace();
 		}
 		return new Object[]{};
 	}

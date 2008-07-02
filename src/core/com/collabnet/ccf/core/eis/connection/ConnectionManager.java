@@ -77,11 +77,12 @@ public final class ConnectionManager<T> {
 	 * @return
 	 * @throws MaxConnectionsReachedException - when the maximum connections for the
 	 * 			particular repository exceeded.
+	 * @throws ConnectionException 
 	 */
 	public T getConnection(String systemId,
 			String systemKind, String repositoryId,
 			String repositoryKind, String connectionInfo,
-			String credentialInfo) throws MaxConnectionsReachedException{
+			String credentialInfo) throws MaxConnectionsReachedException, ConnectionException{
 		return pool.getConnection(systemId, systemKind, repositoryId,
 				repositoryKind, connectionInfo, credentialInfo);
 	}

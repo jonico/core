@@ -8,6 +8,7 @@ import java.util.List;
 
 import org.openadaptor.core.exception.RecordFormatException;
 
+import com.collabnet.ccf.core.CCFRuntimeException;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
@@ -44,7 +45,7 @@ public class SFEEGAHelper {
 			String fieldValue) {
 		List<GenericArtifactField> gaFolderIDs = ga.getAllGenericArtifactFieldsWithSameFieldName(fieldName);
 		if(gaFolderIDs == null){
-			throw new RuntimeException("Field "+fieldName
+			throw new CCFRuntimeException("Field "+fieldName
 					+" does not exist in Generic Artifact. Cannot update field");
 		}
 		if(gaFolderIDs != null && gaFolderIDs.size() == 1){
@@ -66,7 +67,7 @@ public class SFEEGAHelper {
 			}
 		}
 		if(gaFolderIDs == null || (!fieldUpdated)){
-			throw new RuntimeException("Field "+fieldName
+			throw new CCFRuntimeException("Field "+fieldName
 					+" does not exist in Generic Artifact. Cannot update field");
 		}
 	}

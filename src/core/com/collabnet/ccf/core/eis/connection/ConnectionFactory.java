@@ -27,13 +27,13 @@ public interface ConnectionFactory<T> {
 	public T createConnection(String systemId,
 			String systemKind, String repositoryId,
 			String repositoryKind, String connectionInfo,
-			String credentialInfo);
+			String credentialInfo) throws ConnectionException;
 	
 	/**
 	 * Closes the connection object.
 	 * @param connection - the connection object to be closed.
 	 */
-	public void closeConnection(T connection);
+	public void closeConnection(T connection) throws ConnectionException;
 	
 	/**
 	 * Indicates if the connection is live or not. A connection

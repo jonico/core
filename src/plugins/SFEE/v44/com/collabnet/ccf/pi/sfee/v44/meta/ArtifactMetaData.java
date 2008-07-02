@@ -34,49 +34,54 @@ public class ArtifactMetaData {
 	}
 	
 	public enum SFEEFields {
-		id("id", "ID", FIELD_TYPE.SYSTEM_DEFINED, FIELD_INPUT_TYPE.TEXT, FIELD_VALUE_TYPE.STRING),
-		actualHours("actualHours", "Actual hours", FIELD_TYPE.CONFIGURABLE,FIELD_INPUT_TYPE.TEXT, FIELD_VALUE_TYPE.INTEGER),
-		assignedTo("assignedTo", "Assigned to",FIELD_TYPE.SYSTEM_DEFINED, FIELD_INPUT_TYPE.SINGLE_SELECT, FIELD_VALUE_TYPE.USER),
-		lastModifiedBy("lastModifiedBy", "Last modified by", FIELD_TYPE.SYSTEM_DEFINED, FIELD_INPUT_TYPE.TEXT, FIELD_VALUE_TYPE.USER),
-		createdBy("createdBy", "Created by", FIELD_TYPE.SYSTEM_DEFINED, FIELD_INPUT_TYPE.TEXT, FIELD_VALUE_TYPE.USER),
-		folderId("folderId", "Filder id",FIELD_TYPE.SYSTEM_DEFINED, FIELD_INPUT_TYPE.TEXT, FIELD_VALUE_TYPE.STRING),
-		version("version", "Version", FIELD_TYPE.SYSTEM_DEFINED, FIELD_INPUT_TYPE.TEXT, FIELD_VALUE_TYPE.STRING),
-		title("title", "Title", FIELD_TYPE.SYSTEM_DEFINED, FIELD_INPUT_TYPE.TEXT, FIELD_VALUE_TYPE.STRING),
-		path("path", "Path", FIELD_TYPE.SYSTEM_DEFINED, FIELD_INPUT_TYPE.TEXT, FIELD_VALUE_TYPE.STRING),
-		category("category", "Category", FIELD_TYPE.CONFIGURABLE, FIELD_INPUT_TYPE.SINGLE_SELECT, FIELD_VALUE_TYPE.STRING),
+		id("id", "ID", FIELD_TYPE.SYSTEM_DEFINED, FIELD_INPUT_TYPE.TEXT, FIELD_VALUE_TYPE.STRING, true,""),
+		actualHours("actualHours", "Actual hours", FIELD_TYPE.CONFIGURABLE,FIELD_INPUT_TYPE.TEXT, FIELD_VALUE_TYPE.INTEGER, false,""),
+		assignedTo("assignedTo", "Assigned to",FIELD_TYPE.SYSTEM_DEFINED, FIELD_INPUT_TYPE.SINGLE_SELECT, FIELD_VALUE_TYPE.USER, false,""),
+		lastModifiedBy("lastModifiedBy", "Last modified by", FIELD_TYPE.SYSTEM_DEFINED, FIELD_INPUT_TYPE.TEXT, FIELD_VALUE_TYPE.USER, false,""),
+		createdBy("createdBy", "Created by", FIELD_TYPE.SYSTEM_DEFINED, FIELD_INPUT_TYPE.TEXT, FIELD_VALUE_TYPE.USER, false,""),
+		folderId("folderId", "Folder id",FIELD_TYPE.SYSTEM_DEFINED, FIELD_INPUT_TYPE.TEXT, FIELD_VALUE_TYPE.STRING, false,""),
+		version("version", "Version", FIELD_TYPE.SYSTEM_DEFINED, FIELD_INPUT_TYPE.TEXT, FIELD_VALUE_TYPE.STRING, false,""),
+		title("title", "Title", FIELD_TYPE.SYSTEM_DEFINED, FIELD_INPUT_TYPE.TEXT, FIELD_VALUE_TYPE.STRING, true,""),
+		path("path", "Path", FIELD_TYPE.SYSTEM_DEFINED, FIELD_INPUT_TYPE.TEXT, FIELD_VALUE_TYPE.STRING, false,""),
+		category("category", "Category", FIELD_TYPE.CONFIGURABLE, FIELD_INPUT_TYPE.SINGLE_SELECT, FIELD_VALUE_TYPE.STRING, false,""),
 		/* This field is not set by the user. But SFEE automatically sets it when the state
 		 * changes to CLOSED
 		 * */
-		closeDate("closeDate", "Close date", FIELD_TYPE.SYSTEM_DEFINED, FIELD_INPUT_TYPE.DATE, FIELD_VALUE_TYPE.DATE),
-		createdDate("createdDate", "Created date", FIELD_TYPE.SYSTEM_DEFINED, FIELD_INPUT_TYPE.DATE, FIELD_VALUE_TYPE.DATE),
-		lastModifiedDate("lastModifiedDate", "Last modified date", FIELD_TYPE.SYSTEM_DEFINED, FIELD_INPUT_TYPE.DATE, FIELD_VALUE_TYPE.DATE),
-		customer("customer", "Customer", FIELD_TYPE.CONFIGURABLE, FIELD_INPUT_TYPE.SINGLE_SELECT, FIELD_VALUE_TYPE.STRING),
-		description("description", "Description", FIELD_TYPE.SYSTEM_DEFINED, FIELD_INPUT_TYPE.TEXT,FIELD_VALUE_TYPE.STRING),
-		estimatedHours("estimatedHours", "Estimated hours", FIELD_TYPE.CONFIGURABLE, FIELD_INPUT_TYPE.TEXT, FIELD_VALUE_TYPE.INTEGER),
+		closeDate("closeDate", "Close date", FIELD_TYPE.SYSTEM_DEFINED, FIELD_INPUT_TYPE.DATE, FIELD_VALUE_TYPE.DATE, false,""),
+		createdDate("createdDate", "Created date", FIELD_TYPE.SYSTEM_DEFINED, FIELD_INPUT_TYPE.DATE, FIELD_VALUE_TYPE.DATE, false,""),
+		lastModifiedDate("lastModifiedDate", "Last modified date", FIELD_TYPE.SYSTEM_DEFINED, FIELD_INPUT_TYPE.DATE, FIELD_VALUE_TYPE.DATE, false,""),
+		customer("customer", "Customer", FIELD_TYPE.CONFIGURABLE, FIELD_INPUT_TYPE.SINGLE_SELECT, FIELD_VALUE_TYPE.STRING, false,""),
+		description("description", "Description", FIELD_TYPE.SYSTEM_DEFINED, FIELD_INPUT_TYPE.TEXT,FIELD_VALUE_TYPE.STRING, true,""),
+		estimatedHours("estimatedHours", "Estimated hours", FIELD_TYPE.CONFIGURABLE, FIELD_INPUT_TYPE.TEXT, FIELD_VALUE_TYPE.INTEGER, false,""),
 		//flexFields(),
-		group("group", "Group", FIELD_TYPE.CONFIGURABLE, FIELD_INPUT_TYPE.SINGLE_SELECT, FIELD_VALUE_TYPE.STRING),
-		priority("priority", "Priority", FIELD_TYPE.SYSTEM_DEFINED, FIELD_INPUT_TYPE.SINGLE_SELECT, FIELD_VALUE_TYPE.INTEGER), 
-		reportedReleaseId("reportedReleaseId", "Reported in release", FIELD_TYPE.CONFIGURABLE, FIELD_INPUT_TYPE.SINGLE_SELECT, FIELD_VALUE_TYPE.STRING),
-		resolvedReleaseId("resolvedReleaseId", "Resolved in release", FIELD_TYPE.CONFIGURABLE, FIELD_INPUT_TYPE.SINGLE_SELECT, FIELD_VALUE_TYPE.STRING),
-		status("status", "Status", FIELD_TYPE.CONFIGURABLE, FIELD_INPUT_TYPE.SINGLE_SELECT, FIELD_VALUE_TYPE.STRING),
-		statusClass("statusClass", "Status class", FIELD_TYPE.SYSTEM_DEFINED, FIELD_INPUT_TYPE.TEXT, FIELD_VALUE_TYPE.STRING),
-		commentText("Comment Text", "Comment Text", FIELD_TYPE.SYSTEM_DEFINED, FIELD_INPUT_TYPE.TEXT, FIELD_VALUE_TYPE.STRING);
+		group("group", "Group", FIELD_TYPE.CONFIGURABLE, FIELD_INPUT_TYPE.SINGLE_SELECT, FIELD_VALUE_TYPE.STRING, false,""),
+		priority("priority", "Priority", FIELD_TYPE.SYSTEM_DEFINED, FIELD_INPUT_TYPE.SINGLE_SELECT, FIELD_VALUE_TYPE.INTEGER, false,""), 
+		reportedReleaseId("reportedReleaseId", "Reported in release", FIELD_TYPE.CONFIGURABLE, FIELD_INPUT_TYPE.SINGLE_SELECT, FIELD_VALUE_TYPE.STRING, false,"reportedInRelease"),
+		resolvedReleaseId("resolvedReleaseId", "Resolved in release", FIELD_TYPE.CONFIGURABLE, FIELD_INPUT_TYPE.SINGLE_SELECT, FIELD_VALUE_TYPE.STRING, false,"resolvedInRelease"),
+		status("status", "Status", FIELD_TYPE.CONFIGURABLE, FIELD_INPUT_TYPE.SINGLE_SELECT, FIELD_VALUE_TYPE.STRING, true,""),
+		statusClass("statusClass", "Status class", FIELD_TYPE.SYSTEM_DEFINED, FIELD_INPUT_TYPE.TEXT, FIELD_VALUE_TYPE.STRING, false,""),
+		commentText("Comment Text", "Comment Text", FIELD_TYPE.SYSTEM_DEFINED, FIELD_INPUT_TYPE.TEXT, FIELD_VALUE_TYPE.STRING, false,"");
 		
 		private String fieldName;
 		private String displayName;
 		private FIELD_TYPE fieldType;
 		private FIELD_INPUT_TYPE inputType;
 		private FIELD_VALUE_TYPE valueType;
+		private boolean required;
+		private String alternateName;
 		private SFEEFields(String fieldName,
 				String displayName,
 				FIELD_TYPE fieldType,
 				FIELD_INPUT_TYPE inputType,
-				FIELD_VALUE_TYPE valueType){
+				FIELD_VALUE_TYPE valueType,
+				boolean required, String alternateName){
 			this.fieldName = fieldName;
 			this.displayName = displayName;
 			this.fieldType = fieldType;
 			this.inputType = inputType;
 			this.valueType = valueType;
+			this.required = required;
+			this.alternateName = alternateName;
 		}
 		public String getFieldName() {
 			return fieldName;
@@ -93,15 +98,30 @@ public class ArtifactMetaData {
 		public FIELD_VALUE_TYPE getValueType() {
 			return valueType;
 		}
+		public boolean isRequired() {
+			return required;
+		}
+		public void setRequired(boolean required) {
+			this.required = required;
+		}
+		public String getAlternateName() {
+			return alternateName;
+		}
+		public void setAlternateName(String alternateName) {
+			this.alternateName = alternateName;
+		}
 	}
 
 	public static FieldValueTypeValue getFieldValueType(String fieldName) {
 		SFEEFields field = null;
 		try{
-			field = SFEEFields.valueOf(Character.toLowerCase(fieldName.charAt(0))+fieldName.substring(1));
+			field = SFEEFields.valueOf(fieldName);
 		}
 		catch(IllegalArgumentException e){
-			log.error("Field "+fieldName+" is not found in ArtifactMetaData");
+			log.warn("Field "+fieldName+" is not found in ArtifactMetaData");
+		}
+		if(fieldName.equals(SFEEFields.commentText.getFieldName())){
+			field = SFEEFields.commentText;
 		}
 		if(field != null){
 			ArtifactMetaData.FIELD_VALUE_TYPE valueType = field.getValueType();
@@ -129,21 +149,15 @@ public class ArtifactMetaData {
 	}
 
 	public static FieldValueTypeValue getFieldValueType(String fieldName,
-			TrackerFieldSoapDO[] trackerFields) {
+			TrackerFieldSoapDO field) {
 		FieldValueTypeValue fieldValueType = getFieldValueType(fieldName);
 		if(fieldValueType == null){
-			for(TrackerFieldSoapDO field:trackerFields){
-				String name = field.getName();
-				if(name.equals(fieldName)){
-					String fieldType = field.getFieldType();
-					String valueType = field.getValueType();
-					fieldValueType = getGAFieldValueType(fieldType,valueType);
-					break;
-				}
-			}
+			String fieldType = field.getFieldType();
+			String valueType = field.getValueType();
+			fieldValueType = getGAFieldValueType(fieldType,valueType);
 		}
 		if(fieldValueType == null){
-			if(fieldName.equals("Comment Text")){
+			if(fieldName.equals(ArtifactMetaData.SFEEFields.commentText.getFieldName())){
 				return FieldValueTypeValue.STRING;
 			}
 		}

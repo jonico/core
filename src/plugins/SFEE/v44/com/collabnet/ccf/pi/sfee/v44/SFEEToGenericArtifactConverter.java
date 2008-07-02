@@ -1,6 +1,8 @@
 package com.collabnet.ccf.pi.sfee.v44;
 
 import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
 
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
@@ -10,6 +12,7 @@ import com.collabnet.ccf.pi.sfee.v44.meta.ArtifactMetaData;
 import com.vasoftware.sf.soap44.types.SoapFieldValues;
 import com.vasoftware.sf.soap44.webservices.sfmain.TrackerFieldSoapDO;
 import com.vasoftware.sf.soap44.webservices.tracker.ArtifactSoapDO;
+import com.vasoftware.sf.soap44.webservices.tracker.TrackerFieldValueSoapDO;
 
 /**
  * The artifact data from the SFEE SOAP API calls are in the
@@ -25,91 +28,80 @@ public class SFEEToGenericArtifactConverter {
 	 * 
 	 * @param dataObject - The ArtifactSoapDO object that needs to be converted into
 	 * 						a GenericArtifact object
-	 * @param trackerFields - The custom/flex fields defined in the tracker
+	 * @param fieldsMap - The custom/flex fields defined in the tracker
 	 * @param lastReadDate - Last read date for this tracker.
+	 * @param includeFieldMetaData 
 	 * @return - The converted GenericArtifact object
 	 */
-	public GenericArtifact convert(ArtifactSoapDO dataObject, TrackerFieldSoapDO[] trackerFields, Date lastReadDate) {
+	public GenericArtifact convert(ArtifactSoapDO dataObject, HashMap<String, List<TrackerFieldSoapDO>> fieldsMap,
+			Date lastReadDate, boolean includeFieldMetaData) {
 		if(dataObject != null){
 			ArtifactSoapDO artifactRow = dataObject;
 			GenericArtifact genericArtifact = new GenericArtifact();
 			genericArtifact.setArtifactType(GenericArtifact.ArtifactTypeValue.PLAINARTIFACT);
 			genericArtifact.setArtifactMode(GenericArtifact.ArtifactModeValue.COMPLETE);
 			genericArtifact.setErrorCode("ok");
-			genericArtifact.setIncludesFieldMetaData(GenericArtifact.IncludesFieldMetaDataValue.FALSE);
+			if(includeFieldMetaData){
+				genericArtifact.setIncludesFieldMetaData(GenericArtifact.IncludesFieldMetaDataValue.TRUE);
+			}
+			else {
+				genericArtifact.setIncludesFieldMetaData(GenericArtifact.IncludesFieldMetaDataValue.FALSE);
+			}
 			
 			int actualHours = artifactRow.getActualHours();
-			this.createGenericArtifactField(ArtifactMetaData.SFEEFields.actualHours.getFieldName(),
-					ArtifactMetaData.SFEEFields.actualHours.getDisplayName(),
-					actualHours, genericArtifact, trackerFields);
+			this.createGenericArtifactField(ArtifactMetaData.SFEEFields.actualHours,
+					actualHours, genericArtifact, fieldsMap, includeFieldMetaData);
 			String assignedTo = artifactRow.getAssignedTo();
-			this.createGenericArtifactField(ArtifactMetaData.SFEEFields.assignedTo.getFieldName(),
-					ArtifactMetaData.SFEEFields.assignedTo.getDisplayName(),
-					assignedTo, genericArtifact, trackerFields);
+			this.createGenericArtifactField(ArtifactMetaData.SFEEFields.assignedTo,
+					assignedTo, genericArtifact, fieldsMap, includeFieldMetaData);
 			String category = artifactRow.getCategory();
-			this.createGenericArtifactField(ArtifactMetaData.SFEEFields.category.getFieldName(),
-					ArtifactMetaData.SFEEFields.category.getDisplayName(),
-					category, genericArtifact, trackerFields);
+			this.createGenericArtifactField(ArtifactMetaData.SFEEFields.category,
+					category, genericArtifact, fieldsMap, includeFieldMetaData);
 			Date closeDate = artifactRow.getCloseDate();
-			this.createGenericArtifactField(ArtifactMetaData.SFEEFields.closeDate.getFieldName(),
-					ArtifactMetaData.SFEEFields.closeDate.getDisplayName(),
-					closeDate, genericArtifact, trackerFields);
+			this.createGenericArtifactField(ArtifactMetaData.SFEEFields.closeDate,
+					closeDate, genericArtifact, fieldsMap, includeFieldMetaData);
 			String customer = artifactRow.getCustomer();
-			this.createGenericArtifactField(ArtifactMetaData.SFEEFields.customer.getFieldName(),
-					ArtifactMetaData.SFEEFields.customer.getDisplayName(),
-					customer, genericArtifact, trackerFields);
+			this.createGenericArtifactField(ArtifactMetaData.SFEEFields.customer,
+					customer, genericArtifact, fieldsMap, includeFieldMetaData);
 			String description = artifactRow.getDescription();
-			this.createGenericArtifactField(ArtifactMetaData.SFEEFields.description.getFieldName(),
-					ArtifactMetaData.SFEEFields.description.getDisplayName(),
-					description, genericArtifact, trackerFields);
+			this.createGenericArtifactField(ArtifactMetaData.SFEEFields.description,
+					description, genericArtifact, fieldsMap, includeFieldMetaData);
 			int estimatedHours = artifactRow.getEstimatedHours();
-			this.createGenericArtifactField(ArtifactMetaData.SFEEFields.estimatedHours.getFieldName(),
-					ArtifactMetaData.SFEEFields.estimatedHours.getDisplayName(),
-					estimatedHours, genericArtifact, trackerFields);
+			this.createGenericArtifactField(ArtifactMetaData.SFEEFields.estimatedHours,
+					estimatedHours, genericArtifact, fieldsMap, includeFieldMetaData);
 			String group = artifactRow.getGroup();
-			this.createGenericArtifactField(ArtifactMetaData.SFEEFields.group.getFieldName(),
-					ArtifactMetaData.SFEEFields.group.getDisplayName(),
-					group, genericArtifact, trackerFields);
+			this.createGenericArtifactField(ArtifactMetaData.SFEEFields.group,
+					group, genericArtifact, fieldsMap, includeFieldMetaData);
 			int priority = artifactRow.getPriority();
-			this.createGenericArtifactField(ArtifactMetaData.SFEEFields.priority.getFieldName(),
-					ArtifactMetaData.SFEEFields.priority.getDisplayName(),
-					priority, genericArtifact, trackerFields);
+			this.createGenericArtifactField(ArtifactMetaData.SFEEFields.priority,
+					priority, genericArtifact, fieldsMap, includeFieldMetaData);
 			String reportedReleaseId = artifactRow.getReportedReleaseId();
-			this.createGenericArtifactField(ArtifactMetaData.SFEEFields.reportedReleaseId.getFieldName(),
-					ArtifactMetaData.SFEEFields.reportedReleaseId.getDisplayName(),
-					reportedReleaseId, genericArtifact, trackerFields);
+			this.createGenericArtifactField(ArtifactMetaData.SFEEFields.reportedReleaseId,
+					reportedReleaseId, genericArtifact, fieldsMap, includeFieldMetaData);
 			String resolvedReleaseId = artifactRow.getResolvedReleaseId();
-			this.createGenericArtifactField(ArtifactMetaData.SFEEFields.resolvedReleaseId.getFieldName(),
-					ArtifactMetaData.SFEEFields.resolvedReleaseId.getDisplayName(),
-					resolvedReleaseId, genericArtifact, trackerFields);
+			this.createGenericArtifactField(ArtifactMetaData.SFEEFields.resolvedReleaseId,
+					resolvedReleaseId, genericArtifact, fieldsMap, includeFieldMetaData);
 			String status = artifactRow.getStatus();
-			this.createGenericArtifactField(ArtifactMetaData.SFEEFields.status.getFieldName(),
-					ArtifactMetaData.SFEEFields.status.getDisplayName(),
-					status, genericArtifact, trackerFields);
+			this.createGenericArtifactField(ArtifactMetaData.SFEEFields.status,
+					status, genericArtifact, fieldsMap, includeFieldMetaData);
 			String statusClass = artifactRow.getStatusClass();
-			this.createGenericArtifactField(ArtifactMetaData.SFEEFields.statusClass.getFieldName(),
-					ArtifactMetaData.SFEEFields.statusClass.getDisplayName(),
-					statusClass, genericArtifact, trackerFields);
+			this.createGenericArtifactField(ArtifactMetaData.SFEEFields.statusClass,
+					statusClass, genericArtifact, fieldsMap, includeFieldMetaData);
 			String folderId = artifactRow.getFolderId();
-			this.createGenericArtifactField(ArtifactMetaData.SFEEFields.folderId.getFieldName(),
-					ArtifactMetaData.SFEEFields.folderId.getDisplayName(),
-					folderId, genericArtifact, trackerFields);
+			this.createGenericArtifactField(ArtifactMetaData.SFEEFields.folderId,
+					folderId, genericArtifact, fieldsMap, includeFieldMetaData);
 			String path = artifactRow.getPath();
-			this.createGenericArtifactField(ArtifactMetaData.SFEEFields.path.getFieldName(),
-					ArtifactMetaData.SFEEFields.path.getDisplayName(),
-					path, genericArtifact, trackerFields);
+			this.createGenericArtifactField(ArtifactMetaData.SFEEFields.path,
+					path, genericArtifact, fieldsMap, includeFieldMetaData);
 			String title = artifactRow.getTitle();
-			this.createGenericArtifactField(ArtifactMetaData.SFEEFields.title.getFieldName(),
-					ArtifactMetaData.SFEEFields.title.getDisplayName(),
-					title, genericArtifact, trackerFields);
+			this.createGenericArtifactField(ArtifactMetaData.SFEEFields.title,
+					title, genericArtifact, fieldsMap, includeFieldMetaData);
 			String createdBy = artifactRow.getCreatedBy();
-			this.createGenericArtifactField(ArtifactMetaData.SFEEFields.createdBy.getFieldName(),
-					ArtifactMetaData.SFEEFields.createdBy.getDisplayName(),
-					createdBy, genericArtifact, trackerFields);
+			this.createGenericArtifactField(ArtifactMetaData.SFEEFields.createdBy,
+					createdBy, genericArtifact, fieldsMap, includeFieldMetaData);
 			Date createdDate = artifactRow.getCreatedDate();
-			this.createGenericArtifactField(ArtifactMetaData.SFEEFields.createdDate.getFieldName(),
-					ArtifactMetaData.SFEEFields.createdDate.getDisplayName(),
-					createdDate, genericArtifact, trackerFields);
+			this.createGenericArtifactField(ArtifactMetaData.SFEEFields.createdDate,
+					createdDate, genericArtifact, fieldsMap, includeFieldMetaData);
 			if(createdDate.after(lastReadDate)){
 				genericArtifact.setArtifactAction(ArtifactActionValue.CREATE);
 			}
@@ -117,23 +109,19 @@ public class SFEEToGenericArtifactConverter {
 				genericArtifact.setArtifactAction(ArtifactActionValue.UPDATE);
 			}
 			String id = artifactRow.getId();
-			this.createGenericArtifactField(ArtifactMetaData.SFEEFields.id.getFieldName(),
-					ArtifactMetaData.SFEEFields.id.getDisplayName(),
-					id, genericArtifact, trackerFields);
+			this.createGenericArtifactField(ArtifactMetaData.SFEEFields.id,
+					id, genericArtifact, fieldsMap, includeFieldMetaData);
 			genericArtifact.setSourceArtifactId(id);
 			String lastModifiedBy = artifactRow.getLastModifiedBy();
-			this.createGenericArtifactField(ArtifactMetaData.SFEEFields.lastModifiedBy.getFieldName(),
-					ArtifactMetaData.SFEEFields.lastModifiedBy.getDisplayName(),
-					lastModifiedBy, genericArtifact, trackerFields);
+			this.createGenericArtifactField(ArtifactMetaData.SFEEFields.lastModifiedBy,
+					lastModifiedBy, genericArtifact, fieldsMap, includeFieldMetaData);
 			Date lastModifiedDate = artifactRow.getLastModifiedDate();
-			this.createGenericArtifactField(ArtifactMetaData.SFEEFields.lastModifiedDate.getFieldName(),
-					ArtifactMetaData.SFEEFields.lastModifiedDate.getDisplayName(),
-					lastModifiedDate, genericArtifact, trackerFields);
+			this.createGenericArtifactField(ArtifactMetaData.SFEEFields.lastModifiedDate,
+					lastModifiedDate, genericArtifact, fieldsMap, includeFieldMetaData);
 			genericArtifact.setSourceArtifactLastModifiedDate(DateUtil.format(lastModifiedDate));
 			int version = artifactRow.getVersion();
-			this.createGenericArtifactField(ArtifactMetaData.SFEEFields.version.getFieldName(),
-					ArtifactMetaData.SFEEFields.version.getDisplayName(),
-					version, genericArtifact, trackerFields);
+			this.createGenericArtifactField(ArtifactMetaData.SFEEFields.version,
+					version, genericArtifact, fieldsMap, includeFieldMetaData);
 			
 			genericArtifact.setSourceArtifactVersion(Integer.toString(version));
 			
@@ -142,25 +130,34 @@ public class SFEEToGenericArtifactConverter {
 			String[] flexFieldTypes = flexFields.getTypes();
 			Object[] flexFieldValues = flexFields.getValues();
 			for(int i=0; i < flexFieldNames.length; i++){
-//				if(flexFieldNames[i].equals("ArtifactAction")){
-//					genericArtifact.setArtifactAction(GenericArtifact.ArtifactActionValue.CREATE);
-//					continue;
-//				}
-//				else{
-//					genericArtifact.setArtifactAction(GenericArtifact.ArtifactActionValue.UPDATE);
-//				}
 				GenericArtifactField field;
-
+				TrackerFieldSoapDO fieldDO =
+					SFEEAppHandler.getTrackerFieldSoapDOForFlexField(fieldsMap, flexFieldNames[i]); 
 				GenericArtifactField.FieldValueTypeValue fieldValueType =
-					ArtifactMetaData.getFieldValueType(flexFieldNames[i], trackerFields);
-//				 CHANGE Field display name is not correct here.
+					ArtifactMetaData.getFieldValueType(flexFieldNames[i],fieldDO);
 				field = genericArtifact.addNewField(flexFieldNames[i], GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
-				genericArtifact.setArtifactType(GenericArtifact.ArtifactTypeValue.PLAINARTIFACT);
-				genericArtifact.setArtifactMode(GenericArtifact.ArtifactModeValue.COMPLETE);
 				field.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
 				field.setFieldValueType(fieldValueType);
-				// TODO setting the field value as is is not correct. Please change this.
 				field.setFieldValue(ArtifactMetaData.getFieldValue(flexFieldNames[i], flexFieldValues[i], fieldValueType));
+				if(includeFieldMetaData){
+					field.setAlternativeFieldName(flexFieldNames[i]);
+					if(fieldDO.getRequired()){
+						field.setMinOccurs(1);
+					}
+					else {
+						field.setMinOccurs(0);
+					}
+					if(flexFieldTypes[i].equals(TrackerFieldSoapDO.FIELD_TYPE_MULTISELECT)){
+						TrackerFieldValueSoapDO[] fieldValues = fieldDO.getFieldValues();
+						field.setMaxOccurs(fieldValues.length);
+					}
+					else if(flexFieldTypes[i].equals(TrackerFieldSoapDO.FIELD_TYPE_MULTISELECT_USER)){
+						field.setMaxOccursValue(GenericArtifactField.UNBOUNDED);
+					}
+					else {
+						field.setMaxOccurs(1);
+					}
+				}
 			}
 			return genericArtifact;
 		}
@@ -175,12 +172,20 @@ public class SFEEToGenericArtifactConverter {
 	 * @param displayName - The field's display name
 	 * @param value - Value of the field
 	 * @param genericArtifact - The GenericArtifact object on which the new field should be created
-	 * @param trackerFields - The custom/flex fields defined for this tracker.
+	 * @param fieldsMap - The custom/flex fields defined for this tracker.
+	 * @param includeFieldMetaData 
 	 * @return - Returns the newly created GenericArtifactField object
 	 */
-	private GenericArtifactField createGenericArtifactField(String fieldName, String displayName, Object value, GenericArtifact genericArtifact, TrackerFieldSoapDO[] trackerFields){
-		GenericArtifactField field = genericArtifact.addNewField(fieldName, GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD);
-		GenericArtifactField.FieldValueTypeValue fieldValueType = ArtifactMetaData.getFieldValueType(ArtifactMetaData.SFEEFields.actualHours.getFieldName(), trackerFields);
+	private GenericArtifactField createGenericArtifactField(ArtifactMetaData.SFEEFields sfField,
+			Object value, GenericArtifact genericArtifact, HashMap<String,List<TrackerFieldSoapDO>> fieldsMap,
+			boolean includeFieldMetaData){
+		String fieldName = sfField.getFieldName();
+		TrackerFieldSoapDO fieldSoapDO = SFEEAppHandler.getTrackerFieldSoapDOForFlexField(fieldsMap, fieldName);
+		if(fieldSoapDO == null){
+			fieldSoapDO = SFEEAppHandler.getTrackerFieldSoapDOForFlexField(fieldsMap, sfField.getAlternateName());
+		}
+		GenericArtifactField field = genericArtifact.addNewField(sfField.getFieldName(), GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD);
+		GenericArtifactField.FieldValueTypeValue fieldValueType = ArtifactMetaData.getFieldValueType(fieldName, fieldSoapDO);
 		field.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
 		field.setFieldValueType(fieldValueType);
 		//TODO Change this
@@ -188,8 +193,31 @@ public class SFEEToGenericArtifactConverter {
 		if(value != null){
 			field.setFieldValue(value);
 		}
-		else {
-			
+		if(includeFieldMetaData){
+			field.setAlternativeFieldName(sfField.getDisplayName());
+			//TODO How do we determine if a field value can be null or not?
+//			field.setNullValueSupported(nullValueSupported);
+			if(sfField.getFieldType() == ArtifactMetaData.FIELD_TYPE.SYSTEM_DEFINED){
+				if(sfField.isRequired()){
+					field.setMinOccurs(1);
+				} else {
+					field.setMinOccurs(0);
+				}
+				field.setMaxOccurs(1);
+			}
+			else if(sfField.getFieldType() == ArtifactMetaData.FIELD_TYPE.CONFIGURABLE){
+				boolean required = false;
+				if(fieldSoapDO != null){
+					required = fieldSoapDO.getRequired();
+				}
+				if(required){
+					field.setMinOccurs(1);
+				}
+				else {
+					field.setMinOccurs(0);
+				}
+				field.setMaxOccurs(1);
+			}
 		}
 		return field;
 	}

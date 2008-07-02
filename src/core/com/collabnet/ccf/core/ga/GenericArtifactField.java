@@ -1,5 +1,7 @@
 package com.collabnet.ccf.core.ga;
 
+import com.collabnet.ccf.core.CCFRuntimeException;
+
 /**
  * A field has a name and a field type and contains a typed value for the
  * property of the artifact that is described by this field. If a field with the
@@ -98,6 +100,12 @@ public class GenericArtifactField {
 	 * HTMLString, Base64String, Boolean and User.
 	 */
 	private FieldValueTypeValue fieldValueType = FieldValueTypeValue.STRING;
+	
+	public static final int CARDINALITY_UNBOUNDED = -1;
+	
+	public static final String UNBOUNDED = "unbounded";
+	
+	public static final int CARDINALITY_UNKNOWN = -2;
 
 	/**
 	 * This optional attribute describes the minimal occurence of this field
@@ -106,14 +114,14 @@ public class GenericArtifactField {
 	 * "0". This attribute is typically only set if the root element attribute
 	 * "includesFieldMetaData" is set to "true".
 	 */
-	private String minOccurs = VALUE_UNKNOWN;
+	private int minOccurs = 0;
 	/**
 	 * This optional attribute describes the maximal occurence of this field
 	 * element. Typical values are "1", any number greater one, "unknown" and
 	 * "unbounded". This attribute is typically only set if the root element
 	 * attribute "includesFieldMetaData" is set to "true".
 	 */
-	private String maxOccurs = VALUE_UNKNOWN;
+	private int maxOccurs = CARDINALITY_UNBOUNDED;
 	/**
 	 * This optional attribute indicates whether this property of the artifact
 	 * supports a null value as field value. Allowed values are "true", "false"
@@ -248,19 +256,71 @@ public class GenericArtifactField {
 		return fieldValue;
 	}
 
-	public String getMinOccurs() {
+	public int getMinOccurs() {
 		return minOccurs;
 	}
+	
+	public String getMinOccursValue() {
+		if(minOccurs == CARDINALITY_UNKNOWN){
+			return VALUE_UNKNOWN;
+		}
+		return Integer.toString(minOccurs);
+	}
+	
+	public String getMaxOccursValue() {
+		if(maxOccurs == CARDINALITY_UNKNOWN){
+			return VALUE_UNKNOWN;
+		}
+		else if(maxOccurs == CARDINALITY_UNBOUNDED){
+			return UNBOUNDED;
+		}
+		return Integer.toString(minOccurs);
+	}
+	
+	public void setMinOccursValue(String minOccursStr) {
+		if(minOccursStr.equals(VALUE_UNKNOWN)){
+			minOccurs = CARDINALITY_UNKNOWN;
+		}
+		else {
+			try{
+				minOccurs = Integer.parseInt(minOccursStr);
+			}
+			catch(NumberFormatException e){
+				String cause = "Cardinality value minOccurs " + minOccursStr + " is not supported.";
+				CCFRuntimeException exception = new CCFRuntimeException(cause, e);
+				throw exception;
+			}
+		}
+	}
+	
+	public void setMaxOccursValue(String maxOccursStr) {
+		if(maxOccursStr.equals(VALUE_UNKNOWN)){
+			maxOccurs = CARDINALITY_UNKNOWN;
+		}
+		else if(maxOccursStr.equals(UNBOUNDED)){
+			maxOccurs = CARDINALITY_UNBOUNDED;
+		}
+		else {
+			try{
+				maxOccurs = Integer.parseInt(maxOccursStr);
+			}
+			catch(NumberFormatException e){
+				String cause = "Cardinality value " + maxOccursStr + " is not supported.";
+				CCFRuntimeException exception = new CCFRuntimeException(cause, e);
+				throw exception;
+			}
+		}
+	}
 
-	public void setMinOccurs(String minOccurs) {
+	public void setMinOccurs(int minOccurs) {
 		this.minOccurs = minOccurs;
 	}
 
-	public String getMaxOccurs() {
+	public int getMaxOccurs() {
 		return maxOccurs;
 	}
 
-	public void setMaxOccurs(String maxOccurs) {
+	public void setMaxOccurs(int maxOccurs) {
 		this.maxOccurs = maxOccurs;
 	}
 

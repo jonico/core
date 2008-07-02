@@ -7,7 +7,9 @@ import org.dom4j.Document;
 
 import junit.framework.TestCase;
 
+import com.collabnet.ccf.core.eis.connection.ConnectionException;
 import com.collabnet.ccf.core.eis.connection.ConnectionManager;
+import com.collabnet.ccf.core.eis.connection.MaxConnectionsReachedException;
 import com.vasoftware.sf.soap44.types.SoapFilter;
 import com.vasoftware.sf.soap44.types.SoapSortKey;
 import com.vasoftware.sf.soap44.webservices.ClientSoapStubFactory;
@@ -53,20 +55,7 @@ public class SFEEReaderTest extends TestCase {
 		sfeeReader.validate(null);
 	}
 
-	@SuppressWarnings("deprecation")
-	public void dummyTestReadTrackerItems(){
-		String projectTracker = "tracker1001";
-		repositoryId = projectTracker;
-		//"Mon Nov 05 00:00:00 GMT+05:30 2007"
-		Date lastModifiedDate = new Date(2007-1900,10,05,0,0,0);
-		//Date lastModifiedDate = new Date(2008-1900,4,7,9,10,0);
-		boolean firstTimeImport = false;
-		Connection connection = sfeeReader.connect(systemId, systemKind, repositoryId, repositoryKind, connectionInfo, credentialInfo);
-		sfeeReader.readTrackerItems(projectTracker, lastModifiedDate, firstTimeImport, (Document) null,connection);
-		sfeeReader.disconnect(connection);
-	}
-	
-	public void dummyTestCommentsList(){
+	public void dummyTestCommentsList() throws MaxConnectionsReachedException, ConnectionException{
 		Connection connection = sfeeReader.connect(systemId, systemKind, repositoryId, repositoryKind, connectionInfo, credentialInfo);
 		ISourceForgeSoap soapApp = connection.getSfSoap();
 		try {
@@ -89,7 +78,7 @@ public class SFEEReaderTest extends TestCase {
 		}
 	}
 	
-	public void dummyTestWriteAttachment(){
+	public void dummyTestWriteAttachment() throws MaxConnectionsReachedException, ConnectionException{
 		Connection connection = sfeeReader.connect(systemId, systemKind, repositoryId, repositoryKind, connectionInfo, credentialInfo);
 		ISimpleFileStorageAppSoap fileStorageApp = (ISimpleFileStorageAppSoap) ClientSoapStubFactory.getSoapStub(
 				ISimpleFileStorageAppSoap.class, serverUrl);
@@ -113,7 +102,7 @@ public class SFEEReaderTest extends TestCase {
 		}
 	}
 	
-	public void dummyTestAttachmentsList(){
+	public void dummyTestAttachmentsList() throws MaxConnectionsReachedException, ConnectionException{
 		Connection connection = sfeeReader.connect(systemId, systemKind, repositoryId, repositoryKind, connectionInfo, credentialInfo);
 		ISourceForgeSoap soapApp = connection.getSfSoap();
 		try {
@@ -133,7 +122,7 @@ public class SFEEReaderTest extends TestCase {
 		}
 	}
 	
-	public void dummyTestArtfactRetreival() throws RemoteException{
+	public void dummyTestArtfactRetreival() throws RemoteException, MaxConnectionsReachedException, ConnectionException{
 		repositoryId = "tracker1003";
 		Connection connection = sfeeReader.connect(systemId, systemKind, repositoryId, repositoryKind, connectionInfo, credentialInfo);
 		ISourceForgeSoap soapApp = connection.getSfSoap();

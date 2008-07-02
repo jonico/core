@@ -6,6 +6,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.collabnet.ccf.core.eis.connection.ConnectionException;
 import com.collabnet.ccf.core.eis.connection.ConnectionFactory;
 import com.vasoftware.sf.soap44.webservices.ClientSoapStubFactory;
 import com.vasoftware.sf.soap44.webservices.sfmain.ISourceForgeSoap;
@@ -30,14 +31,16 @@ public class SFEEConnectionFactory implements ConnectionFactory<Connection> {
 	 * 
 	 * @see com.collabnet.ccf.core.eis.connection.ConnectionFactory#closeConnection(java.lang.Object)
 	 */
-	public void closeConnection(Connection connection) {
+	public void closeConnection(Connection connection) throws ConnectionException {
 		ISourceForgeSoap sfSoap = connection.getSfSoap();
 		String sessionId = connection.getSessionId();
 		String username = connection.getUserName();
 		try {
 			sfSoap.logoff(username, sessionId);
 		} catch (RemoteException e) {
-			log.error("An error occured while trying to close the connection: "+e.getMessage());
+			String cause = "An error occured while trying to close the connection for "+e.getMessage();
+			log.error(cause, e);
+			throw new ConnectionException(cause, e);
 		}
 	}
 
@@ -51,7 +54,7 @@ public class SFEEConnectionFactory implements ConnectionFactory<Connection> {
 	 */
 	public Connection createConnection(String systemId, String systemKind,
 			String repositoryId, String repositoryKind, String connectionInfo,
-			String credentialInfo) {
+			String credentialInfo) throws ConnectionException {
 		if(StringUtils.isEmpty(repositoryId)){
 			throw new IllegalArgumentException("Repository Id cannot be null");
 		}
@@ -81,7 +84,10 @@ public class SFEEConnectionFactory implements ConnectionFactory<Connection> {
 			sessionId = login(sfSoap, username, password);
 			connection = new Connection(username, sfSoap, sessionId);
 		} catch (RemoteException e) {
-			log.error("While trying to login into SFEE an exception occured: "+e.getMessage());
+			String cause = "While trying to login into SFEE "+ connectionInfo 
+								+" an exception occured: "+e.getMessage();
+			log.error(cause, e);
+			throw new ConnectionException(cause, e);
 		}
 		return connection;
 	}
@@ -98,12 +104,8 @@ public class SFEEConnectionFactory implements ConnectionFactory<Connection> {
 	 *             when an error is encountered during login.
 	 */
 	public String login(ISourceForgeSoap sfSoap, String username, String password) throws RemoteException {
-		try {
-		    String sessionId = sfSoap.login(username, password);
-		    return sessionId;
-		} catch (RemoteException e) {
-		    throw e;
-		}
+	    String sessionId = sfSoap.login(username, password);
+	    return sessionId;
 	}
 
 	/** 

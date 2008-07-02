@@ -296,11 +296,6 @@ public class SFEEAttachmentHandler {
 					nameField.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
 					nameField.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
 					//gaAttachment.setAttachmentDescription(row.getFileName());
-					GenericArtifactField idField = ga.addNewField(AttachmentMetaData.ATTACHMENT_ID,
-							GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
-					idField.setFieldValue(row.getAttachmentId());
-					idField.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
-					idField.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
 					GenericArtifactField sizeField = ga.addNewField(AttachmentMetaData.ATTACHMENT_SIZE,
 							GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
 					sizeField.setFieldValue(Long.parseLong(row.getFileSize()));

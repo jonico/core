@@ -17,12 +17,14 @@ import org.openadaptor.core.exception.ValidationException;
 import org.openadaptor.core.lifecycle.LifecycleComponent;
 
 import com.collabnet.ccf.core.CCFRuntimeException;
+import com.collabnet.ccf.core.eis.connection.ConnectionException;
 import com.collabnet.ccf.core.eis.connection.ConnectionManager;
 import com.collabnet.ccf.core.eis.connection.MaxConnectionsReachedException;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
+import com.collabnet.ccf.core.hospital.CCFErrorCode;
 import com.collabnet.ccf.core.utils.DateUtil;
 import com.collabnet.ccf.pi.sfee.v44.meta.ArtifactMetaData;
 import com.vasoftware.sf.soap44.webservices.sfmain.TrackerFieldSoapDO;
@@ -43,11 +45,6 @@ public class SFEEWriter extends LifecycleComponent implements
 	private static final Log log = LogFactory.getLog(SFEEWriter.class);
 
 	/**
-	 * Token used to indicate that the tracker item has to be created
-	 */
-	private String createToken;
-
-	/**
 	 * SFEE tracker handler instance
 	 */
 	private SFEETrackerHandler trackerHandler;
@@ -56,12 +53,6 @@ public class SFEEWriter extends LifecycleComponent implements
 	 * Comment used when updating SFEE tracker items
 	 */
 	private String updateComment;
-
-	/**
-	 * name of the flex field where the version number of the last update, we
-	 * did ourself, is stored
-	 */
-	private String lastSynchronizedWithOtherSystemSFEETargetFieldname;
 
 	private SFEEAttachmentHandler attachmentHandler;
 	
@@ -89,15 +80,7 @@ public class SFEEWriter extends LifecycleComponent implements
 		} catch (GenericArtifactParsingException e2) {
 			throw new RuntimeException(e2);
 		}
-		//String trackerId = ga.getTargetRepositoryId();
-		//String sourceRepositoryId = ga.getSourceRepositoryId();
 		String sourceArtifactId = ga.getSourceArtifactId();
-//		String sourceSystemId = ga.getSourceSystemId();
-//		String sourceSystemKind = ga.getSourceSystemKind();
-//		String targetSystemId = ga.getTargetSystemId();
-//		String targetSystemKind = ga.getTargetSystemKind();
-//		String sourceRepositoryKind = ga.getSourceRepositoryKind();
-//		String targetRepositoryKind = ga.getTargetRepositoryKind();
 		String targetRepositoryId = ga.getTargetRepositoryId();
 		String targetArtifactId = ga.getTargetArtifactId();
 		String tracker = targetRepositoryId;
@@ -133,11 +116,9 @@ public class SFEEWriter extends LifecycleComponent implements
 
 		// check whether we should create or update the artifact
 		// TODO This has to be done on the artifactAction, not on the id value
-		String id = (String) SFEEGAHelper.getSingleValue(ga, ArtifactMetaData.SFEEFields.id.getFieldName());
 		ArtifactSoapDO result = null;
 		if(ga.getArtifactType() != GenericArtifact.ArtifactTypeValue.ATTACHMENT){
-			if ((StringUtils.isEmpty(id)) || SFEEGAHelper.getSingleValue(ga, 
-					ArtifactMetaData.SFEEFields.id.getFieldName()).equals("NEW")) {
+			if (ga.getArtifactAction() == GenericArtifact.ArtifactActionValue.CREATE) {
 				// find out whether we should delete something, that is not even
 				// present here
 				if (deleteArtifact.booleanValue()) {
@@ -162,7 +143,8 @@ public class SFEEWriter extends LifecycleComponent implements
 				} finally {
 					disconnect(connection);
 				}
-			} else {
+			}
+			else if(ga.getArtifactAction() == GenericArtifact.ArtifactActionValue.UPDATE) {
 				Connection connection = connect(ga);
 				try {
 					if (deleteArtifact.booleanValue()) {
@@ -213,46 +195,6 @@ public class SFEEWriter extends LifecycleComponent implements
 		return resultDocs;
 	}
 	
-	private HashMap<String, List<TrackerFieldSoapDO>> loadTrackerFieldsInHashMap(TrackerFieldSoapDO[] flexFields){
-		HashMap<String, List<TrackerFieldSoapDO>> fieldsMap = 
-							new HashMap<String, List<TrackerFieldSoapDO>>();
-		for(TrackerFieldSoapDO field:flexFields){
-			String fieldName = field.getName();
-			if(fieldsMap.containsKey(fieldName)){
-				List<TrackerFieldSoapDO> fieldsList = fieldsMap.get(fieldName);
-				fieldsList.add(field);
-			}
-			else {
-				List<TrackerFieldSoapDO> fieldsList = new ArrayList<TrackerFieldSoapDO>();
-				fieldsList.add(field);
-				fieldsMap.put(fieldName, fieldsList);
-			}
-		}
-		return fieldsMap;
-	}
-	
-	private TrackerFieldSoapDO getTrackerFieldSoapDOForFlexField(
-			HashMap<String, List<TrackerFieldSoapDO>> fieldsMap, String fieldName){
-		List<TrackerFieldSoapDO> fieldsList = fieldsMap.get(fieldName);
-		if(fieldsList != null){
-			if(fieldsList.size() == 1){
-				return fieldsList.get(0);
-			}
-			else if(fieldsList.size() > 1){
-				// TODO We are in trouble. We have a configurable field and a
-				// flex field with the same name
-			}
-			else if(fieldsList.size() == 0){
-				// No way. This should never happen.
-			}
-		}
-		else {
-			log.warn("Field for "+fieldName+" does not exist.");
-		}
-		// TODO We should not return null here of course
-		return null;
-	}
-	
 	/**
 	 * Creates the artifact represented by the GenericArtifact object
 	 * on the target SFEE system
@@ -270,7 +212,7 @@ public class SFEEWriter extends LifecycleComponent implements
 			log.error("While fetching the flex field values within SFEE, an error occured: "+e1.getMessage());
 		}
 		HashMap<String, List<TrackerFieldSoapDO>> fieldsMap = 
-							this.loadTrackerFieldsInHashMap(flexFields);
+							SFEEAppHandler.loadTrackerFieldsInHashMap(flexFields);
 		ArrayList<String> flexFieldNames = new ArrayList<String>();
 		ArrayList<String> flexFieldTypes = new ArrayList<String>();
 		ArrayList<Object> flexFieldValues = new ArrayList<Object>();
@@ -280,7 +222,7 @@ public class SFEEWriter extends LifecycleComponent implements
 				if(gaField.getFieldType().equals(GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD)){
 					String fieldName = gaField.getFieldName();
 					TrackerFieldSoapDO fieldSoapDO = 
-						this.getTrackerFieldSoapDOForFlexField(fieldsMap, fieldName);
+						SFEEAppHandler.getTrackerFieldSoapDOForFlexField(fieldsMap, fieldName);
 					if(fieldSoapDO == null){
 						log.warn("No field for "+fieldName);
 						continue;
@@ -368,7 +310,7 @@ public class SFEEWriter extends LifecycleComponent implements
 			throw new CCFRuntimeException(cause, e);
 		}
 		HashMap<String, List<TrackerFieldSoapDO>> fieldsMap = 
-			this.loadTrackerFieldsInHashMap(flexFields);
+			SFEEAppHandler.loadTrackerFieldsInHashMap(flexFields);
 		ArrayList<String> flexFieldNames = new ArrayList<String>();
 		ArrayList<String> flexFieldTypes = new ArrayList<String>();
 		ArrayList<Object> flexFieldValues = new ArrayList<Object>();
@@ -378,7 +320,7 @@ public class SFEEWriter extends LifecycleComponent implements
 				if(gaField.getFieldType().equals(GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD)){
 					String fieldName = gaField.getFieldName();
 					TrackerFieldSoapDO fieldSoapDO = 
-						this.getTrackerFieldSoapDOForFlexField(fieldsMap, fieldName);
+						SFEEAppHandler.getTrackerFieldSoapDOForFlexField(fieldsMap, fieldName);
 					if(fieldSoapDO == null){
 						log.warn("No field for "+fieldName);
 						continue;
@@ -445,23 +387,34 @@ public class SFEEWriter extends LifecycleComponent implements
 		String targetSystemKind = ga.getTargetSystemKind();
 		String targetRepositoryId = ga.getTargetRepositoryId();
 		String targetRepositoryKind = ga.getTargetRepositoryKind();
-		Connection connection = connect(targetSystemId, targetSystemKind, targetRepositoryId,
-				targetRepositoryKind, serverUrl, 
-				username+SFEEConnectionFactory.PARAM_DELIMITER+password);
+		Connection connection;
+		try {
+			connection = connect(targetSystemId, targetSystemKind, targetRepositoryId,
+					targetRepositoryKind, serverUrl, 
+					username+SFEEConnectionFactory.PARAM_DELIMITER+password);
+		} catch (MaxConnectionsReachedException e) {
+			String cause = "Could not create connection to the SFEE system. Max connections reached for "+
+								serverUrl;
+			log.error(cause, e);
+			ga.setErrorCode(Integer.toString(CCFErrorCode.MAX_CONNECTIONS_REACHED_FOR_POOL));
+			throw new CCFRuntimeException(cause, e);
+		} catch (ConnectionException e) {
+			String cause = "Could not create connection to the SFEE system "+
+								serverUrl;
+			log.error(cause, e);
+			ga.setErrorCode(Integer.toString(CCFErrorCode.EXTERNAL_SYSTEM_CONNECTION_ERROR));
+			throw new CCFRuntimeException(cause, e);
+		}
 		return connection;
 	}
 
 	public Connection connect(String systemId, String systemKind, String repositoryId,
-			String repositoryKind, String connectionInfo, String credentialInfo) {
+			String repositoryKind, String connectionInfo, String credentialInfo) throws MaxConnectionsReachedException, ConnectionException {
 		log.info("Before calling the parent connect()");
 		//super.connect();
 		Connection connection = null;
-		try {
-			connection = connectionManager.getConnection(systemId, systemKind, repositoryId,
-					repositoryKind, connectionInfo, credentialInfo);
-		} catch (MaxConnectionsReachedException e) {
-			e.printStackTrace();
-		}
+		connection = connectionManager.getConnection(systemId, systemKind, repositoryId,
+				repositoryKind, connectionInfo, credentialInfo);
 		return connection;
 	}
 	

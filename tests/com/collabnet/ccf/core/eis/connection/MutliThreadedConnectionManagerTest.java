@@ -80,7 +80,7 @@ public class MutliThreadedConnectionManagerTest extends MockObjectTestCase {
 				final int iTmp = i;
 				threads[(jTmp+1)*(iTmp+1)-1] = 
 					new TestCaseRunnable(){
-						public void runTestCase(){
+						public void runTestCase() throws ConnectionException{
 							try {
 									long randomLong1 = random.nextInt(20)*1000;
 									try {
