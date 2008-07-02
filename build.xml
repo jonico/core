@@ -142,9 +142,9 @@
 			<antcall target="clean">
 			</antcall>
 			<javac debug="true" debuglevel="${debuglevel}" 
-				destdir="samples/SFEE2SFEE/customReader/bin"
+				destdir="samples/IntegrationScenarios/customReader/bin"
 				source="${source}" target="${target}">
-				<src path="samples/SFEE2SFEE/customReader/src" />
+				<src path="samples/IntegrationScenarios/customReader/src" />
 				<classpath refid="CCFJ.classpath" />
 				<classpath>
 					<fileset dir="build/jars">
@@ -245,7 +245,7 @@
 		<copy todir="build/package/samples">
 			<fileset dir="samples">
 				<include name="CSV2CSV/**/*"/>
-				<include name="SFEE2SFEE/**/*"/>
+				<include name="IntegrationScenarios/**/*"/>
 			</fileset>
 		</copy>
 	</target>
