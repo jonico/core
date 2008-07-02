@@ -9,9 +9,11 @@
 		<artifact xmlns="http://ccf.open.collab.net/GenericArtifactV1.0"
 			artifactAction="create" artifactMode="complete"
 			artifactType="plainArtifact"
-			artifactLastModifiedDate="unknown"
-			artifactLastReadTransactionId="unknown" artifactVersion="unknown"
-			conflicResolutionPolicy="unknown" sourceArtifactId="CSV-1"
+			sourceArtifactLastModifiedDate="unknown"
+			targetArtifactLastModifiedDate="unknown"
+			artifactLastReadTransactionId="unknown" sourceArtifactVersion="unknown"
+			targetArtifactVersion="unknown"
+			conflictResolutionPriority="unknown" sourceArtifactId="CSV-1"
 			sourceRepositoryId="input.txt" sourceRepositoryKind="CSVClearQuestFile"
 			sourceSystemId="CSVFile" sourceSystemKind="Filesystem"
 			targetArtifactId="NEW" targetRepositoryId="tracker1001"
@@ -90,7 +92,7 @@
 				    <xsl:attribute name="fieldAction">replace</xsl:attribute>
 				    <xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
 				  	<xsl:attribute name="fieldValueHasChanged">true</xsl:attribute>
-				  	<xsl:attribute name="fieldValueType">User</xsl:attribute>
+				  	<xsl:attribute name="fieldValueType">String</xsl:attribute>
 				  	<xsl:attribute name="fieldValueIsNull">false</xsl:attribute>
 				  	<xsl:value-of select="text()"/>
 				</field>
@@ -318,7 +320,7 @@
 				    <xsl:attribute name="fieldAction">replace</xsl:attribute>
 				    <xsl:attribute name="fieldType">flexField</xsl:attribute>
 				  	<xsl:attribute name="fieldValueHasChanged">true</xsl:attribute>
-				  	<xsl:attribute name="fieldValueType">User</xsl:attribute>
+				  	<xsl:attribute name="fieldValueType">String</xsl:attribute>
 				  	<xsl:attribute name="fieldValueIsNull">false</xsl:attribute>
 				  	<xsl:value-of select="text()"/>
 				</field>
