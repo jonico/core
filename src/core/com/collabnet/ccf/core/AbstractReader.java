@@ -77,8 +77,20 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 					return -1;
 				}
 				else{
-					String firstSourceArtifactId = first.getSourceArtifactId();
-					String secondSourceArtifactId = second.getSourceArtifactId();
+					String firstSourceArtifactId = null;
+					if(first.getArtifactType() == GenericArtifact.ArtifactTypeValue.PLAINARTIFACT){
+						firstSourceArtifactId = first.getSourceArtifactId();
+					}
+					else {
+						firstSourceArtifactId = first.getDepParentSourceArtifactId();
+					}
+					String secondSourceArtifactId = null;
+					if(second.getArtifactType() == GenericArtifact.ArtifactTypeValue.PLAINARTIFACT){
+						secondSourceArtifactId = second.getSourceArtifactId();
+					}
+					else {
+						secondSourceArtifactId = second.getDepParentSourceArtifactId();
+					}
 					if(firstSourceArtifactId.equals(secondSourceArtifactId)){
 						if(first.getArtifactType() == GenericArtifact.ArtifactTypeValue.PLAINARTIFACT){
 							return -1;
