@@ -10,9 +10,11 @@
 		<artifact xmlns="http://ccf.open.collab.net/GenericArtifactV1.0"
 			artifactAction="create" artifactMode="complete"
 			artifactType="plainArtifact"
-			artifactLastModifiedDate="unknown"
-			artifactLastReadTransactionId="unknown" artifactVersion="unknown"
-			conflicResolutionPolicy="unknown"
+			sourceArtifactLastModifiedDate="unknown"
+			targetArtifactLastModifiedDate="unknown"
+			artifactLastReadTransactionId="unknown" sourceArtifactVersion="unknown"
+			targetArtifactVersion="unknown"
+			conflictResolutionPriority="unknown"
 			sourceRepositoryId="ARTIFACTS" sourceRepositoryKind="TABLE"
 			sourceSystemId="localhost" sourceSystemKind="HSQL DB"
 			targetArtifactId="NEW" targetRepositoryId="tracker1002"
@@ -92,7 +94,7 @@
 				    <xsl:attribute name="fieldAction">replace</xsl:attribute>
 				    <xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
 				  	<xsl:attribute name="fieldValueHasChanged">true</xsl:attribute>
-				  	<xsl:attribute name="fieldValueType">User</xsl:attribute>
+				  	<xsl:attribute name="fieldValueType">String</xsl:attribute>
 				  	<xsl:attribute name="fieldValueIsNull">false</xsl:attribute>
 				  	<xsl:value-of select="text()"/>
 				</field>
