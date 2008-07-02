@@ -5,4 +5,4 @@ CREATE USER SA PASSWORD ""
 GRANT DBA TO SA
 SET WRITE_DELAY 20
 SET SCHEMA PUBLIC
-INSERT INTO SYNCHRONIZATION_STATUS VALUES('cu011','tracker1058','cu011','tracker1059','SFEE4.4','Unidirectional Transformation Scenario Source Tracker','SFEE4.4','Unidirectional Transformation Scenario Target Tracker','2008-01-25 00:43:35.0',NULL,0)
+INSERT INTO SYNCHRONIZATION_STATUS VALUES('cu011','tracker1006','cu011','tracker1007','SFEE4.4','Unidirectional Transformation Scenario Source Tracker','SFEE4.4','Unidirectional Transformation Scenario Target Tracker','1970-01-01 00:00:00.0',NULL,'0')
