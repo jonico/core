@@ -25,6 +25,7 @@ import org.openadaptor.core.exception.ProcessingException;
 import org.openadaptor.core.exception.ValidationException;
 import org.openadaptor.util.FileUtils;
 
+import com.collabnet.ccf.core.CCFRuntimeException;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
 import com.collabnet.ccf.core.utils.XPathUtils;
 
@@ -110,14 +111,20 @@ public class XsltProcessor extends Component implements IDataProcessor {
 	 *             cannot be found or there was an error parsing it
 	 */
 	private Transformer loadXSLT(String xsltFile) {
-		if (xsltFile == null)
-			throw new ValidationException("xsltFile property not set", this);
+		if (xsltFile == null) {
+			String cause = "xsltFile property not set";
+			log.error(cause);
+			throw new CCFRuntimeException(cause);
+		}
 
 		// if the file doesn't exist try to get it via the classpath
 		URL url = FileUtils.toURL(xsltFile);
 		Transformer transform = null;
-		if (url == null)
-			throw new ValidationException("File not found: " + xsltFile, this);
+		if (url == null) {
+			String cause = "File not found";
+			log.error(cause);
+			throw new CCFRuntimeException(cause);
+		}
 
 		// load the transform
 		try {
@@ -130,8 +137,9 @@ public class XsltProcessor extends Component implements IDataProcessor {
 
 			log.info("Loaded XSLT [" + xsltFile + "] successfully");
 		} catch (TransformerConfigurationException e) {
-			throw new ValidationException("Failed to load XSLT: "
-					+ e.getMessage(), this);
+			String cause = "Failed to load XSLT: "+ e.getMessage();
+			log.error(cause,e);
+			throw new CCFRuntimeException(cause,e);
 		}
 		return transform;
 	}
@@ -160,16 +168,17 @@ public class XsltProcessor extends Component implements IDataProcessor {
 			try {
 				transform = constructFileNameAndFetchTransformer(record);
 			} catch (GenericArtifactParsingException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				String cause = "Problem occured while parsing the Document to contruct the file name and fetching transformer";
+				log.error(cause, e);
+				throw new CCFRuntimeException(cause, e);
 			}
 			return transform((Document) record, transform);
 		}
 
 		// if we get this far then we cannot process the record
-		throw new ProcessingException("Invalid record (type: "
-				+ record.getClass().toString() + "). Cannot apply transform",
-				this);
+		String cause = "Invalid record (type: "+ record.getClass().toString() + "). Cannot apply transform";
+		log.error(cause);
+		throw new CCFRuntimeException(cause);
 	}
 
 	public Transformer constructFileNameAndFetchTransformer(Object record) throws GenericArtifactParsingException{
@@ -227,8 +236,9 @@ public class XsltProcessor extends Component implements IDataProcessor {
 		try {
 			return new Document[] { transform(transform, d) };
 		} catch (TransformerException e) {
-			throw new ProcessingException(
-					"Transform failed: " + e.getMessage(), this);
+			String cause = "Transform failed: " + e.getMessage();
+			log.error(cause, e);
+			throw new CCFRuntimeException(cause, e);
 		}
 	}
 
@@ -268,8 +278,9 @@ public class XsltProcessor extends Component implements IDataProcessor {
 		try {
 			return DocumentHelper.parseText(xml);
 		} catch (DocumentException e) {
-			throw new ProcessingException("Failed to parse XML: "
-					+ e.getMessage(), this);
+			String cause = "Failed to parse XML: "+ e.getMessage();
+			log.error(cause, e);
+			throw new CCFRuntimeException(cause, e);
 		}
 	}
 
