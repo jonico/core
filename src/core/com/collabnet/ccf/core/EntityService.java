@@ -49,13 +49,15 @@ public class EntityService extends LifecycleComponent implements
 	 */
 	public Object[] process(Object data) {
 		if (data == null) {
-			throw new NullRecordException(
-					"Expected Document. Null record not permitted.");
+			String cause = "Expected Document. Null record not permitted.";
+			log.error(cause);
+			throw new CCFRuntimeException(cause);
 		}
 
 		if (!(data instanceof Document)) {
-			throw new RecordFormatException("Expected Document. Got ["
-					+ data.getClass().getName() + "]");
+			String cause = "Expected Document. Got ["+ data.getClass().getName() + "]";
+			log.error(cause);
+			throw new CCFRuntimeException(cause);
 		}
 
 		return processXMLDocument((Document) data);
@@ -118,11 +120,13 @@ public class EntityService extends LifecycleComponent implements
 		if(targetArtifactIdFromTable==null) {
 			XPathUtils.addAttribute(element, GenericArtifactHelper.TARGET_ARTIFACT_ID, createToken);
 	    }
-		}
-		catch(GenericArtifactParsingException e) {
-			log.error("There is some problem in extracting attributes from Document in EntityService!!!"+e);
+		} catch (GenericArtifactParsingException e) {
+			String cause = "Problem occured while parsing the Document to extract specific attributes";
+			log.error(cause, e);
+			throw new CCFRuntimeException(cause, e);
 		}
 		
+		log.info("After populating targetArtifactId::"+data.asXML());
 	    Object[] result = {data};
 		return result;
 	}
