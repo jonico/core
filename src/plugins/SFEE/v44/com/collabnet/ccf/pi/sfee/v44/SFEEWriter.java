@@ -77,8 +77,10 @@ public class SFEEWriter extends LifecycleComponent implements
 		GenericArtifact ga = null;
 		try {
 			ga = GenericArtifactHelper.createGenericArtifactJavaObject(data);
-		} catch (GenericArtifactParsingException e2) {
-			throw new RuntimeException(e2);
+	    } catch (GenericArtifactParsingException e) {
+			String cause = "Problem occured while parsing the GenericArtifact into Document";
+			log.error(cause, e);
+			throw new CCFRuntimeException(cause, e);
 		}
 		String sourceArtifactId = ga.getSourceArtifactId();
 		String targetRepositoryId = ga.getTargetRepositoryId();
@@ -179,8 +181,10 @@ public class SFEEWriter extends LifecycleComponent implements
 				attachmentHandler.handleAttachment(connection.getSessionId(), ga,
 						targetParentArtifactId, this.getUsername(),connection.getSfSoap());
 			} catch (RemoteException e) {
-				e.printStackTrace();
-				throw new RuntimeException(e);
+				String cause = "Problem occured while creating attachments in SFEE";
+				log.error(cause, e);
+				ga.setErrorCode(Integer.toString(CCFErrorCode.EXTERNAL_SYSTEM_WRITE_ERROR));
+				throw new CCFRuntimeException(cause, e);
 			} finally {
 				disconnect(connection);
 			}
@@ -189,7 +193,10 @@ public class SFEEWriter extends LifecycleComponent implements
 		try {
 			document = GenericArtifactHelper.createGenericArtifactXMLDocument(ga);
 		} catch (GenericArtifactParsingException e) {
-			throw new RuntimeException(e);
+			String cause = "Problem occured while parsing the GenericArtifact into Document";
+			log.error(cause, e);
+			ga.setErrorCode(Integer.toString(CCFErrorCode.GENERIC_ARTIFACT_PARSING_ERROR));
+			throw new CCFRuntimeException(cause, e);
 		}
 		Object[] resultDocs = { document };
 		return resultDocs;
@@ -277,6 +284,10 @@ public class SFEEWriter extends LifecycleComponent implements
 					comments);
 		} catch (RemoteException e) {
 			log.error("While trying to create an artifact within SFEE, an error occured: "+e.getMessage());
+			String cause = "While trying to create an artifact within SFEE, an error occured";
+			log.error(cause, e);
+			ga.setErrorCode(Integer.toString(CCFErrorCode.EXTERNAL_SYSTEM_WRITE_ERROR));
+			throw new CCFRuntimeException(cause, e);
 		}
 		return result;
 	}
@@ -378,6 +389,10 @@ public class SFEEWriter extends LifecycleComponent implements
 					forceOverride);
 		} catch (RemoteException e) {
 			log.error("While trying to update an artifact, an error occured: "+e.getMessage());
+			String cause = "While trying to update an artifact within SFEE, an error occured";
+			log.error(cause, e);
+			ga.setErrorCode(Integer.toString(CCFErrorCode.EXTERNAL_SYSTEM_WRITE_ERROR));
+			throw new CCFRuntimeException(cause, e);
 		}
 		return result;
 	}
