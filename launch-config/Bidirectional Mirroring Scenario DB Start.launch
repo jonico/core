@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <launchConfiguration type="org.eclipse.jdt.launching.localJavaApplication">
 <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
-<listEntry value="/CCFJ/src/core/lib/openadaptor-3.4/3rdparty/hsqldb.jar"/>
+<listEntry value="/CCF/src/core/lib/openadaptor-3.4/3rdparty/hsqldb.jar"/>
 </listAttribute>
 <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_TYPES">
 <listEntry value="1"/>
@@ -9,6 +9,6 @@
 <booleanAttribute key="org.eclipse.debug.core.appendEnvironmentVariables" value="true"/>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="org.hsqldb.Server"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-database.0 SFEE2SFEE -dbname.0 xdb"/>
-<stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="CCFJ"/>
-<stringAttribute key="org.eclipse.jdt.launching.WORKING_DIRECTORY" value="${workspace_loc:CCFJ/samples/IntegrationScenarios/bidirectionalMirroring/db}"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="CCF"/>
+<stringAttribute key="org.eclipse.jdt.launching.WORKING_DIRECTORY" value="${workspace_loc:CCF/samples/IntegrationScenarios/bidirectionalMirroring/db}"/>
 </launchConfiguration>
