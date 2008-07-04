@@ -24,8 +24,10 @@ import org.openadaptor.core.IDataProcessor;
 import org.openadaptor.core.exception.ProcessingException;
 import org.openadaptor.core.exception.ValidationException;
 import org.openadaptor.util.FileUtils;
+import com.collabnet.ccf.core.hospital.CCFErrorCode;
 
 import com.collabnet.ccf.core.CCFRuntimeException;
+import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
 import com.collabnet.ccf.core.utils.XPathUtils;
 
@@ -110,10 +112,12 @@ public class XsltProcessor extends Component implements IDataProcessor {
 	 *             if the XSLT file is not defined in the properties, the file
 	 *             cannot be found or there was an error parsing it
 	 */
-	private Transformer loadXSLT(String xsltFile) {
+	private Transformer loadXSLT(String xsltFile, Element element) {
 		if (xsltFile == null) {
 			String cause = "xsltFile property not set";
 			log.error(cause);
+			XPathUtils.addAttribute(element, GenericArtifactHelper.ERROR_CODE, 
+					Integer.toString(CCFErrorCode.TRANSFORMER_FILE_ERROR));
 			throw new CCFRuntimeException(cause);
 		}
 
@@ -123,6 +127,8 @@ public class XsltProcessor extends Component implements IDataProcessor {
 		if (url == null) {
 			String cause = "File not found";
 			log.error(cause);
+			XPathUtils.addAttribute(element, GenericArtifactHelper.ERROR_CODE, 
+					Integer.toString(CCFErrorCode.TRANSFORMER_FILE_ERROR));
 			throw new CCFRuntimeException(cause);
 		}
 
@@ -139,6 +145,8 @@ public class XsltProcessor extends Component implements IDataProcessor {
 		} catch (TransformerConfigurationException e) {
 			String cause = "Failed to load XSLT: "+ e.getMessage();
 			log.error(cause,e);
+			XPathUtils.addAttribute(element, GenericArtifactHelper.ERROR_CODE, 
+					Integer.toString(CCFErrorCode.TRANSFORMER_FILE_ERROR));
 			throw new CCFRuntimeException(cause,e);
 		}
 		return transform;
@@ -160,19 +168,23 @@ public class XsltProcessor extends Component implements IDataProcessor {
 		if (record == null)
 			return null;
 
-		//if (record instanceof String)
-			//return transform((String) record);
-
+		Document document = null;
+		Element element = null;
+		
 		if (record instanceof Document) {
 			Transformer transform = null;
 			try {
-				transform = constructFileNameAndFetchTransformer(record);
+				document = (Document) record;
+				element = XPathUtils.getRootElement(document);
+								
+				transform = constructFileNameAndFetchTransformer(record, element);
 			} catch (GenericArtifactParsingException e) {
 				String cause = "Problem occured while parsing the Document to contruct the file name and fetching transformer";
 				log.error(cause, e);
+				XPathUtils.addAttribute(element, GenericArtifactHelper.ERROR_CODE, Integer.toString(CCFErrorCode.GENERIC_ARTIFACT_PARSING_ERROR));
 				throw new CCFRuntimeException(cause, e);
 			}
-			return transform((Document) record, transform);
+			return transform((Document) record, transform, element);
 		}
 
 		// if we get this far then we cannot process the record
@@ -181,13 +193,11 @@ public class XsltProcessor extends Component implements IDataProcessor {
 		throw new CCFRuntimeException(cause);
 	}
 
-	public Transformer constructFileNameAndFetchTransformer(Object record) throws GenericArtifactParsingException{
+	public Transformer constructFileNameAndFetchTransformer(Object record, Element element) throws GenericArtifactParsingException{
 		
 		String fileName = null;
 		Transformer transform = null;
 		if(!StringUtils.isEmpty(this.xsltDir)){
-			Document document = (Document) record;
-			Element element = XPathUtils.getRootElement(document);
 			String sourceSystemId = XPathUtils.getAttributeValue(element, SOURCE_SYSTEM_ID);
 			String targetSystemId = XPathUtils.getAttributeValue(element, TARGET_SYSTEM_ID);
 			String sourceRepositoryId = XPathUtils.getAttributeValue(element, SOURCE_REPOSITORY_ID);
@@ -199,7 +209,7 @@ public class XsltProcessor extends Component implements IDataProcessor {
 			fileName = this.xsltFile;
 		}
 		if(!xsltFileNameTransformerMap.containsKey(fileName)){
-			transform = loadXSLT(fileName);
+			transform = loadXSLT(fileName, element);
 			xsltFileNameTransformerMap.put(fileName, transform);
 		}
 		else {
@@ -219,8 +229,8 @@ public class XsltProcessor extends Component implements IDataProcessor {
 	 *         transformed XML string supplied
 	 */
 	@SuppressWarnings("unused")
-	private Object[] transform(String s, Transformer transform) {
-		return transform(createDOMFromString(s), transform);
+	private Object[] transform(String s, Transformer transform, Element element) {
+		return transform(createDOMFromString(s, element), transform, element);
 	}
 
 	/**
@@ -232,12 +242,13 @@ public class XsltProcessor extends Component implements IDataProcessor {
 	 * @return an array containing a single XML string representing the
 	 *         transformed document
 	 */
-	private Object[] transform(Document d, Transformer transform) {
+	private Object[] transform(Document d, Transformer transform, Element element) {
 		try {
 			return new Document[] { transform(transform, d) };
 		} catch (TransformerException e) {
 			String cause = "Transform failed: " + e.getMessage();
 			log.error(cause, e);
+			XPathUtils.addAttribute(element, GenericArtifactHelper.ERROR_CODE, Integer.toString(CCFErrorCode.TRANSFORMER_TRANSFORMATION_ERROR));
 			throw new CCFRuntimeException(cause, e);
 		}
 	}
@@ -274,12 +285,13 @@ public class XsltProcessor extends Component implements IDataProcessor {
 	 * @throws ProcessingException
 	 *             if the supplied XML cannot be parsed
 	 */
-	private Document createDOMFromString(String xml) {
+	private Document createDOMFromString(String xml, Element element) {
 		try {
 			return DocumentHelper.parseText(xml);
 		} catch (DocumentException e) {
 			String cause = "Failed to parse XML: "+ e.getMessage();
 			log.error(cause, e);
+			XPathUtils.addAttribute(element, GenericArtifactHelper.ERROR_CODE, Integer.toString(CCFErrorCode.TRANSFORMER_TRANSFORMATION_ERROR));
 			throw new CCFRuntimeException(cause, e);
 		}
 	}
