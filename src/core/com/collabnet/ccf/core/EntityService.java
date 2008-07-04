@@ -18,6 +18,7 @@ import org.openadaptor.core.lifecycle.LifecycleComponent;
 
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
+import com.collabnet.ccf.core.hospital.CCFErrorCode;
 import com.collabnet.ccf.core.utils.XPathUtils;
 
 /**
@@ -73,8 +74,9 @@ public class EntityService extends LifecycleComponent implements
 	 *         artifact schema
 	 */
 	private Object[] processXMLDocument(Document data) {
+		Element element = null;
 		try {
-		Element element = XPathUtils.getRootElement(data);
+		element = XPathUtils.getRootElement(data);
 		
 		String artifactType = XPathUtils.getAttributeValue(element, GenericArtifactHelper.ARTIFACT_TYPE);
 		String sourceArtifactId = XPathUtils.getAttributeValue(element, GenericArtifactHelper.SOURCE_ARTIFACT_ID);
@@ -123,6 +125,7 @@ public class EntityService extends LifecycleComponent implements
 		} catch (GenericArtifactParsingException e) {
 			String cause = "Problem occured while parsing the Document to extract specific attributes";
 			log.error(cause, e);
+			XPathUtils.addAttribute(element, GenericArtifactHelper.ERROR_CODE, Integer.toString(CCFErrorCode.GENERIC_ARTIFACT_PARSING_ERROR));
 			throw new CCFRuntimeException(cause, e);
 		}
 		
