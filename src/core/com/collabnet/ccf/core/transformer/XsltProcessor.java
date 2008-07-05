@@ -24,9 +24,9 @@ import org.openadaptor.core.IDataProcessor;
 import org.openadaptor.core.exception.ProcessingException;
 import org.openadaptor.core.exception.ValidationException;
 import org.openadaptor.util.FileUtils;
-import com.collabnet.ccf.core.hospital.CCFErrorCode;
 
 import com.collabnet.ccf.core.CCFRuntimeException;
+import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
 import com.collabnet.ccf.core.utils.XPathUtils;
@@ -116,8 +116,7 @@ public class XsltProcessor extends Component implements IDataProcessor {
 		if (xsltFile == null) {
 			String cause = "xsltFile property not set";
 			log.error(cause);
-			XPathUtils.addAttribute(element, GenericArtifactHelper.ERROR_CODE, 
-					Integer.toString(CCFErrorCode.TRANSFORMER_FILE_ERROR));
+			XPathUtils.addAttribute(element, GenericArtifactHelper.ERROR_CODE,GenericArtifact.TRANSFORMER_FILE_ERROR);
 			throw new CCFRuntimeException(cause);
 		}
 
@@ -127,8 +126,7 @@ public class XsltProcessor extends Component implements IDataProcessor {
 		if (url == null) {
 			String cause = "File not found";
 			log.error(cause);
-			XPathUtils.addAttribute(element, GenericArtifactHelper.ERROR_CODE, 
-					Integer.toString(CCFErrorCode.TRANSFORMER_FILE_ERROR));
+			XPathUtils.addAttribute(element, GenericArtifactHelper.ERROR_CODE,GenericArtifact.TRANSFORMER_FILE_ERROR);
 			throw new CCFRuntimeException(cause);
 		}
 
@@ -145,8 +143,7 @@ public class XsltProcessor extends Component implements IDataProcessor {
 		} catch (TransformerConfigurationException e) {
 			String cause = "Failed to load XSLT: "+ e.getMessage();
 			log.error(cause,e);
-			XPathUtils.addAttribute(element, GenericArtifactHelper.ERROR_CODE, 
-					Integer.toString(CCFErrorCode.TRANSFORMER_FILE_ERROR));
+			XPathUtils.addAttribute(element, GenericArtifactHelper.ERROR_CODE,GenericArtifact.TRANSFORMER_FILE_ERROR);
 			throw new CCFRuntimeException(cause,e);
 		}
 		return transform;
@@ -181,7 +178,7 @@ public class XsltProcessor extends Component implements IDataProcessor {
 			} catch (GenericArtifactParsingException e) {
 				String cause = "Problem occured while parsing the Document to contruct the file name and fetching transformer";
 				log.error(cause, e);
-				XPathUtils.addAttribute(element, GenericArtifactHelper.ERROR_CODE, Integer.toString(CCFErrorCode.GENERIC_ARTIFACT_PARSING_ERROR));
+				XPathUtils.addAttribute(element, GenericArtifactHelper.ERROR_CODE, GenericArtifact.GENERIC_ARTIFACT_PARSING_ERROR);
 				throw new CCFRuntimeException(cause, e);
 			}
 			return transform((Document) record, transform, element);
@@ -248,7 +245,7 @@ public class XsltProcessor extends Component implements IDataProcessor {
 		} catch (TransformerException e) {
 			String cause = "Transform failed: " + e.getMessage();
 			log.error(cause, e);
-			XPathUtils.addAttribute(element, GenericArtifactHelper.ERROR_CODE, Integer.toString(CCFErrorCode.TRANSFORMER_TRANSFORMATION_ERROR));
+			XPathUtils.addAttribute(element, GenericArtifactHelper.ERROR_CODE, GenericArtifact.TRANSFORMER_TRANSFORMATION_ERROR);
 			throw new CCFRuntimeException(cause, e);
 		}
 	}
@@ -291,7 +288,7 @@ public class XsltProcessor extends Component implements IDataProcessor {
 		} catch (DocumentException e) {
 			String cause = "Failed to parse XML: "+ e.getMessage();
 			log.error(cause, e);
-			XPathUtils.addAttribute(element, GenericArtifactHelper.ERROR_CODE, Integer.toString(CCFErrorCode.TRANSFORMER_TRANSFORMATION_ERROR));
+			XPathUtils.addAttribute(element, GenericArtifactHelper.ERROR_CODE, GenericArtifact.TRANSFORMER_TRANSFORMATION_ERROR);
 			throw new CCFRuntimeException(cause, e);
 		}
 	}

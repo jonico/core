@@ -24,7 +24,6 @@ import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
-import com.collabnet.ccf.core.hospital.CCFErrorCode;
 import com.collabnet.ccf.core.utils.DateUtil;
 import com.collabnet.ccf.pi.sfee.v44.meta.ArtifactMetaData;
 import com.vasoftware.sf.soap44.webservices.sfmain.TrackerFieldSoapDO;
@@ -183,7 +182,7 @@ public class SFEEWriter extends LifecycleComponent implements
 			} catch (RemoteException e) {
 				String cause = "Problem occured while creating attachments in SFEE";
 				log.error(cause, e);
-				ga.setErrorCode(Integer.toString(CCFErrorCode.EXTERNAL_SYSTEM_WRITE_ERROR));
+				ga.setErrorCode(GenericArtifact.EXTERNAL_SYSTEM_WRITE_ERROR);
 				throw new CCFRuntimeException(cause, e);
 			} finally {
 				disconnect(connection);
@@ -195,7 +194,7 @@ public class SFEEWriter extends LifecycleComponent implements
 		} catch (GenericArtifactParsingException e) {
 			String cause = "Problem occured while parsing the GenericArtifact into Document";
 			log.error(cause, e);
-			ga.setErrorCode(Integer.toString(CCFErrorCode.GENERIC_ARTIFACT_PARSING_ERROR));
+			ga.setErrorCode(GenericArtifact.GENERIC_ARTIFACT_PARSING_ERROR);
 			throw new CCFRuntimeException(cause, e);
 		}
 		Object[] resultDocs = { document };
@@ -286,7 +285,7 @@ public class SFEEWriter extends LifecycleComponent implements
 			log.error("While trying to create an artifact within SFEE, an error occured: "+e.getMessage());
 			String cause = "While trying to create an artifact within SFEE, an error occured";
 			log.error(cause, e);
-			ga.setErrorCode(Integer.toString(CCFErrorCode.EXTERNAL_SYSTEM_WRITE_ERROR));
+			ga.setErrorCode(GenericArtifact.EXTERNAL_SYSTEM_WRITE_ERROR);
 			throw new CCFRuntimeException(cause, e);
 		}
 		return result;
@@ -391,7 +390,7 @@ public class SFEEWriter extends LifecycleComponent implements
 			log.error("While trying to update an artifact, an error occured: "+e.getMessage());
 			String cause = "While trying to update an artifact within SFEE, an error occured";
 			log.error(cause, e);
-			ga.setErrorCode(Integer.toString(CCFErrorCode.EXTERNAL_SYSTEM_WRITE_ERROR));
+			ga.setErrorCode(GenericArtifact.EXTERNAL_SYSTEM_WRITE_ERROR);
 			throw new CCFRuntimeException(cause, e);
 		}
 		return result;
@@ -411,13 +410,13 @@ public class SFEEWriter extends LifecycleComponent implements
 			String cause = "Could not create connection to the SFEE system. Max connections reached for "+
 								serverUrl;
 			log.error(cause, e);
-			ga.setErrorCode(Integer.toString(CCFErrorCode.MAX_CONNECTIONS_REACHED_FOR_POOL));
+			ga.setErrorCode(GenericArtifact.MAX_CONNECTIONS_REACHED_FOR_POOL);
 			throw new CCFRuntimeException(cause, e);
 		} catch (ConnectionException e) {
 			String cause = "Could not create connection to the SFEE system "+
 								serverUrl;
 			log.error(cause, e);
-			ga.setErrorCode(Integer.toString(CCFErrorCode.EXTERNAL_SYSTEM_CONNECTION_ERROR));
+			ga.setErrorCode(GenericArtifact.EXTERNAL_SYSTEM_CONNECTION_ERROR);
 			throw new CCFRuntimeException(cause, e);
 		}
 		return connection;
