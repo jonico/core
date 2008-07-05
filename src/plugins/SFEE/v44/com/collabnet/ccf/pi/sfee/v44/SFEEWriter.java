@@ -213,6 +213,7 @@ public class SFEEWriter extends LifecycleComponent implements
 	private ArtifactSoapDO createArtifact(GenericArtifact ga, String tracker, Connection connection){
 		TrackerFieldSoapDO[] flexFields = null;
 		try {
+			// FIXME Do we really have to get the flex fields here?
 			flexFields = trackerHandler.getFlexFields(connection.getSessionId(), tracker);
 		} catch (RemoteException e1) {
 			log.error("While fetching the flex field values within SFEE, an error occured: "+e1.getMessage());
@@ -222,10 +223,11 @@ public class SFEEWriter extends LifecycleComponent implements
 		ArrayList<String> flexFieldNames = new ArrayList<String>();
 		ArrayList<String> flexFieldTypes = new ArrayList<String>();
 		ArrayList<Object> flexFieldValues = new ArrayList<Object>();
-		List<GenericArtifactField> gaFields = ga.getAllGenericArtifactFields();
+		
+		// FIXME Look at the methods the generic artifact class already provides
+		List<GenericArtifactField> gaFields = ga.getAllGenericArtifactFieldsWithSameFieldType(GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
 		if(gaFields != null){
-			for(GenericArtifactField gaField:gaFields){
-				if(gaField.getFieldType().equals(GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD)){
+			for(GenericArtifactField gaField:gaFields){	
 					String fieldName = gaField.getFieldName();
 					TrackerFieldSoapDO fieldSoapDO = 
 						SFEEAppHandler.getTrackerFieldSoapDOForFlexField(fieldsMap, fieldName);
@@ -238,9 +240,10 @@ public class SFEEWriter extends LifecycleComponent implements
 					flexFieldTypes.add(trackerFieldValueType);
 					Object value = gaField.getFieldValue();
 					flexFieldValues.add(value);
-				}
 			}
 		}
+		
+		// FIXME Use ga.getAllGenericArtifactFieldsWithSameFieldTypeAndFieldName(fieldType, fieldName) instead
 		String folderId = getStringGAField(ArtifactMetaData.SFEEFields.folderId, ga);
 		String description = SFEEWriter.getStringGAField(ArtifactMetaData.SFEEFields.description, ga);
 		String category = SFEEWriter.getStringGAField(ArtifactMetaData.SFEEFields.category, ga);
@@ -424,7 +427,7 @@ public class SFEEWriter extends LifecycleComponent implements
 
 	public Connection connect(String systemId, String systemKind, String repositoryId,
 			String repositoryKind, String connectionInfo, String credentialInfo) throws MaxConnectionsReachedException, ConnectionException {
-		log.info("Before calling the parent connect()");
+		//log.info("Before calling the parent connect()");
 		//super.connect();
 		Connection connection = null;
 		connection = connectionManager.getConnection(systemId, systemKind, repositoryId,

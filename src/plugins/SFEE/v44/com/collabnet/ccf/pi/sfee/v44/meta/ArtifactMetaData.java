@@ -163,6 +163,7 @@ public class ArtifactMetaData {
 		}
 		return fieldValueType;
 	}
+	
 	public static Object getFieldValue(String fieldName, Object value, FieldValueTypeValue fieldType){
 		if(fieldType == FieldValueTypeValue.DATE || 
 				fieldType == FieldValueTypeValue.DATETIME){
@@ -247,6 +248,8 @@ public class ArtifactMetaData {
 			return true;
 		}
 	}
+	
+	// FIXME This is very inperformant
 	public static void addFlexField(String fieldName,
 			ArtifactSoapDO artifactRow, Object value) {
 		SoapFieldValues flexFields = artifactRow.getFlexFields();

@@ -48,6 +48,7 @@ public class SFEEToGenericArtifactConverter {
 				genericArtifact.setIncludesFieldMetaData(GenericArtifact.IncludesFieldMetaDataValue.FALSE);
 			}
 			
+			// FIXME These fields will never change, why not add the fields directly?
 			int actualHours = artifactRow.getActualHours();
 			this.createGenericArtifactField(ArtifactMetaData.SFEEFields.actualHours,
 					actualHours, genericArtifact, fieldsMap, includeFieldMetaData);
@@ -127,6 +128,7 @@ public class SFEEToGenericArtifactConverter {
 			
 			SoapFieldValues flexFields = artifactRow.getFlexFields();
 			String[] flexFieldNames = flexFields.getNames();
+			// FIXME This is where we get our type info for free, why not take it from there?
 			String[] flexFieldTypes = flexFields.getTypes();
 			Object[] flexFieldValues = flexFields.getValues();
 			for(int i=0; i < flexFieldNames.length; i++){
@@ -138,6 +140,7 @@ public class SFEEToGenericArtifactConverter {
 				field = genericArtifact.addNewField(flexFieldNames[i], GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
 				field.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
 				field.setFieldValueType(fieldValueType);
+				// FIXME Why not use the flexFieldType array for this?
 				field.setFieldValue(ArtifactMetaData.getFieldValue(flexFieldNames[i], flexFieldValues[i], fieldValueType));
 				if(includeFieldMetaData){
 					field.setAlternativeFieldName(flexFieldNames[i]);
@@ -180,6 +183,7 @@ public class SFEEToGenericArtifactConverter {
 			Object value, GenericArtifact genericArtifact, HashMap<String,List<TrackerFieldSoapDO>> fieldsMap,
 			boolean includeFieldMetaData){
 		String fieldName = sfField.getFieldName();
+		// FIXME Why do we call this method for non-flex fields?
 		TrackerFieldSoapDO fieldSoapDO = SFEEAppHandler.getTrackerFieldSoapDOForFlexField(fieldsMap, fieldName);
 		if(fieldSoapDO == null){
 			fieldSoapDO = SFEEAppHandler.getTrackerFieldSoapDOForFlexField(fieldsMap, sfField.getAlternateName());

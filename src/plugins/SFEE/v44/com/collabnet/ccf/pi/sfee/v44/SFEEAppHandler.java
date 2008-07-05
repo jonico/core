@@ -61,6 +61,8 @@ public class SFEEAppHandler {
 		artifactList.add(artifact);
 		this.addComments(artifactList, artifact, lastModifiedDate, connectorUser);
 	}
+	
+	// FIXME Is a comment a flex field or could we transport it using another field type
 	private void addComments(List<ArtifactSoapDO> artifactHistory,
 			ArtifactSoapDO artifact, Date lastModifiedDate, String connectorUser) {
 		try {
@@ -83,6 +85,7 @@ public class SFEEAppHandler {
 //						if(artifactDO.getLastModifiedDate().after(createdDate) ||
 //								artifactDO.getLastModifiedDate().equals(createdDate)){
 							//TODO If more than one comment is added, How this will behave?
+							// FIXME Why do we do this here, it is very inperformant?
 							ArtifactMetaData.addFlexField(ArtifactMetaData.SFEEFields.commentText.getFieldName(), artifactDO, description);
 							commentSet = true;
 							break;
@@ -98,11 +101,13 @@ public class SFEEAppHandler {
 		}
 	}
 	
+	
 	public static HashMap<String, List<TrackerFieldSoapDO>> loadTrackerFieldsInHashMap(TrackerFieldSoapDO[] flexFields){
 		HashMap<String, List<TrackerFieldSoapDO>> fieldsMap = 
 							new HashMap<String, List<TrackerFieldSoapDO>>();
 		for(TrackerFieldSoapDO field:flexFields){
 			String fieldName = field.getName();
+			// FIXME Will we ever get two field with same name in method?
 			if(fieldsMap.containsKey(fieldName)){
 				List<TrackerFieldSoapDO> fieldsList = fieldsMap.get(fieldName);
 				fieldsList.add(field);
@@ -124,6 +129,8 @@ public class SFEEAppHandler {
 				return fieldsList.get(0);
 			}
 			else if(fieldsList.size() > 1){
+				
+				// FIXME What is a configurable field in this context?
 				// TODO We are in trouble. We have a configurable field and a
 				// flex field with the same name
 			}

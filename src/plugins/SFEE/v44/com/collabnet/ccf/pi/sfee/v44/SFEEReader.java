@@ -114,7 +114,7 @@ public class SFEEReader extends AbstractReader {
 	 */
 	public Connection connect(String systemId, String systemKind, String repositoryId,
 			String repositoryKind, String connectionInfo, String credentialInfo) throws MaxConnectionsReachedException, ConnectionException {
-		log.info("Before calling the parent connect()");
+		//log.info("Before calling the parent connect()");
 		Connection connection = null;
 		connection = connectionManager.getConnection(systemId, systemKind, repositoryId,
 			repositoryKind, connectionInfo, credentialInfo);
