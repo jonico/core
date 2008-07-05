@@ -172,9 +172,8 @@ public class XsltProcessor extends Component implements IDataProcessor {
 			Transformer transform = null;
 			try {
 				document = (Document) record;
-				element = XPathUtils.getRootElement(document);
 								
-				transform = constructFileNameAndFetchTransformer(record, element);
+				transform = constructFileNameAndFetchTransformer(document);
 			} catch (GenericArtifactParsingException e) {
 				String cause = "Problem occured while parsing the Document to contruct the file name and fetching transformer";
 				log.error(cause, e);
@@ -190,11 +189,12 @@ public class XsltProcessor extends Component implements IDataProcessor {
 		throw new CCFRuntimeException(cause);
 	}
 
-	public Transformer constructFileNameAndFetchTransformer(Object record, Element element) throws GenericArtifactParsingException{
-		
+	public Transformer constructFileNameAndFetchTransformer(Document record) throws GenericArtifactParsingException{
 		String fileName = null;
 		Transformer transform = null;
+		// this branch is only used if the xslt dir is set, otherwise, the xslt file will be used
 		if(!StringUtils.isEmpty(this.xsltDir)){
+			Element element = XPathUtils.getRootElement(record);
 			String sourceSystemId = XPathUtils.getAttributeValue(element, SOURCE_SYSTEM_ID);
 			String targetSystemId = XPathUtils.getAttributeValue(element, TARGET_SYSTEM_ID);
 			String sourceRepositoryId = XPathUtils.getAttributeValue(element, SOURCE_REPOSITORY_ID);
@@ -206,7 +206,7 @@ public class XsltProcessor extends Component implements IDataProcessor {
 			fileName = this.xsltFile;
 		}
 		if(!xsltFileNameTransformerMap.containsKey(fileName)){
-			transform = loadXSLT(fileName, element);
+			transform = loadXSLT(fileName, record.getRootElement());
 			xsltFileNameTransformerMap.put(fileName, transform);
 		}
 		else {

@@ -19,7 +19,7 @@
 			targetArtifactId="NEW" targetRepositoryId="tracker1001"
 			targetRepositoryKind="TRACKER" targetSystemId="cu011"
 			targetSystemKind="Filesystem" transactionId="0"
-			errorCode="0" includesFieldMetaData="false">
+			errorCode="ok" includesFieldMetaData="false">
 			<xsl:apply-templates />
 		</artifact>
 	</xsl:template>
