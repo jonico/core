@@ -88,7 +88,12 @@ public class Ambulance extends Component implements
 	public void validate(List exceptions) {
 		if (hospitalFileName==null) {
 			exceptions.add(new ValidationException(
-					"Not able to open hosipital filename", this));
+					"hospitalFileName-property not set", this));
+		}
+		
+		if (fos==null) {
+			exceptions.add(new ValidationException(
+					"Could not open hospital file "+hospitalFileName, this));
 		}
 		
 	}
