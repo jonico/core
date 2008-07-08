@@ -104,6 +104,9 @@ public class SampleReader extends AbstractReader {
 		// Let us set the artifactLastModifiedDate to current time always.
 		String artifactLastModifiedDate = DateUtil.format(new Date());
 		ga.setSourceArtifactLastModifiedDate(artifactLastModifiedDate);
+		ga.setTargetArtifactLastModifiedDate(GenericArtifact.VALUE_UNKNOWN);
+		ga.setTargetArtifactVersion(GenericArtifact.VALUE_UNKNOWN);
+		ga.setConflictResolutionPriority(GenericArtifact.VALUE_UNKNOWN);
 
 		// Let us add the following fields into the Generic artifact.
 		// These are the typical fields that can be found in any SFEE
@@ -117,13 +120,13 @@ public class SampleReader extends AbstractReader {
 		GenericArtifactField titleField = ga.addNewField("Title", GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD);
 		titleField.setFieldValueHasChanged(true);
 		titleField.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
-		titleField.setFieldValue("Sample artifact");
+		titleField.setFieldValue("Sample artifact from Custom Reader");
 		titleField.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
 		
 		GenericArtifactField summaryField = ga.addNewField("Summary", GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD);
 		summaryField.setFieldValueHasChanged(true);
 		summaryField.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
-		summaryField.setFieldValue("This is the summary of the Sample artifact");
+		summaryField.setFieldValue("This is the summary of the Sample artifact sent by the Custom Reader");
 		summaryField.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
 		
 		GenericArtifactField statusField = ga.addNewField("Status", GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD);
