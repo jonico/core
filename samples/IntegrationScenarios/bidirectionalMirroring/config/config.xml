@@ -133,7 +133,6 @@ $HeadURL$
 		<property name="connectionManager" ref="SFEEConnectionManager"></property>
 		<property name="sleepInterval" value="1000"></property>
 		<property name="maxAttachmentSizePerArtifact" value="${sfee.max.attachmentsize.per.artifact}" />
-		<property name="includeFieldMetaData" value="true"></property>
 	</bean>
 	<bean id="SFEEConnectionManager"
 		class="com.collabnet.ccf.core.eis.connection.ConnectionManager">
