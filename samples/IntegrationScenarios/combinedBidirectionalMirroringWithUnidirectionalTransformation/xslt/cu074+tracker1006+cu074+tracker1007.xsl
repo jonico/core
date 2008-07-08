@@ -46,7 +46,6 @@
 		match='ccf:field[@fieldName="estimatedHours"]'>
 		<field>
 		    <xsl:attribute name="fieldName">actualHours</xsl:attribute>
-		    <xsl:attribute name="fieldDisplayName">actualHours</xsl:attribute>
 		    <xsl:attribute name="fieldAction"><xsl:value-of select="@fieldAction" /></xsl:attribute>
 		    <xsl:attribute name="fieldType"><xsl:value-of select="@fieldType" /></xsl:attribute>
 		  	<xsl:attribute name="fieldValueHasChanged"><xsl:value-of select="@fieldValueHasChanged" /></xsl:attribute>
@@ -64,7 +63,6 @@
 		match='ccf:field[@fieldName="title"]'>
 		<field>
 		    <xsl:attribute name="fieldName">title</xsl:attribute>
-		    <xsl:attribute name="fieldDisplayName">title</xsl:attribute>
 		    <xsl:attribute name="fieldAction"><xsl:value-of select="@fieldAction" /></xsl:attribute>
 		    <xsl:attribute name="fieldType"><xsl:value-of select="@fieldType" /></xsl:attribute>
 		  	<xsl:attribute name="fieldValueHasChanged"><xsl:value-of select="@fieldValueHasChanged" /></xsl:attribute>
@@ -81,7 +79,6 @@
 		match='ccf:field[@fieldName="description"]'>
 		<field>
 		    <xsl:attribute name="fieldName">description</xsl:attribute>
-		    <xsl:attribute name="fieldDisplayName">description</xsl:attribute>
 		    <xsl:attribute name="fieldAction"><xsl:value-of select="@fieldAction" /></xsl:attribute>
 		    <xsl:attribute name="fieldType"><xsl:value-of select="@fieldType" /></xsl:attribute>
 		  	<xsl:attribute name="fieldValueHasChanged"><xsl:value-of select="@fieldValueHasChanged" /></xsl:attribute>
@@ -100,7 +97,6 @@
 		<xsl:variable name="statusValue" as="xs:string" select="." />
 		<field>
 		    <xsl:attribute name="fieldName">status</xsl:attribute>
-		    <xsl:attribute name="fieldDisplayName">status</xsl:attribute>
 		    <xsl:attribute name="fieldAction"><xsl:value-of select="@fieldAction" /></xsl:attribute>
 		    <xsl:attribute name="fieldType"><xsl:value-of select="@fieldType" /></xsl:attribute>
 		  	<xsl:attribute name="fieldValueHasChanged"><xsl:value-of select="@fieldValueHasChanged" /></xsl:attribute>
@@ -122,7 +118,6 @@
 		<xsl:variable name="typeValue" as="xs:string" select="." />
 		<field>
 		    <xsl:attribute name="fieldName">category</xsl:attribute>
-		    <xsl:attribute name="fieldDisplayName">category</xsl:attribute>
 		    <xsl:attribute name="fieldAction"><xsl:value-of select="@fieldAction" /></xsl:attribute>
 		    <xsl:attribute name="fieldType"><xsl:value-of select="@fieldType" /></xsl:attribute>
 		  	<xsl:attribute name="fieldValueHasChanged"><xsl:value-of select="@fieldValueHasChanged" /></xsl:attribute>
@@ -144,7 +139,6 @@
 		<xsl:variable name="detectedBy" as="xs:string"><xsl:value-of select="." /></xsl:variable>
 		<field>
 		    <xsl:attribute name="fieldName">BG_DETECTED_BY</xsl:attribute>
-		    <xsl:attribute name="fieldDisplayName">Detected By</xsl:attribute>
 		    <xsl:attribute name="fieldAction"><xsl:value-of select="@fieldAction" /></xsl:attribute>
 		    <xsl:attribute name="fieldType"><xsl:value-of select="@fieldType" /></xsl:attribute>
 		  	<xsl:attribute name="fieldValueHasChanged"><xsl:value-of select="@fieldValueHasChanged" /></xsl:attribute>
@@ -166,7 +160,6 @@
 		match='ccf:field[@fieldName="severity"]'>
 		<field>
 		    <xsl:attribute name="fieldName">severity</xsl:attribute>
-		    <xsl:attribute name="fieldDisplayName">severity</xsl:attribute>
 		    <xsl:attribute name="fieldAction"><xsl:value-of select="@fieldAction" /></xsl:attribute>
 		    <xsl:attribute name="fieldType"><xsl:value-of select="@fieldType" /></xsl:attribute>
 		  	<xsl:attribute name="fieldValueHasChanged"><xsl:value-of select="@fieldValueHasChanged" /></xsl:attribute>
@@ -184,7 +177,6 @@
 		match='ccf:field[@fieldName="Detected On"]'>
 		<field>
 		    <xsl:attribute name="fieldName">Detected On</xsl:attribute>
-		    <xsl:attribute name="fieldDisplayName">Detected on</xsl:attribute>
 		    <xsl:attribute name="fieldAction"><xsl:value-of select="@fieldAction" /></xsl:attribute>
 		    <xsl:attribute name="fieldType"><xsl:value-of select="@fieldType" /></xsl:attribute>
 		  	<xsl:attribute name="fieldValueHasChanged"><xsl:value-of select="@fieldValueHasChanged" /></xsl:attribute>
@@ -203,7 +195,6 @@
 		<xsl:variable name="priorityValue" as="xs:string"><xsl:value-of select="." /></xsl:variable>
 		<field>
 		    <xsl:attribute name="fieldName">priority</xsl:attribute>
-		    <xsl:attribute name="fieldDisplayName">priority</xsl:attribute>
 		    <xsl:attribute name="fieldAction"><xsl:value-of select="@fieldAction" /></xsl:attribute>
 		    <xsl:attribute name="fieldType"><xsl:value-of select="@fieldType" /></xsl:attribute>
 		  	<xsl:attribute name="fieldValueHasChanged"><xsl:value-of select="@fieldValueHasChanged" /></xsl:attribute>
@@ -225,7 +216,6 @@
 		match='ccf:field[@fieldName="Test Date"]'>
 		<field>
 		    <xsl:attribute name="fieldName">Test Date</xsl:attribute>
-		    <xsl:attribute name="fieldDisplayName">Test Date</xsl:attribute>
 		    <xsl:attribute name="fieldAction"><xsl:value-of select="@fieldAction" /></xsl:attribute>
 		    <xsl:attribute name="fieldType"><xsl:value-of select="@fieldType" /></xsl:attribute>
 		  	<xsl:attribute name="fieldValueHasChanged"><xsl:value-of select="@fieldValueHasChanged" /></xsl:attribute>
@@ -243,7 +233,6 @@
 		<xsl:variable name="assignedTo" as="xs:string"><xsl:value-of select="." /></xsl:variable>
 		<field>
 		    <xsl:attribute name="fieldName">assignedTo</xsl:attribute>
-		    <xsl:attribute name="fieldDisplayName">assignedTo</xsl:attribute>
 		    <xsl:attribute name="fieldAction"><xsl:value-of select="@fieldAction" /></xsl:attribute>
 		    <xsl:attribute name="fieldType"><xsl:value-of select="@fieldType" /></xsl:attribute>
 		  	<xsl:attribute name="fieldValueHasChanged"><xsl:value-of select="@fieldValueHasChanged" /></xsl:attribute>
@@ -265,7 +254,6 @@
 		<xsl:variable name="ccfText" as="xs:string"><xsl:text>CCF</xsl:text></xsl:variable>
 		<field>
 		    <xsl:attribute name="fieldName">Constant Value Flex Text Field (should always contain CCF)</xsl:attribute>
-		    <xsl:attribute name="fieldDisplayName">Constant Value Flex Text Field (should always contain CCF)</xsl:attribute>
 		    <xsl:attribute name="fieldAction"><xsl:value-of select="@fieldAction" /></xsl:attribute>
 		    <xsl:attribute name="fieldType"><xsl:value-of select="@fieldType" /></xsl:attribute>
 		  	<xsl:attribute name="fieldValueHasChanged"><xsl:value-of select="@fieldValueHasChanged" /></xsl:attribute>
@@ -285,7 +273,6 @@
 		 
 		<field>
 		    <xsl:attribute name="fieldName">Concatenated Flex Field Text (part 1 + part 2)</xsl:attribute>
-		    <xsl:attribute name="fieldDisplayName">Concatenated Flex Field Text (part 1 + part 2)</xsl:attribute>
 		    <xsl:attribute name="fieldAction"><xsl:value-of select="@fieldAction" /></xsl:attribute>
 		    <xsl:attribute name="fieldType"><xsl:value-of select="@fieldType" /></xsl:attribute>
 		  	<xsl:attribute name="fieldValueHasChanged"><xsl:value-of select="@fieldValueHasChanged" /></xsl:attribute>
