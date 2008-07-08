@@ -173,7 +173,7 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 				} catch (GenericArtifactParsingException e) {
 					String cause = "Could not parse the artifact for "+artifactId;
 					log.error(cause,e);
-					genericArtifact.setErrorCode(GenericArtifact.GENERIC_ARTIFACT_PARSING_ERROR);
+					genericArtifact.setErrorCode(GenericArtifact.ERROR_GENERIC_ARTIFACT_PARSING);
 					throw new CCFRuntimeException(cause, e);
 				}
 			}
@@ -210,7 +210,7 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 				} catch (GenericArtifactParsingException e) {
 					String cause = "Could not parse the artifact for "+artifactId;
 					log.error(cause, e);
-					genericArtifact.setErrorCode(GenericArtifact.GENERIC_ARTIFACT_PARSING_ERROR);
+					genericArtifact.setErrorCode(GenericArtifact.ERROR_GENERIC_ARTIFACT_PARSING);
 					throw new CCFRuntimeException(cause, e);
 				}
 			}

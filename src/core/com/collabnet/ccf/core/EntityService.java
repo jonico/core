@@ -125,7 +125,7 @@ public class EntityService extends LifecycleComponent implements
 		} catch (GenericArtifactParsingException e) {
 			String cause = "Problem occured while parsing the Document to extract specific attributes";
 			log.error(cause, e);
-			XPathUtils.addAttribute(element, GenericArtifactHelper.ERROR_CODE, GenericArtifact.GENERIC_ARTIFACT_PARSING_ERROR);
+			XPathUtils.addAttribute(element, GenericArtifactHelper.ERROR_CODE, GenericArtifact.ERROR_GENERIC_ARTIFACT_PARSING);
 			throw new CCFRuntimeException(cause, e);
 		}
 		

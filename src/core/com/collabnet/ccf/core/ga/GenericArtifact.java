@@ -393,21 +393,21 @@ public class GenericArtifact {
 	 */
 	private String depChildTargetArtifactId = VALUE_UNKNOWN;
 
-	public final static String TRANSFORMER_TRANSFORMATION_ERROR = "transformerTransformationError";
+	public final static String ERROR_TRANSFORMER_TRANSFORMATION = "transformerTransformationError";
 
-	public final static String TRANSFORMER_FILE_ERROR = "transformerFileError";
+	public final static String ERROR_TRANSFORMER_FILE = "transformerFileError";
 
-	public final static String EXTERNAL_SYSTEM_WRITE_ERROR = "externalSystemWriteError";
+	public final static String ERROR_EXTERNAL_SYSTEM_WRITE = "externalSystemWriteError";
 
-	public final static String MAX_CONNECTIONS_REACHED_FOR_POOL = "maxConnectionReachedForPool";
+	public final static String ERROR_MAX_CONNECTIONS_REACHED_FOR_POOL = "maxConnectionReachedForPool";
 
-	public final static String EXTERNAL_SYSTEM_CONNECTION_ERROR = "connectionError";
+	public final static String ERROR_EXTERNAL_SYSTEM_CONNECTION = "connectionError";
 
-	public final static String GENERIC_ARTIFACT_PARSING_ERROR = "parsingError";
+	public final static String ERROR_GENERIC_ARTIFACT_PARSING = "parsingError";
 
-	public final static String GENERIC_ARTIFACT_NOT_SCHEMA_COMPLIANT_ERROR = "notSchemaCompliant";
+	public final static String ERROR_GENERIC_ARTIFACT_NOT_SCHEMA_COMPLIANT = "notSchemaCompliant";
 
-	public final static String NO_ERROR = "ok";
+	public final static String ERROR_OK = "ok";
 
 	/**
 	 * Create a new empty generic artifact All attributes will be set to
