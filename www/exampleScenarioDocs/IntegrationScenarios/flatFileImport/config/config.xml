@@ -95,12 +95,13 @@ $HeadURL$
 	<bean id="OrderedMap2XmlMapConverter"
 		class="org.openadaptor.auxil.convertor.xml.OrderedMapToXmlConvertor">
 		<description>Convert the map into XML</description>
-		<property name="rootElementTag" value="record" />
+		<property name="rootElementTag" value="artifact" />
 		<property name="returnXmlAsString" value="false"/>
 	</bean>
 	
 	<bean id="XmlMap2GenericArtifactConverter" class="com.collabnet.ccf.core.transformer.XsltProcessor">
 		<property name="xsltFile" value="xslt/xmlmap2genericartifact.xsl" />
+		<property name="xsltDir" value="" />
 	</bean>
 	<bean id="SFEEConnectionManager"
 		class="com.collabnet.ccf.core.eis.connection.ConnectionManager">

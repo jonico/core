@@ -133,6 +133,7 @@ $HeadURL$
 		<property name="connectionManager" ref="SFEEConnectionManager"></property>
 		<property name="sleepInterval" value="1000"></property>
 		<property name="maxAttachmentSizePerArtifact" value="${sfee.max.attachmentsize.per.artifact}" />
+		<property name="shipAttachments" value="true"></property>
 	</bean>
 	<bean id="SFEEConnectionManager"
 		class="com.collabnet.ccf.core.eis.connection.ConnectionManager">
@@ -165,7 +166,7 @@ $HeadURL$
 	<bean id="FileWriter"
 		class="org.openadaptor.auxil.connector.iostream.writer.FileWriteConnector">
 		<property name="filename" value="output/genericartifact.xml" />
-		<property name="append" value="true" />
+		<property name="append" value="false" />
 	</bean>
 	<bean id="ExceptionHandler" class="com.collabnet.ccf.core.hospital.Ambulance">
 		<description>
