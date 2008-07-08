@@ -33,7 +33,7 @@ public class SFEEGAHelper {
 		List<GenericArtifactField> gaFolderIDs = ga.getAllGenericArtifactFieldsWithSameFieldName(fieldName);
 		if(gaFolderIDs != null){
 			for(GenericArtifactField field:gaFolderIDs){
-				if(field.getFieldType() == GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD){
+				if(field.getFieldType().equals(GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD)){
 					return true;
 				}
 			}
@@ -60,7 +60,7 @@ public class SFEEGAHelper {
 		List<GenericArtifactField> gaFolderIDs = ga.getAllGenericArtifactFieldsWithSameFieldName(fieldName);
 		if(gaFolderIDs != null){
 			for(GenericArtifactField field:gaFolderIDs){
-				if(field.getFieldType() == GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD){
+				if(field.getFieldType().equals(GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD)){
 					field.setFieldValue(fieldValue);
 					fieldUpdated = true;
 				}
