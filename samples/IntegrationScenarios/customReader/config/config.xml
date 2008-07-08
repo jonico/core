@@ -199,6 +199,7 @@ $HeadURL$
 		</description>
 		<property name="synchronizationStatusDatabaseUpdater" ref="SynchronizationStatusDatabaseUpdater"></property>
 		<property name="identityMappingDatabaseReader" ref="IndentityMappingDatabaseReader" />
+		<property name="identityMappingDatabaseUpdater" ref="IdentityMappingDatabaseUpdater" />
 		<property name="identityMappingDatabaseInserter"
 			ref="IdentityMappingDatabaseInserter">
 		</property>
@@ -218,7 +219,36 @@ $HeadURL$
 			<value>${ccf.targetartifactid.sql}</value>
 		</property>
 	</bean>
-	
+	<bean id="IdentityMappingDatabaseUpdater"
+		class="org.openadaptor.auxil.connector.jdbc.writer.JDBCWriteConnector">
+		<property name="writer" ref="IdentityMappingTableUpdater"></property>
+		<property name="jdbcConnection"
+			ref="JDBCConnection">
+		</property>
+	</bean>
+	<bean id="IdentityMappingTableUpdater"
+		class="com.collabnet.ccf.core.db.MapTableUpdater">
+		<description>
+			This is the writer object that writes the artifact mapping
+			information into the database table.
+		</description>
+		<property name="tableName" value="IDENTITY_MAPPING"></property>
+		<property name="sql" value="${ccf.identity.mapping.updater.sql}"></property>
+		<property name="outputColumns">
+			<list>
+				<value>SOURCE_LAST_MODIFICATION_TIME</value>
+				<value>TARGET_LAST_MODIFICATION_TIME</value>
+				<value>SOURCE_ARTIFACT_VERSION</value>
+				<value>TARGET_ARTIFACT_VERSION</value>
+				<value>SOURCE_SYSTEM_ID</value>
+				<value>SOURCE_REPOSITORY_ID</value>
+				<value>TARGET_SYSTEM_ID</value>
+				<value>TARGET_REPOSITORY_ID</value>
+				<value>SOURCE_ARTIFACT_ID</value>
+				<value>ARTIFACT_TYPE</value>
+			</list>
+		</property>
+	</bean>
 	<bean id="IdentityMappingDatabaseInserter"
 		class="org.openadaptor.auxil.connector.jdbc.writer.JDBCWriteConnector">
 		<description>
@@ -264,9 +294,9 @@ $HeadURL$
 		<property name="sql" value="${ccf.mapping.updater.sql}"></property>
 		<property name="outputColumns">
 			<list>
-				<value>LAST_READ_TIME</value>
-				<value>VERSION</value>
-				<value>TRANSACTION_ID</value>
+				<value>LAST_SOURCE_ARTIFACT_MODIFICATION_DATE</value>
+				<value>LAST_SOURCE_ARTIFACT_VERSION</value>
+				<value>LAST_SOURCE_ARTIFACT_ID</value>
 				<value>SOURCE_SYSTEM_ID</value>
 				<value>SOURCE_REPOSITORY_ID</value>
 				<value>TARGET_SYSTEM_ID</value>
