@@ -15,7 +15,7 @@ import org.openadaptor.core.exception.ProcessingException;
  * This component will take the content of an XML document (string) line by line
  * and converts the contained XML documents to a Dom4J document. It assumes that
  * the XML documents piped in line by line are all compliant to the Generic
- * Artifact XML schema (at least they should end with </artifact>)
+ * Artifact XML schema (at least they should end with </artifact>).
  * 
  * @author jnicolai
  * 
