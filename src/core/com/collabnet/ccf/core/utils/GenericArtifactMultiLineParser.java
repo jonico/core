@@ -83,7 +83,7 @@ public class GenericArtifactMultiLineParser extends Component implements
 			String xmlDocumentLine = (String) record;
 			// check whether XML document was terminated by top-level element so
 			// that we can finally parse it
-			if (xmlDocumentLine.matches("</artifact>")) {
+			if (xmlDocumentLine.matches(".*</artifact>")) {
 				xmlDocument.append(xmlDocumentLine);
 				dom4JXmlDocument = createDOMFromString(xmlDocument.toString());
 				xmlDocument = new StringBuffer();
