@@ -48,7 +48,8 @@ $HeadURL$
 			<map>
 				<entry key-ref="SynchronizationStatusPollingReader" value-ref="SFEEReader" />
 				<entry key-ref="SFEEReader" value-ref="SFEETransformer" />
-				<entry key-ref="SFEETransformer" value-ref="EntityService" />
+				<entry key-ref="SFEETransformer" value-ref="GenericArtifactSchemaValidator" />
+				<entry key-ref="GenericArtifactSchemaValidator" value-ref="EntityService" />
 				<entry key-ref="EntityService" value-ref="SFEEWriter" />
 				<entry key-ref="SFEEWriter" value-ref="SynchronizationStatusAndIdentityMappingTableUpdater" />
 			</map>
@@ -63,6 +64,10 @@ $HeadURL$
 		</description>
 		<property name="xsltDir" value="${ccf.xsltDir}" />
 	</bean>
+	<bean id="GenericArtifactSchemaValidator" class="com.collabnet.ccf.core.utils.XmlValidator">
+    	<description>This processor validates whether the artifacts produced by the SFEE reader are generic artifact schema compliant.</description>
+    	<property name="schemaURL" value="config/genericartifactschema.xsd"/>
+  	</bean>
 	<bean id="SynchronizationStatusPollingReader"
 		class="com.collabnet.ccf.core.test.plugins.SimpleLoopingPollingReadConnector">
 		<description>
