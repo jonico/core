@@ -133,16 +133,21 @@ public class SFEEToGenericArtifactConverter {
 			Object[] flexFieldValues = flexFields.getValues();
 			for(int i=0; i < flexFieldNames.length; i++){
 				GenericArtifactField field;
-				TrackerFieldSoapDO fieldDO =
-					SFEEAppHandler.getTrackerFieldSoapDOForFlexField(fieldsMap, flexFieldNames[i]); 
 				GenericArtifactField.FieldValueTypeValue fieldValueType =
-					ArtifactMetaData.getFieldValueType(flexFieldNames[i],fieldDO);
+					ArtifactMetaData.getFieldValueTypeForFieldType(flexFieldTypes[i]);
 				field = genericArtifact.addNewField(flexFieldNames[i], GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
 				field.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
 				field.setFieldValueType(fieldValueType);
 				// FIXME Why not use the flexFieldType array for this?
-				field.setFieldValue(ArtifactMetaData.getFieldValue(flexFieldNames[i], flexFieldValues[i], fieldValueType));
+				if(flexFieldTypes[i].equals(TrackerFieldSoapDO.FIELD_TYPE_DATE)){
+					field.setFieldValue(ArtifactMetaData.getDateFieldValue(flexFieldNames[i], flexFieldValues[i]));
+				}
+				else {
+					field.setFieldValue(flexFieldValues[i]);
+				}
 				if(includeFieldMetaData){
+					TrackerFieldSoapDO fieldDO =
+						SFEEAppHandler.getTrackerFieldSoapDOForFlexField(fieldsMap, flexFieldNames[i]); 
 					field.setAlternativeFieldName(flexFieldNames[i]);
 					if(fieldDO.getRequired()){
 						field.setMinOccurs(1);
@@ -183,16 +188,11 @@ public class SFEEToGenericArtifactConverter {
 			Object value, GenericArtifact genericArtifact, HashMap<String,List<TrackerFieldSoapDO>> fieldsMap,
 			boolean includeFieldMetaData){
 		String fieldName = sfField.getFieldName();
-		// FIXME Why do we call this method for non-flex fields?
-		TrackerFieldSoapDO fieldSoapDO = SFEEAppHandler.getTrackerFieldSoapDOForFlexField(fieldsMap, fieldName);
-		if(fieldSoapDO == null){
-			fieldSoapDO = SFEEAppHandler.getTrackerFieldSoapDOForFlexField(fieldsMap, sfField.getAlternateName());
-		}
+		
 		GenericArtifactField field = genericArtifact.addNewField(sfField.getFieldName(), GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD);
-		GenericArtifactField.FieldValueTypeValue fieldValueType = ArtifactMetaData.getFieldValueType(fieldName, fieldSoapDO);
+		GenericArtifactField.FieldValueTypeValue fieldValueType = ArtifactMetaData.getFieldValueType(fieldName);
 		field.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
 		field.setFieldValueType(fieldValueType);
-		//TODO Change this
 		field.setFieldValueHasChanged(true);
 		if(value != null){
 			field.setFieldValue(value);
@@ -210,6 +210,10 @@ public class SFEEToGenericArtifactConverter {
 				field.setMaxOccurs(1);
 			}
 			else if(sfField.getFieldType() == ArtifactMetaData.FIELD_TYPE.CONFIGURABLE){
+				TrackerFieldSoapDO fieldSoapDO = SFEEAppHandler.getTrackerFieldSoapDOForFlexField(fieldsMap, fieldName);
+				if(fieldSoapDO == null){
+					fieldSoapDO = SFEEAppHandler.getTrackerFieldSoapDOForFlexField(fieldsMap, sfField.getAlternateName());
+				}
 				boolean required = false;
 				if(fieldSoapDO != null){
 					required = fieldSoapDO.getRequired();

@@ -81,6 +81,8 @@ public class SFEEWriter extends LifecycleComponent implements
 			log.error(cause, e);
 			throw new CCFRuntimeException(cause, e);
 		}
+	    GenericArtifact.ArtifactActionValue artifactAction = ga.getArtifactAction();
+	    GenericArtifact.ArtifactTypeValue artifactType = ga.getArtifactType();
 		String sourceArtifactId = ga.getSourceArtifactId();
 		String targetRepositoryId = ga.getTargetRepositoryId();
 		String targetArtifactId = ga.getTargetArtifactId();
@@ -89,12 +91,7 @@ public class SFEEWriter extends LifecycleComponent implements
 			return new Object[]{data};
 		}
 		
-		if(!SFEEGAHelper.containsSingleMandatoryField(ga, ArtifactMetaData.SFEEFields.id.getFieldName())){
-			SFEEGAHelper.addField(ga, ArtifactMetaData.SFEEFields.id.getFieldName(),
-					"NEW", GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD,
-					GenericArtifactField.FieldValueTypeValue.STRING);
-		}
-		if(!StringUtils.isEmpty(targetArtifactId)){
+		if(artifactAction == GenericArtifact.ArtifactActionValue.UPDATE){
 			SFEEGAHelper.updateSingleMandatoryField(ga, 
 					ArtifactMetaData.SFEEFields.id.getFieldName(), targetArtifactId);
 			ga.setTargetArtifactId(targetArtifactId);
@@ -111,31 +108,22 @@ public class SFEEWriter extends LifecycleComponent implements
 
 		// this field is probably added from a read processor or read connector
 		// component
-		Boolean deleteArtifact = false;
 		Boolean forceOverride = true;
 		
 
 		// check whether we should create or update the artifact
 		// TODO This has to be done on the artifactAction, not on the id value
 		ArtifactSoapDO result = null;
-		if(ga.getArtifactType() != GenericArtifact.ArtifactTypeValue.ATTACHMENT){
-			if (ga.getArtifactAction() == GenericArtifact.ArtifactActionValue.CREATE) {
-				// find out whether we should delete something, that is not even
-				// present here
-				if (deleteArtifact.booleanValue()) {
-					log
-							.warn("Cannot delete an artifact that is not even mirrored (yet): "
-									+ data.asXML());
-					return null;
-				}
+		if(artifactType == GenericArtifact.ArtifactTypeValue.PLAINARTIFACT){
+			if (artifactAction == GenericArtifact.ArtifactActionValue.CREATE) {
 				Connection connection = connect(ga);
 				try {
-	
 					result = this.createArtifact(ga, tracker, connection);
-	
 					// update Id field after creating the artifact
 					targetArtifactId = result.getId();
-					SFEEGAHelper.updateSingleField(ga, ArtifactMetaData.SFEEFields.id.getFieldName(), targetArtifactId);
+					SFEEGAHelper.addField(ga, ArtifactMetaData.SFEEFields.id.getFieldName(), targetArtifactId,
+							GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD,
+							GenericArtifactField.FieldValueTypeValue.STRING);
 					ga.setTargetArtifactId(targetArtifactId);
 				} catch (NumberFormatException e) {
 					log.error("Wrong data format of attribute for artifact "
@@ -145,21 +133,15 @@ public class SFEEWriter extends LifecycleComponent implements
 					disconnect(connection);
 				}
 			}
-			else if(ga.getArtifactAction() == GenericArtifact.ArtifactActionValue.UPDATE) {
+			else if(artifactAction == GenericArtifact.ArtifactActionValue.UPDATE) {
 				Connection connection = connect(ga);
 				try {
-					if (deleteArtifact.booleanValue()) {
-	//					trackerHandler.removeArtifact(getSessionId(),
-	//							soapDoObj.getId());
-					} else {
-						// update token or do conflict resolution
-						result = this.updateArtifact(ga, tracker, forceOverride, connection);
-						if (result == null) {
-							// conflict resolution has decided in favor of the
-							// target copy
-							disconnect(connection);
-							return new Object[0];
-						}
+					// update token or do conflict resolution
+					result = this.updateArtifact(ga, tracker, forceOverride, connection);
+					if (result == null) {
+						// conflict resolution has decided in favor of the
+						// target copy
+						return new Object[0];
 					}
 				} catch (NumberFormatException e) {
 					log.error("Wrong data format of attribute for artifact "
@@ -169,11 +151,16 @@ public class SFEEWriter extends LifecycleComponent implements
 					disconnect(connection);
 				}
 			}
+			else if(artifactAction == GenericArtifact.ArtifactActionValue.DELETE){
+				// INFO Delete is not yet implemented
+//				trackerHandler.removeArtifact(getSessionId(),
+//							soapDoObj.getId());
+			}
 			if(result != null){
 				this.populateTargetArtifactAttributes(ga, result);
 			}
 		}
-		else {
+		else if(artifactType == GenericArtifact.ArtifactTypeValue.ATTACHMENT){
 			Connection connection = connect(ga);
 			String targetParentArtifactId = ga.getDepParentTargetArtifactId();
 			try {
@@ -224,22 +211,21 @@ public class SFEEWriter extends LifecycleComponent implements
 		ArrayList<String> flexFieldTypes = new ArrayList<String>();
 		ArrayList<Object> flexFieldValues = new ArrayList<Object>();
 		
-		// FIXME Look at the methods the generic artifact class already provides
 		List<GenericArtifactField> gaFields = ga.getAllGenericArtifactFieldsWithSameFieldType(GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
 		if(gaFields != null){
 			for(GenericArtifactField gaField:gaFields){	
-					String fieldName = gaField.getFieldName();
-					TrackerFieldSoapDO fieldSoapDO = 
-						SFEEAppHandler.getTrackerFieldSoapDOForFlexField(fieldsMap, fieldName);
-					if(fieldSoapDO == null){
-						log.warn("No field for "+fieldName);
-						continue;
-					}
-					String trackerFieldValueType = fieldSoapDO.getValueType();
-					flexFieldNames.add(fieldName);
-					flexFieldTypes.add(trackerFieldValueType);
-					Object value = gaField.getFieldValue();
-					flexFieldValues.add(value);
+				String fieldName = gaField.getFieldName();
+				TrackerFieldSoapDO fieldSoapDO = 
+					SFEEAppHandler.getTrackerFieldSoapDOForFlexField(fieldsMap, fieldName);
+				if(fieldSoapDO == null){
+					log.warn("No field for "+fieldName);
+					continue;
+				}
+				String trackerFieldValueType = fieldSoapDO.getValueType();
+				flexFieldNames.add(fieldName);
+				flexFieldTypes.add(trackerFieldValueType);
+				Object value = gaField.getFieldValue();
+				flexFieldValues.add(value);
 			}
 		}
 		
@@ -327,23 +313,24 @@ public class SFEEWriter extends LifecycleComponent implements
 		ArrayList<String> flexFieldNames = new ArrayList<String>();
 		ArrayList<String> flexFieldTypes = new ArrayList<String>();
 		ArrayList<Object> flexFieldValues = new ArrayList<Object>();
-		List<GenericArtifactField> gaFields = ga.getAllGenericArtifactFields();
+		List<GenericArtifactField> gaFields = ga.getAllGenericArtifactFieldsWithSameFieldType(GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
 		if(gaFields != null){
 			for(GenericArtifactField gaField:gaFields){
-				if(gaField.getFieldType().equals(GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD)){
-					String fieldName = gaField.getFieldName();
-					TrackerFieldSoapDO fieldSoapDO = 
-						SFEEAppHandler.getTrackerFieldSoapDOForFlexField(fieldsMap, fieldName);
-					if(fieldSoapDO == null){
-						log.warn("No field for "+fieldName);
-						continue;
-					}
-					String trackerFieldValueType = fieldSoapDO.getValueType();
-					flexFieldNames.add(fieldName);
-					flexFieldTypes.add(trackerFieldValueType);
-					Object value = gaField.getFieldValue();
-					flexFieldValues.add(value);
+				String fieldName = gaField.getFieldName();
+				TrackerFieldSoapDO fieldSoapDO = 
+					SFEEAppHandler.getTrackerFieldSoapDOForFlexField(fieldsMap, fieldName);
+				if(fieldSoapDO == null){
+					log.warn("No field for "+fieldName);
+					continue;
 				}
+				String trackerFieldValueType = fieldSoapDO.getValueType();
+				if(trackerFieldValueType.equals("SfUser")){
+					trackerFieldValueType = TrackerFieldSoapDO.FIELD_VALUE_TYPE_USER;
+				}
+				flexFieldNames.add(fieldName);
+				flexFieldTypes.add(trackerFieldValueType);
+				Object value = gaField.getFieldValue();
+				flexFieldValues.add(value);
 			}
 		}
 		String id = SFEEWriter.getStringGAField(ArtifactMetaData.SFEEFields.id, ga);

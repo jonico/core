@@ -329,9 +329,11 @@ public class SFEEReader extends AbstractReader {
 		ArrayList<GenericArtifact> gaList = new ArrayList<GenericArtifact>();
 		try {
 			TrackerFieldSoapDO[] trackerFields = null;
-			trackerFields = trackerHandler.getFlexFields(connection.getSessionId(), sourceRepositoryId);
-			HashMap<String, List<TrackerFieldSoapDO>> fieldsMap =
-				SFEEAppHandler.loadTrackerFieldsInHashMap(trackerFields);
+			HashMap<String, List<TrackerFieldSoapDO>> fieldsMap = null;
+			if(this.isIncludeFieldMetaData()){
+				trackerFields = trackerHandler.getFlexFields(connection.getSessionId(), sourceRepositoryId);
+				fieldsMap =	SFEEAppHandler.loadTrackerFieldsInHashMap(trackerFields);
+			}
 			ArtifactSoapDO artifact = trackerHandler.getTrackerItem(connection.getSessionId(), artifactId);
 			SFEEAppHandler appHandler = new SFEEAppHandler(connection.getSfSoap(), connection.getSessionId());
 			appHandler.addComments(artifact,

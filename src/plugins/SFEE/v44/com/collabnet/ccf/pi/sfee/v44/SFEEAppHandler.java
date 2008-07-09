@@ -10,6 +10,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.collabnet.ccf.pi.sfee.v44.meta.ArtifactMetaData;
+import com.vasoftware.sf.soap44.types.SoapFieldValues;
 import com.vasoftware.sf.soap44.webservices.sfmain.CommentSoapList;
 import com.vasoftware.sf.soap44.webservices.sfmain.CommentSoapRow;
 import com.vasoftware.sf.soap44.webservices.sfmain.ISourceForgeSoap;
@@ -85,8 +86,7 @@ public class SFEEAppHandler {
 //						if(artifactDO.getLastModifiedDate().after(createdDate) ||
 //								artifactDO.getLastModifiedDate().equals(createdDate)){
 							//TODO If more than one comment is added, How this will behave?
-							// FIXME Why do we do this here, it is very inperformant?
-							ArtifactMetaData.addFlexField(ArtifactMetaData.SFEEFields.commentText.getFieldName(), artifactDO, description);
+							this.addComment(ArtifactMetaData.SFEEFields.commentText.getFieldName(), artifactDO, description);
 							commentSet = true;
 							break;
 //						}
@@ -145,4 +145,54 @@ public class SFEEAppHandler {
 		return null;
 	}
 
+	private void addComment(String fieldName,
+			ArtifactSoapDO artifactRow, String value) {
+		SoapFieldValues flexFields = artifactRow.getFlexFields();
+		String[] fieldNames = null;
+		Object[] fieldValues = null;
+		String[] fieldTypes = null;
+		if(flexFields != null){
+			fieldNames = flexFields.getNames();
+			fieldValues = flexFields.getValues();
+			fieldTypes = flexFields.getTypes();
+		}
+		else {
+			flexFields = new SoapFieldValues();
+			fieldNames = flexFields.getNames();
+			fieldValues = flexFields.getValues();
+			fieldTypes = flexFields.getTypes();
+		}
+		if(fieldNames != null){
+			String[] newFieldNames = new String[fieldNames.length+1];
+			System.arraycopy(fieldNames, 0, newFieldNames, 0, fieldNames.length);
+			newFieldNames[fieldNames.length] = fieldName;
+			fieldNames = newFieldNames;
+		}
+		else {
+			fieldNames = new String[]{fieldName};
+		}
+		if(fieldValues != null){
+			Object[] newfieldValues = new Object[fieldValues.length+1];
+			System.arraycopy(fieldValues, 0, newfieldValues, 0, fieldValues.length);
+			newfieldValues[fieldValues.length] = value;
+			fieldValues = newfieldValues;
+		}
+		else {
+			fieldValues = new Object[]{value};
+		}
+		if(fieldTypes != null){
+			String[] newfieldTypes = new String[fieldTypes.length+1];
+			System.arraycopy(fieldTypes, 0, newfieldTypes, 0, fieldTypes.length);
+			newfieldTypes[fieldTypes.length] = TrackerFieldSoapDO.FIELD_VALUE_TYPE_STRING;
+			fieldTypes = newfieldTypes;
+		}
+		else {
+			String fieldType = null;
+			fieldType = TrackerFieldSoapDO.FIELD_VALUE_TYPE_STRING;
+			fieldTypes = new String[]{fieldType};
+		}
+		flexFields.setNames(fieldNames);
+		flexFields.setValues(fieldValues);
+		flexFields.setTypes(fieldTypes);
+	}
 }
