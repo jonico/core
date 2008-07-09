@@ -69,7 +69,7 @@
 			scenario it reads a file with generic artifact xml documents
 			in it.
 		</description>
-		<property name="filename" value="input/genericartifacts.xml"/>
+		<property name="filename" value="input/genericartifacts.xml.txt"/>
 		
 	</bean>
 
