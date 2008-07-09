@@ -113,8 +113,6 @@ public class MappingDBUpdater extends LifecycleComponent implements IDataProcess
 			
 			java.sql.Timestamp targetTime = new java.sql.Timestamp(targetLastModifiedDate.getTime());
 			
-			log.info("Inside MappingDBUpdator, ##### proper formatted Last_read_time="+sourceTime);
-			
 			createMapping(sourceArtifactId,
 					sourceRepositoryId,
 					sourceRepositoryKind,
@@ -174,8 +172,6 @@ public class MappingDBUpdater extends LifecycleComponent implements IDataProcess
 
 			
 			IOrderedMap inputParameters = new OrderedHashMap();
-			
-			log.info("Second time......Inside MappingDBUpdator, ##### proper formatted Last_read_time="+sourceTime);
 			inputParameters.add(0,"LAST_SOURCE_ARTIFACT_MODIFICATION_DATE",sourceTime);
 			inputParameters.add(1,"LAST_SOURCE_ARTIFACT_VERSION",sourceArtifactVersion);
 			inputParameters.add(2,"LAST_SOURCE_ARTIFACT_ID",sourceArtifactId);
