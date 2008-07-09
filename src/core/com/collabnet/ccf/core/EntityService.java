@@ -36,11 +36,6 @@ public class EntityService extends LifecycleComponent implements
 	 */
 	private static final Log log = LogFactory.getLog(EntityService.class);
 
-	/**
-	 * Token used to indicate that the target repository item has to be created
-	 */
-	private String createToken = "NEW";
-	
 	private JDBCReadConnector identityMappingDatabaseReader = null;
 	
 
@@ -76,53 +71,50 @@ public class EntityService extends LifecycleComponent implements
 	private Object[] processXMLDocument(Document data) {
 		Element element = null;
 		try {
-		element = XPathUtils.getRootElement(data);
-		
-		String artifactType = XPathUtils.getAttributeValue(element, GenericArtifactHelper.ARTIFACT_TYPE);
-		String sourceArtifactId = XPathUtils.getAttributeValue(element, GenericArtifactHelper.SOURCE_ARTIFACT_ID);
-		String sourceSystemId  = XPathUtils.getAttributeValue(element, GenericArtifactHelper.SOURCE_SYSTEM_ID);
-		String sourceSystemKind = XPathUtils.getAttributeValue(element, GenericArtifactHelper.SOURCE_SYSTEM_KIND);
-		String sourceRepositoryId = XPathUtils.getAttributeValue(element, GenericArtifactHelper.SOURCE_REPOSITORY_ID);
-		String sourceRepositoryKind = XPathUtils.getAttributeValue(element, GenericArtifactHelper.SOURCE_REPOSITORY_KIND);
-		
-		String targetSystemId = XPathUtils.getAttributeValue(element, GenericArtifactHelper.TARGET_SYSTEM_ID);
-		String targetSystemKind = XPathUtils.getAttributeValue(element, GenericArtifactHelper.TARGET_SYSTEM_KIND);
-		String targetRepositoryId = XPathUtils.getAttributeValue(element, GenericArtifactHelper.TARGET_REPOSITORY_ID);
-		String targetRepositoryKind = XPathUtils.getAttributeValue(element, GenericArtifactHelper.TARGET_REPOSITORY_KIND);
-		
-		if(sourceArtifactId.equalsIgnoreCase("Unknown")){
-			return new Object[]{data};
-		}
-		String targetArtifactIdFromTable = lookupTargetArtifactId(sourceArtifactId, sourceSystemId, sourceRepositoryId, 
-				targetSystemId, targetRepositoryId, artifactType);
-		if(artifactType.equals(GenericArtifactHelper.ARTIFACT_TYPE_ATTACHMENT)){
-			String sourceParentArtifactId = XPathUtils.getAttributeValue(element,
-					GenericArtifactHelper.DEP_PARENT_SOURCE_ARTIFACT_ID);
-			String sourceParentRepositoryId = XPathUtils.getAttributeValue(element,
-					GenericArtifactHelper.DEP_PARENT_SOURCE_REPOSITORY_ID);
-			String targetParentRepositoryId = XPathUtils.getAttributeValue(element,
-					GenericArtifactHelper.DEP_PARENT_TARGET_REPOSITORY_ID);
-			String targetParentArtifactId = lookupTargetArtifactId(sourceParentArtifactId, sourceSystemId, sourceParentRepositoryId, 
-					targetSystemId, targetParentRepositoryId, GenericArtifactHelper.ARTIFACT_TYPE_PLAIN_ARTIFACT);
-			if(StringUtils.isEmpty(targetParentArtifactId)){
-				String cause = "Parent artifact "+sourceParentArtifactId+" for attachment "+
-									sourceArtifactId +" is not created on the target";
-				Throwable e = new CCFRuntimeException(cause);
-				log.error(cause, e);
+			element = XPathUtils.getRootElement(data);
+			
+			String artifactType = XPathUtils.getAttributeValue(element, GenericArtifactHelper.ARTIFACT_TYPE);
+			String sourceArtifactId = XPathUtils.getAttributeValue(element, GenericArtifactHelper.SOURCE_ARTIFACT_ID);
+			String sourceSystemId  = XPathUtils.getAttributeValue(element, GenericArtifactHelper.SOURCE_SYSTEM_ID);
+			String sourceRepositoryId = XPathUtils.getAttributeValue(element, GenericArtifactHelper.SOURCE_REPOSITORY_ID);
+			String targetSystemId = XPathUtils.getAttributeValue(element, GenericArtifactHelper.TARGET_SYSTEM_ID);
+			String targetRepositoryId = XPathUtils.getAttributeValue(element, GenericArtifactHelper.TARGET_REPOSITORY_ID);
+			
+			if(sourceArtifactId.equalsIgnoreCase("Unknown")){
+				return new Object[]{data};
 			}
+			String targetArtifactIdFromTable = lookupTargetArtifactId(sourceArtifactId, sourceSystemId, sourceRepositoryId, 
+					targetSystemId, targetRepositoryId, artifactType);
+			if(artifactType.equals(GenericArtifactHelper.ARTIFACT_TYPE_ATTACHMENT)){
+				String sourceParentArtifactId = XPathUtils.getAttributeValue(element,
+						GenericArtifactHelper.DEP_PARENT_SOURCE_ARTIFACT_ID);
+				String sourceParentRepositoryId = XPathUtils.getAttributeValue(element,
+						GenericArtifactHelper.DEP_PARENT_SOURCE_REPOSITORY_ID);
+				String targetParentRepositoryId = XPathUtils.getAttributeValue(element,
+						GenericArtifactHelper.DEP_PARENT_TARGET_REPOSITORY_ID);
+				String targetParentArtifactId = lookupTargetArtifactId(sourceParentArtifactId, sourceSystemId, sourceParentRepositoryId, 
+						targetSystemId, targetParentRepositoryId, GenericArtifactHelper.ARTIFACT_TYPE_PLAIN_ARTIFACT);
+				if(StringUtils.isEmpty(targetParentArtifactId)){
+					String cause = "Parent artifact "+sourceParentArtifactId+" for attachment "+
+										sourceArtifactId +" is not created on the target";
+					Throwable e = new CCFRuntimeException(cause);
+					log.error(cause, e);
+				}
+				else {
+					XPathUtils.addAttribute(element, GenericArtifactHelper.DEP_PARENT_TARGET_ARTIFACT_ID,
+							targetParentArtifactId);
+				}
+			}
+			
+			if(targetArtifactIdFromTable != null) {
+				XPathUtils.addAttribute(element, GenericArtifactHelper.TARGET_ARTIFACT_ID, targetArtifactIdFromTable);
+				XPathUtils.addAttribute(element, GenericArtifactHelper.ARTIFACT_ACTION,	GenericArtifactHelper.ARTIFACT_ACTION_UPDATE);
+		    }
 			else {
-				XPathUtils.addAttribute(element, GenericArtifactHelper.DEP_PARENT_TARGET_ARTIFACT_ID,
-						targetParentArtifactId);
-			}
+				XPathUtils.addAttribute(element, GenericArtifactHelper.ARTIFACT_ACTION,	GenericArtifactHelper.ARTIFACT_ACTION_CREATE);
+		    }
 		}
-		
-		if(targetArtifactIdFromTable!=null && !(targetArtifactIdFromTable.equals(createToken)) && !(targetArtifactIdFromTable.equals("NULL"))) {
-			XPathUtils.addAttribute(element, GenericArtifactHelper.TARGET_ARTIFACT_ID, targetArtifactIdFromTable);
-	    }
-		if(targetArtifactIdFromTable==null) {
-			XPathUtils.addAttribute(element, GenericArtifactHelper.TARGET_ARTIFACT_ID, createToken);
-	    }
-		} catch (GenericArtifactParsingException e) {
+		catch(GenericArtifactParsingException e) {
 			String cause = "Problem occured while parsing the Document to extract specific attributes";
 			log.error(cause, e);
 			XPathUtils.addAttribute(element, GenericArtifactHelper.ERROR_CODE, GenericArtifact.ERROR_GENERIC_ARTIFACT_PARSING);
@@ -152,6 +144,8 @@ public class EntityService extends LifecycleComponent implements
 		
 		if(resultSet == null || resultSet.length == 0){
 			targetArtifactId = null;
+			log.info(sourceArtifactId + "-" + sourceRepositoryId + "-"+sourceSystemId
+					+ targetRepositoryId + "-" + targetSystemId + " are not mapped.");
 		}
 		else if(resultSet.length == 1){
 			if(resultSet[0] instanceof OrderedHashMap){
