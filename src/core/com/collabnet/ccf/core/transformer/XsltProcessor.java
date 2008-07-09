@@ -105,8 +105,8 @@ public class XsltProcessor extends Component implements IDataProcessor {
 	}
 
 	/**
-	 * Trys to load the XSLT from the file defined in the properties (will also
-	 * try to find the file on the classpath if it can).
+	 * Tries to load the XSLT from the file defined in the properties (will also
+	 * try to find the file on the class path if it can).
 	 * 
 	 * @throws ValidationException
 	 *             if the XSLT file is not defined in the properties, the file
@@ -120,11 +120,11 @@ public class XsltProcessor extends Component implements IDataProcessor {
 			throw new CCFRuntimeException(cause);
 		}
 
-		// if the file doesn't exist try to get it via the classpath
+		// if the file doesn't exist try to get it via the class path
 		URL url = FileUtils.toURL(xsltFile);
 		Transformer transform = null;
 		if (url == null) {
-			String cause = "File not found";
+			String cause = "XSLT File " + xsltFile + " is not found";
 			log.error(cause);
 			XPathUtils.addAttribute(element, GenericArtifactHelper.ERROR_CODE,GenericArtifact.ERROR_TRANSFORMER_FILE);
 			throw new CCFRuntimeException(cause);
@@ -132,10 +132,6 @@ public class XsltProcessor extends Component implements IDataProcessor {
 
 		// load the transform
 		try {
-			// TODO Do not directly code the use of Saxon into the code?
-			// TransformerFactory factory =
-			// TransformerFactory.newInstance("net.sf.saxon.TransformerFactoryImpl",
-			// null);
 			TransformerFactory factory = TransformerFactory.newInstance();
 			transform = factory.newTransformer(new StreamSource(url.getPath()));
 
