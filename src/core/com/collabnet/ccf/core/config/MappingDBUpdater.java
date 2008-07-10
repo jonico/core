@@ -42,7 +42,6 @@ public class MappingDBUpdater extends LifecycleComponent implements IDataProcess
 	private static final String TARGET_ARTIFACT_VERSION = "targetArtifactVersion";
 	private static final String ARTIFACT_TYPE = "artifactType";
 	private static final String ARTIFACT_TYPE_ATTACHMENT = "attachment";
-	private static final String TRANSACTION_ID = "transactionId";
 	private static final String DEP_PARENT_SOURCE_ARTIFACT_ID = "depParentSourceArtifactId";
 	private static final String DEP_PARENT_SOURCE_REPOSITORY_ID = "depParentSourceRepositoryId";
 	private static final String DEP_PARENT_SOURCE_REPOSITORY_KIND = "depParentSourceRepositoryKind";
@@ -254,7 +253,7 @@ public class MappingDBUpdater extends LifecycleComponent implements IDataProcess
 		else if(resultSet.length == 1){
 			if(resultSet[0] instanceof OrderedHashMap){
 				OrderedHashMap result = (OrderedHashMap) resultSet[0];
-				if(result.size() == 1){
+				if(result.size() == 3){
 					targetArtifactId = result.get(0).toString();
 					log.info("The value of targetArtifactId="+targetArtifactId);
 					return targetArtifactId;
@@ -332,7 +331,7 @@ public class MappingDBUpdater extends LifecycleComponent implements IDataProcess
 		inputParameters.add(6,"TARGET_SYSTEM_ID",targetSystemId);
 		inputParameters.add(7,"TARGET_REPOSITORY_ID",targetRepositoryId);
 		inputParameters.add(8,"SOURCE_ARTIFACT_ID",sourceArtifactId);
-		inputParameters.add(9,"ARTIFACT_TYPE",sourceArtifactId);
+		inputParameters.add(9,"ARTIFACT_TYPE",artifactType);
 		
 		IOrderedMap[] params = new IOrderedMap[]{inputParameters};
 		identityMappingDatabaseUpdater.connect();
