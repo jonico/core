@@ -1,5 +1,7 @@
 package com.collabnet.ccf.core;
 
+import java.sql.Timestamp;
+import java.util.Date;
 import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
@@ -19,6 +21,7 @@ import org.openadaptor.core.lifecycle.LifecycleComponent;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
+import com.collabnet.ccf.core.utils.DateUtil;
 import com.collabnet.ccf.core.utils.XPathUtils;
 
 /**
@@ -79,12 +82,28 @@ public class EntityService extends LifecycleComponent implements
 			String sourceRepositoryId = XPathUtils.getAttributeValue(element, GenericArtifactHelper.SOURCE_REPOSITORY_ID);
 			String targetSystemId = XPathUtils.getAttributeValue(element, GenericArtifactHelper.TARGET_SYSTEM_ID);
 			String targetRepositoryId = XPathUtils.getAttributeValue(element, GenericArtifactHelper.TARGET_REPOSITORY_ID);
-			
+			String sourceArtifactVersion = XPathUtils.getAttributeValue(element, GenericArtifactHelper.SOURCE_ARTIFACT_VERSION);
+			String sourceArtifactLastModifiedDateStr = XPathUtils.getAttributeValue(element, GenericArtifactHelper.SOURCE_ARTIFACT_LAST_MODIFICATION_DATE);
+			Date sourceArtifactLastModifiedDate = DateUtil.parse(sourceArtifactLastModifiedDateStr);
+			// FIXME Artifact version is a string in table. If there is a system that uses some other
+			// Notations than numbers for version, how will this succeed?
+			int sourceArtifactVersionInt = Integer.parseInt(sourceArtifactVersion);
 			if(sourceArtifactId.equalsIgnoreCase("Unknown")){
 				return new Object[]{data};
 			}
-			String targetArtifactIdFromTable = lookupTargetArtifactId(sourceArtifactId, sourceSystemId, sourceRepositoryId, 
+			Object[] results = lookupTargetArtifactId(sourceArtifactId, sourceSystemId, sourceRepositoryId, 
 					targetSystemId, targetRepositoryId, artifactType);
+			String targetArtifactIdFromTable = results[0].toString();
+			Date sourceArtifactLastModifiedDateFromTable = (Date) results[1];
+			String sourceArtifactVersionFromTable = results[2].toString();
+			int sourceArtifactVersionIntFromTable = Integer.parseInt(sourceArtifactVersionFromTable);
+			if(sourceArtifactLastModifiedDateFromTable.equals(sourceArtifactLastModifiedDate) &&
+					sourceArtifactVersionIntFromTable >= sourceArtifactVersionInt)
+			{
+				log.info("Seems the artifact has already been shipped. Duplicately shipped "
+						+ sourceArtifactId + " at " + sourceArtifactVersion);
+				return null;
+			}
 			if(artifactType.equals(GenericArtifactHelper.ARTIFACT_TYPE_ATTACHMENT)){
 				String sourceParentArtifactId = XPathUtils.getAttributeValue(element,
 						GenericArtifactHelper.DEP_PARENT_SOURCE_ARTIFACT_ID);
@@ -92,8 +111,9 @@ public class EntityService extends LifecycleComponent implements
 						GenericArtifactHelper.DEP_PARENT_SOURCE_REPOSITORY_ID);
 				String targetParentRepositoryId = XPathUtils.getAttributeValue(element,
 						GenericArtifactHelper.DEP_PARENT_TARGET_REPOSITORY_ID);
-				String targetParentArtifactId = lookupTargetArtifactId(sourceParentArtifactId, sourceSystemId, sourceParentRepositoryId, 
+				Object[] resultsDep = lookupTargetArtifactId(sourceParentArtifactId, sourceSystemId, sourceParentRepositoryId, 
 						targetSystemId, targetParentRepositoryId, GenericArtifactHelper.ARTIFACT_TYPE_PLAIN_ARTIFACT);
+				String targetParentArtifactId =  resultsDep[0].toString();
 				if(StringUtils.isEmpty(targetParentArtifactId)){
 					String cause = "Parent artifact "+sourceParentArtifactId+" for attachment "+
 										sourceArtifactId +" is not created on the target";
@@ -126,9 +146,8 @@ public class EntityService extends LifecycleComponent implements
 	}
 	
 	
-	private String lookupTargetArtifactId(String sourceArtifactId, String sourceSystemId, String sourceRepositoryId, 
+	private Object[] lookupTargetArtifactId(String sourceArtifactId, String sourceSystemId, String sourceRepositoryId, 
 			String targetSystemId, String targetRepositoryId, String artifactType) {
-		String targetArtifactId = null;
 		IOrderedMap inputParameters = new OrderedHashMap();
 		
 		inputParameters.add(sourceSystemId);
@@ -141,30 +160,31 @@ public class EntityService extends LifecycleComponent implements
 		identityMappingDatabaseReader.connect();
 		Object[] resultSet = identityMappingDatabaseReader.next(inputParameters, 1000);
 		identityMappingDatabaseReader.disconnect();
-		
+		Object[] results = null;
 		if(resultSet == null || resultSet.length == 0){
-			targetArtifactId = null;
 			log.info(sourceArtifactId + "-" + sourceRepositoryId + "-"+sourceSystemId
 					+ targetRepositoryId + "-" + targetSystemId + " are not mapped.");
 		}
 		else if(resultSet.length == 1){
+			results = new Object[3];
 			if(resultSet[0] instanceof OrderedHashMap){
 				OrderedHashMap result = (OrderedHashMap) resultSet[0];
-				if(result.size() == 1){
-					targetArtifactId = result.get(0).toString();
+				if(result.size() == 3){
+					results[0] = result.get(0).toString();
+					Timestamp timeStamp = (Timestamp) result.get(1);
+					Date date = new Date(timeStamp.getTime());
+					results[1] = date;
+					results[2] = result.get(2).toString();
 				}
 				else if(result.size() > 1){
 					log.info("There are more than one target artifact ids returned from the table for "+sourceArtifactId);
-				}
-				else {
-					targetArtifactId = null;
 				}
 			}
 		}
 		else {
 			log.warn("There are more than one target artifact ids returned from the table for "+sourceArtifactId);
 		}
-		return targetArtifactId;
+		return results;
 	}
 	
 	/**
