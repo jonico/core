@@ -139,9 +139,10 @@
 		</jar>
 	</target>
 	<target name="build.sample">
+			<mkdir dir="samples/IntegrationScenarios/customReader/bin" />
 			<antcall target="clean">
 			</antcall>
-			<javac debug="true" debuglevel="${debuglevel}" 
+			<javac debug="true" debuglevel="${debuglevel}"
 				destdir="samples/IntegrationScenarios/customReader/bin"
 				source="${source}" target="${target}">
 				<src path="samples/IntegrationScenarios/customReader/src" />
