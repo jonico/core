@@ -30,15 +30,8 @@ public class SFEEGAHelper {
 	}
 	
 	public static boolean containsSingleMandatoryField(GenericArtifact ga, String fieldName){
-		List<GenericArtifactField> gaFolderIDs = ga.getAllGenericArtifactFieldsWithSameFieldName(fieldName);
-		if(gaFolderIDs != null){
-			for(GenericArtifactField field:gaFolderIDs){
-				if(field.getFieldType().equals(GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD)){
-					return true;
-				}
-			}
-		}
-		return false;
+		List<GenericArtifactField> gaFolderIDs = ga.getAllGenericArtifactFieldsWithSameFieldTypeAndFieldName(GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD, fieldName);
+		return (gaFolderIDs!= null && gaFolderIDs.size() > 0); 
 	}
 
 	public static void updateSingleField(GenericArtifact ga, String fieldName,
@@ -57,13 +50,11 @@ public class SFEEGAHelper {
 	public static void updateSingleMandatoryField(GenericArtifact ga, String fieldName,
 			String fieldValue) {
 		boolean fieldUpdated = false;
-		List<GenericArtifactField> gaFolderIDs = ga.getAllGenericArtifactFieldsWithSameFieldName(fieldName);
+		List<GenericArtifactField> gaFolderIDs = ga.getAllGenericArtifactFieldsWithSameFieldTypeAndFieldName(GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD,fieldName);
 		if(gaFolderIDs != null){
 			for(GenericArtifactField field:gaFolderIDs){
-				if(field.getFieldType().equals(GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD)){
 					field.setFieldValue(fieldValue);
 					fieldUpdated = true;
-				}
 			}
 		}
 		if(gaFolderIDs == null || (!fieldUpdated)){
@@ -85,12 +76,6 @@ public class SFEEGAHelper {
 			String fieldValue, String fieldType, FieldValueTypeValue fieldValueTypeValue) {
 		GenericArtifactField newField = ga.addNewField(fieldName, fieldType);
 		newField.setFieldValueType(fieldValueTypeValue);
-		newField.setFieldValue(fieldValue);
-	}
-	
-	public static void addMandatoryField(GenericArtifact ga, String fieldName,
-			String fieldValue, String fieldType) {
-		GenericArtifactField newField = ga.addNewField(fieldName, fieldType);
 		newField.setFieldValue(fieldValue);
 	}
 	
