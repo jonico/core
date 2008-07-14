@@ -308,9 +308,7 @@ public class SFEEAttachmentHandler {
 					mimeTypeField.setFieldValue(row.getMimetype());
 					mimeTypeField.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
 					mimeTypeField.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
-					System.out.println(row.getAttachmentId()+" "+
-							row.getRawFileId()+" "+
-							row.getStoredFileId());
+					
 					byte[] attachmentData = null;
 					 attachmentData = this.getAttachmentData(sessionId, row.getRawFileId(),
 							Long.parseLong(row.getFileSize()), artifactId);
