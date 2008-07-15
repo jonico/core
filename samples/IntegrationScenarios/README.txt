@@ -3,54 +3,77 @@
 
 About:
 
-   The CCF Samples are provided to give the users a kick-start on using the CCF framework. You will
-   have to follow the instructions given below to get CCF working on your environment.
+   The CCF Samples are provided to give the users a kick-start on using the CCF framework.
+   
+   The integration scenarios are summarized at http://ccf.open.collab.net/wiki/ExampleScenarios
+   and explained in detail at http://ccf.open.collab.net/nonav/exampleScenarioDocs/index.html
+   
+   You will have to follow the instructions given below to get CCF working on your environment.
 
 Instructions:
 
-   1. Get a working CCF db schema with data:
-        - Setting up the CCF schema (This is to be done once for all possible wirings you might want):
-	This is the one base table structure in which all CCF related connectors put their data. This
-	base structure has to be created before you can specify the various systems required. You might
-	want to configure multiple wirings, but it is recommended that you create one base schema where
-	you add on info related to the various wirings.
-	If you chose to install the hsql db service during installation, you can skip this step, as
-	the service would take care of setting up the CCF schema in a hsql database for you.
-	Otherwise, please refer to the CCFSchema.script file in this directory, and create these
-	table structures for use by CCF on your database installation.
-
-	- Getting working data into your database (This is to be done for each wiring you might want):
-	Please refer to the CCFSampleDBData.script file, and insert similar values that reflect your
-	environment into the database tables you created in the previous step.
-	NOTE: If you want to use the hsql service and insert values, you could choose to do either
-	of the following methods
-	* Modify the insert statements in db\*.script to suit your environment, and append
-	the contents to the CCF_INSTALL_DIR\CCFDBService\db\CCFDB.script before starting the CCFDB service.
-	(or)
+   1. Prepare the central CCF data base
+   
+   Both the synchronization status as well as the identity mapping of all artifacts synchronized by
+   the CCF are kept in a central data base. The table names and columns refer to the definitions
+   of the CCF general terms at http://ccf.open.collab.net/wiki/Naming_Conventions_and_Definitions
+   and the generic artifact format specification at
+   http://ccf.open.collab.net/servlets/ProjectProcess?pageID=aT1rGG&subpageID=nLKvgT
+   
+   Currently, the central CCF data base is based on HyberSonic SQL.
+   The schema of this data base and some sample content for the integration scenarios can be found
+   in the centralCCFDatabase directory in the ccfDatabase.script file.
+   
+   ***** WRITE HOW TO RUN THE DATA BASE UNDER WINDOWS/LINUX ****
+   
+   In order to run the integration scenarios on different machines but the preconfigured ones, you have
+   to adjust the repository and system ids according to your needs. You may chose two options to adjust
+   the contents of the central data base: 
+	
+	* Modify the insert statements in ccfDatabase.script to suit your environment by hand (please
+	make sure to stop the HyberSonic SQL data base before).
+	
 	* Start the CCFDBService, and use a third party tool like DBVisualizer (http://www.minq.se/products/dbvis/)
 	to insert the appropriate values into your hsql db. To do this, you need to be aware of the following
 	information:
-	The connection string for the hsql DB would look like: jdbc:hsqldb:hsql://hostname:9001/dbname
-	For dbvisualizer, you need to use CCF_INSTALL_DIR\CCFDBService\lib\hsqldb.jar as the jdbc driver
+	The connection string for the hsql DB would look like: jdbc:hsqldb:hsql://hostname:9001/xdb
+	For dbvisualizer, you need to use hsqldb.jar as the jdbc driver
 
-   2. Configure the CCF spring configuration files appropriately:
-	Open the config\*.xml file, which will contain a sample wiring. Change the connection parameters
-	and other info to reflect your environment
+   2. Prepare the integration scenario you are interested in
+	Every integration scenario contains a config directory where you can find an openadaptor wiring configuratin
+	called config.xml. The documentation you can find on http://ccf.open.collab.net/nonav/exampleScenarioDocs/index.html
+	was automatically generated out of these files. In most cases you will not change this file directly but the
+	configuration values it references. These configuration values are stored in the .properties files contained
+	in the same directory. Typically you just have to adjust the URL, user name and password for your SFEE system
+	(contained in sfee.properties).
+	
+	Furthermore you may have to edit the SQL query in property ccf.sfeereader.poller.sql
+	(contained in ccf.properties). 
+	according to the changes you have made in the central CCF data base synchronization status table before.
+	Looking at the generic artifact specification at
+	http://ccf.open.collab.net/servlets/ProjectProcess?pageID=aT1rGG&subpageID=nLKvgT and the technical terms
+	and definitions at http://ccf.open.collab.net/wiki/Naming_Conventions_and_Definitions will help again
+	to exactly understand the meaning of this SQL query.
 
    3. Prepare the xslts:
-        The xslts are present in the xslt folder. The xslts are simple rules for transformation of
-	data from one system to another. Please modify the xslts appropriately to suit the field
-	structure of your source and target systems
+   	Some integration scenarios make heavy use of artifact transformation. This transformation is done with the
+   	help of XSLT scripts. Predefined xslt scripts are present in the xslt folder of the integration scenarios.
+   	If the transformation depends on the source and target repository, XSLT scripts will have to follow certain
+   	naming conventions (typically sourceSystem+sourceRepository+targetSystem+targetRepository.xsl). 
+   	These naming conventions are explained in detail within the wiring file.
+   	 
+   	Please modify the name of xslt scripts in the xslt directory according to these rules.
+   	If the trackers you like to synchronize have a different field structure as the preconfigured ones,
+   	you also have to adjust the content of the xslt files.
+   	Use the generic artifact export scenario (http://ccf.open.collab.net/wiki/ExampleScenarios) 
+   	to get an impression how the xml documents will look like for your specific trackers.  
 
-   4. Run the connector:
-	You can choose to run the connector once, or install it as a service.
-	To run it, just execute the RunConnector.bat in this directory
-	To install this wiring as a service, simply execute the InstallWiringAsService.bat file. (You will
-	be required to manually start the connector service)
-
+   4. Run the integration scenario:
+	***** WRITE HOW TO RUN THE EXAMPLES UNDER WINDOWS/LINUX **** 
+	
    5. Logs:
 	When the connector is running, you might want to refer to the logs, which will be present in the
-	logs directory in the current directory
+	logs directory of the integration scenario.
 
 
 Happy Connecting!
