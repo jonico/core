@@ -123,7 +123,7 @@ public class GenericArtifactHelper {
 	public static final String FIELD_VALUE_TYPE_HTML_STRING = "HTMLString";
 	public static final String FIELD_VALUE_TYPE_INTEGER = "Integer";
 	public static final String FIELD_VALUE_TYPE_STRING = "String";
-	// private static final String FIELD_VALUE_TYPE_USER = "User";
+	private static final String FIELD_VALUE_TYPE_USER = "User";
 	// private static final String FIELD_VALUE_TYPE_LIST = "List";
 	// private static final String FIELD_VALUE_TYPE_MULTI_SELECT_LIST =
 	// "Multi_Select_String";
@@ -219,8 +219,8 @@ public class GenericArtifactHelper {
 				GenericArtifactField.FieldValueTypeValue.INTEGER);
 		fieldValueTypeHashMap.put(FIELD_VALUE_TYPE_STRING,
 				GenericArtifactField.FieldValueTypeValue.STRING);
-		// fieldValueTypeHashMap.put(FIELD_VALUE_TYPE_USER,
-		// GenericArtifactField.FieldValueTypeValue.USER);
+		fieldValueTypeHashMap.put(FIELD_VALUE_TYPE_USER,
+		GenericArtifactField.FieldValueTypeValue.USER);
 		// fieldValueTypeHashMap.put(FIELD_VALUE_TYPE_LIST,
 		// GenericArtifactField.FieldValueTypeValue.LIST);
 		// fieldValueTypeHashMap.put(FIELD_VALUE_TYPE_MULTI_SELECT_LIST,
@@ -467,10 +467,10 @@ public class GenericArtifactHelper {
 				genericArtifactField.setFieldValue(value);
 				break;
 			}
-				// case USER: {
-				// genericArtifactField.setFieldValue(value);
-				// break;
-				// }
+			case USER: {
+				genericArtifactField.setFieldValue(value);
+				break;
+			}
 				// case LIST: {
 				// genericArtifactField.setFieldValue(value);
 				// break;
@@ -938,10 +938,10 @@ public class GenericArtifactHelper {
 			addAttribute(field, FIELD_VALUE_TYPE, FIELD_VALUE_TYPE_STRING);
 			break;
 		}
-			// case USER: {
-			// addAttribute(field, FIELD_VALUE_TYPE, FIELD_VALUE_TYPE_USER);
-			// break;
-			// }
+		case USER: {
+			addAttribute(field, FIELD_VALUE_TYPE, FIELD_VALUE_TYPE_USER);
+			break;
+		}
 			// case LIST: {
 			// addAttribute(field, FIELD_VALUE_TYPE, FIELD_VALUE_TYPE_LIST);
 			// break;

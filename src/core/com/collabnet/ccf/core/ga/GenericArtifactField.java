@@ -55,7 +55,7 @@ public class GenericArtifactField {
 	 * @author jnicolai
 	 */
 	public enum FieldValueTypeValue {
-		INTEGER, DOUBLE, DATETIME, DATE, STRING, HTMLSTRING, BASE64STRING, BOOLEAN
+		INTEGER, DOUBLE, DATETIME, DATE, STRING, HTMLSTRING, BASE64STRING, BOOLEAN, USER
 	};
 
 	public void getStringRepresentationOfFieldValueTypeValue(
