@@ -10,7 +10,7 @@ Instructions:
 
    1. Get a working CCF db schema with data:
         - Setting up the CCF schema (This is to be done once for all possible wirings you might want):
-	This is the one base table structure in which all CCF related connectors put thier data. This
+	This is the one base table structure in which all CCF related connectors put their data. This
 	base structure has to be created before you can specify the various systems required. You might
 	want to configure multiple wirings, but it is recommended that you create one base schema where
 	you add on info related to the various wirings.

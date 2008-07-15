@@ -18,7 +18,7 @@
 			sourceSystemId="CSVFile" sourceSystemKind="Filesystem"
 			targetArtifactId="NEW" targetRepositoryId="tracker1001"
 			targetRepositoryKind="TRACKER" targetSystemId="cu011"
-			targetSystemKind="Filesystem" transactionId="0"
+			targetSystemKind="SFEE 4.4" transactionId="0"
 			errorCode="ok" includesFieldMetaData="false">
 			<xsl:apply-templates />
 		</artifact>
