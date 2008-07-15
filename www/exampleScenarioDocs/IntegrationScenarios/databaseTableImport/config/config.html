@@ -52,9 +52,58 @@
 <area shape="rect" href="../../../IntegrationScenarios/databaseTableImport/config/config.html#SFEEConnectionManager" title="Ref" alt="" coords="809,570,828,584"/>
 <area shape="rect" href="../../../IntegrationScenarios/databaseTableImport/config/config.html#JDBCConnection" title="JDBCConnection: org.openadaptor.auxil.connector.jdbc.JDBCConnection" alt="" coords="944,5,1245,69"/>
 </map><pre xmlns="http://www.w3.org/TR/xhtml1/strict">
-  This is the configuration for the CollabNet Connector Framework sample 
-   "Database table import Scenario". This wiring file configures an SFEE tracker
-   to get synced with a database table.
+  This integration scenario demonstrated the capability of CCF
+  to import artifacts data from a database table into an SFEE tracker.
+
+1. Configuring the SFEE tracker information
+	The SFEE tracker id is configured in the database in the SYNCHRONIZATION_STATUS
+	table. Please refer the source repository id configuration in the 
+	centralCCFDatabase/ccfDatabase.script
+	Please change this value to the tracker id that you intend to export the
+	data from and adjust the SQL query in the ccf.sfeereader.poller.sql property
+	(contained in config/ccf.properties).
+	
+	Change the SFEE SOAP server URL and password in the config/sfee.properties
+	file as shown below.
+	sfee.server.1.url=&lt;SFEE SOAP server URL&gt;
+	sfee.server.1.username=&lt;connector user&gt;
+	sfee.server.1.password=&lt;connector user's password&gt;
+
+2. Configuring the ARTIFACTS table
+	The table that contains the artifacts are configured in this file
+	as
+	&lt;bean id="DatabaseTableReader"
+		class="org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector"&gt;
+		&lt;description&gt;
+			This is the JDBC read connector used by the SynchronizationStatusPollingReader to read the
+			repository mapping and the synchronization info.
+		&lt;/description&gt;
+		&lt;property name="jdbcConnection" ref="JdbcConnection" /&gt;
+		&lt;property name="batchSize" value="1" /&gt;
+		&lt;property name="resultSetConverter" ref="ResultSetConverter" /&gt;
+		&lt;property name="sql"&gt;
+			&lt;value&gt;SELECT * FROM ARTIFACTS&lt;/value&gt;
+		&lt;/property&gt;
+	&lt;/bean&gt;
+	
+	This configuration snippet configures the table ARTIFACTS as the source of the
+	artifacts data. If you intend to change the table name edit the sql property
+	as SELECT * FROM &lt;ARTIFACT_TABLE&gt;
+
+3. Mapping database fields to SFEE tracker fields
+	This is done in the XSLT file xslt/record2GenericArtifact.xsl
+	Change the field names in the template according to the 
+	field names in the database table and the SFEE tracker.
+
+4. Please note that this integration scenario currently does not support
+	a) importing multi-select field values.
+		Mutiselect field values will not be imported properly if there are
+		more than one field values are configured in the database table.
+	b) attachments import.
+
+5. Limitations
+	a) The COMMENT_TEXT in the database table is configured as CHAR(256)
+	So you may not be able to import larger comments.
   </pre><table border="1" bgcolor="#CCCCCC" xmlns="http://www.w3.org/TR/xhtml1/strict"><colgroup><col bgcolor="#CCCCCC"/><col bgcolor="#FFFFFF"/><col bgcolor="#CCCCCC"/><col bgcolor="#FFFFFF"/></colgroup><tr bgcolor="#000099"><th><font color="white">Beans index</font></th><th><font color="white">Process routing</font></th><th><font color="white">Discard routing</font></th><th><font color="white">Exception routing</font></th></tr><tr><td><a href="#SystemPropertyConfigurer">SystemPropertyConfigurer</a></td><td/><td/><td><a href="#ExceptionHandler">ExceptionHandler</a></td></tr><tr><td><a href="#Adaptor">Adaptor</a></td><td/><td/><td><a href="#ExceptionHandler">ExceptionHandler</a></td></tr><tr><td><a href="#Router">Router</a></td><td/><td/><td><a href="#ExceptionHandler">ExceptionHandler</a></td></tr><tr><td><a href="#Transformer">Transformer</a></td><td><a href="#SFEEWriter">SFEEWriter</a></td><td/><td><a href="#ExceptionHandler">ExceptionHandler</a></td></tr><tr><td><a href="#DatabaseTableReader">DatabaseTableReader</a></td><td><a href="#Transformer">Transformer</a></td><td/><td><a href="#ExceptionHandler">ExceptionHandler</a></td></tr><tr><td><a href="#JdbcConnection">JdbcConnection</a></td><td/><td/><td><a href="#ExceptionHandler">ExceptionHandler</a></td></tr><tr><td><a href="#SynchronizationStatusXMLConverter">SynchronizationStatusXMLConverter</a></td><td/><td/><td><a href="#ExceptionHandler">ExceptionHandler</a></td></tr><tr><td><a href="#SFEEConnectionManager">SFEEConnectionManager</a></td><td/><td/><td><a href="#ExceptionHandler">ExceptionHandler</a></td></tr><tr><td><a href="#SFEEConnectionFactory">SFEEConnectionFactory</a></td><td/><td/><td><a href="#ExceptionHandler">ExceptionHandler</a></td></tr><tr><td><a href="#SFEEWriter">SFEEWriter</a></td><td/><td/><td><a href="#ExceptionHandler">ExceptionHandler</a></td></tr><tr><td><a href="#JDBCConnection">JDBCConnection</a></td><td/><td/><td><a href="#ExceptionHandler">ExceptionHandler</a></td></tr><tr><td><a href="#ExceptionHandler">ExceptionHandler</a></td><td/><td/><td><a href="#ExceptionHandler">ExceptionHandler</a></td></tr></table><p xmlns="http://www.w3.org/TR/xhtml1/strict"><table border="1" bgcolor="#CCCCCC"><colgroup><col bgcolor="#CCCCCC"/><col bgcolor="#FFFFFF"/><col bgcolor="#CCCCCC"/><col bgcolor="#FFFFFF"/></colgroup><tr bgcolor="#000099"><th colspan="3"><font color="white"><a class="th" name="SystemPropertyConfigurer">SystemPropertyConfigurer</a> : <a class="th">org.springframework.beans.factory.config.PropertyPlaceholderConfigurer</a> | <a class="th" href="../../../../javadocs/org/springframework/beans/factory/config/PropertyPlaceholderConfigurer.html">JavaDoc</a> | <a class="th" href="../../../beans2config.html#org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">BeansToConfig</a></font></th></tr><tr><td colspan="3"><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">ignoreResourceNotFound</td><td>false</td><td/></tr><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">systemPropertiesMode</td><td><table border="1" bgcolor="#CCCCCC"><colgroup><col bgcolor="#CCCCCC"/><col bgcolor="#FFFFFF"/><col bgcolor="#CCCCCC"/><col bgcolor="#FFFFFF"/></colgroup><tr bgcolor="#000099"><th colspan="3"><font color="white"><a class="th" name="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer.SYSTEM_PROPERTIES_MODE_OVERRIDE">org.springframework.beans.factory.config.PropertyPlaceholderConfigurer.SYSTEM_PROPERTIES_MODE_OVERRIDE</a> : <a class="th">org.springframework.beans.factory.config.FieldRetrievingFactoryBean</a> | <a class="th" href="../../../../javadocs/org/springframework/beans/factory/config/FieldRetrievingFactoryBean.html">JavaDoc</a> | <a class="th" href="../../../beans2config.html#org.springframework.beans.factory.config.FieldRetrievingFactoryBean">BeansToConfig</a></font></th></tr></table></td></tr><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">locations</td><td>
 				Properties configured in these property files will be imported into the wiring file.
 				The file ccf.properties contains the properties for the CCF core components.

@@ -60,70 +60,79 @@
 <area shape="rect" href="../../../IntegrationScenarios/genericArtifactExport/config/config.html#SFEEConnectionManager" title="SFEEConnectionManager.connectionFactory" alt="" coords="933,430,941,438"/>
 <area shape="rect" href="../../../IntegrationScenarios/genericArtifactExport/config/config.html#SFEEConnectionManager" title="Ref" alt="" coords="825,369,844,382"/>
 </map><pre xmlns="http://www.w3.org/TR/xhtml1/strict">
-		    
-  This sample exports the tracker artifacts from an SFEE system into
-  the Generic Artifact xml format and saves them into a file.
-    
-  You need the following in your classpath
-  
-    lib
-    lib/openadaptor.jar
-    lib/openadaptor-spring.jar
-    lib/openadaptor-depends.jar
-  
+		This scenario shows how to store all the artifacts contained in
+		one tracker in a local file in the GenericArtifactXMLFormat. In
+		its default configuration it dumps the content of the
+		Bidirectional Mirroring Scenario Tracker A. This scenario is
+		especially helpful if you like to get an impression of the
+		transport format commonly used by all CCF components in the
+		pipeline.
 	</pre><table border="1" bgcolor="#CCCCCC" xmlns="http://www.w3.org/TR/xhtml1/strict"><colgroup><col bgcolor="#CCCCCC"/><col bgcolor="#FFFFFF"/><col bgcolor="#CCCCCC"/><col bgcolor="#FFFFFF"/></colgroup><tr bgcolor="#000099"><th><font color="white">Beans index</font></th><th><font color="white">Process routing</font></th><th><font color="white">Discard routing</font></th><th><font color="white">Exception routing</font></th></tr><tr><td><a href="#SystemPropertyConfigurer">SystemPropertyConfigurer</a></td><td/><td/><td><a href="#ExceptionHandler">ExceptionHandler</a></td></tr><tr><td><a href="#Adaptor">Adaptor</a></td><td/><td/><td><a href="#ExceptionHandler">ExceptionHandler</a></td></tr><tr><td><a href="#Router">Router</a></td><td/><td/><td><a href="#ExceptionHandler">ExceptionHandler</a></td></tr><tr><td><a href="#SynchronizationStatusPollingReader">SynchronizationStatusPollingReader</a></td><td><a href="#SFEEReader">SFEEReader</a></td><td/><td><a href="#ExceptionHandler">ExceptionHandler</a></td></tr><tr><td><a href="#SynchronizationStatusDatabaseReader">SynchronizationStatusDatabaseReader</a></td><td/><td/><td><a href="#ExceptionHandler">ExceptionHandler</a></td></tr><tr><td><a href="#JDBCConnection">JDBCConnection</a></td><td/><td/><td><a href="#ExceptionHandler">ExceptionHandler</a></td></tr><tr><td><a href="#SynchronizationStatusXMLConverter">SynchronizationStatusXMLConverter</a></td><td/><td/><td><a href="#ExceptionHandler">ExceptionHandler</a></td></tr><tr><td><a href="#SFEEReader">SFEEReader</a></td><td><a href="#GenericArtifact2XmlMapConverter">GenericArtifact2XmlMapConverter</a></td><td/><td><a href="#ExceptionHandler">ExceptionHandler</a></td></tr><tr><td><a href="#SFEEConnectionManager">SFEEConnectionManager</a></td><td/><td/><td><a href="#ExceptionHandler">ExceptionHandler</a></td></tr><tr><td><a href="#SFEEConnectionFactory">SFEEConnectionFactory</a></td><td/><td/><td><a href="#ExceptionHandler">ExceptionHandler</a></td></tr><tr><td><a href="#GenericArtifact2XmlMapConverter">GenericArtifact2XmlMapConverter</a></td><td><a href="#FileWriter">FileWriter</a></td><td/><td><a href="#ExceptionHandler">ExceptionHandler</a></td></tr><tr><td><a href="#FileWriter">FileWriter</a></td><td/><td/><td><a href="#ExceptionHandler">ExceptionHandler</a></td></tr><tr><td><a href="#ExceptionHandler">ExceptionHandler</a></td><td/><td/><td><a href="#ExceptionHandler">ExceptionHandler</a></td></tr></table><p xmlns="http://www.w3.org/TR/xhtml1/strict"><table border="1" bgcolor="#CCCCCC"><colgroup><col bgcolor="#CCCCCC"/><col bgcolor="#FFFFFF"/><col bgcolor="#CCCCCC"/><col bgcolor="#FFFFFF"/></colgroup><tr bgcolor="#000099"><th colspan="3"><font color="white"><a class="th" name="SystemPropertyConfigurer">SystemPropertyConfigurer</a> : <a class="th">org.springframework.beans.factory.config.PropertyPlaceholderConfigurer</a> | <a class="th" href="../../../../javadocs/org/springframework/beans/factory/config/PropertyPlaceholderConfigurer.html">JavaDoc</a> | <a class="th" href="../../../beans2config.html#org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">BeansToConfig</a></font></th></tr><tr><td colspan="3"><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">ignoreResourceNotFound</td><td>false</td><td/></tr><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">systemPropertiesMode</td><td><table border="1" bgcolor="#CCCCCC"><colgroup><col bgcolor="#CCCCCC"/><col bgcolor="#FFFFFF"/><col bgcolor="#CCCCCC"/><col bgcolor="#FFFFFF"/></colgroup><tr bgcolor="#000099"><th colspan="3"><font color="white"><a class="th" name="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer.SYSTEM_PROPERTIES_MODE_OVERRIDE">org.springframework.beans.factory.config.PropertyPlaceholderConfigurer.SYSTEM_PROPERTIES_MODE_OVERRIDE</a> : <a class="th">org.springframework.beans.factory.config.FieldRetrievingFactoryBean</a> | <a class="th" href="../../../../javadocs/org/springframework/beans/factory/config/FieldRetrievingFactoryBean.html">JavaDoc</a> | <a class="th" href="../../../beans2config.html#org.springframework.beans.factory.config.FieldRetrievingFactoryBean">BeansToConfig</a></font></th></tr></table></td></tr><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">locations</td><td>
-				Properties configured in these property files will be imported into the wiring file.
-				The file ccf.properties contains the properties for the CCF core components.
-				sfee.properties file contains the properties for the SFEE plugin classes.
+				Properties configured in these property files will be
+				imported into the wiring file. The file ccf.properties
+				contains the properties for the CCF core components.
+				sfee.properties file contains the properties for the
+				SFEE plugin classes.
 			<table border="1" bgcolor="#FFFFFF"><tr><td>1</td><td>classpath:ccf.properties</td></tr><tr><td>2</td><td>classpath:sfee.properties</td></tr></table></td></tr></td></tr></table></p><p xmlns="http://www.w3.org/TR/xhtml1/strict"><table border="1" bgcolor="#CCCCCC"><colgroup><col bgcolor="#CCCCCC"/><col bgcolor="#FFFFFF"/><col bgcolor="#CCCCCC"/><col bgcolor="#FFFFFF"/></colgroup><tr bgcolor="#000099"><th colspan="3"><font color="white"><a class="th" name="Adaptor">Adaptor</a> : <a class="th">org.openadaptor.core.adaptor.Adaptor</a> | <a class="th" href="../../../../javadocs/org/openadaptor/core/adaptor/Adaptor.html">JavaDoc</a> | <a class="th" href="../../../beans2config.html#org.openadaptor.core.adaptor.Adaptor">BeansToConfig</a></font></th></tr><tr><td colspan="3"><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">messageProcessor</td><td><a href="#Router">Router</a></td><td/></tr></td></tr></table></p><p xmlns="http://www.w3.org/TR/xhtml1/strict"><table border="1" bgcolor="#CCCCCC"><colgroup><col bgcolor="#CCCCCC"/><col bgcolor="#FFFFFF"/><col bgcolor="#CCCCCC"/><col bgcolor="#FFFFFF"/></colgroup><tr bgcolor="#000099"><th colspan="3"><font color="white"><a class="th" name="Router">Router</a> : <a class="th">org.openadaptor.core.router.Router</a> | <a class="th" href="../../../../javadocs/org/openadaptor/core/router/Router.html">JavaDoc</a> | <a class="th" href="../../../beans2config.html#org.openadaptor.core.router.Router">BeansToConfig</a></font></th></tr><tr bgcolor="#CCCCCC"><td colspan="3">
-			The processMap property of this Router bean configures the processors
-			that are wired together to ship the artifacts from the source repository
-			to the target repository.
+			The processMap property of this Router bean configures the
+			processors that are wired together to ship the artifacts
+			from the source repository to the target repository.
 		</td></tr><tr><td colspan="3"><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">processMap</td><td><table border="1" bgcolor="#FFFFFF"><tr><td>1</td><td><a href="#SynchronizationStatusPollingReader">SynchronizationStatusPollingReader</a></td><td><a href="#SFEEReader">SFEEReader</a></td><td/></tr><tr><td>2</td><td><a href="#SFEEReader">SFEEReader</a></td><td><a href="#GenericArtifact2XmlMapConverter">GenericArtifact2XmlMapConverter</a></td><td/></tr><tr><td>3</td><td><a href="#GenericArtifact2XmlMapConverter">GenericArtifact2XmlMapConverter</a></td><td><a href="#FileWriter">FileWriter</a></td><td/></tr></table></td></tr><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">exceptionProcessor</td><td><a href="#ExceptionHandler">ExceptionHandler</a></td><td/></tr></td></tr></table></p><p xmlns="http://www.w3.org/TR/xhtml1/strict"><table border="1" bgcolor="#CCCCCC"><colgroup><col bgcolor="#CCCCCC"/><col bgcolor="#FFFFFF"/><col bgcolor="#CCCCCC"/><col bgcolor="#FFFFFF"/></colgroup><tr bgcolor="#000099"><th colspan="3"><font color="white"><a class="th" name="SynchronizationStatusPollingReader">SynchronizationStatusPollingReader</a> : <a class="th">com.collabnet.ccf.core.test.plugins.SimpleLoopingPollingReadConnector</a> | <a class="th" href="../../../../javadocs/com/collabnet/ccf/core/test/plugins/SimpleLoopingPollingReadConnector.html">JavaDoc</a> | <a class="th" href="../../../beans2config.html#com.collabnet.ccf.core.test.plugins.SimpleLoopingPollingReadConnector">BeansToConfig</a></font></th></tr><tr bgcolor="#CCCCCC"><td colspan="3">
-			This polling connector polls the CCF database tables that contain the repository
-			mapping and the synchronization info and feeds the details to the source repository
-			reader piped down the line. Please refer the processMap configuration for the Router
-			bean.
-			
-			In this case this polling reader reads the synchronization status using the database
-			read connector configured in the property delegate.
-			
-			Polling interval seconds is configured as 0 to indicate that the polling reader should
-			read from the database read connector continuously without and pauses in between.
+			This polling connector polls the CCF database tables that
+			contain the repository mapping and the synchronization info
+			and feeds the details to the source repository reader piped
+			down the line. Please refer the processMap configuration for
+			the Router bean.
+
+			In this case this polling reader reads the synchronization
+			status using the database read connector configured in the
+			property delegate.
+
+			Polling interval seconds is configured as 0 to indicate that
+			the polling reader should read from the database read
+			connector continuously without and pauses in between.
 		</td></tr><tr><td colspan="3"><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">pollLimit</td><td>1</td><td/></tr><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">delegate</td><td><a href="#SynchronizationStatusDatabaseReader">SynchronizationStatusDatabaseReader</a></td><td/></tr><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">pollIntervalSecs</td><td>0</td><td/></tr></td></tr></table></p><p xmlns="http://www.w3.org/TR/xhtml1/strict"><table border="1" bgcolor="#CCCCCC"><colgroup><col bgcolor="#CCCCCC"/><col bgcolor="#FFFFFF"/><col bgcolor="#CCCCCC"/><col bgcolor="#FFFFFF"/></colgroup><tr bgcolor="#000099"><th colspan="3"><font color="white"><a class="th" name="SynchronizationStatusDatabaseReader">SynchronizationStatusDatabaseReader</a> : <a class="th">org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector</a> | <a class="th" href="../../../../javadocs/org/openadaptor/auxil/connector/jdbc/reader/JDBCReadConnector.html">JavaDoc</a> | <a class="th" href="../../../beans2config.html#org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector">BeansToConfig</a></font></th></tr><tr bgcolor="#CCCCCC"><td colspan="3">
-			This is the JDBC read connector used by the SynchronizationStatusPollingReader to read the
-			repository mapping and the synchronization info.
+			This is the JDBC read connector used by the
+			SynchronizationStatusPollingReader to read the repository
+			mapping and the synchronization info.
 		</td></tr><tr><td colspan="3"><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">jdbcConnection</td><td><a href="#JDBCConnection">JDBCConnection</a></td><td/></tr><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">batchSize</td><td>1</td><td/></tr><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">resultSetConverter</td><td><a href="#SynchronizationStatusXMLConverter">SynchronizationStatusXMLConverter</a></td><td/></tr><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">sql</td><td>${ccf.sfeereader.poller.sql}</td></tr></td></tr></table></p><p xmlns="http://www.w3.org/TR/xhtml1/strict"><table border="1" bgcolor="#CCCCCC"><colgroup><col bgcolor="#CCCCCC"/><col bgcolor="#FFFFFF"/><col bgcolor="#CCCCCC"/><col bgcolor="#FFFFFF"/></colgroup><tr bgcolor="#000099"><th colspan="3"><font color="white"><a class="th" name="JDBCConnection">JDBCConnection</a> : <a class="th">org.openadaptor.auxil.connector.jdbc.JDBCConnection</a> | <a class="th" href="../../../../javadocs/org/openadaptor/auxil/connector/jdbc/JDBCConnection.html">JavaDoc</a> | <a class="th" href="../../../beans2config.html#org.openadaptor.auxil.connector.jdbc.JDBCConnection">BeansToConfig</a></font></th></tr><tr bgcolor="#CCCCCC"><td colspan="3">
 			This defines jdbc connection that will be used by the
 			SynchronizationStatusPollingReader
 		</td></tr><tr><td colspan="3"><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">driver</td><td>${ccf.db.driver}</td><td/></tr><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">url</td><td>${ccf.db.url}</td><td/></tr><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">username</td><td>${ccf.db.username}</td><td/></tr><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">password</td><td>${ccf.db.password}</td><td/></tr></td></tr></table></p><p xmlns="http://www.w3.org/TR/xhtml1/strict"><table border="1" bgcolor="#CCCCCC"><colgroup><col bgcolor="#CCCCCC"/><col bgcolor="#FFFFFF"/><col bgcolor="#CCCCCC"/><col bgcolor="#FFFFFF"/></colgroup><tr bgcolor="#000099"><th colspan="3"><font color="white"><a class="th" name="SynchronizationStatusXMLConverter">SynchronizationStatusXMLConverter</a> : <a class="th">org.openadaptor.auxil.connector.jdbc.reader.xml.ResultSetToXMLConverter</a> | <a class="th" href="../../../../javadocs/org/openadaptor/auxil/connector/jdbc/reader/xml/ResultSetToXMLConverter.html">JavaDoc</a> | <a class="th" href="../../../beans2config.html#org.openadaptor.auxil.connector.jdbc.reader.xml.ResultSetToXMLConverter">BeansToConfig</a></font></th></tr><tr bgcolor="#CCCCCC"><td colspan="3">
-			Converts the synchronization info in the database into XML sync info
-			document.
+			Converts the synchronization info in the database into XML
+			sync info document.
 		</td></tr><tr><td colspan="3"><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">convertToString</td><td>false</td><td/></tr><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">rootElement</td><td>EmptySyncInf</td><td/></tr></td></tr></table></p><p xmlns="http://www.w3.org/TR/xhtml1/strict"><table border="1" bgcolor="#CCCCCC"><colgroup><col bgcolor="#CCCCCC"/><col bgcolor="#FFFFFF"/><col bgcolor="#CCCCCC"/><col bgcolor="#FFFFFF"/></colgroup><tr bgcolor="#000099"><th colspan="3"><font color="white"><a class="th" name="SFEEReader">SFEEReader</a> : <a class="th">com.collabnet.ccf.pi.sfee.v44.SFEEReader</a> | <a class="th" href="../../../../javadocs/com/collabnet/ccf/pi/sfee/v44/SFEEReader.html">JavaDoc</a> | <a class="th" href="../../../beans2config.html#com.collabnet.ccf.pi.sfee.v44.SFEEReader">BeansToConfig</a></font></th></tr><tr bgcolor="#CCCCCC"><td colspan="3">
-			This reader reads the modified artifacts in the SFEE system's tracker configured in the
-			${sfee.server.1.url} and the sync info tables. It also reads all the related dependent artifact details
-			and converts them into Generic Artifact XML document format and sends to the
-			next component in the pipeline. The next component in the piple line may be
-			an XSLT transformer component such as com.collabnet.ccf.core.transformer.XsltProcessor
-			or an EntityService component depending on the target SFEE tracker needs the data
-			to be translated to fit into its fields or not. In this sample scenario we configure
-			a file writer that will write the generic artifact xml into the file specified.
+			This reader reads the modified artifacts in the SFEE
+			system's tracker configured in the ${sfee.server.1.url} and
+			the sync info tables. It also reads all the related
+			dependent artifact details and converts them into Generic
+			Artifact XML document format and sends to the next component
+			in the pipeline. The next component in the piple line may be
+			an XSLT transformer component such as
+			com.collabnet.ccf.core.transformer.XsltProcessor or an
+			EntityService component depending on the target SFEE tracker
+			needs the data to be translated to fit into its fields or
+			not. In this sample scenario we configure a file writer that
+			will write the generic artifact xml into the file specified.
 		</td></tr><tr><td colspan="3"><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">username</td><td>${sfee.server.1.username}</td><td/></tr><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">password</td><td>${sfee.server.1.password}</td><td/></tr><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">serverUrl</td><td>${sfee.server.1.url}</td><td/></tr><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">connectionManager</td><td><a href="#SFEEConnectionManager">SFEEConnectionManager</a></td><td/></tr><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">sleepInterval</td><td>1000</td><td/></tr><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">maxAttachmentSizePerArtifact</td><td>${sfee.max.attachmentsize.per.artifact}</td><td/></tr><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">shipAttachments</td><td>true</td><td/></tr></td></tr></table></p><p xmlns="http://www.w3.org/TR/xhtml1/strict"><table border="1" bgcolor="#CCCCCC"><colgroup><col bgcolor="#CCCCCC"/><col bgcolor="#FFFFFF"/><col bgcolor="#CCCCCC"/><col bgcolor="#FFFFFF"/></colgroup><tr bgcolor="#000099"><th colspan="3"><font color="white"><a class="th" name="SFEEConnectionManager">SFEEConnectionManager</a> : <a class="th">com.collabnet.ccf.core.eis.connection.ConnectionManager</a> | <a class="th" href="../../../../javadocs/com/collabnet/ccf/core/eis/connection/ConnectionManager.html">JavaDoc</a> | <a class="th" href="../../../beans2config.html#com.collabnet.ccf.core.eis.connection.ConnectionManager">BeansToConfig</a></font></th></tr><tr bgcolor="#CCCCCC"><td colspan="3">
-			The connection manager implements a connection pooling mechanism where the 
-			connections to multiple systems are cached for the readers and writers
-			to retrieve when needed. Before returning the connection to the client
-			the connection manager checks if the connection is live and only returns 
-			valid connections.
-			It assigns and manages one pool per repository.
-		</td></tr><tr><td colspan="3"><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">maxConnectionsPerPool</td><td>5</td><td/></tr><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">maxIdleTimeForConnection</td><td>600000</td><td/></tr><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">scavengerInterval</td><td>120000</td><td/></tr><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">connectionFactory</td><td><a href="#SFEEConnectionFactory">SFEEConnectionFactory</a></td><td/></tr></td></tr></table></p><p xmlns="http://www.w3.org/TR/xhtml1/strict"><table border="1" bgcolor="#CCCCCC"><colgroup><col bgcolor="#CCCCCC"/><col bgcolor="#FFFFFF"/><col bgcolor="#CCCCCC"/><col bgcolor="#FFFFFF"/></colgroup><tr bgcolor="#000099"><th colspan="3"><font color="white"><a class="th" name="SFEEConnectionFactory">SFEEConnectionFactory</a> : <a class="th">com.collabnet.ccf.pi.sfee.v44.SFEEConnectionFactory</a> | <a class="th" href="../../../../javadocs/com/collabnet/ccf/pi/sfee/v44/SFEEConnectionFactory.html">JavaDoc</a> | <a class="th" href="../../../beans2config.html#com.collabnet.ccf.pi.sfee.v44.SFEEConnectionFactory">BeansToConfig</a></font></th></tr><tr bgcolor="#CCCCCC"><td colspan="3">
-			This bean is an implementation of the com.collabnet.ccf.core.eis.connection.ConnectionFactory
-			interface. It is responsible to create and close an connection for a given
+			The connection manager implements a connection pooling
+			mechanism where the connections to multiple systems are
+			cached for the readers and writers to retrieve when needed.
+			Before returning the connection to the client the connection
+			manager checks if the connection is live and only returns
+			valid connections. It assigns and manages one pool per
 			repository.
-			In this case SFEEConnectionFactory manages com.collabnet.ccf.pi.sfee.v44.Connection
-			objects.
+		</td></tr><tr><td colspan="3"><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">maxConnectionsPerPool</td><td>5</td><td/></tr><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">maxIdleTimeForConnection</td><td>600000</td><td/></tr><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">scavengerInterval</td><td>120000</td><td/></tr><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">connectionFactory</td><td><a href="#SFEEConnectionFactory">SFEEConnectionFactory</a></td><td/></tr></td></tr></table></p><p xmlns="http://www.w3.org/TR/xhtml1/strict"><table border="1" bgcolor="#CCCCCC"><colgroup><col bgcolor="#CCCCCC"/><col bgcolor="#FFFFFF"/><col bgcolor="#CCCCCC"/><col bgcolor="#FFFFFF"/></colgroup><tr bgcolor="#000099"><th colspan="3"><font color="white"><a class="th" name="SFEEConnectionFactory">SFEEConnectionFactory</a> : <a class="th">com.collabnet.ccf.pi.sfee.v44.SFEEConnectionFactory</a> | <a class="th" href="../../../../javadocs/com/collabnet/ccf/pi/sfee/v44/SFEEConnectionFactory.html">JavaDoc</a> | <a class="th" href="../../../beans2config.html#com.collabnet.ccf.pi.sfee.v44.SFEEConnectionFactory">BeansToConfig</a></font></th></tr><tr bgcolor="#CCCCCC"><td colspan="3">
+			This bean is an implementation of the
+			com.collabnet.ccf.core.eis.connection.ConnectionFactory
+			interface. It is responsible to create and close an
+			connection for a given repository. In this case
+			SFEEConnectionFactory manages
+			com.collabnet.ccf.pi.sfee.v44.Connection objects.
 		</td></tr></table></p><p xmlns="http://www.w3.org/TR/xhtml1/strict"><table border="1" bgcolor="#CCCCCC"><colgroup><col bgcolor="#CCCCCC"/><col bgcolor="#FFFFFF"/><col bgcolor="#CCCCCC"/><col bgcolor="#FFFFFF"/></colgroup><tr bgcolor="#000099"><th colspan="3"><font color="white"><a class="th" name="GenericArtifact2XmlMapConverter">GenericArtifact2XmlMapConverter</a> : <a class="th">org.openadaptor.auxil.processor.xml.XsltProcessor</a> | <a class="th" href="../../../../javadocs/org/openadaptor/auxil/processor/xml/XsltProcessor.html">JavaDoc</a> | <a class="th" href="../../../beans2config.html#org.openadaptor.auxil.processor.xml.XsltProcessor">BeansToConfig</a></font></th></tr><tr><td colspan="3"><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">xsltFile</td><td>${ccf.xsltFile}</td><td/></tr></td></tr></table></p><p xmlns="http://www.w3.org/TR/xhtml1/strict"><table border="1" bgcolor="#CCCCCC"><colgroup><col bgcolor="#CCCCCC"/><col bgcolor="#FFFFFF"/><col bgcolor="#CCCCCC"/><col bgcolor="#FFFFFF"/></colgroup><tr bgcolor="#000099"><th colspan="3"><font color="white"><a class="th" name="FileWriter">FileWriter</a> : <a class="th">org.openadaptor.auxil.connector.iostream.writer.FileWriteConnector</a> | <a class="th" href="../../../../javadocs/org/openadaptor/auxil/connector/iostream/writer/FileWriteConnector.html">JavaDoc</a> | <a class="th" href="../../../beans2config.html#org.openadaptor.auxil.connector.iostream.writer.FileWriteConnector">BeansToConfig</a></font></th></tr><tr><td colspan="3"><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">filename</td><td>output/genericartifact.xml</td><td/></tr><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">append</td><td>false</td><td/></tr></td></tr></table></p><p xmlns="http://www.w3.org/TR/xhtml1/strict"><table border="1" bgcolor="#CCCCCC"><colgroup><col bgcolor="#CCCCCC"/><col bgcolor="#FFFFFF"/><col bgcolor="#CCCCCC"/><col bgcolor="#FFFFFF"/></colgroup><tr bgcolor="#000099"><th colspan="3"><font color="white"><a class="th" name="ExceptionHandler">ExceptionHandler</a> : <a class="th">com.collabnet.ccf.core.hospital.Ambulance</a> | <a class="th" href="../../../../javadocs/com/collabnet/ccf/core/hospital/Ambulance.html">JavaDoc</a> | <a class="th" href="../../../beans2config.html#com.collabnet.ccf.core.hospital.Ambulance">BeansToConfig</a></font></th></tr><tr bgcolor="#CCCCCC"><td colspan="3">
-			The ambulance class catches all the exceptions that are thrown and not caught
-			by any of the components in the pipe and logs the infromation such as the component
-			that threw this exception and the input Generic Artifact xml document or the
-			sync info db xml document.
+			The ambulance class catches all the exceptions that are
+			thrown and not caught by any of the components in the pipe
+			and logs the infromation such as the component that threw
+			this exception and the input Generic Artifact xml document
+			or the sync info db xml document.
 		</td></tr><tr><td colspan="3"><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">hospitalFileName</td><td>${ccf.hospital.file}</td><td/></tr></td></tr></table></p></body></html>
