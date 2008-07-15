@@ -8,16 +8,29 @@ $HeadURL$
 	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
 	<description>
 		<![CDATA[    
-  This sample imports tracker data contained in a CSV file or some other flatfile
-  with a non-comma character as a separator into an SFEE tracker.
-  
-  This sample assumes that the artifacts represented in the flatfile are freshly
-  imported into the SFEE tracker.
-  
-    lib
-    lib/openadaptor.jar
-    lib/openadaptor-spring.jar
-    lib/openadaptor-depends.jar
+  This sample demonstrates the capability of CCF to import 
+artifacts data from a CSV file into an SFEE tracker.
+
+1. Configuring the SFEE tracker information
+	The target repository to which the artifacts to be imported is configured in the
+	xslt/xmlmap2genericartifact.xsl file as 
+	targetRepositoryId="tracker1001"
+	targetSystemId="cu011"
+	Please change these values to the tracker id that you intend to import the
+	data
+	
+	Change the SFEE SOAP server URL and password in the config/sfee.properties
+	file as shown below.
+	sfee.server.1.url=<SFEE SOAP server URL>
+	sfee.server.1.username=<connector user>
+	sfee.server.1.password=<connector user's password>
+
+2. Please note that this integration scenario does not currently support
+	a) importing multi-select field values.
+		Multiselect field values will not be imported properly if there are
+		more than one field values are configured in the CSV file.
+	b) attachments import
+	c) importing comments
   ]]>
 	</description>
 	<bean id="SystemPropertyConfigurer"

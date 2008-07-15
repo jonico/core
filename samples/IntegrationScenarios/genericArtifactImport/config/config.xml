@@ -7,13 +7,16 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
 
-	<description><![CDATA[This scenario shows how import the content of a file
-	that contains artifacts encoded in the GenericArtifactXMLFormat.
-	In its default configuration it loads some artifacts which might have come from
-	Bidirectional Mirroring Scenario Tracker A
-	and stores them into Bidirectional Mirroring Scenario Tracker B.
-	This scenario is especially helpful if you like to replay failed artifact updates into the CCF pipeline again
-	or if you just like to experiment with the fields contained within the GenericArtifactXMLFormat specification.]]>
+	<description>
+		This scenario shows how import the content of a file that
+		contains artifacts encoded in the GenericArtifactXMLFormat. In
+		its default configuration it loads some artifacts which might
+		have come from Bidirectional Mirroring Scenario Tracker A and
+		stores them into Bidirectional Mirroring Scenario Tracker B.
+		This scenario is especially helpful if you like to replay failed
+		artifact updates into the CCF pipeline again or if you just like
+		to experiment with the fields contained within the
+		GenericArtifactXMLFormat specification.
 	</description>
 
 	<bean id="SystemPropertyConfigurer"
@@ -69,8 +72,9 @@
 			scenario it reads a file with generic artifact xml documents
 			in it.
 		</description>
-		<property name="filename" value="input/genericartifacts.xml.txt"/>
-		
+		<property name="filename"
+			value="input/genericartifacts.xml.txt" />
+
 	</bean>
 
 	<bean id="GenericArtifactMultiLineParser"
@@ -213,7 +217,9 @@
 			information into the database table.
 		</description>
 		<property name="tableName" value="IDENTITY_MAPPING"></property>
-		<property name="sql" value="${ccf.identity.mapping.updater.sql}"></property>
+		<property name="sql"
+			value="${ccf.identity.mapping.updater.sql}">
+		</property>
 		<property name="outputColumns">
 			<list>
 				<value>SOURCE_LAST_MODIFICATION_TIME</value>
@@ -238,7 +244,7 @@
 		<property name="writer" ref="IdentityMappingTableInserter"></property>
 		<property name="jdbcConnection" ref="JDBCConnection"></property>
 	</bean>
-<bean id="IdentityMappingTableInserter"
+	<bean id="IdentityMappingTableInserter"
 		class="org.openadaptor.auxil.connector.jdbc.writer.MapTableWriter">
 		<description>
 			This is the writer object that writes the artifact mapping

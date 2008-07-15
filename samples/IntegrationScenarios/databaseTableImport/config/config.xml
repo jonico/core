@@ -8,8 +8,8 @@ $HeadURL$
 	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
 
 	<description><![CDATA[
-  This sample demonstrates the capability of CCF to import 
-artifacts data from a database table into an SFEE tracker.
+  This integration scenario demonstrated the capability of CCF
+  to import artifacts data from a database table into an SFEE tracker.
 
 1. Configuring the SFEE tracker information
 	The SFEE tracker id is configured in the database in the SYNCHRONIZATION_STATUS
@@ -26,7 +26,7 @@ artifacts data from a database table into an SFEE tracker.
 	sfee.server.1.password=<connector user's password>
 
 2. Configuring the ARTIFACTS table
-	The table that contains the artifacts are configured in the config\database-table-import.xml
+	The table that contains the artifacts are configured in this file
 	as
 	<bean id="DatabaseTableReader"
 		class="org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector">
@@ -51,7 +51,7 @@ artifacts data from a database table into an SFEE tracker.
 	Change the field names in the template according to the 
 	field names in the database table and the SFEE tracker.
 
-4. Please note that this sample as is does not support the following
+4. Please note that this integration scenario currently does not support
 	a) importing multi-select field values.
 		Mutiselect field values will not be imported properly if there are
 		more than one field values are configured in the database table.

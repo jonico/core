@@ -85,7 +85,7 @@ artifacts from an SFEE tracker into a database table.
 		<property name="pollIntervalSecs" value="0" />
 	</bean>
 
-5. Please note that this sample as is does not support the following
+5. Please note that this integration scenario does not currently support
 	a) exporting multi-select field values.
 		Mutiselect field values will not be imported properly if there are
 		more than one field values are configured in the tracker field.
