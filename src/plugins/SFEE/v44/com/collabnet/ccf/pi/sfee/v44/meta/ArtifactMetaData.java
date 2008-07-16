@@ -16,6 +16,8 @@ public class ArtifactMetaData {
 
 	private static final HashMap<String, GenericArtifactField.FieldValueTypeValue>
 			fieldValueTypeGAFieldTypeMap = new HashMap<String, GenericArtifactField.FieldValueTypeValue>();
+	private static final HashMap<GenericArtifactField.FieldValueTypeValue, String>
+			fieldGAValueTypeFieldTypeMap = new HashMap<GenericArtifactField.FieldValueTypeValue, String>();
 	static {
 		fieldValueTypeGAFieldTypeMap.put(TrackerFieldSoapDO.FIELD_VALUE_TYPE_DATE,
 				GenericArtifactField.FieldValueTypeValue.DATE);
@@ -24,7 +26,17 @@ public class ArtifactMetaData {
 		fieldValueTypeGAFieldTypeMap.put(TrackerFieldSoapDO.FIELD_VALUE_TYPE_STRING,
 				GenericArtifactField.FieldValueTypeValue.STRING);
 		fieldValueTypeGAFieldTypeMap.put(TrackerFieldSoapDO.FIELD_VALUE_TYPE_USER,
-				GenericArtifactField.FieldValueTypeValue.STRING);
+				GenericArtifactField.FieldValueTypeValue.USER);
+	}
+	static {
+		fieldGAValueTypeFieldTypeMap.put(GenericArtifactField.FieldValueTypeValue.DATE,
+				TrackerFieldSoapDO.FIELD_VALUE_TYPE_DATE);
+		fieldGAValueTypeFieldTypeMap.put(GenericArtifactField.FieldValueTypeValue.INTEGER,
+				TrackerFieldSoapDO.FIELD_VALUE_TYPE_INTEGER);
+		fieldGAValueTypeFieldTypeMap.put(GenericArtifactField.FieldValueTypeValue.STRING, 
+				TrackerFieldSoapDO.FIELD_VALUE_TYPE_STRING);
+		fieldGAValueTypeFieldTypeMap.put(GenericArtifactField.FieldValueTypeValue.USER,
+				TrackerFieldSoapDO.FIELD_VALUE_TYPE_USER);
 	}
 
 	public enum FIELD_TYPE {
@@ -36,9 +48,9 @@ public class ArtifactMetaData {
 	public enum SFEEFields {
 		id("id", "ID", FIELD_TYPE.SYSTEM_DEFINED, GenericArtifactField.FieldValueTypeValue.STRING, true,""),
 		actualHours("actualHours", "Actual hours", FIELD_TYPE.CONFIGURABLE,GenericArtifactField.FieldValueTypeValue.INTEGER, false,""),
-		assignedTo("assignedTo", "Assigned to",FIELD_TYPE.SYSTEM_DEFINED, GenericArtifactField.FieldValueTypeValue.STRING, false,""),
-		lastModifiedBy("lastModifiedBy", "Last modified by", FIELD_TYPE.SYSTEM_DEFINED, GenericArtifactField.FieldValueTypeValue.STRING, false,""),
-		createdBy("createdBy", "Created by", FIELD_TYPE.SYSTEM_DEFINED, GenericArtifactField.FieldValueTypeValue.STRING, false,""),
+		assignedTo("assignedTo", "Assigned to",FIELD_TYPE.SYSTEM_DEFINED, GenericArtifactField.FieldValueTypeValue.USER, false,""),
+		lastModifiedBy("lastModifiedBy", "Last modified by", FIELD_TYPE.SYSTEM_DEFINED, GenericArtifactField.FieldValueTypeValue.USER, false,""),
+		createdBy("createdBy", "Created by", FIELD_TYPE.SYSTEM_DEFINED, GenericArtifactField.FieldValueTypeValue.USER, false,""),
 		folderId("folderId", "Folder id",FIELD_TYPE.SYSTEM_DEFINED, GenericArtifactField.FieldValueTypeValue.STRING, false,""),
 		version("version", "Version", FIELD_TYPE.SYSTEM_DEFINED, GenericArtifactField.FieldValueTypeValue.STRING, false,""),
 		title("title", "Title", FIELD_TYPE.SYSTEM_DEFINED, GenericArtifactField.FieldValueTypeValue.STRING, true,""),
@@ -124,6 +136,17 @@ public class ArtifactMetaData {
 		}
 		else {
 			log.error("No type found for " + fieldType);
+		}
+		return null;
+	}
+	
+	public static String getSFEEFieldValueTypeForGAFieldType(FieldValueTypeValue fieldType) {
+		String fieldValueType = fieldGAValueTypeFieldTypeMap.get(fieldType);
+		if(fieldValueType != null){
+			return fieldValueType;
+		}
+		else {
+			log.error("No SFEE type found for GA type " + fieldType);
 		}
 		return null;
 	}
