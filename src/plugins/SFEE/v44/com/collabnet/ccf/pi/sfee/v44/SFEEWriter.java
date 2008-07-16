@@ -198,15 +198,6 @@ public class SFEEWriter extends LifecycleComponent implements
 	 * @return - the newly created artifact's ArtifactSoapDO object
 	 */
 	private ArtifactSoapDO createArtifact(GenericArtifact ga, String tracker, Connection connection){
-		TrackerFieldSoapDO[] flexFields = null;
-		try {
-			// FIXME Do we really have to get the flex fields here?
-			flexFields = trackerHandler.getFlexFields(connection.getSessionId(), tracker);
-		} catch (RemoteException e1) {
-			log.error("While fetching the flex field values within SFEE, an error occured: "+e1.getMessage());
-		}
-		HashMap<String, List<TrackerFieldSoapDO>> fieldsMap = 
-							SFEEAppHandler.loadTrackerFieldsInHashMap(flexFields);
 		ArrayList<String> flexFieldNames = new ArrayList<String>();
 		ArrayList<String> flexFieldTypes = new ArrayList<String>();
 		ArrayList<Object> flexFieldValues = new ArrayList<Object>();
@@ -215,13 +206,7 @@ public class SFEEWriter extends LifecycleComponent implements
 		if(gaFields != null){
 			for(GenericArtifactField gaField:gaFields){	
 				String fieldName = gaField.getFieldName();
-				TrackerFieldSoapDO fieldSoapDO = 
-					SFEEAppHandler.getTrackerFieldSoapDOForFlexField(fieldsMap, fieldName);
-				if(fieldSoapDO == null){
-					log.warn("No field for "+fieldName);
-					continue;
-				}
-				String trackerFieldValueType = fieldSoapDO.getValueType();
+				String trackerFieldValueType = ArtifactMetaData.getSFEEFieldValueTypeForGAFieldType(gaField.getFieldValueType());
 				flexFieldNames.add(fieldName);
 				flexFieldTypes.add(trackerFieldValueType);
 				Object value = gaField.getFieldValue();
@@ -300,16 +285,6 @@ public class SFEEWriter extends LifecycleComponent implements
 	 * @return - returns the updated artifact's ArtifactSoapDO object
 	 */
 	private ArtifactSoapDO updateArtifact(GenericArtifact ga, String tracker, boolean forceOverride, Connection connection){
-		TrackerFieldSoapDO[] flexFields = null;
-		try {
-			flexFields = trackerHandler.getFlexFields(connection.getSessionId(), tracker);
-		} catch (RemoteException e) {
-			String cause = "Exception while retrieving flex fields";
-			log.error(cause, e);
-			throw new CCFRuntimeException(cause, e);
-		}
-		HashMap<String, List<TrackerFieldSoapDO>> fieldsMap = 
-			SFEEAppHandler.loadTrackerFieldsInHashMap(flexFields);
 		ArrayList<String> flexFieldNames = new ArrayList<String>();
 		ArrayList<String> flexFieldTypes = new ArrayList<String>();
 		ArrayList<Object> flexFieldValues = new ArrayList<Object>();
@@ -317,13 +292,8 @@ public class SFEEWriter extends LifecycleComponent implements
 		if(gaFields != null){
 			for(GenericArtifactField gaField:gaFields){
 				String fieldName = gaField.getFieldName();
-				TrackerFieldSoapDO fieldSoapDO = 
-					SFEEAppHandler.getTrackerFieldSoapDOForFlexField(fieldsMap, fieldName);
-				if(fieldSoapDO == null){
-					log.warn("No field for "+fieldName);
-					continue;
-				}
-				String trackerFieldValueType = fieldSoapDO.getValueType();
+				String trackerFieldValueType = 
+					ArtifactMetaData.getSFEEFieldValueTypeForGAFieldType(gaField.getFieldValueType());
 				if(trackerFieldValueType.equals("SfUser")){
 					trackerFieldValueType = TrackerFieldSoapDO.FIELD_VALUE_TYPE_USER;
 				}
@@ -534,7 +504,9 @@ public class SFEEWriter extends LifecycleComponent implements
 	private String[] getComments(GenericArtifact ga){
 		String[] comments = null;
 		List<GenericArtifactField> gaFields = 
-			ga.getAllGenericArtifactFieldsWithSameFieldName(ArtifactMetaData.SFEEFields.commentText.getFieldName());
+			ga.getAllGenericArtifactFieldsWithSameFieldTypeAndFieldName(
+					GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD,
+					ArtifactMetaData.SFEEFields.commentText.getFieldName());
 		int commentsSize = 0;
 		if(gaFields != null){
 			commentsSize = gaFields.size();
