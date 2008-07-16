@@ -41,10 +41,6 @@ public class SFEEReader extends AbstractReader {
     
 	private static final Log log = LogFactory.getLog(SFEEReader.class);
 	
-	private boolean isDry=true;
-
-	private Object readerContext = null;
-
 	private SFEETrackerHandler trackerHandler = null;
 	
 	private SFEEAttachmentHandler attachmentHandler = null;
@@ -59,18 +55,28 @@ public class SFEEReader extends AbstractReader {
 
 	private String username = null;
 	
+	/**
+	 * Constructs and Initializes the SFEEReader component.
+	 */
 	public SFEEReader() {
 	    super();
 	    init();
 	}
 
+    /**
+     * Constructs and initializes the SFEEReader component with an id.
+     * 
+     * @param id - The id of the SFEEReader component.
+     */
     public SFEEReader(String id) {
 	    super(id);
 	    init();
 	}
     
+    /**
+     * Initializes the SFEEToGenericArtifactConverter component.
+     */
     public void init(){
-    	super.init();
     	artifactConverter = new SFEEToGenericArtifactConverter();
     }
     
@@ -87,14 +93,7 @@ public class SFEEReader extends AbstractReader {
 		return lastModifiedDate;
 	}
 
-	public Object getReaderContext() {
-		return readerContext;
-	}
 	
-	public boolean isDry() {
-		return isDry;
-	}
-
 	/**
 	 * Connects to the source SFEE system using the connectionInfo and credentialInfo
 	 * details.
@@ -118,7 +117,6 @@ public class SFEEReader extends AbstractReader {
 		Connection connection = null;
 		connection = connectionManager.getConnection(systemId, systemKind, repositoryId,
 			repositoryKind, connectionInfo, credentialInfo);
-		isDry=false;
 		return connection;
 	}
 	
