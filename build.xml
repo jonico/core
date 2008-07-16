@@ -142,7 +142,7 @@
 			<mkdir dir="samples/IntegrationScenarios/customReader/bin" />
 			<antcall target="clean">
 			</antcall>
-			<javac debug="true" debuglevel="${debuglevel}"
+			<javac debug="true" debuglevel="${debuglevel}" 
 				destdir="samples/IntegrationScenarios/customReader/bin"
 				source="${source}" target="${target}">
 				<src path="samples/IntegrationScenarios/customReader/src" />
@@ -251,22 +251,12 @@
 		</copy>
 	</target>
 
-        <!--Installer Deployment-->
-        
-        <target name="sanity" description="Checking the NSIS PATH for creating the installer">	 
-              
-   	       <fail unless="env.NSIS_PATH">
-	           NSIS_PATH variable is not available in the enviroinment
-               </fail>
-	       <echo>NSIS_PATH=${env.NSIS_PATH}</echo>
-        </target>
-
         <target name="cleanup" description="Cleans all generated files">
               <delete dir="deploy"/>
               <delete dir="production_installer"/>        
         </target>
 
-        <target name="deploy" depends="sanity,cleanup,build">
+        <target name="deploy" depends="cleanup,build">
               <property file="default.properties"/>
              
 	      <mkdir dir="deploy"/>
