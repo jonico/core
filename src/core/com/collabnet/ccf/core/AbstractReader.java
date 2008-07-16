@@ -58,6 +58,15 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 		init();
 	}
 	
+	/**
+	 * Initializes the Reader with an empty repository records HashMap.
+	 * The repositories synchronization waiting list and the repository ids in 
+	 * the waiting list are also initialized.
+	 * It also creates a comparator that will be used to compare a set of
+	 * GenericArtifacts.
+	 * The comparator compares the GenericArtifacts according to the last
+	 * modified date of the artifacts. 
+	 */
 	protected void init(){
 		log.debug("Initializing the AbstractReader");
 		repositoryRecordHashMap = new HashMap<String, RepositoryRecord>();
@@ -230,12 +239,27 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 		return new Object[]{};
 	}
 
+	/**
+	 * Removes the record passed in the parameter from the waiting list so that
+	 * in the further runs this repository will not be taken into account for artifact
+	 * shipment (Unless the repository record is added again by the incoming synchronization
+	 * record).
+	 * 
+	 * @param currentRecord - The repository record to be removed from the waiting list.
+	 */
 	private void removeFromWaitingList(RepositoryRecord currentRecord) {
 		repositorySynchronizationWaitingList.remove(currentRecord);
 		String currentSourceRepositoryId = currentRecord.getRepositoryId(); 
 		repositoryRecordsInRepositorySynchronizationWaitingList.remove(currentSourceRepositoryId);
 	}
 	
+	/**
+	 * Moves the repository to the tail of the waiting list so that in the
+	 * next immediate run the repository will not be considered for synchronization
+	 * (Unless it is the lone repository that is being sync-ed).
+	 * 
+	 * @param currentRecord - The repository record to be moved to the tail.
+	 */
 	private void moveToTail(RepositoryRecord currentRecord){
 		repositorySynchronizationWaitingList.remove(currentRecord);
 		repositorySynchronizationWaitingList.add(currentRecord);
@@ -318,8 +342,6 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 	public abstract List<String> getChangedArtifacts(Document syncInfo);
 	
 	public void reset(Object context) {
-		// TODO Auto-generated method stub
-
 	}
 
 	@SuppressWarnings("unchecked")
@@ -330,7 +352,8 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 	}
 	
 	/**
-	 * Extracts and returns the last read time from the sync info.
+	 * Extracts and returns the last modified time of the artifact that was
+	 * sync-ed last.
 	 * @param syncInfo
 	 * @return
 	 */
@@ -350,6 +373,11 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 	}
 	
 
+	/**
+	 * Returns the version of the artifact that was sync-ed in the last CCF cycle.
+	 * @param syncInfo - The incoming sync info
+	 * @return - The version of the artifact that was last sync-ed
+	 */
 	protected String getLastSourceVersion(Document syncInfo) {
 		Node node= syncInfo.selectSingleNode("//LAST_SOURCE_ARTIFACT_VERSION");
 		if (node==null)
@@ -357,6 +385,13 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 		return node.getText();
 	}
 
+	/**
+	 * Returns the source artifact id that was sync-ed in the last
+	 * CCF cycle.
+	 * 
+	 * @param syncInfo - The incoming sync info of a particular repository.
+	 * @return - The source artifact id that was sync-ed last for this repository.
+	 */
 	protected String getLastSourceArtifactId(Document syncInfo) {
 		Node node= syncInfo.selectSingleNode("//LAST_SOURCE_ARTIFACT_ID");
 		if (node==null)
@@ -367,8 +402,8 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 	
 	/**
 	 * Extracts and returns the Source repository id from the sync info.
-	 * @param syncInfo
-	 * @return
+	 * @param syncInfo - The incoming sync info for the repository.
+	 * @return - Returns the repository id from this sync info.
 	 */
 	public String getSourceRepositoryId(Document syncInfo) {
 		Node node= syncInfo.selectSingleNode("//SOURCE_REPOSITORY_ID");
@@ -379,8 +414,8 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 	
 	/**
 	 * Extracts and returns the Source repository kind from the sync info.
-	 * @param syncInfo
-	 * @return
+	 * @param syncInfo - The incoming sync info for this repository.
+	 * @return - Returns the repository kind from the incoming sync info of this repository
 	 */
 	public String getSourceRepositoryKind(Document syncInfo) {
 		Node node= syncInfo.selectSingleNode("//SOURCE_REPOSITORY_KIND");
@@ -391,8 +426,9 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 
 	/**
 	 * Extracts and returns the Source system id from the sync info.
-	 * @param syncInfo
-	 * @return
+	 * 
+	 * @param syncInfo - the incoming sync info for this repository
+	 * @return - The source system id for this repository.
 	 */
 	public String getSourceSystemId(Document syncInfo) {
 		Node node= syncInfo.selectSingleNode("//SOURCE_SYSTEM_ID");
@@ -403,8 +439,8 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 	
 	/**
 	 * Extracts and returns the source system kind from the sync info.
-	 * @param syncInfo
-	 * @return
+	 * @param syncInfo - The incoming sync info for this repository.
+	 * @return - The source system kind for this repository.
 	 */
 	public String getSourceSystemKind(Document syncInfo) {
 		Node node= syncInfo.selectSingleNode("//SOURCE_SYSTEM_KIND");
@@ -415,8 +451,8 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 
 	/**
 	 * Extracts and returns the target repository id from the sync info.
-	 * @param syncInfo
-	 * @return
+	 * @param syncInfo - The incoming sync info for this repository.
+	 * @return - the target repository id that is mapped to this repository.
 	 */
 	public String getTargetRepositoryId(Document syncInfo) {
 		Node node= syncInfo.selectSingleNode("//TARGET_REPOSITORY_ID");
@@ -427,8 +463,9 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 	
 	/**
 	 * Extracts and returns the target repository kind from the sync info.
-	 * @param syncInfo
-	 * @return
+	 * 
+	 * @param syncInfo - The incoming sync info for this repository.
+	 * @return - The target repository id extracted from this repository info.
 	 */
 	public String getTargetRepositoryKind(Document syncInfo) {
 		Node node= syncInfo.selectSingleNode("//TARGET_REPOSITORY_KIND");
@@ -439,8 +476,8 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 
 	/**
 	 * Extracts and returns the Target system id from the sync info.
-	 * @param syncInfo
-	 * @return
+	 * @param syncInfo - The incoming sync info for this repository.
+	 * @return - The target system id from the sync info
 	 */
 	public String getTargetSystemId(Document syncInfo) {
 		Node node= syncInfo.selectSingleNode("//TARGET_SYSTEM_ID");
@@ -451,8 +488,8 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 	
 	/**
 	 * Extracts and returns the target system kind from the sync info.
-	 * @param syncInfo
-	 * @return
+	 * @param syncInfo - The incoming sync info for this repository.
+	 * @return - the target system kind from this repository sync info.
 	 */
 	public String getTargetSystemKind(Document syncInfo) {
 		Node node= syncInfo.selectSingleNode("//TARGET_SYSTEM_KIND");
@@ -479,21 +516,63 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 	public void setSleepInterval(long sleepInterval) {
 		this.sleepInterval = sleepInterval;
 	}
+	/**
+	 * Returns whether the attachments of the artifact should be shipped by the Reader
+	 * component.
+	 * 
+	 * @return - true if the attachments will be shipped.
+	 * 		   - false if the attachments won't be shipped.
+	 */
 	public boolean isShipAttachments() {
 		return shipAttachments;
 	}
+	/**
+	 * Sets the flag whether to ship the attachments or not.
+	 * 
+	 * @param shipAttachments - true if the attachment should be shipped
+	 * 						  - false if the attachments should not be shipped.
+	 */
 	public void setShipAttachments(boolean shipAttachments) {
 		this.shipAttachments = shipAttachments;
 	}
+	/**
+	 * Returns the maximum attachment size that will be shipped for an
+	 * artifact. The max attachment size is configured in bytes.
+	 * 
+	 * @return - The maximum attachment size per artifact in bytes
+	 */
 	public long getMaxAttachmentSizePerArtifact() {
 		return maxAttachmentSizePerArtifact;
 	}
+	/**
+	 * Sets the maximum attachment size to be shipped for an artifact.
+	 * If the attachment size is more than this configured value it 
+	 * should not be shipped by the reader.
+	 * 
+	 * @param maxAttachmentPerArtifact - the maximum attachment size that can
+	 * be shipped.
+	 */
 	public void setMaxAttachmentSizePerArtifact(long maxAttachmentPerArtifact) {
 		this.maxAttachmentSizePerArtifact = maxAttachmentPerArtifact;
 	}
+	/**
+	 * Returns the flag that denotes if the Reader should include field meta data
+	 * for the artifacts that are shipped.
+	 * 
+	 * @return - true if the field meta data should be shipped
+	 * 		   - false if the field meta data need not be shipped by the Reader.
+	 */
 	public boolean isIncludeFieldMetaData() {
 		return includeFieldMetaData;
 	}
+	/**
+	 * Sets if the field meta data should be included in the artifact by the
+	 * Reader component.
+	 * @param includeFieldMetaData - true if the Reader should include the meta data
+	 * 									for the fields.
+	 * 							   - flase if the Reader need not include the field meta data
+	 * 								with the artifact fields.
+	 */
 	public void setIncludeFieldMetaData(boolean includeFieldMetaData) {
 		this.includeFieldMetaData = includeFieldMetaData;
 	}
