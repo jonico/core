@@ -12,11 +12,11 @@
 		<xsl:variable name="fieldName" as="xs:string"><xsl:value-of select="@fieldName" /></xsl:variable>
 		<xsl:choose>
 			<xsl:when test="$fieldName = 'id' and @fieldType = 'mandatoryField'">
+				<xsl:element name="artifactId"><xsl:value-of select="text()"/></xsl:element>
 			</xsl:when>
 			<xsl:otherwise>
 				<xsl:element name="{$fieldName}"><xsl:value-of select="text()"/></xsl:element>
 			</xsl:otherwise>
 		</xsl:choose>
-		
 	</xsl:template>
 </xsl:stylesheet>
