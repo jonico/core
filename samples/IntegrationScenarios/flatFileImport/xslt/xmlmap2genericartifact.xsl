@@ -181,6 +181,18 @@
 				  	<xsl:value-of select="text()"/>
 				</field>
 			</xsl:if>
+			<xsl:if test="$fieldName = 'artifactId'">
+				<field>
+					<xsl:attribute name="fieldName">id</xsl:attribute>
+				    <xsl:attribute name="fieldDisplayName"><xsl:value-of select="$fieldName"/></xsl:attribute>
+				    <xsl:attribute name="fieldAction">replace</xsl:attribute>
+				    <xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
+				  	<xsl:attribute name="fieldValueHasChanged">true</xsl:attribute>
+				  	<xsl:attribute name="fieldValueType">String</xsl:attribute>
+				  	<xsl:attribute name="fieldValueIsNull">false</xsl:attribute>
+				  	<xsl:value-of select="text()"/>
+				</field>
+			</xsl:if>
 			<xsl:if test="$fieldName = 'id'">
 				<field>
 					<xsl:attribute name="fieldName">id</xsl:attribute>
