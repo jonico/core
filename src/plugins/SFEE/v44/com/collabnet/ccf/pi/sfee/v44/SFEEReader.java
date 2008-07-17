@@ -77,6 +77,7 @@ public class SFEEReader extends AbstractReader {
      * Initializes the SFEEToGenericArtifactConverter component.
      */
     public void init(){
+    	super.init();
     	artifactConverter = new SFEEToGenericArtifactConverter();
     }
     
