@@ -292,6 +292,7 @@ artifact was lastly updated in the target system.  There is one reserved value "
 			<xs:enumeration value="HTMLString"/>
 			<xs:enumeration value="Base64String"/>
 			<xs:enumeration value="Boolean"/>
+			<xs:enumeration value="User"/>
 		</xs:restriction>
 	</xs:simpleType>
 </xs:schema>
