@@ -61,8 +61,6 @@
 					value-ref="SFEEReader" />
 				<entry key-ref="SFEEReader" value-ref="SFEETransformer" />
 				<entry key-ref="SFEETransformer"
-					value-ref="GenericArtifactSchemaValidator" />
-				<entry key-ref="GenericArtifactSchemaValidator"
 					value-ref="EntityService" />
 				<entry key-ref="EntityService" value-ref="SFEEWriter" />
 				<entry key-ref="SFEEWriter"
