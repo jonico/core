@@ -88,12 +88,14 @@ public class EntityService extends LifecycleComponent implements
 			// FIXME Artifact version is a string in table. If there is a system that uses some other
 			// Notations than numbers for version, how will this succeed?
 			int sourceArtifactVersionInt = Integer.parseInt(sourceArtifactVersion);
+			String targetArtifactIdFromTable = null;
 			if(sourceArtifactId.equalsIgnoreCase("Unknown")){
 				return new Object[]{data};
 			}
 			Object[] results = lookupTargetArtifactId(sourceArtifactId, sourceSystemId, sourceRepositoryId, 
 					targetSystemId, targetRepositoryId, artifactType);
-			String targetArtifactIdFromTable = results[0].toString();
+			if(results!=null && results.length!=0) {
+			targetArtifactIdFromTable = results[0].toString();
 			Date sourceArtifactLastModifiedDateFromTable = (Date) results[1];
 			String sourceArtifactVersionFromTable = results[2].toString();
 			int sourceArtifactVersionIntFromTable = Integer.parseInt(sourceArtifactVersionFromTable);
@@ -103,6 +105,7 @@ public class EntityService extends LifecycleComponent implements
 				log.info("Seems the artifact has already been shipped. Duplicately shipped "
 						+ sourceArtifactId + " at " + sourceArtifactVersion);
 				return null;
+			}
 			}
 			if(artifactType.equals(GenericArtifactHelper.ARTIFACT_TYPE_ATTACHMENT)){
 				String sourceParentArtifactId = XPathUtils.getAttributeValue(element,
