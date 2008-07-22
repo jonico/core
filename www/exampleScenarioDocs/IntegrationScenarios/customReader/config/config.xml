@@ -85,7 +85,7 @@
 			status using the database read connector configured in the
 			property delegate.
 		</description>
-		<property name="pollLimit" value="-1" />
+		<property name="pollLimit" value="1" />
 		<property name="delegate"
 			ref="SynchronizationStatusDatabaseReader" />
 		<property name="pollIntervalSecs" value="5000" />
