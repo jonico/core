@@ -24,7 +24,21 @@ Instructions:
    The schema of this data base and some sample content for the integration scenarios can be found
    in the centralCCFDatabase directory in the ccfDatabase.script file.
    
-   ***** WRITE HOW TO RUN THE DATA BASE UNDER WINDOWS/LINUX ****
+   Running the database under Windows
+   	  1. Set the JAVA_HOME and the CCF_HOME environment variables in the %CCF_HOME%/bin/setEnv.bat file.
+   	  		The JAVA_HOME should point to a valid directory that contains JDK 1.5 and above.
+      		The CCF_HOME is the directory where you have extracted the CCF package.
+      2. Go to the %CCF_HOME%/samples/centralCCFDatabase directory.
+      3. Execute the startDB.bat script
+
+   Running the database under Linux
+      1. Set the JAVA_HOME and the CCF_HOME environment variables in the $CCF_HOME/bin/setEnv.sh file.
+      		The JAVA_HOME should point to a valid directory that contains JDK 1.5 and above.
+      		The CCF_HOME is the directory where you have extracted the CCF package.
+      2. Go to the $CCF_HOME/samples/centralCCFDatabase directory.
+      3. Execute the startDB.sh script. If the startDB.sh script does not have execute permission, grant the
+      execute permission to it.
+      		chmod + startDB.sh
    
    In order to run the integration scenarios on different machines but the preconfigured ones, you have
    to adjust the repository and system ids according to your needs. You may chose two options to adjust
@@ -69,7 +83,19 @@ Instructions:
    	to get an impression how the xml documents will look like for your specific trackers.  
 
    4. Run the integration scenario:
-	***** WRITE HOW TO RUN THE EXAMPLES UNDER WINDOWS/LINUX **** 
+    Before running the integration scenarios you must start the database first. Please refer #1.
+	
+	Running the Sample Integration scenarios under Linux
+	1. Change the directory to the respective sample scenario that you want to run.
+	2. Check if the RunCCFService.sh has execution permission.
+	3. If not grant execute permission to the RunCCFService.sh script as shown below.
+		chmod +x RunCCFService.sh
+	4. Now run the RunCCFService.sh script as shown below.
+		./RunCCFService.sh
+	
+	Running the Sample Integration scenarios under windows
+	1. Change the working directory to the respective sample scenario that you want to run.
+	2. Run the RunCCFService.bat script
 	
    5. Logs:
 	When the connector is running, you might want to refer to the logs, which will be present in the
