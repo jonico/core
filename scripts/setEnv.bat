@@ -4,8 +4,17 @@ rem startup scripts.
 
 rem Please refer http://ccf.collab.net/
 
-rem set JAVA_HOME=
-rem set CCF_HOME=
+rem Before running anything set your JAVA_HOME
+rem and the CCF_HOME env variables.
+rem Point the JAVA_HOME to the JDK directory on your machine.
+rem You will need JDK 1.5 and above.
+rem Point the CCF_HOME to the directory where you have extracted the CCF
+
+rem If you haven't set the CCF_HOME directory it will be taken as the parent directory of the
+rem bin directory file.
+
+set JAVA_HOME=
+set CCF_HOME=
 
 set CCF_HOME=%~dp0..
 
