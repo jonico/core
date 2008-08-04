@@ -67,7 +67,7 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 	 * The comparator compares the GenericArtifacts according to the last
 	 * modified date of the artifacts. 
 	 */
-	protected void init(){
+	private void init(){
 		log.debug("Initializing the AbstractReader");
 		repositoryRecordHashMap = new HashMap<String, RepositoryRecord>();
 		repositorySynchronizationWaitingList = new ArrayList<RepositoryRecord>();
@@ -132,7 +132,6 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 	 * then the AbstractReader pauses the processing for sleepInterval milliseconds.
 	 */
 	public Object[] process(Object data) {
-		log.debug("Entering process method of AbstractReader");
 		Document syncInfoIn = null;
 		if(data instanceof Document){
 			syncInfoIn = (Document) data;
@@ -224,13 +223,13 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 				}
 			}
 			else {
-				log.info("No changed artifacts reported for "+sourceRepositoryId
+				log.debug("No changed artifacts reported for "+sourceRepositoryId
 						+". Removing it from the waiting list");
 				removeFromWaitingList(currentRecord);
 			}
 		}
 		try {
-			log.info("There are no artifacts to be shipped from any of the repositories. Sleeping");
+			log.debug("There are no artifacts to be shipped from any of the repositories. Sleeping");
 			Thread.sleep(sleepInterval);
 		} catch (InterruptedException e) {
 			String cause = "Thread is interrupted";
