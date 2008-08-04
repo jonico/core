@@ -1,5 +1,6 @@
 package com.collabnet.ccf.core.transformer;
 
+import java.io.File;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
@@ -36,6 +37,18 @@ import com.collabnet.ccf.core.utils.XPathUtils;
  * additionally allows to output XML documents encoded as Dom4J instances. This
  * implies that it will only work with XSLT files that will generate valid XML
  * output (a restriction the standard openAdaptor XSLT processor does not have).
+ * 
+ * Either the xsltDir or xsltFile property should be set.
+ * If the xsltDir property is set then the XsltProcessor will look into the 
+ * directory for valid XSLT files that correspond to the following naming
+ * conventions.
+ * 
+ * For each source and target repository mappings the XSLT file name that will be looked up is
+ * 		<b>&lt;<i>source system id</i>&gt;+&lt;<i>source repository id</i>&gt;+&lt;<i>target system id</i>&gt;+&lt;<i>tartget repository id</i>&gt;.xsl</b>
+ * If the xsltFile property is set then the XsltProcessor loads that XSLT file for
+ * all the transformations.
+ * 
+ * If both the properties are set then the xsltDir property takes precedence.
  * 
  * @author jnicolai
  * 
@@ -89,11 +102,26 @@ public class XsltProcessor extends Component implements IDataProcessor {
 	 */
 	@SuppressWarnings("unchecked")
 	public void validate(List exceptions) {
-		/*try {
-			transform = loadXSLT(xsltFile);
-		} catch (RuntimeException ex) {
-			exceptions.add(ex);
-		}*/
+		String xsltDir = this.getXsltDir();
+		String xsltFile = this.getXsltFile();
+		if(!StringUtils.isEmpty(xsltDir)){
+			File xsltDirFile = new File(xsltDir);
+			if(xsltDirFile.exists() && xsltDirFile.isDirectory()){
+				log.debug("xsltDir property is a valid directory");
+			}
+			else {
+				exceptions.add(new ValidationException("xsltDir property is not a valid directory...!",this));
+			}
+		}
+		else if(!StringUtils.isEmpty(xsltFile)){
+			File xsltFileFile = new File(xsltFile);
+			if(xsltFileFile.exists() && xsltFileFile.isFile()){
+				log.debug("xsltFile ptoperty is a valid file");
+			}
+			else {
+				exceptions.add(new ValidationException("xsltFile property is not a valid file...!",this));
+			}
+		}
 		if(xsltFileNameTransformerMap==null)
 			xsltFileNameTransformerMap = new HashMap<String, Transformer>();
 	}
@@ -137,7 +165,7 @@ public class XsltProcessor extends Component implements IDataProcessor {
 
 			log.info("Loaded XSLT [" + xsltFile + "] successfully");
 		} catch (TransformerConfigurationException e) {
-			String cause = "Failed to load XSLT: "+ e.getMessage();
+			String cause = "Failed to load XSLT: [" + xsltFile +" ]"+  e.getMessage();
 			log.error(cause,e);
 			XPathUtils.addAttribute(element, GenericArtifactHelper.ERROR_CODE,GenericArtifact.ERROR_TRANSFORMER_FILE);
 			throw new CCFRuntimeException(cause,e);
@@ -291,5 +319,9 @@ public class XsltProcessor extends Component implements IDataProcessor {
 
 	public String getXsltFile() {
 		return xsltFile;
+	}
+	
+	public String getXsltDir(){
+		return this.xsltDir;
 	}
 }
