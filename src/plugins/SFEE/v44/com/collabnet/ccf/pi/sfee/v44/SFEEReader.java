@@ -76,8 +76,7 @@ public class SFEEReader extends AbstractReader {
     /**
      * Initializes the SFEEToGenericArtifactConverter component.
      */
-    public void init(){
-    	super.init();
+    private void init(){
     	artifactConverter = new SFEEToGenericArtifactConverter();
     }
     
@@ -85,7 +84,6 @@ public class SFEEReader extends AbstractReader {
 		String lastModifiedDateString = this.getLastSourceArtifactModificationDate(syncInfo);
 		Date lastModifiedDate = null; 
 		if (!StringUtils.isEmpty(lastModifiedDateString)) {
-			log.debug("Artifacts to be fetched from "+lastModifiedDateString);
 			lastModifiedDate=(Date)SFEEGAHelper.asTypedValue(lastModifiedDateString, "DateTime");
 			lastModifiedDate.setTime(lastModifiedDate.getTime()+1);
 		} else {
