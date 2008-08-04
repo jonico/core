@@ -45,7 +45,7 @@ public class Ambulance extends Component implements
 		return document;
 	}
 	public Object[] process(Object data) {
-		log.info("Artifact reached ambulance");
+		log.warn("Artifact reached ambulance");
 		if(data instanceof MessageException){
 					MessageException exception = (MessageException) data;
 					Object dataObj = exception.getData();
