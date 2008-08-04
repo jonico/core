@@ -79,6 +79,8 @@ public class StringUtils {
 	 * @see #convertHTML(String)
 	 */
 	private final static String HTML_PATTERN = "(<[^>]+>)";
+	
+	private final static String BR_PATTERN = "(<[bB][rR][/]?>)";
     
 	private final static String UNDERSCORE_PATTERN = "________________________________________";
 	
@@ -732,6 +734,7 @@ public class StringUtils {
 	 */
     public static String stripHTML(String text) {
     	if (text != null) {
+    		text = text.replaceAll(BR_PATTERN, "\n");
     		text = text.replaceAll(HTML_PATTERN, EMPTY_STRING);
     		return stripSpecificDelimiter(text);
     	} else {
