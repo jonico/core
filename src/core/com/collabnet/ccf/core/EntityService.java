@@ -13,8 +13,6 @@ import org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector;
 import org.openadaptor.auxil.orderedmap.IOrderedMap;
 import org.openadaptor.auxil.orderedmap.OrderedHashMap;
 import org.openadaptor.core.IDataProcessor;
-import org.openadaptor.core.exception.NullRecordException;
-import org.openadaptor.core.exception.RecordFormatException;
 import org.openadaptor.core.exception.ValidationException;
 import org.openadaptor.core.lifecycle.LifecycleComponent;
 
@@ -28,6 +26,9 @@ import com.collabnet.ccf.core.utils.XPathUtils;
  * This component will find out whether an artifact coming out of the source
  * system has to be created, updated, deleted or ignored within the target system.
  * It will also try to find out the correct id of the artifact on the target system.
+ * 
+ * It checks the version of the source artifact to see if that version of the artifact already
+ * shipped there by avoiding duplicate artifact shipment.
  * 
  * @author jnicolai
  * 
@@ -95,17 +96,17 @@ public class EntityService extends LifecycleComponent implements
 			Object[] results = lookupTargetArtifactId(sourceArtifactId, sourceSystemId, sourceRepositoryId, 
 					targetSystemId, targetRepositoryId, artifactType);
 			if(results!=null && results.length!=0) {
-			targetArtifactIdFromTable = results[0].toString();
-			Date sourceArtifactLastModifiedDateFromTable = (Date) results[1];
-			String sourceArtifactVersionFromTable = results[2].toString();
-			int sourceArtifactVersionIntFromTable = Integer.parseInt(sourceArtifactVersionFromTable);
-			if(sourceArtifactLastModifiedDateFromTable.equals(sourceArtifactLastModifiedDate) &&
-					sourceArtifactVersionIntFromTable >= sourceArtifactVersionInt)
-			{
-				log.info("Seems the artifact has already been shipped. Duplicately shipped "
-						+ sourceArtifactId + " at " + sourceArtifactVersion);
-				return null;
-			}
+				targetArtifactIdFromTable = results[0].toString();
+				Date sourceArtifactLastModifiedDateFromTable = (Date) results[1];
+				String sourceArtifactVersionFromTable = results[2].toString();
+				int sourceArtifactVersionIntFromTable = Integer.parseInt(sourceArtifactVersionFromTable);
+				if(sourceArtifactLastModifiedDateFromTable.equals(sourceArtifactLastModifiedDate) &&
+						sourceArtifactVersionIntFromTable >= sourceArtifactVersionInt)
+				{
+					log.warn("Seems the artifact has already been shipped. Duplicately shipping "
+							+ sourceArtifactId + " at " + sourceArtifactVersion);
+					return null;
+				}
 			}
 			if(artifactType.equals(GenericArtifactHelper.ARTIFACT_TYPE_ATTACHMENT)){
 				String sourceParentArtifactId = XPathUtils.getAttributeValue(element,
@@ -149,6 +150,24 @@ public class EntityService extends LifecycleComponent implements
 	}
 	
 	
+	/**
+	 * For a given source artifact id, source repository and the target repository details,
+	 * this method finds out the target artifact id mapped to the source artifact id.
+	 * 
+	 * If the source artifact id had ever passed through the wiring the identity mapping will
+	 * contain the corresponding target artifact id. This method fetches the target artifact id 
+	 * and returns. If there is no target artifact id mapped to this source artifact id this
+	 * method return a null.
+	 * 
+	 * @param sourceArtifactId - The source artifact id that should be looked up for a target artifact id
+	 * @param sourceSystemId - The system id of the source repository
+	 * @param sourceRepositoryId - The repository id of the source artifact
+	 * @param targetSystemId - The system id of the target repository
+	 * @param targetRepositoryId - The repository id of the target artifact
+	 * @param artifactType - The artifact type
+	 * 
+	 * @return the target artifact id for the source artifact id
+	 */
 	private Object[] lookupTargetArtifactId(String sourceArtifactId, String sourceSystemId, String sourceRepositoryId, 
 			String targetSystemId, String targetRepositoryId, String artifactType) {
 		IOrderedMap inputParameters = new OrderedHashMap();
