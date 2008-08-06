@@ -5,7 +5,7 @@
 	<classpathentry kind="src" path="tests"/>
 	<classpathentry excluding="lib/**" kind="src" path="src/core"/>
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/bootstrap.jar"/>
-	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/openadaptor.jar" sourcepath="C:/Documents and Settings/jnicolai/My Documents/openadaptorSourceCode/src"/>
+	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/openadaptor.jar"/>
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/openadaptor-depends.jar"/>
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/openadaptor-spring.jar"/>
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/openadaptor-stub.jar"/>

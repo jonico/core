@@ -234,6 +234,7 @@
 		<mkdir dir="build/package/samples"/>
 		<copy todir="build/package/samples">
 			<fileset dir="samples">
+				<include name="README.txt"/>
 				<include name="IntegrationScenarios/**/*"/>
 				<include name="centralCCFDatabase/**/*"/>
 			</fileset>
