@@ -286,10 +286,10 @@ public class MappingDBUpdater extends LifecycleComponent implements IDataProcess
 		inputParameters.add(1,"SOURCE_REPOSITORY_ID",sourceRepositoryId);
 		inputParameters.add(2,"TARGET_SYSTEM_ID",targetSystemId);
 		inputParameters.add(3,"TARGET_REPOSITORY_ID",targetRepositoryId);
-		inputParameters.add(4,"SOURCE_SYSTEM_KIND",sourceSystemId);
-		inputParameters.add(5,"SOURCE_REPOSITORY_KIND",sourceRepositoryId);
-		inputParameters.add(6,"TARGET_SYSTEM_KIND",targetSystemId);
-		inputParameters.add(7,"TARGET_REPOSITORY_KIND",targetRepositoryId);
+		inputParameters.add(4,"SOURCE_SYSTEM_KIND",sourceSystemKind);
+		inputParameters.add(5,"SOURCE_REPOSITORY_KIND",sourceRepositoryKind);
+		inputParameters.add(6,"TARGET_SYSTEM_KIND",targetSystemKind);
+		inputParameters.add(7,"TARGET_REPOSITORY_KIND",targetRepositoryKind);
 		inputParameters.add(8,"SOURCE_ARTIFACT_ID",sourceArtifactId);
 		inputParameters.add(9,"TARGET_ARTIFACT_ID",targetArtifactId);
 		inputParameters.add(10,"SOURCE_LAST_MODIFICATION_TIME",sourceTime);
