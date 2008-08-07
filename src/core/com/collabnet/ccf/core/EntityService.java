@@ -95,7 +95,7 @@ public class EntityService extends LifecycleComponent implements
 			}
 			Object[] results = lookupTargetArtifactId(sourceArtifactId, sourceSystemId, sourceRepositoryId, 
 					targetSystemId, targetRepositoryId, artifactType);
-			if(results!=null && results.length!=0) {
+			if(results!=null && results.length!=0 && results[0]!=null && results[1]!=null && results[2]!=null) {
 				targetArtifactIdFromTable = results[0].toString();
 				Date sourceArtifactLastModifiedDateFromTable = (Date) results[1];
 				String sourceArtifactVersionFromTable = results[2].toString();
