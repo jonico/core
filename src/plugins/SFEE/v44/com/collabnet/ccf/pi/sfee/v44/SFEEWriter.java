@@ -91,9 +91,16 @@ public class SFEEWriter extends LifecycleComponent implements
 		}
 		
 		if(artifactAction == GenericArtifact.ArtifactActionValue.UPDATE){
-			SFEEGAHelper.updateSingleMandatoryField(ga, 
-					ArtifactMetaData.SFEEFields.id.getFieldName(), targetArtifactId);
-			ga.setTargetArtifactId(targetArtifactId);
+			if(SFEEGAHelper.containsSingleMandatoryField(ga, ArtifactMetaData.SFEEFields.id.getFieldName())){
+				SFEEGAHelper.updateSingleMandatoryField(ga, 
+						ArtifactMetaData.SFEEFields.id.getFieldName(), targetArtifactId);
+				ga.setTargetArtifactId(targetArtifactId);
+			}
+			else {
+				SFEEGAHelper.addField(ga, ArtifactMetaData.SFEEFields.id.getFieldName(), targetArtifactId,
+						GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD,
+						GenericArtifactField.FieldValueTypeValue.STRING);
+			}
 		}
 		if(SFEEGAHelper.containsSingleMandatoryField(ga, ArtifactMetaData.SFEEFields.folderId.getFieldName())){
 			SFEEGAHelper.updateSingleMandatoryField(ga, ArtifactMetaData.SFEEFields.folderId.getFieldName(), tracker);
