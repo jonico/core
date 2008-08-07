@@ -1,3 +1,4 @@
+@echo off
 rem This is the startup script for the CCF Database
 set CLASSPATH=..\..\lib\extlib\hsqldb.jar
 call ..\..\bin\setEnv.bat
