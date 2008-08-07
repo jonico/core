@@ -76,6 +76,23 @@
 	  	</field>
 	</xsl:template>
 	<xsl:template
+        match='ccf:field[@fieldName="id"]'>
+        <field>
+            <xsl:attribute name="fieldName">id</xsl:attribute>
+            <xsl:attribute name="fieldDisplayName">id</xsl:attribute>
+            <xsl:attribute name="fieldAction"><xsl:value-of select="@fieldAction" /></xsl:attribute>
+            <xsl:attribute name="fieldType"><xsl:value-of select="@fieldType" /></xsl:attribute>
+            <xsl:attribute name="fieldValueHasChanged"><xsl:value-of select="@fieldValueHasChanged" /></xsl:attribute>
+            <xsl:attribute name="fieldValueType"><xsl:value-of select="@fieldValueType" /></xsl:attribute>
+            <xsl:attribute name="fieldValueIsNull"><xsl:value-of select="@fieldValueIsNull" /></xsl:attribute>
+            <xsl:attribute name="minOccurs"><xsl:value-of select="@minOccurs" /></xsl:attribute>
+            <xsl:attribute name="maxOccurs"><xsl:value-of select="@maxOccurs" /></xsl:attribute>
+            <xsl:attribute name="nullValueSupported"><xsl:value-of select="@nullValueSupported" /></xsl:attribute>
+            <xsl:attribute name="alternativeFieldName"><xsl:value-of select="@alternativeFieldName" /></xsl:attribute>
+            <xsl:value-of select="."></xsl:value-of>
+        </field>
+    </xsl:template>
+	<xsl:template
 		match='ccf:field[@fieldName="description"]'>
 		<field>
 		    <xsl:attribute name="fieldName">description</xsl:attribute>

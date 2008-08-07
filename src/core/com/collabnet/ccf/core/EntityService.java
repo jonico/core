@@ -96,16 +96,36 @@ public class EntityService extends LifecycleComponent implements
 			Object[] results = lookupTargetArtifactId(sourceArtifactId, sourceSystemId, sourceRepositoryId, 
 					targetSystemId, targetRepositoryId, artifactType);
 			if(results!=null && results.length!=0) {
-				targetArtifactIdFromTable = results[0].toString();
-				Date sourceArtifactLastModifiedDateFromTable = (Date) results[1];
-				String sourceArtifactVersionFromTable = results[2].toString();
-				int sourceArtifactVersionIntFromTable = Integer.parseInt(sourceArtifactVersionFromTable);
-				if(sourceArtifactLastModifiedDateFromTable.equals(sourceArtifactLastModifiedDate) &&
-						sourceArtifactVersionIntFromTable >= sourceArtifactVersionInt)
-				{
-					log.warn("Seems the artifact has already been shipped. Duplicately shipping "
-							+ sourceArtifactId + " at " + sourceArtifactVersion);
-					return null;
+				if(results[0]!=null){
+					targetArtifactIdFromTable = results[0].toString();
+				}
+				else {
+					targetArtifactIdFromTable = null;
+				}
+				Date sourceArtifactLastModifiedDateFromTable = null;
+				if(results.length >= 2 && results[1]!=null) {
+					sourceArtifactLastModifiedDateFromTable = (Date) results[1];
+				}
+				else {
+					sourceArtifactLastModifiedDateFromTable = null;
+				}
+				String sourceArtifactVersionFromTable = null;
+				if(results.length >= 3 && results[2]!=null){
+					sourceArtifactVersionFromTable = results[2].toString();
+				}
+				else {
+					sourceArtifactVersionFromTable = null;
+				}
+				
+				if(sourceArtifactLastModifiedDateFromTable != null && sourceArtifactVersionFromTable != null){
+					int sourceArtifactVersionIntFromTable = Integer.parseInt(sourceArtifactVersionFromTable);
+					if(sourceArtifactLastModifiedDateFromTable.equals(sourceArtifactLastModifiedDate) &&
+							sourceArtifactVersionIntFromTable >= sourceArtifactVersionInt)
+					{
+						log.warn("Seems the artifact has already been shipped. Duplicately shipping "
+								+ sourceArtifactId + " at " + sourceArtifactVersion);
+						return null;
+					}
 				}
 			}
 			if(artifactType.equals(GenericArtifactHelper.ARTIFACT_TYPE_ATTACHMENT)){
