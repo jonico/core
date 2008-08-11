@@ -9,6 +9,10 @@
       <title localize="false">Project Settings</title>
       <filename>HtmlSnippet2.html</filename>
     </component>
+    <component visibility="2" type="Html" order="3">
+      <title localize="false">Project Tracker settings</title>
+      <filename>HtmlSnippet3.html</filename>
+    </component>
   </component_list>
 </page>
 
