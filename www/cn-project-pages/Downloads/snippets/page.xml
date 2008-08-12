@@ -6,7 +6,7 @@
       <filename>HtmlSnippet2.html</filename>
     </component>
     <component visibility="1" type="Html" order="2">
-      <title localize="false" />
+      <title localize="false">Downloads</title>
       <filename>HtmlSnippet1.html</filename>
     </component>
   </component_list>
