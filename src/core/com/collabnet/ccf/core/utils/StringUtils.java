@@ -83,6 +83,8 @@ public class StringUtils {
 	private final static String HTML_PATTERN = "(<[^>]+>)";
 	
 	private final static String BR_PATTERN = "(<[bB][rR][/]?>)";
+	
+	private final static String SLASH_N_PATTERN = "(\n)";
     
 	private final static String UNDERSCORE_PATTERN = "________________________________________";
 	
@@ -739,7 +741,9 @@ public class StringUtils {
     			sb.append(c);
     		}
     	}
-    	return sb.toString();
+    	String newStr = sb.toString();
+    	String newStrWithSlashN = newStr.replaceAll(SLASH_N_PATTERN, "<br>"); 
+    	return newStrWithSlashN;
     }
     
     
