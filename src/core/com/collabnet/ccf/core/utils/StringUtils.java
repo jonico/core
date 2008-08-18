@@ -68,7 +68,9 @@ public class StringUtils {
 	 * Maps entity names to their corresponding unicode <code>Characters</code>.
 	 * </p>
 	 */
-	private static Map ENTITY_MAPPING;
+	private static Map<String, Character> ENTITY_MAPPING;
+	
+	private static Map<Character, String> CHAR_ENTITY_MAPPING;
 	
 	/**
 	 * <p>
@@ -81,6 +83,8 @@ public class StringUtils {
 	private final static String HTML_PATTERN = "(<[^>]+>)";
 	
 	private final static String BR_PATTERN = "(<[bB][rR][/]?>)";
+	
+	private final static String SLASH_N_PATTERN = "(\n)";
     
 	private final static String UNDERSCORE_PATTERN = "________________________________________";
 	
@@ -609,9 +613,11 @@ public class StringUtils {
 		/* &hearts; */, 9830
 		/* &diams; */, };
 				
-		ENTITY_MAPPING = new HashMap(511);
+		ENTITY_MAPPING = new HashMap<String, Character>(511);
+		CHAR_ENTITY_MAPPING = new HashMap<Character, String>(511);
 		for (int i = 0; i < entityKeys.length; i++) {
 			ENTITY_MAPPING.put(entityKeys[i], new Character(entityValues[i]));
+			CHAR_ENTITY_MAPPING.put(new Character(entityValues[i]),entityKeys[i]);
 		}
 	} // end static initialization block
 
@@ -720,6 +726,25 @@ public class StringUtils {
 		/* If result is not shorter, we did not do anything. Saves RAM. */
 		return (sb.length() == originalTextLength) ? text : sb.toString();
 	} // end method convertEntities(String)
+    
+    public static String encodeHTMLToEntityReferences(String html){
+    	StringBuffer sb = new StringBuffer();
+    	for(int i=0; i < html.length(); i++){
+    		char c = html.charAt(i);
+    		String entity = CHAR_ENTITY_MAPPING.get(c);
+    		if(entity != null){
+    			sb.append('&');
+    			sb.append(entity);
+    			sb.append(';');
+    		}
+    		else {
+    			sb.append(c);
+    		}
+    	}
+    	String newStr = sb.toString();
+    	String newStrWithSlashN = newStr.replaceAll(SLASH_N_PATTERN, "<br>"); 
+    	return newStrWithSlashN;
+    }
     
     
     /**
