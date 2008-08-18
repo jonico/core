@@ -192,11 +192,17 @@ public class SFEEAttachmentHandler {
 	
 	private AttachmentSoapRow getAttachmentMetaData(String fileName, Date createdDate,
 			ISourceForgeSoap sourceForgeSoap, String sessionId, String artifactId) throws RemoteException{
+		Date artifactModifiedDate = new Date((createdDate.getTime()/1000) * 1000);
 		AttachmentSoapList attachmentsList = sourceForgeSoap.listAttachments(sessionId, artifactId);
 		AttachmentSoapRow[] attachmentRows = attachmentsList.getDataRows();
-		for(AttachmentSoapRow row:attachmentRows){
-			if(row.getFileName().equals(fileName) && createdDate.equals(row.getDateCreated())){
+		for(int i=0; i <attachmentRows.length; i++){
+			 AttachmentSoapRow row = attachmentRows[i];
+			Date attachmentCreatedDate = new Date((row.getDateCreated().getTime()/1000)*1000);
+			if(row.getFileName().equals(fileName) && artifactModifiedDate.equals(attachmentCreatedDate)){
 				return row;
+			}
+			if(i == attachmentRows.length-1){
+				log.warn("No attachments match with the name "+fileName+" created time "+createdDate);
 			}
 		}
 		return null;
