@@ -27,7 +27,7 @@ public class SFEEReaderTest extends TestCase {
 	SFEEReader sfeeReader = null;
 	String username="mseethar";
     String password="password";
-    String serverUrl="http://cu011.cubit.maa.collab.net:8080";
+    String serverUrl="http://cu074.cubit.maa.collab.net:8080";
     String keepAlive = "true";
 	private String systemKind;
 	private String credentialInfo;
@@ -122,11 +122,11 @@ public class SFEEReaderTest extends TestCase {
 		}
 	}
 	
-	public void dummyTestArtfactRetreival() throws RemoteException, MaxConnectionsReachedException, ConnectionException{
-		repositoryId = "tracker1003";
+	public void testArtfactRetreival() throws RemoteException, MaxConnectionsReachedException, ConnectionException{
+		repositoryId = "tracker1215";
 		Connection connection = sfeeReader.connect(systemId, systemKind, repositoryId, repositoryKind, connectionInfo, credentialInfo);
 		ISourceForgeSoap soapApp = connection.getSfSoap();
-		Date lastModifiedDate = new Date(2008-1900,5,16,16,45,0);
+		Date lastModifiedDate = new Date(2007-1900,5,16,16,45,0);
 		ITrackerAppSoap trackerApp = (ITrackerAppSoap) ClientSoapStubFactory.getSoapStub(
 				ITrackerAppSoap.class, serverUrl);
 		String[] selectedColumns = { ArtifactSoapDO.COLUMN_ID,

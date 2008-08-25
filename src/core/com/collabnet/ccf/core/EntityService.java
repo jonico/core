@@ -90,43 +90,25 @@ public class EntityService extends LifecycleComponent implements
 			// Notations than numbers for version, how will this succeed?
 			int sourceArtifactVersionInt = Integer.parseInt(sourceArtifactVersion);
 			String targetArtifactIdFromTable = null;
+			String targetArtifactVersion = null;
 			if(sourceArtifactId.equalsIgnoreCase("Unknown")){
 				return new Object[]{data};
 			}
 			Object[] results = lookupTargetArtifactId(sourceArtifactId, sourceSystemId, sourceRepositoryId, 
 					targetSystemId, targetRepositoryId, artifactType);
 			if(results!=null && results.length!=0) {
-				if(results[0]!=null){
-					targetArtifactIdFromTable = results[0].toString();
+				targetArtifactIdFromTable = results[0].toString();
+				Date sourceArtifactLastModifiedDateFromTable = (Date) results[1];
+				String sourceArtifactVersionFromTable = results[2].toString();
+				int sourceArtifactVersionIntFromTable = Integer.parseInt(sourceArtifactVersionFromTable);
+				if(sourceArtifactLastModifiedDateFromTable.equals(sourceArtifactLastModifiedDate) &&
+						sourceArtifactVersionIntFromTable >= sourceArtifactVersionInt)
+				{
+					log.warn("Seems the artifact has already been shipped. Duplicately shipping "
+							+ sourceArtifactId + " at " + sourceArtifactVersion);
+					return null;
 				}
-				else {
-					targetArtifactIdFromTable = null;
-				}
-				Date sourceArtifactLastModifiedDateFromTable = null;
-				if(results.length >= 2 && results[1]!=null) {
-					sourceArtifactLastModifiedDateFromTable = (Date) results[1];
-				}
-				else {
-					sourceArtifactLastModifiedDateFromTable = null;
-				}
-				String sourceArtifactVersionFromTable = null;
-				if(results.length >= 3 && results[2]!=null){
-					sourceArtifactVersionFromTable = results[2].toString();
-				}
-				else {
-					sourceArtifactVersionFromTable = null;
-				}
-				
-				if(sourceArtifactLastModifiedDateFromTable != null && sourceArtifactVersionFromTable != null){
-					int sourceArtifactVersionIntFromTable = Integer.parseInt(sourceArtifactVersionFromTable);
-					if(sourceArtifactLastModifiedDateFromTable.equals(sourceArtifactLastModifiedDate) &&
-							sourceArtifactVersionIntFromTable >= sourceArtifactVersionInt)
-					{
-						log.warn("Seems the artifact has already been shipped. Duplicately shipping "
-								+ sourceArtifactId + " at " + sourceArtifactVersion);
-						return null;
-					}
-				}
+				targetArtifactVersion = results[3].toString();
 			}
 			if(artifactType.equals(GenericArtifactHelper.ARTIFACT_TYPE_ATTACHMENT)){
 				String sourceParentArtifactId = XPathUtils.getAttributeValue(element,
@@ -153,6 +135,7 @@ public class EntityService extends LifecycleComponent implements
 			if(targetArtifactIdFromTable != null) {
 				XPathUtils.addAttribute(element, GenericArtifactHelper.TARGET_ARTIFACT_ID, targetArtifactIdFromTable);
 				XPathUtils.addAttribute(element, GenericArtifactHelper.ARTIFACT_ACTION,	GenericArtifactHelper.ARTIFACT_ACTION_UPDATE);
+				XPathUtils.addAttribute(element, GenericArtifactHelper.TARGET_ARTIFACT_VERSION, targetArtifactVersion);
 		    }
 			else {
 				XPathUtils.addAttribute(element, GenericArtifactHelper.ARTIFACT_ACTION,	GenericArtifactHelper.ARTIFACT_ACTION_CREATE);
@@ -208,15 +191,16 @@ public class EntityService extends LifecycleComponent implements
 					+ targetRepositoryId + "-" + targetSystemId + " are not mapped.");
 		}
 		else if(resultSet.length == 1){
-			results = new Object[3];
+			results = new Object[4];
 			if(resultSet[0] instanceof OrderedHashMap){
 				OrderedHashMap result = (OrderedHashMap) resultSet[0];
-				if(result.size() == 3){
+				if(result.size() == 4){
 					results[0] = result.get(0).toString();
 					Timestamp timeStamp = (Timestamp) result.get(1);
 					Date date = new Date(timeStamp.getTime());
 					results[1] = date;
 					results[2] = result.get(2).toString();
+					results[3] = result.get(3).toString();
 				}
 				else if(result.size() > 1){
 					log.info("There are more than one target artifact ids returned from the table for "+sourceArtifactId);

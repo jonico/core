@@ -147,7 +147,7 @@ public class SFEEWriter extends LifecycleComponent implements
 					if (result == null) {
 						// conflict resolution has decided in favor of the
 						// target copy
-						return new Object[0];
+						return new Object[]{ga};
 					}
 				} catch (NumberFormatException e) {
 					log.error("Wrong data format of attribute for artifact "
@@ -291,6 +291,39 @@ public class SFEEWriter extends LifecycleComponent implements
 	 * @return - returns the updated artifact's ArtifactSoapDO object
 	 */
 	private ArtifactSoapDO updateArtifact(GenericArtifact ga, String tracker, boolean forceOverride, Connection connection){
+		String id = SFEEWriter.getStringGAField(ArtifactMetaData.SFEEFields.id, ga);
+		String conflictResolutionPriority = ga.getConflictResolutionPriority();
+		ArtifactSoapDO currentTargetArtifact = null;
+		try {
+			currentTargetArtifact = 
+				trackerHandler.getTrackerItem(connection.getSessionId(), id);
+		} catch (RemoteException e) {
+			String cause = "While trying to get the current target artifact (before updating), an error occured";
+			log.error(cause + ": " + e.getMessage());
+			log.error(cause, e);
+			ga.setErrorCode(GenericArtifact.ERROR_EXTERNAL_SYSTEM_CONNECTION);
+			throw new CCFRuntimeException(cause, e);
+		}
+		int currentAritfactVersion = currentTargetArtifact.getVersion();
+		String artifactVersionFromTable = ga.getTargetArtifactVersion();
+		int artifactVersionIntFromTable = Integer.parseInt(artifactVersionFromTable);
+		if(artifactVersionIntFromTable < currentAritfactVersion){
+			//We have a conflict here. The target artifact is modified
+			log.warn("The target artifact is modified. Indicates a conflict...!!!");
+			if(conflictResolutionPriority.equals(
+					GenericArtifact.VALUE_CONFLICT_RESOLUTION_PRIORITY_ALWAYS_IGNORE)){
+				log.warn("Conflict Resolution Priority favours ignoring the shipment: "
+						+conflictResolutionPriority);
+				log.warn("Ignoring the update for artifact "+id);
+				return currentTargetArtifact;
+			}
+			else if(conflictResolutionPriority.equals(
+					GenericArtifact.VALUE_CONFLICT_RESOLUTION_PRIORITY_ALWAYS_OVERRIDE)){
+				log.warn("Conflict Resolution Priority favours overriding the changes: "
+						+conflictResolutionPriority);
+				log.warn("Overriding the data for artifact "+id);
+			}
+		}
 		ArrayList<String> flexFieldNames = new ArrayList<String>();
 		ArrayList<String> flexFieldTypes = new ArrayList<String>();
 		ArrayList<Object> flexFieldValues = new ArrayList<Object>();
@@ -309,7 +342,7 @@ public class SFEEWriter extends LifecycleComponent implements
 				flexFieldValues.add(value);
 			}
 		}
-		String id = SFEEWriter.getStringGAField(ArtifactMetaData.SFEEFields.id, ga);
+		
 		String folderId = SFEEWriter.getStringGAField(ArtifactMetaData.SFEEFields.folderId, ga);
 		String description = SFEEWriter.getStringGAField(ArtifactMetaData.SFEEFields.description, ga);
 		String category = SFEEWriter.getStringGAField(ArtifactMetaData.SFEEFields.category, ga);

@@ -253,13 +253,10 @@ public class MappingDBUpdater extends LifecycleComponent implements IDataProcess
 		else if(resultSet.length == 1){
 			if(resultSet[0] instanceof OrderedHashMap){
 				OrderedHashMap result = (OrderedHashMap) resultSet[0];
-				if(result.size() == 3){
+				if(result.size() > 0){
 					targetArtifactId = result.get(0).toString();
 					log.info("The value of targetArtifactId="+targetArtifactId);
 					return targetArtifactId;
-				}
-				else if(result.size() > 1){
-					log.warn("There are more than one target artifact ids returned from the table for "+sourceArtifactId);
 				}
 				else {
 					targetArtifactId = null;

@@ -105,13 +105,14 @@ public class SFEETrackerHandler {
 	 * 
 	 * @param sessionID
 	 * @param trackerId
+	 * @param connectorUser 
 	 * @return null if only duplicates were found, else a list of changed
 	 *         tracker items
 	 * @throws RemoteException
 	 */
 	public List<ArtifactSoapDO> getChangedTrackerItems(String sessionID,
 			String trackerId, Date lastModifiedDate, String lastArtifactId,
-			int lastArtifactVersion) throws RemoteException {
+			int lastArtifactVersion, String connectorUser) throws RemoteException {
 		log.debug("Getting the changed artifacts from "+lastModifiedDate);
 		// only select ID of row because we have to get the details in any case
 		String[] selectedColumns = { ArtifactSoapDO.COLUMN_ID,
@@ -123,7 +124,7 @@ public class SFEETrackerHandler {
 				SoapFilter.DATE_FORMAT.format(lastModifiedDate)) };
 		ArtifactDetailSoapRow[] rows = mTrackerApp.getArtifactDetailList(
 				sessionID, trackerId, selectedColumns, filter, sortKeys, 0, -1,
-				false, false).getDataRows();
+				false, true).getDataRows();
 		if(rows != null){
 			log.debug("There were " + rows.length +" artifacts changed");
 		}
@@ -141,10 +142,12 @@ public class SFEETrackerHandler {
 				} else {
 					ArtifactSoapDO artifactData = mTrackerApp.getArtifactData(
 							sessionID, id);
-					if (duplicateFound) {
-						detailRowsNew.add(artifactData);
+					if(!artifactData.getLastModifiedBy().equals(connectorUser)){
+						if (duplicateFound) {
+							detailRowsNew.add(artifactData);
+						}
+						detailRowsFull.add(artifactData);
 					}
-					detailRowsFull.add(artifactData);
 				}
 			}
 		}
@@ -332,6 +335,7 @@ public class SFEETrackerHandler {
 				}
 			}
 		}
+		artifactData = mTrackerApp.getArtifactData(sessionId, Id);
 		log.info("Artifact updated id: " + artifactData.getId()+ " in tracker " + artifactData.getFolderId());
 		return artifactData;
 	}

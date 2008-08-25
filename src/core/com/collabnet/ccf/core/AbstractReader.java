@@ -498,6 +498,19 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 	}
 	
 	/**
+	 * Extracts and returns the conflictResolutionPriority for the
+	 * source repository.
+	 * @param syncInfo
+	 * @return
+	 */
+	public String getConflictResolutionPriority(Document syncInfo){
+		Node node= syncInfo.selectSingleNode("//CONFLICT_RESOLUTION_PRIORITY");
+		if (node==null)
+			return null;
+		return node.getText();
+	}
+	
+	/**
 	 * Returns the configured sleep interval in milliseconds
 	 * @return
 	 */

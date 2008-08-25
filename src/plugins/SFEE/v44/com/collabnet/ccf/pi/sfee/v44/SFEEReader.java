@@ -141,6 +141,7 @@ public class SFEEReader extends AbstractReader {
 		String sourceRepositoryKind = this.getSourceRepositoryKind(syncInfo);
 		String sourceSystemId = this.getSourceSystemId(syncInfo);
 		String sourceSystemKind = this.getSourceSystemKind(syncInfo);
+		String conflictResolutionPriority = this.getConflictResolutionPriority(syncInfo);
 		
 		String targetRepositoryId = this.getTargetRepositoryId(syncInfo);
 		String targetRepositoryKind = this.getTargetRepositoryKind(syncInfo);
@@ -158,6 +159,7 @@ public class SFEEReader extends AbstractReader {
 		ga.setSourceRepositoryKind(sourceRepositoryKind);
 		ga.setSourceSystemId(sourceSystemId);
 		ga.setSourceSystemKind(sourceSystemKind);
+		ga.setConflictResolutionPriority(conflictResolutionPriority);
 		
 		ga.setTargetRepositoryId(targetRepositoryId);
 		ga.setTargetRepositoryKind(targetRepositoryKind);
@@ -408,7 +410,7 @@ public class SFEEReader extends AbstractReader {
 		List<ArtifactSoapDO> artifactRows = null;
 		try {
 			artifactRows = trackerHandler.getChangedTrackerItems(connection.getSessionId(),
-					sourceRepositoryId,lastModifiedDate,lastSynchronizedArtifactId,version);
+					sourceRepositoryId,lastModifiedDate,lastSynchronizedArtifactId,version,this.getUsername());
 		} catch (RemoteException e) {
 			String cause = "During the changed artifacts retrieval process from SFEE, an exception occured";
 			log.error(cause, e);
@@ -418,10 +420,8 @@ public class SFEEReader extends AbstractReader {
 		}
 		if(artifactRows != null){
 			for(ArtifactSoapDO artifact:artifactRows){
-				if(!artifact.getLastModifiedBy().equals(this.username)){
-					String artifactId = artifact.getId();
-					artifactIds.add(artifactId);
-				}
+				String artifactId = artifact.getId();
+				artifactIds.add(artifactId);
 			}
 		}
 		return artifactIds;
