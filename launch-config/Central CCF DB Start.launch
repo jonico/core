@@ -10,5 +10,5 @@
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="org.hsqldb.Server"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-database.0 ccfDatabase -dbname.0 xdb"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="ccf"/>
-<stringAttribute key="org.eclipse.jdt.launching.WORKING_DIRECTORY" value="${workspace_loc:ccf/samples/centralccfDatabase}"/>
+<stringAttribute key="org.eclipse.jdt.launching.WORKING_DIRECTORY" value="${workspace_loc:ccf/samples/centralCCFDatabase}"/>
 </launchConfiguration>
