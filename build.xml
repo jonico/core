@@ -250,7 +250,7 @@
           <property file="default.properties"/>
          
       <mkdir dir="deploy"/>
-      <zip destfile="deploy/PI-${tool.name}-${tool.version}.${tool.buildnumber}.zip" 
+      <zip destfile="deploy/${tool.name}-${tool.version}.${tool.buildnumber}.zip" 
 	       basedir="build/package"/>
           <delete dir="build/package"/>
     </target>
