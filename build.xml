@@ -194,7 +194,7 @@
 		<mkdir dir="build/package/bin"/>
 		<copy todir="build/package/bin">
 			<fileset dir="scripts">
-				<include name="setEnv.bat" />
+				<include name="setEnv.*" />
 			</fileset>
 		</copy>
 		<mkdir dir="build/package/CCFDBService/db"/>
@@ -206,7 +206,7 @@
 		</copy>
 		<copy todir="build/package/CCFDBService">
 			<fileset dir="scripts">
-				<include name="startDB.bat" />
+				<include name="startDB.*" />
 			</fileset>
 		</copy>
 		<mkdir dir="build/package/lib"/>
@@ -216,7 +216,7 @@
 				<exclude name="*JUnit*.jar"/>
 			</fileset>
 			<fileset dir="config">
-				<include name="log4j.xml" />
+				<include name="log4j.*" />
 			</fileset>
 		</copy>
 		<mkdir dir="build/package/lib/extlib"/>
