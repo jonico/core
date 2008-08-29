@@ -79,18 +79,6 @@ public class SFEEReader extends AbstractReader {
     private void init(){
     	artifactConverter = new SFEEToGenericArtifactConverter();
     }
-    
-	private Date getLastModifiedDate(Document syncInfo){
-		String lastModifiedDateString = this.getLastSourceArtifactModificationDate(syncInfo);
-		Date lastModifiedDate = null; 
-		if (!StringUtils.isEmpty(lastModifiedDateString)) {
-			lastModifiedDate=(Date)SFEEGAHelper.asTypedValue(lastModifiedDateString, "DateTime");
-			lastModifiedDate.setTime(lastModifiedDate.getTime()+1);
-		} else {
-			lastModifiedDate = new Date(0);
-		}
-		return lastModifiedDate;
-	}
 
 	
 	/**
