@@ -4,4 +4,4 @@ call ..\bin\setEnv.bat
 
 if not exist logs mkdir logs
 
-%JAVA_HOME%\bin\java org.hsqldb.Server -database.0 db/CCFDB -dbname.0 xdb > logs\db.log
+"%JAVA_HOME%\bin\java.exe" org.hsqldb.Server -database.0 db/CCFDB -dbname.0 xdb > logs\db.log
