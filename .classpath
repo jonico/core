@@ -4,70 +4,26 @@
 	<classpathentry kind="src" path="samples/IntegrationScenarios/customReader/src"/>
 	<classpathentry kind="src" path="tests"/>
 	<classpathentry excluding="lib/**" kind="src" path="src/core"/>
-	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/bootstrap.jar"/>
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/openadaptor.jar"/>
-	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/openadaptor-depends.jar"/>
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/openadaptor-spring.jar"/>
-	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/openadaptor-stub.jar"/>
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/activation.jar"/>
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/axis_1.4.jar"/>
-	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/carol.jar"/>
-	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/cglib-nodep.jar"/>
-	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/commons-codec_1.3.jar"/>
-	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/commons-collections_3.2.jar"/>
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/commons-discovery_0.2.jar"/>
-	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/commons-httpclient_3.0.1.jar"/>
-	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/commons-jxpath_1.2.jar"/>
-	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/commons-lang_2.0.jar"/>
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/commons-logging.jar"/>
-	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/commons-net_1.2.2.jar"/>
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/dom4j_1.6.1.jar"/>
-	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/dumbster.jar"/>
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/hsqldb.jar"/>
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/jaxen_1.1-beta-9.jar"/>
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/jaxrpc.jar"/>
-	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/jdom.jar"/>
-	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/jetty_6.0.1.jar"/>
-	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/jetty-util_6.0.1.jar"/>
-	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/jmock-cglib-1.2.0.jar"/>
-	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/jmock-core-1.2.0.jar"/>
-	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/jms.jar"/>
-	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/jmxremote.jar"/>
-	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/jmxri.jar"/>
-	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/jmxtools.jar"/>
-	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/jonas_timer.jar"/>
-	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/jotm_jrmp_stubs.jar"/>
-	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/jotm.jar"/>
-	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/js_1_6R5.jar"/>
-	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/json.jar"/>
-	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/jta-spec_1.0.1.jar"/>
-	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/junit.jar"/>
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/log4j-1.2.15.jar"/>
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/mail.jar"/>
-	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/mockrunner-jdbc.jar"/>
-	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/mockrunner-jms.jar"/>
-	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/mysql-connector-java-5.0.6-bin.jar"/>
-	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/qname.jar"/>
-	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/quartz_1.5.2.jar"/>
-	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/resolver_from_xerces_2.9.0.jar"/>
-	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/rome_0.9.jar"/>
-	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/saaj.jar"/>
-	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/script.jar"/>
-	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/serializer_from_xerces_2.9.0.jar"/>
-	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/servlet-api_2.5-6.0.1.jar"/>
-	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/spring_2.0.2.jar"/>
-	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/spring-core_2.0.2.jar"/>
-	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/spring-mock.jar"/>
-	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/stax-api_1.0.1.jar"/>
-	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/velocity_1.4.jar"/>
-	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/wsdl4j_1.6.2.jar"/>
-	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/wstx-asl_3.0.1.jar"/>
-	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/xercesImpl_2.9.0.jar"/>
-	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/xfire-all_1.2.3.jar"/>
-	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/xml-apis_from_xerces_2.9.0.jar"/>
-	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/XmlSchema_1.1.jar"/>
-	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/xstream-1.2.1.jar"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/J2SE-1.5"/>
 	<classpathentry kind="lib" path="src/plugins/SFEE/v44/lib/sf_soap44_sdk.jar"/>
+	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/commons-codec_1.3.jar"/>
+	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/spring_2.0.2.jar"/>
+	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/junit.jar"/>
+	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/jmock-core-1.2.0.jar"/>
+	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/xercesImpl_2.9.0.jar"/>
+	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/commons-lang_2.0.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/J2SE-1.5"/>
+	<classpathentry kind="lib" path="config"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
