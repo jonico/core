@@ -142,6 +142,7 @@ public class SFEETrackerHandler {
 				} else {
 					ArtifactSoapDO artifactData = mTrackerApp.getArtifactData(
 							sessionID, id);
+					// updates from the connector user are ignored to avoid infinite update loops
 					if(!artifactData.getLastModifiedBy().equals(connectorUser)){
 						if (duplicateFound) {
 							detailRowsNew.add(artifactData);

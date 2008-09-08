@@ -54,6 +54,8 @@ public class SFEEReader extends AbstractReader {
 	private String password = null;
 
 	private String username = null;
+
+	private boolean ignoreConnectorUserUpdates = true;
 	
 	/**
 	 * Constructs and Initializes the SFEEReader component.
@@ -266,7 +268,7 @@ public class SFEEReader extends AbstractReader {
 		List<GenericArtifact> attachments = null;
 		try {
 			attachments = attachmentHandler.listAttachments(connection.getSessionId(),
-					lastModifiedDate,getUsername(),artifactIds, connection.getSfSoap(),
+					lastModifiedDate,isIgnoreConnectorUserUpdates()?getUsername():"",artifactIds, connection.getSfSoap(),
 					this.getMaxAttachmentSizePerArtifact());
 			for(GenericArtifact attachment:attachments){
 				populateSrcAndDestForAttachment(syncInfo, attachment);
@@ -324,7 +326,7 @@ public class SFEEReader extends AbstractReader {
 			ArtifactSoapDO artifact = trackerHandler.getTrackerItem(connection.getSessionId(), artifactId);
 			SFEEAppHandler appHandler = new SFEEAppHandler(connection.getSfSoap(), connection.getSessionId());
 			appHandler.addComments(artifact,
-					lastModifiedDate,this.getUsername());
+					lastModifiedDate,isIgnoreConnectorUserUpdates()?this.getUsername():"");
 			GenericArtifact genericArtifact = artifactConverter.convert(artifact,
 					fieldsMap, lastModifiedDate, this.isIncludeFieldMetaData());
 			populateSrcAndDest(syncInfo, genericArtifact);
@@ -398,7 +400,7 @@ public class SFEEReader extends AbstractReader {
 		List<ArtifactSoapDO> artifactRows = null;
 		try {
 			artifactRows = trackerHandler.getChangedTrackerItems(connection.getSessionId(),
-					sourceRepositoryId,lastModifiedDate,lastSynchronizedArtifactId,version,this.getUsername());
+					sourceRepositoryId,lastModifiedDate,lastSynchronizedArtifactId,version,isIgnoreConnectorUserUpdates()?this.getUsername():"");
 		} catch (RemoteException e) {
 			String cause = "During the changed artifacts retrieval process from SFEE, an exception occured";
 			log.error(cause, e);
@@ -486,5 +488,29 @@ public class SFEEReader extends AbstractReader {
 	 */
 	public void setConnectionManager(ConnectionManager<Connection> connectionManager) {
 		this.connectionManager = connectionManager;
+	}
+
+	/**
+	 * Sets whether updated and created artifacts from the connector user should be ignored
+	 * This is the default behavior to avoid infinite update loops.
+	 * However, in artifact export scenarios, where all artifacts should be extracted, this
+	 * property should be set to false
+	 * @param ignoreConnectorUserUpdates whether to ignore artifacts that have been created 
+	 * or lastly modified by the connector user
+	 */
+	public void setIgnoreConnectorUserUpdates(boolean ignoreConnectorUserUpdates) {
+		this.ignoreConnectorUserUpdates = ignoreConnectorUserUpdates;
+	}
+
+	/**
+	 * Retrieves whether updated and created artifacts from the connector user should be ignored
+	 * This is the default behavior to avoid infinite update loops.
+	 * However, in artifact export scenarios, where all artifacts should be extracted, this
+	 * property should is set to false
+	 * @return the ignoreConnectorUserUpdates whether to ignore artifacts that have been created 
+	 * or lastly modified by the connector user
+	 */
+	public boolean isIgnoreConnectorUserUpdates() {
+		return ignoreConnectorUserUpdates;
 	}
 }

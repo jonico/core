@@ -97,7 +97,7 @@ public class SFEEAppHandler {
 				}
 			}
 		} catch (RemoteException e) {
-			log.error("Could not get comments list for artifact "+artifact.getId());
+			log.error("Could not get comments list for artifact "+artifact.getId()+": "+e.getMessage());
 		}
 	}
 	
