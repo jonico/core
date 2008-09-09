@@ -14,6 +14,7 @@
 			<xsl:when test="$fieldName = 'id' and @fieldType = 'mandatoryField'">
 				<xsl:element name="artifactId"><xsl:value-of select="text()"/></xsl:element>
 			</xsl:when>
+			<xsl:when test="$fieldName = 'Comment Text'"/>
 			<xsl:otherwise>
 				<xsl:element name="{$fieldName}"><xsl:value-of select="text()"/></xsl:element>
 			</xsl:otherwise>

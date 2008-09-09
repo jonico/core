@@ -196,7 +196,7 @@ public class XsltProcessor extends Component implements IDataProcessor {
 			Transformer transform = null;
 			try {
 				document = (Document) record;
-								
+				element=document.getRootElement();				
 				transform = constructFileNameAndFetchTransformer(document);
 			} catch (GenericArtifactParsingException e) {
 				String cause = "Problem occured while parsing the Document to contruct the file name and fetching transformer";
