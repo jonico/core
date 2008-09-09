@@ -220,22 +220,21 @@ public class SFEEWriter extends LifecycleComponent implements
 			}
 		}
 		
-		// FIXME Use ga.getAllGenericArtifactFieldsWithSameFieldTypeAndFieldName(fieldType, fieldName) instead
-		String folderId = getStringGAField(ArtifactMetaData.SFEEFields.folderId, ga);
-		String description = SFEEWriter.getStringGAField(ArtifactMetaData.SFEEFields.description, ga);
-		String category = SFEEWriter.getStringGAField(ArtifactMetaData.SFEEFields.category, ga);
-		String group = SFEEWriter.getStringGAField(ArtifactMetaData.SFEEFields.group, ga);
-		String status = SFEEWriter.getStringGAField(ArtifactMetaData.SFEEFields.status, ga);
-		String statusClass = SFEEWriter.getStringGAField(ArtifactMetaData.SFEEFields.statusClass, ga);
-		String customer = SFEEWriter.getStringGAField(ArtifactMetaData.SFEEFields.customer, ga);
-		int priority = SFEEWriter.getIntGAField(ArtifactMetaData.SFEEFields.priority, ga);
-		int estimatedHours = SFEEWriter.getIntGAField(ArtifactMetaData.SFEEFields.estimatedHours, ga);
-		int actualHours = SFEEWriter.getIntGAField(ArtifactMetaData.SFEEFields.actualHours, ga);
-		Date closeDate = SFEEWriter.getDateGAField(ArtifactMetaData.SFEEFields.closeDate, ga);
-		String assignedTo = SFEEWriter.getStringGAField(ArtifactMetaData.SFEEFields.assignedTo, ga);
-		String reportedReleaseId = SFEEWriter.getStringGAField(ArtifactMetaData.SFEEFields.reportedReleaseId, ga);
-		String resolvedReleaseId = SFEEWriter.getStringGAField(ArtifactMetaData.SFEEFields.resolvedReleaseId, ga);
-		String title = SFEEWriter.getStringGAField(ArtifactMetaData.SFEEFields.title, ga);
+		String folderId = getStringMandatoryGAField(ArtifactMetaData.SFEEFields.folderId, ga);
+		String description = SFEEWriter.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.description, ga);
+		String category = SFEEWriter.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.category, ga);
+		String group = SFEEWriter.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.group, ga);
+		String status = SFEEWriter.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.status, ga);
+		String statusClass = SFEEWriter.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.statusClass, ga);
+		String customer = SFEEWriter.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.customer, ga);
+		int priority = SFEEWriter.getIntMandatoryGAField(ArtifactMetaData.SFEEFields.priority, ga);
+		int estimatedHours = SFEEWriter.getIntMandatoryGAField(ArtifactMetaData.SFEEFields.estimatedHours, ga);
+		int actualHours = SFEEWriter.getIntMandatoryGAField(ArtifactMetaData.SFEEFields.actualHours, ga);
+		Date closeDate = SFEEWriter.getDateMandatoryGAField(ArtifactMetaData.SFEEFields.closeDate, ga);
+		String assignedTo = SFEEWriter.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.assignedTo, ga);
+		String reportedReleaseId = SFEEWriter.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.reportedReleaseId, ga);
+		String resolvedReleaseId = SFEEWriter.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.resolvedReleaseId, ga);
+		String title = SFEEWriter.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.title, ga);
 		String[] comments = this.getComments(ga);
 		ArtifactSoapDO result = null;
 		try {
@@ -291,7 +290,8 @@ public class SFEEWriter extends LifecycleComponent implements
 	 * @return - returns the updated artifact's ArtifactSoapDO object
 	 */
 	private ArtifactSoapDO updateArtifact(GenericArtifact ga, String tracker, boolean forceOverride, Connection connection){
-		String id = SFEEWriter.getStringGAField(ArtifactMetaData.SFEEFields.id, ga);
+		//String id = SFEEWriter.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.id, ga);
+		String id = ga.getTargetArtifactId();
 		String conflictResolutionPriority = ga.getConflictResolutionPriority();
 		ArtifactSoapDO currentTargetArtifact = null;
 		try {
@@ -306,7 +306,10 @@ public class SFEEWriter extends LifecycleComponent implements
 		}
 		int currentAritfactVersion = currentTargetArtifact.getVersion();
 		String artifactVersionFromTable = ga.getTargetArtifactVersion();
-		int artifactVersionIntFromTable = Integer.parseInt(artifactVersionFromTable);
+		int artifactVersionIntFromTable = -1;
+		if (!artifactVersionFromTable.equals(GenericArtifact.VALUE_UNKNOWN)) {
+			artifactVersionIntFromTable= Integer.parseInt(artifactVersionFromTable);
+		}
 		if(artifactVersionIntFromTable < currentAritfactVersion){
 			//We have a conflict here. The target artifact is modified
 			log.warn("The target artifact is modified. Indicates a conflict...!!!");
@@ -343,21 +346,21 @@ public class SFEEWriter extends LifecycleComponent implements
 			}
 		}
 		
-		String folderId = SFEEWriter.getStringGAField(ArtifactMetaData.SFEEFields.folderId, ga);
-		String description = SFEEWriter.getStringGAField(ArtifactMetaData.SFEEFields.description, ga);
-		String category = SFEEWriter.getStringGAField(ArtifactMetaData.SFEEFields.category, ga);
-		String group = SFEEWriter.getStringGAField(ArtifactMetaData.SFEEFields.group, ga);
-		String status = SFEEWriter.getStringGAField(ArtifactMetaData.SFEEFields.status, ga);
-		String statusClass = SFEEWriter.getStringGAField(ArtifactMetaData.SFEEFields.statusClass, ga);
-		String customer = SFEEWriter.getStringGAField(ArtifactMetaData.SFEEFields.customer, ga);
-		int priority = SFEEWriter.getIntGAField(ArtifactMetaData.SFEEFields.priority, ga);
-		int estimatedHours = SFEEWriter.getIntGAField(ArtifactMetaData.SFEEFields.estimatedHours, ga);
-		int actualHours = SFEEWriter.getIntGAField(ArtifactMetaData.SFEEFields.actualHours, ga);
-		Date closeDate = SFEEWriter.getDateGAField(ArtifactMetaData.SFEEFields.closeDate, ga);
-		String assignedTo = SFEEWriter.getStringGAField(ArtifactMetaData.SFEEFields.assignedTo, ga);
-		String reportedReleaseId = SFEEWriter.getStringGAField(ArtifactMetaData.SFEEFields.reportedReleaseId, ga);
-		String resolvedReleaseId = SFEEWriter.getStringGAField(ArtifactMetaData.SFEEFields.resolvedReleaseId, ga);
-		String title = SFEEWriter.getStringGAField(ArtifactMetaData.SFEEFields.title, ga);
+		String folderId = SFEEWriter.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.folderId, ga);
+		String description = SFEEWriter.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.description, ga);
+		String category = SFEEWriter.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.category, ga);
+		String group = SFEEWriter.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.group, ga);
+		String status = SFEEWriter.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.status, ga);
+		String statusClass = SFEEWriter.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.statusClass, ga);
+		String customer = SFEEWriter.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.customer, ga);
+		int priority = SFEEWriter.getIntMandatoryGAField(ArtifactMetaData.SFEEFields.priority, ga);
+		int estimatedHours = SFEEWriter.getIntMandatoryGAField(ArtifactMetaData.SFEEFields.estimatedHours, ga);
+		int actualHours = SFEEWriter.getIntMandatoryGAField(ArtifactMetaData.SFEEFields.actualHours, ga);
+		Date closeDate = SFEEWriter.getDateMandatoryGAField(ArtifactMetaData.SFEEFields.closeDate, ga);
+		String assignedTo = SFEEWriter.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.assignedTo, ga);
+		String reportedReleaseId = SFEEWriter.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.reportedReleaseId, ga);
+		String resolvedReleaseId = SFEEWriter.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.resolvedReleaseId, ga);
+		String title = SFEEWriter.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.title, ga);
 		String[] comments = this.getComments(ga);
 		ArtifactSoapDO result = null;
 		try {
@@ -477,8 +480,8 @@ public class SFEEWriter extends LifecycleComponent implements
 	public void reset(Object context) {
 	}
 	
-	public static GenericArtifactField getGAField(String name, GenericArtifact ga){
-		List<GenericArtifactField> gaFields = ga.getAllGenericArtifactFieldsWithSameFieldName(name);
+	protected static GenericArtifactField getMandatoryGAField(String name, GenericArtifact ga){
+		List<GenericArtifactField> gaFields = ga.getAllGenericArtifactFieldsWithSameFieldTypeAndFieldName(GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD, name);
 		if(gaFields == null || gaFields.size() == 0){
 			return null;
 		}
@@ -487,30 +490,53 @@ public class SFEEWriter extends LifecycleComponent implements
 			return field;
 		}
 		else {
-			throw new RuntimeException("This should never be the case");
+			throw new RuntimeException("More than one mandatory field with the same field name: "+name);
 		}
 	}
 	
-	public static String getStringGAField(ArtifactMetaData.SFEEFields field, GenericArtifact ga){
-		String fieldValue = SFEEWriter.getStringGAField(field.getFieldName(), ga);
+	protected static GenericArtifactField getFlexGAField(String name, GenericArtifact ga){
+		List<GenericArtifactField> gaFields = ga.getAllGenericArtifactFieldsWithSameFieldTypeAndFieldName(GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD, name);
+		if(gaFields == null || gaFields.size() == 0){
+			return null;
+		}
+		else if(gaFields.size() == 1){
+			GenericArtifactField field = gaFields.get(0);
+			return field;
+		}
+		else {
+			throw new RuntimeException("More than one flex field with the same field name: "+name);
+		}
+	}
+	
+	protected static String getStringMandatoryGAField(ArtifactMetaData.SFEEFields field, GenericArtifact ga){
+		String fieldValue = SFEEWriter.getStringMandatoryGAField(field.getFieldName(), ga);
 		if(StringUtils.isEmpty(fieldValue)){
 			return null;
 		}
 		return fieldValue;
 	}
 	
-	public static String getStringGAField(String fieldName, GenericArtifact ga){
+	protected static String getStringMandatoryGAField(String fieldName, GenericArtifact ga){
 		String fieldValue = null;
-		GenericArtifactField gaField = SFEEWriter.getGAField(fieldName, ga);
+		GenericArtifactField gaField = SFEEWriter.getMandatoryGAField(fieldName, ga);
 		if(gaField != null){
 			fieldValue = (String) gaField.getFieldValue();
 		}
 		return fieldValue;
 	}
 	
-	public static int getIntGAField(ArtifactMetaData.SFEEFields field, GenericArtifact ga){
+	protected static String getStringFlexGAField(String fieldName, GenericArtifact ga){
+		String fieldValue = null;
+		GenericArtifactField gaField = SFEEWriter.getFlexGAField(fieldName, ga);
+		if(gaField != null){
+			fieldValue = (String) gaField.getFieldValue();
+		}
+		return fieldValue;
+	}
+	
+	protected static int getIntMandatoryGAField(ArtifactMetaData.SFEEFields field, GenericArtifact ga){
 		int fieldValue = 0;
-		GenericArtifactField gaField = SFEEWriter.getGAField(field.getFieldName(), ga);
+		GenericArtifactField gaField = SFEEWriter.getMandatoryGAField(field.getFieldName(), ga);
 		if(gaField != null){
 			Object fieldValueObj = gaField.getFieldValue();
 			if(fieldValueObj instanceof String){
@@ -524,9 +550,9 @@ public class SFEEWriter extends LifecycleComponent implements
 		return fieldValue;
 	}
 	
-	public static Date getDateGAField(ArtifactMetaData.SFEEFields field, GenericArtifact ga){
+	protected static Date getDateMandatoryGAField(ArtifactMetaData.SFEEFields field, GenericArtifact ga){
 		Date fieldValue = null;
-		GenericArtifactField gaField = SFEEWriter.getGAField(field.getFieldName(), ga);
+		GenericArtifactField gaField = SFEEWriter.getMandatoryGAField(field.getFieldName(), ga);
 		if(gaField != null){
 			Object fieldValueObj = gaField.getFieldValue();
 			if(fieldValueObj instanceof String){

@@ -142,13 +142,13 @@ public class SFEEAttachmentHandler {
 	 * @throws RemoteException
 	 */
 	public void handleAttachment(String sessionId, GenericArtifact att, String artifactId, String userName, ISourceForgeSoap sourceForgeSoap) throws RemoteException {
-		String contentType = SFEEWriter.getStringGAField(AttachmentMetaData.ATTACHMENT_TYPE, att);
-		String attachDescription = SFEEWriter.getStringGAField(AttachmentMetaData.ATTACHMENT_DESCRIPTION, att);
+		String contentType = SFEEWriter.getStringFlexGAField(AttachmentMetaData.ATTACHMENT_TYPE, att);
+		String attachDescription = SFEEWriter.getStringFlexGAField(AttachmentMetaData.ATTACHMENT_DESCRIPTION, att);
 		System.out.println();
-		String attachmentMimeType = SFEEWriter.getStringGAField(AttachmentMetaData.ATTACHMENT_MIME_TYPE, att);
-		String attachmentName = SFEEWriter.getStringGAField(AttachmentMetaData.ATTACHMENT_NAME, att);
+		String attachmentMimeType = SFEEWriter.getStringFlexGAField(AttachmentMetaData.ATTACHMENT_MIME_TYPE, att);
+		String attachmentName = SFEEWriter.getStringFlexGAField(AttachmentMetaData.ATTACHMENT_NAME, att);
 		attachmentName = userName + "_" + attachmentName;
-		String attachmentURL = SFEEWriter.getStringGAField(AttachmentMetaData.ATTACHMENT_SOURCE_URL, att);
+		String attachmentURL = SFEEWriter.getStringFlexGAField(AttachmentMetaData.ATTACHMENT_SOURCE_URL, att);
 		byte[] data = Base64.decodeBase64(att.getArtifactValue().getBytes());
 		GenericArtifact.ArtifactActionValue attAction = att.getArtifactAction();
 		ArtifactSoapDO artifact = null;
