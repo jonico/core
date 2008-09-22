@@ -14,6 +14,7 @@ import java.util.Map;
 
 import javax.xml.datatype.XMLGregorianCalendar;
 
+import org.apache.commons.lang.StringUtils;
 import org.dom4j.Document;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
@@ -27,6 +28,9 @@ import com.collabnet.ccf.core.ga.GenericArtifact.ArtifactModeValue;
 import com.collabnet.ccf.core.ga.GenericArtifact.ArtifactTypeValue;
 import com.collabnet.ccf.core.ga.GenericArtifact.IncludesFieldMetaDataValue;
 import com.collabnet.ccf.core.ga.GenericArtifactField.FieldValueTypeValue;
+import com.collabnet.ccf.core.utils.DateUtil;
+import com.collabnet.ccf.pi.sfee.v44.meta.ArtifactMetaData;
+import com.collabnet.ccf.pi.sfee.v44.meta.ArtifactMetaData.SFEEFields;
 
 /**
  * 
@@ -999,5 +1003,91 @@ public class GenericArtifactHelper {
 	private static void addAttribute(Element element, String attributeName,
 			String value) {
 		element.addAttribute(attributeName, value);
+	}
+
+	public static GenericArtifactField getMandatoryGAField(String name, GenericArtifact ga){
+		List<GenericArtifactField> gaFields = ga.getAllGenericArtifactFieldsWithSameFieldTypeAndFieldName(GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD, name);
+		if(gaFields == null || gaFields.size() == 0){
+			return null;
+		}
+		else if(gaFields.size() == 1){
+			GenericArtifactField field = gaFields.get(0);
+			return field;
+		}
+		else {
+			throw new RuntimeException("More than one mandatory field with the same field name: "+name);
+		}
+	}
+
+	public static GenericArtifactField getFlexGAField(String name, GenericArtifact ga){
+		List<GenericArtifactField> gaFields = ga.getAllGenericArtifactFieldsWithSameFieldTypeAndFieldName(GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD, name);
+		if(gaFields == null || gaFields.size() == 0){
+			return null;
+		}
+		else if(gaFields.size() == 1){
+			GenericArtifactField field = gaFields.get(0);
+			return field;
+		}
+		else {
+			throw new RuntimeException("More than one flex field with the same field name: "+name);
+		}
+	}
+
+	public static String getStringMandatoryGAField(ArtifactMetaData.SFEEFields field, GenericArtifact ga){
+		String fieldValue = GenericArtifactHelper.getStringMandatoryGAField(field.getFieldName(), ga);
+		if(StringUtils.isEmpty(fieldValue)){
+			return null;
+		}
+		return fieldValue;
+	}
+
+	public static String getStringMandatoryGAField(String fieldName, GenericArtifact ga){
+		String fieldValue = null;
+		GenericArtifactField gaField = getMandatoryGAField(fieldName, ga);
+		if(gaField != null){
+			fieldValue = (String) gaField.getFieldValue();
+		}
+		return fieldValue;
+	}
+
+	public static String getStringFlexGAField(String fieldName, GenericArtifact ga){
+		String fieldValue = null;
+		GenericArtifactField gaField = getFlexGAField(fieldName, ga);
+		if(gaField != null){
+			fieldValue = (String) gaField.getFieldValue();
+		}
+		return fieldValue;
+	}
+
+	public static int getIntMandatoryGAField(ArtifactMetaData.SFEEFields field, GenericArtifact ga){
+		int fieldValue = 0;
+		GenericArtifactField gaField = getMandatoryGAField(field.getFieldName(), ga);
+		if(gaField != null){
+			Object fieldValueObj = gaField.getFieldValue();
+			if(fieldValueObj instanceof String){
+				String fieldValueString = (String) fieldValueObj;
+				fieldValue = Integer.parseInt(fieldValueString);
+			}
+			else if(fieldValueObj instanceof Integer){
+				fieldValue = ((Integer) fieldValueObj).intValue();
+			}
+		}
+		return fieldValue;
+	}
+
+	public static Date getDateMandatoryGAField(ArtifactMetaData.SFEEFields field, GenericArtifact ga){
+		Date fieldValue = null;
+		GenericArtifactField gaField = getMandatoryGAField(field.getFieldName(), ga);
+		if(gaField != null){
+			Object fieldValueObj = gaField.getFieldValue();
+			if(fieldValueObj instanceof String){
+				String fieldValueString = (String) fieldValueObj;
+				fieldValue = DateUtil.parse(fieldValueString);
+			}
+			else if(fieldValueObj instanceof Date){
+				fieldValue = (Date) fieldValueObj;
+			}
+		}
+		return fieldValue;
 	}
 }

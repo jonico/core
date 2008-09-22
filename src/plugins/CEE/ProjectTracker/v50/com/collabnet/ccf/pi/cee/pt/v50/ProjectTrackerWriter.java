@@ -29,7 +29,6 @@ import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
 import com.collabnet.ccf.core.ga.GenericArtifact.ArtifactTypeValue;
 import com.collabnet.ccf.core.ga.GenericArtifactField.FieldValueTypeValue;
 import com.collabnet.ccf.core.utils.DateUtil;
-import com.collabnet.ccf.pi.sfee.v44.SFEEWriter;
 import com.collabnet.core.ws.exception.WSException;
 import com.collabnet.tracker.common.ClientArtifact;
 import com.collabnet.tracker.common.ClientArtifactComment;
@@ -116,8 +115,8 @@ public class ProjectTrackerWriter extends LifecycleComponent implements IDataPro
 		String artifactId = helper.getArtifactIdFromFullyQualifiedArtifactId(targetArtifactId);
 		TrackerWebServicesClient twsclient = this.getConnection(ga);
 		byte[] data = Base64.decodeBase64(ga.getArtifactValue().getBytes());
-		String attachmentMimeType = SFEEWriter.getStringGAField(AttachmentMetaData.ATTACHMENT_MIME_TYPE, ga);
-		String attachmentName = SFEEWriter.getStringGAField(AttachmentMetaData.ATTACHMENT_NAME, ga);
+		String attachmentMimeType = GenericArtifactHelper.getStringFlexGAField(AttachmentMetaData.ATTACHMENT_MIME_TYPE, ga);
+		String attachmentName = GenericArtifactHelper.getStringFlexGAField(AttachmentMetaData.ATTACHMENT_NAME, ga);
 		javax.mail.util.ByteArrayDataSource dataSource = new javax.mail.util.ByteArrayDataSource(data,attachmentMimeType);
 		dataSource.setName(attachmentName);
 		try {
