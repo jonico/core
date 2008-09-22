@@ -96,7 +96,8 @@ public class ProjectTrackerReader extends AbstractReader {
 		int version = 0;
 		try {
 			ArtifactHistoryList ahl = this.artifactHistoryList.get();
-			History historyList[] = ahl.getHistory();
+			History historyList[] = null;
+			if(ahl != null) ahl.getHistory();
 			if(historyList != null)
 			{
 				for(History history:historyList){
@@ -271,6 +272,15 @@ public class ProjectTrackerReader extends AbstractReader {
 			log.error(message, e);
 			throw new CCFRuntimeException(message, e);
 		}
+		finally {
+			connectionManager.releaseConnection(twsclient);
+			twsclient = null;
+		}
+		String lastModifiedBy = artifact.getAttributeValue(TrackerWebServicesClient.DEFAULT_NAMESPACE,
+				TrackerWebServicesClient.MODIFIED_BY_FIELD_NAME);
+		if(lastModifiedBy.equals(username)){
+			return new ArrayList<GenericArtifact>();
+		}
 		List<GenericArtifact> gaList = new ArrayList<GenericArtifact>();
 		GenericArtifact ga = new GenericArtifact();
 		ga.setArtifactType(GenericArtifact.ArtifactTypeValue.PLAINARTIFACT);
@@ -328,6 +338,7 @@ public class ProjectTrackerReader extends AbstractReader {
 					String createdOnStr = attValue;
 					long createdOnTime = Long.parseLong(createdOnStr);
 					try {
+						twsclient = this.getConnection(syncInfo);
 						ArtifactHistoryList ahlVersion = 
 							twsclient.getChangeHistoryForArtifact(artifactIdentifier,
 									createdOnTime, toTime);
@@ -343,6 +354,9 @@ public class ProjectTrackerReader extends AbstractReader {
 						log.error(message, e);
 						throw new CCFRuntimeException(message,
 								e);
+					}
+					finally {
+						connectionManager.releaseConnection(twsclient);
 					}
 				}
 			}
@@ -373,7 +387,6 @@ public class ProjectTrackerReader extends AbstractReader {
 			String attachmentName = attachment.getAttachmentName();
 			attahcmentIDNameMap.put(attachmentId, attachmentName);
 		}
-		connectionManager.releaseConnection(twsclient);
 		this.populateSrcAndDest(syncInfo, ga);
 		gaList.add(ga);
 		return gaList;
