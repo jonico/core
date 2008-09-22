@@ -3,6 +3,8 @@ package com.collabnet.ccf.pi.cee.pt.v50;
 import java.net.MalformedURLException;
 
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import com.collabnet.ccf.core.eis.connection.ConnectionException;
 import com.collabnet.ccf.core.eis.connection.ConnectionFactory;
@@ -10,16 +12,15 @@ import com.collabnet.tracker.core.TrackerClientManager;
 import com.collabnet.tracker.core.TrackerWebServicesClient;
 
 public class CollabNetConnectionFactory implements ConnectionFactory<TrackerWebServicesClient> {
+	private static final Log log = LogFactory.getLog(CollabNetConnectionFactory.class);
 	public static final String PARAM_DELIMITER = ":";
 	public void closeConnection(TrackerWebServicesClient connection) throws ConnectionException {
-		// TODO Auto-generated method stub
-		// Seems nothing to do
+		//Nothing to do
 	}
 
 	public TrackerWebServicesClient createConnection(String systemId, String systemKind,
 			String repositoryId, String repositoryKind, String connectionInfo,
 			String credentialInfo) throws ConnectionException {
-		// TODO Auto-generated method stub
 		if(StringUtils.isEmpty(repositoryId)){
 			throw new IllegalArgumentException("Repository Id cannot be null");
 		}
@@ -38,13 +39,15 @@ public class CollabNetConnectionFactory implements ConnectionFactory<TrackerWebS
 					password = splitCredentials[1];
 				}
 				else {
-					throw new IllegalArgumentException("Credentials info is not valid.");
+					String message = "Credentials info is not valid "+credentialInfo;
+					log.error(message);
+					throw new IllegalArgumentException(message);
 				}
 			}
 		}
 		String projectName = null;
 		if(repositoryId != null){
-			String[] splitProjectName = repositoryId.split(PARAM_DELIMITER);
+			String[] splitProjectName = repositoryId.split(":");
 			if(splitProjectName != null){
 				if(splitProjectName.length >= 1){
 					projectName = splitProjectName[0];
@@ -63,8 +66,9 @@ public class CollabNetConnectionFactory implements ConnectionFactory<TrackerWebS
 			twsclient = TrackerClientManager.getInstance().createClient(url,
 					username, password,null,null, null);
 		} catch (MalformedURLException e) {
-			e.printStackTrace();
-			throw new ConnectionException("Exception when trying to get the Web Services client", e);
+			String message = "Exception when trying to get the Web Services client";
+			log.error(message, e);
+			throw new ConnectionException(message, e);
 		}
 		return twsclient;
 	}
