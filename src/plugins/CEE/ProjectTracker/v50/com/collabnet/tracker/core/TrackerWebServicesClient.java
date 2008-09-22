@@ -3,6 +3,7 @@ package com.collabnet.tracker.core;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
+import java.io.StringWriter;
 import java.net.MalformedURLException;
 import java.net.Proxy;
 import java.net.URL;
@@ -11,6 +12,7 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -23,10 +25,18 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.rpc.ServiceException;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 
 import org.apache.axis.AxisFault;
 import org.apache.axis.EngineConfiguration;
 import org.apache.axis.message.MessageElement;
+import org.apache.xml.serialize.OutputFormat;
+import org.apache.xml.serialize.XMLSerializer;
 import org.w3c.dom.DOMImplementation;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -46,11 +56,14 @@ import com.collabnet.core.ws.services.SystemStatusService;
 import com.collabnet.core.ws.services.SystemStatusServiceLocator;
 import com.collabnet.core.ws.services.Version;
 import com.collabnet.tracker.common.ClientArtifact;
+import com.collabnet.tracker.common.ClientArtifactComment;
 import com.collabnet.tracker.common.ClientArtifactListXMLHelper;
+import com.collabnet.tracker.common.ClientXMLOperationError;
 import com.collabnet.tracker.common.WebServiceClient;
 import com.collabnet.tracker.core.model.TrackerArtifactType;
 import com.collabnet.tracker.core.model.TrackerClientData;
 import com.collabnet.tracker.core.util.TrackerUtil;
+import com.collabnet.tracker.ws.ArtifactHistoryList;
 import com.collabnet.tracker.ws.ArtifactType;
 import com.collabnet.tracker.ws.ArtifactTypeMetadata;
 import com.collabnet.tracker.ws.HistoryTransactionList;
@@ -146,116 +159,13 @@ public class TrackerWebServicesClient {
 	 */
 	public ClientArtifactListXMLHelper createArtifactList(List<ClientArtifact> artifacts) throws Exception {
 		// TODO: implement
+		System.out.println();
 		try {
-			EngineConfiguration config = mClient.getEngineConfiguration();
-			DispatcherService service = new DispatcherServiceLocator(config);
-			URL portAddress = mClient.constructServiceURL("/ws/Dispatcher");
-			Dispatcher theService = service.getDispatcher(portAddress);
-
-			////////////////////////////////////////
 			Document doc = null;
 			doc = createNewXMLDocument(DEFAULT_NAMESPACE, "ns1:"+"createArtifactList");
 
-			Element root = doc.getDocumentElement();
-
-			Element artifactListNode = doc.createElementNS(DEFAULT_NAMESPACE, "ns1:"+"artifactList");
-			root.appendChild(artifactListNode);
-
-			// TODO: Move all the below code to clientArtifact.java?
-			
-			List<String> nameSpaces = new ArrayList<String>();
-			nameSpaces.add(DEFAULT_NAMESPACE);
-
-			for (int i = 0 ; i < artifacts.size() ; i++) {
-				ClientArtifact ca = artifacts.get(i);
-				String nsXNameSpace = ca.getNamespace();
-				String artifactType = ca.getTagName();
-				int nsCtr;
-				// check if the namespace alrady exists in the xml so far
-				for (nsCtr = 0 ; nsCtr < nameSpaces.size() ; nsCtr++) {
-					if (nameSpaces.get(nsCtr) == nsXNameSpace) {
-						break;
-					}
-				}
-				
-				// if not, add to the namespace list and use the latest number
-				if ( nsCtr >= nameSpaces.size() ) {
-					nameSpaces.add(nsXNameSpace);
-					// point nsCtr to the last namespace, which we just added
-					nsCtr = nameSpaces.size();
-				}
-				else {
-					// adjust array indexing value to real value
-					nsCtr++;
-				}
-
-				String nsNumberString = "ns" + nsCtr + ":";
-				
-				Element artifactNode = doc.createElementNS(nsXNameSpace, nsNumberString + artifactType);
-				artifactListNode.appendChild(artifactNode);
-	
-				//Element modByNode = doc.createElementNS(DEFAULT_NAMESPACE, "ns1:"+"modifiedBy");
-				//modByNode.appendChild(doc.createTextNode(userName));
-				//artifactNode.appendChild(modByNode);
-	
-				//Element lastReadNode = doc.createElementNS(DEFAULT_NAMESPACE, "ns1:"+"lastReadOn");
-				//lastReadNode.appendChild(doc.createTextNode(taskData.getLastModified()));
-				//artifactNode.appendChild(lastReadNode);
-	
-				// Add each attribute
-				Map<String, List<String>> textAttributes = ca.getAttributes();
-				
-				for ( int attrCtr = 0 ; attrCtr < textAttributes.size() ; attrCtr++) {
-					for (String attribute: textAttributes.keySet()) {
-						List<String> values = textAttributes.get(attribute);
-
-						// strip the namespace from the attribute key
-			    		String[] parts = attribute.substring(1).split("\\}");
-			    		attribute = parts[1];
-						
-						
-						if (values.size() > 1 ) {
-							for (String value: values) {
-								// TODO: consider the namespace of the attributes?
-								Element attributeNode = doc.createElementNS(nsXNameSpace, nsNumberString + attribute);
-								Element valueNode = doc.createElement("value");
-								valueNode.setNodeValue(value);
-								
-								attributeNode.appendChild(valueNode);
-								
-								artifactNode.appendChild(attributeNode);
-							}
-						}
-						else {
-							// TODO: consider the namespace of the attributes?
-							Element attributeNode = doc.createElementNS(nsXNameSpace, nsNumberString + attribute);
-							//attributeNode.setNodeValue(values.get(0));
-							attributeNode.appendChild(doc.createTextNode(values.get(0)));
-							
-							artifactNode.appendChild(attributeNode);
-						}
-					}
-				}
-				
-			} // for every artifact
-			
-			Element sendMail = doc.createElementNS(DEFAULT_NAMESPACE, "ns1:"+"sendEmail");
-			sendMail.appendChild(doc.createTextNode("true"));
-			root.appendChild(sendMail);
-
-//			printResult(doc);
-			String docString = doc.getTextContent();
-			System.out.println(docString); 
-			Request req = toRequest(doc);
-			String reqString = req.toString();
-			System.out.println(reqString); 
-			Response r = theService.execute(toRequest(doc));
-			Document result = toDocument(r);
-			ClientArtifactListXMLHelper helper = new ClientArtifactListXMLHelper(result);
-
+			ClientArtifactListXMLHelper helper = this.createOrUpdateArtifactList(doc, artifacts);
 			return helper;
-
-			////////////////////////////////////////
 		}
 		catch (Exception e) {
 			throw e;
@@ -274,120 +184,138 @@ public class TrackerWebServicesClient {
 	 */
 	public ClientArtifactListXMLHelper updateArtifactList(List<ClientArtifact> artifacts) throws Exception {
 		// TODO: implement
+		System.out.println();
 		try {
-			EngineConfiguration config = mClient.getEngineConfiguration();
-			DispatcherService service = new DispatcherServiceLocator(config);
-			URL portAddress = mClient.constructServiceURL("/ws/Dispatcher");
-			Dispatcher theService = service.getDispatcher(portAddress);
-
-			////////////////////////////////////////
+			
 			Document doc = null;
 			doc = createNewXMLDocument(DEFAULT_NAMESPACE, "ns1:"+"updateArtifactList");
-
-			Element root = doc.getDocumentElement();
-
-			Element artifactListNode = doc.createElementNS(DEFAULT_NAMESPACE, "ns1:"+"artifactList");
-			root.appendChild(artifactListNode);
-
-			// TODO: Move all the below code to clientArtifact.java?
 			
-			List<String> nameSpaces = new ArrayList<String>();
-			nameSpaces.add(DEFAULT_NAMESPACE);
+			ClientArtifactListXMLHelper helper  = this.createOrUpdateArtifactList(doc, artifacts);
 
-			for (int i = 0 ; i < artifacts.size() ; i++) {
-				ClientArtifact ca = artifacts.get(i);
-				String nsXNameSpace = ca.getNamespace();
-				String artifactType = ca.getTagName();
-				int nsCtr;
-				// check if the namespace alrady exists in the xml so far
-				for (nsCtr = 0 ; nsCtr < nameSpaces.size() ; nsCtr++) {
-					if (nameSpaces.get(nsCtr) == nsXNameSpace) {
-						break;
+			return helper;
+		}
+		catch (Exception e) {
+			throw e;
+		}		
+	}
+	
+	public ClientArtifactListXMLHelper createOrUpdateArtifactList(Document doc,
+			List<ClientArtifact> artifacts) throws Exception{
+		EngineConfiguration config = mClient.getEngineConfiguration();
+		DispatcherService service = new DispatcherServiceLocator(config);
+		URL portAddress = mClient.constructServiceURL("/ws/Dispatcher");
+		Dispatcher theService = service.getDispatcher(portAddress);
+		Element root = doc.getDocumentElement();
+
+		Element artifactListNode = doc.createElementNS(DEFAULT_NAMESPACE, "ns1:"+"artifactList");
+		root.appendChild(artifactListNode);
+
+		// TODO: Move all the below code to clientArtifact.java?
+		
+		HashMap<String, Integer> nameSpaces = new HashMap<String, Integer>();
+		//List<String> nameSpaces = new ArrayList<String>();
+		int nameSpaceCount = 1;
+		nameSpaces.put(DEFAULT_NAMESPACE,nameSpaceCount);
+		
+		for (int i = 0 ; i < artifacts.size() ; i++) {
+			ClientArtifact ca = artifacts.get(i);
+			String nsXNameSpace = ca.getNamespace();
+			String artifactType = ca.getTagName();
+			//int nsCtr;
+			// check if the namespace alrady exists in the xml so far
+			if (nameSpaces.get(nsXNameSpace) == null) {
+				nameSpaces.put(nsXNameSpace, ++nameSpaceCount);
+			}
+			
+			String nsNumberString = "ns" + nameSpaces.get(nsXNameSpace) + ":";
+			
+			Element artifactNode = doc.createElementNS(nsXNameSpace, nsNumberString + artifactType);
+			artifactListNode.appendChild(artifactNode);
+
+			Element modByNode = doc.createElementNS(DEFAULT_NAMESPACE, "ns1:"+"modifiedBy");
+			modByNode.appendChild(doc.createTextNode(mClient.getUserName()));
+			artifactNode.appendChild(modByNode);
+
+			Element lastReadNode = doc.createElementNS(DEFAULT_NAMESPACE, "ns1:"+"lastReadOn");
+			lastReadNode.appendChild(doc.createTextNode(Long.toString(new Date().getTime())));
+			artifactNode.appendChild(lastReadNode);
+
+			// Add each attribute
+			Map<String, List<String>> textAttributes = ca.getAttributes();
+			
+				for (String attribute: textAttributes.keySet()) {
+					List<String> values = textAttributes.get(attribute);
+
+					// strip the namespace from the attribute key
+		    		String[] parts = attribute.substring(1).split("\\}");
+		    		String attributeNamespace = parts[0];
+		    		attribute = parts[1];
+		    		if (nameSpaces.get(attributeNamespace) == null) {
+						nameSpaces.put(attributeNamespace, ++nameSpaceCount);
 					}
-				}
-				
-				// if not, add to the namespace list and use the latest number
-				if ( nsCtr >= nameSpaces.size() ) {
-					nameSpaces.add(nsXNameSpace);
-					// point nsCtr to the last namespace, which we just added
-					nsCtr = nameSpaces.size();
-				}
-				else {
-					// adjust array indexing value to real value
-					nsCtr++;
-				}
-
-				String nsNumberString = "ns" + nsCtr + ":";
-				
-				Element artifactNode = doc.createElementNS(nsXNameSpace, nsNumberString + artifactType);
-				artifactListNode.appendChild(artifactNode);
-	
-				//Element modByNode = doc.createElementNS(DEFAULT_NAMESPACE, "ns1:"+"modifiedBy");
-				//modByNode.appendChild(doc.createTextNode(userName));
-				//artifactNode.appendChild(modByNode);
-	
-				//Element lastReadNode = doc.createElementNS(DEFAULT_NAMESPACE, "ns1:"+"lastReadOn");
-				//lastReadNode.appendChild(doc.createTextNode(taskData.getLastModified()));
-				//artifactNode.appendChild(lastReadNode);
-	
-				// Add each attribute
-				Map<String, List<String>> textAttributes = ca.getAttributes();
-				
-				for ( int attrCtr = 0 ; attrCtr < textAttributes.size() ; attrCtr++) {
-					for (String attribute: textAttributes.keySet()) {
-						List<String> values = textAttributes.get(attribute);
-
-						// strip the namespace from the attribute key
-			    		String[] parts = attribute.substring(1).split("\\}");
-			    		attribute = parts[1];
-						
-						
-						if (values.size() > 1 ) {
-							for (String value: values) {
-								// TODO: consider the namespace of the attributes?
-								Element attributeNode = doc.createElementNS(nsXNameSpace, nsNumberString + attribute);
-								Element valueNode = doc.createElement("value");
-								valueNode.setNodeValue(value);
-								
+		    		nsNumberString = "ns" + nameSpaces.get(attributeNamespace) + ":";
+					
+					if (values.size() > 1 ||(attributeNamespace.equals(DEFAULT_NAMESPACE) &&
+									attribute.equals("id"))) {
+						for (String value: values) {
+							if(value != null){
+								Element attributeNode = doc.createElementNS(attributeNamespace, nsNumberString + attribute);
+								Element valueNode = doc.createElementNS(DEFAULT_NAMESPACE, "ns1:value");
+								//valueNode.setNodeValue(value);
+								valueNode.appendChild(doc.createTextNode(value));
 								attributeNode.appendChild(valueNode);
 								
 								artifactNode.appendChild(attributeNode);
 							}
 						}
-						else {
-							// TODO: consider the namespace of the attributes?
-							Element attributeNode = doc.createElementNS(nsXNameSpace, nsNumberString + attribute);
-							//attributeNode.setNodeValue(values.get(0));
-							attributeNode.appendChild(doc.createTextNode(values.get(0)));
-							
-							artifactNode.appendChild(attributeNode);
-						}
+					}
+					else {
+						// TODO: consider the namespace of the attributes?
+						Element attributeNode = doc.createElementNS(nsXNameSpace, nsNumberString + attribute);
+						//attributeNode.setNodeValue(values.get(0));
+						attributeNode.appendChild(doc.createTextNode(values.get(0)));
+						
+						artifactNode.appendChild(attributeNode);
 					}
 				}
+				List<ClientArtifactComment> comments = ca.getComments();
+				for(ClientArtifactComment comment:comments){
+					String commentText = comment.getCommentText();
+					Element commentNode = doc.createElementNS("urn:ws.tracker.collabnet.com", "ns1:"+"comment");
+					Element textNode = doc.createElementNS(DEFAULT_NAMESPACE, "ns1:"+"text");
+					textNode.appendChild(doc.createTextNode(commentText));
+					commentNode.appendChild(textNode);
+					artifactNode.appendChild(commentNode);
+				}
 				
-			} // for every artifact
-			
-			Element sendMail = doc.createElementNS(DEFAULT_NAMESPACE, "ns1:"+"sendEmail");
-			sendMail.appendChild(doc.createTextNode("true"));
-			root.appendChild(sendMail);
+				Element reasonNode = doc.createElementNS("urn:ws.tracker.collabnet.com", "ns1:"+"reason");
+				reasonNode.appendChild(doc.createTextNode("Synchronized by Connector"));
+				artifactNode.appendChild(reasonNode);
+		} // for every artifact
+		
+		Element sendMail = doc.createElementNS(DEFAULT_NAMESPACE, "ns1:"+"sendEmail");
+		sendMail.appendChild(doc.createTextNode("true"));
+		root.appendChild(sendMail);
 
-//			printResult(doc);
-			String docString = doc.getTextContent();
-			System.out.println(docString); 
-			Request req = toRequest(doc);
-			String reqString = req.toString();
-			System.out.println(reqString); 
-			Response r = theService.execute(toRequest(doc));
-			Document result = toDocument(r);
-			ClientArtifactListXMLHelper helper = new ClientArtifactListXMLHelper(result);
+//		printResult(doc);
+		String docString = doc.getTextContent();
+		System.out.println(docString); 
+		TransformerFactory tf = TransformerFactory.newInstance();
+		Transformer t = tf.newTransformer();
+		StringWriter sw = new StringWriter();
+		t.transform( new DOMSource(doc), new StreamResult(sw));
+		sw.toString();
 
-			return helper;
-
-			////////////////////////////////////////
-		}
-		catch (Exception e) {
-			throw e;
-		}		
+		Request req = toRequest(doc);
+		String reqString = req.toString();
+		System.out.println(reqString); 
+		Response r = theService.execute(toRequest(doc));
+		Document result = toDocument(r);
+		StringWriter sw1 = new StringWriter();
+		t.transform( new DOMSource(result), new StreamResult(sw1));
+		sw1.toString();
+		ClientArtifactListXMLHelper helper = new ClientArtifactListXMLHelper(result);
+		return helper;
 	}
 
 
@@ -699,7 +627,22 @@ public class TrackerWebServicesClient {
 		System.out.println("request artifactChanges() between: " + new Date(from) + " and " + new Date(to));
   		return theService.getArtifactChanges(ata, from, to);
 	}
-
+	
+	public ArtifactHistoryList getChangeHistoryForArtifact(String artifactId, long from, Long to) throws Exception {
+        String[] artifactList = new String[1];
+        artifactList[0] = artifactId;
+        return this.getChangeHistoryForArtifact(artifactList, from, to);
+	}
+	
+	public ArtifactHistoryList getChangeHistoryForArtifact(String[] artifactList, long from, Long to) throws ServiceException, WSException, RemoteException{
+		EngineConfiguration config = mClient.getEngineConfiguration();
+        ArtifactHistoryService service = new ArtifactHistoryServiceLocator(config);
+        URL portAddress = mClient.constructServiceURL("/tracker/ArtifactHistory");
+        ArtifactHistoryManager theService = service.getArtifactHistoryManager(portAddress);
+ 		TrackerUtil.debug("request artifactChanges() between: " + new Date(from) + " and " + new Date(to)); 
+		System.out.println("request artifactChanges() between: " + new Date(from) + " and " + new Date(to));
+  		return theService.getArtifactHistory(artifactList, from, to);
+	}
 
 	/**
 	 * Converts a DOM Document to a Request object expected by the
@@ -935,6 +878,17 @@ public class TrackerWebServicesClient {
 
 		theService.addAttachment(taskId, attachment.getName(), comment, attachment.getContentType(), attachmentHandler);
 
+	}
+	
+	public DataHandler getDataHandlerForAttachment(String taskId, String attachmentId) throws
+			ServiceException, WSException, NumberFormatException, RemoteException{
+		EngineConfiguration config = mClient.getEngineConfiguration();
+		AttachmentService service = new AttachmentServiceLocator(config);
+		URL portAddress = mClient.constructServiceURL("/tracker/Attachment");
+		AttachmentManager theService = service.getAttachmentService(portAddress);
+
+		DataHandler handler = theService.getAttachment(taskId, Long.parseLong(attachmentId));
+		return handler;
 	}
 
 	/**
