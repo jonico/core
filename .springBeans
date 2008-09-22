@@ -17,6 +17,7 @@
 		<config>samples/IntegrationScenarios/genericArtifactExport/config/config.xml</config>
 		<config>samples/IntegrationScenarios/unidirectionalTransformation/config/config.xml</config>
 		<config>samples/IntegrationScenarios/genericArtifactImport/config/config.xml</config>
+		<config>samples/CEE/bidirectionalMirroring/config/config.xml</config>
 	</configs>
 	<configSets>
 	</configSets>
