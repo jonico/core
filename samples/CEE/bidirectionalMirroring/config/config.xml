@@ -36,12 +36,22 @@
 			<list>
 				<value>classpath:ccf.properties</value>
 				<value>classpath:cee.properties</value>
-				<value>classpath:qc.properties</value>
+				<value>classpath:sfee.properties</value>
 			</list>
 		</property>
 	</bean>
 	<bean id="Adaptor" class="org.openadaptor.core.adaptor.Adaptor">
 		<property name="messageProcessor" ref="Router" />
+	</bean>
+
+	<bean id="GenericArtifactSchemaValidator"
+		class="com.collabnet.ccf.core.utils.XmlValidator">
+		<description>
+			This processor validates whether the artifacts produced by
+			the SFEE reader are generic artifact schema compliant.
+		</description>
+		<property name="schemaURL"
+			value="config/genericartifactschema.xsd" />
 	</bean>
 
 	<bean id="Router" class="org.openadaptor.core.router.Router">
@@ -52,65 +62,25 @@
 		</description>
 		<property name="processMap">
 			<map>
-				<!-- <entry key-ref="SynchronizationStatusPollingReader"
-                    value-ref="QCReader" />
-                <entry key-ref="QCReader"   value-ref="QCTransformer" />
-                <entry key-ref="QCTransformer" value-ref="EntityService" />
-                <entry key-ref="EntityService" value-ref="PTWriter" />
+				<entry key-ref="SynchronizationStatusPollingReaderPT"
+					value-ref="PTReader" />
+				<entry key-ref="PTReader"   value-ref="Transformer" />
+				<entry key-ref="Transformer" value-ref="PTEntityService" />
+				<entry key-ref="PTEntityService" value-ref="SFEEWriter" />
+				<entry key-ref="SFEEWriter"
+					value-ref="SynchronizationStatusAndIdentityMappingTableUpdater" />
+				<!-- <entry key-ref="SynchronizationStatusPollingReaderSFEE"
+                    value-ref="SFEEReader" />
+                <entry key-ref="SFEEReader"   value-ref="Transformer" />
+                <entry key-ref="Transformer" value-ref="SFEEEntityService" />
+                <entry key-ref="SFEEEntityService" value-ref="PTWriter" />
                 <entry key-ref="PTWriter"
                     value-ref="SynchronizationStatusAndIdentityMappingTableUpdater" /> -->
-
-                <entry key-ref="SynchronizationStatusPollingReaderPT"
-                    value-ref="PTReader" />
-                <entry key-ref="PTReader"   value-ref="PTTransformer" />
-                <entry key-ref="PTTransformer" value-ref="PTEntityService" />
-                <entry key-ref="PTEntityService" value-ref="QCWriter" />
-                <entry key-ref="QCWriter"
-                    value-ref="SynchronizationStatusAndIdentityMappingTableUpdater" />
 			</map>
 		</property>
 		<property name="exceptionProcessor" ref="ExceptionHandler" />
 	</bean>
 	<bean id="SynchronizationStatusPollingReaderPT"
-        class="com.collabnet.ccf.core.test.plugins.SimpleLoopingPollingReadConnector">
-        <description>
-            This polling connector polls the CCF database tables that
-            contain the repository mapping and the synchronization info
-            and feeds the details to the source repository reader piped
-            down the line. Please refer the processMap configuration for
-            the Router bean.
-
-            In this case this polling reader reads the synchronization
-            status using the database read connector configured in the
-            property delegate.
-
-            Polling interval seconds is configured as 0 to indicate that
-            the polling reader should read from the database read
-            connector continuously without and pauses in between.
-        </description>
-        <property name="pollLimit" value="-1" />
-        <property name="delegate"
-            ref="SynchronizationStatusDatabaseReaderPT" />
-        <property name="pollIntervalSecs" value="0" />
-    </bean>
-    <bean id="SynchronizationStatusDatabaseReaderPT"
-        class="org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector">
-        <description>
-            This is the JDBC read connector used by the
-            SynchronizationStatusPollingReader to read the repository
-            mapping and the synchronization info.
-        </description>
-        <property name="jdbcConnection" ref="JDBCConnection" />
-        <!-- batch size of 0 or less means process all rows in one message batch. -->
-        <!-- batch size of one means process one row per message and so on -->
-        <property name="batchSize" value="1" />
-        <property name="resultSetConverter"
-            ref="SynchronizationStatusXMLConverter" />
-        <property name="sql">
-            <value>${ccf.ceereader.poller.sql}</value>
-        </property>
-    </bean>
-	<bean id="SynchronizationStatusPollingReader"
 		class="com.collabnet.ccf.core.test.plugins.SimpleLoopingPollingReadConnector">
 		<description>
 			This polling connector polls the CCF database tables that
@@ -132,43 +102,6 @@
 			ref="SynchronizationStatusDatabaseReader" />
 		<property name="pollIntervalSecs" value="0" />
 	</bean>
-	<bean id="QCReader" class="com.collabnet.ccf.pi.qc.v90.QCReader">
-        <description>
-            This reader reads the modified artifacts in the QC system's tracker configured in the
-            ${qc.server.1.url} and the sync info tables. It reads all the related dependent artifact details
-            and converts them into Generic Artifact XML document format and sends to the
-            next component in the pipeline. The next component in the pipeline may be
-            an XSLT transformer component such as com.collabnet.ccf.core.transformer.XsltProcessor
-            or an EntityService component depending on the target SFEE tracker needs the data
-            to be translated to fit into its fields or not.
-        </description>
-        <property name="serverUrl" value="${qc.system.1.url}" />
-        <property name="userName" value="${qc.system.1.username}" />
-        <property name="password" value="${qc.system.1.password}" />
-        <property name="connectionManager" ref="QCConnectionManager"></property>
-        <property name="sleepInterval" value="1000"></property>
-        <property name="maxAttachmentSizePerArtifact" value="${qc.max.attachmentsize.per.artifact}" />
-    </bean>
-    <bean id="QCWriter" class="com.collabnet.ccf.pi.qc.v90.QCWriter">
-        <description>
-            This QCWriter will write the data contained in the incoming
-            document to QC.
-        </description>
-        <property name="serverUrl" value="${qc.system.1.url}" />
-        <property name="userName" value="${qc.system.1.username}" />
-        <property name="password" value="${qc.system.1.password}" />
-        <property name="connectionManager" ref="QCConnectionManager"></property>
-    </bean>
-    <bean id="QCConnectionManager"
-        class="com.collabnet.ccf.core.eis.connection.ConnectionManager">
-        <property name="maxConnectionsPerPool" value="5"></property>
-        <property name="maxIdleTimeForConnection" value="600000" />
-        <property name="scavengerInterval" value="120000"></property>
-        <property name="connectionFactory" ref="QCConnectionFactory"></property>
-    </bean>
-    <bean id="QCConnectionFactory"
-        class="com.collabnet.ccf.pi.qc.v90.QCConnectionFactory">
-    </bean>
 	<bean id="SynchronizationStatusDatabaseReader"
 		class="org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector">
 		<description>
@@ -183,9 +116,48 @@
 		<property name="resultSetConverter"
 			ref="SynchronizationStatusXMLConverter" />
 		<property name="sql">
-			<value>${ccf.qc.poller.sql}</value>
+			<value>${ccf.ceereader.poller.sql}</value>
 		</property>
 	</bean>
+	<bean id="SynchronizationStatusPollingReaderSFEE"
+        class="com.collabnet.ccf.core.test.plugins.SimpleLoopingPollingReadConnector">
+        <description>
+            This polling connector polls the CCF database tables that
+            contain the repository mapping and the synchronization info
+            and feeds the details to the source repository reader piped
+            down the line. Please refer the processMap configuration for
+            the Router bean.
+
+            In this case this polling reader reads the synchronization
+            status using the database read connector configured in the
+            property delegate.
+
+            Polling interval seconds is configured as 0 to indicate that
+            the polling reader should read from the database read
+            connector continuously without and pauses in between.
+        </description>
+        <property name="pollLimit" value="-1" />
+        <property name="delegate"
+            ref="SynchronizationStatusDatabaseReaderSFEE" />
+        <property name="pollIntervalSecs" value="0" />
+    </bean>
+    <bean id="SynchronizationStatusDatabaseReaderSFEE"
+        class="org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector">
+        <description>
+            This is the JDBC read connector used by the
+            SynchronizationStatusPollingReader to read the repository
+            mapping and the synchronization info.
+        </description>
+        <property name="jdbcConnection" ref="JDBCConnection" />
+        <!-- batch size of 0 or less means process all rows in one message batch. -->
+        <!-- batch size of one means process one row per message and so on -->
+        <property name="batchSize" value="1" />
+        <property name="resultSetConverter"
+            ref="SynchronizationStatusXMLConverter" />
+        <property name="sql">
+            <value>${ccf.sfeereader.poller.sql}</value>
+        </property>
+    </bean>
 	<bean id="JDBCConnection"
 		class="org.openadaptor.auxil.connector.jdbc.JDBCConnection">
 		<description>
@@ -285,7 +257,78 @@
 			com.collabnet.ccf.pi.sfee.v44.Connection objects.
 		</description>
 	</bean>
-    <bean id="EntityService"
+	<bean id="SFEEReader"
+        class="com.collabnet.ccf.pi.sfee.v44.SFEEReader">
+        <description>
+            This reader reads the modified artifacts in the SFEE
+            system's tracker configured in the ${sfee.server.1.url} and
+            the sync info tables. It also reads all the related
+            dependent artifact details and converts them into Generic
+            Artifact XML document format and sends to the next component
+            in the pipeline. The next component in the piple line may be
+            an XSLT transformer component such as
+            com.collabnet.ccf.core.transformer.XsltProcessor or an
+            EntityService component depending on the target SFEE tracker
+            needs the data to be translated to fit into its fields or
+            not.
+        </description>
+        <property name="username" value="${sfee.server.1.username}" />
+        <property name="password" value="${sfee.server.1.password}" />
+        <property name="serverUrl" value="${sfee.server.1.url}" />
+        <property name="connectionManager"
+            ref="SFEEConnectionManager">
+        </property>
+        <property name="sleepInterval" value="1000"></property>
+        <property name="maxAttachmentSizePerArtifact"
+            value="${sfee.max.attachmentsize.per.artifact}" />
+    </bean>
+	<bean id="SFEEWriter"
+        class="com.collabnet.ccf.pi.sfee.v44.SFEEWriter">
+        <description>
+            This data processor is responsible for writing the artifacts
+            coming from the EntitySerive into the target SFEE system. It
+            converts/extracts the data from the Generic Artifact XML and
+            pushes to the target SFEE system.
+        </description>
+        <property name="username" value="${sfee.server.1.username}" />
+        <property name="password" value="${sfee.server.1.password}" />
+        <property name="serverUrl" value="${sfee.server.1.url}" />
+        <property name="updateComment"
+            value="Synchronized by Connector user" />
+        <property name="connectionManager"
+            ref="SFEEConnectionManager">
+        </property>
+    </bean>
+    <bean id="SFEEConnectionManager"
+        class="com.collabnet.ccf.core.eis.connection.ConnectionManager">
+        <description>
+            The connection manager implements a connection pooling
+            mechanism where the connections to multiple systems are
+            cached for the readers and writers to retrieve when needed.
+            Before returning the connection to the client the connection
+            manager checks if the connection is live and only returns
+            valid connections. It assigns and manages one pool per
+            repository.
+        </description>
+        <property name="maxConnectionsPerPool" value="5"></property>
+        <property name="maxIdleTimeForConnection" value="600000" />
+        <property name="scavengerInterval" value="120000"></property>
+        <property name="connectionFactory"
+            ref="SFEEConnectionFactory">
+        </property>
+    </bean>
+    <bean id="SFEEConnectionFactory"
+        class="com.collabnet.ccf.pi.sfee.v44.SFEEConnectionFactory">
+        <description>
+            This bean is an implementation of the
+            com.collabnet.ccf.core.eis.connection.ConnectionFactory
+            interface. It is responsible to create and close an
+            connection for a given repository. In this case
+            SFEEConnectionFactory manages
+            com.collabnet.ccf.pi.sfee.v44.Connection objects.
+        </description>
+    </bean>
+    <bean id="PTEntityService"
 		class="com.collabnet.ccf.core.EntityService">
 		<description>
 			This component is responsible for determining if the current
@@ -301,7 +344,7 @@
 		<property name="identityMappingDatabaseReader"
 			ref="IndentityMappingDatabaseReader" />
 	</bean>
-	 <bean id="PTEntityService"
+	<bean id="SFEEEntityService"
         class="com.collabnet.ccf.core.EntityService">
         <description>
             This component is responsible for determining if the current
@@ -317,21 +360,13 @@
         <property name="identityMappingDatabaseReader"
             ref="IndentityMappingDatabaseReader" />
     </bean>
-    <bean id="PTTransformer"
+    <bean id="Transformer"
         class="com.collabnet.ccf.core.transformer.XsltProcessor">
         <description>The xsltDir specifies the directory in which the xsl files are contained. The naming conventions
         for the xsl files need to be followed. 
         Name of an xsl file should be: sourceSystem+sourceRepository+targetSystem+targetRepository.xsl 
         </description>
-        <property name="xsltFile" value="${ccf.xsltFile.2}" />
-    </bean>
-    <bean id="QCTransformer"
-        class="com.collabnet.ccf.core.transformer.XsltProcessor">
-        <description>The xsltDir specifies the directory in which the xsl files are contained. The naming conventions
-        for the xsl files need to be followed. 
-        Name of an xsl file should be: sourceSystem+sourceRepository+targetSystem+targetRepository.xsl 
-        </description>
-        <property name="xsltFile" value="${ccf.xsltFile.1}" />
+        <property name="xsltFile" value="${ccf.xsltFile}" />
     </bean>
 
 	<bean id="SynchronizationStatusAndIdentityMappingTableUpdater"
