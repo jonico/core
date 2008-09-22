@@ -115,6 +115,8 @@ public class TrackerWebServicesClient {
 	public static final String LEAVE_OPERATION = "leave";
 
 	public static final String REASON_FOR_CHANGE_TYPE = "_REASON_FOR_CHANGE";
+	public static final String MODIFIED_BY_FIELD_NAME = "modifiedBy";
+	public static final String LAST_READ_ON_FIELD_NAME = "lastReadOn";
 
 	private WebServiceClient mClient;
 	private TrackerClientData repositoryData;
@@ -232,11 +234,11 @@ public class TrackerWebServicesClient {
 			Element artifactNode = doc.createElementNS(nsXNameSpace, nsNumberString + artifactType);
 			artifactListNode.appendChild(artifactNode);
 
-			Element modByNode = doc.createElementNS(DEFAULT_NAMESPACE, "ns1:"+"modifiedBy");
+			Element modByNode = doc.createElementNS(DEFAULT_NAMESPACE, "ns1:"+MODIFIED_BY_FIELD_NAME);
 			modByNode.appendChild(doc.createTextNode(mClient.getUserName()));
 			artifactNode.appendChild(modByNode);
 
-			Element lastReadNode = doc.createElementNS(DEFAULT_NAMESPACE, "ns1:"+"lastReadOn");
+			Element lastReadNode = doc.createElementNS(DEFAULT_NAMESPACE, "ns1:"+LAST_READ_ON_FIELD_NAME);
 			lastReadNode.appendChild(doc.createTextNode(Long.toString(new Date().getTime())));
 			artifactNode.appendChild(lastReadNode);
 
