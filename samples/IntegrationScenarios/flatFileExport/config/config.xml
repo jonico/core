@@ -117,7 +117,7 @@ $HeadURL$
 			Polling interval seconds is configured as 0 to indicate that the polling reader should
 			read from the database read connector continuously without and pauses in between.
 		</description>
-		<property name="pollLimit" value="1" />
+		<property name="pollLimit" value="8" />
 		<property name="delegate" ref="SynchronizationStatusDatabaseReader" />
 		<property name="pollIntervalSecs" value="0" />
 	</bean>

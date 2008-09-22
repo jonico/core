@@ -12,16 +12,7 @@
 				<xsl:attribute name="fieldValueType">String</xsl:attribute>
 				<xsl:attribute name="fieldValueIsNull">false</xsl:attribute>
 			</field>-->
-			<field>
-				<xsl:attribute name="fieldName">description</xsl:attribute>
-				<xsl:attribute name="fieldDisplayName">description</xsl:attribute>
-				<xsl:attribute name="fieldAction">replace</xsl:attribute>
-				<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
-				<xsl:attribute name="fieldValueHasChanged">true</xsl:attribute>
-				<xsl:attribute name="fieldValueType">String</xsl:attribute>
-				<xsl:attribute name="fieldValueIsNull">false</xsl:attribute>
-The artifact was read in by a CSV file
-			</field>
+			<field><xsl:attribute name="fieldName">description</xsl:attribute><xsl:attribute name="fieldDisplayName">description</xsl:attribute><xsl:attribute name="fieldAction">replace</xsl:attribute><xsl:attribute name="fieldType">mandatoryField</xsl:attribute><xsl:attribute name="fieldValueHasChanged">true</xsl:attribute><xsl:attribute name="fieldValueType">String</xsl:attribute><xsl:attribute name="fieldValueIsNull">false</xsl:attribute>The artifact was read in by a CSV file</field>
 			<!--<field>
 				<xsl:attribute name="fieldName">category</xsl:attribute>
 				<xsl:attribute name="fieldDisplayName">category</xsl:attribute>
