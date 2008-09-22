@@ -142,7 +142,6 @@ public class SFEETrackerHandler {
 				} else {
 					ArtifactSoapDO artifactData = mTrackerApp.getArtifactData(
 							sessionID, id);
-					// updates from the connector user are ignored to avoid infinite update loops
 					if(!artifactData.getLastModifiedBy().equals(connectorUser)){
 						if (duplicateFound) {
 							detailRowsNew.add(artifactData);
@@ -266,7 +265,10 @@ public class SFEETrackerHandler {
 		newFlexFields.setValues(flexFieldValues.toArray());
 		newFlexFields.setTypes(flexFieldTypes.toArray(new String[0]));
 		artifactData.setFlexFields(newFlexFields);
+		mTrackerApp.setArtifactData(sessionId, artifactData, "Synchronized by Connector User", null,
+				null, null);
 		for(String comment:comments){
+			artifactData = mTrackerApp.getArtifactData(sessionId, artifactData.getId());
 			mTrackerApp.setArtifactData(sessionId, artifactData, comment, null,
 					null, null);
 		}
@@ -319,7 +321,10 @@ public class SFEETrackerHandler {
 				artifactData.setStatusClass(statusClass);
 				artifactData.setCloseDate(closeDate);
 				artifactData.setResolvedReleaseId(resolvedReleaseId);
+				mTrackerApp.setArtifactData(sessionId, artifactData, "Synchronized by Connector User", null,
+						null, null);
 				for(String comment:comments){
+					artifactData = mTrackerApp.getArtifactData(sessionId, Id);
 					mTrackerApp.setArtifactData(sessionId, artifactData, comment, null,
 							null, null);
 				}
