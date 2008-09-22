@@ -21,7 +21,6 @@ import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
 import com.collabnet.ccf.core.utils.DateUtil;
-import com.collabnet.ccf.pi.sfee.v44.SFEEGAHelper;
 
 /**
  * AbstractReader provides the abstraction of shipping Generic Artifacts through
@@ -502,8 +501,7 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 		String lastModifiedDateString = this.getLastSourceArtifactModificationDate(syncInfo);
 		Date lastModifiedDate = null; 
 		if (!StringUtils.isEmpty(lastModifiedDateString)) {
-			//TODO Change the SFEE related class here
-			lastModifiedDate=(Date)SFEEGAHelper.asTypedValue(lastModifiedDateString, "DateTime");
+			lastModifiedDate=DateUtil.parse(lastModifiedDateString);
 			lastModifiedDate.setTime(lastModifiedDate.getTime()+1);
 		} else {
 			lastModifiedDate = new Date(0);
