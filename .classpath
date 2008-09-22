@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry excluding="lib/**" kind="src" path="src/plugins/SFEE/v44"/>
+	<classpathentry excluding="Test/|lib" kind="src" path="src/plugins/CEE/ProjectTracker/v50"/>
 	<classpathentry kind="src" path="samples/IntegrationScenarios/customReader/src"/>
 	<classpathentry kind="src" path="tests"/>
 	<classpathentry excluding="lib/**" kind="src" path="src/core"/>
@@ -25,5 +26,8 @@
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/commons-lang_2.0.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/J2SE-1.5"/>
 	<classpathentry kind="lib" path="config"/>
+	<classpathentry kind="lib" path="src/plugins/CEE/ProjectTracker/v50/lib/cee-5.0.jar"/>
+	<classpathentry kind="lib" path="src/plugins/CEE/ProjectTracker/v50/lib/wss4j-1.5.1.jar"/>
+	<classpathentry kind="lib" path="src/plugins/CEE/ProjectTracker/v50/lib/xmlsec-1.4.0.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
