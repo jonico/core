@@ -14,13 +14,13 @@ rem Point the CCF_HOME to the directory where you have extracted the CCF
 rem If you haven't set the CCF_HOME directory it will be taken as the parent directory of the
 rem bin directory.
 
-set JAVA_HOME=C:\mount\Java\jdk1.6.0_05
+set JAVA_HOME=
 set CCF_HOME=
 
-if (%JAVA_HOME%)==() goto NO_JAVA_HOME
-if not exist %JAVA_HOME%\bin\java.exe goto NO_PROPER_JAVA_HOME
-if (%CCF_HOME%)==() set CCF_HOME=%~dp0..
-if not exist %CCF_HOME% goto NO_PROPER_CCF_HOME
+if "%JAVA_HOME%"=="" goto NO_JAVA_HOME
+if not exist "%JAVA_HOME%\bin\java.exe" goto NO_PROPER_JAVA_HOME
+if "%CCF_HOME%"=="" set CCF_HOME=%~dp0..
+if not exist "%CCF_HOME%" goto NO_PROPER_CCF_HOME
 
 set LIB_PATH=%CCF_HOME%\lib
 set EXT_LIB_PATH=%CCF_HOME%\lib\extlib
