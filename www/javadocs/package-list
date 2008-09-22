@@ -7,6 +7,12 @@ com.collabnet.ccf.core.hospital
 com.collabnet.ccf.core.test.plugins
 com.collabnet.ccf.core.transformer
 com.collabnet.ccf.core.utils
+com.collabnet.ccf.pi.cee.pt.v50
 com.collabnet.ccf.pi.sfee.v44
 com.collabnet.ccf.pi.sfee.v44.meta
 com.collabnet.ccf.samples
+com.collabnet.tracker.common
+com.collabnet.tracker.common.httpClient
+com.collabnet.tracker.core
+com.collabnet.tracker.core.model
+com.collabnet.tracker.core.util
