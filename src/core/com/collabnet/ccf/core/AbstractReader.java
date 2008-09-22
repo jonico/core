@@ -209,6 +209,7 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 				
 				List<GenericArtifact> sortedGAs = combineAndSort(artifactData,artifactAttachments,artifactDependencies);
 				artifactsToBeShippedList.addAll(sortedGAs);
+				if(artifactsToBeShippedList.isEmpty()) return new Object[]{};
 				GenericArtifact genericArtifact = artifactsToBeShippedList.remove(0);
 				try {
 					Document returnDoc = GenericArtifactHelper.createGenericArtifactXMLDocument(genericArtifact);
