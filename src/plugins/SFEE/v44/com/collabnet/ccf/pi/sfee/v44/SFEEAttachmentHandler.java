@@ -19,7 +19,6 @@ import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.utils.DateUtil;
-import com.vasoftware.sf.soap44.webservices.ClientSoapStubFactory;
 import com.vasoftware.sf.soap44.webservices.filestorage.IFileStorageAppSoap;
 import com.vasoftware.sf.soap44.webservices.filestorage.ISimpleFileStorageAppSoap;
 import com.vasoftware.sf.soap44.webservices.sfmain.AttachmentSoapList;
@@ -54,12 +53,9 @@ public class SFEEAttachmentHandler {
 	 *            Soap server URL.
 	 */
 	public SFEEAttachmentHandler(String serverUrl) {
-		mTrackerApp = (ITrackerAppSoap) ClientSoapStubFactory.getSoapStub(
-				ITrackerAppSoap.class, serverUrl);
-		fileStorageApp = (ISimpleFileStorageAppSoap) ClientSoapStubFactory.getSoapStub(
-				ISimpleFileStorageAppSoap.class, serverUrl);
-		fileStorageSoapApp = (IFileStorageAppSoap) ClientSoapStubFactory.getSoapStub(
-				IFileStorageAppSoap.class, serverUrl);
+		mTrackerApp = new TrackerAppSoapTimeoutWrapper(serverUrl);
+		fileStorageApp = new SimpleFileStorageSOAPAppTimeoutWrapper(serverUrl);
+		fileStorageSoapApp = new FileStorageSOAPTimeoutWrapper(serverUrl);
 	}
 
 	/**

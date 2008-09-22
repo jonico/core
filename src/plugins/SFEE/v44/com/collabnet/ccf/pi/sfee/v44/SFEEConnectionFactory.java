@@ -8,7 +8,6 @@ import org.apache.commons.logging.LogFactory;
 
 import com.collabnet.ccf.core.eis.connection.ConnectionException;
 import com.collabnet.ccf.core.eis.connection.ConnectionFactory;
-import com.vasoftware.sf.soap44.webservices.ClientSoapStubFactory;
 import com.vasoftware.sf.soap44.webservices.sfmain.ISourceForgeSoap;
 
 /**
@@ -78,7 +77,8 @@ public class SFEEConnectionFactory implements ConnectionFactory<Connection> {
 			}
 		}
 		Connection connection = null;
-		ISourceForgeSoap sfSoap = (ISourceForgeSoap) ClientSoapStubFactory.getSoapStub(ISourceForgeSoap.class, connectionInfo);
+		//ISourceForgeSoap sfSoap = (ISourceForgeSoap) ClientSoapStubFactory.getSoapStub(ISourceForgeSoap.class, connectionInfo);
+		ISourceForgeSoap sfSoap = new SourceForgeSOAPTimeoutWrapper(connectionInfo);
 		String sessionId = null;
 		try {
 			sessionId = login(sfSoap, username, password);
@@ -103,7 +103,7 @@ public class SFEEConnectionFactory implements ConnectionFactory<Connection> {
 	 * @throws RemoteException
 	 *             when an error is encountered during login.
 	 */
-	public String login(ISourceForgeSoap sfSoap, String username, String password) throws RemoteException {
+	private String login(ISourceForgeSoap sfSoap, String username, String password) throws RemoteException {
 	    String sessionId = sfSoap.login(username, password);
 	    return sessionId;
 	}

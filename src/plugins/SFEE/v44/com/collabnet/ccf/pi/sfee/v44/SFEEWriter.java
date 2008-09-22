@@ -260,7 +260,6 @@ public class SFEEWriter extends LifecycleComponent implements
 					title,
 					comments);
 		} catch (RemoteException e) {
-			log.error("While trying to create an artifact within SFEE, an error occured: "+e.getMessage());
 			String cause = "While trying to create an artifact within SFEE, an error occured";
 			log.error(cause, e);
 			ga.setErrorCode(GenericArtifact.ERROR_EXTERNAL_SYSTEM_WRITE);
@@ -298,7 +297,6 @@ public class SFEEWriter extends LifecycleComponent implements
 				trackerHandler.getTrackerItem(connection.getSessionId(), id);
 		} catch (RemoteException e) {
 			String cause = "While trying to get the current target artifact (before updating), an error occured";
-			log.error(cause + ": " + e.getMessage());
 			log.error(cause, e);
 			ga.setErrorCode(GenericArtifact.ERROR_EXTERNAL_SYSTEM_CONNECTION);
 			throw new CCFRuntimeException(cause, e);
@@ -388,7 +386,6 @@ public class SFEEWriter extends LifecycleComponent implements
 					comments,
 					forceOverride);
 		} catch (RemoteException e) {
-			log.error("While trying to update an artifact, an error occured: "+e.getMessage());
 			String cause = "While trying to update an artifact within SFEE, an error occured";
 			log.error(cause, e);
 			ga.setErrorCode(GenericArtifact.ERROR_EXTERNAL_SYSTEM_WRITE);

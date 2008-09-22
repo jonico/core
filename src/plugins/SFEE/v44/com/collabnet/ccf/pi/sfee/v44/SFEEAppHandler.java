@@ -52,7 +52,7 @@ public class SFEEAppHandler {
 	 * 
 	 * The comments added by the connector user are ignored by this method.
 	 * 
-	 * @param artifact - The AritfactSoapDO object whose comments need to be added
+	 * @param artifact - The ArtifactSoapDO object whose comments need to be added
 	 * @param lastModifiedDate - The last read time of this tracker
 	 * @param connectorUser - The username that is configured to log into the SFEE
 	 * 						to retrieve the artifact data.
@@ -164,6 +164,7 @@ public class SFEEAppHandler {
 		}
 		if(fieldNames != null){
 			String[] newFieldNames = new String[fieldNames.length+1];
+			// FIXME This does not perform well, why not use a list instead?
 			System.arraycopy(fieldNames, 0, newFieldNames, 0, fieldNames.length);
 			newFieldNames[fieldNames.length] = fieldName;
 			fieldNames = newFieldNames;
@@ -173,6 +174,7 @@ public class SFEEAppHandler {
 		}
 		if(fieldValues != null){
 			Object[] newfieldValues = new Object[fieldValues.length+1];
+			// FIXME This does not perform well, why not use a list instead?
 			System.arraycopy(fieldValues, 0, newfieldValues, 0, fieldValues.length);
 			newfieldValues[fieldValues.length] = value;
 			fieldValues = newfieldValues;
@@ -182,6 +184,7 @@ public class SFEEAppHandler {
 		}
 		if(fieldTypes != null){
 			String[] newfieldTypes = new String[fieldTypes.length+1];
+			// FIXME This does not perform well, why not use a list instead?
 			System.arraycopy(fieldTypes, 0, newfieldTypes, 0, fieldTypes.length);
 			newfieldTypes[fieldTypes.length] = TrackerFieldSoapDO.FIELD_VALUE_TYPE_STRING;
 			fieldTypes = newfieldTypes;
