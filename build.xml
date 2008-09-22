@@ -73,8 +73,10 @@
 		<pathelement location="src/core/lib/openadaptor-3.4/3rdparty/xml-apis_from_xerces_2.9.0.jar" />
 		<pathelement location="src/core/lib/openadaptor-3.4/3rdparty/XmlSchema_1.1.jar" />
 		<pathelement location="src/core/lib/openadaptor-3.4/3rdparty/xstream-1.2.1.jar" />
-		<pathelement location="src/plugins/HPQC/lib/jacob/jacob.jar" />
 		<pathelement location="src/plugins/SFEE/v44/lib/sf_soap44_sdk.jar" />
+		<pathelement location="src/plugins/CEE/ProjectTracker/v50/lib/cee-5.0.jar" />
+		<pathelement location="src/plugins/CEE/ProjectTracker/v50/lib/wss4j-1.5.1.jar" />
+		<pathelement location="src/plugins/CEE/ProjectTracker/v50/lib/xmlsec-1.4.0.jar" />
 	</path>
 	<target name="init">
 		<delete dir="build/jars" />
@@ -88,7 +90,7 @@
 		<mkdir dir="build/classes" />
 	</target>
 	<target depends="clean" name="cleanall" />
-	<target depends="init, create.manifest, build.core, build.sfee.plugin, build.sample, build.junit.tests, junit, package" name="build" />
+	<target depends="init, create.manifest, build.core, build.sfee.plugin, build.cee.plugin, build.sample, build.junit.tests, junit, package" name="build" />
 	<target name="create.manifest">
 		<property file="default.properties"/>
 		<manifest file="build/MANIFEST.MF">
@@ -133,6 +135,26 @@
 			</fileset>
 		</jar>
 	</target>
+	<target name="build.cee.plugin">
+	        <antcall target="clean">
+	        </antcall>
+	        <javac debug="true" debuglevel="${debuglevel}" destdir="build/classes" source="${source}" target="${target}">
+	            <src path="src/plugins/CEE/ProjectTracker/v50" />
+	            <classpath refid="CCFJ.classpath" />
+	            <classpath>
+	                <fileset dir="build/jars">
+	                    <include name="CCFCoreV10.jar" />
+	                	<include name="CCFSFEEPluginV44.jar" />
+	                </fileset>
+	            </classpath>
+
+	        </javac>
+	        <jar destfile="build/jars/CCFCEEPluginV50.jar"  manifest="build/MANIFEST.MF">
+	            <fileset dir="build/classes">
+	                <include name="**/*.class" />
+	            </fileset>
+	        </jar>
+	    </target>
 	<target name="build.sample">
 			<mkdir dir="samples/IntegrationScenarios/customReader/bin" />
 			<antcall target="clean">
@@ -194,7 +216,7 @@
 		<mkdir dir="build/package/bin"/>
 		<copy todir="build/package/bin">
 			<fileset dir="scripts">
-				<include name="setEnv.bat" />
+				<include name="setEnv.*" />
 			</fileset>
 		</copy>
 		<mkdir dir="build/package/CCFDBService/db"/>
@@ -206,7 +228,7 @@
 		</copy>
 		<copy todir="build/package/CCFDBService">
 			<fileset dir="scripts">
-				<include name="startDB.bat" />
+				<include name="startDB.*" />
 			</fileset>
 		</copy>
 		<mkdir dir="build/package/lib"/>
@@ -216,7 +238,7 @@
 				<exclude name="*JUnit*.jar"/>
 			</fileset>
 			<fileset dir="config">
-				<include name="log4j.xml" />
+				<include name="log4j.*" />
 			</fileset>
 		</copy>
 		<mkdir dir="build/package/lib/extlib"/>
@@ -229,6 +251,9 @@
 			</fileset>
 			<fileset dir="src/plugins/SFEE/v44/lib">
 				<include name="*.jar" />
+			</fileset>
+			<fileset dir="src/plugins/CEE/ProjectTracker/v50/lib">
+			    <include name="*.jar" />
 			</fileset>
 		</copy>
 		<mkdir dir="build/package/samples"/>
@@ -250,7 +275,7 @@
           <property file="default.properties"/>
          
       <mkdir dir="deploy"/>
-      <zip destfile="deploy/PI-${tool.name}-${tool.version}.${tool.buildnumber}.zip" 
+      <zip destfile="deploy/${tool.name}-${tool.version}.${tool.buildnumber}.zip" 
 	       basedir="build/package"/>
           <delete dir="build/package"/>
     </target>
