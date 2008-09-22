@@ -39,8 +39,10 @@ public class SFEETrackerHandler {
 	 * @param serverUrl - The source SFEE SOAP server URL
 	 */
 	public SFEETrackerHandler(String serverUrl) {
-		mTrackerApp = (ITrackerAppSoap) ClientSoapStubFactory.getSoapStub(
-				ITrackerAppSoap.class, serverUrl);
+		// enable this if you do not like to have the retry code enabled
+		//mTrackerApp = (ITrackerAppSoap) ClientSoapStubFactory.getSoapStub(
+		//		ITrackerAppSoap.class, serverUrl);
+		mTrackerApp = new TrackerAppSoapTimeoutWrapper(serverUrl);
 	}
 
 	/**
@@ -255,7 +257,6 @@ public class SFEETrackerHandler {
 				estimatedHours, // estimatedHours
 				assignedTo, // assigned user name
 				reportedReleaseId, flexFields, null, null, null);
-
 		artifactData.setActualHours(actualHours);
 		artifactData.setStatusClass(statusClass);
 		artifactData.setCloseDate(closeDate);
@@ -267,10 +268,19 @@ public class SFEETrackerHandler {
 		artifactData.setFlexFields(newFlexFields);
 		mTrackerApp.setArtifactData(sessionId, artifactData, "Synchronized by Connector User", null,
 				null, null);
-		for(String comment:comments){
-			artifactData = mTrackerApp.getArtifactData(sessionId, artifactData.getId());
-			mTrackerApp.setArtifactData(sessionId, artifactData, comment, null,
+		for(String comment:comments) {
+			boolean commentNotUpdated = true;
+			while (commentNotUpdated) {
+				try {
+					commentNotUpdated = false;
+					artifactData = mTrackerApp.getArtifactData(sessionId, artifactData.getId());
+					mTrackerApp.setArtifactData(sessionId, artifactData, comment, null,
 					null, null);
+				} catch (com.vasoftware.sf.soap44.fault.VersionMismatchFault e) {
+					log.warn("Stale comment update, trying again ...:", e);
+					commentNotUpdated = true;
+				}
+			}
 		}
 		log.info("Artifact created: " + artifactData.getId());
 		return artifactData;
@@ -294,11 +304,11 @@ public class SFEETrackerHandler {
 			boolean forceOverride)
 			throws RemoteException {
 		
-		boolean tryItAgain = true;
+		boolean mainArtifactNotUpdated = true;
 		ArtifactSoapDO artifactData = null;
-		while (tryItAgain) {
+		while (mainArtifactNotUpdated) {
 			try {
-				tryItAgain = false;
+				mainArtifactNotUpdated = false;
 				artifactData = mTrackerApp.getArtifactData(sessionId, Id);
 				SoapFieldValues flexFields = new SoapFieldValues();
 				flexFields.setNames(flexFieldNames.toArray(new String[0]));
@@ -323,15 +333,10 @@ public class SFEETrackerHandler {
 				artifactData.setResolvedReleaseId(resolvedReleaseId);
 				mTrackerApp.setArtifactData(sessionId, artifactData, "Synchronized by Connector User", null,
 						null, null);
-				for(String comment:comments){
-					artifactData = mTrackerApp.getArtifactData(sessionId, Id);
-					mTrackerApp.setArtifactData(sessionId, artifactData, comment, null,
-							null, null);
-				}
 			} catch (com.vasoftware.sf.soap44.fault.VersionMismatchFault e) {
 				if (forceOverride) {
 					log.warn("Stale update, trying again ...:", e);
-					tryItAgain = true;
+					mainArtifactNotUpdated = true;
 				}
 				else {
 					log
@@ -341,7 +346,22 @@ public class SFEETrackerHandler {
 				}
 			}
 		}
-		artifactData = mTrackerApp.getArtifactData(sessionId, Id);
+		
+		for(String comment:comments) {
+			boolean commentNotUpdated = true;
+			while (commentNotUpdated) {
+				try {
+					commentNotUpdated = false;
+					artifactData = mTrackerApp.getArtifactData(sessionId, Id);
+					mTrackerApp.setArtifactData(sessionId, artifactData, comment, null,
+					null, null);
+				} catch (com.vasoftware.sf.soap44.fault.VersionMismatchFault e) {
+					log.warn("Stale comment update, trying again ...:", e);
+					commentNotUpdated = true;
+				}
+			}
+		}
+		
 		log.info("Artifact updated id: " + artifactData.getId()+ " in tracker " + artifactData.getFolderId());
 		return artifactData;
 	}
