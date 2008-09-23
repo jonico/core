@@ -27,7 +27,7 @@ public interface ConnectionFactory<T> {
 	public T createConnection(String systemId,
 			String systemKind, String repositoryId,
 			String repositoryKind, String connectionInfo,
-			String credentialInfo) throws ConnectionException;
+			String credentialInfo,ConnectionManager<T> connectionManager) throws ConnectionException;
 	
 	/**
 	 * Closes the connection object.

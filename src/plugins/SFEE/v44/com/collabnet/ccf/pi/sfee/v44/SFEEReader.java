@@ -211,8 +211,8 @@ public class SFEEReader extends AbstractReader {
 			exceptionsPresent = true;
 		}
 		if(!exceptionsPresent){
-			trackerHandler = new SFEETrackerHandler(getServerUrl());
-			attachmentHandler = new SFEEAttachmentHandler(getServerUrl());
+			trackerHandler = new SFEETrackerHandler(getServerUrl(),connectionManager);
+			attachmentHandler = new SFEEAttachmentHandler(getServerUrl(),connectionManager);
 		}
 	}
 

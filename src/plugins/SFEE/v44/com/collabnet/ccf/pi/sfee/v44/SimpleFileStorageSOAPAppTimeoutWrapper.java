@@ -2,6 +2,7 @@ package com.collabnet.ccf.pi.sfee.v44;
 
 import java.rmi.RemoteException;
 
+import com.collabnet.ccf.core.eis.connection.ConnectionManager;
 import com.vasoftware.sf.soap44.webservices.ClientSoapStubFactory;
 import com.vasoftware.sf.soap44.webservices.filestorage.ISimpleFileStorageAppSoap;
 
@@ -9,10 +10,12 @@ public class SimpleFileStorageSOAPAppTimeoutWrapper extends TimeoutWrapper
 		implements ISimpleFileStorageAppSoap {
 
 	private ISimpleFileStorageAppSoap fileStorageApp;
+	private ConnectionManager<Connection> connectionManager;
 
-	public SimpleFileStorageSOAPAppTimeoutWrapper(String serverUrl) {
+	public SimpleFileStorageSOAPAppTimeoutWrapper(String serverUrl, ConnectionManager<Connection> connectionManager) {
 		fileStorageApp = (ISimpleFileStorageAppSoap) ClientSoapStubFactory
 				.getSoapStub(ISimpleFileStorageAppSoap.class, serverUrl);
+		this.connectionManager=connectionManager;
 	}
 
 	public void endFileUpload(String arg0, String arg1) throws RemoteException {

@@ -4,6 +4,7 @@ import java.rmi.RemoteException;
 
 import javax.activation.DataHandler;
 
+import com.collabnet.ccf.core.eis.connection.ConnectionManager;
 import com.vasoftware.sf.soap44.webservices.ClientSoapStubFactory;
 import com.vasoftware.sf.soap44.webservices.filestorage.IFileStorageAppSoap;
 
@@ -11,10 +12,12 @@ public class FileStorageSOAPTimeoutWrapper extends TimeoutWrapper implements
 		IFileStorageAppSoap {
 
 	private IFileStorageAppSoap fileStorageSoapApp;
+	private ConnectionManager<Connection> connectionManager;
 
-	public FileStorageSOAPTimeoutWrapper(String serverUrl) {
+	public FileStorageSOAPTimeoutWrapper(String serverUrl, ConnectionManager<Connection> connectionManager) {
 		fileStorageSoapApp = (IFileStorageAppSoap) ClientSoapStubFactory
 				.getSoapStub(IFileStorageAppSoap.class, serverUrl);
+		this.connectionManager=connectionManager;
 	}
 
 	public DataHandler downloadFile(String arg0, String arg1)

@@ -10,6 +10,7 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.collabnet.ccf.core.eis.connection.ConnectionManager;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.vasoftware.sf.soap44.types.SoapFieldValues;
 import com.vasoftware.sf.soap44.types.SoapFilter;
@@ -31,17 +32,18 @@ public class SFEETrackerHandler {
 	private ITrackerAppSoap mTrackerApp;
 
 	private static final Log log = LogFactory.getLog(SFEETrackerHandler.class);
-
+	
 	/**
 	 * Class constructor.
 	 * 
 	 * @param serverUrl - The source SFEE SOAP server URL
+	 * @param connectionManager 
 	 */
-	public SFEETrackerHandler(String serverUrl) {
+	public SFEETrackerHandler(String serverUrl, ConnectionManager<Connection> connectionManager) {
 		// enable this if you do not like to have the retry code enabled
 		//mTrackerApp = (ITrackerAppSoap) ClientSoapStubFactory.getSoapStub(
 		//		ITrackerAppSoap.class, serverUrl);
-		mTrackerApp = new TrackerAppSoapTimeoutWrapper(serverUrl);
+		mTrackerApp = new TrackerAppSoapTimeoutWrapper(serverUrl,connectionManager);
 	}
 
 	/**

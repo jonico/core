@@ -72,7 +72,7 @@ public final class ConnectionPool<T> {
 	public T getConnection(String systemId,
 			String systemKind, String repositoryId,
 			String repositoryKind, String connectionInfo,
-			String credentialInfo) throws MaxConnectionsReachedException, ConnectionException {
+			String credentialInfo,ConnectionManager<T> connectionManager) throws MaxConnectionsReachedException, ConnectionException {
 		if(factory == null){
 			throw new IllegalArgumentException("Connection Factory is not set");
 		}
@@ -82,7 +82,7 @@ public final class ConnectionPool<T> {
 		if(connection == null){
 			log.debug("No free connection... Creating a connection");
 			connection = createConnection(systemId, systemKind, repositoryId,
-					repositoryKind, connectionInfo, credentialInfo);
+					repositoryKind, connectionInfo, credentialInfo,connectionManager);
 		}
 		return connection;
 	}
@@ -103,6 +103,7 @@ public final class ConnectionPool<T> {
 	 * @param credentialInfo - Credential information for the system and repository.
 	 * 							Typically contains the username and passwword for the
 	 * 							system and repository combination.
+	 * @param connectionManager 
 	 * @return - Returns the free connection object or the connection object created by 
 	 * 			the ConnectionFactory
 	 * @throws MaxConnectionsReachedException - If the configured maximum connections per
@@ -113,7 +114,7 @@ public final class ConnectionPool<T> {
 	private T createConnection(String systemId,
 			String systemKind, String repositoryId,
 			String repositoryKind, String connectionInfo,
-			String credentialInfo) throws MaxConnectionsReachedException, ConnectionException {
+			String credentialInfo, ConnectionManager<T> connectionManager) throws MaxConnectionsReachedException, ConnectionException {
 		String key = generateKey(systemId,
 				systemKind, repositoryId,
 				repositoryKind, connectionInfo,
@@ -123,7 +124,7 @@ public final class ConnectionPool<T> {
 					+"Reached max connections "+maxConnectionsPerPool);
 		}
 		T createdConnection = factory.createConnection(systemId, systemKind, repositoryId,
-				repositoryKind, connectionInfo, credentialInfo);
+				repositoryKind, connectionInfo, credentialInfo,connectionManager);
 		ConnectionInfo info = new ConnectionInfo();
 		info.setKey(key);
 		info.setConnection(createdConnection);
@@ -305,7 +306,7 @@ public final class ConnectionPool<T> {
 				try {
 					Thread.sleep(scavengerInterval);
 				} catch (InterruptedException e) {
-					e.printStackTrace();
+					log.error("Interrupted from sleep",e);
 					break;
 				}
 			}

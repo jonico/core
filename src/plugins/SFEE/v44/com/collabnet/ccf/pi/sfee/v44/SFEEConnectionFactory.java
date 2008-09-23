@@ -8,6 +8,7 @@ import org.apache.commons.logging.LogFactory;
 
 import com.collabnet.ccf.core.eis.connection.ConnectionException;
 import com.collabnet.ccf.core.eis.connection.ConnectionFactory;
+import com.collabnet.ccf.core.eis.connection.ConnectionManager;
 import com.vasoftware.sf.soap44.webservices.sfmain.ISourceForgeSoap;
 
 /**
@@ -53,7 +54,7 @@ public class SFEEConnectionFactory implements ConnectionFactory<Connection> {
 	 */
 	public Connection createConnection(String systemId, String systemKind,
 			String repositoryId, String repositoryKind, String connectionInfo,
-			String credentialInfo) throws ConnectionException {
+			String credentialInfo,ConnectionManager<Connection> connectionManager) throws ConnectionException {
 		if(StringUtils.isEmpty(repositoryId)){
 			throw new IllegalArgumentException("Repository Id cannot be null");
 		}
@@ -78,7 +79,7 @@ public class SFEEConnectionFactory implements ConnectionFactory<Connection> {
 		}
 		Connection connection = null;
 		//ISourceForgeSoap sfSoap = (ISourceForgeSoap) ClientSoapStubFactory.getSoapStub(ISourceForgeSoap.class, connectionInfo);
-		ISourceForgeSoap sfSoap = new SourceForgeSOAPTimeoutWrapper(connectionInfo);
+		ISourceForgeSoap sfSoap = new SourceForgeSOAPTimeoutWrapper(connectionInfo,connectionManager);
 		String sessionId = null;
 		try {
 			sessionId = login(sfSoap, username, password);

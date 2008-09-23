@@ -8,6 +8,7 @@ import org.apache.commons.logging.LogFactory;
 
 import com.collabnet.ccf.core.eis.connection.ConnectionException;
 import com.collabnet.ccf.core.eis.connection.ConnectionFactory;
+import com.collabnet.ccf.core.eis.connection.ConnectionManager;
 import com.collabnet.tracker.core.TrackerClientManager;
 import com.collabnet.tracker.core.TrackerWebServicesClient;
 
@@ -20,7 +21,7 @@ public class CollabNetConnectionFactory implements ConnectionFactory<TrackerWebS
 
 	public TrackerWebServicesClient createConnection(String systemId, String systemKind,
 			String repositoryId, String repositoryKind, String connectionInfo,
-			String credentialInfo) throws ConnectionException {
+			String credentialInfo,ConnectionManager<TrackerWebServicesClient> connectionManager) throws ConnectionException {
 		if(StringUtils.isEmpty(repositoryId)){
 			throw new IllegalArgumentException("Repository Id cannot be null");
 		}

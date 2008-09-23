@@ -14,6 +14,7 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.collabnet.ccf.core.eis.connection.ConnectionManager;
 import com.collabnet.ccf.core.ga.AttachmentMetaData;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
@@ -51,11 +52,12 @@ public class SFEEAttachmentHandler {
 	 * 
 	 * @param serverUrl
 	 *            Soap server URL.
+	 * @param connectionManager 
 	 */
-	public SFEEAttachmentHandler(String serverUrl) {
-		mTrackerApp = new TrackerAppSoapTimeoutWrapper(serverUrl);
-		fileStorageApp = new SimpleFileStorageSOAPAppTimeoutWrapper(serverUrl);
-		fileStorageSoapApp = new FileStorageSOAPTimeoutWrapper(serverUrl);
+	public SFEEAttachmentHandler(String serverUrl, ConnectionManager<Connection> connectionManager) {
+		mTrackerApp = new TrackerAppSoapTimeoutWrapper(serverUrl,connectionManager);
+		fileStorageApp = new SimpleFileStorageSOAPAppTimeoutWrapper(serverUrl,connectionManager);
+		fileStorageSoapApp = new FileStorageSOAPTimeoutWrapper(serverUrl,connectionManager);
 	}
 
 	/**

@@ -2,6 +2,7 @@ package com.collabnet.ccf.pi.sfee.v44;
 
 import java.rmi.RemoteException;
 
+import com.collabnet.ccf.core.eis.connection.ConnectionManager;
 import com.vasoftware.sf.soap44.types.SoapFilter;
 import com.vasoftware.sf.soap44.webservices.ClientSoapStubFactory;
 import com.vasoftware.sf.soap44.webservices.sfmain.AssociationSoapList;
@@ -22,10 +23,12 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 		ISourceForgeSoap {
 
 	private ISourceForgeSoap sfSoap;
+	private ConnectionManager<Connection> connectionManager;
 
-	public SourceForgeSOAPTimeoutWrapper(String connectionInfo) {
+	public SourceForgeSOAPTimeoutWrapper(String connectionInfo, ConnectionManager<Connection> connectionManager) {
 		sfSoap = (ISourceForgeSoap) ClientSoapStubFactory.getSoapStub(
 				ISourceForgeSoap.class, connectionInfo);
+		this.connectionManager=connectionManager;
 	}
 
 	public void addGroupMember(String arg0, String arg1, String arg2)

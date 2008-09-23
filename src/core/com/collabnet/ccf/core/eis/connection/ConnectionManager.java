@@ -84,7 +84,7 @@ public final class ConnectionManager<T> {
 			String repositoryKind, String connectionInfo,
 			String credentialInfo) throws MaxConnectionsReachedException, ConnectionException{
 		return pool.getConnection(systemId, systemKind, repositoryId,
-				repositoryKind, connectionInfo, credentialInfo);
+				repositoryKind, connectionInfo, credentialInfo,this);
 	}
 	/**
 	 * Releases the connection to the pool. When the Readers/Writers are done

@@ -448,8 +448,8 @@ public class SFEEWriter extends LifecycleComponent implements
 					"updateComment-property not set", this));
 		}
 
-		trackerHandler = new SFEETrackerHandler(getServerUrl());
-		attachmentHandler = new SFEEAttachmentHandler(getServerUrl());
+		trackerHandler = new SFEETrackerHandler(getServerUrl(),connectionManager);
+		attachmentHandler = new SFEEAttachmentHandler(getServerUrl(), connectionManager);
 	}
 
 	/**

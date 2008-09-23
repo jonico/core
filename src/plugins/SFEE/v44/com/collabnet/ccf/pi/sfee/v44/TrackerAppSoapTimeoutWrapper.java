@@ -2,6 +2,7 @@ package com.collabnet.ccf.pi.sfee.v44;
 
 import java.rmi.RemoteException;
 
+import com.collabnet.ccf.core.eis.connection.ConnectionManager;
 import com.vasoftware.sf.soap44.types.SoapFieldValues;
 import com.vasoftware.sf.soap44.types.SoapFilter;
 import com.vasoftware.sf.soap44.types.SoapSortKey;
@@ -20,16 +21,19 @@ public class TrackerAppSoapTimeoutWrapper extends TimeoutWrapper implements
 		ITrackerAppSoap {
 	/** Tracker Soap API handle */
 	private ITrackerAppSoap mTrackerApp;
+	private ConnectionManager<Connection> connectionManager;
 
 	/**
 	 * Class constructor.
 	 * 
 	 * @param serverUrl -
 	 *            The source SFEE SOAP server URL
+	 * @param connectionManager 
 	 */
-	public TrackerAppSoapTimeoutWrapper(String serverUrl) {
+	public TrackerAppSoapTimeoutWrapper(String serverUrl, ConnectionManager<Connection> connectionManager) {
 		mTrackerApp = (ITrackerAppSoap) ClientSoapStubFactory.getSoapStub(
 				ITrackerAppSoap.class, serverUrl);
+		this.connectionManager=connectionManager;
 	}
 
 	public void addDateField(String arg0, String arg1, String arg2,
