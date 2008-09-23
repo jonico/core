@@ -219,21 +219,21 @@ public class SFEEWriter extends LifecycleComponent implements
 			}
 		}
 		
-		String folderId = GenericArtifactHelper.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.folderId, ga);
-		String description = GenericArtifactHelper.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.description, ga);
-		String category = GenericArtifactHelper.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.category, ga);
-		String group = GenericArtifactHelper.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.group, ga);
-		String status = GenericArtifactHelper.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.status, ga);
-		String statusClass = GenericArtifactHelper.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.statusClass, ga);
-		String customer = GenericArtifactHelper.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.customer, ga);
-		int priority = GenericArtifactHelper.getIntMandatoryGAField(ArtifactMetaData.SFEEFields.priority, ga);
-		int estimatedHours = GenericArtifactHelper.getIntMandatoryGAField(ArtifactMetaData.SFEEFields.estimatedHours, ga);
-		int actualHours = GenericArtifactHelper.getIntMandatoryGAField(ArtifactMetaData.SFEEFields.actualHours, ga);
-		Date closeDate = GenericArtifactHelper.getDateMandatoryGAField(ArtifactMetaData.SFEEFields.closeDate, ga);
-		String assignedTo = GenericArtifactHelper.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.assignedTo, ga);
-		String reportedReleaseId = GenericArtifactHelper.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.reportedReleaseId, ga);
-		String resolvedReleaseId = GenericArtifactHelper.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.resolvedReleaseId, ga);
-		String title = GenericArtifactHelper.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.title, ga);
+		String folderId = GenericArtifactHelper.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.folderId.getFieldName(), ga);
+		String description = GenericArtifactHelper.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.description.getFieldName(), ga);
+		String category = GenericArtifactHelper.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.category.getFieldName(), ga);
+		String group = GenericArtifactHelper.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.group.getFieldName(), ga);
+		String status = GenericArtifactHelper.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.status.getFieldName(), ga);
+		String statusClass = GenericArtifactHelper.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.statusClass.getFieldName(), ga);
+		String customer = GenericArtifactHelper.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.customer.getFieldName(), ga);
+		int priority = GenericArtifactHelper.getIntMandatoryGAField(ArtifactMetaData.SFEEFields.priority.getFieldName(), ga);
+		int estimatedHours = GenericArtifactHelper.getIntMandatoryGAField(ArtifactMetaData.SFEEFields.estimatedHours.getFieldName(), ga);
+		int actualHours = GenericArtifactHelper.getIntMandatoryGAField(ArtifactMetaData.SFEEFields.actualHours.getFieldName(), ga);
+		Date closeDate = GenericArtifactHelper.getDateMandatoryGAField(ArtifactMetaData.SFEEFields.closeDate.getFieldName(), ga);
+		String assignedTo = GenericArtifactHelper.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.assignedTo.getFieldName(), ga);
+		String reportedReleaseId = GenericArtifactHelper.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.reportedReleaseId.getFieldName(), ga);
+		String resolvedReleaseId = GenericArtifactHelper.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.resolvedReleaseId.getFieldName(), ga);
+		String title = GenericArtifactHelper.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.title.getFieldName(), ga);
 		String[] comments = this.getComments(ga);
 		ArtifactSoapDO result = null;
 		try {
@@ -343,21 +343,21 @@ public class SFEEWriter extends LifecycleComponent implements
 			}
 		}
 		
-		String folderId = GenericArtifactHelper.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.folderId, ga);
-		String description = GenericArtifactHelper.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.description, ga);
-		String category = GenericArtifactHelper.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.category, ga);
-		String group = GenericArtifactHelper.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.group, ga);
-		String status = GenericArtifactHelper.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.status, ga);
-		String statusClass = GenericArtifactHelper.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.statusClass, ga);
-		String customer = GenericArtifactHelper.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.customer, ga);
-		int priority = GenericArtifactHelper.getIntMandatoryGAField(ArtifactMetaData.SFEEFields.priority, ga);
-		int estimatedHours = GenericArtifactHelper.getIntMandatoryGAField(ArtifactMetaData.SFEEFields.estimatedHours, ga);
-		int actualHours = GenericArtifactHelper.getIntMandatoryGAField(ArtifactMetaData.SFEEFields.actualHours, ga);
-		Date closeDate = GenericArtifactHelper.getDateMandatoryGAField(ArtifactMetaData.SFEEFields.closeDate, ga);
-		String assignedTo = GenericArtifactHelper.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.assignedTo, ga);
-		String reportedReleaseId = GenericArtifactHelper.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.reportedReleaseId, ga);
-		String resolvedReleaseId = GenericArtifactHelper.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.resolvedReleaseId, ga);
-		String title = GenericArtifactHelper.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.title, ga);
+		String folderId = GenericArtifactHelper.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.folderId.getFieldName(), ga);
+		String description = GenericArtifactHelper.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.description.getFieldName(), ga);
+		String category = GenericArtifactHelper.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.category.getFieldName(), ga);
+		String group = GenericArtifactHelper.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.group.getFieldName(), ga);
+		String status = GenericArtifactHelper.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.status.getFieldName(), ga);
+		String statusClass = GenericArtifactHelper.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.statusClass.getFieldName(), ga);
+		String customer = GenericArtifactHelper.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.customer.getFieldName(), ga);
+		int priority = GenericArtifactHelper.getIntMandatoryGAField(ArtifactMetaData.SFEEFields.priority.getFieldName(), ga);
+		int estimatedHours = GenericArtifactHelper.getIntMandatoryGAField(ArtifactMetaData.SFEEFields.estimatedHours.getFieldName(), ga);
+		int actualHours = GenericArtifactHelper.getIntMandatoryGAField(ArtifactMetaData.SFEEFields.actualHours.getFieldName(), ga);
+		Date closeDate = GenericArtifactHelper.getDateMandatoryGAField(ArtifactMetaData.SFEEFields.closeDate.getFieldName(), ga);
+		String assignedTo = GenericArtifactHelper.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.assignedTo.getFieldName(), ga);
+		String reportedReleaseId = GenericArtifactHelper.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.reportedReleaseId.getFieldName(), ga);
+		String resolvedReleaseId = GenericArtifactHelper.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.resolvedReleaseId.getFieldName(), ga);
+		String title = GenericArtifactHelper.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.title.getFieldName(), ga);
 		String[] comments = this.getComments(ga);
 		ArtifactSoapDO result = null;
 		try {

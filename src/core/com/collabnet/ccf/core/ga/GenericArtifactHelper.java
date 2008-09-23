@@ -29,8 +29,6 @@ import com.collabnet.ccf.core.ga.GenericArtifact.ArtifactTypeValue;
 import com.collabnet.ccf.core.ga.GenericArtifact.IncludesFieldMetaDataValue;
 import com.collabnet.ccf.core.ga.GenericArtifactField.FieldValueTypeValue;
 import com.collabnet.ccf.core.utils.DateUtil;
-import com.collabnet.ccf.pi.sfee.v44.meta.ArtifactMetaData;
-import com.collabnet.ccf.pi.sfee.v44.meta.ArtifactMetaData.SFEEFields;
 
 /**
  * 
@@ -1033,14 +1031,6 @@ public class GenericArtifactHelper {
 		}
 	}
 
-	public static String getStringMandatoryGAField(ArtifactMetaData.SFEEFields field, GenericArtifact ga){
-		String fieldValue = GenericArtifactHelper.getStringMandatoryGAField(field.getFieldName(), ga);
-		if(StringUtils.isEmpty(fieldValue)){
-			return null;
-		}
-		return fieldValue;
-	}
-
 	public static String getStringMandatoryGAField(String fieldName, GenericArtifact ga){
 		String fieldValue = null;
 		GenericArtifactField gaField = getMandatoryGAField(fieldName, ga);
@@ -1059,9 +1049,9 @@ public class GenericArtifactHelper {
 		return fieldValue;
 	}
 
-	public static int getIntMandatoryGAField(ArtifactMetaData.SFEEFields field, GenericArtifact ga){
+	public static int getIntMandatoryGAField(String fieldName, GenericArtifact ga){
 		int fieldValue = 0;
-		GenericArtifactField gaField = getMandatoryGAField(field.getFieldName(), ga);
+		GenericArtifactField gaField = getMandatoryGAField(fieldName, ga);
 		if(gaField != null){
 			Object fieldValueObj = gaField.getFieldValue();
 			if(fieldValueObj instanceof String){
@@ -1075,9 +1065,9 @@ public class GenericArtifactHelper {
 		return fieldValue;
 	}
 
-	public static Date getDateMandatoryGAField(ArtifactMetaData.SFEEFields field, GenericArtifact ga){
+	public static Date getDateMandatoryGAField(String fieldName, GenericArtifact ga){
 		Date fieldValue = null;
-		GenericArtifactField gaField = getMandatoryGAField(field.getFieldName(), ga);
+		GenericArtifactField gaField = getMandatoryGAField(fieldName, ga);
 		if(gaField != null){
 			Object fieldValueObj = gaField.getFieldValue();
 			if(fieldValueObj instanceof String){
