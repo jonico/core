@@ -16,14 +16,16 @@ import com.vasoftware.sf.soap44.webservices.tracker.TrackerSoapDO;
 import com.vasoftware.sf.soap44.webservices.tracker.TrackerSoapList;
 import com.vasoftware.sf.soap44.webservices.tracker.WorkflowTransitionSoapList;
 
-public class TrackerAppSoapTimeoutWrapper implements ITrackerAppSoap {
+public class TrackerAppSoapTimeoutWrapper extends TimeoutWrapper implements
+		ITrackerAppSoap {
 	/** Tracker Soap API handle */
 	private ITrackerAppSoap mTrackerApp;
-	
+
 	/**
 	 * Class constructor.
 	 * 
-	 * @param serverUrl - The source SFEE SOAP server URL
+	 * @param serverUrl -
+	 *            The source SFEE SOAP server URL
 	 */
 	public TrackerAppSoapTimeoutWrapper(String serverUrl) {
 		mTrackerApp = (ITrackerAppSoap) ClientSoapStubFactory.getSoapStub(
@@ -32,37 +34,106 @@ public class TrackerAppSoapTimeoutWrapper implements ITrackerAppSoap {
 
 	public void addDateField(String arg0, String arg1, String arg2,
 			boolean arg3, boolean arg4, boolean arg5) throws RemoteException {
-		mTrackerApp.addDateField(arg0, arg1, arg2, arg3, arg4, arg5);
+		boolean retryCall = true;
+		int numberOfTries = 1;
+		while (retryCall) {
+			try {
+				mTrackerApp.addDateField(arg0, arg1, arg2, arg3, arg4, arg5);
+				retryCall = false;
+			} catch (RemoteException e) {
+				if (!handleException(e, numberOfTries))
+					throw e;
+			}
+			++numberOfTries;
+		}
 	}
 
 	public void addMultiSelectField(String arg0, String arg1, String arg2,
 			int arg3, boolean arg4, boolean arg5, boolean arg6, String[] arg7,
 			String[] arg8) throws RemoteException {
-		mTrackerApp.addMultiSelectField(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
-		
+		boolean retryCall = true;
+		int numberOfTries = 1;
+		while (retryCall) {
+			try {
+				mTrackerApp.addMultiSelectField(arg0, arg1, arg2, arg3, arg4,
+						arg5, arg6, arg7, arg8);
+				retryCall = false;
+			} catch (RemoteException e) {
+				if (!handleException(e, numberOfTries))
+					throw e;
+			}
+			++numberOfTries;
+		}
 	}
 
 	public void addSingleSelectField(String arg0, String arg1, String arg2,
 			boolean arg3, boolean arg4, boolean arg5, String[] arg6, String arg7)
 			throws RemoteException {
-		mTrackerApp.addSingleSelectField(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7);
+		boolean retryCall = true;
+		int numberOfTries = 1;
+		while (retryCall) {
+			try {
+				mTrackerApp.addSingleSelectField(arg0, arg1, arg2, arg3, arg4,
+						arg5, arg6, arg7);
+				retryCall = false;
+			} catch (RemoteException e) {
+				if (!handleException(e, numberOfTries))
+					throw e;
+			}
+			++numberOfTries;
+		}
 	}
 
 	public void addTextField(String arg0, String arg1, String arg2, int arg3,
 			int arg4, boolean arg5, boolean arg6, boolean arg7, String arg8)
 			throws RemoteException {
-		mTrackerApp.addTextField(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
+		boolean retryCall = true;
+		int numberOfTries = 1;
+		while (retryCall) {
+			try {
+				mTrackerApp.addTextField(arg0, arg1, arg2, arg3, arg4, arg5,
+						arg6, arg7, arg8);
+				retryCall = false;
+			} catch (RemoteException e) {
+				if (!handleException(e, numberOfTries))
+					throw e;
+			}
+			++numberOfTries;
+		}
 	}
 
 	public void addUserSelectField(String arg0, String arg1, String arg2,
 			int arg3, boolean arg4, boolean arg5, boolean arg6, String[] arg7,
 			String arg8) throws RemoteException {
-		mTrackerApp.addUserSelectField(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
+		boolean retryCall = true;
+		int numberOfTries = 1;
+		while (retryCall) {
+			try {
+				mTrackerApp.addUserSelectField(arg0, arg1, arg2, arg3, arg4,
+						arg5, arg6, arg7, arg8);
+				retryCall = false;
+			} catch (RemoteException e) {
+				if (!handleException(e, numberOfTries))
+					throw e;
+			}
+			++numberOfTries;
+		}
 	}
 
 	public void copyWorkflowTransitions(String arg0, String arg1, String arg2)
 			throws RemoteException {
-		mTrackerApp.copyWorkflowTransitions(arg0, arg1, arg2);
+		boolean retryCall = true;
+		int numberOfTries = 1;
+		while (retryCall) {
+			try {
+				mTrackerApp.copyWorkflowTransitions(arg0, arg1, arg2);
+				retryCall = false;
+			} catch (RemoteException e) {
+				if (!handleException(e, numberOfTries))
+					throw e;
+			}
+			++numberOfTries;
+		}
 	}
 
 	public ArtifactSoapDO createArtifact(String arg0, String arg1, String arg2,
@@ -70,108 +141,300 @@ public class TrackerAppSoapTimeoutWrapper implements ITrackerAppSoap {
 			int arg8, int arg9, String arg10, String arg11,
 			SoapFieldValues arg12, String arg13, String arg14, String arg15)
 			throws RemoteException {
-		return mTrackerApp.createArtifact(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12, arg13, arg14, arg15);
+		int numberOfTries = 1;
+		while (true) {
+			try {
+				return mTrackerApp.createArtifact(arg0, arg1, arg2, arg3, arg4,
+						arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12,
+						arg13, arg14, arg15);
+			} catch (RemoteException e) {
+				if (!handleException(e, numberOfTries))
+					throw e;
+			}
+			++numberOfTries;
+		}
 	}
 
 	public void createArtifactDependency(String arg0, String arg1, String arg2,
 			String arg3) throws RemoteException {
-		mTrackerApp.createArtifactDependency(arg0, arg1, arg2, arg3);		
+		boolean retryCall = true;
+		int numberOfTries = 1;
+		while (retryCall) {
+			try {
+				mTrackerApp.createArtifactDependency(arg0, arg1, arg2, arg3);
+				retryCall = false;
+			} catch (RemoteException e) {
+				if (!handleException(e, numberOfTries))
+					throw e;
+			}
+			++numberOfTries;
+		}
 	}
 
 	public TrackerSoapDO createTracker(String arg0, String arg1, String arg2,
 			String arg3, String arg4) throws RemoteException {
-		return mTrackerApp.createTracker(arg0, arg1, arg2, arg3, arg4);
+		int numberOfTries = 1;
+		while (true) {
+			try {
+				return mTrackerApp.createTracker(arg0, arg1, arg2, arg3, arg4);
+			} catch (RemoteException e) {
+				if (!handleException(e, numberOfTries))
+					throw e;
+			}
+			++numberOfTries;
+		}
 	}
 
 	public void deleteArtifact(String arg0, String arg1) throws RemoteException {
-		mTrackerApp.deleteArtifact(arg0, arg1);
+		boolean retryCall = true;
+		int numberOfTries = 1;
+		while (retryCall) {
+			try {
+				mTrackerApp.deleteArtifact(arg0, arg1);
+				retryCall = false;
+			} catch (RemoteException e) {
+				if (!handleException(e, numberOfTries))
+					throw e;
+			}
+			++numberOfTries;
+		}
 	}
 
 	public void deleteField(String arg0, String arg1, String arg2)
 			throws RemoteException {
-		mTrackerApp.deleteField(arg0, arg1, arg2);
-		
+		boolean retryCall = true;
+		int numberOfTries = 1;
+		while (retryCall) {
+			try {
+				mTrackerApp.deleteField(arg0, arg1, arg2);
+				retryCall = false;
+			} catch (RemoteException e) {
+				if (!handleException(e, numberOfTries))
+					throw e;
+			}
+			++numberOfTries;
+		}
 	}
 
 	public ArtifactSoapList findArtifacts(String arg0, String arg1,
 			String arg2, boolean arg3) throws RemoteException {
-		return mTrackerApp.findArtifacts(arg0, arg1, arg2, arg3);
+		int numberOfTries = 1;
+		while (true) {
+			try {
+				return mTrackerApp.findArtifacts(arg0, arg1, arg2, arg3);
+			} catch (RemoteException e) {
+				if (!handleException(e, numberOfTries))
+					throw e;
+			}
+			++numberOfTries;
+		}
 	}
 
 	public WorkflowTransitionSoapList getAllowedWorkflowTransitionList(
 			String arg0, String arg1) throws RemoteException {
-		return mTrackerApp.getAllowedWorkflowTransitionList(arg0, arg1);
+		int numberOfTries = 1;
+		while (true) {
+			try {
+				return mTrackerApp.getAllowedWorkflowTransitionList(arg0, arg1);
+			} catch (RemoteException e) {
+				if (!handleException(e, numberOfTries))
+					throw e;
+			}
+			++numberOfTries;
+		}
 	}
 
 	public ArtifactSoapDO getArtifactData(String arg0, String arg1)
 			throws RemoteException {
-		return mTrackerApp.getArtifactData(arg0, arg1);
+		int numberOfTries = 1;
+		while (true) {
+			try {
+				return mTrackerApp.getArtifactData(arg0, arg1);
+			} catch (RemoteException e) {
+				if (!handleException(e, numberOfTries))
+					throw e;
+			}
+			++numberOfTries;
+		}
 	}
 
 	public ArtifactDetailSoapList getArtifactDetailList(String arg0,
 			String arg1, String[] arg2, SoapFilter[] arg3, SoapSortKey[] arg4,
 			int arg5, int arg6, boolean arg7, boolean arg8)
 			throws RemoteException {
-		return mTrackerApp.getArtifactDetailList(arg0, arg1, arg2, arg3, arg4, arg5, arg6, arg7, arg8);
+		int numberOfTries = 1;
+		while (true) {
+			try {
+				return mTrackerApp.getArtifactDetailList(arg0, arg1, arg2,
+						arg3, arg4, arg5, arg6, arg7, arg8);
+			} catch (RemoteException e) {
+				if (!handleException(e, numberOfTries))
+					throw e;
+			}
+			++numberOfTries;
+		}
 	}
 
 	public ArtifactSoapList getArtifactList(String arg0, String arg1,
 			SoapFilter[] arg2) throws RemoteException {
-		return mTrackerApp.getArtifactList(arg0, arg1, arg2);
+		int numberOfTries = 1;
+		while (true) {
+			try {
+				return mTrackerApp.getArtifactList(arg0, arg1, arg2);
+			} catch (RemoteException e) {
+				if (!handleException(e, numberOfTries))
+					throw e;
+			}
+			++numberOfTries;
+		}
 	}
 
 	public ArtifactDependencySoapList getChildDependencyList(String arg0,
 			String arg1) throws RemoteException {
-		return mTrackerApp.getChildDependencyList(arg0, arg1);
+		int numberOfTries = 1;
+		while (true) {
+			try {
+				return mTrackerApp.getChildDependencyList(arg0, arg1);
+			} catch (RemoteException e) {
+				if (!handleException(e, numberOfTries))
+					throw e;
+			}
+			++numberOfTries;
+		}
 	}
 
 	public TrackerFieldSoapDO[] getFields(String arg0, String arg1)
 			throws RemoteException {
-		return mTrackerApp.getFields(arg0, arg1);
+		int numberOfTries = 1;
+		while (true) {
+			try {
+				return mTrackerApp.getFields(arg0, arg1);
+			} catch (RemoteException e) {
+				if (!handleException(e, numberOfTries))
+					throw e;
+			}
+			++numberOfTries;
+		}
 	}
 
 	public ArtifactDependencySoapList getParentDependencyList(String arg0,
 			String arg1) throws RemoteException {
-		return mTrackerApp.getParentDependencyList(arg0, arg1);
+		int numberOfTries = 1;
+		while (true) {
+			try {
+				return mTrackerApp.getParentDependencyList(arg0, arg1);
+			} catch (RemoteException e) {
+				if (!handleException(e, numberOfTries))
+					throw e;
+			}
+			++numberOfTries;
+		}
 	}
 
 	public TrackerSoapDO getTrackerData(String arg0, String arg1)
 			throws RemoteException {
-		return mTrackerApp.getTrackerData(arg0, arg1);
+		int numberOfTries = 1;
+		while (true) {
+			try {
+				return mTrackerApp.getTrackerData(arg0, arg1);
+			} catch (RemoteException e) {
+				if (!handleException(e, numberOfTries))
+					throw e;
+			}
+			++numberOfTries;
+		}
 	}
 
 	public TrackerSoapList getTrackerList(String arg0, String arg1)
 			throws RemoteException {
-		return mTrackerApp.getTrackerList(arg0, arg1);
+		int numberOfTries = 1;
+		while (true) {
+			try {
+				return mTrackerApp.getTrackerList(arg0, arg1);
+			} catch (RemoteException e) {
+				if (!handleException(e, numberOfTries))
+					throw e;
+			}
+			++numberOfTries;
+		}
 	}
 
 	public ArtifactSoapDO moveArtifact(String arg0, String arg1, String arg2,
 			String arg3) throws RemoteException {
-		return mTrackerApp.moveArtifact(arg0, arg1, arg2, arg3);
+		int numberOfTries = 1;
+		while (true) {
+			try {
+				return mTrackerApp.moveArtifact(arg0, arg1, arg2, arg3);
+			} catch (RemoteException e) {
+				if (!handleException(e, numberOfTries))
+					throw e;
+			}
+			++numberOfTries;
+		}
 	}
 
 	public void removeArtifactDependency(String arg0, String arg1, String arg2)
 			throws RemoteException {
-		mTrackerApp.removeArtifactDependency(arg0, arg1, arg2);
-		
+		boolean retryCall = true;
+		int numberOfTries = 1;
+		while (retryCall) {
+			try {
+				mTrackerApp.removeArtifactDependency(arg0, arg1, arg2);
+				retryCall = false;
+			} catch (RemoteException e) {
+				if (!handleException(e, numberOfTries))
+					throw e;
+			}
+			++numberOfTries;
+		}
 	}
 
 	public void setArtifactData(String arg0, ArtifactSoapDO arg1, String arg2,
 			String arg3, String arg4, String arg5) throws RemoteException {
-		mTrackerApp.setArtifactData(arg0, arg1, arg2, arg3, arg4, arg5);
-		
+		boolean retryCall = true;
+		int numberOfTries = 1;
+		while (retryCall) {
+			try {
+				mTrackerApp.setArtifactData(arg0, arg1, arg2, arg3, arg4, arg5);
+				retryCall = false;
+			} catch (RemoteException e) {
+				if (!handleException(e, numberOfTries))
+					throw e;
+			}
+			++numberOfTries;
+		}
 	}
 
 	public void setField(String arg0, String arg1, TrackerFieldSoapDO arg2)
 			throws RemoteException {
-		mTrackerApp.setField(arg0, arg1, arg2);
-		
+		boolean retryCall = true;
+		int numberOfTries = 1;
+		while (retryCall) {
+			try {
+				mTrackerApp.setField(arg0, arg1, arg2);
+				retryCall = false;
+			} catch (RemoteException e) {
+				if (!handleException(e, numberOfTries))
+					throw e;
+			}
+			++numberOfTries;
+		}
 	}
 
 	public void setTrackerData(String arg0, TrackerSoapDO arg1)
 			throws RemoteException {
-		mTrackerApp.setTrackerData(arg0, arg1);
-		
+		boolean retryCall = true;
+		int numberOfTries = 1;
+		while (retryCall) {
+			try {
+				mTrackerApp.setTrackerData(arg0, arg1);
+				retryCall = false;
+			} catch (RemoteException e) {
+				if (!handleException(e, numberOfTries))
+					throw e;
+			}
+			++numberOfTries;
+		}
 	}
-	
+
 }

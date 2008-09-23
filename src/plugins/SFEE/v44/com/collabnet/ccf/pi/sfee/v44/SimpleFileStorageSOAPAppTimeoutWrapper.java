@@ -5,36 +5,85 @@ import java.rmi.RemoteException;
 import com.vasoftware.sf.soap44.webservices.ClientSoapStubFactory;
 import com.vasoftware.sf.soap44.webservices.filestorage.ISimpleFileStorageAppSoap;
 
-
-public class SimpleFileStorageSOAPAppTimeoutWrapper implements
-		ISimpleFileStorageAppSoap {
+public class SimpleFileStorageSOAPAppTimeoutWrapper extends TimeoutWrapper
+		implements ISimpleFileStorageAppSoap {
 
 	private ISimpleFileStorageAppSoap fileStorageApp;
 
 	public SimpleFileStorageSOAPAppTimeoutWrapper(String serverUrl) {
-		fileStorageApp = (ISimpleFileStorageAppSoap) ClientSoapStubFactory.getSoapStub(ISimpleFileStorageAppSoap.class, serverUrl);	
+		fileStorageApp = (ISimpleFileStorageAppSoap) ClientSoapStubFactory
+				.getSoapStub(ISimpleFileStorageAppSoap.class, serverUrl);
 	}
-	
+
 	public void endFileUpload(String arg0, String arg1) throws RemoteException {
-		fileStorageApp.endFileUpload(arg0, arg1);
+		boolean retryCall = true;
+		int numberOfTries = 1;
+		while (retryCall) {
+			try {
+				fileStorageApp.endFileUpload(arg0, arg1);
+				retryCall = false;
+			} catch (RemoteException e) {
+				if (!handleException(e, numberOfTries))
+					throw e;
+			}
+			++numberOfTries;
+		}
 	}
 
 	public long getSize(String arg0, String arg1) throws RemoteException {
-		return fileStorageApp.getSize(arg0, arg1);
+		int numberOfTries = 1;
+		while (true) {
+			try {
+				return fileStorageApp.getSize(arg0, arg1);
+			} catch (RemoteException e) {
+				if (!handleException(e, numberOfTries))
+					throw e;
+			}
+			++numberOfTries;
+		}
 	}
 
 	public byte[] read(String arg0, String arg1, int arg2, int arg3)
 			throws RemoteException {
-		return fileStorageApp.read(arg0, arg1, arg2, arg3);
+		int numberOfTries = 1;
+		while (true) {
+			try {
+				return fileStorageApp.read(arg0, arg1, arg2, arg3);
+			} catch (RemoteException e) {
+				if (!handleException(e, numberOfTries))
+					throw e;
+			}
+			++numberOfTries;
+		}
 	}
 
 	public String startFileUpload(String arg0) throws RemoteException {
-		return fileStorageApp.startFileUpload(arg0);
+		int numberOfTries = 1;
+		while (true) {
+			try {
+				return fileStorageApp.startFileUpload(arg0);
+			} catch (RemoteException e) {
+				if (!handleException(e, numberOfTries))
+					throw e;
+			}
+			++numberOfTries;
+		}
 	}
 
 	public void write(String arg0, String arg1, byte[] arg2)
 			throws RemoteException {
-		fileStorageApp.write(arg0, arg1, arg2);
+		boolean retryCall = true;
+		int numberOfTries = 1;
+		while (retryCall) {
+			try {
+				fileStorageApp.write(arg0, arg1, arg2);
+				retryCall = false;
+			} catch (RemoteException e) {
+				if (!handleException(e, numberOfTries))
+					throw e;
+			}
+			++numberOfTries;
+		}
 	}
 
 }
