@@ -107,19 +107,19 @@ public class XsltProcessor extends Component implements IDataProcessor {
 		if(!StringUtils.isEmpty(xsltDir)){
 			File xsltDirFile = new File(xsltDir);
 			if(xsltDirFile.exists() && xsltDirFile.isDirectory()){
-				log.debug("xsltDir property is a valid directory");
+				log.debug("xsltDir property "+xsltDir+" is a valid directory");
 			}
 			else {
-				exceptions.add(new ValidationException("xsltDir property is not a valid directory...!",this));
+				exceptions.add(new ValidationException("xsltDir property "+xsltDir+" is not a valid directory...!",this));
 			}
 		}
 		else if(!StringUtils.isEmpty(xsltFile)){
 			File xsltFileFile = new File(xsltFile);
 			if(xsltFileFile.exists() && xsltFileFile.isFile()){
-				log.debug("xsltFile ptoperty is a valid file");
+				log.debug("xsltFile ptoperty "+xsltFile+" is a valid file");
 			}
 			else {
-				exceptions.add(new ValidationException("xsltFile property is not a valid file...!",this));
+				exceptions.add(new ValidationException("xsltFile property "+xsltFile+" is not a valid file...!",this));
 			}
 		}
 		if(xsltFileNameTransformerMap==null)
