@@ -1090,4 +1090,26 @@ public class GenericArtifactHelper {
 		}
 		return fieldValue;
 	}
+	public static String getStringGAField(String fieldName, GenericArtifact ga){
+		String fieldValue = null;
+		GenericArtifactField gaField = GenericArtifactHelper.getGAField(fieldName, ga);
+		if(gaField != null){
+			fieldValue = (String) gaField.getFieldValue();
+		}
+		return fieldValue;
+	}
+	
+	public static GenericArtifactField getGAField(String name, GenericArtifact ga){
+		List<GenericArtifactField> gaFields = ga.getAllGenericArtifactFieldsWithSameFieldName(name);
+		if(gaFields == null || gaFields.size() == 0){
+			return null;
+		}
+		else if(gaFields.size() == 1){
+			GenericArtifactField field = gaFields.get(0);
+			return field;
+		}
+		else {
+			throw new RuntimeException("More than one flex field with the same field name: "+name);
+		}
+	}
 }

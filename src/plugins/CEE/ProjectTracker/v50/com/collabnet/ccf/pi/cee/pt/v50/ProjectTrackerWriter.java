@@ -115,8 +115,8 @@ public class ProjectTrackerWriter extends LifecycleComponent implements IDataPro
 		String artifactId = helper.getArtifactIdFromFullyQualifiedArtifactId(targetArtifactId);
 		TrackerWebServicesClient twsclient = this.getConnection(ga);
 		byte[] data = Base64.decodeBase64(ga.getArtifactValue().getBytes());
-		String attachmentMimeType = GenericArtifactHelper.getStringFlexGAField(AttachmentMetaData.ATTACHMENT_MIME_TYPE, ga);
-		String attachmentName = GenericArtifactHelper.getStringFlexGAField(AttachmentMetaData.ATTACHMENT_NAME, ga);
+		String attachmentMimeType = GenericArtifactHelper.getStringGAField(AttachmentMetaData.ATTACHMENT_MIME_TYPE, ga);
+		String attachmentName = GenericArtifactHelper.getStringGAField(AttachmentMetaData.ATTACHMENT_NAME, ga);
 		javax.mail.util.ByteArrayDataSource dataSource = new javax.mail.util.ByteArrayDataSource(data,attachmentMimeType);
 		dataSource.setName(attachmentName);
 		try {
