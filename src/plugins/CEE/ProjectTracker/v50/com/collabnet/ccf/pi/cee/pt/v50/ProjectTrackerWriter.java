@@ -50,6 +50,7 @@ public class ProjectTrackerWriter extends LifecycleComponent implements IDataPro
 	private String password = null;
 	private ConnectionManager<TrackerWebServicesClient> connectionManager = null;
 	private MetaDataHelper metadataHelper = MetaDataHelper.getInstance();
+	ProjectTrackerHelper ptHelper = ProjectTrackerHelper.getInstance();
 	public Object[] process(Object data) {
 		GenericArtifact ga = null;
 		if(data instanceof Document){
@@ -111,8 +112,7 @@ public class ProjectTrackerWriter extends LifecycleComponent implements IDataPro
 	
 	private GenericArtifact createProjectTrackerAttachment(GenericArtifact ga) {
 		String targetArtifactId = ga.getDepParentTargetArtifactId();
-		ProjectTrackerHelper helper = ProjectTrackerHelper.getInstance();
-		String artifactId = helper.getArtifactIdFromFullyQualifiedArtifactId(targetArtifactId);
+		String artifactId = ptHelper.getArtifactIdFromFullyQualifiedArtifactId(targetArtifactId);
 		TrackerWebServicesClient twsclient = this.getConnection(ga);
 		byte[] data = Base64.decodeBase64(ga.getArtifactValue().getBytes());
 		String attachmentMimeType = GenericArtifactHelper.getStringGAField(AttachmentMetaData.ATTACHMENT_MIME_TYPE, ga);
@@ -142,11 +142,10 @@ public class ProjectTrackerWriter extends LifecycleComponent implements IDataPro
 
 	private GenericArtifact updateProjectTrackerArtifact(GenericArtifact ga) {
 		String targetArtifactId = ga.getTargetArtifactId();
-		ProjectTrackerHelper helper = ProjectTrackerHelper.getInstance();
 		String targetArtifactTypeNameSpace =
-			helper.getArtifactTypeNamespaceFromFullyQualifiedArtifactId(targetArtifactId);
+			ptHelper.getArtifactTypeNamespaceFromFullyQualifiedArtifactId(targetArtifactId);
 		String targetArtifactTypeTagName =
-			helper.getArtifactTypeTagNameFromFullyQualifiedArtifactId(targetArtifactId);
+			ptHelper.getArtifactTypeTagNameFromFullyQualifiedArtifactId(targetArtifactId);
 		TrackerWebServicesClient twsclient = this.getConnection(ga);
 		
 		try {
@@ -156,6 +155,7 @@ public class ProjectTrackerWriter extends LifecycleComponent implements IDataPro
 					targetArtifactTypeNameSpace, targetArtifactTypeTagName);
 			cla.add(ca);
 			ClientArtifactListXMLHelper artifactHelper = twsclient.updateArtifactList(cla);
+			ptHelper.processWSErrors(artifactHelper);
 			List<ClientArtifact> artifacts = artifactHelper.getAllArtifacts();
 			if(artifacts.size() == 1){
 				ClientArtifact artifact = artifacts.get(0);
@@ -182,8 +182,20 @@ public class ProjectTrackerWriter extends LifecycleComponent implements IDataPro
 					ga.setTargetArtifactVersion(Integer.toString(version));
 				}
 			}
+		} catch (WSException e) {
+			String message = "WSException while updating artifact " + targetArtifactId;
+			log.error(message, e);
+			throw new CCFRuntimeException(message, e);
+		} catch (RemoteException e) {
+			String message = "RemoteException while updating artifact " + targetArtifactId;
+			log.error(message, e);
+			throw new CCFRuntimeException(message, e);
+		} catch (ServiceException e) {
+			String message = "ServiceException while updating artifact " + targetArtifactId;
+			log.error(message, e);
+			throw new CCFRuntimeException(message, e);
 		} catch (Exception e) {
-			String message = "Exception while updating PT artifact";
+			String message = "Exception while updating artifact " + targetArtifactId;
 			log.error(message, e);
 			throw new CCFRuntimeException(message, e);
 		}
@@ -198,24 +210,27 @@ public class ProjectTrackerWriter extends LifecycleComponent implements IDataPro
 		String repositoryKey = this.getRepositoryKey(ga);
 		String artifactTypeDisplayName = targetRepositoryId.substring(targetRepositoryId.lastIndexOf(":")+1);
 		
-		TrackerWebServicesClient twsclient = this.getConnection(ga);
+		TrackerWebServicesClient twsclient = null;
 		TrackerArtifactType trackerArtifactType =
 			metadataHelper.getTrackerArtifactType(repositoryKey);
-		if(trackerArtifactType == null){
-			trackerArtifactType = metadataHelper.getTrackerArtifactType(repositoryKey,
-					artifactTypeDisplayName, twsclient);
-		}
+		
 		String targetArtifactTypeNamespace = trackerArtifactType.getNamespace();
 		String targetArtifactTypeTagName = trackerArtifactType.getTagName();
 		try {
+			twsclient = this.getConnection(ga);
+			if(trackerArtifactType == null){
+				trackerArtifactType = metadataHelper.getTrackerArtifactType(repositoryKey,
+						artifactTypeDisplayName, twsclient);
+			}
 			List<ClientArtifact> cla = null;
 			cla = new ArrayList<ClientArtifact>();
 			ClientArtifact ca = this.getClientArtifactFromGenericArtifact(ga, twsclient,
 					targetArtifactTypeNamespace, targetArtifactTypeTagName);
 			cla.add(ca);
 			ClientArtifactListXMLHelper artifactHelper = twsclient.createArtifactList(cla);
+			ptHelper.processWSErrors(artifactHelper);
 			List<ClientArtifact> artifacts = artifactHelper.getAllArtifacts();
-			if(artifacts.size() == 1){
+			if(artifacts.size() == 1) {
 				ClientArtifact artifact = artifacts.get(0);
 				ga.setTargetArtifactId("{"+targetArtifactTypeNamespace+"}"
 						+targetArtifactTypeTagName+":"+artifact.getArtifactID());
@@ -230,8 +245,20 @@ public class ProjectTrackerWriter extends LifecycleComponent implements IDataPro
 				log.error(message);
 				throw new CCFRuntimeException(message);
 			}
+		} catch (WSException e) {
+			String message = "WSException while creating artifact";
+			log.error(message, e);
+			throw new CCFRuntimeException(message, e);
+		} catch (RemoteException e) {
+			String message = "RemoteException while creating artifact";
+			log.error(message, e);
+			throw new CCFRuntimeException(message, e);
+		} catch (ServiceException e) {
+			String message = "ServiceException while creating artifact";
+			log.error(message, e);
+			throw new CCFRuntimeException(message, e);
 		} catch (Exception e) {
-			String message = "Artifact creation failed...!!!";
+			String message = "Exception while creating artifact";
 			log.error(message, e);
 			throw new CCFRuntimeException(message, e);
 		}
@@ -245,10 +272,9 @@ public class ProjectTrackerWriter extends LifecycleComponent implements IDataPro
 			TrackerWebServicesClient twsclient, String targetArtifactTypeNameSpace,
 			String targetArtifactTypeTagName){
 		String targetArtifactId = ga.getTargetArtifactId();
-		ProjectTrackerHelper helper = ProjectTrackerHelper.getInstance();
 		String artifactId = null;
 		if(!targetArtifactId.equals(GenericArtifact.VALUE_UNKNOWN)){
-			artifactId = helper.getArtifactIdFromFullyQualifiedArtifactId(targetArtifactId);
+			artifactId = ptHelper.getArtifactIdFromFullyQualifiedArtifactId(targetArtifactId);
 		}
 		String repositoryKey = this.getRepositoryKey(ga);
 		TrackerArtifactType trackerArtifactType = metadataHelper.getTrackerArtifactType(repositoryKey,
@@ -265,13 +291,13 @@ public class ProjectTrackerWriter extends LifecycleComponent implements IDataPro
 		for(GenericArtifactField field:ga.getAllGenericArtifactFields()){
 			String fieldName = field.getFieldName();
 			String fieldDisplayName = null;
-			String namespace = helper.getNamespace(fieldName);
+			String namespace = ptHelper.getNamespace(fieldName);
 			if(namespace == null){
 				fieldDisplayName = fieldName;
 				namespace = targetArtifactTypeNameSpace;
 			}
 			else {
-				fieldDisplayName = helper.getEntityName(fieldName);
+				fieldDisplayName = ptHelper.getEntityName(fieldName);
 			}
 			if(fieldName.equals("Comment")){
 				this.addComment(field,ca);
@@ -312,6 +338,12 @@ public class ProjectTrackerWriter extends LifecycleComponent implements IDataPro
 				}
 			}
 		}
+		if(fullyQualifiedFieldTagName == null){
+			String message = "There is no field with the name "
+				+fieldDisplayName+" in "+artifactTypeTagName+" "+artifactType.getDisplayName();
+			log.error(message);
+			throw new CCFRuntimeException(message);
+		}
 		return fullyQualifiedFieldTagName;
 	}
 
@@ -324,11 +356,10 @@ public class ProjectTrackerWriter extends LifecycleComponent implements IDataPro
 	private void addAttribute(GenericArtifactField field, ClientArtifact ca,
 			TrackerAttribute trackerAttribute, String fullyQualifiedFieldTagName,
 			ArtifactTypeMetadata metadata) {
-		ProjectTrackerHelper helper = ProjectTrackerHelper.getInstance();
 		String attributeNamespace =
-			helper.getArtifactTypeNamespaceFromFullyQualifiedArtifactType(fullyQualifiedFieldTagName);
+			ptHelper.getArtifactTypeNamespaceFromFullyQualifiedArtifactType(fullyQualifiedFieldTagName);
 		String attributeTagName =
-			helper.getArtifactTypeTagNameFromFullyQualifiedArtifactType(fullyQualifiedFieldTagName);
+			ptHelper.getArtifactTypeTagNameFromFullyQualifiedArtifactType(fullyQualifiedFieldTagName);
 		Object fieldValue = field.getFieldValue();
 		if(fieldValue == null) return;
 		FieldValueTypeValue fieldType = field.getFieldValueType();
