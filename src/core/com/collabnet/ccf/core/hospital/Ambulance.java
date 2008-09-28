@@ -1,6 +1,7 @@
 package com.collabnet.ccf.core.hospital;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -12,10 +13,13 @@ import org.apache.commons.logging.LogFactory;
 import org.dom4j.Document;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
-import org.openadaptor.core.Component;
 import org.openadaptor.core.IDataProcessor;
 import org.openadaptor.core.exception.MessageException;
 import org.openadaptor.core.exception.ValidationException;
+import org.openadaptor.core.lifecycle.LifecycleComponent;
+
+import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
+import com.collabnet.ccf.core.utils.CCFUtils;
 
 /**
  * This is the exception handler class that catches
@@ -25,12 +29,14 @@ import org.openadaptor.core.exception.ValidationException;
  * @author madhusuthanan (madhusuthanan@collab.net)
  *
  */
-public class Ambulance extends Component implements
+public class Ambulance extends LifecycleComponent implements
 		IDataProcessor {
     
 	private static final Log log = LogFactory.getLog(Ambulance.class);
 	private String hospitalFileName = null;
 	private FileOutputStream fos = null;
+	private String artifactsDirectory = null;
+	private File artifactsDirectoryFile = null;
 	
 	public Ambulance(String id) {
 	    super(id);
@@ -64,12 +70,43 @@ public class Ambulance extends Component implements
 					Element dataElement = failure.addElement("Data");
 					if(dataObj instanceof Document){
 						Document dataDoc = (Document) dataObj;
-						dataElement.setText(dataDoc.asXML());
+						String artifactFileName = null;
+						try {
+							artifactFileName = CCFUtils.getTempFileName(dataDoc);
+						} catch (GenericArtifactParsingException e) {
+							log.warn("The data that reached the hospital is not a Generic Artifact");
+						}
+						if(artifactFileName == null){
+							artifactFileName = "sync-info";
+						}
+						String tempFilePath = null;
+						FileOutputStream fos = null;
+						try {
+							File tempFile = File.createTempFile(artifactFileName, ".xml", artifactsDirectoryFile);
+							fos = new FileOutputStream(tempFile);
+							String dataXML = dataDoc.asXML();
+							fos.write(dataXML.getBytes());
+							fos.flush();
+							fos.close();
+							tempFilePath = tempFile.getAbsolutePath();
+						} catch (IOException e) {
+							log.error("Could not create temporary File", e);
+						}
+						finally {
+							if(fos != null){
+								try {
+									fos.close();
+								} catch (IOException e) {
+									log.warn("Could not close temp file stream",e);
+								}
+							}
+						}
+						dataElement.setText(tempFilePath);
 					}
 					String writeData = failure.asXML();
 					try {
 						fos.write(writeData.getBytes());
-						fos.write("\n".getBytes());
+						fos.write(System.getProperty("line.separator").getBytes());
 						fos.flush();
 					} catch (IOException e) {
 						log.error("An IO-Exception occured in the hospital: "+e.getMessage());
@@ -95,7 +132,43 @@ public class Ambulance extends Component implements
 			exceptions.add(new ValidationException(
 					"Could not open hospital file "+hospitalFileName, this));
 		}
+		if(artifactsDirectory == null){
+			exceptions.add(new ValidationException(
+					"Artifacts directory is not set ", this));
+		}
+		else {
+			File artifactsDirFile = new File(artifactsDirectory);
+			if(artifactsDirFile.exists()){
+				if(artifactsDirFile.isDirectory()){
+					artifactsDirectoryFile = artifactsDirFile;
+				}
+				else {
+					exceptions.add(new ValidationException(
+							"Artifacts directory "+artifactsDirectory+" is not a valid directory", this));
+				}
+			}
+			else {
+				if(artifactsDirFile.mkdirs()){
+					artifactsDirectoryFile = artifactsDirFile;
+				}
+				else {
+					exceptions.add(new ValidationException(
+							"Could not create artifacts directory "+artifactsDirectory, this));
+				}
+			}
+			
+		}
 		
+	}
+	public void stop() {
+	    if(fos != null){
+	    	try {
+				fos.close();
+			} catch (IOException e) {
+				log.error("Exception when trying to close the hospital file stream", e);
+			}
+	    }
+	    super.stop();
 	}
 
 	public String getHospitalFileName() {
@@ -109,6 +182,14 @@ public class Ambulance extends Component implements
 		} catch (FileNotFoundException e) {
 			log.error("Could not open hospital file "+hospitalFileName+ " :"+hospitalFileName);
 		}
+	}
+
+	public String getArtifactsDirectory() {
+		return artifactsDirectory;
+	}
+
+	public void setArtifactsDirectory(String artifactsDirectory) {
+		this.artifactsDirectory = artifactsDirectory;
 	}
 
 }
