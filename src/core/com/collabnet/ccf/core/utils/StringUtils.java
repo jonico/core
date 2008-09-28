@@ -761,6 +761,7 @@ public class StringUtils {
     	if (text != null) {
     		text = text.replaceAll(BR_PATTERN, "\n");
     		text = text.replaceAll(HTML_PATTERN, EMPTY_STRING);
+    		text = StringUtils.convertEntities(text);
     		return stripSpecificDelimiter(text);
     	} else {
     		return (null);
