@@ -3,7 +3,6 @@ package com.collabnet.tracker.core;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
-import java.io.StringWriter;
 import java.net.MalformedURLException;
 import java.net.Proxy;
 import java.net.URL;
@@ -25,18 +24,10 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.rpc.ServiceException;
-import javax.xml.transform.Transformer;
-import javax.xml.transform.TransformerConfigurationException;
-import javax.xml.transform.TransformerException;
-import javax.xml.transform.TransformerFactory;
-import javax.xml.transform.dom.DOMSource;
-import javax.xml.transform.stream.StreamResult;
 
 import org.apache.axis.AxisFault;
 import org.apache.axis.EngineConfiguration;
 import org.apache.axis.message.MessageElement;
-import org.apache.xml.serialize.OutputFormat;
-import org.apache.xml.serialize.XMLSerializer;
 import org.w3c.dom.DOMImplementation;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -58,7 +49,6 @@ import com.collabnet.core.ws.services.Version;
 import com.collabnet.tracker.common.ClientArtifact;
 import com.collabnet.tracker.common.ClientArtifactComment;
 import com.collabnet.tracker.common.ClientArtifactListXMLHelper;
-import com.collabnet.tracker.common.ClientXMLOperationError;
 import com.collabnet.tracker.common.WebServiceClient;
 import com.collabnet.tracker.core.model.TrackerArtifactType;
 import com.collabnet.tracker.core.model.TrackerClientData;
@@ -153,52 +143,41 @@ public class TrackerWebServicesClient {
 	 * Get all of the server defined queries for the project
 	 * @return
 	 * @param artifact
+	 * @throws Exception 
 	 * @throws Exception
 	 * 
 	 * 
 	 * NOTE: All artifact in the List must belong to the same namespace and artifactType
 	 * 
 	 */
-	public ClientArtifactListXMLHelper createArtifactList(List<ClientArtifact> artifacts) throws Exception {
-		// TODO: implement
-		System.out.println();
-		try {
-			Document doc = null;
-			doc = createNewXMLDocument(DEFAULT_NAMESPACE, "ns1:"+"createArtifactList");
+	public ClientArtifactListXMLHelper createArtifactList(List<ClientArtifact> artifacts)
+				throws Exception {
+		Document doc = null;
+		doc = createNewXMLDocument(DEFAULT_NAMESPACE, "ns1:"+"createArtifactList");
 
-			ClientArtifactListXMLHelper helper = this.createOrUpdateArtifactList(doc, artifacts);
-			return helper;
-		}
-		catch (Exception e) {
-			throw e;
-		}		
+		ClientArtifactListXMLHelper helper = this.createOrUpdateArtifactList(doc, artifacts);
+		return helper;
 	}
 
 	/**
 	 * Get all of the server defined queries for the project
 	 * @return
 	 * @param artifact
+	 * @throws Exception 
 	 * @throws Exception
 	 * 
 	 * 
 	 * NOTE: All artifact in the List must belong to the same namespace and artifactType
 	 * 
 	 */
-	public ClientArtifactListXMLHelper updateArtifactList(List<ClientArtifact> artifacts) throws Exception {
-		// TODO: implement
-		System.out.println();
-		try {
-			
-			Document doc = null;
-			doc = createNewXMLDocument(DEFAULT_NAMESPACE, "ns1:"+"updateArtifactList");
-			
-			ClientArtifactListXMLHelper helper  = this.createOrUpdateArtifactList(doc, artifacts);
+	public ClientArtifactListXMLHelper updateArtifactList(List<ClientArtifact> artifacts)
+						throws Exception {
+		Document doc = null;
+		doc = createNewXMLDocument(DEFAULT_NAMESPACE, "ns1:"+"updateArtifactList");
+		
+		ClientArtifactListXMLHelper helper  = this.createOrUpdateArtifactList(doc, artifacts);
 
-			return helper;
-		}
-		catch (Exception e) {
-			throw e;
-		}		
+		return helper;
 	}
 	
 	public ClientArtifactListXMLHelper createOrUpdateArtifactList(Document doc,
@@ -302,20 +281,12 @@ public class TrackerWebServicesClient {
 //		printResult(doc);
 		String docString = doc.getTextContent();
 		System.out.println(docString); 
-		TransformerFactory tf = TransformerFactory.newInstance();
-		Transformer t = tf.newTransformer();
-		StringWriter sw = new StringWriter();
-		t.transform( new DOMSource(doc), new StreamResult(sw));
-		sw.toString();
 
 		Request req = toRequest(doc);
 		String reqString = req.toString();
 		System.out.println(reqString); 
 		Response r = theService.execute(toRequest(doc));
 		Document result = toDocument(r);
-		StringWriter sw1 = new StringWriter();
-		t.transform( new DOMSource(result), new StreamResult(sw1));
-		sw1.toString();
 		ClientArtifactListXMLHelper helper = new ClientArtifactListXMLHelper(result);
 		return helper;
 	}
@@ -451,32 +422,6 @@ public class TrackerWebServicesClient {
 		throw new Exception(msg);
 	}
 	
-//	/*
-//	 * helper method that can be used to print an xml document to the command
-//	 * line for debugging
-//	 */
-//	private void printResult(Document result) {
-//		try{
-//			System.out.println("\n\n\n");
-//		DOMSource domSource = new DOMSource(result);
-//		StreamResult streamResult = new StreamResult(System.out);
-//		TransformerFactory tf = TransformerFactory.newInstance();
-//		Transformer serializer = tf.newTransformer();
-//		
-//		serializer.setOutputProperty(OutputKeys.ENCODING,"ISO-8859-1");
-//		serializer.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM,"users.dtd");
-//		
-//		serializer.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION,"yes");
-//		serializer.setOutputProperty(OutputKeys.STANDALONE,"yes");
-//		serializer.setOutputProperty(OutputKeys.METHOD,"xml");
-//		serializer.setOutputProperty(OutputKeys.INDENT,"yes");
-//		serializer.transform(domSource, streamResult); 
-//		}catch(Exception e){
-//			e.printStackTrace();
-//		}
-//	}
-
-
 	private Document createNewXMLDocument(String namespace, String qualifiedTagName) {
 		DocumentBuilderFactory dbf;// = DocumentBuilderFactory.newInstance();
 		DocumentBuilder db;
