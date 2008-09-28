@@ -97,23 +97,9 @@ public class MetaDataHelper {
 	}
 	
 	public TrackerArtifactType getTrackerArtifactType(String repositoryKey, String artifactTypeDisplayName,
-			TrackerWebServicesClient twsclient){
+			TrackerWebServicesClient twsclient) throws WSException, RemoteException, ServiceException{
 		Collection<TrackerArtifactType> tAT = null;
-		try {
-			tAT = twsclient.getArtifactTypes();
-		} catch (WSException e1) {
-			String message = "Web Service Exception while retreiving Artifact Type meta data";
-			log.error(message, e1);
-			throw new CCFRuntimeException(message, e1);
-		} catch (RemoteException e1) {
-			String message = "Remote Exception while retreiving Artifact Type meta data";
-			log.error(message, e1);
-			throw new CCFRuntimeException(message, e1);
-		} catch (ServiceException e1) {
-			String message = "Service Exception while retreiving Artifact Type meta data";
-			log.error(message, e1);
-			throw new CCFRuntimeException(message, e1);
-		}
+		tAT = twsclient.getArtifactTypes();
 		TrackerArtifactType artifactTypeForDisplayName = null;
 		for (TrackerArtifactType type : tAT )
 		{

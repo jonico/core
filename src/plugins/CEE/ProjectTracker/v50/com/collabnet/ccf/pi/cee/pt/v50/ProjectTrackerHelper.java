@@ -1,5 +1,10 @@
 package com.collabnet.ccf.pi.cee.pt.v50;
 
+import java.util.List;
+
+import com.collabnet.tracker.common.ClientArtifactListXMLHelper;
+import com.collabnet.tracker.common.ClientXMLOperationError;
+
 public class ProjectTrackerHelper {
 	private static ProjectTrackerHelper instance = null;
 	private ProjectTrackerHelper(){
@@ -83,5 +88,20 @@ public class ProjectTrackerHelper {
 			entityName = input.substring(start+1, end);
 		}
 		return entityName;
+	}
+	public void processWSErrors(ClientArtifactListXMLHelper soapResponse) {
+		List<ClientXMLOperationError> errors = soapResponse.getErrors();
+		String cause = null;
+		if(errors.size() > 0){
+			cause = "";
+			for(ClientXMLOperationError error:errors){
+				String message = error.getMsg();
+				String code = error.getCode();
+				String trace = error.getTrace();
+				cause = "Message: " +message + " Code: " + code + System.getProperty("line.sparator");
+				cause += trace + System.getProperty("line.sparator") + System.getProperty("line.sparator");
+			}
+			throw new ProjectTrackerWebServiceException(cause);
+		}
 	}
 }

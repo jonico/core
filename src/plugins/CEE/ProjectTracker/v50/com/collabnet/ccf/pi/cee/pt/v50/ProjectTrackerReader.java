@@ -1,6 +1,7 @@
 package com.collabnet.ccf.pi.cee.pt.v50;
 
 import java.io.InputStream;
+import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -10,6 +11,7 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.activation.DataHandler;
+import javax.xml.rpc.ServiceException;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.logging.Log;
@@ -25,6 +27,7 @@ import com.collabnet.ccf.core.ga.AttachmentMetaData;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.utils.DateUtil;
+import com.collabnet.core.ws.exception.WSException;
 import com.collabnet.tracker.common.ClientArtifact;
 import com.collabnet.tracker.common.ClientArtifactAttachment;
 import com.collabnet.tracker.common.ClientArtifactComment;
@@ -64,7 +67,7 @@ public class ProjectTrackerReader extends AbstractReader {
 	private ConnectionManager<TrackerWebServicesClient> connectionManager = null;
 	// TODO Use ThreadLocal object to store these variables
 	private ThreadLocal<ArtifactHistoryList> artifactHistoryList = new ThreadLocal<ArtifactHistoryList>();
-	
+	ProjectTrackerHelper ptHelper = ProjectTrackerHelper.getInstance();
 	private static HashMap<String, GenericArtifactField.FieldValueTypeValue> ptGATypesMap =
 		new HashMap<String, GenericArtifactField.FieldValueTypeValue>();
 	static {
@@ -92,12 +95,13 @@ public class ProjectTrackerReader extends AbstractReader {
 		ata[0] = new ArtifactType(trackerArtifactType.getTagName(),
 				trackerArtifactType.getNamespace(), trackerArtifactType.getDisplayName());
 		ArrayList<GenericArtifact> attachmentGAs = new ArrayList<GenericArtifact>();
-		TrackerWebServicesClient twsclient = this.getConnection(syncInfo);
+		TrackerWebServicesClient twsclient = null;
 		int version = 0;
 		try {
+			twsclient = this.getConnection(syncInfo);
 			ArtifactHistoryList ahl = this.artifactHistoryList.get();
 			History historyList[] = null;
-			if(ahl != null) ahl.getHistory();
+			if(ahl != null) historyList = ahl.getHistory();
 			if(historyList != null)
 			{
 				for(History history:historyList){
@@ -253,18 +257,20 @@ public class ProjectTrackerReader extends AbstractReader {
 		Date lastModifiedDate = this.getLastModifiedDate(syncInfo);
 		long fromTime = lastModifiedDate.getTime();
 		long toTime = System.currentTimeMillis();
-		TrackerWebServicesClient twsclient = this.getConnection(syncInfo);
+		TrackerWebServicesClient twsclient = null;
 		ClientArtifact artifact = null;
 		try {
+			twsclient = this.getConnection(syncInfo);
 			ClientArtifactListXMLHelper listHelper = twsclient.getArtifactById(artifactIdentifier);
 			List<ClientArtifact> artifacts = listHelper.getAllArtifacts();
+			ptHelper.processWSErrors(listHelper);
 			if(artifacts == null || artifacts.size() == 0){
 				throw new CCFRuntimeException("There is no artifact with id "+artifactIdentifier);
 			}
 			else if(artifacts.size() == 1){
 				artifact = artifacts.get(0);
 			}
-			else{
+			else if(artifacts.size() > 1){
 				throw new CCFRuntimeException("More than one artifact were returned for id "+artifactIdentifier);
 			}
 		} catch (Exception e) {
@@ -273,8 +279,10 @@ public class ProjectTrackerReader extends AbstractReader {
 			throw new CCFRuntimeException(message, e);
 		}
 		finally {
-			connectionManager.releaseConnection(twsclient);
-			twsclient = null;
+			if(twsclient != null){
+				connectionManager.releaseConnection(twsclient);
+				twsclient = null;
+			}
 		}
 		String lastModifiedBy = artifact.getAttributeValue(TrackerWebServicesClient.DEFAULT_NAMESPACE,
 				TrackerWebServicesClient.MODIFIED_BY_FIELD_NAME);
@@ -356,7 +364,10 @@ public class ProjectTrackerReader extends AbstractReader {
 								e);
 					}
 					finally {
-						connectionManager.releaseConnection(twsclient);
+						if(twsclient != null){
+							connectionManager.releaseConnection(twsclient);
+							twsclient = null;
+						}
 					}
 				}
 			}
@@ -436,13 +447,16 @@ public class ProjectTrackerReader extends AbstractReader {
 			twsclient = this.connect(systemId, systemKind, repositoryId,
 					repositoryKind, connectionInfo, credentialInfo);
 		} catch (MaxConnectionsReachedException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			throw new CCFRuntimeException("Could not get connection for PT",e);
 		} catch (ConnectionException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			throw new CCFRuntimeException("Could not get connection for PT",e);
+		}
+		finally {
+			if(twsclient != null){
+				connectionManager.releaseConnection(twsclient);
+			}
 		}
 		return twsclient;
 	}
@@ -464,33 +478,49 @@ public class ProjectTrackerReader extends AbstractReader {
 		Set<String> artifactTypes = new HashSet<String>();
 		
 		
-		TrackerWebServicesClient twsclient = this.getConnection(syncInfo);
+		TrackerWebServicesClient twsclient = null;
 		TrackerArtifactType trackerArtifactType =
 			metadataHelper.getTrackerArtifactType(repositoryKey);
-		if(trackerArtifactType == null){
-			trackerArtifactType = metadataHelper.getTrackerArtifactType(repositoryKey,
-					artifactTypeDisplayName, twsclient);
-		}
 		ArrayList<String> artifacts = new ArrayList<String>();
-
-		String namespace = trackerArtifactType.getNamespace();
-		String tagname = trackerArtifactType.getTagName();
-		String artifactTypeFullyQualifiedName = "{"+namespace+"}"+tagname;
-		
-		artifactTypes.add(artifactTypeFullyQualifiedName);
-		String changedArtifacts[] = null;
 		try {
-			changedArtifacts = twsclient.getChangedArtifacts(artifactTypes, fromTime);
-		} catch (Exception e) {
+			twsclient = this.getConnection(syncInfo);
+			if(trackerArtifactType == null){
+				trackerArtifactType = metadataHelper.getTrackerArtifactType(repositoryKey,
+						artifactTypeDisplayName, twsclient);
+			}
+	
+			String namespace = trackerArtifactType.getNamespace();
+			String tagname = trackerArtifactType.getTagName();
+			String artifactTypeFullyQualifiedName = "{"+namespace+"}"+tagname;
+			
+			artifactTypes.add(artifactTypeFullyQualifiedName);
+			String[] changedArtifacts = twsclient.getChangedArtifacts(artifactTypes, fromTime);
+			for (String artifact: changedArtifacts)
+			{
+				artifacts.add(artifactTypeFullyQualifiedName +":"+ artifact);
+			}
+		} catch (WSException e1) {
+			String message = "Web Service Exception while retreiving Artifact Type meta data";
+			log.error(message, e1);
+			throw new CCFRuntimeException(message, e1);
+		} catch (RemoteException e1) {
+			String message = "Remote Exception while retreiving Artifact Type meta data";
+			log.error(message, e1);
+			throw new CCFRuntimeException(message, e1);
+		} catch (ServiceException e1) {
+			String message = "Service Exception while retreiving Artifact Type meta data";
+			log.error(message, e1);
+			throw new CCFRuntimeException(message, e1);
+		}
+		catch (Exception e) {
 			String message = "Exception while getting the changed artifacts";
 			log.error(message, e);
 			throw new CCFRuntimeException(message, e);
+		} finally {
+			if(twsclient != null){
+				connectionManager.releaseConnection(twsclient);
+			}
 		}
-		for (String artifact: changedArtifacts)
-		{
-			artifacts.add(artifactTypeFullyQualifiedName +":"+ artifact);
-		}
-		connectionManager.releaseConnection(twsclient);
 		return artifacts;
 	}
 	
