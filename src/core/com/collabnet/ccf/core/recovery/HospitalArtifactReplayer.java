@@ -45,6 +45,7 @@ public class HospitalArtifactReplayer extends SpringAdaptor {
 	private File replayWorkDir = null;
 	private static HashMap<String, File> componentConfigFileMap = new HashMap<String, File>();
 	private static final Log log = LogFactory.getLog(HospitalArtifactReplayer.class);
+	public static final String OPENADAPTOR_SPRING_CONFIG=".openadaptor-spring.xml";
 	public HospitalArtifactReplayer(HospitalEntry entry){
 		this.entry = entry;
 		DocumentBuilderFactory docBuilderFactory = DocumentBuilderFactory.newInstance();
@@ -98,7 +99,7 @@ public class HospitalArtifactReplayer extends SpringAdaptor {
 	    System.exit(0);
 	}
 	protected void loadBeanDefinitions(String url, GenericApplicationContext context) {
-		if(url.endsWith(SpringApplication.OPENADAPTOR_SPRING_CONFIG)){
+		if(url.endsWith(OPENADAPTOR_SPRING_CONFIG)){
 			url = "classpath:" + "org/openadaptor/spring/" + OPENADAPTOR_SPRING_CONFIG;
 		}
 	    String protocol = "";
