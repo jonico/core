@@ -45,7 +45,7 @@ public class TrackerAppSoapTimeoutWrapper extends TimeoutWrapper implements
 				mTrackerApp.addDateField(arg0, arg1, arg2, arg3, arg4, arg5);
 				retryCall = false;
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -63,7 +63,7 @@ public class TrackerAppSoapTimeoutWrapper extends TimeoutWrapper implements
 						arg5, arg6, arg7, arg8);
 				retryCall = false;
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -81,7 +81,7 @@ public class TrackerAppSoapTimeoutWrapper extends TimeoutWrapper implements
 						arg5, arg6, arg7);
 				retryCall = false;
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -99,7 +99,7 @@ public class TrackerAppSoapTimeoutWrapper extends TimeoutWrapper implements
 						arg6, arg7, arg8);
 				retryCall = false;
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -117,7 +117,7 @@ public class TrackerAppSoapTimeoutWrapper extends TimeoutWrapper implements
 						arg5, arg6, arg7, arg8);
 				retryCall = false;
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -133,7 +133,7 @@ public class TrackerAppSoapTimeoutWrapper extends TimeoutWrapper implements
 				mTrackerApp.copyWorkflowTransitions(arg0, arg1, arg2);
 				retryCall = false;
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -152,7 +152,7 @@ public class TrackerAppSoapTimeoutWrapper extends TimeoutWrapper implements
 						arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12,
 						arg13, arg14, arg15);
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -168,7 +168,7 @@ public class TrackerAppSoapTimeoutWrapper extends TimeoutWrapper implements
 				mTrackerApp.createArtifactDependency(arg0, arg1, arg2, arg3);
 				retryCall = false;
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -182,7 +182,7 @@ public class TrackerAppSoapTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				return mTrackerApp.createTracker(arg0, arg1, arg2, arg3, arg4);
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -197,7 +197,7 @@ public class TrackerAppSoapTimeoutWrapper extends TimeoutWrapper implements
 				mTrackerApp.deleteArtifact(arg0, arg1);
 				retryCall = false;
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -213,7 +213,7 @@ public class TrackerAppSoapTimeoutWrapper extends TimeoutWrapper implements
 				mTrackerApp.deleteField(arg0, arg1, arg2);
 				retryCall = false;
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -227,7 +227,7 @@ public class TrackerAppSoapTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				return mTrackerApp.findArtifacts(arg0, arg1, arg2, arg3);
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -241,7 +241,7 @@ public class TrackerAppSoapTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				return mTrackerApp.getAllowedWorkflowTransitionList(arg0, arg1);
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -255,7 +255,7 @@ public class TrackerAppSoapTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				return mTrackerApp.getArtifactData(arg0, arg1);
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -272,7 +272,7 @@ public class TrackerAppSoapTimeoutWrapper extends TimeoutWrapper implements
 				return mTrackerApp.getArtifactDetailList(arg0, arg1, arg2,
 						arg3, arg4, arg5, arg6, arg7, arg8);
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -286,7 +286,7 @@ public class TrackerAppSoapTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				return mTrackerApp.getArtifactList(arg0, arg1, arg2);
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -300,7 +300,7 @@ public class TrackerAppSoapTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				return mTrackerApp.getChildDependencyList(arg0, arg1);
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -314,7 +314,7 @@ public class TrackerAppSoapTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				return mTrackerApp.getFields(arg0, arg1);
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -328,7 +328,7 @@ public class TrackerAppSoapTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				return mTrackerApp.getParentDependencyList(arg0, arg1);
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -342,7 +342,7 @@ public class TrackerAppSoapTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				return mTrackerApp.getTrackerData(arg0, arg1);
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -356,7 +356,7 @@ public class TrackerAppSoapTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				return mTrackerApp.getTrackerList(arg0, arg1);
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -370,7 +370,7 @@ public class TrackerAppSoapTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				return mTrackerApp.moveArtifact(arg0, arg1, arg2, arg3);
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -386,7 +386,7 @@ public class TrackerAppSoapTimeoutWrapper extends TimeoutWrapper implements
 				mTrackerApp.removeArtifactDependency(arg0, arg1, arg2);
 				retryCall = false;
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -402,7 +402,7 @@ public class TrackerAppSoapTimeoutWrapper extends TimeoutWrapper implements
 				mTrackerApp.setArtifactData(arg0, arg1, arg2, arg3, arg4, arg5);
 				retryCall = false;
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -418,7 +418,7 @@ public class TrackerAppSoapTimeoutWrapper extends TimeoutWrapper implements
 				mTrackerApp.setField(arg0, arg1, arg2);
 				retryCall = false;
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -434,7 +434,7 @@ public class TrackerAppSoapTimeoutWrapper extends TimeoutWrapper implements
 				mTrackerApp.setTrackerData(arg0, arg1);
 				retryCall = false;
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;

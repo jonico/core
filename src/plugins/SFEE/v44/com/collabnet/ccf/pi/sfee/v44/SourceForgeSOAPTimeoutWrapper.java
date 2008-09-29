@@ -40,7 +40,7 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 				sfSoap.addGroupMember(arg0, arg1, arg2);
 				retryCall = false;
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -56,7 +56,7 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 				sfSoap.addProjectMember(arg0, arg1, arg2);
 				retryCall = false;
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -72,7 +72,7 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 				sfSoap.createAssociation(arg0, arg1, arg2, arg3);
 				retryCall = false;
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -86,7 +86,7 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				return sfSoap.createGroup(arg0, arg1, arg2);
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -100,7 +100,7 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				return sfSoap.createProject(arg0, arg1, arg2, arg3);
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -115,7 +115,7 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 				return sfSoap.createProjectFromTemplate(arg0, arg1, arg2, arg3,
 						arg4);
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -131,7 +131,7 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 				return sfSoap.createUser(arg0, arg1, arg2, arg3, arg4, arg5,
 						arg6, arg7, arg8);
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -147,7 +147,7 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 				sfSoap.deleteAssociation(arg0, arg1, arg2);
 				retryCall = false;
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -163,7 +163,7 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 				sfSoap.deleteAttachment(arg0, arg1, arg2);
 				retryCall = false;
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -178,7 +178,7 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 				sfSoap.deleteGroup(arg0, arg1);
 				retryCall = false;
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -193,7 +193,7 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 				sfSoap.deleteProject(arg0, arg1);
 				retryCall = false;
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -207,7 +207,7 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				return sfSoap.findProjects(arg0, arg1);
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -221,7 +221,7 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				return sfSoap.findUsers(arg0, arg1);
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -235,7 +235,7 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				return sfSoap.getActiveGroupMembers(arg0, arg1);
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -248,7 +248,7 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				return sfSoap.getApiVersion();
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -262,7 +262,7 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				return sfSoap.getAssociationList(arg0, arg1);
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -276,7 +276,7 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				return sfSoap.getAuditHistoryList(arg0, arg1);
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -290,7 +290,7 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				return sfSoap.getCommentList(arg0, arg1);
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -304,7 +304,7 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				return sfSoap.getConfigurationValue(arg0, arg1);
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -318,7 +318,7 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				return sfSoap.getGroupData(arg0, arg1);
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -332,7 +332,7 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				return sfSoap.getGroupList(arg0, arg1);
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -346,7 +346,7 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				return sfSoap.getProjectAccessLevel(arg0, arg1);
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -360,7 +360,7 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				return sfSoap.getProjectData(arg0, arg1);
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -374,7 +374,7 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				return sfSoap.getProjectDiskUsage(arg0, arg1);
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -388,7 +388,7 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				return sfSoap.getProjectGroupList(arg0, arg1);
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -401,7 +401,7 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				return sfSoap.getProjectList(arg0);
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -415,7 +415,7 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				return sfSoap.getProjectListForUser(arg0, arg1);
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -429,7 +429,7 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				return sfSoap.getProjectMemberList(arg0, arg1);
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -443,7 +443,7 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				return sfSoap.getProjectQuota(arg0, arg1);
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -457,7 +457,7 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				return sfSoap.getProjectListForUser(arg0, arg1);
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -471,7 +471,7 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				return sfSoap.getUserData(arg0, arg1);
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -485,7 +485,7 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				return sfSoap.getUserGroupList(arg0, arg1);
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -499,7 +499,7 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				return sfSoap.getUserList(arg0, arg1);
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -513,7 +513,7 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				return sfSoap.getUserProjectList(arg0);
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -526,7 +526,7 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				return sfSoap.getVersion(arg0);
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -540,7 +540,7 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				return sfSoap.getVersionInformationList(arg0, arg1);
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -554,7 +554,7 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				return sfSoap.hasPermission(arg0, arg1, arg2, arg3);
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -567,7 +567,7 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				return sfSoap.isHostedMode(arg0);
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -587,7 +587,7 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				return sfSoap.listAttachments(arg0, arg1);
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -600,7 +600,7 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				return sfSoap.listTemplates(arg0);
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -613,7 +613,7 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				return sfSoap.login(arg0, arg1);
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -626,7 +626,7 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				return sfSoap.loginAnonymous(arg0);
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -640,7 +640,7 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				return sfSoap.loginWithToken(arg0, arg1);
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -655,7 +655,7 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 				sfSoap.logoff(arg0, arg1);
 				retryCall = false;
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -670,7 +670,7 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 				sfSoap.reindexObject(arg0, arg1);
 				retryCall = false;
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -686,7 +686,7 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 				sfSoap.removeGroupMember(arg0, arg1, arg2);
 				retryCall = false;
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -703,7 +703,7 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 				sfSoap.removeProjectMember(arg0, arg1, arg2);
 				retryCall = false;
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -719,7 +719,7 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 				sfSoap.setGroupData(arg0, arg1);
 				retryCall = false;
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -735,7 +735,7 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 				sfSoap.setProjectAccessLevel(arg0, arg1, arg2);
 				retryCall = false;
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -751,7 +751,7 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 				sfSoap.setProjectQuota(arg0, arg1, arg2);
 				retryCall = false;
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -767,7 +767,7 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 				sfSoap.setUserData(arg0, arg1);
 				retryCall = false;
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;

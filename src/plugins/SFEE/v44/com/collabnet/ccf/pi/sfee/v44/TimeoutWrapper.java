@@ -5,6 +5,8 @@ import java.rmi.RemoteException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.collabnet.ccf.core.eis.connection.ConnectionManager;
+
 public class TimeoutWrapper {
 
 	private static final Log log = LogFactory.getLog(TimeoutWrapper.class);
@@ -13,9 +15,10 @@ public class TimeoutWrapper {
 	 * This method determines whether the exception is timeout related and will be handled in this method or whether it should be handled by another layer
 	 * @param e exception that was intercepted
 	 * @param numberOfTries number this method was already called for the same method call, this will help to determine the timeout
+	 * @param connectionManager this object is used to retrieve timeout related configuration parameters 
 	 * @return true if exception was handled here and method call should be retried, false if exception should be passed to next layer
 	 */
-	protected boolean handleException(RemoteException e, int numberOfTries) {
+	protected boolean handleException(RemoteException e, int numberOfTries, ConnectionManager<Connection> connectionManager) {
 		Throwable cause=e.getCause();
 		if (cause instanceof java.net.SocketException || cause instanceof java.net.UnknownHostException ) {
 			if (numberOfTries == 1) {

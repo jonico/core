@@ -1,5 +1,7 @@
 package com.collabnet.ccf.pi.sfee.v44;
 
+import java.rmi.RemoteException;
+
 import com.vasoftware.sf.soap44.webservices.sfmain.ISourceForgeSoap;
 
 /**
@@ -20,6 +22,7 @@ public class Connection {
 	private ISourceForgeSoap mSfSoap;
 	private String mSessionId;
 	private String userName;
+	private String password;
 	
 	/**
 	 * Constructs a holder object for the 
@@ -28,15 +31,17 @@ public class Connection {
 	 * 		3) the username
 	 * 
 	 * @param username - the connector username
+	 * @param password - the connector password 
 	 * @param sfSoap - The ISourceForgeSoap object that is connected to the SOAP
 	 * 					server
 	 * @param sessionId - The login session id
 	 */
-	public Connection(String username, ISourceForgeSoap sfSoap,
+	public Connection(String username, String password, ISourceForgeSoap sfSoap,
 			String sessionId) {
 		this.userName = username;
 		this.mSfSoap = sfSoap;
 		this.mSessionId = sessionId;
+		this.password=password;
 	}
 	
 	/**
@@ -58,11 +63,31 @@ public class Connection {
 	}
 	
 	/**
-	 * Returns the username that is used to login into the SFEE SOAP APi server
+	 * Returns the password for the SOAP API calls
+	 * 
+	 * @return
+	 */
+	private String getPassword() {
+		return password;
+	}
+	
+	/**
+	 * Returns the username that is used to login into the SFEE SOAP API server
 	 * 
 	 * @return - The user name
 	 */
 	public String getUserName() {
 		return userName;
+	}
+	
+	/**
+	 * Relogins the user and changes the session id.
+	 * @return New session id
+	 * @throws RemoteException
+	 *             when an error is encountered during login.
+	 */
+	public String relogin() throws RemoteException {
+	    mSessionId = mSfSoap.login(userName, password);
+	    return mSessionId;
 	}
 }

@@ -27,7 +27,7 @@ public class FileStorageSOAPTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				return fileStorageSoapApp.downloadFile(arg0, arg1);
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -41,7 +41,7 @@ public class FileStorageSOAPTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				return fileStorageSoapApp.downloadFileDirect(arg0, arg1, arg2);
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -55,7 +55,7 @@ public class FileStorageSOAPTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				return fileStorageSoapApp.uploadFile(arg0, arg1);
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;

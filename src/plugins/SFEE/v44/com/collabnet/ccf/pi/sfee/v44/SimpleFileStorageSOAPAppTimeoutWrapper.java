@@ -26,7 +26,7 @@ public class SimpleFileStorageSOAPAppTimeoutWrapper extends TimeoutWrapper
 				fileStorageApp.endFileUpload(arg0, arg1);
 				retryCall = false;
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -39,7 +39,7 @@ public class SimpleFileStorageSOAPAppTimeoutWrapper extends TimeoutWrapper
 			try {
 				return fileStorageApp.getSize(arg0, arg1);
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -53,7 +53,7 @@ public class SimpleFileStorageSOAPAppTimeoutWrapper extends TimeoutWrapper
 			try {
 				return fileStorageApp.read(arg0, arg1, arg2, arg3);
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -66,7 +66,7 @@ public class SimpleFileStorageSOAPAppTimeoutWrapper extends TimeoutWrapper
 			try {
 				return fileStorageApp.startFileUpload(arg0);
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;
@@ -82,7 +82,7 @@ public class SimpleFileStorageSOAPAppTimeoutWrapper extends TimeoutWrapper
 				fileStorageApp.write(arg0, arg1, arg2);
 				retryCall = false;
 			} catch (RemoteException e) {
-				if (!handleException(e, numberOfTries))
+				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
 			++numberOfTries;

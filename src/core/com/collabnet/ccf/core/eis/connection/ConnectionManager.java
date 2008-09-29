@@ -1,5 +1,9 @@
 package com.collabnet.ccf.core.eis.connection;
 
+
+import java.util.WeakHashMap;
+
+
 /**
  * The connection manager is responsible to manage the connection pools
  * for each source/target system.
@@ -53,6 +57,8 @@ package com.collabnet.ccf.core.eis.connection;
  */
 public final class ConnectionManager<T> {
 	private ConnectionPool<T> pool = new ConnectionPool<T>();
+	
+	private WeakHashMap<String,T> connectionLookupTable= new WeakHashMap<String,T>();
 
 	/**
 	 * Returns a Connection object for a particular system and repository
@@ -172,5 +178,25 @@ public final class ConnectionManager<T> {
 	 */
 	public void setScavengerInterval(long scavengerInterval) {
 		pool.setScavengerInterval(scavengerInterval);
+	}
+	
+	/**
+	 * This method allows to store a connection under a certain key so that it can be retrieved later
+	 * The connection is stored in a weak hash map so that the entry is automaticaly removed if no component
+	 * uses the connection any more
+	 * @param key
+	 * @param connection
+	 */
+	public void registerConnection(String key, T connection) {
+			connectionLookupTable.put(key, connection);
+	}
+	
+	/**
+	 * Returns the connection associated with the key if the connection is still used
+	 * @param key key under which the connection was registered
+	 * @return connection associated with the key or null if no connection was found
+	 */
+	public T lookupRegisteredConnection(String key) {
+		return connectionLookupTable.get(key);
 	}
 }

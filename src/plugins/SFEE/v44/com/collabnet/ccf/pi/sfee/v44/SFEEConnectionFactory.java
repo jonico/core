@@ -83,7 +83,8 @@ public class SFEEConnectionFactory implements ConnectionFactory<Connection> {
 		String sessionId = null;
 		try {
 			sessionId = login(sfSoap, username, password);
-			connection = new Connection(username, sfSoap, sessionId);
+			connection = new Connection(username, password, sfSoap, sessionId);
+			connectionManager.registerConnection(sessionId, connection);
 		} catch (RemoteException e) {
 			String cause = "While trying to login into SFEE "+ connectionInfo 
 								+" an exception occured: "+e.getMessage();
