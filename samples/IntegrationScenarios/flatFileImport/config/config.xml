@@ -165,5 +165,6 @@ artifacts data from a CSV file into an SFEE tracker.
 			sync info db xml document.
 		</description>
   		<property name="hospitalFileName" value="${ccf.hospital.file}"/>
+  		<property name="artifactsDirectory" value="${ccf.hospital.artifacts.directory}"></property>
   	</bean>
 </beans>
