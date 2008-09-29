@@ -63,6 +63,14 @@ public class Connection {
 	}
 	
 	/**
+	 * Sets the login session id for the SOAP API calls
+	 * 
+	 */
+	private void setSessionId(String sessionId) {
+		mSessionId=sessionId;
+	}
+	
+	/**
 	 * Returns the password for the SOAP API calls
 	 * 
 	 * @return
@@ -87,7 +95,7 @@ public class Connection {
 	 *             when an error is encountered during login.
 	 */
 	public String relogin() throws RemoteException {
-	    mSessionId = mSfSoap.login(userName, password);
-	    return mSessionId;
+	    setSessionId(getSfSoap().login(getUserName(), getPassword()));
+	    return getSessionId();
 	}
 }

@@ -3,6 +3,7 @@ package com.collabnet.ccf.pi.sfee.v44;
 import java.rmi.RemoteException;
 
 import com.collabnet.ccf.core.eis.connection.ConnectionManager;
+import com.vasoftware.sf.soap44.fault.InvalidSessionFault;
 import com.vasoftware.sf.soap44.types.SoapFieldValues;
 import com.vasoftware.sf.soap44.types.SoapFilter;
 import com.vasoftware.sf.soap44.types.SoapSortKey;
@@ -44,7 +45,12 @@ public class TrackerAppSoapTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				mTrackerApp.addDateField(arg0, arg1, arg2, arg3, arg4, arg5);
 				retryCall = false;
-			} catch (RemoteException e) {
+			}
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -62,7 +68,12 @@ public class TrackerAppSoapTimeoutWrapper extends TimeoutWrapper implements
 				mTrackerApp.addMultiSelectField(arg0, arg1, arg2, arg3, arg4,
 						arg5, arg6, arg7, arg8);
 				retryCall = false;
-			} catch (RemoteException e) {
+			}
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -80,7 +91,12 @@ public class TrackerAppSoapTimeoutWrapper extends TimeoutWrapper implements
 				mTrackerApp.addSingleSelectField(arg0, arg1, arg2, arg3, arg4,
 						arg5, arg6, arg7);
 				retryCall = false;
-			} catch (RemoteException e) {
+			}
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -98,7 +114,12 @@ public class TrackerAppSoapTimeoutWrapper extends TimeoutWrapper implements
 				mTrackerApp.addTextField(arg0, arg1, arg2, arg3, arg4, arg5,
 						arg6, arg7, arg8);
 				retryCall = false;
-			} catch (RemoteException e) {
+			}
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -116,7 +137,12 @@ public class TrackerAppSoapTimeoutWrapper extends TimeoutWrapper implements
 				mTrackerApp.addUserSelectField(arg0, arg1, arg2, arg3, arg4,
 						arg5, arg6, arg7, arg8);
 				retryCall = false;
-			} catch (RemoteException e) {
+			}
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -132,7 +158,12 @@ public class TrackerAppSoapTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				mTrackerApp.copyWorkflowTransitions(arg0, arg1, arg2);
 				retryCall = false;
-			} catch (RemoteException e) {
+			}
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -151,7 +182,12 @@ public class TrackerAppSoapTimeoutWrapper extends TimeoutWrapper implements
 				return mTrackerApp.createArtifact(arg0, arg1, arg2, arg3, arg4,
 						arg5, arg6, arg7, arg8, arg9, arg10, arg11, arg12,
 						arg13, arg14, arg15);
-			} catch (RemoteException e) {
+			}
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -167,7 +203,12 @@ public class TrackerAppSoapTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				mTrackerApp.createArtifactDependency(arg0, arg1, arg2, arg3);
 				retryCall = false;
-			} catch (RemoteException e) {
+			}
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -181,7 +222,12 @@ public class TrackerAppSoapTimeoutWrapper extends TimeoutWrapper implements
 		while (true) {
 			try {
 				return mTrackerApp.createTracker(arg0, arg1, arg2, arg3, arg4);
-			} catch (RemoteException e) {
+			}
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -196,7 +242,12 @@ public class TrackerAppSoapTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				mTrackerApp.deleteArtifact(arg0, arg1);
 				retryCall = false;
-			} catch (RemoteException e) {
+			}
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -212,7 +263,12 @@ public class TrackerAppSoapTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				mTrackerApp.deleteField(arg0, arg1, arg2);
 				retryCall = false;
-			} catch (RemoteException e) {
+			}
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -226,7 +282,12 @@ public class TrackerAppSoapTimeoutWrapper extends TimeoutWrapper implements
 		while (true) {
 			try {
 				return mTrackerApp.findArtifacts(arg0, arg1, arg2, arg3);
-			} catch (RemoteException e) {
+			} 
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -240,7 +301,12 @@ public class TrackerAppSoapTimeoutWrapper extends TimeoutWrapper implements
 		while (true) {
 			try {
 				return mTrackerApp.getAllowedWorkflowTransitionList(arg0, arg1);
-			} catch (RemoteException e) {
+			}
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -254,7 +320,12 @@ public class TrackerAppSoapTimeoutWrapper extends TimeoutWrapper implements
 		while (true) {
 			try {
 				return mTrackerApp.getArtifactData(arg0, arg1);
-			} catch (RemoteException e) {
+			}
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -271,7 +342,12 @@ public class TrackerAppSoapTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				return mTrackerApp.getArtifactDetailList(arg0, arg1, arg2,
 						arg3, arg4, arg5, arg6, arg7, arg8);
-			} catch (RemoteException e) {
+			} 
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -285,7 +361,12 @@ public class TrackerAppSoapTimeoutWrapper extends TimeoutWrapper implements
 		while (true) {
 			try {
 				return mTrackerApp.getArtifactList(arg0, arg1, arg2);
-			} catch (RemoteException e) {
+			}
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -299,7 +380,12 @@ public class TrackerAppSoapTimeoutWrapper extends TimeoutWrapper implements
 		while (true) {
 			try {
 				return mTrackerApp.getChildDependencyList(arg0, arg1);
-			} catch (RemoteException e) {
+			}
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -313,7 +399,12 @@ public class TrackerAppSoapTimeoutWrapper extends TimeoutWrapper implements
 		while (true) {
 			try {
 				return mTrackerApp.getFields(arg0, arg1);
-			} catch (RemoteException e) {
+			}
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -327,7 +418,12 @@ public class TrackerAppSoapTimeoutWrapper extends TimeoutWrapper implements
 		while (true) {
 			try {
 				return mTrackerApp.getParentDependencyList(arg0, arg1);
-			} catch (RemoteException e) {
+			} 
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -341,7 +437,12 @@ public class TrackerAppSoapTimeoutWrapper extends TimeoutWrapper implements
 		while (true) {
 			try {
 				return mTrackerApp.getTrackerData(arg0, arg1);
-			} catch (RemoteException e) {
+			}
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -355,7 +456,12 @@ public class TrackerAppSoapTimeoutWrapper extends TimeoutWrapper implements
 		while (true) {
 			try {
 				return mTrackerApp.getTrackerList(arg0, arg1);
-			} catch (RemoteException e) {
+			}
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -369,7 +475,12 @@ public class TrackerAppSoapTimeoutWrapper extends TimeoutWrapper implements
 		while (true) {
 			try {
 				return mTrackerApp.moveArtifact(arg0, arg1, arg2, arg3);
-			} catch (RemoteException e) {
+			}
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -385,7 +496,12 @@ public class TrackerAppSoapTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				mTrackerApp.removeArtifactDependency(arg0, arg1, arg2);
 				retryCall = false;
-			} catch (RemoteException e) {
+			}
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -401,7 +517,12 @@ public class TrackerAppSoapTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				mTrackerApp.setArtifactData(arg0, arg1, arg2, arg3, arg4, arg5);
 				retryCall = false;
-			} catch (RemoteException e) {
+			}
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -417,7 +538,12 @@ public class TrackerAppSoapTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				mTrackerApp.setField(arg0, arg1, arg2);
 				retryCall = false;
-			} catch (RemoteException e) {
+			}
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -433,7 +559,12 @@ public class TrackerAppSoapTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				mTrackerApp.setTrackerData(arg0, arg1);
 				retryCall = false;
-			} catch (RemoteException e) {
+			}
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}

@@ -20,6 +20,8 @@ import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.utils.DateUtil;
+import com.vasoftware.sf.soap44.fault.InvalidSessionFault;
+import com.vasoftware.sf.soap44.fault.NoSuchObjectFault;
 import com.vasoftware.sf.soap44.webservices.filestorage.IFileStorageAppSoap;
 import com.vasoftware.sf.soap44.webservices.filestorage.ISimpleFileStorageAppSoap;
 import com.vasoftware.sf.soap44.webservices.sfmain.AttachmentSoapList;
@@ -77,15 +79,37 @@ public class SFEEAttachmentHandler {
 	public ArtifactSoapDO attachFileToArtifact(String sessionId, String artifactId,
 						String comment, String fileName, String mimeType, byte[] data)
 			throws RemoteException {
-		
-		String fileDescriptor = fileStorageApp.startFileUpload(sessionId);
-		fileStorageApp.write(sessionId, fileDescriptor, data);
-		fileStorageApp.endFileUpload(sessionId, fileDescriptor);
-			
-		ArtifactSoapDO soapDo = mTrackerApp.getArtifactData(sessionId, artifactId);
-		mTrackerApp.setArtifactData(sessionId, soapDo, comment,
-					fileName, mimeType, fileDescriptor);
-		soapDo = mTrackerApp.getArtifactData(sessionId, artifactId);
+		ArtifactSoapDO soapDo = null;
+		boolean retryCall=true;
+		while (retryCall) {
+			retryCall=false;
+			String fileDescriptor = fileStorageApp.startFileUpload(sessionId);
+			try {
+				fileStorageApp.write(sessionId, fileDescriptor, data);
+				fileStorageApp.endFileUpload(sessionId, fileDescriptor);
+					
+				soapDo = mTrackerApp.getArtifactData(sessionId, artifactId);
+				boolean fileAttached = true;
+				while (fileAttached) {
+					try {
+						fileAttached=false;
+						mTrackerApp.setArtifactData(sessionId, soapDo, comment,
+								fileName, mimeType, fileDescriptor);
+					} catch (com.vasoftware.sf.soap44.fault.VersionMismatchFault e) {
+						log.warn("Stale attachment update, trying again ...:", e);
+						soapDo.setVersion(soapDo.getVersion()+1);
+						fileAttached = true;
+					}
+				}
+			}
+			catch (InvalidSessionFault e) {
+				log.warn("While uploading an attachment, the session id became invalid",e);
+				retryCall=true;
+			}
+		}
+		// we have to increase the version after the update
+		// TODO Find out whether this really works if last modified date differs from actual last modified date
+		soapDo.setVersion(soapDo.getVersion()+1);
 		return soapDo;
 	}
 	
@@ -100,28 +124,35 @@ public class SFEEAttachmentHandler {
 	 * @throws RemoteException
 	 */
 	public byte[] getAttachmentData(String sessionId, String fileId, long size, String folderId) throws RemoteException{
-		DataHandler dataHandler = fileStorageSoapApp.downloadFileDirect(sessionId, folderId, fileId);
+		boolean retryCall=true;
 		byte[] data = null;
-		BufferedInputStream is = null;
-		try {
-			is = new BufferedInputStream(dataHandler.getInputStream());
-			//TODO not a safe cast here...
-			data = new byte[(int)size];
-			int readLength = is.read(data);
-			if(readLength == size){
-				//Good that we read all the data
-			}
-			else {
-				//TODO something wrong
-			}
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		} finally {
-			if(is != null){
-				try {
-					is.close();
-				} catch (IOException e) {
-					log.error("By closing the attachment stream, an errr occured: "+e.getMessage());
+		while (retryCall) {
+			retryCall=false;
+			DataHandler dataHandler = fileStorageSoapApp.downloadFileDirect(sessionId, folderId, fileId);
+			BufferedInputStream is = null;
+			try {
+				is = new BufferedInputStream(dataHandler.getInputStream());
+				//TODO not a safe cast here...
+				data = new byte[(int)size];
+				int readLength = is.read(data);
+				if(readLength == size){
+					//Good that we read all the data
+				}
+				else {
+					// FIXME What if the attachment's size has been changed in the mean time?
+					log.error("While reading data from the attachment stream, less data than expected was returned.");
+				}
+			} catch (IOException e) {
+				//throw new RuntimeException(e);
+					log.error("An IO-Error while reading the attachment stream occured, trying again: ",e);
+					retryCall=true;
+			} finally {
+				if(is != null){
+					try {
+						is.close();
+					} catch (IOException e) {
+						log.error("By closing the attachment stream, an error occured: "+e.getMessage());
+					}
 				}
 			}
 		}

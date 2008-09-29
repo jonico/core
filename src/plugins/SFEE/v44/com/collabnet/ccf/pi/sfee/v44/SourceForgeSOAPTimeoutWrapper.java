@@ -3,6 +3,7 @@ package com.collabnet.ccf.pi.sfee.v44;
 import java.rmi.RemoteException;
 
 import com.collabnet.ccf.core.eis.connection.ConnectionManager;
+import com.vasoftware.sf.soap44.fault.InvalidSessionFault;
 import com.vasoftware.sf.soap44.types.SoapFilter;
 import com.vasoftware.sf.soap44.webservices.ClientSoapStubFactory;
 import com.vasoftware.sf.soap44.webservices.sfmain.AssociationSoapList;
@@ -39,7 +40,12 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				sfSoap.addGroupMember(arg0, arg1, arg2);
 				retryCall = false;
-			} catch (RemoteException e) {
+			} 
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -55,7 +61,12 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				sfSoap.addProjectMember(arg0, arg1, arg2);
 				retryCall = false;
-			} catch (RemoteException e) {
+			} 
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -71,7 +82,12 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				sfSoap.createAssociation(arg0, arg1, arg2, arg3);
 				retryCall = false;
-			} catch (RemoteException e) {
+			} 
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -85,7 +101,12 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 		while (true) {
 			try {
 				return sfSoap.createGroup(arg0, arg1, arg2);
-			} catch (RemoteException e) {
+			} 
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -99,7 +120,12 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 		while (true) {
 			try {
 				return sfSoap.createProject(arg0, arg1, arg2, arg3);
-			} catch (RemoteException e) {
+			} 
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -114,7 +140,12 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				return sfSoap.createProjectFromTemplate(arg0, arg1, arg2, arg3,
 						arg4);
-			} catch (RemoteException e) {
+			} 
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -130,7 +161,12 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				return sfSoap.createUser(arg0, arg1, arg2, arg3, arg4, arg5,
 						arg6, arg7, arg8);
-			} catch (RemoteException e) {
+			} 
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -146,7 +182,12 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				sfSoap.deleteAssociation(arg0, arg1, arg2);
 				retryCall = false;
-			} catch (RemoteException e) {
+			} 
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -162,7 +203,12 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				sfSoap.deleteAttachment(arg0, arg1, arg2);
 				retryCall = false;
-			} catch (RemoteException e) {
+			}
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -177,7 +223,12 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				sfSoap.deleteGroup(arg0, arg1);
 				retryCall = false;
-			} catch (RemoteException e) {
+			} 
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -192,7 +243,12 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				sfSoap.deleteProject(arg0, arg1);
 				retryCall = false;
-			} catch (RemoteException e) {
+			}
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -206,7 +262,12 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 		while (true) {
 			try {
 				return sfSoap.findProjects(arg0, arg1);
-			} catch (RemoteException e) {
+			}
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -220,7 +281,12 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 		while (true) {
 			try {
 				return sfSoap.findUsers(arg0, arg1);
-			} catch (RemoteException e) {
+			}
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -234,7 +300,12 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 		while (true) {
 			try {
 				return sfSoap.getActiveGroupMembers(arg0, arg1);
-			} catch (RemoteException e) {
+			}
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -247,7 +318,8 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 		while (true) {
 			try {
 				return sfSoap.getApiVersion();
-			} catch (RemoteException e) {
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -261,7 +333,12 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 		while (true) {
 			try {
 				return sfSoap.getAssociationList(arg0, arg1);
-			} catch (RemoteException e) {
+			}
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -275,7 +352,12 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 		while (true) {
 			try {
 				return sfSoap.getAuditHistoryList(arg0, arg1);
-			} catch (RemoteException e) {
+			} 
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -289,7 +371,12 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 		while (true) {
 			try {
 				return sfSoap.getCommentList(arg0, arg1);
-			} catch (RemoteException e) {
+			} 
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -303,7 +390,12 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 		while (true) {
 			try {
 				return sfSoap.getConfigurationValue(arg0, arg1);
-			} catch (RemoteException e) {
+			}
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -317,7 +409,12 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 		while (true) {
 			try {
 				return sfSoap.getGroupData(arg0, arg1);
-			} catch (RemoteException e) {
+			}
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -331,7 +428,12 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 		while (true) {
 			try {
 				return sfSoap.getGroupList(arg0, arg1);
-			} catch (RemoteException e) {
+			}
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -345,7 +447,12 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 		while (true) {
 			try {
 				return sfSoap.getProjectAccessLevel(arg0, arg1);
-			} catch (RemoteException e) {
+			}
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -359,7 +466,12 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 		while (true) {
 			try {
 				return sfSoap.getProjectData(arg0, arg1);
-			} catch (RemoteException e) {
+			} 
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -373,7 +485,12 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 		while (true) {
 			try {
 				return sfSoap.getProjectDiskUsage(arg0, arg1);
-			} catch (RemoteException e) {
+			} 
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -387,7 +504,12 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 		while (true) {
 			try {
 				return sfSoap.getProjectGroupList(arg0, arg1);
-			} catch (RemoteException e) {
+			}
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -400,7 +522,12 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 		while (true) {
 			try {
 				return sfSoap.getProjectList(arg0);
-			} catch (RemoteException e) {
+			}
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -414,7 +541,12 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 		while (true) {
 			try {
 				return sfSoap.getProjectListForUser(arg0, arg1);
-			} catch (RemoteException e) {
+			}
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -428,7 +560,12 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 		while (true) {
 			try {
 				return sfSoap.getProjectMemberList(arg0, arg1);
-			} catch (RemoteException e) {
+			}
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -442,7 +579,12 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 		while (true) {
 			try {
 				return sfSoap.getProjectQuota(arg0, arg1);
-			} catch (RemoteException e) {
+			}
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -456,7 +598,12 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 		while (true) {
 			try {
 				return sfSoap.getProjectListForUser(arg0, arg1);
-			} catch (RemoteException e) {
+			}
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -470,7 +617,12 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 		while (true) {
 			try {
 				return sfSoap.getUserData(arg0, arg1);
-			} catch (RemoteException e) {
+			}
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -484,7 +636,12 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 		while (true) {
 			try {
 				return sfSoap.getUserGroupList(arg0, arg1);
-			} catch (RemoteException e) {
+			}
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -498,7 +655,12 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 		while (true) {
 			try {
 				return sfSoap.getUserList(arg0, arg1);
-			} catch (RemoteException e) {
+			}
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -512,7 +674,12 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 		while (true) {
 			try {
 				return sfSoap.getUserProjectList(arg0);
-			} catch (RemoteException e) {
+			} 
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -525,7 +692,12 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 		while (true) {
 			try {
 				return sfSoap.getVersion(arg0);
-			} catch (RemoteException e) {
+			}
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -539,7 +711,12 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 		while (true) {
 			try {
 				return sfSoap.getVersionInformationList(arg0, arg1);
-			} catch (RemoteException e) {
+			}
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -553,7 +730,12 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 		while (true) {
 			try {
 				return sfSoap.hasPermission(arg0, arg1, arg2, arg3);
-			} catch (RemoteException e) {
+			}
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -566,7 +748,12 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 		while (true) {
 			try {
 				return sfSoap.isHostedMode(arg0);
-			} catch (RemoteException e) {
+			}
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -586,7 +773,12 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 		while (true) {
 			try {
 				return sfSoap.listAttachments(arg0, arg1);
-			} catch (RemoteException e) {
+			}
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -599,7 +791,12 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 		while (true) {
 			try {
 				return sfSoap.listTemplates(arg0);
-			} catch (RemoteException e) {
+			}
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -654,7 +851,12 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				sfSoap.logoff(arg0, arg1);
 				retryCall = false;
-			} catch (RemoteException e) {
+			}
+			catch (InvalidSessionFault e) {
+				// ignore this one since we are already logged out
+				retryCall=false;
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -669,7 +871,12 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				sfSoap.reindexObject(arg0, arg1);
 				retryCall = false;
-			} catch (RemoteException e) {
+			} 
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -685,7 +892,12 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				sfSoap.removeGroupMember(arg0, arg1, arg2);
 				retryCall = false;
-			} catch (RemoteException e) {
+			} 
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -702,7 +914,12 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				sfSoap.removeProjectMember(arg0, arg1, arg2);
 				retryCall = false;
-			} catch (RemoteException e) {
+			}
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -718,7 +935,12 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				sfSoap.setGroupData(arg0, arg1);
 				retryCall = false;
-			} catch (RemoteException e) {
+			} 
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -734,7 +956,12 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				sfSoap.setProjectAccessLevel(arg0, arg1, arg2);
 				retryCall = false;
-			} catch (RemoteException e) {
+			}
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -750,7 +977,12 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				sfSoap.setProjectQuota(arg0, arg1, arg2);
 				retryCall = false;
-			} catch (RemoteException e) {
+			} 
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -766,7 +998,12 @@ public class SourceForgeSOAPTimeoutWrapper extends TimeoutWrapper implements
 			try {
 				sfSoap.setUserData(arg0, arg1);
 				retryCall = false;
-			} catch (RemoteException e) {
+			} 
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}

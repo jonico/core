@@ -129,7 +129,8 @@ public class SFEEWriter extends LifecycleComponent implements
 					SFEEGAHelper.addField(ga, ArtifactMetaData.SFEEFields.id.getFieldName(), targetArtifactId,
 							GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD,
 							GenericArtifactField.FieldValueTypeValue.STRING);
-					ga.setTargetArtifactId(targetArtifactId);
+					// this is already done in the populate target artifact method
+					//ga.setTargetArtifactId(targetArtifactId);
 				} catch (NumberFormatException e) {
 					log.error("Wrong data format of attribute for artifact "
 							+ data.asXML(), e);

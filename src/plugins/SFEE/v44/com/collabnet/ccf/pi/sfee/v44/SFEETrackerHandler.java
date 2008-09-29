@@ -267,8 +267,20 @@ public class SFEETrackerHandler {
 		newFlexFields.setValues(flexFieldValues.toArray());
 		newFlexFields.setTypes(flexFieldTypes.toArray(new String[0]));
 		artifactData.setFlexFields(newFlexFields);
-		mTrackerApp.setArtifactData(sessionId, artifactData, "Synchronized by Connector User", null,
-				null, null);
+		
+		boolean initialUpdated = true;
+		while (initialUpdated) {
+			try {
+				initialUpdated=false;
+				mTrackerApp.setArtifactData(sessionId, artifactData, "Synchronized by Connector User", null,
+						null, null);
+			} catch (com.vasoftware.sf.soap44.fault.VersionMismatchFault e) {
+				log.warn("Stale initial update, trying again ...:", e);
+				artifactData.setVersion(artifactData.getVersion()+1);
+				initialUpdated = true;
+			}
+		}
+		
 		for(String comment:comments) {
 			boolean commentNotUpdated = true;
 			while (commentNotUpdated) {

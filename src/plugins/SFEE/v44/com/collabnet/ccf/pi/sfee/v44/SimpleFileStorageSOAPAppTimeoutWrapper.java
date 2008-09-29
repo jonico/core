@@ -3,6 +3,7 @@ package com.collabnet.ccf.pi.sfee.v44;
 import java.rmi.RemoteException;
 
 import com.collabnet.ccf.core.eis.connection.ConnectionManager;
+import com.vasoftware.sf.soap44.fault.InvalidSessionFault;
 import com.vasoftware.sf.soap44.webservices.ClientSoapStubFactory;
 import com.vasoftware.sf.soap44.webservices.filestorage.ISimpleFileStorageAppSoap;
 
@@ -25,7 +26,9 @@ public class SimpleFileStorageSOAPAppTimeoutWrapper extends TimeoutWrapper
 			try {
 				fileStorageApp.endFileUpload(arg0, arg1);
 				retryCall = false;
-			} catch (RemoteException e) {
+			}
+			// we do not catch invalid session exceptions here since the file id would be invalid
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -38,7 +41,9 @@ public class SimpleFileStorageSOAPAppTimeoutWrapper extends TimeoutWrapper
 		while (true) {
 			try {
 				return fileStorageApp.getSize(arg0, arg1);
-			} catch (RemoteException e) {
+			}
+			// we do not catch invalid session exceptions here since the file id would be invalid
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -52,7 +57,9 @@ public class SimpleFileStorageSOAPAppTimeoutWrapper extends TimeoutWrapper
 		while (true) {
 			try {
 				return fileStorageApp.read(arg0, arg1, arg2, arg3);
-			} catch (RemoteException e) {
+			} 
+			// we do not catch invalid session exceptions here since the file id would be invalid
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -65,7 +72,12 @@ public class SimpleFileStorageSOAPAppTimeoutWrapper extends TimeoutWrapper
 		while (true) {
 			try {
 				return fileStorageApp.startFileUpload(arg0);
-			} catch (RemoteException e) {
+			}
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -81,7 +93,9 @@ public class SimpleFileStorageSOAPAppTimeoutWrapper extends TimeoutWrapper
 			try {
 				fileStorageApp.write(arg0, arg1, arg2);
 				retryCall = false;
-			} catch (RemoteException e) {
+			}
+			// we do not catch invalid session exceptions here since the file id would be invalid
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}

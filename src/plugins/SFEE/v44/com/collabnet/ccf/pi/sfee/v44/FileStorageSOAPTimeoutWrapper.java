@@ -5,6 +5,7 @@ import java.rmi.RemoteException;
 import javax.activation.DataHandler;
 
 import com.collabnet.ccf.core.eis.connection.ConnectionManager;
+import com.vasoftware.sf.soap44.fault.InvalidSessionFault;
 import com.vasoftware.sf.soap44.webservices.ClientSoapStubFactory;
 import com.vasoftware.sf.soap44.webservices.filestorage.IFileStorageAppSoap;
 
@@ -26,7 +27,12 @@ public class FileStorageSOAPTimeoutWrapper extends TimeoutWrapper implements
 		while (true) {
 			try {
 				return fileStorageSoapApp.downloadFile(arg0, arg1);
-			} catch (RemoteException e) {
+			} 
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -40,7 +46,12 @@ public class FileStorageSOAPTimeoutWrapper extends TimeoutWrapper implements
 		while (true) {
 			try {
 				return fileStorageSoapApp.downloadFileDirect(arg0, arg1, arg2);
-			} catch (RemoteException e) {
+			}
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
@@ -54,7 +65,12 @@ public class FileStorageSOAPTimeoutWrapper extends TimeoutWrapper implements
 		while (true) {
 			try {
 				return fileStorageSoapApp.uploadFile(arg0, arg1);
-			} catch (RemoteException e) {
+			} 
+			catch (InvalidSessionFault e) {
+				// arg0 is the invalid session id
+				arg0 = retryLogin(arg0, e, numberOfTries, connectionManager);
+			}
+			catch (RemoteException e) {
 				if (!handleException(e, numberOfTries, connectionManager))
 					throw e;
 			}
