@@ -1,25 +1,21 @@
 package com.collabnet.ccf.core.eis.connection;
 
-
 import java.util.WeakHashMap;
 
-
 /**
- * The connection manager is responsible to manage the connection pools
- * for each source/target system.
- * It creates and manages one pool per repository.
- * As the connection manager does not know the type of the connection object
- * for each and every system that exists in the world, it depends on the 
- * ConnectionFactory class to retrive a connection for a particular system.
- * The plugin providers should implement the ConnectionFactory 
- * (com.collabnet.ccf.core.eis.connection.ConnectionFactory) by properly parameterizing the
- * connection object's class into the implemented class.
- * In the wiring configuration file they need to set the ConnectionFactory bean
- * in the ConnectionManager's connectionFactory property.
+ * The connection manager is responsible to manage the connection pools for each
+ * source/target system. It creates and manages one pool per repository. As the
+ * connection manager does not know the type of the connection object for each
+ * and every system that exists in the world, it depends on the
+ * ConnectionFactory class to retrive a connection for a particular system. The
+ * plugin providers should implement the ConnectionFactory
+ * (com.collabnet.ccf.core.eis.connection.ConnectionFactory) by properly
+ * parameterizing the connection object's class into the implemented class. In
+ * the wiring configuration file they need to set the ConnectionFactory bean in
+ * the ConnectionManager's connectionFactory property.
  * 
- *  A sample wiring file
- * snippet that configures a ConnectionManager to manage SFEE connections is shown below.
- * <code>
+ * A sample wiring file snippet that configures a ConnectionManager to manage
+ * SFEE connections is shown below. <code>
  * <bean id="SFEEConnectionManager"
  * 		class="com.collabnet.ccf.core.eis.connection.ConnectionManager">
  * 		<description>
@@ -47,144 +43,181 @@ import java.util.WeakHashMap;
  * 		</description>
  * 	</bean>
  * </code>
+ * 
  * @author Madhusuthanan Seetharam (madhusuthanan@collab.net)
- *
- * @param <T> - The class of the connection object to be managed
- * 				As the connection object class will vary depending on the 
- * 				system that we connect, the connection manager needs to know the
- * 				class of the connection object that it should manage.
+ * 
+ * @param <T> -
+ *            The class of the connection object to be managed As the connection
+ *            object class will vary depending on the system that we connect,
+ *            the connection manager needs to know the class of the connection
+ *            object that it should manage.
  * 
  */
 public final class ConnectionManager<T> {
-	
+
 	/**
-	 * This object is used to pool connections in order not to open a
-	 * new connection for every single request
+	 * This object is used to pool connections in order not to open a new
+	 * connection for every single request
 	 */
 	private ConnectionPool<T> pool = new ConnectionPool<T>();
-	
+
 	/**
-	 * This property (true by default) determines whether after a timeout
-	 * while calling an operation on the connection, the operation should be
-	 * tried again 
+	 * This property (true by default) determines whether after a timeout while
+	 * calling an operation on the connection, the operation should be tried
+	 * again
 	 */
-	private boolean enableRetryAfterNetworkTimeout=true;
-	
+	private boolean enableRetryAfterNetworkTimeout = true;
+
 	/**
-	 * This property (true by default) determines whether after detecting
-	 * a session timeout, it should be tried to reconnect using the credentials
-	 * of the last login 
+	 * This configuration value (default is 120000 ms) specifies the maximum
+	 * amount of milliseconds, the retry mechanism will wait before retrying an
+	 * operation after network related timeouts. The value is specified in
+	 * milliseconds
 	 */
-	private boolean enableReloginAfterSessionTimeout=true;
-	
+	private int maximumRetryWaitingTime = 120000;
+
 	/**
-	 * This property (false by default) determines whether the standard
-	 * retry code for network and login related exceptions should be used
-	 * or whether a component specific retry policy should be applied
+	 * This value (default 5000 ms) specifies how much to increase the sleeping
+	 * interval for every try that is made to retry a timed out operation.
 	 */
-	private boolean useStandardTimeoutHandlingCode=false;
-	
-	private WeakHashMap<String,T> connectionLookupTable= new WeakHashMap<String,T>();
+	private int retryIncrementTime = 5000;
+
+	/**
+	 * This property (true by default) determines whether after detecting a
+	 * session timeout, it should be tried to reconnect using the credentials of
+	 * the last login
+	 */
+	private boolean enableReloginAfterSessionTimeout = true;
+
+	/**
+	 * This property (false by default) determines whether the standard retry
+	 * code for network and login related exceptions should be used or whether a
+	 * component specific retry policy should be applied
+	 */
+	private boolean useStandardTimeoutHandlingCode = false;
+
+	private WeakHashMap<String, T> connectionLookupTable = new WeakHashMap<String, T>();
 
 	/**
 	 * Returns a Connection object for a particular system and repository
-	 * combination from the pool. The connection information typically contains the server url
-	 * to which the connection to be made.
-	 * The credential information typically has the username and password concatenated
-	 * by a delimiter.
-	 * The connection info and credential info are used by the ConnectionFactory
-	 * to create a connection.
+	 * combination from the pool. The connection information typically contains
+	 * the server url to which the connection to be made. The credential
+	 * information typically has the username and password concatenated by a
+	 * delimiter. The connection info and credential info are used by the
+	 * ConnectionFactory to create a connection.
 	 * 
-	 * @param systemId - The system id for the system to which the connection is to
-	 * 					 be made 
-	 * @param systemKind - System kind for the system to which the connection to be made
-	 * @param repositoryId - The repository id for the repository to which the connection
-	 * 						 to be created
-	 * @param repositoryKind - The repository kind for the repository
-	 * @param connectionInfo - Connection information. Typically contains the server
-	 * 						   name or URL
-	 * @param credentialInfo - Credential information for the system and repository combination.
-	 * 						   Typically contains the username and password separated by a
-	 * 						   delimiter.
+	 * @param systemId -
+	 *            The system id for the system to which the connection is to be
+	 *            made
+	 * @param systemKind -
+	 *            System kind for the system to which the connection to be made
+	 * @param repositoryId -
+	 *            The repository id for the repository to which the connection
+	 *            to be created
+	 * @param repositoryKind -
+	 *            The repository kind for the repository
+	 * @param connectionInfo -
+	 *            Connection information. Typically contains the server name or
+	 *            URL
+	 * @param credentialInfo -
+	 *            Credential information for the system and repository
+	 *            combination. Typically contains the username and password
+	 *            separated by a delimiter.
 	 * @return
-	 * @throws MaxConnectionsReachedException - when the maximum connections for the
-	 * 			particular repository exceeded.
-	 * @throws ConnectionException 
+	 * @throws MaxConnectionsReachedException -
+	 *             when the maximum connections for the particular repository
+	 *             exceeded.
+	 * @throws ConnectionException
 	 */
-	public T getConnection(String systemId,
-			String systemKind, String repositoryId,
-			String repositoryKind, String connectionInfo,
-			String credentialInfo) throws MaxConnectionsReachedException, ConnectionException{
+	public T getConnection(String systemId, String systemKind,
+			String repositoryId, String repositoryKind, String connectionInfo,
+			String credentialInfo) throws MaxConnectionsReachedException,
+			ConnectionException {
 		return pool.getConnection(systemId, systemKind, repositoryId,
-				repositoryKind, connectionInfo, credentialInfo,this);
+				repositoryKind, connectionInfo, credentialInfo, this);
 	}
+
 	/**
 	 * Releases the connection to the pool. When the Readers/Writers are done
-	 * with the connection object, they should release the connection to the pool.
-	 * If the connection is not released, further calls to the getConnection
-	 * will result in the creation of new Connection objects and accumulations of the
-	 * connection objects will lead to the MaxConnectionsReachedException on
-	 * further calls to the getConnection() method.
+	 * with the connection object, they should release the connection to the
+	 * pool. If the connection is not released, further calls to the
+	 * getConnection will result in the creation of new Connection objects and
+	 * accumulations of the connection objects will lead to the
+	 * MaxConnectionsReachedException on further calls to the getConnection()
+	 * method.
+	 * 
 	 * @param connection
 	 */
-	public void releaseConnection(T connection){
+	public void releaseConnection(T connection) {
 		pool.releaseConnection(connection);
 	}
+
 	/**
 	 * Sets the ConnectionFactory object that knows how to create a connection
-	 * to a particular repository.
-	 * This object is an instance of the class that is implemented by the plugin
-	 * developer by implementing the ConnectionFactory interface.
+	 * to a particular repository. This object is an instance of the class that
+	 * is implemented by the plugin developer by implementing the
+	 * ConnectionFactory interface.
+	 * 
 	 * @param factory
 	 */
-	public void setConnectionFactory(ConnectionFactory<T> factory){
+	public void setConnectionFactory(ConnectionFactory<T> factory) {
 		pool.setFactory(factory);
 	}
+
 	/**
 	 * Returns the ConnectionFactory object.
+	 * 
 	 * @return - an instance of the ConnectionFactory class implemented by the
-	 * 			plugin developer.
+	 *         plugin developer.
 	 */
-	public ConnectionFactory<T> getConnectionFactory(){
+	public ConnectionFactory<T> getConnectionFactory() {
 		return pool.getFactory();
 	}
+
 	/**
 	 * Returns the maximum connection configured per pool.
+	 * 
 	 * @return - Maximum connections limit per pool
 	 */
 	public int getMaxConnectionsPerPool() {
 		return pool.getMaxConnectionsPerPool();
 	}
+
 	/**
 	 * Sets the maximum number of connections allowed per pool.
 	 * 
-	 * As the connection manager maintains a connection pool per
-	 * repository this property applies to each pool that is managed
-	 * by the ConnectionManager.
+	 * As the connection manager maintains a connection pool per repository this
+	 * property applies to each pool that is managed by the ConnectionManager.
 	 * 
-	 * @param maxConnectionsPerPool - Maximum connections per pool
+	 * @param maxConnectionsPerPool -
+	 *            Maximum connections per pool
 	 */
 	public void setMaxConnectionsPerPool(int maxConnectionsPerPool) {
 		pool.setMaxConnectionsPerPool(maxConnectionsPerPool);
 	}
+
 	/**
 	 * Returns the maximum idle time for a connection object in milliseconds.
+	 * 
 	 * @return - The maximum idle time for the connections in the pool.
 	 */
 	public long getMaxIdleTimeForConnection() {
 		return pool.getMaxIdleTime();
 	}
+
 	/**
-	 * Sets the maximum time that a connection can be idle in a pool.
-	 * If there are connections that stay unused for a longer time
-	 * than the maxIdleTimeForConnection they are closed and removed by the scavenger
+	 * Sets the maximum time that a connection can be idle in a pool. If there
+	 * are connections that stay unused for a longer time than the
+	 * maxIdleTimeForConnection they are closed and removed by the scavenger
 	 * thread.
 	 * 
-	 * @param maxIdleTimeForConnection - The maximum idle time for the connections in the pool.
+	 * @param maxIdleTimeForConnection -
+	 *            The maximum idle time for the connections in the pool.
 	 */
 	public void setMaxIdleTimeForConnection(long maxIdleTimeForConnection) {
 		pool.setMaxIdleTime(maxIdleTimeForConnection);
 	}
+
 	/**
 	 * Returns the interval in which the scavenger thread is run
 	 * 
@@ -193,89 +226,158 @@ public final class ConnectionManager<T> {
 	public long getScavengerInterval() {
 		return pool.getScavengerInterval();
 	}
+
 	/**
 	 * Sets the interval between scavenger thread runs.
 	 * 
-	 * The scavenger thread is responsible to close connections that are
-	 * not used for the maxIdleTimeForConnection. This property sets the interval
+	 * The scavenger thread is responsible to close connections that are not
+	 * used for the maxIdleTimeForConnection. This property sets the interval
 	 * between two successive scavenger thread runs.
 	 * 
-	 * @param scavengerInterval - Interval between successive scavenger thread runs.
+	 * @param scavengerInterval -
+	 *            Interval between successive scavenger thread runs.
 	 */
 	public void setScavengerInterval(long scavengerInterval) {
 		pool.setScavengerInterval(scavengerInterval);
 	}
-	
+
 	/**
-	 * This method allows to store a connection under a certain key so that it can be retrieved later
-	 * The connection is stored in a weak hash map so that the entry is automaticaly removed if no component
-	 * uses the connection any more
+	 * This method allows to store a connection under a certain key so that it
+	 * can be retrieved later The connection is stored in a weak hash map so
+	 * that the entry is automaticaly removed if no component uses the
+	 * connection any more
+	 * 
 	 * @param key
 	 * @param connection
 	 */
 	public void registerConnection(String key, T connection) {
-			connectionLookupTable.put(key, connection);
+		connectionLookupTable.put(key, connection);
 	}
-	
+
 	/**
-	 * Returns the connection associated with the key if the connection is still used
-	 * @param key key under which the connection was registered
-	 * @return connection associated with the key or null if no connection was found
+	 * Returns the connection associated with the key if the connection is still
+	 * used
+	 * 
+	 * @param key
+	 *            key under which the connection was registered
+	 * @return connection associated with the key or null if no connection was
+	 *         found
 	 */
 	public T lookupRegisteredConnection(String key) {
 		return connectionLookupTable.get(key);
 	}
+
 	/**
 	 * Set whether to retry operations after a network timeout or not
-	 * @param enableRetryAfterNetworkTimeout the enableRetryAfterNetworkTimeout to set
+	 * 
+	 * @param enableRetryAfterNetworkTimeout
+	 *            the enableRetryAfterNetworkTimeout to set
 	 */
 	public void setEnableRetryAfterNetworkTimeout(
 			boolean enableRetryAfterNetworkTimeout) {
 		this.enableRetryAfterNetworkTimeout = enableRetryAfterNetworkTimeout;
 	}
+
 	/**
 	 * Returns whether to retry operations after a network timeout or not
 	 * Default is true
+	 * 
 	 * @return the enableRetryAfterNetworkTimeout
 	 */
 	public boolean isEnableRetryAfterNetworkTimeout() {
 		return enableRetryAfterNetworkTimeout;
 	}
-	
+
 	/**
-	 * Sets whether to relogin and retry operations after a session timeout or not
-	 * @param enableReloginAfterSessionTimeout the enableReloginAfterSessionTimeout to set
+	 * Sets whether to relogin and retry operations after a session timeout or
+	 * not
+	 * 
+	 * @param enableReloginAfterSessionTimeout
+	 *            the enableReloginAfterSessionTimeout to set
 	 */
 	public void setEnableReloginAfterSessionTimeout(
 			boolean enableReloginAfterSessionTimeout) {
 		this.enableReloginAfterSessionTimeout = enableReloginAfterSessionTimeout;
 	}
+
 	/**
-	 * Returns whether to relogin and retry operations after a session timeout or not
-	 * Default is true
+	 * Returns whether to relogin and retry operations after a session timeout
+	 * or not Default is true
+	 * 
 	 * @return the enableReloginAfterSessionTimeout
 	 */
 	public boolean isEnableReloginAfterSessionTimeout() {
 		return enableReloginAfterSessionTimeout;
 	}
+
 	/**
 	 * Sets whether to use the standard code for reconnects and relogins after
-	 * network related timeouts and invalid session objects or whether to use
-	 * a custom implementation
-	 * @param useStandardTimeoutHandlingCode the useStandardTimeoutHandlingCode to set
+	 * network related timeouts and invalid session objects or whether to use a
+	 * custom implementation
+	 * 
+	 * @param useStandardTimeoutHandlingCode
+	 *            the useStandardTimeoutHandlingCode to set
 	 */
 	public void setUseStandardTimeoutHandlingCode(
 			boolean useStandardTimeoutHandlingCode) {
 		this.useStandardTimeoutHandlingCode = useStandardTimeoutHandlingCode;
 	}
+
 	/**
 	 * Sets whether to use the standard code for reconnects and relogins after
-	 * network related timeouts and invalid session objects or whether to use
-	 * a custom implementation
-	 * Default is false
+	 * network related timeouts and invalid session objects or whether to use a
+	 * custom implementation Default is false
+	 * 
 	 * @return the useStandardTimeoutHandlingCode
 	 */
 	public boolean isUseStandardTimeoutHandlingCode() {
 		return useStandardTimeoutHandlingCode;
+	}
+
+	/**
+	 * Sets the value (default is 120000 ms) to specify the maximum amount of
+	 * milliseconds, the retry mechanism will wait before retrying an operation
+	 * after network related timeouts. The value is specified in milliseconds
+	 * 
+	 * @param maximumRetryWaitingTime
+	 *            the maximumRetryWaitingTime to set
+	 */
+	public void setMaximumRetryWaitingTime(int maximumRetryWaitingTime) {
+		this.maximumRetryWaitingTime = maximumRetryWaitingTime;
+	}
+
+	/**
+	 * Gets the value (default is 120000 ms) that specifies the maximum amount
+	 * of milliseconds, the retry mechanism will wait before retrying an
+	 * operation after network related timeouts. The value is specified in
+	 * milliseconds
+	 * 
+	 * @return the maximumRetryWaitingTime
+	 */
+	public int getMaximumRetryWaitingTime() {
+		return maximumRetryWaitingTime;
+	}
+
+	/**
+	 * Set the value (default 5000 ms) to specify how much to increase the
+	 * sleeping interval for every try that is made to retry a timed out
+	 * operation.
+	 * 
+	 * @param retryIncrementTime
+	 *            the retryIncrementTime to set
+	 */
+	public void setRetryIncrementTime(int retryIncrementTime) {
+		this.retryIncrementTime = retryIncrementTime;
+	}
+
+	/**
+	 * Get the value (default 5000 ms) to specify how much to increase the
+	 * sleeping interval for every try that is made to retry a timed out
+	 * operation.
+	 * 
+	 * @return the retryIncrementTime
+	 */
+	public int getRetryIncrementTime() {
+		return retryIncrementTime;
 	}
 }

@@ -27,13 +27,17 @@ public class TimeoutWrapper {
 	 *            parameters
 	 * @return true if exception was handled here and method call should be
 	 *         retried, false if exception should be passed to next layer
-	 * @throws RemoteException 
+	 * @throws RemoteException
 	 */
 	protected boolean handleException(RemoteException e, int numberOfTries,
-			ConnectionManager<Connection> connectionManager) throws RemoteException {
+			ConnectionManager<Connection> connectionManager)
+			throws RemoteException {
 		if (!connectionManager.isEnableRetryAfterNetworkTimeout())
 			throw e;
-		
+		int msToSleep = (numberOfTries - 1)
+				* connectionManager.getRetryIncrementTime();
+		int maxMsToSleep = connectionManager.getMaximumRetryWaitingTime();
+
 		Throwable cause = e.getCause();
 		if (cause instanceof java.net.SocketException
 				|| cause instanceof java.net.UnknownHostException) {
@@ -43,24 +47,30 @@ public class TimeoutWrapper {
 						.warn(
 								"Network related problem occurred while calling SFEE/CSFE webservice. Try operation again",
 								e);
-			} else if (numberOfTries < 7) {
+			} else if (msToSleep < maxMsToSleep) {
 				// error occurred again, short error message, go to sleep
-				int timeOut = (int) Math.pow(2, numberOfTries);
+				// we switched to a linear increase of the timeout value, may
+				// have to revisit this decision later
+				// int timeOut = (int) Math.pow(2, numberOfTries);
 				log.warn("Network related error occurred again ("
-						+ e.getMessage() + "), sleeping for " + timeOut
-						+ " seconds.");
+						+ e.getMessage()
+						+ "), incremented timeout, now sleeping for "
+						+ msToSleep + " milliseconds.");
 				try {
-					Thread.sleep(timeOut * 1000);
+					Thread.sleep(msToSleep);
 				} catch (InterruptedException e1) {
 					log.error("Interrupted sleep in timeout method: ", e1);
 				}
 			} else {
 				// error occurred more than 6 times, short error message, go to
 				// sleep for two minutes
-				log.warn("Network related error occurred again ("
-						+ e.getMessage() + ") , sleeping for two minutes.");
+				log
+						.warn("Network related error occurred again, switched to maximum waiting time ("
+								+ e.getMessage()
+								+ "), sleeping for "
+								+ maxMsToSleep + " milliseconds.");
 				try {
-					Thread.sleep(120000);
+					Thread.sleep(maxMsToSleep);
 				} catch (InterruptedException e1) {
 					log.error("Interrupted sleep in timeout method: ", e1);
 				}
