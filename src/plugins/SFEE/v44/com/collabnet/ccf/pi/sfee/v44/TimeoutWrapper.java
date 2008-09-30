@@ -115,6 +115,8 @@ public class TimeoutWrapper {
 			// unknown exceptions
 			try {
 				newSessionId = connection.relogin();
+				// register new session id
+				connectionManager.registerConnection(newSessionId, connection);
 			} catch (RemoteException e1) {
 				log.error("While trying to relogin an error occured:", e1);
 				// throw the exception we have not been able to fix
