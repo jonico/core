@@ -15,7 +15,6 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.openadaptor.spring.SpringAdaptor;
-import org.openadaptor.spring.SpringApplication;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.support.BeanDefinitionReader;
 import org.springframework.beans.factory.support.PropertiesBeanDefinitionReader;
@@ -37,8 +36,14 @@ import org.xml.sax.SAXException;
 import com.collabnet.ccf.core.CCFRuntimeException;
 import com.collabnet.ccf.core.hospital.HospitalEntry;
 
+
+// FIXME What about successfully replayed artifacts?
+// FIXME Use another user for the replay script to force resync?
+// FIXME How to replay just a set of artifacts
+// FIXME Should we include the entity service in front of the source component to avoid duplicates? 
 public class HospitalArtifactReplayer extends SpringAdaptor {
 	public static final String HOSPITAL = "-hospital";
+	// FIXME Should this constant be configurable?
 	public static final String REPLAY_WORK_DIR = "logs/replay/work";
 	private DocumentBuilder builder = null;
 	HospitalEntry entry = null;
@@ -68,6 +73,7 @@ public class HospitalArtifactReplayer extends SpringAdaptor {
 	public static void main(String[] args){
 		String hospitalFileName = null;
 		String[] springAppArgs = new String[args.length - 2];
+		// FIXME What happens if -hospital is the last parameter?
 		for(int i=0, j=0; i < args.length; i++, j++){
 			if(args[i].equals(HOSPITAL)){
 				hospitalFileName = args[++i];
@@ -186,6 +192,7 @@ public class HospitalArtifactReplayer extends SpringAdaptor {
 		    	componentConfigFileMap.put(configComponentIdentifier, outputFile);
 			}
 			
+			// FIXME Use of deprecated method
 			UrlResource newUrlResource = new UrlResource(outputFile.toURL().toString());
 			((XmlBeanDefinitionReader)reader).registerBeanDefinitions(document, newUrlResource);
 	      } catch (BeansException e) {
@@ -242,6 +249,7 @@ public class HospitalArtifactReplayer extends SpringAdaptor {
 			NamedNodeMap atts = beanNode.getAttributes();
 			Node beanIdNode = atts.getNamedItem("id");
 			String beanId = beanIdNode.getNodeValue();
+			// FIXME What happens if the router component is not called router
 			if(beanId.equals("Router")){
 				NodeList routerPropertyNodes = ((Element)beanNode).getElementsByTagName("property");
 				for(int j=0; j < routerPropertyNodes.getLength(); j++){
@@ -282,6 +290,7 @@ public class HospitalArtifactReplayer extends SpringAdaptor {
 			NamedNodeMap nodeMap = node.getAttributes();
 			Node idNode = nodeMap.getNamedItem("id");
 			String id = idNode.getNodeValue();
+			// FIXME What happens if the router is not called router?
 			if(id.equals("Router")){
 				routerNode = node;
 			}
@@ -295,6 +304,7 @@ public class HospitalArtifactReplayer extends SpringAdaptor {
 			NamedNodeMap nodeMap = node.getAttributes();
 			Node nameNode = nodeMap.getNamedItem("name");
 			String value = nameNode.getNodeValue();
+			// FIXME What happens if no map is used within the router?
 			if(value.equals("processMap")){
 				NodeList propertyChilds = ((Element)node).getElementsByTagName("map");
 				Node mapNode = propertyChilds.item(0);
@@ -302,6 +312,9 @@ public class HospitalArtifactReplayer extends SpringAdaptor {
 			}
 		}
 	}
+	
+	// FIXME Will only work if all router entries are in a certain order
+	// FIXME What happens with components that have mutiple outputs? 
 	private void removeProcessors(Node mapNode) {
 		NodeList entryNodes = ((Element)mapNode).getElementsByTagName("entry");
 		String sourceComponent = entry.getSourceComponent();
