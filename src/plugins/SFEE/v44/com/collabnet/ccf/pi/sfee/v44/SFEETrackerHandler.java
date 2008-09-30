@@ -15,6 +15,7 @@ import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.vasoftware.sf.soap44.types.SoapFieldValues;
 import com.vasoftware.sf.soap44.types.SoapFilter;
 import com.vasoftware.sf.soap44.types.SoapSortKey;
+import com.vasoftware.sf.soap44.webservices.ClientSoapStubFactory;
 import com.vasoftware.sf.soap44.webservices.sfmain.TrackerFieldSoapDO;
 import com.vasoftware.sf.soap44.webservices.tracker.ArtifactDependencySoapRow;
 import com.vasoftware.sf.soap44.webservices.tracker.ArtifactDetailSoapRow;
@@ -41,9 +42,14 @@ public class SFEETrackerHandler {
 	 */
 	public SFEETrackerHandler(String serverUrl, ConnectionManager<Connection> connectionManager) {
 		// enable this if you do not like to have the retry code enabled
-		//mTrackerApp = (ITrackerAppSoap) ClientSoapStubFactory.getSoapStub(
-		//		ITrackerAppSoap.class, serverUrl);
-		mTrackerApp = new TrackerAppSoapTimeoutWrapper(serverUrl,connectionManager);
+		
+		if (connectionManager.isUseStandardTimeoutHandlingCode()) {
+			mTrackerApp = (ITrackerAppSoap) ClientSoapStubFactory.getSoapStub(
+				ITrackerAppSoap.class, serverUrl);
+		}
+		else {
+			mTrackerApp = new TrackerAppSoapTimeoutWrapper(serverUrl,connectionManager);
+		}
 	}
 
 	/**

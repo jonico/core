@@ -203,11 +203,11 @@ public final class ConnectionPool<T> {
 				for(ConnectionInfo info: connectionInfos){
 					boolean isConnectionFree = info.isFree();
 					if(isConnectionFree){
-						T retreivedConnection = info.getConnection();
-						boolean isConnectionAlive = factory.isAlive(retreivedConnection);
+						T retrievedConnection = info.getConnection();
+						boolean isConnectionAlive = factory.isAlive(retrievedConnection);
 						if(isConnectionAlive){
 							info.poppedFromPool();
-							connection = retreivedConnection;
+							connection = retrievedConnection;
 							break;
 						}
 					}

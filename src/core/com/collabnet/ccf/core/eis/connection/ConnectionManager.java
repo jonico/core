@@ -56,7 +56,33 @@ import java.util.WeakHashMap;
  * 
  */
 public final class ConnectionManager<T> {
+	
+	/**
+	 * This object is used to pool connections in order not to open a
+	 * new connection for every single request
+	 */
 	private ConnectionPool<T> pool = new ConnectionPool<T>();
+	
+	/**
+	 * This property (true by default) determines whether after a timeout
+	 * while calling an operation on the connection, the operation should be
+	 * tried again 
+	 */
+	private boolean enableRetryAfterNetworkTimeout=true;
+	
+	/**
+	 * This property (true by default) determines whether after detecting
+	 * a session timeout, it should be tried to reconnect using the credentials
+	 * of the last login 
+	 */
+	private boolean enableReloginAfterSessionTimeout=true;
+	
+	/**
+	 * This property (false by default) determines whether the standard
+	 * retry code for network and login related exceptions should be used
+	 * or whether a component specific retry policy should be applied
+	 */
+	private boolean useStandardTimeoutHandlingCode=false;
 	
 	private WeakHashMap<String,T> connectionLookupTable= new WeakHashMap<String,T>();
 
@@ -198,5 +224,58 @@ public final class ConnectionManager<T> {
 	 */
 	public T lookupRegisteredConnection(String key) {
 		return connectionLookupTable.get(key);
+	}
+	/**
+	 * Set whether to retry operations after a network timeout or not
+	 * @param enableRetryAfterNetworkTimeout the enableRetryAfterNetworkTimeout to set
+	 */
+	public void setEnableRetryAfterNetworkTimeout(
+			boolean enableRetryAfterNetworkTimeout) {
+		this.enableRetryAfterNetworkTimeout = enableRetryAfterNetworkTimeout;
+	}
+	/**
+	 * Returns whether to retry operations after a network timeout or not
+	 * Default is true
+	 * @return the enableRetryAfterNetworkTimeout
+	 */
+	public boolean isEnableRetryAfterNetworkTimeout() {
+		return enableRetryAfterNetworkTimeout;
+	}
+	
+	/**
+	 * Sets whether to relogin and retry operations after a session timeout or not
+	 * @param enableReloginAfterSessionTimeout the enableReloginAfterSessionTimeout to set
+	 */
+	public void setEnableReloginAfterSessionTimeout(
+			boolean enableReloginAfterSessionTimeout) {
+		this.enableReloginAfterSessionTimeout = enableReloginAfterSessionTimeout;
+	}
+	/**
+	 * Returns whether to relogin and retry operations after a session timeout or not
+	 * Default is true
+	 * @return the enableReloginAfterSessionTimeout
+	 */
+	public boolean isEnableReloginAfterSessionTimeout() {
+		return enableReloginAfterSessionTimeout;
+	}
+	/**
+	 * Sets whether to use the standard code for reconnects and relogins after
+	 * network related timeouts and invalid session objects or whether to use
+	 * a custom implementation
+	 * @param useStandardTimeoutHandlingCode the useStandardTimeoutHandlingCode to set
+	 */
+	public void setUseStandardTimeoutHandlingCode(
+			boolean useStandardTimeoutHandlingCode) {
+		this.useStandardTimeoutHandlingCode = useStandardTimeoutHandlingCode;
+	}
+	/**
+	 * Sets whether to use the standard code for reconnects and relogins after
+	 * network related timeouts and invalid session objects or whether to use
+	 * a custom implementation
+	 * Default is false
+	 * @return the useStandardTimeoutHandlingCode
+	 */
+	public boolean isUseStandardTimeoutHandlingCode() {
+		return useStandardTimeoutHandlingCode;
 	}
 }

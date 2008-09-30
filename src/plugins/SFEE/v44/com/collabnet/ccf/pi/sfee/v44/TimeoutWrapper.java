@@ -27,9 +27,13 @@ public class TimeoutWrapper {
 	 *            parameters
 	 * @return true if exception was handled here and method call should be
 	 *         retried, false if exception should be passed to next layer
+	 * @throws RemoteException 
 	 */
 	protected boolean handleException(RemoteException e, int numberOfTries,
-			ConnectionManager<Connection> connectionManager) {
+			ConnectionManager<Connection> connectionManager) throws RemoteException {
+		if (!connectionManager.isEnableRetryAfterNetworkTimeout())
+			throw e;
+		
 		Throwable cause = e.getCause();
 		if (cause instanceof java.net.SocketException
 				|| cause instanceof java.net.UnknownHostException) {
@@ -84,6 +88,8 @@ public class TimeoutWrapper {
 	protected String retryLogin(String sessionId, InvalidSessionFault e,
 			int numberOfTries, ConnectionManager<Connection> connectionManager)
 			throws InvalidSessionFault {
+		if (!connectionManager.isEnableReloginAfterSessionTimeout())
+			throw e;
 		if (numberOfTries == 1) {
 			// first try, long error message
 			log

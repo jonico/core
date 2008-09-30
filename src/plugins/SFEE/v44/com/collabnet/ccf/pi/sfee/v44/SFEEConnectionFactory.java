@@ -9,6 +9,7 @@ import org.apache.commons.logging.LogFactory;
 import com.collabnet.ccf.core.eis.connection.ConnectionException;
 import com.collabnet.ccf.core.eis.connection.ConnectionFactory;
 import com.collabnet.ccf.core.eis.connection.ConnectionManager;
+import com.vasoftware.sf.soap44.webservices.ClientSoapStubFactory;
 import com.vasoftware.sf.soap44.webservices.sfmain.ISourceForgeSoap;
 
 /**
@@ -78,8 +79,13 @@ public class SFEEConnectionFactory implements ConnectionFactory<Connection> {
 			}
 		}
 		Connection connection = null;
-		//ISourceForgeSoap sfSoap = (ISourceForgeSoap) ClientSoapStubFactory.getSoapStub(ISourceForgeSoap.class, connectionInfo);
-		ISourceForgeSoap sfSoap = new SourceForgeSOAPTimeoutWrapper(connectionInfo,connectionManager);
+		ISourceForgeSoap sfSoap = null;
+		if (connectionManager.isUseStandardTimeoutHandlingCode()) {
+			sfSoap = (ISourceForgeSoap) ClientSoapStubFactory.getSoapStub(ISourceForgeSoap.class, connectionInfo);
+		}
+		else {
+			sfSoap = new SourceForgeSOAPTimeoutWrapper(connectionInfo,connectionManager);
+		}
 		String sessionId = null;
 		try {
 			sessionId = login(sfSoap, username, password);
