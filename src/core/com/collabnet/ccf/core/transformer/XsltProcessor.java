@@ -30,6 +30,7 @@ import com.collabnet.ccf.core.CCFRuntimeException;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
+import com.collabnet.ccf.core.utils.CCFUtils;
 import com.collabnet.ccf.core.utils.XPathUtils;
 
 /**
@@ -223,6 +224,8 @@ public class XsltProcessor extends Component implements IDataProcessor {
 			String targetSystemId = XPathUtils.getAttributeValue(element, TARGET_SYSTEM_ID);
 			String sourceRepositoryId = XPathUtils.getAttributeValue(element, SOURCE_REPOSITORY_ID);
 			String targetRepositoryId = XPathUtils.getAttributeValue(element, TARGET_REPOSITORY_ID);
+			sourceRepositoryId = CCFUtils.getTempFileName(sourceRepositoryId);
+			targetRepositoryId = CCFUtils.getTempFileName(targetRepositoryId);
 			String xsltDir = this.xsltDir;
 			fileName = xsltDir+sourceSystemId+PARAM_DELIMITER+sourceRepositoryId+PARAM_DELIMITER+targetSystemId+PARAM_DELIMITER+targetRepositoryId+".xsl";
 		}
