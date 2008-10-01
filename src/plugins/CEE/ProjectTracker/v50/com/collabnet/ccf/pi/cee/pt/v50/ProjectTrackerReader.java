@@ -14,6 +14,7 @@ import javax.activation.DataHandler;
 import javax.xml.rpc.ServiceException;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dom4j.Document;
@@ -80,6 +81,7 @@ public class ProjectTrackerReader extends AbstractReader {
 		ptGATypesMap.put("EMAIL", GenericArtifactField.FieldValueTypeValue.STRING);
 		ptGATypesMap.put("LONG_TEXT", GenericArtifactField.FieldValueTypeValue.STRING);
 		ptGATypesMap.put("SINGLE_SELECT", GenericArtifactField.FieldValueTypeValue.STRING);
+		ptGATypesMap.put("USER", GenericArtifactField.FieldValueTypeValue.USER);
 	}
 
 	@Override
@@ -315,6 +317,7 @@ public class ProjectTrackerReader extends AbstractReader {
 				continue;
 			}
 			for(String attValue:attValues){
+				if(StringUtils.isEmpty(attValue)) continue;
 				GenericArtifactField field = null;
 				if(isAttributeRequired) {
 					field = ga.addNewField(attributeNamespaceDiaplayName,
@@ -329,13 +332,25 @@ public class ProjectTrackerReader extends AbstractReader {
 				field.setFieldValueHasChanged(true);
 				field.setFieldValueType(gaFieldType);
 				if(trackerAttribute.getAttributeType().equals("MULTI_SELECT") || 
-						trackerAttribute.getAttributeType().equals("SINGLE_SELECT")){
+						trackerAttribute.getAttributeType().equals("SINGLE_SELECT")||
+						trackerAttribute.getAttributeType().equals("STATE")){
 					ArtifactTypeMetadata metadata = metadataHelper.getArtifactTypeMetadata(
 							this.getRepositoryKey(syncInfo), artifactTypeNamespace, artifactTypeTagName);
 					attValue = this.convertOptionValue(attributeNamespace, attributeTagName,
 							attValue, metadata);
 				}
-				field.setFieldValue(attValue);
+				if(trackerAttribute.getAttributeType().equals("DATE")
+						|| attributeName.equals(CREATED_ON_FIELD_NAME)
+						|| attributeName.equals(MODIFIED_ON_FIELD_NAME)){
+					String dateStr = attValue;
+					if(!StringUtils.isEmpty(dateStr)){
+						Date date = new Date(Long.parseLong(dateStr));
+						field.setFieldValue(date);
+					}
+				}
+				else {
+					field.setFieldValue(attValue);
+				}
 				if(attributeName.equals(MODIFIED_ON_FIELD_NAME)){
 					String modifiedOnStr = attValue;
 					Date modifiedOnDate = new Date(Long.parseLong(modifiedOnStr));
@@ -355,6 +370,7 @@ public class ProjectTrackerReader extends AbstractReader {
 						if(historyList != null && historyList.length == 1){
 							History history = historyList[0];
 							int version = history.getHistoryTransaction().length;
+//							history.getHistoryTransaction()[0].getReason()
 							ga.setSourceArtifactVersion(Integer.toString(version));
 						}
 					} catch (Exception e) {

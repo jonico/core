@@ -211,17 +211,17 @@ public class ProjectTrackerWriter extends LifecycleComponent implements IDataPro
 		String artifactTypeDisplayName = targetRepositoryId.substring(targetRepositoryId.lastIndexOf(":")+1);
 		
 		TrackerWebServicesClient twsclient = null;
-		TrackerArtifactType trackerArtifactType =
-			metadataHelper.getTrackerArtifactType(repositoryKey);
 		
-		String targetArtifactTypeNamespace = trackerArtifactType.getNamespace();
-		String targetArtifactTypeTagName = trackerArtifactType.getTagName();
 		try {
 			twsclient = this.getConnection(ga);
+			TrackerArtifactType trackerArtifactType =
+				metadataHelper.getTrackerArtifactType(repositoryKey);
 			if(trackerArtifactType == null){
 				trackerArtifactType = metadataHelper.getTrackerArtifactType(repositoryKey,
 						artifactTypeDisplayName, twsclient);
 			}
+			String targetArtifactTypeNamespace = trackerArtifactType.getNamespace();
+			String targetArtifactTypeTagName = trackerArtifactType.getTagName();
 			List<ClientArtifact> cla = null;
 			cla = new ArrayList<ClientArtifact>();
 			ClientArtifact ca = this.getClientArtifactFromGenericArtifact(ga, twsclient,
@@ -303,8 +303,9 @@ public class ProjectTrackerWriter extends LifecycleComponent implements IDataPro
 				this.addComment(field,ca);
 			}
 			else{
+				System.out.println();
 				String fullyQualifiedFieldTagName = this.getFullyQualifiedFieldTagName(fieldDisplayName,
-						targetArtifactTypeTagName, trackerArtifactType);
+						namespace, trackerArtifactType);
 				TrackerAttribute trackerAttribute = trackerArtifactType.getAttribute(fullyQualifiedFieldTagName);
 				this.addAttribute(field, ca, trackerAttribute, fullyQualifiedFieldTagName, metadata);
 			}
