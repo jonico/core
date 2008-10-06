@@ -260,6 +260,7 @@
 		<copy todir="build/package/samples">
 			<fileset dir="samples">
 				<include name="README.txt"/>
+				<include name="CEE/**/*"/>
 				<include name="IntegrationScenarios/**/*"/>
 				<include name="centralCCFDatabase/**/*"/>
 			</fileset>
