@@ -45,6 +45,7 @@ import com.collabnet.tracker.ws.Option;
 
 public class ProjectTrackerWriter extends LifecycleComponent implements IDataProcessor {
 	private static final Log log = LogFactory.getLog(ProjectTrackerWriter.class);
+	private static final Log logConflictResolutor = LogFactory.getLog("com.collabnet.ccf.core.conflict.resolution");
 	private String serverUrl = null;
 	private String username = null;
 	private String password = null;
@@ -149,6 +150,32 @@ public class ProjectTrackerWriter extends LifecycleComponent implements IDataPro
 		TrackerWebServicesClient twsclient = this.getConnection(ga);
 		
 		try {
+			int version = this.getArtifactVerstion(targetArtifactId, new Date(0).getTime(),
+					new Date().getTime(), twsclient);
+			int lastSyncVersion = -1;
+			String lastSyncVersionStr = ga.getTargetArtifactVersion();
+			try{
+				lastSyncVersion = Integer.parseInt(lastSyncVersionStr);
+			}
+			catch(NumberFormatException e){
+				String message = "Last successful synchronization version of artifact "
+					+ targetArtifactId + " is not a number "+lastSyncVersionStr;
+				log.error(message, e);
+				throw new CCFRuntimeException(message, e);
+			}
+			if(lastSyncVersion < version){
+				String conflictResolutionPolicy = ga.getConflictResolutionPriority();
+				if(conflictResolutionPolicy.equals(GenericArtifact.VALUE_CONFLICT_RESOLUTION_PRIORITY_ALWAYS_IGNORE)){
+					logConflictResolutor.warn("Conflict detected for PT artifact "+targetArtifactId
+							+". Changes are ignored.");
+					ga.setArtifactAction(GenericArtifact.ArtifactActionValue.IGNORE);
+					return ga;
+				}
+				else {
+					logConflictResolutor.info("Conflict detected for PT artifact "+targetArtifactId
+							+". Changes are overridden.");
+				}
+			}
 			List<ClientArtifact> cla = null;
 			cla = new ArrayList<ClientArtifact>();
 			ClientArtifact ca = this.getClientArtifactFromGenericArtifact(ga, twsclient,
@@ -167,20 +194,7 @@ public class ProjectTrackerWriter extends LifecycleComponent implements IDataPro
 				ga.setTargetArtifactLastModifiedDate(DateUtil.format(modifiedOnDate));
 				String createdOn = artifact.getAttributeValue(
 						ProjectTrackerReader.TRACKER_NAMESPACE, ProjectTrackerReader.CREATED_ON_FIELD);
-				long createdOnTime = Long.parseLong(createdOn);
-				ArtifactHistoryList ahlVersion = 
-					twsclient.getChangeHistoryForArtifact(artifact.getArtifactID(),
-							createdOnTime, modifiedOnDate.getTime());
-				History[] historyList = ahlVersion.getHistory();
-				if(historyList != null && historyList.length == 1){
-					History history = historyList[0];
-					HistoryTransaction[] transactionList = history.getHistoryTransaction();
-					int version = 0;
-					if(transactionList != null){
-						version = transactionList.length;
-					}
-					ga.setTargetArtifactVersion(Integer.toString(version));
-				}
+				ga.setTargetArtifactVersion(Integer.toString(version+1));
 			}
 		} catch (WSException e) {
 			String message = "WSException while updating artifact " + targetArtifactId;
@@ -204,7 +218,24 @@ public class ProjectTrackerWriter extends LifecycleComponent implements IDataPro
 		}
 		return ga;
 	}
-
+	
+	private int getArtifactVerstion(String artifactId, long createdOnTime, long modifiedOnTime,
+			TrackerWebServicesClient twsclient) throws Exception{
+		ArtifactHistoryList ahlVersion = 
+			twsclient.getChangeHistoryForArtifact(artifactId,
+					createdOnTime, modifiedOnTime);
+		History[] historyList = ahlVersion.getHistory();
+		int version = 0;
+		if(historyList != null && historyList.length == 1){
+			History history = historyList[0];
+			HistoryTransaction[] transactionList = history.getHistoryTransaction();
+			if(transactionList != null){
+				version = transactionList.length;
+			}
+		}
+		return version;
+	}
+	
 	private GenericArtifact createProjectTrackerArtifact(GenericArtifact ga) {
 		String targetRepositoryId = ga.getTargetRepositoryId();
 		String repositoryKey = this.getRepositoryKey(ga);

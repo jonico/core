@@ -76,7 +76,10 @@ public class EntityService extends LifecycleComponent implements
 		Element element = null;
 		try {
 			element = XPathUtils.getRootElement(data);
-			
+			String artifactAction = XPathUtils.getAttributeValue(element, GenericArtifactHelper.ARTIFACT_ACTION);
+			if(artifactAction.equals(GenericArtifactHelper.ARTIFACT_ACTION_IGNORE)){
+				return new Object[]{data};
+			}
 			String artifactType = XPathUtils.getAttributeValue(element, GenericArtifactHelper.ARTIFACT_TYPE);
 			String sourceArtifactId = XPathUtils.getAttributeValue(element, GenericArtifactHelper.SOURCE_ARTIFACT_ID);
 			String sourceSystemId  = XPathUtils.getAttributeValue(element, GenericArtifactHelper.SOURCE_SYSTEM_ID);

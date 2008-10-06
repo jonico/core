@@ -60,8 +60,10 @@ public class ProjectTrackerReader extends AbstractReader {
 	public static final String TRACKER_NAMESPACE = "urn:ws.tracker.collabnet.com";
 	public static final String CREATED_ON_FIELD = "createdOn";
 	public static final String MODIFIED_ON_FIELD = "modifiedOn";
+	public static final String REASON_FIELD = "reason";
 	public static final String CREATED_ON_FIELD_NAME = "{"+TRACKER_NAMESPACE+"}"+CREATED_ON_FIELD;
 	public static final String MODIFIED_ON_FIELD_NAME = "{"+TRACKER_NAMESPACE+"}"+MODIFIED_ON_FIELD;
+	public static final String REASON_FIELD_NAME = "{"+TRACKER_NAMESPACE+"}"+REASON_FIELD;
 	public static final String ARTIFACT_VERSION_FIELD_NAME = "{urn:cu023.cubit.maa.collab.net/PT/IZ-PT/}version";
 	private MetaDataHelper metadataHelper = MetaDataHelper.getInstance();
 	private HashMap<String, String> attahcmentIDNameMap = null;
@@ -339,10 +341,14 @@ public class ProjectTrackerReader extends AbstractReader {
 					attValue = this.convertOptionValue(attributeNamespace, attributeTagName,
 							attValue, metadata);
 				}
+				else if(trackerAttribute.getAttributeType().equals("USER")){
+					field.setFieldValueType(GenericArtifactField.FieldValueTypeValue.USER);
+				}
 				if(trackerAttribute.getAttributeType().equals("DATE")
 						|| attributeName.equals(CREATED_ON_FIELD_NAME)
 						|| attributeName.equals(MODIFIED_ON_FIELD_NAME)){
 					String dateStr = attValue;
+					field.setFieldValueType(GenericArtifactField.FieldValueTypeValue.DATE);
 					if(!StringUtils.isEmpty(dateStr)){
 						Date date = new Date(Long.parseLong(dateStr));
 						field.setFieldValue(date);
@@ -369,8 +375,24 @@ public class ProjectTrackerReader extends AbstractReader {
 						History[] historyList = ahlVersion.getHistory();
 						if(historyList != null && historyList.length == 1){
 							History history = historyList[0];
-							int version = history.getHistoryTransaction().length;
-//							history.getHistoryTransaction()[0].getReason()
+							int version = 0;
+							if(history != null){
+								version = history.getHistoryTransaction().length;
+//								history.getHistoryTransaction()[0].getReason()
+								for(HistoryTransaction transaction:history.getHistoryTransaction()){
+									long historyTime = transaction.getModifiedOn();
+									if(historyTime > fromTime){
+										String reason = transaction.getReason();
+										GenericArtifactField reasonField = ga.addNewField(REASON_FIELD_NAME,
+												GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD);
+										reasonField.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
+										reasonField.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
+										reasonField.setFieldValueHasChanged(true);
+										reasonField.setFieldValueType(gaFieldType);
+										reasonField.setFieldValue(reason);
+									}
+								}
+							}
 							ga.setSourceArtifactVersion(Integer.toString(version));
 						}
 					} catch (Exception e) {

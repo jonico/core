@@ -11,7 +11,12 @@
 <xsl:stylesheet version="2.0"
 	xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:ccf="http://ccf.open.collab.net/GenericArtifactV1.0"
 	xmlns:xs="http://www.w3.org/2001/XMLSchema"
+	xmlns:ptutil="xalan://com.collabnet.ccf.pi.cee.pt.v50.ProjectTrackerHelper"
 	exclude-result-prefixes="xsl xs">
+	<xsl:variable name="sourceArtifactId" as="xs:string" select="/ccf:artifact/@sourceArtifactId"></xsl:variable>
+    <xsl:variable name="artifactTypeNameSpace" as="xs:string">
+        <xsl:value-of select="ptutil:getNamespaceWithBraces($sourceArtifactId)"/>
+    </xsl:variable>
 	<xsl:template match='/ccf:artifact[@artifactType = "plainArtifact"]'>
 		<artifact xmlns="http://ccf.open.collab.net/GenericArtifactV1.0">
 			<xsl:attribute name="artifactAction"><xsl:value-of select="@artifactAction" /></xsl:attribute>
@@ -65,7 +70,7 @@
 	  	</field>
 	</xsl:template>
 	<xsl:template
-		match='ccf:field[@fieldName="{urn:cu023.cubit.maa.collab.net/PT/IZ-PT/}summary"]'>
+		match='ccf:field[@fieldName=concat($artifactTypeNameSpace,"Summary")]'>
 		<field>
 		    <xsl:attribute name="fieldName">title</xsl:attribute>
 		    <xsl:attribute name="fieldDisplayName">Title</xsl:attribute>
@@ -82,7 +87,7 @@
 	  	</field>
 	</xsl:template>
 	<xsl:template
-		match='ccf:field[@fieldName="{urn:cu023.cubit.maa.collab.net/PT/IZ-PT/}description"]'>
+		match='ccf:field[@fieldName=concat($artifactTypeNameSpace,"Description")]'>
 		<field>
 		    <xsl:attribute name="fieldName">description</xsl:attribute>
 		    <xsl:attribute name="fieldDisplayName">Description</xsl:attribute>
@@ -100,7 +105,7 @@
 	</xsl:template>
 
 	<xsl:template
-		match='ccf:field[@fieldName="{urn:cu023.cubit.maa.collab.net/PT/IZ-PT/}status"]'>
+		match='ccf:field[@fieldName=concat($artifactTypeNameSpace,"Status")]'>
 		<xsl:variable name="statusValue" as="xs:string" select="." />
 		<field>
 		    <xsl:attribute name="fieldName">status</xsl:attribute>
@@ -126,7 +131,7 @@
 	</xsl:template>
 
 	 <xsl:template
-		match='ccf:field[@fieldName="{urn:cu023.cubit.maa.collab.net/PT/IZ-PT/}priority"]'>
+		match='ccf:field[@fieldName=concat($artifactTypeNameSpace,"Priority")]'>
 		<xsl:variable name="priorityValue" as="xs:string"><xsl:value-of select="." /></xsl:variable>
 		<field>
 		    <xsl:attribute name="fieldName">priority</xsl:attribute>
@@ -150,7 +155,7 @@
 		</field>
 	</xsl:template>
 	<xsl:template
-		match='ccf:field[@fieldName="{urn:ws.tracker.collabnet.com}createdBy"]'>
+		match='ccf:field[@fieldName="{urn:ws.tracker.collabnet.com}Created By"]'>
 		<!-- <xsl:variable name="detectedBy" as="xs:string"><xsl:value-of select="." /></xsl:variable>  -->
 		<field>
 		    <xsl:attribute name="fieldName">Detected By</xsl:attribute>
@@ -168,7 +173,7 @@
 	  	</field>
 	</xsl:template>
 	<xsl:template
-		match='ccf:field[@fieldName="{urn:cu023.cubit.maa.collab.net/PT/IZ-PT/}special_comments"]'>
+		match='ccf:field[@fieldName=concat($artifactTypeNameSpace,"Special Comments")]'>
 		<field>
 		    <xsl:attribute name="fieldName">Comment Text</xsl:attribute>
 		    <xsl:attribute name="fieldDisplayName">Comments</xsl:attribute>

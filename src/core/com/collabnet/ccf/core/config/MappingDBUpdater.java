@@ -14,6 +14,7 @@ import org.openadaptor.core.IDataProcessor;
 import org.openadaptor.core.exception.ValidationException;
 import org.openadaptor.core.lifecycle.LifecycleComponent;
 
+import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
 import com.collabnet.ccf.core.utils.DateUtil;
 import com.collabnet.ccf.core.utils.XPathUtils;
@@ -62,6 +63,11 @@ public class MappingDBUpdater extends LifecycleComponent implements IDataProcess
 			
 			try {
 			Element element = XPathUtils.getRootElement((Document)data);
+			
+			String artifactAction = XPathUtils.getAttributeValue(element, GenericArtifactHelper.ARTIFACT_ACTION);
+			if(artifactAction.equals(GenericArtifactHelper.ARTIFACT_ACTION_IGNORE)){
+				return new Object[]{data};
+			}
 			
 			String sourceArtifactId = XPathUtils.getAttributeValue(element, SOURCE_ARTIFACT_ID);
 			String sourceSystemId  = XPathUtils.getAttributeValue(element, SOURCE_SYSTEM_ID);

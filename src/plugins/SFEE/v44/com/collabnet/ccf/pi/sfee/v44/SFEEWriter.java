@@ -40,6 +40,8 @@ public class SFEEWriter extends LifecycleComponent implements
 	 * log4j logger instance
 	 */
 	private static final Log log = LogFactory.getLog(SFEEWriter.class);
+	
+	private static final Log logConflictResolutor = LogFactory.getLog("com.collabnet.ccf.core.conflict.resolution");
 
 	/**
 	 * SFEE tracker handler instance
@@ -313,16 +315,15 @@ public class SFEEWriter extends LifecycleComponent implements
 			log.warn("The target artifact is modified. Indicates a conflict...!!!");
 			if(conflictResolutionPriority.equals(
 					GenericArtifact.VALUE_CONFLICT_RESOLUTION_PRIORITY_ALWAYS_IGNORE)){
-				log.warn("Conflict Resolution Priority favours ignoring the shipment: "
-						+conflictResolutionPriority);
-				log.warn("Ignoring the update for artifact "+id);
+				logConflictResolutor.warn("Conflict detected for SFEE artifact "+id
+						+". Changes are ignored.");
+				ga.setArtifactAction(GenericArtifact.ArtifactActionValue.IGNORE);
 				return currentTargetArtifact;
 			}
 			else if(conflictResolutionPriority.equals(
 					GenericArtifact.VALUE_CONFLICT_RESOLUTION_PRIORITY_ALWAYS_OVERRIDE)){
-				log.warn("Conflict Resolution Priority favours overriding the changes: "
-						+conflictResolutionPriority);
-				log.warn("Overriding the data for artifact "+id);
+				logConflictResolutor.info("Conflict detected for SFEE artifact "+id
+						+". Changes are overridden.");
 			}
 		}
 		ArrayList<String> flexFieldNames = new ArrayList<String>();
