@@ -14,7 +14,7 @@ import java.util.Map;
 
 import javax.xml.datatype.XMLGregorianCalendar;
 
-import org.apache.commons.lang.StringUtils;
+
 import org.dom4j.Document;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
@@ -906,7 +906,11 @@ public class GenericArtifactHelper {
 			FieldValueTypeValue fieldValueType)
 			throws GenericArtifactParsingException {
 		// TODO Carefully specify conversion for every single type
-
+		if (fieldValueType==null) {
+			throw new GenericArtifactParsingException(
+					"Non valid value for field-attribute " + FIELD_VALUE_TYPE
+							+ " specified.");
+		}
 		switch (fieldValueType) {
 		case BASE64STRING: {
 			addAttribute(field, FIELD_VALUE_TYPE, FIELD_VALUE_TYPE_BASE64STRING);
