@@ -87,14 +87,17 @@ public class EntityService extends LifecycleComponent implements
 			String targetSystemId = XPathUtils.getAttributeValue(element, GenericArtifactHelper.TARGET_SYSTEM_ID);
 			String targetRepositoryId = XPathUtils.getAttributeValue(element, GenericArtifactHelper.TARGET_REPOSITORY_ID);
 			String sourceArtifactVersion = XPathUtils.getAttributeValue(element, GenericArtifactHelper.SOURCE_ARTIFACT_VERSION);
+			if (sourceArtifactVersion == null || sourceArtifactVersion.equals(GenericArtifact.VALUE_UNKNOWN)) {
+				sourceArtifactVersion=GenericArtifactHelper.ARTIFACT_VERSION_FORCE_RESYNC;
+			}
+			
 			String sourceArtifactLastModifiedDateStr = XPathUtils.getAttributeValue(element, GenericArtifactHelper.SOURCE_ARTIFACT_LAST_MODIFICATION_DATE);
 			Date sourceArtifactLastModifiedDate = DateUtil.parse(sourceArtifactLastModifiedDateStr);
-			// FIXME Artifact version is a string in table. If there is a system that uses some other
-			// Notations than numbers for version, how will this succeed?
+			
 			int sourceArtifactVersionInt = Integer.parseInt(sourceArtifactVersion);
 			String targetArtifactIdFromTable = null;
 			String targetArtifactVersion = null;
-			if(sourceArtifactId.equalsIgnoreCase("Unknown")){
+			if(sourceArtifactId.equalsIgnoreCase(GenericArtifact.VALUE_UNKNOWN)){
 				return new Object[]{data};
 			}
 			Object[] results = lookupTargetArtifactId(sourceArtifactId, sourceSystemId, sourceRepositoryId, 

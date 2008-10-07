@@ -85,16 +85,22 @@ public class MappingDBUpdater extends LifecycleComponent implements IDataProcess
 			String targetArtifactLastModifiedDateString = XPathUtils.getAttributeValue(element, TARGET_LAST_READ_TIME);
 			String sourceArtifactVersion = XPathUtils.getAttributeValue(element, SOURCE_ARTIFACT_VERSION);
 			String targetArtifactVersion = XPathUtils.getAttributeValue(element, TARGET_ARTIFACT_VERSION);
+			
+			// this is necessary to get around the duplicate detection mechanism in case of initial resyncs
+			if (artifactAction.equals(GenericArtifactHelper.ARTIFACT_ACTION_CREATE)) {
+				targetArtifactVersion = GenericArtifactHelper.ARTIFACT_VERSION_FORCE_RESYNC;
+			}
+			
 			String artifactType = XPathUtils.getAttributeValue(element, ARTIFACT_TYPE);
 			//String lastReadTransactionId = XPathUtils.getAttributeValue(element, TRANSACTION_ID);
 			
 			if(artifactType.equals(ARTIFACT_TYPE_ATTACHMENT)) {
-			depParentSourceArtifactId = XPathUtils.getAttributeValue(element, DEP_PARENT_SOURCE_ARTIFACT_ID);
-			depParentSourceRepositoryId = XPathUtils.getAttributeValue(element, DEP_PARENT_SOURCE_REPOSITORY_ID);
-			depParentSourceRepositoryKind = XPathUtils.getAttributeValue(element, DEP_PARENT_SOURCE_REPOSITORY_KIND);
-			depParentTargetArtifactId = XPathUtils.getAttributeValue(element, DEP_PARENT_TARGET_ARTIFACT_ID);
-			depParentTargetRepositoryId = XPathUtils.getAttributeValue(element, DEP_PARENT_TARGET_REPOSITORY_ID);
-			depParentTargetRepositoryKind = XPathUtils.getAttributeValue(element, DEP_PARENT_TARGET_REPOSITORY_KIND);
+				depParentSourceArtifactId = XPathUtils.getAttributeValue(element, DEP_PARENT_SOURCE_ARTIFACT_ID);
+				depParentSourceRepositoryId = XPathUtils.getAttributeValue(element, DEP_PARENT_SOURCE_REPOSITORY_ID);
+				depParentSourceRepositoryKind = XPathUtils.getAttributeValue(element, DEP_PARENT_SOURCE_REPOSITORY_KIND);
+				depParentTargetArtifactId = XPathUtils.getAttributeValue(element, DEP_PARENT_TARGET_ARTIFACT_ID);
+				depParentTargetRepositoryId = XPathUtils.getAttributeValue(element, DEP_PARENT_TARGET_REPOSITORY_ID);
+				depParentTargetRepositoryKind = XPathUtils.getAttributeValue(element, DEP_PARENT_TARGET_REPOSITORY_KIND);
 			}
 			
 			java.util.Date sourceLastModifiedDate = null;
@@ -112,8 +118,8 @@ public class MappingDBUpdater extends LifecycleComponent implements IDataProcess
 				return new Object[]{};
 			}
 			else {
-			//targetArtifactLastModifiedDateString = "June 26, 2008 11:02:26 AM GMT+05:30";
-			targetLastModifiedDate = DateUtil.parse(targetArtifactLastModifiedDateString);
+				//targetArtifactLastModifiedDateString = "June 26, 2008 11:02:26 AM GMT+05:30";
+				targetLastModifiedDate = DateUtil.parse(targetArtifactLastModifiedDateString);
 			}
 			
 			java.sql.Timestamp targetTime = new java.sql.Timestamp(targetLastModifiedDate.getTime());
@@ -146,7 +152,6 @@ public class MappingDBUpdater extends LifecycleComponent implements IDataProcess
 					NULL_VALUE,
 					NULL_VALUE);
 			// we also have to create the opposite mapping,
-			// but we do not know the version yet
 			createMapping(targetArtifactId,
 					targetRepositoryId,
 					targetRepositoryKind,

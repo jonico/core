@@ -82,6 +82,8 @@ public class GenericArtifactHelper {
 	public static final String TARGET_SYSTEM_ID = "targetSystemId";
 	public static final String TARGET_SYSTEM_KIND = "targetSystemKind";
 
+	public static final String ARTIFACT_VERSION_FORCE_RESYNC = "-1";
+	
 	public static final String ARTIFACT_ACTION_CREATE = "create";
 	public static final String ARTIFACT_ACTION_DELETE = "delete";
 	public static final String ARTIFACT_ACTION_IGNORE = "ignore";
