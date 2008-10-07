@@ -265,6 +265,11 @@
 				<include name="centralCCFDatabase/**/*"/>
 			</fileset>
 		</copy>
+		<copy todir="build/package">
+            <fileset dir=".">
+                <include name="README-PT-PLUGIN.txt"/>
+            </fileset>
+        </copy>
 	</target>
 
     <target name="cleanup" description="Cleans all generated files">

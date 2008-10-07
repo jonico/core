@@ -1,4 +1,4 @@
-                Collabnet Connector Framework v1.0
+                Collabnet Connector Framework v1.1
                 ----------------------------------
                 
 Introduction:                
