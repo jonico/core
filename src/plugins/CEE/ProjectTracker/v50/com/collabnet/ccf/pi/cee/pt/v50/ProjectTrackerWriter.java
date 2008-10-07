@@ -11,6 +11,7 @@ import java.util.Map.Entry;
 import javax.xml.rpc.ServiceException;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dom4j.Document;
@@ -397,6 +398,11 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 			ptHelper.getArtifactTypeTagNameFromFullyQualifiedArtifactType(fullyQualifiedFieldTagName);
 		Object fieldValue = field.getFieldValue();
 		if(fieldValue == null) return;
+		else if(fieldValue instanceof String) {
+			if(StringUtils.isEmpty((String)fieldValue)){
+				return;
+			}
+		}
 		FieldValueTypeValue fieldType = field.getFieldValueType();
 		String attributeValue = null;
 		if(fieldType == FieldValueTypeValue.STRING){
