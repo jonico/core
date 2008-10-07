@@ -14,6 +14,7 @@ import org.openadaptor.core.exception.RecordFormatException;
 import org.openadaptor.core.exception.ValidationException;
 import org.openadaptor.core.lifecycle.LifecycleComponent;
 
+import com.collabnet.ccf.core.AbstractWriter;
 import com.collabnet.ccf.core.CCFRuntimeException;
 import com.collabnet.ccf.core.eis.connection.ConnectionException;
 import com.collabnet.ccf.core.eis.connection.ConnectionManager;
@@ -34,8 +35,9 @@ import com.vasoftware.sf.soap44.webservices.tracker.ArtifactSoapDO;
  * @author jnicolai
  * 
  */
-public class SFEEWriter extends LifecycleComponent implements
+public class SFEEWriter extends AbstractWriter implements
 		IDataProcessor {
+
 	/**
 	 * log4j logger instance
 	 */
@@ -55,13 +57,20 @@ public class SFEEWriter extends LifecycleComponent implements
 
 	private SFEEAttachmentHandler attachmentHandler;
 	
-	private ConnectionManager<Connection> connectionManager = null;
+	//private ConnectionManager<Connection> connectionManager = null;
 	
 	private String serverUrl;
 
 	private String password;
 
 	private String username;
+	
+	public SFEEWriter(String id) {
+		super(id);
+	}
+	
+	public SFEEWriter() {
+	}
 
 	/**
 	 * Main method to handle the creation, updating and deletion of SFEE tracker
@@ -72,24 +81,65 @@ public class SFEEWriter extends LifecycleComponent implements
 	 * @return array of generated XML documents compliant to generic XML
 	 *         artifact schema
 	 */
-	private Object[] processXMLDocument(Document data) {
-		GenericArtifact ga = null;
-		try {
-			ga = GenericArtifactHelper.createGenericArtifactJavaObject(data);
-	    } catch (GenericArtifactParsingException e) {
-			String cause = "Problem occured while parsing the GenericArtifact into Document";
-			log.error(cause, e);
-			throw new CCFRuntimeException(cause, e);
-		}
-	    GenericArtifact.ArtifactActionValue artifactAction = ga.getArtifactAction();
+//	private Object[] processXMLDocument(Document data) {
+//		GenericArtifact ga = null;
+//		try {
+//			ga = GenericArtifactHelper.createGenericArtifactJavaObject(data);
+//	    } catch (GenericArtifactParsingException e) {
+//			String cause = "Problem occured while parsing the GenericArtifact into Document";
+//			log.error(cause, e);
+//			throw new CCFRuntimeException(cause, e);
+//		}
+//	    
+//
+//
+//		// this field is probably added from a read processor or read connector
+//		// component
+//		
+//
+//		// check whether we should create or update the artifact
+//		// TODO This has to be done on the artifactAction, not on the id value
+//		ArtifactSoapDO result = null;
+//		if(artifactType == GenericArtifact.ArtifactTypeValue.PLAINARTIFACT){
+//			if (artifactAction == GenericArtifact.ArtifactActionValue.CREATE) {
+//				//INFO asdasdas
+//			}
+//			else if(artifactAction == GenericArtifact.ArtifactActionValue.UPDATE) {
+//				// INFO update code moved
+//			}
+//			else if(artifactAction == GenericArtifact.ArtifactActionValue.DELETE){
+//				// INFO Delete is not yet implemented
+////				trackerHandler.removeArtifact(getSessionId(),
+////							soapDoObj.getId());
+//			}
+//			// INFO Repeat this for both create and update
+//			if(result != null){
+//				this.populateTargetArtifactAttributes(ga, result);
+//			}
+//		}
+//		else if(artifactType == GenericArtifact.ArtifactTypeValue.ATTACHMENT){
+//			//INFO Moved to separate method
+//		}
+//		Document document = null;
+//		try {
+//			document = GenericArtifactHelper.createGenericArtifactXMLDocument(ga);
+//		} catch (GenericArtifactParsingException e) {
+//			String cause = "Problem occured while parsing the GenericArtifact into Document";
+//			log.error(cause, e);
+//			ga.setErrorCode(GenericArtifact.ERROR_GENERIC_ARTIFACT_PARSING);
+//			throw new CCFRuntimeException(cause, e);
+//		}
+//		Object[] resultDocs = { document };
+//		return resultDocs;
+//	}
+	
+	private void initializeArtifact(GenericArtifact ga){
+		GenericArtifact.ArtifactActionValue artifactAction = ga.getArtifactAction();
 	    GenericArtifact.ArtifactTypeValue artifactType = ga.getArtifactType();
 		String sourceArtifactId = ga.getSourceArtifactId();
 		String targetRepositoryId = ga.getTargetRepositoryId();
 		String targetArtifactId = ga.getTargetArtifactId();
 		String tracker = targetRepositoryId;
-		if(sourceArtifactId.equalsIgnoreCase("Unknown")){
-			return new Object[]{data};
-		}
 		
 		if(artifactAction == GenericArtifact.ArtifactActionValue.UPDATE){
 			if(SFEEGAHelper.containsSingleMandatoryField(ga, ArtifactMetaData.SFEEFields.id.getFieldName())){
@@ -111,78 +161,9 @@ public class SFEEWriter extends LifecycleComponent implements
 					GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD,
 					GenericArtifactField.FieldValueTypeValue.STRING);
 		}
-
-
-		// this field is probably added from a read processor or read connector
-		// component
-		Boolean forceOverride = true;
-		
-
-		// check whether we should create or update the artifact
-		// TODO This has to be done on the artifactAction, not on the id value
-		ArtifactSoapDO result = null;
-		if(artifactType == GenericArtifact.ArtifactTypeValue.PLAINARTIFACT){
-			if (artifactAction == GenericArtifact.ArtifactActionValue.CREATE) {
-				Connection connection = connect(ga);
-				try {
-					result = this.createArtifact(ga, tracker, connection);
-					// update Id field after creating the artifact
-					targetArtifactId = result.getId();
-					SFEEGAHelper.addField(ga, ArtifactMetaData.SFEEFields.id.getFieldName(), targetArtifactId,
-							GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD,
-							GenericArtifactField.FieldValueTypeValue.STRING);
-					// this is already done in the populate target artifact method
-					//ga.setTargetArtifactId(targetArtifactId);
-				} catch (NumberFormatException e) {
-					log.error("Wrong data format of attribute for artifact "
-							+ data.asXML(), e);
-					return null;
-				} finally {
-					disconnect(connection);
-				}
-			}
-			else if(artifactAction == GenericArtifact.ArtifactActionValue.UPDATE) {
-				Connection connection = connect(ga);
-				try {
-					// update token or do conflict resolution
-					result = this.updateArtifact(ga, tracker, forceOverride, connection);
-					if (result == null) {
-						// conflict resolution has decided in favor of the
-						// target copy
-						return new Object[]{ga};
-					}
-				} catch (NumberFormatException e) {
-					log.error("Wrong data format of attribute for artifact "
-							+ data.asXML(), e);
-					return null;
-				} finally {
-					disconnect(connection);
-				}
-			}
-			else if(artifactAction == GenericArtifact.ArtifactActionValue.DELETE){
-				// INFO Delete is not yet implemented
-//				trackerHandler.removeArtifact(getSessionId(),
-//							soapDoObj.getId());
-			}
-			if(result != null){
-				this.populateTargetArtifactAttributes(ga, result);
-			}
-		}
-		else if(artifactType == GenericArtifact.ArtifactTypeValue.ATTACHMENT){
-			Connection connection = connect(ga);
-			String targetParentArtifactId = ga.getDepParentTargetArtifactId();
-			try {
-				attachmentHandler.handleAttachment(connection.getSessionId(), ga,
-						targetParentArtifactId, this.getUsername(),connection.getSfSoap());
-			} catch (RemoteException e) {
-				String cause = "Problem occured while creating attachments in SFEE";
-				log.error(cause, e);
-				ga.setErrorCode(GenericArtifact.ERROR_EXTERNAL_SYSTEM_WRITE);
-				throw new CCFRuntimeException(cause, e);
-			} finally {
-				disconnect(connection);
-			}
-		}
+	}
+	
+	public Document returnDocument(GenericArtifact ga){
 		Document document = null;
 		try {
 			document = GenericArtifactHelper.createGenericArtifactXMLDocument(ga);
@@ -192,8 +173,104 @@ public class SFEEWriter extends LifecycleComponent implements
 			ga.setErrorCode(GenericArtifact.ERROR_GENERIC_ARTIFACT_PARSING);
 			throw new CCFRuntimeException(cause, e);
 		}
-		Object[] resultDocs = { document };
-		return resultDocs;
+		return document;
+	}
+	
+	public Document createArtifact(Document data){
+		GenericArtifact ga = null;
+		try {
+			ga = GenericArtifactHelper.createGenericArtifactJavaObject(data);
+	    } catch (GenericArtifactParsingException e) {
+			String cause = "Problem occured while parsing the GenericArtifact into Document";
+			log.error(cause, e);
+			throw new CCFRuntimeException(cause, e);
+		}
+	    this.initializeArtifact(ga);
+		String targetRepositoryId = ga.getTargetRepositoryId();
+		String targetArtifactId = ga.getTargetArtifactId();
+		String tracker = targetRepositoryId;
+		Connection connection = connect(ga);
+		ArtifactSoapDO result = null;
+		try {
+			result = this.createArtifact(ga, tracker, connection);
+			// update Id field after creating the artifact
+			targetArtifactId = result.getId();
+			SFEEGAHelper.addField(ga, ArtifactMetaData.SFEEFields.id.getFieldName(), targetArtifactId,
+					GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD,
+					GenericArtifactField.FieldValueTypeValue.STRING);
+		} catch (NumberFormatException e) {
+			log.error("Wrong data format of attribute for artifact "
+					+ data.asXML(), e);
+			return null;
+		} finally {
+			disconnect(connection);
+		}
+		if(result != null){
+			this.populateTargetArtifactAttributes(ga, result);
+		}
+		return this.returnDocument(ga);
+	}
+	
+	public Document updateArtifact(Document data){
+		GenericArtifact ga = null;
+		try {
+			ga = GenericArtifactHelper.createGenericArtifactJavaObject(data);
+	    } catch (GenericArtifactParsingException e) {
+			String cause = "Problem occured while parsing the GenericArtifact into Document";
+			log.error(cause, e);
+			throw new CCFRuntimeException(cause, e);
+		}
+	    this.initializeArtifact(ga);
+		String targetRepositoryId = ga.getTargetRepositoryId();
+		String tracker = targetRepositoryId;
+		Connection connection = connect(ga);
+		ArtifactSoapDO result = null;
+		Boolean forceOverride = true;
+		try {
+			// update token or do conflict resolution
+			result = this.updateArtifact(ga, tracker, forceOverride, connection);
+//			if (result == null) {
+//				// conflict resolution has decided in favor of the
+//				// target copy
+//				return new Object[]{ga};
+//			}
+		} catch (NumberFormatException e) {
+			log.error("Wrong data format of attribute for artifact "
+					+ data.asXML(), e);
+			return null;
+		} finally {
+			disconnect(connection);
+		}
+		if(result != null){
+			this.populateTargetArtifactAttributes(ga, result);
+		}
+		return this.returnDocument(ga);
+	}
+	
+	public Document createAttachment(Document data){
+		GenericArtifact ga = null;
+		try {
+			ga = GenericArtifactHelper.createGenericArtifactJavaObject(data);
+	    } catch (GenericArtifactParsingException e) {
+			String cause = "Problem occured while parsing the GenericArtifact into Document";
+			log.error(cause, e);
+			throw new CCFRuntimeException(cause, e);
+		}
+	    this.initializeArtifact(ga);
+		Connection connection = connect(ga);
+		String targetParentArtifactId = ga.getDepParentTargetArtifactId();
+		try {
+			attachmentHandler.handleAttachment(connection.getSessionId(), ga,
+					targetParentArtifactId, this.getUsername(),connection.getSfSoap());
+		} catch (RemoteException e) {
+			String cause = "Problem occured while creating attachments in SFEE";
+			log.error(cause, e);
+			ga.setErrorCode(GenericArtifact.ERROR_EXTERNAL_SYSTEM_WRITE);
+			throw new CCFRuntimeException(cause, e);
+		} finally {
+			disconnect(connection);
+		}
+		return this.returnDocument(ga);
 	}
 	
 	/**
@@ -293,39 +370,40 @@ public class SFEEWriter extends LifecycleComponent implements
 	private ArtifactSoapDO updateArtifact(GenericArtifact ga, String tracker, boolean forceOverride, Connection connection){
 		//String id = SFEEWriter.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.id, ga);
 		String id = ga.getTargetArtifactId();
-		String conflictResolutionPriority = ga.getConflictResolutionPriority();
-		ArtifactSoapDO currentTargetArtifact = null;
-		try {
-			currentTargetArtifact = 
-				trackerHandler.getTrackerItem(connection.getSessionId(), id);
-		} catch (RemoteException e) {
-			String cause = "While trying to get the current target artifact (before updating), an error occured";
-			log.error(cause, e);
-			ga.setErrorCode(GenericArtifact.ERROR_EXTERNAL_SYSTEM_CONNECTION);
-			throw new CCFRuntimeException(cause, e);
-		}
-		int currentAritfactVersion = currentTargetArtifact.getVersion();
-		String artifactVersionFromTable = ga.getTargetArtifactVersion();
-		int artifactVersionIntFromTable = -1;
-		if (!artifactVersionFromTable.equals(GenericArtifact.VALUE_UNKNOWN)) {
-			artifactVersionIntFromTable= Integer.parseInt(artifactVersionFromTable);
-		}
-		if(artifactVersionIntFromTable < currentAritfactVersion){
-			//We have a conflict here. The target artifact is modified
-			log.warn("The target artifact is modified. Indicates a conflict...!!!");
-			if(conflictResolutionPriority.equals(
-					GenericArtifact.VALUE_CONFLICT_RESOLUTION_PRIORITY_ALWAYS_IGNORE)){
-				logConflictResolutor.warn("Conflict detected for SFEE artifact "+id
-						+". Changes are ignored.");
-				ga.setArtifactAction(GenericArtifact.ArtifactActionValue.IGNORE);
-				return currentTargetArtifact;
-			}
-			else if(conflictResolutionPriority.equals(
-					GenericArtifact.VALUE_CONFLICT_RESOLUTION_PRIORITY_ALWAYS_OVERRIDE)){
-				logConflictResolutor.info("Conflict detected for SFEE artifact "+id
-						+". Changes are overridden.");
-			}
-		}
+		//INFO conflict resolution is now done in AbstractWriter
+//		String conflictResolutionPriority = ga.getConflictResolutionPriority();
+//		ArtifactSoapDO currentTargetArtifact = null;
+//		try {
+//			currentTargetArtifact = 
+//				trackerHandler.getTrackerItem(connection.getSessionId(), id);
+//		} catch (RemoteException e) {
+//			String cause = "While trying to get the current target artifact (before updating), an error occured";
+//			log.error(cause, e);
+//			ga.setErrorCode(GenericArtifact.ERROR_EXTERNAL_SYSTEM_CONNECTION);
+//			throw new CCFRuntimeException(cause, e);
+//		}
+//		int currentAritfactVersion = currentTargetArtifact.getVersion();
+//		String artifactVersionFromTable = ga.getTargetArtifactVersion();
+//		int artifactVersionIntFromTable = -1;
+//		if (!artifactVersionFromTable.equals(GenericArtifact.VALUE_UNKNOWN)) {
+//			artifactVersionIntFromTable= Integer.parseInt(artifactVersionFromTable);
+//		}
+//		if(artifactVersionIntFromTable < currentAritfactVersion){
+//			//We have a conflict here. The target artifact is modified
+//			log.warn("The target artifact is modified. Indicates a conflict...!!!");
+//			if(conflictResolutionPriority.equals(
+//					GenericArtifact.VALUE_CONFLICT_RESOLUTION_PRIORITY_ALWAYS_IGNORE)){
+//				logConflictResolutor.warn("Conflict detected for SFEE artifact "+id
+//						+". Changes are ignored.");
+//				ga.setArtifactAction(GenericArtifact.ArtifactActionValue.IGNORE);
+//				return currentTargetArtifact;
+//			}
+//			else if(conflictResolutionPriority.equals(
+//					GenericArtifact.VALUE_CONFLICT_RESOLUTION_PRIORITY_ALWAYS_OVERRIDE)){
+//				logConflictResolutor.info("Conflict detected for SFEE artifact "+id
+//						+". Changes are overridden.");
+//			}
+//		}
 		ArrayList<String> flexFieldNames = new ArrayList<String>();
 		ArrayList<String> flexFieldTypes = new ArrayList<String>();
 		ArrayList<Object> flexFieldValues = new ArrayList<Object>();
@@ -424,16 +502,17 @@ public class SFEEWriter extends LifecycleComponent implements
 
 	public Connection connect(String systemId, String systemKind, String repositoryId,
 			String repositoryKind, String connectionInfo, String credentialInfo) throws MaxConnectionsReachedException, ConnectionException {
-		//log.info("Before calling the parent connect()");
-		//super.connect();
 		Connection connection = null;
+		ConnectionManager<Connection> connectionManager = 
+			(ConnectionManager<Connection>) getConnectionManager();
 		connection = connectionManager.getConnection(systemId, systemKind, repositoryId,
 				repositoryKind, connectionInfo, credentialInfo);
 		return connection;
 	}
 	
 	private void disconnect(Connection connection) {
-		// TODO Auto-generated method stub
+		ConnectionManager<Connection> connectionManager = 
+			(ConnectionManager<Connection>) getConnectionManager();
 		connectionManager.releaseConnection(connection);
 	}
 	@SuppressWarnings("unchecked")
@@ -449,27 +528,10 @@ public class SFEEWriter extends LifecycleComponent implements
 			exceptions.add(new ValidationException(
 					"updateComment-property not set", this));
 		}
-
+		ConnectionManager<Connection> connectionManager = 
+			(ConnectionManager<Connection>) getConnectionManager();
 		trackerHandler = new SFEETrackerHandler(getServerUrl(),connectionManager);
 		attachmentHandler = new SFEEAttachmentHandler(getServerUrl(), connectionManager);
-	}
-
-	/**
-	 * openAdaptor Method to process all input and puts out the results This
-	 * method will only handle Dom4J documents encoded in the generic XML schema
-	 */
-	public Object[] process(Object data) {
-		if (data == null) {
-			throw new NullRecordException(
-					"Expected Document. Null record not permitted.");
-		}
-
-		if (!(data instanceof Document)) {
-			throw new RecordFormatException("Expected Document. Got ["
-					+ data.getClass().getName() + "]");
-		}
-
-		return processXMLDocument((Document) data);
 	}
 
 	/**
@@ -545,11 +607,62 @@ public class SFEEWriter extends LifecycleComponent implements
 		this.username = username;
 	}
 
-	public ConnectionManager<Connection> getConnectionManager() {
-		return connectionManager;
+	@Override
+	public Document createDependency(Document gaDocument) {
+		throw new CCFRuntimeException("createDependency is not implemented...!");
 	}
 
-	public void setConnectionManager(ConnectionManager<Connection> connectionManager) {
-		this.connectionManager = connectionManager;
+	@Override
+	public Document deleteArtifact(Document gaDocument) {
+		throw new CCFRuntimeException("deleteArtifact is not implemented...!");
+	}
+
+	@Override
+	public Document deleteAttachment(Document gaDocument) {
+		throw new CCFRuntimeException("deleteAttachment is not implemented...!");
+	}
+
+	@Override
+	public Document deleteDependency(Document gaDocument) {
+		throw new CCFRuntimeException("deleteDependency is not implemented...!");
+	}
+
+	@Override
+	public int getArtifactVersion(Document data) {
+		GenericArtifact ga = null;
+		try {
+			ga = GenericArtifactHelper.createGenericArtifactJavaObject(data);
+	    } catch (GenericArtifactParsingException e) {
+			String cause = "Problem occured while parsing the GenericArtifact into Document";
+			log.error(cause, e);
+			throw new CCFRuntimeException(cause, e);
+		}
+	    this.initializeArtifact(ga);
+	    String targetArtifactId = ga.getTargetArtifactId();
+	    Connection connection = connect(ga);
+		ArtifactSoapDO currentTargetArtifact = null;
+		try {
+			currentTargetArtifact = 
+				trackerHandler.getTrackerItem(connection.getSessionId(), targetArtifactId);
+		} catch (RemoteException e) {
+			String cause = "While trying to get the current target artifact (before updating), an error occured";
+			log.error(cause, e);
+			ga.setErrorCode(GenericArtifact.ERROR_EXTERNAL_SYSTEM_CONNECTION);
+			throw new CCFRuntimeException(cause, e);
+		} finally {
+			disconnect(connection);
+		}
+		int currentAritfactVersion = currentTargetArtifact.getVersion();
+		return currentAritfactVersion;
+	}
+
+	@Override
+	public Document updateAttachment(Document gaDocument) {
+		throw new CCFRuntimeException("updateAttachment is not implemented...!");
+	}
+
+	@Override
+	public Document updateDependency(Document gaDocument) {
+		throw new CCFRuntimeException("updateDependency is not implemented...!");
 	}
 }
