@@ -212,6 +212,8 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 				if(artifactsToBeShippedList.isEmpty()) return new Object[]{};
 				GenericArtifact genericArtifact = artifactsToBeShippedList.remove(0);
 				try {
+					String conflictResolution = this.getConflictResolutionPriority(syncInfo);
+					genericArtifact.setConflictResolutionPriority(conflictResolution);
 					Document returnDoc = GenericArtifactHelper.createGenericArtifactXMLDocument(genericArtifact);
 					Object[] returnObjects = new Object[] {returnDoc};
 					moveToTail(currentRecord);
