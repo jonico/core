@@ -86,11 +86,6 @@ public class MappingDBUpdater extends LifecycleComponent implements IDataProcess
 			String sourceArtifactVersion = XPathUtils.getAttributeValue(element, SOURCE_ARTIFACT_VERSION);
 			String targetArtifactVersion = XPathUtils.getAttributeValue(element, TARGET_ARTIFACT_VERSION);
 			
-			// this is necessary to get around the duplicate detection mechanism in case of initial resyncs
-			if (artifactAction.equals(GenericArtifactHelper.ARTIFACT_ACTION_CREATE)) {
-				targetArtifactVersion = GenericArtifactHelper.ARTIFACT_VERSION_FORCE_RESYNC;
-			}
-			
 			String artifactType = XPathUtils.getAttributeValue(element, ARTIFACT_TYPE);
 			//String lastReadTransactionId = XPathUtils.getAttributeValue(element, TRANSACTION_ID);
 			
@@ -151,7 +146,11 @@ public class MappingDBUpdater extends LifecycleComponent implements IDataProcess
 					NULL_VALUE,
 					NULL_VALUE,
 					NULL_VALUE);
-			// we also have to create the opposite mapping,
+			// we also have to create the opposite mapping
+			// this is necessary to get around the duplicate detection mechanism in case of initial resyncs
+			if (artifactAction.equals(GenericArtifactHelper.ARTIFACT_ACTION_CREATE)) {
+				targetArtifactVersion = GenericArtifactHelper.ARTIFACT_VERSION_FORCE_RESYNC;
+			}
 			createMapping(targetArtifactId,
 					targetRepositoryId,
 					targetRepositoryKind,
