@@ -15,7 +15,7 @@
 			<param name="ConversionPattern" value="%p %t %c - %m%n"/>
 		</layout>
 	</appender>
-	<appender name="SMTPAppender" class="org.apache.log4j.net.SMTPAppender">
+	<appender name="ErrorNotifier" class="org.apache.log4j.net.SMTPAppender">
 		<param name="Threshold" value="ERROR"/>
 		<param name="To" value="madhusuthanan@collab.net"/>
 		<param name="From" value="madhusuthanan@collab.net"/>
@@ -26,20 +26,35 @@
 			<param name="ConversionPattern" value="%-5p %d{ISO8601} - %m%n"/>
 		</layout>
 	</appender>
+	<appender name="ConflictNotifier" class="org.apache.log4j.net.SMTPAppender">
+		<param name="Threshold" value="WARN"/>
+		<param name="To" value="madhusuthanan@collab.net"/>
+		<param name="From" value="madhusuthanan@collab.net"/>
+		<param name="SMTPHost" value="maa-exchmb.maa.corp.collab.net"/>
+		<param name="BufferSize" value="100"/>
+		<param name="Subject" value="CCF Conflict Notification"/>
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="%-5p %d{ISO8601} - %m%n"/>
+		</layout>
+	</appender>
 	<root>
 		<priority value="info"/>
 		<appender-ref ref="console"/>
 		<appender-ref ref="R"/>
 	</root>
-	
-	<!-- 
-		<logger name="com.collabnet">
-    	<level value="debug"/>
+
+	<logger name="com.collabnet">
+    	<level value="info"/>
 		<appender-ref ref="console" />
 		<appender-ref ref="R" />
-		<appender-ref ref="SMTPAppender" />
-  		</logger>
-	 -->
+		<appender-ref ref="ErrorNotifier" />
+  	</logger>
+  	<logger name="com.collabnet.ccf.core.conflict.resolution">
+    	<level value="info"/>
+    	<appender-ref ref="R" />
+		<appender-ref ref="ConflictNotifier" />
+  	</logger>
+
 </log4j:configuration>
 
   
