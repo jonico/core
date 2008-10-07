@@ -908,7 +908,7 @@ public class GenericArtifactHelper {
 		// TODO Carefully specify conversion for every single type
 		if (fieldValueType==null) {
 			throw new GenericArtifactParsingException(
-					"Non valid value for field-attribute " + FIELD_VALUE_TYPE
+					"Non valid value for field-attribute " + field.attributeValue(FIELD_NAME)
 							+ " specified.");
 		}
 		switch (fieldValueType) {
