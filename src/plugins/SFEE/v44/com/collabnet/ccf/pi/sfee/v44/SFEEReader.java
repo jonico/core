@@ -104,7 +104,7 @@ public class SFEEReader extends AbstractReader {
 			String repositoryKind, String connectionInfo, String credentialInfo) throws MaxConnectionsReachedException, ConnectionException {
 		//log.info("Before calling the parent connect()");
 		Connection connection = null;
-		connection = connectionManager.getConnection(systemId, systemKind, repositoryId,
+		connection = connectionManager.getConnectionToUpdateOrExtractArtifact(systemId, systemKind, repositoryId,
 			repositoryKind, connectionInfo, credentialInfo);
 		return connection;
 	}
@@ -197,20 +197,16 @@ public class SFEEReader extends AbstractReader {
 	@Override
 	public void validate(List exceptions) {
 		super.validate(exceptions);
-		boolean exceptionsPresent = false;
 		if(StringUtils.isEmpty(serverUrl)){
 			exceptions.add(new ValidationException("serverUrl-property not set",this));
-			exceptionsPresent = true;
 		}
 		if(StringUtils.isEmpty(username)){
 			exceptions.add(new ValidationException("username-property not set",this));
-			exceptionsPresent = true;
 		}
-		if(password == null){
+		if(getPassword() == null){
 			exceptions.add(new ValidationException("password-property not set",this));
-			exceptionsPresent = true;
 		}
-		if(!exceptionsPresent){
+		if(exceptions.size()==0){
 			trackerHandler = new SFEETrackerHandler(getServerUrl(),connectionManager);
 			attachmentHandler = new SFEEAttachmentHandler(getServerUrl(),connectionManager);
 		}
@@ -251,7 +247,7 @@ public class SFEEReader extends AbstractReader {
 		try {
 			connection = connect(sourceSystemId, sourceSystemKind, sourceRepositoryId,
 					sourceRepositoryKind, serverUrl, 
-					username+SFEEConnectionFactory.PARAM_DELIMITER+password);
+					getUsername()+SFEEConnectionFactory.PARAM_DELIMITER+getPassword());
 		} catch (MaxConnectionsReachedException e) {
 			String cause = "Could not create connection to the SFEE system. Max connections reached for "+
 									serverUrl;
@@ -303,7 +299,7 @@ public class SFEEReader extends AbstractReader {
 		try {
 			connection = connect(sourceSystemId, sourceSystemKind, sourceRepositoryId,
 					sourceRepositoryKind, serverUrl, 
-					username+SFEEConnectionFactory.PARAM_DELIMITER+password);
+					getUsername()+SFEEConnectionFactory.PARAM_DELIMITER+getPassword());
 		} catch (MaxConnectionsReachedException e) {
 			String cause = "Could not create connection to the SFEE system. Max connections reached for "+
 								serverUrl;
@@ -380,7 +376,7 @@ public class SFEEReader extends AbstractReader {
 		try {
 			connection = connect(sourceSystemId, sourceSystemKind, sourceRepositoryId,
 					sourceRepositoryKind, serverUrl, 
-					username+SFEEConnectionFactory.PARAM_DELIMITER+password);
+					getUsername()+SFEEConnectionFactory.PARAM_DELIMITER+getPassword());
 		} catch (MaxConnectionsReachedException e) {
 			String cause = "Could not create connection to the SFEE system. Max connections reached for "+
 								serverUrl;
@@ -418,7 +414,7 @@ public class SFEEReader extends AbstractReader {
 	}
 
 	/**
-	 * Returns the server URL of the source SFEE system that is
+	 * Returns the server URL of the source CSFE/SFEE system that is
 	 * configured in the wiring file.
 	 * @return
 	 */
@@ -427,7 +423,7 @@ public class SFEEReader extends AbstractReader {
 	}
 
 	/**
-	 * Sets the source SFEE system's SOAP server URL.
+	 * Sets the source CSFE/SFEE system's SOAP server URL.
 	 * 
 	 * @param serverUrl - the URL of the source SFEE system.
 	 */
@@ -436,35 +432,46 @@ public class SFEEReader extends AbstractReader {
 	}
 
 	/**
-	 * Returns the password configured for this source SFEE system
-	 * @return
+	 * Gets the mandatory password that belongs to the username
+	 * 
+	 * @return the password
 	 */
-	public String getPassword() {
+	private String getPassword() {
 		return password;
 	}
 
 	/**
-	 * Sets the password of the user that is used to connect to the source SFEE system.
+	 * Sets the password that belongs to the username
 	 * 
 	 * @param password
+	 *            the password to set
 	 */
 	public void setPassword(String password) {
 		this.password = password;
 	}
 
 	/**
-	 * Gives the username configured to connect to the source SFEE system.
+	 * Gets the mandatory user name The user name is used to login into the
+	 * SFEE/CSFE instance whenever an artifact should be updated or extracted.
+	 * This user has to differ from the resync user in order to force initial
+	 * resyncs with the source system once a new artifact has been created.
 	 * 
-	 * @return - The user name configured for this source SFEE system
+	 * @return the userName
 	 */
 	public String getUsername() {
 		return username;
 	}
 
 	/**
-	 * Sets the username used to connect to the source SFEE system.
+	 * Sets the mandatory username
 	 * 
-	 * @param username - the username to connect to the source SFEE system.
+	 * The user name is used to login into the SFEE/CSFE instance whenever an
+	 * artifact should be updated or extracted. This user has to differ from the
+	 * resync user in order to force initial resyncs with the source system once
+	 * a new artifact has been created.
+	 * 
+	 * @param userName
+	 *            the username to set
 	 */
 	public void setUsername(String username) {
 		this.username = username;

@@ -14,7 +14,7 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dom4j.Document;
-import org.openadaptor.core.IDataProcessor;
+import org.openadaptor.core.exception.ValidationException;
 
 import com.collabnet.ccf.core.AbstractWriter;
 import com.collabnet.ccf.core.CCFRuntimeException;
@@ -43,11 +43,9 @@ import com.collabnet.tracker.ws.History;
 import com.collabnet.tracker.ws.HistoryTransaction;
 import com.collabnet.tracker.ws.Option;
 
-public class ProjectTrackerWriter extends AbstractWriter implements IDataProcessor {
+public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClient> {
 	private static final Log log = LogFactory.getLog(ProjectTrackerWriter.class);
 	private String serverUrl = null;
-	private String username = null;
-	private String password = null;
 //	private ConnectionManager<TrackerWebServicesClient> connectionManager = null;
 	private MetaDataHelper metadataHelper = MetaDataHelper.getInstance();
 	ProjectTrackerHelper ptHelper = ProjectTrackerHelper.getInstance();
@@ -471,12 +469,22 @@ public class ProjectTrackerWriter extends AbstractWriter implements IDataProcess
 		String repositoryId = ga.getTargetRepositoryId();
 		String repositoryKind = ga.getTargetRepositoryKind();
 		String connectionInfo = this.getServerUrl();
-		String credentialInfo = this.getUsername()+
-							CollabNetConnectionFactory.PARAM_DELIMITER+this.getPassword();
 		TrackerWebServicesClient twsclient = null;
 		try {
-			twsclient = this.connect(systemId, systemKind, repositoryId,
-					repositoryKind, connectionInfo, credentialInfo);
+			if ((!ga.getArtifactAction().equals(
+					GenericArtifact.ArtifactActionValue.CREATE))
+					|| getResyncUserName() == null) {
+				String credentialInfo = this.getUsername()+
+				CollabNetConnectionFactory.PARAM_DELIMITER+this.getPassword();
+				twsclient = this.connect(systemId, systemKind, repositoryId,
+						repositoryKind, connectionInfo, credentialInfo, false);
+			}
+			else {
+				String credentialInfo = this.getResyncUserName()+
+				CollabNetConnectionFactory.PARAM_DELIMITER+this.getResyncPassword();
+				twsclient = this.connect(systemId, systemKind, repositoryId,
+						repositoryKind, connectionInfo, credentialInfo, true);
+			}
 		} catch (MaxConnectionsReachedException e) {
 			String message = "Could not get connection for PT";
 			log.error(message, e);
@@ -490,30 +498,37 @@ public class ProjectTrackerWriter extends AbstractWriter implements IDataProcess
 	}
 	
 	/**
-	 * Connects to the source SFEE system using the connectionInfo and credentialInfo
+	 * Connects to the source CEE system using the connectionInfo and credentialInfo
 	 * details.
 	 * 
 	 * This method uses the ConnectionManager configured in the wiring file
-	 * for the SFEEReader
+	 * for the CEEReader
 	 *  
-	 * @param systemId - The system id of the source SFEE system
-	 * @param systemKind - The system kind of the source SFEE system
-	 * @param repositoryId - The tracker id in the source SFEE system
+	 * @param systemId - The system id of the source CEE system
+	 * @param systemKind - The system kind of the source CEE system
+	 * @param repositoryId - The tracker id in the source CEE system
 	 * @param repositoryKind - The repository kind for the tracker
-	 * @param connectionInfo - The SFEE server URL
+	 * @param connectionInfo - The CEE server URL
 	 * @param credentialInfo - User name and password concatenated with a delimiter.
+	 * @param forceResync true if initial resync after artifact creation should be enforced
 	 * @return - The connection object obtained from the ConnectionManager
 	 * @throws MaxConnectionsReachedException 
 	 * @throws ConnectionException 
 	 */
 	public TrackerWebServicesClient connect(String systemId, String systemKind, String repositoryId,
-			String repositoryKind, String connectionInfo, String credentialInfo) throws MaxConnectionsReachedException, ConnectionException {
+			String repositoryKind, String connectionInfo, String credentialInfo, boolean forceResync) throws MaxConnectionsReachedException, ConnectionException {
 		log.info("Getting connection to PT");
 		ConnectionManager<TrackerWebServicesClient> connectionManager = 
 			(ConnectionManager<TrackerWebServicesClient>) this.getConnectionManager();
 		TrackerWebServicesClient connection = null;
-		connection = connectionManager.getConnection(systemId, systemKind, repositoryId,
-			repositoryKind, connectionInfo, credentialInfo);
+		if (forceResync) {
+			connection = connectionManager.getConnectionToCreateArtifact(systemId, systemKind, repositoryId,
+					repositoryKind, connectionInfo, credentialInfo);
+		}
+		else {
+			connection = connectionManager.getConnectionToUpdateOrExtractArtifact(systemId, systemKind, repositoryId,
+					repositoryKind, connectionInfo, credentialInfo);
+		}
 		return connection;
 	}
 	
@@ -529,33 +544,56 @@ public class ProjectTrackerWriter extends AbstractWriter implements IDataProcess
 		// TODO Auto-generated method stub
 	}
 
+	/**
+	 * Returns the server URL of the CEE system that is
+	 * configured in the wiring file.
+	 * @return
+	 */
 	public String getServerUrl() {
 		return serverUrl;
 	}
 
+	/**
+	 * Sets the target CEE system's SOAP server URL.
+	 * 
+	 * @param serverUrl - the URL of the source CEE system.
+	 */
 	public void setServerUrl(String serverUrl) {
 		this.serverUrl = serverUrl;
 	}
 
-	public String getUsername() {
-		return username;
-	}
+	@SuppressWarnings("unchecked")
+	public void validate(List exceptions) {
+		super.validate(exceptions);
 
-	public void setUsername(String username) {
-		this.username = username;
-	}
+		if (getResyncUserName() == null) {
+			log
+					.warn("resyncUserName-property has not been set, so that initial resyncs after artifact creation are not possible.");
+		}
 
-	public String getPassword() {
-		return password;
-	}
+		if (getPassword() == null) {
+			log.error("password-property not set");
+			exceptions.add(new ValidationException("password-property not set",
+					this));
+		}
 
-	public void setPassword(String password) {
-		this.password = password;
-	}
+		if (getUsername() == null) {
+			log.error("userName-property not set");
+			exceptions.add(new ValidationException("userName-property not set",
+					this));
+		}
 
-	public void validate(List arg0) {
-		// TODO Auto-generated method stub
-		
+		if (getServerUrl() == null) {
+			log.error("serverUrl-property not set");
+			exceptions.add(new ValidationException(
+					"serverUrl-property not set", this));
+		}
+
+		if (getConnectionManager() == null) {
+			log.error("connectionManager-property not set");
+			exceptions.add(new ValidationException(
+					"connectionManager-property not set", this));
+		}
 	}
 
 	@Override
@@ -655,5 +693,123 @@ public class ProjectTrackerWriter extends AbstractWriter implements IDataProcess
 		}
 		return false;
 	}
+	
+	/**
+	 * Password that is used to login into the CEE instance in combination
+	 * with the username
+	 */
+	private String password;
 
+	/**
+	 * Username that is used to login into the CEE instance
+	 */
+	private String username;
+
+	/**
+	 * Another user name that is used to login into the CEE instance. This
+	 * user has to differ from the ordinary user used to log in in order to
+	 * force initial resyncs with the source system once a new artifact has been
+	 * created.
+	 */
+	private String resyncUserName;
+
+	/**
+	 * Password that belongs to the resync user. This user has to differ from the
+	 * ordinary user used to log in in order to force initial resyncs with the
+	 * source system once a new artifact has been created.
+	 */
+	private String resyncPassword;
+
+	/**
+	 * Sets the optional resync username
+	 * 
+	 * The resync user name is used to login into the CEE instance
+	 * whenever an artifact should be created. This user has to differ from the
+	 * ordinary user used to log in in order to force initial resyncs with the
+	 * source system once a new artifact has been created.
+	 * 
+	 * @param resyncUserName
+	 *            the resyncUserName to set
+	 */
+	public void setResyncUserName(String resyncUserName) {
+		this.resyncUserName = resyncUserName;
+	}
+
+	/**
+	 * Gets the optional resync username The resync user name is used to login
+	 * into the CEE instance whenever an artifact should be created. This
+	 * user has to differ from the ordinary user used to log in in order to
+	 * force initial resyncs with the source system once a new artifact has been
+	 * created.
+	 * 
+	 * @return the resyncUserName
+	 */
+	private String getResyncUserName() {
+		return resyncUserName;
+	}
+
+	/**
+	 * Sets the optional resync password that belongs to the resync user
+	 * 
+	 * @param resyncPassword
+	 *            the resyncPassword to set
+	 */
+	public void setResyncPassword(String resyncPassword) {
+		this.resyncPassword = resyncPassword;
+	}
+
+	/**
+	 * Gets the optional resync password that belongs to the resync user
+	 * 
+	 * @return the resyncPassword
+	 */
+	private String getResyncPassword() {
+		return resyncPassword;
+	}
+
+	/**
+	 * Gets the mandatory password that belongs to the username
+	 * 
+	 * @return the password
+	 */
+	private String getPassword() {
+		return password;
+	}
+
+	/**
+	 * Sets the password that belongs to the username
+	 * 
+	 * @param password
+	 *            the password to set
+	 */
+	public void setPassword(String password) {
+		this.password = password;
+	}
+
+	/**
+	 * Gets the mandatory user name The user name is used to login into the
+	 * CEE instance whenever an artifact should be updated or extracted.
+	 * This user has to differ from the resync user in order to force initial
+	 * resyncs with the source system once a new artifact has been created.
+	 * 
+	 * @return the userName
+	 */
+	public String getUsername() {
+		return username;
+	}
+
+	/**
+	 * Sets the mandatory username
+	 * 
+	 * The user name is used to login into the CEE instance whenever an
+	 * artifact should be updated or extracted. This user has to differ from the
+	 * resync user in order to force initial resyncs with the source system once
+	 * a new artifact has been created.
+	 * 
+	 * @param userName
+	 *            the user name to set
+	 */
+	public void setUsername(String username) {
+		this.username = username;
+	}
 }

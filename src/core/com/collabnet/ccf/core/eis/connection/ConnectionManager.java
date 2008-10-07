@@ -100,7 +100,14 @@ public final class ConnectionManager<T> {
 
 	/**
 	 * Returns a Connection object for a particular system and repository
-	 * combination from the pool. The connection information typically contains
+	 * combination from the pool. The connection is used to 
+	 * update or extract artifacts.
+	 * This is typically done using different credential information than the ones
+	 * used to create artifacts. The credential information for updates
+	 * and extractions are the same to avoid infinite update loops and differ from
+	 * the credentials used to create artifacts in order to force an initial resync
+	 * after artifact creation.
+	 * The connection information typically contains
 	 * the server url to which the connection to be made. The credential
 	 * information typically has the username and password concatenated by a
 	 * delimiter. The connection info and credential info are used by the
@@ -119,22 +126,69 @@ public final class ConnectionManager<T> {
 	 * @param connectionInfo -
 	 *            Connection information. Typically contains the server name or
 	 *            URL
-	 * @param credentialInfo -
+	 * @param credentialInfoToUpdateOrExtract -
 	 *            Credential information for the system and repository
 	 *            combination. Typically contains the username and password
-	 *            separated by a delimiter.
+	 *            separated by a delimiter. These credentials should not be used
+	 *            to create new artifacts.
 	 * @return
 	 * @throws MaxConnectionsReachedException -
 	 *             when the maximum connections for the particular repository
 	 *             exceeded.
 	 * @throws ConnectionException
 	 */
-	public T getConnection(String systemId, String systemKind,
+	public T getConnectionToUpdateOrExtractArtifact(String systemId, String systemKind,
 			String repositoryId, String repositoryKind, String connectionInfo,
-			String credentialInfo) throws MaxConnectionsReachedException,
+			String credentialInfoToUpdateAndExtract) throws MaxConnectionsReachedException,
 			ConnectionException {
 		return pool.getConnection(systemId, systemKind, repositoryId,
-				repositoryKind, connectionInfo, credentialInfo, this);
+				repositoryKind, connectionInfo, credentialInfoToUpdateAndExtract, this);
+	}
+	
+	/**
+	 * Returns a Connection object for a particular system and repository
+	 * combination from the pool. The connection is used to create new artifacts.
+	 * This is typically done using different credential information than the ones
+	 * used to update or extract artifacts. The credential information for updates
+	 * and extractions are the same to avoid infinite update loops and differ from
+	 * the credentials used to create artifacts in order to force an initial resync
+	 * after artifact creation.  
+	 * The connection information typically contains
+	 * the server url to which the connection to be made. The credential
+	 * information typically has the username and password concatenated by a
+	 * delimiter. The connection info and credential info are used by the
+	 * ConnectionFactory to create a connection.
+	 * 
+	 * @param systemId -
+	 *            The system id for the system to which the connection is to be
+	 *            made
+	 * @param systemKind -
+	 *            System kind for the system to which the connection to be made
+	 * @param repositoryId -
+	 *            The repository id for the repository to which the connection
+	 *            to be created
+	 * @param repositoryKind -
+	 *            The repository kind for the repository
+	 * @param connectionInfo -
+	 *            Connection information. Typically contains the server name or
+	 *            URL
+	 * @param credentialInfoToCreate -
+	 *            Credential information for the system and repository
+	 *            combination. Typically contains the username and password
+	 *            separated by a delimiter. These credential info should not
+	 *            be used to update or extract artifacts.
+	 * @return
+	 * @throws MaxConnectionsReachedException -
+	 *             when the maximum connections for the particular repository
+	 *             exceeded.
+	 * @throws ConnectionException
+	 */
+	public T getConnectionToCreateArtifact(String systemId, String systemKind,
+			String repositoryId, String repositoryKind, String connectionInfo,
+			String credentialInfoToCreate) throws MaxConnectionsReachedException,
+			ConnectionException {
+		return pool.getConnection(systemId, systemKind, repositoryId,
+				repositoryKind, connectionInfo, credentialInfoToCreate, this);
 	}
 
 	/**

@@ -129,7 +129,7 @@ public class MutliThreadedConnectionManagerTest extends MockObjectTestCase {
 									} catch (InterruptedException e) {
 										e.printStackTrace();
 									}
-									connection = manager.getConnection(systemId+jTmp, systemKind+jTmp, repositoryId+jTmp,
+									connection = manager.getConnectionToUpdateOrExtractArtifact(systemId+jTmp, systemKind+jTmp, repositoryId+jTmp,
 										repositoryKind+jTmp, connectionInfo+jTmp, credentialInfo+jTmp);
 									if(connection == null){
 										fail("Connection is null for " +iTmp+" "+jTmp);

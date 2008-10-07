@@ -29,7 +29,9 @@ import com.vasoftware.sf.soap44.webservices.tracker.TrackerSoapRow;
  * and artifacts.
  */
 public class SFEETrackerHandler {
-	/** Tracker Soap API handle */
+	/**
+	 * Tracker Soap API handle
+	 */
 	private ITrackerAppSoap mTrackerApp;
 
 	private static final Log log = LogFactory.getLog(SFEETrackerHandler.class);

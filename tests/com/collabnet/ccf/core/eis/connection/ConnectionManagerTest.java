@@ -39,11 +39,11 @@ public class ConnectionManagerTest extends MockObjectTestCase {
 				eq(repositoryKind),
 				eq(connectionInfo),
 				eq(credentialInfo)}).will(returnValue("CreatedConnection"));
-		String connection = manager.getConnection(systemId, systemKind, repositoryId,
+		String connection = manager.getConnectionToUpdateOrExtractArtifact(systemId, systemKind, repositoryId,
 				repositoryKind, connectionInfo, credentialInfo);
 		manager.releaseConnection(connection);
 		context.expects(once()).method("isAlive").with(eq("CreatedConnection")).will(returnValue(true));
-		connection = manager.getConnection(systemId, systemKind, repositoryId,
+		connection = manager.getConnectionToUpdateOrExtractArtifact(systemId, systemKind, repositoryId,
 				repositoryKind, connectionInfo, credentialInfo);
 	}
 	@SuppressWarnings("unchecked")
@@ -73,7 +73,7 @@ public class ConnectionManagerTest extends MockObjectTestCase {
 		String[] connections = new String[numberOfConnectionsNeeded];
 		for(int i=0; i < numberOfConnectionsNeeded; i++){
 			try {
-				connections[i] = manager.getConnection(systemId, systemKind, repositoryId,
+				connections[i] = manager.getConnectionToUpdateOrExtractArtifact(systemId, systemKind, repositoryId,
 						repositoryKind, connectionInfo, credentialInfo);
 			} catch (MaxConnectionsReachedException e) {
 				fail("Max connections reached at "+(i+1)
@@ -108,7 +108,7 @@ public class ConnectionManagerTest extends MockObjectTestCase {
 		boolean maxConnectionsExceptionOccured = false;
 		for(int i=0; i < numberOfConnectionsNeeded; i++){
 			try {
-				connections[i] = manager.getConnection(systemId, systemKind, repositoryId,
+				connections[i] = manager.getConnectionToUpdateOrExtractArtifact(systemId, systemKind, repositoryId,
 						repositoryKind, connectionInfo, credentialInfo);
 			} catch (MaxConnectionsReachedException e) {
 				maxConnectionsExceptionOccured = true;

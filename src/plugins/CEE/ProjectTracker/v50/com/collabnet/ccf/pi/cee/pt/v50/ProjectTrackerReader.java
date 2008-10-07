@@ -18,6 +18,8 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dom4j.Document;
+import org.openadaptor.core.IDataProcessor;
+import org.openadaptor.core.exception.ValidationException;
 
 import com.collabnet.ccf.core.AbstractReader;
 import com.collabnet.ccf.core.CCFRuntimeException;
@@ -45,7 +47,7 @@ import com.collabnet.tracker.ws.HistoryActivity;
 import com.collabnet.tracker.ws.HistoryTransaction;
 import com.collabnet.tracker.ws.Option;
 
-public class ProjectTrackerReader extends AbstractReader {
+public class ProjectTrackerReader extends AbstractReader implements IDataProcessor {
 	private static final Log log = LogFactory.getLog(ProjectTrackerReader.class);
 	private String serverUrl = null;
 
@@ -563,17 +565,17 @@ public class ProjectTrackerReader extends AbstractReader {
 	}
 	
 	/**
-	 * Connects to the source SFEE system using the connectionInfo and credentialInfo
+	 * Connects to the source CEE system using the connectionInfo and credentialInfo
 	 * details.
 	 * 
 	 * This method uses the ConnectionManager configured in the wiring file
-	 * for the SFEEReader
+	 * for the CEEReader
 	 *  
-	 * @param systemId - The system id of the source SFEE system
-	 * @param systemKind - The system kind of the source SFEE system
-	 * @param repositoryId - The tracker id in the source SFEE system
+	 * @param systemId - The system id of the source CEE system
+	 * @param systemKind - The system kind of the source CEE system
+	 * @param repositoryId - The tracker id in the source CEE system
 	 * @param repositoryKind - The repository kind for the tracker
-	 * @param connectionInfo - The SFEE server URL
+	 * @param connectionInfo - The CEE server URL
 	 * @param credentialInfo - User name and password concatenated with a delimiter.
 	 * @return - The connection object obtained from the ConnectionManager
 	 * @throws MaxConnectionsReachedException 
@@ -583,7 +585,7 @@ public class ProjectTrackerReader extends AbstractReader {
 			String repositoryKind, String connectionInfo, String credentialInfo) throws MaxConnectionsReachedException, ConnectionException {
 		//log.info("Before calling the parent connect()");
 		TrackerWebServicesClient connection = null;
-		connection = connectionManager.getConnection(systemId, systemKind, repositoryId,
+		connection = connectionManager.getConnectionToUpdateOrExtractArtifact(systemId, systemKind, repositoryId,
 			repositoryKind, connectionInfo, credentialInfo);
 		return connection;
 	}
@@ -628,26 +630,66 @@ public class ProjectTrackerReader extends AbstractReader {
 		connectionManager.releaseConnection(connection);
 	}
 
+	/**
+	 * Returns the server URL of the CEE system that is
+	 * configured in the wiring file.
+	 * @return
+	 */
 	public String getServerUrl() {
 		return serverUrl;
 	}
 
+	/**
+	 * Sets the source CEE system's SOAP server URL.
+	 * 
+	 * @param serverUrl - the URL of the source CEE system.
+	 */
 	public void setServerUrl(String serverUrl) {
 		this.serverUrl = serverUrl;
 	}
 
-	public String getPassword() {
+	/**
+	 * Gets the mandatory password that belongs to the username
+	 * 
+	 * @return the password
+	 */
+	private String getPassword() {
 		return password;
 	}
 
+	/**
+	 * Sets the password that belongs to the username
+	 * 
+	 * @param password
+	 *            the password to set
+	 */
 	public void setPassword(String password) {
 		this.password = password;
 	}
 
+	/**
+	 * Gets the mandatory user name The user name is used to login into the
+	 * CEE instance whenever an artifact should be updated or extracted.
+	 * This user has to differ from the resync user in order to force initial
+	 * resyncs with the source system once a new artifact has been created.
+	 * 
+	 * @return the userName
+	 */
 	public String getUsername() {
 		return username;
 	}
 
+	/**
+	 * Sets the mandatory username
+	 * 
+	 * The user name is used to login into the CEE instance whenever an
+	 * artifact should be updated or extracted. This user has to differ from the
+	 * resync user in order to force initial resyncs with the source system once
+	 * a new artifact has been created.
+	 * 
+	 * @param usser name
+	 *            the user name to set
+	 */
 	public void setUsername(String username) {
 		this.username = username;
 	}
@@ -667,6 +709,42 @@ public class ProjectTrackerReader extends AbstractReader {
 
 	public void setConnectorUserDisplayName(String connectorUserDisplayName) {
 		this.connectorUserDisplayName = connectorUserDisplayName;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public void validate(List exceptions) {
+		super.validate(exceptions);
+
+		if (getPassword() == null) {
+			log.error("password-property not set");
+			exceptions.add(new ValidationException("password-property not set",
+					this));
+		}
+
+		if (getUsername() == null) {
+			log.error("userName-property not set");
+			exceptions.add(new ValidationException("userName-property not set",
+					this));
+		}
+		
+		if (getConnectorUserDisplayName() == null) {
+			log.error("connectorUserDisplayName-property not set");
+			exceptions.add(new ValidationException("connectorUserDisplayName-property not set",
+					this));
+		}
+
+		if (getServerUrl() == null) {
+			log.error("serverUrl-property not set");
+			exceptions.add(new ValidationException(
+					"serverUrl-property not set", this));
+		}
+
+		if (getConnectionManager() == null) {
+			log.error("connectionManager-property not set");
+			exceptions.add(new ValidationException(
+					"connectionManager-property not set", this));
+		}
+		
 	}
 
 }

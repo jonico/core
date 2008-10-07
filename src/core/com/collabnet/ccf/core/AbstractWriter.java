@@ -13,11 +13,11 @@ import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
 import com.collabnet.ccf.core.utils.XPathUtils;
 
-public abstract class AbstractWriter extends LifecycleComponent implements
+public abstract class AbstractWriter<T> extends LifecycleComponent implements
 		IDataProcessor {
 	private static final Log log = LogFactory.getLog(AbstractWriter.class);
 	private static final Log logConflictResolutor = LogFactory.getLog("com.collabnet.ccf.core.conflict.resolution");
-	private ConnectionManager connectionManager = null;
+	private ConnectionManager<T> connectionManager = null;
 	public AbstractWriter(String id) {
 		super(id);
 	}
@@ -241,11 +241,11 @@ public abstract class AbstractWriter extends LifecycleComponent implements
 		
 	}
 
-	public ConnectionManager getConnectionManager() {
+	public ConnectionManager<T> getConnectionManager() {
 		return connectionManager;
 	}
 
-	public void setConnectionManager(ConnectionManager connectionManager) {
+	public void setConnectionManager(ConnectionManager<T> connectionManager) {
 		this.connectionManager = connectionManager;
 	}
 
