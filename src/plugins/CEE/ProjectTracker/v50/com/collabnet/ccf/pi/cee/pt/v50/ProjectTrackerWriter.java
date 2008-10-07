@@ -15,8 +15,8 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dom4j.Document;
 import org.openadaptor.core.IDataProcessor;
-import org.openadaptor.core.lifecycle.LifecycleComponent;
 
+import com.collabnet.ccf.core.AbstractWriter;
 import com.collabnet.ccf.core.CCFRuntimeException;
 import com.collabnet.ccf.core.eis.connection.ConnectionException;
 import com.collabnet.ccf.core.eis.connection.ConnectionManager;
@@ -43,19 +43,18 @@ import com.collabnet.tracker.ws.History;
 import com.collabnet.tracker.ws.HistoryTransaction;
 import com.collabnet.tracker.ws.Option;
 
-public class ProjectTrackerWriter extends LifecycleComponent implements IDataProcessor {
+public class ProjectTrackerWriter extends AbstractWriter implements IDataProcessor {
 	private static final Log log = LogFactory.getLog(ProjectTrackerWriter.class);
-	private static final Log logConflictResolutor = LogFactory.getLog("com.collabnet.ccf.core.conflict.resolution");
 	private String serverUrl = null;
 	private String username = null;
 	private String password = null;
-	private ConnectionManager<TrackerWebServicesClient> connectionManager = null;
+//	private ConnectionManager<TrackerWebServicesClient> connectionManager = null;
 	private MetaDataHelper metadataHelper = MetaDataHelper.getInstance();
 	ProjectTrackerHelper ptHelper = ProjectTrackerHelper.getInstance();
-	public Object[] process(Object data) {
+	public Object[] processOld(Object data) {
 		GenericArtifact ga = null;
 		if(data instanceof Document){
-			ga = this.processXMLDocument((Document)data);
+			ga = this.processXMLDocumentOld((Document)data);
 		}
 		Document doc = null;
 		try {
@@ -68,8 +67,7 @@ public class ProjectTrackerWriter extends LifecycleComponent implements IDataPro
 		return new Object[]{doc};
 	}
 	
-	public GenericArtifact processXMLDocument(Document document){
-		System.out.println();
+	public GenericArtifact processXMLDocumentOld(Document document){
 		GenericArtifact ga = null;
 		try {
 			ga = GenericArtifactHelper.createGenericArtifactJavaObject(document);
@@ -111,6 +109,30 @@ public class ProjectTrackerWriter extends LifecycleComponent implements IDataPro
 		return ga;
 	}
 	
+	private GenericArtifact getGenericArtifact(Document document){
+		GenericArtifact ga = null;
+		try {
+			ga = GenericArtifactHelper.createGenericArtifactJavaObject(document);
+	    } catch (GenericArtifactParsingException e) {
+			String cause = "Problem occured while parsing the GenericArtifact into Document";
+			log.error(cause, e);
+			throw new CCFRuntimeException(cause, e);
+		}
+	    return ga;
+	}
+	
+	private Document returnGenericArtifactDocument(GenericArtifact ga){
+		Document doc = null;
+		try {
+			doc = GenericArtifactHelper.createGenericArtifactXMLDocument(ga);
+		} catch (GenericArtifactParsingException e) {
+			String message = "Exception while parsing artifact";
+			log.error(message, e);
+			throw new CCFRuntimeException(message, e);
+		}
+		return doc;
+	}
+	
 	private GenericArtifact createProjectTrackerAttachment(GenericArtifact ga) {
 		String targetArtifactId = ga.getDepParentTargetArtifactId();
 		String artifactId = ptHelper.getArtifactIdFromFullyQualifiedArtifactId(targetArtifactId);
@@ -136,9 +158,15 @@ public class ProjectTrackerWriter extends LifecycleComponent implements IDataPro
 			throw new CCFRuntimeException(message, e);
 		}
 		finally {
-			connectionManager.releaseConnection(twsclient);
+			this.releaseConnection(twsclient);
 		}
 		return ga;
+	}
+
+	private void releaseConnection(TrackerWebServicesClient twsclient) {
+		ConnectionManager<TrackerWebServicesClient> connectionManager = 
+				(ConnectionManager<TrackerWebServicesClient>) this.getConnectionManager();
+		connectionManager.releaseConnection(twsclient);
 	}
 
 	private GenericArtifact updateProjectTrackerArtifact(GenericArtifact ga) {
@@ -152,30 +180,6 @@ public class ProjectTrackerWriter extends LifecycleComponent implements IDataPro
 		try {
 			int version = this.getArtifactVerstion(targetArtifactId, new Date(0).getTime(),
 					new Date().getTime(), twsclient);
-			int lastSyncVersion = -1;
-			String lastSyncVersionStr = ga.getTargetArtifactVersion();
-			try{
-				lastSyncVersion = Integer.parseInt(lastSyncVersionStr);
-			}
-			catch(NumberFormatException e){
-				String message = "Last successful synchronization version of artifact "
-					+ targetArtifactId + " is not a number "+lastSyncVersionStr;
-				log.error(message, e);
-				throw new CCFRuntimeException(message, e);
-			}
-			if(lastSyncVersion < version){
-				String conflictResolutionPolicy = ga.getConflictResolutionPriority();
-				if(conflictResolutionPolicy.equals(GenericArtifact.VALUE_CONFLICT_RESOLUTION_PRIORITY_ALWAYS_IGNORE)){
-					logConflictResolutor.warn("Conflict detected for PT artifact "+targetArtifactId
-							+". Changes are ignored.");
-					ga.setArtifactAction(GenericArtifact.ArtifactActionValue.IGNORE);
-					return ga;
-				}
-				else {
-					logConflictResolutor.info("Conflict detected for PT artifact "+targetArtifactId
-							+". Changes are overridden.");
-				}
-			}
 			List<ClientArtifact> cla = null;
 			cla = new ArrayList<ClientArtifact>();
 			ClientArtifact ca = this.getClientArtifactFromGenericArtifact(ga, twsclient,
@@ -214,15 +218,16 @@ public class ProjectTrackerWriter extends LifecycleComponent implements IDataPro
 			throw new CCFRuntimeException(message, e);
 		}
 		finally {
-			connectionManager.releaseConnection(twsclient);
+			this.releaseConnection(twsclient);
 		}
 		return ga;
 	}
 	
 	private int getArtifactVerstion(String artifactId, long createdOnTime, long modifiedOnTime,
 			TrackerWebServicesClient twsclient) throws Exception{
+		String artifactIdentifier = ptHelper.getArtifactIdFromFullyQualifiedArtifactId(artifactId);
 		ArtifactHistoryList ahlVersion = 
-			twsclient.getChangeHistoryForArtifact(artifactId,
+			twsclient.getChangeHistoryForArtifact(artifactIdentifier,
 					createdOnTime, modifiedOnTime);
 		History[] historyList = ahlVersion.getHistory();
 		int version = 0;
@@ -294,7 +299,7 @@ public class ProjectTrackerWriter extends LifecycleComponent implements IDataPro
 			throw new CCFRuntimeException(message, e);
 		}
 		finally {
-			connectionManager.releaseConnection(twsclient);
+			this.releaseConnection(twsclient);
 		}
 		return ga;
 	}
@@ -504,6 +509,8 @@ public class ProjectTrackerWriter extends LifecycleComponent implements IDataPro
 	public TrackerWebServicesClient connect(String systemId, String systemKind, String repositoryId,
 			String repositoryKind, String connectionInfo, String credentialInfo) throws MaxConnectionsReachedException, ConnectionException {
 		log.info("Getting connection to PT");
+		ConnectionManager<TrackerWebServicesClient> connectionManager = 
+			(ConnectionManager<TrackerWebServicesClient>) this.getConnectionManager();
 		TrackerWebServicesClient connection = null;
 		connection = connectionManager.getConnection(systemId, systemKind, repositoryId,
 			repositoryKind, connectionInfo, credentialInfo);
@@ -520,7 +527,6 @@ public class ProjectTrackerWriter extends LifecycleComponent implements IDataPro
 
 	public void reset(Object arg0) {
 		// TODO Auto-generated method stub
-		
 	}
 
 	public String getServerUrl() {
@@ -547,13 +553,107 @@ public class ProjectTrackerWriter extends LifecycleComponent implements IDataPro
 		this.password = password;
 	}
 
-	public ConnectionManager<TrackerWebServicesClient> getConnectionManager() {
-		return connectionManager;
+	public void validate(List arg0) {
+		// TODO Auto-generated method stub
+		
 	}
 
-	public void setConnectionManager(
-			ConnectionManager<TrackerWebServicesClient> connectionManager) {
-		this.connectionManager = connectionManager;
+	@Override
+	public Document createArtifact(Document gaDocument) {
+		GenericArtifact ga = this.getGenericArtifact(gaDocument);
+		ga = this.createProjectTrackerArtifact(ga);
+		return this.returnGenericArtifactDocument(ga);
+	}
+
+	@Override
+	public Document createAttachment(Document gaDocument) {
+		GenericArtifact ga = this.getGenericArtifact(gaDocument);
+		ga = this.createProjectTrackerAttachment(ga);
+		return this.returnGenericArtifactDocument(ga);
+	}
+
+	@Override
+	public Document createDependency(Document gaDocument) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Document deleteArtifact(Document gaDocument) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Document deleteAttachment(Document gaDocument) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Document deleteDependency(Document gaDocument) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public int getArtifactVersion(Document gaDocument) {
+		GenericArtifact ga = this.getGenericArtifact(gaDocument);
+		String targetArtifactId = ga.getTargetArtifactId();
+		TrackerWebServicesClient twsclient = null;
+		int version = 0;
+		try {
+			twsclient = this.getConnection(ga);
+			version = this.getArtifactVerstion(targetArtifactId, new Date(0).getTime(),
+					new Date().getTime(), twsclient);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} finally {
+			if(twsclient != null){
+				this.releaseConnection(twsclient);
+			}
+		}
+		return version;
+	}
+
+	@Override
+	public Document updateArtifact(Document gaDocument) {
+		GenericArtifact ga = this.getGenericArtifact(gaDocument);
+		ga = this.updateProjectTrackerArtifact(ga);
+		return this.returnGenericArtifactDocument(ga);
+	}
+
+	@Override
+	public Document updateAttachment(Document gaDocument) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Document updateDependency(Document gaDocument) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+	
+	public boolean handleException(Throwable cause){
+		if(cause == null) return false;
+		if (cause instanceof java.net.SocketException
+				|| cause instanceof java.net.UnknownHostException) {
+			return true;
+		}
+		else if(cause instanceof ConnectionException){
+			return true;
+		}
+		else if(cause instanceof RemoteException){
+			Throwable innerCause = cause.getCause();
+			return handleException(innerCause);
+		}
+		else if(cause instanceof CCFRuntimeException){
+			Throwable innerCause = cause.getCause();
+			return handleException(innerCause);
+		}
+		return false;
 	}
 
 }
