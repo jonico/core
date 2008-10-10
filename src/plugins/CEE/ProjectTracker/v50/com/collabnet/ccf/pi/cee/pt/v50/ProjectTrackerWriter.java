@@ -338,7 +338,6 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 				this.addComment(field,ca);
 			}
 			else{
-				System.out.println();
 				String fullyQualifiedFieldTagName = this.getFullyQualifiedFieldTagName(fieldDisplayName,
 						namespace, trackerArtifactType);
 				TrackerAttribute trackerAttribute = trackerArtifactType.getAttribute(fullyQualifiedFieldTagName);
@@ -445,6 +444,9 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 			ca.addAttributeValue(attributeNamespace, attributeTagName, null);
 			attributeValue = this.convertOptionValue(attributeNamespace, attributeTagName,
 					attributeValue, metadata);
+		}
+		else if(trackerAttribute.getAttributeType().equals("USER")){
+			ca.addAttributeValue(attributeNamespace, attributeTagName, null);
 		}
 		ca.addAttributeValue(attributeNamespace, attributeTagName, attributeValue);
 	}
