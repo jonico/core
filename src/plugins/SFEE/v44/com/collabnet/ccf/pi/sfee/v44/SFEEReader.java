@@ -108,7 +108,7 @@ public class SFEEReader extends AbstractReader<Connection> {
 		return connection;
 	}
 	
-	
+	@Override
 	public boolean handleException(Throwable cause, ConnectionManager<Connection> connectionManager){
 		if(cause == null) return false;
 		if ((cause instanceof java.net.SocketException

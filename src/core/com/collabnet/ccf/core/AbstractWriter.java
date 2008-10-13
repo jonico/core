@@ -110,7 +110,7 @@ public abstract class AbstractWriter<T> extends LifecycleComponent implements
 				log.error(message, e);
 				throw new CCFRuntimeException(message, e);
 			} catch(Exception e){
-				boolean connectionException = connectionManager.isUseStandardTimeoutHandlingCode() || this.handleException(e, connectionManager);
+				boolean connectionException = connectionManager.isUseStandardTimeoutHandlingCode() && this.handleException(e, connectionManager);
 				if(!connectionException){
 					retry = false;
 					if(e instanceof CCFRuntimeException){
@@ -146,8 +146,6 @@ public abstract class AbstractWriter<T> extends LifecycleComponent implements
 							log.error("Interrupted sleep in timeout method: ", e1);
 						}
 					} else {
-						// error occurred more than 6 times, short error message, go to
-						// sleep for two minutes
 						log
 								.warn("Network related error occurred again, switched to maximum waiting time ("
 										+ e.getMessage()

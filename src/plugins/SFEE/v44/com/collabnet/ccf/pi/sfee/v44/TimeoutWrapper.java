@@ -62,8 +62,6 @@ public class TimeoutWrapper {
 					log.error("Interrupted sleep in timeout method: ", e1);
 				}
 			} else {
-				// error occurred more than 6 times, short error message, go to
-				// sleep for two minutes
 				log
 						.warn("Network related error occurred again, switched to maximum waiting time ("
 								+ e.getMessage()

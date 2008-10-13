@@ -87,6 +87,7 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 		ptGATypesMap.put("USER", GenericArtifactField.FieldValueTypeValue.USER);
 	}
 	
+	@Override
 	public boolean handleException(Throwable cause, ConnectionManager<TrackerWebServicesClient> connectionManager){
 		// TODO What about invalid sessions?
 		if(cause == null) return false;

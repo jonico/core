@@ -192,7 +192,67 @@ public abstract class AbstractReader<T> extends LifecycleComponent implements ID
 						" changed artifacts in repository " + sourceRepositoryId);
 				currentRecord.setSyncInfo(syncInfoIn);
 				syncInfo = currentRecord.getSyncInfo();
-				List<String> artifactsToBeRead = this.getChangedArtifacts(syncInfo);
+				// TODO Does it make sense to insert retry code here or is it better just to try it again later?
+				int numberOfTries = 1;
+				boolean retry = false;
+				List<String> artifactsToBeRead = null;
+				do{
+					int msToSleep = (numberOfTries - 1)	* connectionManager.getRetryIncrementTime();
+					int maxMsToSleep = connectionManager.getMaximumRetryWaitingTime();
+					try {
+						artifactsToBeRead = this.getChangedArtifacts(syncInfo);
+					} catch(Exception e){
+						boolean connectionException = connectionManager.isUseStandardTimeoutHandlingCode() && this.handleException(e, connectionManager);
+						if(!connectionException){
+							retry = false;
+							if(e instanceof CCFRuntimeException){
+								throw (CCFRuntimeException)e;
+							}
+							else if(e instanceof RuntimeException) {
+								throw (RuntimeException)e;
+							}
+							else {
+								throw new CCFRuntimeException("An exception occured", e);
+							}
+						}
+						else {
+							retry = true;
+							if (numberOfTries == 1) {
+								// first try, long error message
+								log
+										.warn(
+												"Network related problem occurred while connecting to external system. Try operation again",
+												e);
+							} else if (msToSleep < maxMsToSleep) {
+								// error occurred again, short error message, go to sleep
+								// we switched to a linear increase of the timeout value, may
+								// have to revisit this decision later
+								// int timeOut = (int) Math.pow(2, numberOfTries);
+								log.warn("Network related error occurred again ("
+										+ e.getMessage()
+										+ "), incremented timeout, now sleeping for "
+										+ msToSleep + " milliseconds.");
+								try {
+									Thread.sleep(msToSleep);
+								} catch (InterruptedException e1) {
+									log.error("Interrupted sleep in timeout method: ", e1);
+								}
+							} else {
+								log
+										.warn("Network related error occurred again, switched to maximum waiting time ("
+												+ e.getMessage()
+												+ "), sleeping for "
+												+ maxMsToSleep + " milliseconds.");
+								try {
+									Thread.sleep(maxMsToSleep);
+								} catch (InterruptedException e1) {
+									log.error("Interrupted sleep in timeout method: ", e1);
+								}
+							}
+						}
+					}
+					++numberOfTries;
+				} while(retry);
 				artifactsToBeReadList.addAll(artifactsToBeRead);
 			}
 			if(!artifactsToBeReadList.isEmpty()) {
@@ -200,16 +260,76 @@ public abstract class AbstractReader<T> extends LifecycleComponent implements ID
 						"artifacts to be read.");
 				String artifactId = artifactsToBeReadList.remove(0);
 				log.debug("Getting the data for artifact "+artifactId);
-				List<GenericArtifact> artifactData = this.getArtifactData(syncInfo, artifactId);
-				List<GenericArtifact> artifactAttachments = null;
-				if(shipAttachments){
-					artifactAttachments = this.getArtifactAttachments(syncInfo, artifactId);
-				} else {
-					artifactAttachments = new ArrayList<GenericArtifact>();
-				}
-				List<GenericArtifact> artifactDependencies = this.getArtifactDependencies(syncInfo, artifactId);
+				int numberOfTries = 1;
+				List<GenericArtifact> sortedGAs = null;
+				boolean retry = false;
+				do{
+					int msToSleep = (numberOfTries - 1)	* connectionManager.getRetryIncrementTime();
+					int maxMsToSleep = connectionManager.getMaximumRetryWaitingTime();
+					try {
+						List<GenericArtifact> artifactData = this.getArtifactData(syncInfo, artifactId);
+						List<GenericArtifact> artifactAttachments = null;
+						if(shipAttachments){
+							artifactAttachments = this.getArtifactAttachments(syncInfo, artifactId);
+						} else {
+							artifactAttachments = new ArrayList<GenericArtifact>();
+						}
+						List<GenericArtifact> artifactDependencies = this.getArtifactDependencies(syncInfo, artifactId);
+						
+						sortedGAs = combineAndSort(artifactData,artifactAttachments,artifactDependencies);
+					} catch(Exception e){
+						boolean connectionException = connectionManager.isUseStandardTimeoutHandlingCode() && this.handleException(e, connectionManager);
+						if(!connectionException){
+							retry = false;
+							if(e instanceof CCFRuntimeException){
+								throw (CCFRuntimeException)e;
+							}
+							else if(e instanceof RuntimeException) {
+								throw (RuntimeException)e;
+							}
+							else {
+								throw new CCFRuntimeException("An exception occured", e);
+							}
+						}
+						else {
+							retry = true;
+							if (numberOfTries == 1) {
+								// first try, long error message
+								log
+										.warn(
+												"Network related problem occurred while connecting to external system. Try operation again",
+												e);
+							} else if (msToSleep < maxMsToSleep) {
+								// error occurred again, short error message, go to sleep
+								// we switched to a linear increase of the timeout value, may
+								// have to revisit this decision later
+								// int timeOut = (int) Math.pow(2, numberOfTries);
+								log.warn("Network related error occurred again ("
+										+ e.getMessage()
+										+ "), incremented timeout, now sleeping for "
+										+ msToSleep + " milliseconds.");
+								try {
+									Thread.sleep(msToSleep);
+								} catch (InterruptedException e1) {
+									log.error("Interrupted sleep in timeout method: ", e1);
+								}
+							} else {
+								log
+										.warn("Network related error occurred again, switched to maximum waiting time ("
+												+ e.getMessage()
+												+ "), sleeping for "
+												+ maxMsToSleep + " milliseconds.");
+								try {
+									Thread.sleep(maxMsToSleep);
+								} catch (InterruptedException e1) {
+									log.error("Interrupted sleep in timeout method: ", e1);
+								}
+							}
+						}
+					}
+					++numberOfTries;
+				} while(retry);
 				
-				List<GenericArtifact> sortedGAs = combineAndSort(artifactData,artifactAttachments,artifactDependencies);
 				artifactsToBeShippedList.addAll(sortedGAs);
 				if(artifactsToBeShippedList.isEmpty()) return new Object[]{};
 				GenericArtifact genericArtifact = artifactsToBeShippedList.remove(0);
@@ -635,5 +755,9 @@ public abstract class AbstractReader<T> extends LifecycleComponent implements ID
 	 */
 	public void setConnectionManager(ConnectionManager<T> connectionManager) {
 		this.connectionManager = connectionManager;
+	}
+	
+	public boolean handleException(Throwable rootCause,ConnectionManager<T> connectionManager){
+		return false;
 	}
 }
