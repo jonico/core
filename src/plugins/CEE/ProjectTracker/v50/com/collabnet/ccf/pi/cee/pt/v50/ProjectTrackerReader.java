@@ -714,6 +714,11 @@ public class ProjectTrackerReader extends AbstractReader implements IDataProcess
 	@SuppressWarnings("unchecked")
 	public void validate(List exceptions) {
 		super.validate(exceptions);
+		
+		if (getResyncUserName() == null) {
+			log
+					.warn("resyncUserName-property has not been set, so that initial resyncs after artifact creation are not possible.");
+		}
 
 		if (getPassword() == null) {
 			log.error("password-property not set");
@@ -746,5 +751,43 @@ public class ProjectTrackerReader extends AbstractReader implements IDataProcess
 		}
 		
 	}
+	
+	/**
+	 * Sets the optional resync username
+	 * 
+	 * The resync user name is used to login into the CEE instance
+	 * whenever an artifact should be created. This user has to differ from the
+	 * ordinary user used to log in in order to force initial resyncs with the
+	 * source system once a new artifact has been created.
+	 * 
+	 * @param resyncUserName
+	 *            the resyncUserName to set
+	 */
+	public void setResyncUserName(String resyncUserName) {
+		this.resyncUserName = resyncUserName;
+	}
+
+	/**
+	 * Gets the optional resync username The resync user name is used to login
+	 * into the CEE instance whenever an artifact should be created. This
+	 * user has to differ from the ordinary user used to log in in order to
+	 * force initial resyncs with the source system once a new artifact has been
+	 * created. This property can also
+	 * be set for the reader component in order to be able to differentiate
+	 * between artifacts created by ordinary users and artifacts to be resynced.
+	 * 
+	 * @return the resyncUserName
+	 */
+	private String getResyncUserName() {
+		return resyncUserName;
+	}
+	
+	/**
+	 * Another user name that is used to login into the CEE instance. This
+	 * user has to differ from the ordinary user used to log in in order to
+	 * force initial resyncs with the source system once a new artifact has been
+	 * created.
+	 */
+	private String resyncUserName;
 
 }
