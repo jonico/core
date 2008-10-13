@@ -17,6 +17,7 @@ import org.openadaptor.core.IDataProcessor;
 import org.openadaptor.core.exception.ValidationException;
 import org.openadaptor.core.lifecycle.LifecycleComponent;
 
+import com.collabnet.ccf.core.eis.connection.ConnectionManager;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
@@ -37,7 +38,7 @@ import com.collabnet.ccf.core.utils.DateUtil;
  * @author madhusuthanan (madhusuthanan@collab.net)
  *
  */
-public abstract class AbstractReader extends LifecycleComponent implements IDataProcessor {
+public abstract class AbstractReader<T> extends LifecycleComponent implements IDataProcessor {
 	private static final Log log = LogFactory.getLog(AbstractReader.class);
 	private HashMap<String, RepositoryRecord> repositoryRecordHashMap = null;
 	private ArrayList<RepositoryRecord> repositorySynchronizationWaitingList = null;
@@ -48,6 +49,7 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 	private Comparator<GenericArtifact> genericArtifactComparator = null;
 	public static final long DEFAULT_MAX_ATTACHMENT_SIZE_PER_ARTIFACT = 10 * 1024 * 1024;
 	private long maxAttachmentSizePerArtifact = DEFAULT_MAX_ATTACHMENT_SIZE_PER_ARTIFACT;
+	private ConnectionManager<T> connectionManager;
 
 	public AbstractReader(){
 		super();
@@ -348,7 +350,14 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 
 	@SuppressWarnings("unchecked")
 	public void validate(List exceptions) {
-		if(sleepInterval == -1){
+		super.validate(exceptions);
+		if (getConnectionManager() == null) {
+			log.error("connectionManager property is not set");
+			exceptions.add(new ValidationException("connectionManager property is not set",this));
+		}
+			
+		if(getSleepInterval() == -1){
+			log.error("sleepInterval is not set");
 			exceptions.add(new ValidationException("sleepInterval is not set",this));
 		}
 	}
@@ -602,5 +611,29 @@ public abstract class AbstractReader extends LifecycleComponent implements IData
 	 */
 	public void setIncludeFieldMetaData(boolean includeFieldMetaData) {
 		this.includeFieldMetaData = includeFieldMetaData;
+	}
+	
+	/**
+	 * Get the connection manager. The connection manager is responsible to
+	 * manage (create, close, pool) the connections from type T.
+	 * Furthermore, it contains timeout settings and the settings
+	 * for the retry code in case of network timeout and session fault
+	 * related errors.
+	 * @return the connection manager object
+	 */
+	public ConnectionManager<T> getConnectionManager() {
+		return connectionManager;
+	}
+
+	/**
+	 * Set the connection manager. The connection manager is responsible to
+	 * manage (create, close, pool) the connections from type T.
+	 * Furthermore, it contains timeout settings and the settings
+	 * for the retry code in case of network timeout and session fault
+	 * related errors.
+	 * @param connectionManager the connection manager object
+	 */
+	public void setConnectionManager(ConnectionManager<T> connectionManager) {
+		this.connectionManager = connectionManager;
 	}
 }

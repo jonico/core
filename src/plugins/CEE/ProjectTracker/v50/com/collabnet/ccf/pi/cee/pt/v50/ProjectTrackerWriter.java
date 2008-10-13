@@ -177,7 +177,7 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 		TrackerWebServicesClient twsclient = this.getConnection(ga);
 		
 		try {
-			int version = this.getArtifactVerstion(targetArtifactId, new Date(0).getTime(),
+			int version = this.getArtifactVersion(targetArtifactId, new Date(0).getTime(),
 					new Date().getTime(), twsclient);
 			List<ClientArtifact> cla = null;
 			cla = new ArrayList<ClientArtifact>();
@@ -222,7 +222,7 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 		return ga;
 	}
 	
-	private int getArtifactVerstion(String artifactId, long createdOnTime, long modifiedOnTime,
+	private int getArtifactVersion(String artifactId, long createdOnTime, long modifiedOnTime,
 			TrackerWebServicesClient twsclient) throws Exception{
 		String artifactIdentifier = ptHelper.getArtifactIdFromFullyQualifiedArtifactId(artifactId);
 		ArtifactHistoryList ahlVersion = 
@@ -596,12 +596,6 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 			exceptions.add(new ValidationException(
 					"serverUrl-property not set", this));
 		}
-
-		if (getConnectionManager() == null) {
-			log.error("connectionManager-property not set");
-			exceptions.add(new ValidationException(
-					"connectionManager-property not set", this));
-		}
 	}
 
 	@Override
@@ -650,7 +644,7 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 		int version = 0;
 		try {
 			twsclient = this.getConnection(ga);
-			version = this.getArtifactVerstion(targetArtifactId, new Date(0).getTime(),
+			version = this.getArtifactVersion(targetArtifactId, new Date(0).getTime(),
 					new Date().getTime(), twsclient);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
@@ -682,22 +676,24 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 		return null;
 	}
 	
-	public boolean handleException(Throwable cause){
+	@Override
+	public boolean handleException(Throwable cause, ConnectionManager<TrackerWebServicesClient> connectionManager){
+		// TODO What about invalid sessions?
 		if(cause == null) return false;
-		if (cause instanceof java.net.SocketException
-				|| cause instanceof java.net.UnknownHostException) {
+		if ((cause instanceof java.net.SocketException
+				|| cause instanceof java.net.UnknownHostException) && connectionManager.isEnableRetryAfterNetworkTimeout()) {
 			return true;
 		}
-		else if(cause instanceof ConnectionException){
+		else if(cause instanceof ConnectionException && connectionManager.isEnableRetryAfterNetworkTimeout()){
 			return true;
 		}
 		else if(cause instanceof RemoteException){
 			Throwable innerCause = cause.getCause();
-			return handleException(innerCause);
+			return handleException(innerCause, connectionManager);
 		}
 		else if(cause instanceof CCFRuntimeException){
 			Throwable innerCause = cause.getCause();
-			return handleException(innerCause);
+			return handleException(innerCause, connectionManager);
 		}
 		return false;
 	}

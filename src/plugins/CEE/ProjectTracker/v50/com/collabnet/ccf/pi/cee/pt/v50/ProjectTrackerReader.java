@@ -47,7 +47,7 @@ import com.collabnet.tracker.ws.HistoryActivity;
 import com.collabnet.tracker.ws.HistoryTransaction;
 import com.collabnet.tracker.ws.Option;
 
-public class ProjectTrackerReader extends AbstractReader implements IDataProcessor {
+public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClient> implements IDataProcessor {
 	private static final Log log = LogFactory.getLog(ProjectTrackerReader.class);
 	private String serverUrl = null;
 
@@ -69,7 +69,6 @@ public class ProjectTrackerReader extends AbstractReader implements IDataProcess
 	public static final String ARTIFACT_VERSION_FIELD_NAME = "{urn:cu023.cubit.maa.collab.net/PT/IZ-PT/}version";
 	private MetaDataHelper metadataHelper = MetaDataHelper.getInstance();
 	private HashMap<String, String> attahcmentIDNameMap = null;
-	private ConnectionManager<TrackerWebServicesClient> connectionManager = null;
 	// TODO Use ThreadLocal object to store these variables
 	private ThreadLocal<ArtifactHistoryList> artifactHistoryList = new ThreadLocal<ArtifactHistoryList>();
 	ProjectTrackerHelper ptHelper = ProjectTrackerHelper.getInstance();
@@ -86,6 +85,27 @@ public class ProjectTrackerReader extends AbstractReader implements IDataProcess
 		ptGATypesMap.put("LONG_TEXT", GenericArtifactField.FieldValueTypeValue.STRING);
 		ptGATypesMap.put("SINGLE_SELECT", GenericArtifactField.FieldValueTypeValue.STRING);
 		ptGATypesMap.put("USER", GenericArtifactField.FieldValueTypeValue.USER);
+	}
+	
+	public boolean handleException(Throwable cause, ConnectionManager<TrackerWebServicesClient> connectionManager){
+		// TODO What about invalid sessions?
+		if(cause == null) return false;
+		if ((cause instanceof java.net.SocketException
+				|| cause instanceof java.net.UnknownHostException) && connectionManager.isEnableRetryAfterNetworkTimeout()) {
+			return true;
+		}
+		else if(cause instanceof ConnectionException && connectionManager.isEnableRetryAfterNetworkTimeout()){
+			return true;
+		}
+		else if(cause instanceof RemoteException){
+			Throwable innerCause = cause.getCause();
+			return handleException(innerCause, connectionManager);
+		}
+		else if(cause instanceof CCFRuntimeException){
+			Throwable innerCause = cause.getCause();
+			return handleException(innerCause, connectionManager);
+		}
+		return false;
 	}
 
 	@Override
@@ -203,7 +223,7 @@ public class ProjectTrackerReader extends AbstractReader implements IDataProcess
 		}
 		finally {
 			this.attahcmentIDNameMap = null;
-			connectionManager.releaseConnection(twsclient);
+			getConnectionManager().releaseConnection(twsclient);
 		}
 		return attachmentGAs;
 	}
@@ -286,7 +306,7 @@ public class ProjectTrackerReader extends AbstractReader implements IDataProcess
 		}
 		finally {
 			if(twsclient != null){
-				connectionManager.releaseConnection(twsclient);
+				getConnectionManager().releaseConnection(twsclient);
 				twsclient = null;
 			}
 		}
@@ -405,7 +425,7 @@ public class ProjectTrackerReader extends AbstractReader implements IDataProcess
 					}
 					finally {
 						if(twsclient != null){
-							connectionManager.releaseConnection(twsclient);
+							getConnectionManager().releaseConnection(twsclient);
 							twsclient = null;
 						}
 					}
@@ -495,7 +515,7 @@ public class ProjectTrackerReader extends AbstractReader implements IDataProcess
 		}
 		finally {
 			if(twsclient != null){
-				connectionManager.releaseConnection(twsclient);
+				getConnectionManager().releaseConnection(twsclient);
 			}
 		}
 		return twsclient;
@@ -558,7 +578,7 @@ public class ProjectTrackerReader extends AbstractReader implements IDataProcess
 			throw new CCFRuntimeException(message, e);
 		} finally {
 			if(twsclient != null){
-				connectionManager.releaseConnection(twsclient);
+				getConnectionManager().releaseConnection(twsclient);
 			}
 		}
 		return artifacts;
@@ -585,7 +605,7 @@ public class ProjectTrackerReader extends AbstractReader implements IDataProcess
 			String repositoryKind, String connectionInfo, String credentialInfo) throws MaxConnectionsReachedException, ConnectionException {
 		//log.info("Before calling the parent connect()");
 		TrackerWebServicesClient connection = null;
-		connection = connectionManager.getConnectionToUpdateOrExtractArtifact(systemId, systemKind, repositoryId,
+		connection = getConnectionManager().getConnectionToUpdateOrExtractArtifact(systemId, systemKind, repositoryId,
 			repositoryKind, connectionInfo, credentialInfo);
 		return connection;
 	}
@@ -627,7 +647,7 @@ public class ProjectTrackerReader extends AbstractReader implements IDataProcess
 	 * @param connection - The connection to be released to the ConnectionManager
 	 */
 	public void disconnect(TrackerWebServicesClient connection) {
-		connectionManager.releaseConnection(connection);
+		getConnectionManager().releaseConnection(connection);
 	}
 
 	/**
@@ -694,15 +714,6 @@ public class ProjectTrackerReader extends AbstractReader implements IDataProcess
 		this.username = username;
 	}
 
-	public ConnectionManager<TrackerWebServicesClient> getConnectionManager() {
-		return connectionManager;
-	}
-
-	public void setConnectionManager(
-			ConnectionManager<TrackerWebServicesClient> connectionManager) {
-		this.connectionManager = connectionManager;
-	}
-
 	public String getConnectorUserDisplayName() {
 		return connectorUserDisplayName;
 	}
@@ -743,12 +754,6 @@ public class ProjectTrackerReader extends AbstractReader implements IDataProcess
 			exceptions.add(new ValidationException(
 					"serverUrl-property not set", this));
 		}
-
-		if (getConnectionManager() == null) {
-			log.error("connectionManager-property not set");
-			exceptions.add(new ValidationException(
-					"connectionManager-property not set", this));
-		}
 		
 	}
 	
@@ -759,6 +764,9 @@ public class ProjectTrackerReader extends AbstractReader implements IDataProcess
 	 * whenever an artifact should be created. This user has to differ from the
 	 * ordinary user used to log in in order to force initial resyncs with the
 	 * source system once a new artifact has been created.
+	 * This property can also
+	 * be set for the reader component in order to be able to differentiate
+	 * between artifacts created by ordinary users and artifacts to be resynced.
 	 * 
 	 * @param resyncUserName
 	 *            the resyncUserName to set

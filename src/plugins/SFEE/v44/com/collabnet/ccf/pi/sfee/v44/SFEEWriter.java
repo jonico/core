@@ -22,6 +22,7 @@ import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
 import com.collabnet.ccf.core.utils.DateUtil;
 import com.collabnet.ccf.pi.sfee.v44.meta.ArtifactMetaData;
+import com.vasoftware.sf.soap44.fault.InvalidSessionFault;
 import com.vasoftware.sf.soap44.webservices.sfmain.TrackerFieldSoapDO;
 import com.vasoftware.sf.soap44.webservices.tracker.ArtifactSoapDO;
 
@@ -187,6 +188,30 @@ public class SFEEWriter extends AbstractWriter<Connection> implements IDataProce
 					GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD,
 					GenericArtifactField.FieldValueTypeValue.STRING);
 		}
+	}
+	
+	@Override
+	public boolean handleException(Throwable cause, ConnectionManager<Connection> connectionManager){
+		if(cause == null) return false;
+		if ((cause instanceof java.net.SocketException
+				|| cause instanceof java.net.UnknownHostException) && connectionManager.isEnableRetryAfterNetworkTimeout()) {
+			return true;
+		}
+		else if(cause instanceof ConnectionException && connectionManager.isEnableRetryAfterNetworkTimeout()){
+			return true;
+		}
+		else if (cause instanceof InvalidSessionFault && connectionManager.isEnableReloginAfterSessionTimeout()) {
+			return true;
+		}
+		else if(cause instanceof RemoteException){
+			Throwable innerCause = cause.getCause();
+			return handleException(innerCause, connectionManager);
+		}
+		else if(cause instanceof CCFRuntimeException){
+			Throwable innerCause = cause.getCause();
+			return handleException(innerCause, connectionManager);
+		}
+		return false;
 	}
 
 	public Document returnDocument(GenericArtifact ga) {
@@ -625,13 +650,8 @@ public class SFEEWriter extends AbstractWriter<Connection> implements IDataProce
 					"serverUrl-property not set", this));
 		}
 
-		ConnectionManager<Connection> connectionManager = (ConnectionManager<Connection>) getConnectionManager();
+		ConnectionManager<Connection> connectionManager = getConnectionManager();
 
-		if (connectionManager == null) {
-			log.error("connectionManager-property not set");
-			exceptions.add(new ValidationException(
-					"connectionManager-property not set", this));
-		}
 		if (exceptions.size() == 0) {
 			trackerHandler = new SFEETrackerHandler(getServerUrl(),
 					connectionManager);

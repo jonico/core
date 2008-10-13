@@ -19,6 +19,7 @@ import com.collabnet.ccf.core.eis.connection.ConnectionManager;
 import com.collabnet.ccf.core.eis.connection.MaxConnectionsReachedException;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
+import com.vasoftware.sf.soap44.fault.InvalidSessionFault;
 import com.vasoftware.sf.soap44.webservices.sfmain.TrackerFieldSoapDO;
 import com.vasoftware.sf.soap44.webservices.tracker.ArtifactSoapDO;
 
@@ -37,7 +38,7 @@ import com.vasoftware.sf.soap44.webservices.tracker.ArtifactSoapDO;
  * @author madhusuthanan
  *
  */
-public class SFEEReader extends AbstractReader {
+public class SFEEReader extends AbstractReader<Connection> {
     
 	private static final Log log = LogFactory.getLog(SFEEReader.class);
 	
@@ -46,8 +47,6 @@ public class SFEEReader extends AbstractReader {
 	private SFEEAttachmentHandler attachmentHandler = null;
 	
 	private SFEEToGenericArtifactConverter artifactConverter = null;
-	
-	private ConnectionManager<Connection> connectionManager = null;
 	
 	private String serverUrl = null;
 
@@ -104,9 +103,33 @@ public class SFEEReader extends AbstractReader {
 			String repositoryKind, String connectionInfo, String credentialInfo) throws MaxConnectionsReachedException, ConnectionException {
 		//log.info("Before calling the parent connect()");
 		Connection connection = null;
-		connection = connectionManager.getConnectionToUpdateOrExtractArtifact(systemId, systemKind, repositoryId,
+		connection = getConnectionManager().getConnectionToUpdateOrExtractArtifact(systemId, systemKind, repositoryId,
 			repositoryKind, connectionInfo, credentialInfo);
 		return connection;
+	}
+	
+	
+	public boolean handleException(Throwable cause, ConnectionManager<Connection> connectionManager){
+		if(cause == null) return false;
+		if ((cause instanceof java.net.SocketException
+				|| cause instanceof java.net.UnknownHostException) && connectionManager.isEnableRetryAfterNetworkTimeout()) {
+			return true;
+		}
+		else if(cause instanceof ConnectionException && connectionManager.isEnableRetryAfterNetworkTimeout()){
+			return true;
+		}
+		else if (cause instanceof InvalidSessionFault && connectionManager.isEnableReloginAfterSessionTimeout()) {
+			return true;
+		}
+		else if(cause instanceof RemoteException){
+			Throwable innerCause = cause.getCause();
+			return handleException(innerCause, connectionManager);
+		}
+		else if(cause instanceof CCFRuntimeException){
+			Throwable innerCause = cause.getCause();
+			return handleException(innerCause, connectionManager);
+		}
+		return false;
 	}
 	
 	/**
@@ -115,7 +138,7 @@ public class SFEEReader extends AbstractReader {
 	 * @param connection - The connection to be released to the ConnectionManager
 	 */
 	public void disconnect(Connection connection) {
-		connectionManager.releaseConnection(connection);
+		getConnectionManager().releaseConnection(connection);
 	}
 	
 	/**
@@ -213,8 +236,8 @@ public class SFEEReader extends AbstractReader {
 			exceptions.add(new ValidationException("password-property not set",this));
 		}
 		if(exceptions.size()==0){
-			trackerHandler = new SFEETrackerHandler(getServerUrl(),connectionManager);
-			attachmentHandler = new SFEEAttachmentHandler(getServerUrl(),connectionManager);
+			trackerHandler = new SFEETrackerHandler(getServerUrl(),getConnectionManager());
+			attachmentHandler = new SFEEAttachmentHandler(getServerUrl(),getConnectionManager());
 		}
 	}
 
@@ -481,26 +504,6 @@ public class SFEEReader extends AbstractReader {
 	 */
 	public void setUsername(String username) {
 		this.username = username;
-	}
-
-	/**
-	 * Gives the ConnectionManager object from which the SFEEReader
-	 * gets the connections from.
-	 * 
-	 * @return - the ConnectionManager
-	 */
-	public ConnectionManager<Connection> getConnectionManager() {
-		return connectionManager;
-	}
-
-	/**
-	 * Sets the ConnectionManager object that is used to retrieve connections
-	 * from by the SFEEReader.
-	 * 
-	 * @param connectionManager
-	 */
-	public void setConnectionManager(ConnectionManager<Connection> connectionManager) {
-		this.connectionManager = connectionManager;
 	}
 
 	/**

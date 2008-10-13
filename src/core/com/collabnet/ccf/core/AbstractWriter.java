@@ -1,10 +1,13 @@
 package com.collabnet.ccf.core;
 
+import java.util.List;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dom4j.Document;
 import org.dom4j.Element;
 import org.openadaptor.core.IDataProcessor;
+import org.openadaptor.core.exception.ValidationException;
 import org.openadaptor.core.lifecycle.LifecycleComponent;
 
 import com.collabnet.ccf.core.eis.connection.ConnectionManager;
@@ -107,8 +110,7 @@ public abstract class AbstractWriter<T> extends LifecycleComponent implements
 				log.error(message, e);
 				throw new CCFRuntimeException(message, e);
 			} catch(Exception e){
-				System.out.println();
-				boolean connectionException = this.handleException(e);
+				boolean connectionException = connectionManager.isUseStandardTimeoutHandlingCode() || this.handleException(e, connectionManager);
 				if(!connectionException){
 					retry = false;
 					if(e instanceof CCFRuntimeException){
@@ -164,7 +166,7 @@ public abstract class AbstractWriter<T> extends LifecycleComponent implements
 		return new Object[]{gaDocument};
 	}
 
-	public boolean handleException(Throwable rootCause){
+	public boolean handleException(Throwable rootCause,ConnectionManager<T> connectionManager){
 		return false;
 	}
 
@@ -240,13 +242,37 @@ public abstract class AbstractWriter<T> extends LifecycleComponent implements
 	public void stop(){
 		
 	}
+	
+	@SuppressWarnings("unchecked")
+	public void validate(List exceptions) {
+		super.validate(exceptions);
+		if (getConnectionManager() == null) {
+			log.error("connectionManager property is not set");
+			exceptions.add(new ValidationException("connectionManager property is not set",this));
+		}
+	}
 
+	/**
+	 * Get the connection manager. The connection manager is responsible to
+	 * manage (create, close, pool) the connections from type T.
+	 * Furthermore, it contains timeout settings and the settings
+	 * for the retry code in case of network timeout and session fault
+	 * related errors.
+	 * @return the connection manager object
+	 */
 	public ConnectionManager<T> getConnectionManager() {
 		return connectionManager;
 	}
 
+	/**
+	 * Set the connection manager. The connection manager is responsible to
+	 * manage (create, close, pool) the connections from type T.
+	 * Furthermore, it contains timeout settings and the settings
+	 * for the retry code in case of network timeout and session fault
+	 * related errors.
+	 * @param connectionManager the connection manager object
+	 */
 	public void setConnectionManager(ConnectionManager<T> connectionManager) {
 		this.connectionManager = connectionManager;
 	}
-
 }
