@@ -149,18 +149,9 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 			 							String[] attachmentIds = ha.getNewValue();
 			 							for(String attachmentId:attachmentIds){
 			 								if(attachmentId == null) continue;
-			 								DataHandler handler = null;
-			 								try{
-			 									handler = twsclient.getDataHandlerForAttachment(artifactIdentifier, attachmentId);
-			 								} catch(WSException e){
-			 									int code = e.getCode();
-			 									if(code == 214){
-			 										continue;
-			 									}
-			 									else throw e;
-			 								}
+			 								
 			 								String attachmentName = attahcmentIDNameMap.get(attachmentId);
-			 								String contentType = handler.getContentType();
+			 								
 			 								GenericArtifact ga = new GenericArtifact();
 			 								ga.setArtifactAction(GenericArtifact.ArtifactActionValue.CREATE);
 			 								ga.setSourceArtifactLastModifiedDate(DateUtil.format(modifiedOn));
@@ -190,16 +181,28 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 	
 			 								GenericArtifactField mimeTypeField = ga.addNewField(AttachmentMetaData.ATTACHMENT_MIME_TYPE,
 			 										GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
-			 								mimeTypeField.setFieldValue(contentType);
 			 								mimeTypeField.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
 			 								mimeTypeField.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
 				 							
 			 								StringBuffer buffer = new StringBuffer();
 			 								long size = 0;
+			 								DataHandler handler = null;
+			 								try{
+			 									handler = twsclient.getDataHandlerForAttachment(artifactIdentifier, attachmentId);
+			 								} catch(WSException e){
+			 									int code = e.getCode();
+			 									if(code == 214){
+			 										continue;
+			 									}
+			 									else throw e;
+			 								}
+			 								String contentType = handler.getContentType();
+			 								mimeTypeField.setFieldValue(contentType);
 				 							InputStream is = handler.getInputStream();
 				 							byte [] bytes = new byte[1024*3];
 				 							int readCount = -1;
-				 							while((readCount = is.read(bytes)) != -1){
+				 							int available = 0;
+				 							while((available = is.available()) > 0 && (readCount = is.read(bytes)) != -1){
 				 								size += readCount;
 				 								if(readCount < bytes.length){
 				 									byte[] bytesTmp = new byte[readCount];
@@ -208,6 +211,7 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 				 								}
 				 								buffer.append(new String(Base64.encodeBase64(bytes)));
 				 							}
+				 							is.close();
 				 							GenericArtifactField sizeField = ga.addNewField(AttachmentMetaData.ATTACHMENT_SIZE,
 			 										GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
 			 								sizeField.setFieldValue(size);
@@ -466,6 +470,8 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 			String commentor = comment.getCommenter();
 			if(commentTime > fromTime && (!commentor.equals(this.getUsername()))){
 				String commentText = comment.getCommentText();
+				String commenter = comment.getCommenter();
+				commentText = "\nOriginal commenter: " + commenter + "\n" + commentText;
 				GenericArtifactField field = null;
 				field = ga.addNewField("Comment",
 						GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
