@@ -9,6 +9,7 @@ import java.net.URL;
 import java.net.UnknownHostException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
@@ -269,9 +270,9 @@ public class TrackerWebServicesClient {
 					artifactNode.appendChild(commentNode);
 				}
 				
-				Element reasonNode = doc.createElementNS("urn:ws.tracker.collabnet.com", "ns1:"+"reason");
-				reasonNode.appendChild(doc.createTextNode("Synchronized by Connector"));
-				artifactNode.appendChild(reasonNode);
+//				Element reasonNode = doc.createElementNS("urn:ws.tracker.collabnet.com", "ns1:"+"reason");
+//				reasonNode.appendChild(doc.createTextNode("Synchronized by Connector"));
+//				artifactNode.appendChild(reasonNode);
 		} // for every artifact
 		
 		Element sendMail = doc.createElementNS(DEFAULT_NAMESPACE, "ns1:"+"sendEmail");
@@ -816,7 +817,7 @@ public class TrackerWebServicesClient {
 	 * @throws WSException
 	 * @throws RemoteException
 	 */
-	public void postAttachment(String taskId, String comment, DataSource attachment) throws ServiceException, WSException, RemoteException {
+	public long postAttachment(String taskId, String comment, DataSource attachment) throws ServiceException, WSException, RemoteException {
 		EngineConfiguration config = mClient.getEngineConfiguration();
 		AttachmentService service = new AttachmentServiceLocator(config);
 		URL portAddress = mClient.constructServiceURL("/tracker/Attachment");
@@ -824,7 +825,9 @@ public class TrackerWebServicesClient {
 		DataHandler attachmentHandler = new DataHandler(attachment);
 
 		theService.addAttachment(taskId, attachment.getName(), comment, attachment.getContentType(), attachmentHandler);
-
+		long[] ids = theService.getAttachmentIds(taskId);
+		Arrays.sort(ids);
+		return ids[ids.length - 1];
 	}
 	
 	public DataHandler getDataHandlerForAttachment(String taskId, String attachmentId) throws

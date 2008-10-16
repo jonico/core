@@ -141,8 +141,11 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 		String attachmentName = GenericArtifactHelper.getStringGAField(AttachmentMetaData.ATTACHMENT_NAME, ga);
 		javax.mail.util.ByteArrayDataSource dataSource = new javax.mail.util.ByteArrayDataSource(data,attachmentMimeType);
 		dataSource.setName(attachmentName);
+		long attachmentId = -1;
+		Date lastModifiedDate = null;
 		try {
-			twsclient.postAttachment(artifactId, "Attachment added by Connector", dataSource);
+			attachmentId = twsclient.postAttachment(artifactId, "Attachment added by Connector", dataSource);
+			lastModifiedDate = new Date();
 		} catch (WSException e) {
 			String message = "Exception while creating PT artifact";
 			log.error(message, e);
@@ -159,6 +162,12 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 		finally {
 			this.releaseConnection(twsclient);
 		}
+		ga.setTargetArtifactId(Long.toString(attachmentId));
+		ga.setTargetArtifactLastModifiedDate(DateUtil.format(lastModifiedDate));
+		ga.setTargetArtifactVersion("1");
+		//TODO Are these values valid?
+		ga.setDepParentTargetRepositoryId(ga.getTargetRepositoryId());
+		ga.setDepParentTargetRepositoryKind(ga.getTargetRepositoryKind());
 		return ga;
 	}
 
@@ -462,6 +471,7 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 					String optionDisplayName = option.getDisplayName();
 					if(optionDisplayName.equals(attributeValue)){
 						optionValue = option.getTagName();
+						break;
 					}
 				}
 			}

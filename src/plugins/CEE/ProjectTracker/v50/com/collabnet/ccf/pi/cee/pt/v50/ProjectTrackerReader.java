@@ -149,8 +149,16 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 			 							String[] attachmentIds = ha.getNewValue();
 			 							for(String attachmentId:attachmentIds){
 			 								if(attachmentId == null) continue;
-			 								DataHandler handler =
-				 								twsclient.getDataHandlerForAttachment(artifactIdentifier, attachmentId);
+			 								DataHandler handler = null;
+			 								try{
+			 									handler = twsclient.getDataHandlerForAttachment(artifactIdentifier, attachmentId);
+			 								} catch(WSException e){
+			 									int code = e.getCode();
+			 									if(code == 214){
+			 										continue;
+			 									}
+			 									else throw e;
+			 								}
 			 								String attachmentName = attahcmentIDNameMap.get(attachmentId);
 			 								String contentType = handler.getContentType();
 			 								GenericArtifact ga = new GenericArtifact();
@@ -339,7 +347,20 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 				gaFieldType = ptGATypesMap.get(ptAttributeType);
 			}
 			else {
-				continue;
+				GenericArtifactField field = ga.addNewField(attributeNamespaceDiaplayName,
+						GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
+				field.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
+				field.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
+				field.setFieldValueHasChanged(true);
+				field.setFieldValueType(gaFieldType);
+				if(trackerAttribute.getAttributeType().equals("USER")){
+					field.setFieldValueType(GenericArtifactField.FieldValueTypeValue.USER);
+				}
+				if(trackerAttribute.getAttributeType().equals("DATE")
+						|| attributeName.equals(CREATED_ON_FIELD_NAME)
+						|| attributeName.equals(MODIFIED_ON_FIELD_NAME)){
+					field.setFieldValueType(GenericArtifactField.FieldValueTypeValue.DATE);
+				}
 			}
 			for(String attValue:attValues){
 				if(StringUtils.isEmpty(attValue)) continue;
@@ -356,6 +377,15 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 				field.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
 				field.setFieldValueHasChanged(true);
 				field.setFieldValueType(gaFieldType);
+				if(trackerAttribute.getAttributeType().equals("USER")){
+					field.setFieldValueType(GenericArtifactField.FieldValueTypeValue.USER);
+				}
+				if(trackerAttribute.getAttributeType().equals("DATE")
+						|| attributeName.equals(CREATED_ON_FIELD_NAME)
+						|| attributeName.equals(MODIFIED_ON_FIELD_NAME)){
+					field.setFieldValueType(GenericArtifactField.FieldValueTypeValue.DATE);
+				}
+				
 				if(trackerAttribute.getAttributeType().equals("MULTI_SELECT") || 
 						trackerAttribute.getAttributeType().equals("SINGLE_SELECT")||
 						trackerAttribute.getAttributeType().equals("STATE")){
@@ -364,14 +394,10 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 					attValue = this.convertOptionValue(attributeNamespace, attributeTagName,
 							attValue, metadata);
 				}
-				else if(trackerAttribute.getAttributeType().equals("USER")){
-					field.setFieldValueType(GenericArtifactField.FieldValueTypeValue.USER);
-				}
 				if(trackerAttribute.getAttributeType().equals("DATE")
 						|| attributeName.equals(CREATED_ON_FIELD_NAME)
 						|| attributeName.equals(MODIFIED_ON_FIELD_NAME)){
 					String dateStr = attValue;
-					field.setFieldValueType(GenericArtifactField.FieldValueTypeValue.DATE);
 					if(!StringUtils.isEmpty(dateStr)){
 						Date date = new Date(Long.parseLong(dateStr));
 						field.setFieldValue(date);
