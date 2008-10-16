@@ -30,4 +30,7 @@ public class GATransformerUtil {
 	public static String trim(String stringToTrim){
 		return stringToTrim.trim();
 	}
+	public static String encodeHTMLToEntityReferences(String html){
+    	return StringUtils.encodeHTMLToEntityReferences(html);
+    }
 }
