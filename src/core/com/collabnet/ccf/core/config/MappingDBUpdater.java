@@ -14,6 +14,7 @@ import org.openadaptor.core.IDataProcessor;
 import org.openadaptor.core.exception.ValidationException;
 import org.openadaptor.core.lifecycle.LifecycleComponent;
 
+import com.collabnet.ccf.core.CCFRuntimeException;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
 import com.collabnet.ccf.core.utils.DateUtil;
@@ -100,7 +101,9 @@ public class MappingDBUpdater extends LifecycleComponent implements IDataProcess
 			
 			java.util.Date sourceLastModifiedDate = null;
 			if(sourceArtifactLastModifiedDateString.equalsIgnoreCase("Unknown")){
-				return new Object[]{};
+				String message = "Source artifact last modified date is populated as: "+sourceArtifactLastModifiedDateString;
+				log.error(message);
+				throw new CCFRuntimeException(message);
 			}
 			else {
 				sourceLastModifiedDate = DateUtil.parse(sourceArtifactLastModifiedDateString);
@@ -110,7 +113,9 @@ public class MappingDBUpdater extends LifecycleComponent implements IDataProcess
 			java.util.Date targetLastModifiedDate = null;
 			
 			if(targetArtifactLastModifiedDateString.equalsIgnoreCase("Unknown")){
-				return new Object[]{};
+				String message = "Target artifact last modified date is populated as: "+sourceArtifactLastModifiedDateString;
+				log.error(message);
+				throw new CCFRuntimeException(message);
 			}
 			else {
 				//targetArtifactLastModifiedDateString = "June 26, 2008 11:02:26 AM GMT+05:30";
@@ -201,10 +206,9 @@ public class MappingDBUpdater extends LifecycleComponent implements IDataProcess
 		else {
 			String message = "The Mapping updater needs a GenericArtifact object";
 			message += " But it got something else.";
-			throw new RuntimeException(message);
+			throw new CCFRuntimeException(message);
 		}
 		
-		// TODO Auto-generated method stub
 		return null;
 	}
 	
