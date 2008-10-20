@@ -43,7 +43,7 @@
 		<appender-ref ref="R"/>
 	</root>
 
-	<logger name="com.collabnet">
+	<!--<logger name="com.collabnet">
     	<level value="info"/>
 		<appender-ref ref="console" />
 		<appender-ref ref="R" />
@@ -55,6 +55,6 @@
 		<appender-ref ref="ConflictNotifier" />
   	</logger>
 
-</log4j:configuration>
+--></log4j:configuration>
 
   
