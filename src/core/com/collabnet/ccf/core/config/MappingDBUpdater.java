@@ -22,6 +22,9 @@ import com.collabnet.ccf.core.utils.DateUtil;
 import com.collabnet.ccf.core.utils.XPathUtils;
 
 public class MappingDBUpdater extends LifecycleComponent implements IDataProcessor{
+	
+	// This properties are the column names within the data base
+	// They must not used to retrieve attributes from the GenericArtifactFormat
 	private static final String DEP_PARENT_TARGET_REPOSITORY_KIND = "DEP_PARENT_TARGET_REPOSITORY_KIND";
 	private static final String DEP_PARENT_TARGET_REPOSITORY_ID = "DEP_PARENT_TARGET_REPOSITORY_ID";
 	private static final String DEP_PARENT_TARGET_ARTIFACT_ID = "DEP_PARENT_TARGET_ARTIFACT_ID";
@@ -49,6 +52,7 @@ public class MappingDBUpdater extends LifecycleComponent implements IDataProcess
 	private static final String TARGET_SYSTEM_ID = "TARGET_SYSTEM_ID";
 	private static final String SOURCE_REPOSITORY_ID = "SOURCE_REPOSITORY_ID";
 	private static final String SOURCE_SYSTEM_ID = "SOURCE_SYSTEM_ID";
+	
 	private static final Log log = LogFactory.getLog(MappingDBUpdater.class);
 	private JDBCWriteConnector synchronizationStatusDatabaseUpdater = null;
 	private JDBCReadConnector identityMappingDatabaseReader = null;
@@ -56,9 +60,6 @@ public class MappingDBUpdater extends LifecycleComponent implements IDataProcess
 	
 	private JDBCWriteConnector identityMappingDatabaseInserter = null;
 	private static final String NULL_VALUE = null;
-	
-	private static final String SOURCE_LAST_READ_TIME = "sourceArtifactLastModifiedDate";
-	private static final String TARGET_LAST_READ_TIME = "targetArtifactLastModifiedDate";
 	
 	public Object[] process(Object data) {
 		// I will expect a Generic Artifact object
@@ -91,8 +92,8 @@ public class MappingDBUpdater extends LifecycleComponent implements IDataProcess
 			String targetRepositoryId = XPathUtils.getAttributeValue(element, GenericArtifactHelper.TARGET_REPOSITORY_ID);
 			String targetRepositoryKind = XPathUtils.getAttributeValue(element, GenericArtifactHelper.TARGET_REPOSITORY_KIND);
 			
-			String sourceArtifactLastModifiedDateString = XPathUtils.getAttributeValue(element, SOURCE_LAST_READ_TIME);
-			String targetArtifactLastModifiedDateString = XPathUtils.getAttributeValue(element, TARGET_LAST_READ_TIME);
+			String sourceArtifactLastModifiedDateString = XPathUtils.getAttributeValue(element, GenericArtifactHelper.SOURCE_ARTIFACT_LAST_MODIFICATION_DATE);
+			String targetArtifactLastModifiedDateString = XPathUtils.getAttributeValue(element, GenericArtifactHelper.TARGET_ARTIFACT_LAST_MODIFICATION_DATE);
 			String sourceArtifactVersion = XPathUtils.getAttributeValue(element, GenericArtifactHelper.SOURCE_ARTIFACT_VERSION);
 			String targetArtifactVersion = XPathUtils.getAttributeValue(element, GenericArtifactHelper.TARGET_ARTIFACT_VERSION);
 			
