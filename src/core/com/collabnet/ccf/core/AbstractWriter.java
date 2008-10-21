@@ -161,7 +161,14 @@ public abstract class AbstractWriter<T> extends LifecycleComponent implements
 			}
 			++numberOfTries;
 		}while(retry);
-		return new Object[]{gaDocument};
+		Object[] returnValue = null;
+		if(gaDocument == null){
+			returnValue = new Object[]{};
+		}
+		else {
+			returnValue = new Object[]{gaDocument};
+		}
+		return returnValue;
 	}
 
 	public boolean handleException(Throwable rootCause,ConnectionManager<T> connectionManager){
