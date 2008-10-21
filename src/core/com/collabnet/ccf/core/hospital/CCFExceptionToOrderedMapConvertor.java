@@ -9,7 +9,6 @@ import org.openadaptor.auxil.orderedmap.IOrderedMap;
 import org.openadaptor.core.IComponent;
 import org.openadaptor.core.exception.MessageException;
 
-import com.collabnet.ccf.core.CCFRuntimeException;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
@@ -223,7 +222,7 @@ public class CCFExceptionToOrderedMapConvertor extends
 				map.put(TARGET_REPOSITORY_KIND, null);
 				map.put(SOURCE_ARTIFACT_ID, null);
 				map.put(TARGET_ARTIFACT_ID, null);
-				map.put(GENERICARTIFACT, null);
+				map.put(GENERICARTIFACT, dataDoc.asXML());
 				map.put(ERROR_CODE, null);
 				map.put(SOURCE_LAST_MODIFICATION_TIME,null);
 				map.put(TARGET_LAST_MODIFICATION_TIME,null);
