@@ -1,7 +1,30 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:ccf="http://ccf.open.collab.net/GenericArtifactV1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema" exclude-result-prefixes="xsl xs">
+<xsl:variable name="dbid" select="//dbid" />
 	<xsl:template match="/node()" priority="2">
-		<artifact xmlns="http://ccf.open.collab.net/GenericArtifactV1.0" artifactAction="create" artifactMode="complete" artifactType="plainArtifact" sourceArtifactLastModifiedDate="unknown" targetArtifactLastModifiedDate="unknown" artifactLastReadTransactionId="unknown" sourceArtifactVersion="unknown" targetArtifactVersion="unknown" conflictResolutionPriority="unknown" sourceArtifactId="CSV-1" sourceRepositoryId="input.txt" sourceRepositoryKind="CSVClearQuestFile" sourceSystemId="CSVFile" sourceSystemKind="Filesystem" targetArtifactId="NEW" targetRepositoryId="tracker1001" targetRepositoryKind="TRACKER" targetSystemId="cu011" targetSystemKind="CSFE 5.0" transactionId="0" errorCode="ok" includesFieldMetaData="false">
+		<artifact xmlns="http://ccf.open.collab.net/GenericArtifactV1.0">
+						<xsl:attribute name="artifactAction">create</xsl:attribute>
+						<xsl:attribute name="artifactMode">complete</xsl:attribute>
+						<xsl:attribute name="artifactType">plainArtifact</xsl:attribute>
+						<xsl:attribute name="sourceArtifactLastModifiedDate">unknown</xsl:attribute>
+						<xsl:attribute name="targetArtifactLastModifiedDate">unknown</xsl:attribute>
+						<xsl:attribute name="artifactLastReadTransactionId">unknown</xsl:attribute>
+						<xsl:attribute name="sourceArtifactVersion">unknown</xsl:attribute>
+						<xsl:attribute name="targetArtifactVersion">unknown</xsl:attribute>
+						<xsl:attribute name="conflictResolutionPriority">alwaysOverride</xsl:attribute>
+						<xsl:attribute name="sourceArtifactId"><xsl:value-of select="$dbid"/></xsl:attribute>
+						<xsl:attribute name="sourceRepositoryId">input.txt</xsl:attribute>
+						<xsl:attribute name="sourceRepositoryKind">CSVClearQuestFile</xsl:attribute>
+						<xsl:attribute name="sourceSystemId">CSVFile</xsl:attribute>
+						<xsl:attribute name="sourceSystemKind">Filesystem</xsl:attribute>
+						<xsl:attribute name="targetRepositoryId">tracker1001</xsl:attribute>
+						<xsl:attribute name="targetRepositoryKind">TRACKER</xsl:attribute>
+						<xsl:attribute name="targetSystemId">cu011</xsl:attribute>
+						<xsl:attribute name="targetSystemKind">CSFE 5.0</xsl:attribute>
+						<xsl:attribute name="transactionId">0</xsl:attribute>
+						<xsl:attribute name="errorCode">ok</xsl:attribute>
+						<xsl:attribute name="includesFieldMetaData">false</xsl:attribute>
+						<xsl:attribute name="targetArtifactId">unknown</xsl:attribute>  
 			<!-- Constant fields -->
 			<!--<field>
 				<xsl:attribute name="fieldName">customer</xsl:attribute>
