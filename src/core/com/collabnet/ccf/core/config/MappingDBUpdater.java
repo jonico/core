@@ -219,10 +219,11 @@ public class MappingDBUpdater extends LifecycleComponent implements IDataProcess
 		else {
 			String message = "The Mapping updater needs a GenericArtifact object";
 			message += " But it got something else.";
+			log.error(message);
 			throw new CCFRuntimeException(message);
 		}
 		
-		return null;
+		return new Object[]{data};
 	}
 	
 	private void createMapping(String sourceArtifactId, String sourceRepositoryId,
