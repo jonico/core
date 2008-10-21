@@ -9,7 +9,6 @@ com.collabnet.ccf.core.test.plugins
 com.collabnet.ccf.core.transformer
 com.collabnet.ccf.core.utils
 com.collabnet.ccf.pi.cee.pt.v50
-com.collabnet.ccf.pi.sfee
 com.collabnet.ccf.pi.sfee.v44
 com.collabnet.ccf.pi.sfee.v44.meta
 com.collabnet.ccf.samples
