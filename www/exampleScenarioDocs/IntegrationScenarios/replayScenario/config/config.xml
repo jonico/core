@@ -70,7 +70,7 @@
 					-->
 					<list>
 						<ref bean="SFEEEntityServiceXMLConverter" />
-						<ref bean="HospitalUpdatorSQLConverter" />
+						<ref bean="HospitalUpdatorSQLConverterReprocessed" />
 					</list>
 				</entry>
 				
@@ -85,7 +85,7 @@
 				The output of all filters will go to these two components to update
 				the hospitalized artifact entries 
 				 -->		
-				<entry key-ref="HospitalUpdatorSQLConverter" value-ref="HospitalUpdator"/>
+				<entry key-ref="HospitalUpdatorSQLConverterReprocessed" value-ref="HospitalUpdator"/>
 				<entry key-ref="ExceptionConvertor" value-ref="HospitalWriter"/>
 				
 				<!--  
@@ -96,6 +96,12 @@
 				<entry key-ref="SFEEEntityService" value-ref="SFEEWriter" />
 				<entry key-ref="SFEEWriter"
 					value-ref="SynchronizationStatusAndIdentityMappingTableUpdater" />
+				
+				<!-- 
+				This wiring will allow to set the fixed field for successful replays
+				 -->
+				 <entry key-ref="SynchronizationStatusAndIdentityMappingTableUpdater" value-ref="HospitalUpdatorSQLConverterFixed"/>
+				 <entry key-ref="HospitalUpdatorSQLConverterFixed" value-ref="HospitalUpdator"/>	
 			</map>
 		</property>
 		<property name="exceptionProcessor" ref="ExceptionConvertor"/>
@@ -128,12 +134,17 @@
 	<bean id="SFEEEntityServiceXMLConverter" class="org.openadaptor.auxil.processor.script.ScriptProcessor">
 		<description>
 			This component will convert the generic artifact part of the hospitalized
-			artifact into a Dom4J document
+			artifact into a Dom4J document. Furthermore it will use the transactionId
+			attribute to transport the id within the hospital to allow to differentiate
+			between successful and unsuccessful replays
 		</description>
 		<property name="script">
 			<value>
 			importPackage(Packages.org.dom4j);
+			var old_oa_data=oa_data;
 			oa_data=DocumentHelper.parseText(oa_data.get('GENERIC_ARTIFACT'));
+			oa_data.getRootElement().addAttribute("transactionId",old_oa_data.get('ID'));
+			oa_data.getRootElement().addAttribute("errorCode","ok");
 			</value>
 		</property>
 	</bean>
@@ -172,7 +183,7 @@
 		</description>
 	</bean>
 	 
-	<bean id="HospitalUpdatorSQLConverter"
+	<bean id="HospitalUpdatorSQLConverterReprocessed"
 		class="org.openadaptor.auxil.processor.script.ScriptProcessor">
 		<description>
 			This defines the SQL update statement to update the
@@ -180,6 +191,17 @@
 		</description>
 		<property name="script">
 			<value>oa_data = "UPDATE HOSPITAL SET REPROCESSED = TRUE WHERE ID = '" + oa_data.get('ID') + "'";</value>
+		</property>
+	</bean>
+	
+	<bean id="HospitalUpdatorSQLConverterFixed"
+		class="org.openadaptor.auxil.processor.script.ScriptProcessor">
+		<description>
+			This defines the SQL update statement to update the
+			hospital data base.
+		</description>
+		<property name="script">
+			<value>oa_data = "UPDATE HOSPITAL SET FIXED = TRUE WHERE ID = '" + oa_data.getRootElement().selectSingleNode("@transactionId").getText() + "'";</value>
 		</property>
 	</bean>
 	
@@ -232,6 +254,7 @@
 		<property name="xsltDir" value="${ccf.xsltDir}" />
 	</bean>
 	
+	<!-- You may set a different user for the replay script to trigger initial resynchs -->
 	<bean id="SFEEConnectionManager"
 		class="com.collabnet.ccf.core.eis.connection.ConnectionManager">
 		<description>
