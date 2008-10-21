@@ -8,13 +8,10 @@
 	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
 
 	<description>
-		This scenario provides you with a code skeleton you can use in
-		order to write your own reader component. In the code skeleton,
-		the reader component only produces a constant stream of always
-		the same plain artifact and updates its last modified date. This
-		code can then be modified to query real artifacts from a real
-		third party tool. The resulting artifacts will be transported
-		into a standard SFEE tracker.
+		This scenario is used to replay hospitalized artifacts in the target
+		system they belong. In order just to replay the correct artifacts
+		this scenario comes with lots of filters and sql statements that
+		can be changed to control the message flow.
 	</description>
 
 	<bean id="SystemPropertyConfigurer"
@@ -36,6 +33,8 @@
 			<list>
 				<value>classpath:ccf.properties</value>
 				<value>classpath:sfee.properties</value>
+				<value>classpath:cee.properties</value>
+				<value>classpath:qc.properties</value>
 			</list>
 		</property>
 	</bean>
@@ -51,18 +50,178 @@
 		</description>
 		<property name="processMap">
 			<map>
-				<entry key-ref="SynchronizationStatusPollingReader"
-					value-ref="SampleReader" />
-				<entry key-ref="SampleReader" value-ref="Transformer" />
-				<entry key-ref="Transformer" value-ref="EntityService" />
-				<entry key-ref="EntityService" value-ref="SFEEWriter" />
+				<entry key-ref="HospitalDatabaseReader">
+					<!--  Please plugin all filters here that can handle certain types of failed artifact
+						  You could group by component, error code, ... 
+					-->
+					<list>
+						<ref bean="SFEEWriterErrorFilter" />
+					</list>
+				</entry>
+				
+				
+				<!--  
+				All filters have to be connected with the hospital updator component
+				to indicate that they have done the reprocessing of the artifact 
+				-->
+				<entry key-ref="SFEEWriterErrorFilter">
+					<!--  Please plugin all filters here that can handle certain types of failed artifact
+						  You could group by component, error code, ... 
+					-->
+					<list>
+						<ref bean="SFEEEntityServiceXMLConverter" />
+						<ref bean="HospitalUpdatorSQLConverter" />
+					</list>
+				</entry>
+				
+				<!--
+				This section is used to pipe the output of the XML converters behind the filters
+				into the main processing pipeline. 
+				 -->
+				<entry key-ref="SFEEEntityServiceXMLConverter" value-ref="SFEEEntityService" /> 
+
+				
+				<!--
+				The output of all filters will go to these two components to update
+				the hospitalized artifact entries 
+				 -->		
+				<entry key-ref="HospitalUpdatorSQLConverter" value-ref="HospitalUpdator"/>
+				<entry key-ref="ExceptionConvertor" value-ref="HospitalWriter"/>
+				
+				<!--  
+				This is the main processing where the filters will send their data to
+				after they converted it into the needed XML format
+				-->
+				<entry key-ref="SFEETransformer" value-ref="SFEEEntityService" />
+				<entry key-ref="SFEEEntityService" value-ref="SFEEWriter" />
 				<entry key-ref="SFEEWriter"
 					value-ref="SynchronizationStatusAndIdentityMappingTableUpdater" />
 			</map>
 		</property>
-		<property name="exceptionProcessor" ref="ExceptionHandler" />
+		<property name="exceptionProcessor" ref="ExceptionConvertor"/>
 	</bean>
-	<bean id="Transformer"
+	
+	<!--  
+	Place all filter here, you can reference the field names directly in the script
+	-->
+	<bean id="SFEEWriterErrorFilter" class="org.openadaptor.auxil.processor.script.ScriptFilterProcessor">
+		<description>		
+		</description>
+		<property name="scriptProcessor">
+			<bean class="org.openadaptor.auxil.processor.script.MapScriptProcessor">
+					<property name="script">
+						<value>
+						 <![CDATA[
+						 	ERROR_CODE != null && ORIGINATING_COMPONENT == 'SFEEWriter'
+						 ]]>
+			  			</value>
+					</property>
+			</bean>
+		</property>
+		<!-- We ony let entries pass that fullfil the condition -->
+		<property name="filterOnMatch" value="false"/>
+	</bean>
+	
+	<!--
+	Place the XML converters here, you can always use the same code  
+	-->
+	<bean id="SFEEEntityServiceXMLConverter" class="org.openadaptor.auxil.processor.script.ScriptProcessor">
+		<description>
+			This component will convert the generic artifact part of the hospitalized
+			artifact into a Dom4J document
+		</description>
+		<property name="script">
+			<value>
+			importPackage(Packages.org.dom4j);
+			oa_data=DocumentHelper.parseText(oa_data.get('GENERIC_ARTIFACT'));
+			</value>
+		</property>
+	</bean>
+	
+	
+	<!--
+	Hospital related components are configured here
+	You typically just have to change the SQL query of the HospitalDatabaseReader 
+	 -->
+	 <bean id="HospitalDatabaseReader"
+		class="org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector">
+		<description>
+			This SQL statement retrieves all hospitaized artifacts
+			that should be replayed. Be careful not to chose artifacts
+			that has been already replayed or artifacts that cannot be solved
+			by using the components of this wiring. 
+		</description>
+		<property name="jdbcConnection" ref="HospitalJdbcConnection" />
+		<!-- batch size of 0 or less means process all rows in one message batch. -->
+		<!-- batch size of one means process one row per message and so on -->
+		<property name="batchSize" value="0" />
+		<property name="resultSetConverter"
+			ref="HospitalResultSetConverter" />
+		<property name="sql">
+			<value>SELECT * FROM HOSPITAL WHERE REPROCESSED != TRUE</value>
+		</property>
+	</bean>
+	
+	<bean id="HospitalResultSetConverter"
+		class="org.openadaptor.auxil.connector.jdbc.reader.orderedmap.ResultSetToOrderedMapConverter">
+		<description>
+			Component to convert the data base SFEE synchronization
+			information (which trackers to query from which timestamp
+			on) to XML documents the read connector processes in order
+			to know which artifacts to poll for.
+		</description>
+	</bean>
+	 
+	<bean id="HospitalUpdatorSQLConverter"
+		class="org.openadaptor.auxil.processor.script.ScriptProcessor">
+		<description>
+			This defines the SQL update statement to update the
+			hospital data base.
+		</description>
+		<property name="script">
+			<value>oa_data = "UPDATE HOSPITAL SET REPROCESSED = TRUE WHERE ID = '" + oa_data.get('ID') + "'";</value>
+		</property>
+	</bean>
+	
+	<bean id="HospitalJdbcConnection" class="org.openadaptor.auxil.connector.jdbc.JDBCConnection">
+    	<description>This defines the jdbc connection for the hospital.</description>
+    	<property name="driver" value="${ccf.db.driver}" />
+		<property name="url" value="${ccf.db.url}" />
+		<property name="username" value="${ccf.db.username}" />
+		<property name="password" value="${ccf.db.password}" />
+	</bean>
+  
+ 	<!-- 
+ 	These components are needed to catch new exceptions and store them in the hospital
+ 	-->
+	<bean id="ExceptionConvertor" class="com.collabnet.ccf.core.hospital.CCFExceptionToOrderedMapConvertor">
+  		<property name="adaptor" ref="Adaptor"/>
+	</bean>
+  
+ 	<bean id="HospitalWriter" class="org.openadaptor.auxil.connector.jdbc.writer.JDBCWriteConnector">
+		<property name="jdbcConnection" ref="HospitalJdbcConnection" />
+		<property name="writer">
+			<bean
+				class="org.openadaptor.auxil.connector.jdbc.writer.MapTableWriter">
+				<property name="tableName" value="HOSPITAL" />
+			</bean>
+		</property>
+ 	</bean>
+  
+  	<bean id="HospitalUpdator"
+		class="org.openadaptor.auxil.connector.jdbc.writer.JDBCWriteConnector">
+		<description>
+			This component will update the hospitalized artifacts
+		</description>
+		<property name="jdbcConnection" ref="HospitalJdbcConnection" />
+	</bean>
+	
+	
+	<!-- 
+	 The components of the main processing pipeline are configured here
+	 -->
+	
+	<bean id="SFEETransformer"
 		class="com.collabnet.ccf.core.transformer.XsltProcessor">
 		<description>
 			The xsltDir specifies the directory in which the xsl files
@@ -72,42 +231,7 @@
 		</description>
 		<property name="xsltDir" value="${ccf.xsltDir}" />
 	</bean>
-	<bean id="SynchronizationStatusPollingReader"
-		class="com.collabnet.ccf.core.test.plugins.SimpleLoopingPollingReadConnector">
-		<description>
-			This polling connector polls the CCF database tables that
-			contain the repository mapping and the synchronization info
-			and feeds the details to the source repository reader piped
-			down the line. Please refer the processMap configuration for
-			the Router bean.
-
-			In this case this polling reader reads the synchronization
-			status using the database read connector configured in the
-			property delegate.
-		</description>
-		<property name="pollLimit" value="1" />
-		<property name="delegate"
-			ref="SynchronizationStatusDatabaseReader" />
-		<property name="pollIntervalSecs" value="5000" />
-	</bean>
-
-	<bean id="SampleReader"
-		class="com.collabnet.ccf.samples.SampleReader">
-		<description>
-			This reader reads the modified artifacts in the SFEE
-			system's tracker configured in the ${sfee.server.1.url} and
-			the sync info tables. It also reads all the related
-			dependent artifact details and converts them into Generic
-			Artifact XML document format and sends to the next component
-			in the pipeline. The next component in the piple line may be
-			an XSLT transformer component such as
-			com.collabnet.ccf.core.transformer.XsltProcessor or an
-			EntityService component depending on the target SFEE tracker
-			needs the data to be translated to fit into its fields or
-			not.
-		</description>
-		<property name="sleepInterval" value="1000" />
-	</bean>
+	
 	<bean id="SFEEConnectionManager"
 		class="com.collabnet.ccf.core.eis.connection.ConnectionManager">
 		<description>
@@ -126,6 +250,7 @@
 			ref="SFEEConnectionFactory">
 		</property>
 	</bean>
+	
 	<bean id="SFEEConnectionFactory"
 		class="com.collabnet.ccf.pi.sfee.v44.SFEEConnectionFactory">
 		<description>
@@ -137,6 +262,7 @@
 			com.collabnet.ccf.pi.sfee.v44.Connection objects.
 		</description>
 	</bean>
+	
 	<bean id="SFEEWriter"
 		class="com.collabnet.ccf.pi.sfee.v44.SFEEWriter">
 		<description>
@@ -154,7 +280,8 @@
 			ref="SFEEConnectionManager">
 		</property>
 	</bean>
-	<bean id="EntityService"
+	
+	<bean id="SFEEEntityService"
 		class="com.collabnet.ccf.core.EntityService">
 		<description>
 			This component is responsible for determining if the current
@@ -170,28 +297,16 @@
 		<property name="identityMappingDatabaseReader"
 			ref="IndentityMappingDatabaseReader" />
 	</bean>
-	<bean id="SynchronizationStatusDatabaseReader"
-		class="org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector">
-		<description>
-			This is the JDBC read connector used by the
-			SynchronizationStatusPollingReader to read the repository
-			mapping and the synchronization info.
-		</description>
-		<property name="jdbcConnection" ref="JDBCConnection" />
-		<!-- batch size of 0 or less means process all rows in one message batch. -->
-		<!-- batch size of one means process one row per message and so on -->
-		<property name="batchSize" value="1" />
-		<property name="resultSetConverter"
-			ref="SynchronizationStatusXMLConverter" />
-		<property name="sql">
-			<value>${ccf.sfeereader.poller.sql}</value>
-		</property>
-	</bean>
+	
+	<!-- 
+	These components can be shared between different plugins and update
+	the identity mapping and synchronization status tables
+	 -->
 	<bean id="JDBCConnection"
 		class="org.openadaptor.auxil.connector.jdbc.JDBCConnection">
 		<description>
-			This defines jdbc connection that will be used by the
-			SynchronizationStatusPollingReader
+			This defines jdbc connection that will be used by
+			the components on the main processing pipeline
 		</description>
 		<property name="driver" value="${ccf.db.driver}" />
 		<property name="url" value="${ccf.db.url}" />
@@ -199,15 +314,6 @@
 		<property name="password" value="${ccf.db.password}" />
 	</bean>
 
-	<bean id="SynchronizationStatusXMLConverter"
-		class="org.openadaptor.auxil.connector.jdbc.reader.xml.ResultSetToXMLConverter">
-		<description>
-			Converts the synchronization info in the database into XML
-			sync info document.
-		</description>
-		<property name="convertToString" value="false" />
-		<property name="rootElement" value="EmptySyncInf" />
-	</bean>
 	<bean id="SynchronizationStatusAndIdentityMappingTableUpdater"
 		class="com.collabnet.ccf.core.config.MappingDBUpdater">
 		<description>
@@ -237,6 +343,7 @@
 			ref="IdentityMappingDatabaseInserter">
 		</property>
 	</bean>
+	
 	<bean id="IndentityMappingDatabaseReader"
 		class="org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector">
 		<description>
@@ -252,36 +359,7 @@
 			<value>${ccf.targetartifactid.sql}</value>
 		</property>
 	</bean>
-	<bean id="IdentityMappingDatabaseUpdater"
-		class="org.openadaptor.auxil.connector.jdbc.writer.JDBCWriteConnector">
-		<property name="writer" ref="IdentityMappingTableUpdater"></property>
-		<property name="jdbcConnection" ref="JDBCConnection"></property>
-	</bean>
-	<bean id="IdentityMappingTableUpdater"
-		class="com.collabnet.ccf.core.db.MapTableUpdater">
-		<description>
-			This is the writer object that writes the artifact mapping
-			information into the database table.
-		</description>
-		<property name="tableName" value="IDENTITY_MAPPING"></property>
-		<property name="sql"
-			value="${ccf.identity.mapping.updater.sql}">
-		</property>
-		<property name="outputColumns">
-			<list>
-				<value>SOURCE_LAST_MODIFICATION_TIME</value>
-				<value>TARGET_LAST_MODIFICATION_TIME</value>
-				<value>SOURCE_ARTIFACT_VERSION</value>
-				<value>TARGET_ARTIFACT_VERSION</value>
-				<value>SOURCE_SYSTEM_ID</value>
-				<value>SOURCE_REPOSITORY_ID</value>
-				<value>TARGET_SYSTEM_ID</value>
-				<value>TARGET_REPOSITORY_ID</value>
-				<value>SOURCE_ARTIFACT_ID</value>
-				<value>ARTIFACT_TYPE</value>
-			</list>
-		</property>
-	</bean>
+
 	<bean id="IdentityMappingDatabaseInserter"
 		class="org.openadaptor.auxil.connector.jdbc.writer.JDBCWriteConnector">
 		<description>
@@ -330,6 +408,39 @@
 			</list>
 		</property>
 	</bean>
+
+	<bean id="IdentityMappingDatabaseUpdater"
+		class="org.openadaptor.auxil.connector.jdbc.writer.JDBCWriteConnector">
+		<property name="writer" ref="IdentityMappingTableUpdater"></property>
+		<property name="jdbcConnection" ref="JDBCConnection"></property>
+	</bean>
+	
+	<bean id="IdentityMappingTableUpdater"
+		class="com.collabnet.ccf.core.db.MapTableUpdater">
+		<description>
+			This is the writer object that writes the artifact mapping
+			information into the database table.
+		</description>
+		<property name="tableName" value="IDENTITY_MAPPING"></property>
+		<property name="sql"
+			value="${ccf.identity.mapping.updater.sql}">
+		</property>
+		<property name="outputColumns">
+			<list>
+				<value>SOURCE_LAST_MODIFICATION_TIME</value>
+				<value>TARGET_LAST_MODIFICATION_TIME</value>
+				<value>SOURCE_ARTIFACT_VERSION</value>
+				<value>TARGET_ARTIFACT_VERSION</value>
+				<value>SOURCE_SYSTEM_ID</value>
+				<value>SOURCE_REPOSITORY_ID</value>
+				<value>TARGET_SYSTEM_ID</value>
+				<value>TARGET_REPOSITORY_ID</value>
+				<value>SOURCE_ARTIFACT_ID</value>
+				<value>ARTIFACT_TYPE</value>
+			</list>
+		</property>
+	</bean>
+
 	<bean id="SynchronizationStatusDatabaseUpdater"
 		class="org.openadaptor.auxil.connector.jdbc.writer.JDBCWriteConnector">
 		<property name="writer"
@@ -343,7 +454,7 @@
 			This is the writer object that writes the artifact mapping
 			information into the database table.
 		</description>
-		<property name="tableName" value="ARTIFACT_MAPPING"></property>
+		<property name="tableName" value="SYNCHRONIZATION_STATUS"></property>
 		<property name="sql" value="${ccf.mapping.updater.sql}"></property>
 		<property name="outputColumns">
 			<list>
@@ -357,16 +468,5 @@
 			</list>
 		</property>
 	</bean>
-	<bean id="ExceptionHandler"
-		class="com.collabnet.ccf.core.hospital.Ambulance">
-		<description>
-			The ambulance class catches all the exceptions that are
-			thrown and not caught by any of the components in the pipe
-			and logs the infromation such as the component that threw
-			this exception and the input Generic Artifact xml document
-			or the sync info db xml document.
-		</description>
-		<property name="hospitalFileName" value="${ccf.hospital.file}" />
-		<property name="artifactsDirectory" value="${ccf.hospital.artifacts.directory}"></property>
-	</bean>
+	
 </beans>
