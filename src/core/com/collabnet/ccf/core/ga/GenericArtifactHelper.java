@@ -88,7 +88,7 @@ public class GenericArtifactHelper {
 	public static final String ARTIFACT_ACTION_DELETE = "delete";
 	public static final String ARTIFACT_ACTION_IGNORE = "ignore";
 	public static final String ARTIFACT_ACTION_UPDATE = "update";
-	public static final String ARTIFACT_ACTION_UNKNOWN = "Unknown";
+	public static final String ARTIFACT_ACTION_UNKNOWN = "unknown";
 
 	public static final String ARTIFACT_MODE_COMPLETE = "complete";
 	public static final String ARTIFACT_MODE_CHANGED_FIELDS_ONLY = "changedFieldsOnly";
