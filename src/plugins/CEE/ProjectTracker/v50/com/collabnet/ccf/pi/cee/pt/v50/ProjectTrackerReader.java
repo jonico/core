@@ -566,7 +566,9 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 		String repositoryKey = this.getRepositoryKey(syncInfo);
 		String repositoryId = this.getSourceRepositoryId(syncInfo);
 		Date lastModifiedDate = this.getLastModifiedDate(syncInfo);
-		String fromTime = Long.toString(lastModifiedDate.getTime()+1000);
+		long fromTimeLong = lastModifiedDate.getTime();
+		fromTimeLong = fromTimeLong < 0 ? 0 : fromTimeLong;
+		String fromTime = Long.toString(fromTimeLong+1000);
 		String artifactTypeDisplayName = repositoryId.substring(repositoryId.lastIndexOf(":")+1);
 		Set<String> artifactTypes = new HashSet<String>();
 		
