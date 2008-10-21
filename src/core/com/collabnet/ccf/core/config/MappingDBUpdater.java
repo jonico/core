@@ -28,28 +28,9 @@ public class MappingDBUpdater extends LifecycleComponent implements IDataProcess
 	
 	private JDBCWriteConnector identityMappingDatabaseInserter = null;
 	private static final String NULL_VALUE = null;
-	private static final String SOURCE_ARTIFACT_ID = "sourceArtifactId";
-	private static final String SOURCE_REPOSITORY_ID = "sourceRepositoryId";
-	private static final String SOURCE_REPOSITORY_KIND = "sourceRepositoryKind";
-	private static final String SOURCE_SYSTEM_ID = "sourceSystemId";
-	private static final String SOURCE_SYSTEM_KIND = "sourceSystemKind";
-	private static final String TARGET_ARTIFACT_ID = "targetArtifactId";
-	private static final String TARGET_REPOSITORY_ID = "targetRepositoryId";
-	private static final String TARGET_REPOSITORY_KIND = "targetRepositoryKind";
-	private static final String TARGET_SYSTEM_ID = "targetSystemId";
-	private static final String TARGET_SYSTEM_KIND = "targetSystemKind";
+	
 	private static final String SOURCE_LAST_READ_TIME = "sourceArtifactLastModifiedDate";
 	private static final String TARGET_LAST_READ_TIME = "targetArtifactLastModifiedDate";
-	private static final String SOURCE_ARTIFACT_VERSION = "sourceArtifactVersion";
-	private static final String TARGET_ARTIFACT_VERSION = "targetArtifactVersion";
-	private static final String ARTIFACT_TYPE = "artifactType";
-	private static final String ARTIFACT_TYPE_ATTACHMENT = "attachment";
-	private static final String DEP_PARENT_SOURCE_ARTIFACT_ID = "depParentSourceArtifactId";
-	private static final String DEP_PARENT_SOURCE_REPOSITORY_ID = "depParentSourceRepositoryId";
-	private static final String DEP_PARENT_SOURCE_REPOSITORY_KIND = "depParentSourceRepositoryKind";
-	private static final String DEP_PARENT_TARGET_ARTIFACT_ID = "depParentTargetArtifactId";;
-	private static final String DEP_PARENT_TARGET_REPOSITORY_ID = "depParentTargetRepositoryId";;
-	private static final String DEP_PARENT_TARGET_REPOSITORY_KIND = "depParentTargetRepositoryKind";;
 	
 	public Object[] process(Object data) {
 		// I will expect a Generic Artifact object
@@ -70,33 +51,33 @@ public class MappingDBUpdater extends LifecycleComponent implements IDataProcess
 				return new Object[]{data};
 			}
 			
-			String sourceArtifactId = XPathUtils.getAttributeValue(element, SOURCE_ARTIFACT_ID);
-			String sourceSystemId  = XPathUtils.getAttributeValue(element, SOURCE_SYSTEM_ID);
-			String sourceSystemKind = XPathUtils.getAttributeValue(element, SOURCE_SYSTEM_KIND);
-			String sourceRepositoryId = XPathUtils.getAttributeValue(element, SOURCE_REPOSITORY_ID);
-			String sourceRepositoryKind = XPathUtils.getAttributeValue(element, SOURCE_REPOSITORY_KIND);
+			String sourceArtifactId = XPathUtils.getAttributeValue(element, GenericArtifactHelper.SOURCE_ARTIFACT_ID);
+			String sourceSystemId  = XPathUtils.getAttributeValue(element, GenericArtifactHelper.SOURCE_SYSTEM_ID);
+			String sourceSystemKind = XPathUtils.getAttributeValue(element, GenericArtifactHelper.SOURCE_SYSTEM_KIND);
+			String sourceRepositoryId = XPathUtils.getAttributeValue(element, GenericArtifactHelper.SOURCE_REPOSITORY_ID);
+			String sourceRepositoryKind = XPathUtils.getAttributeValue(element, GenericArtifactHelper.SOURCE_REPOSITORY_KIND);
 			
-			String targetArtifactId = XPathUtils.getAttributeValue(element, TARGET_ARTIFACT_ID);
-			String targetSystemId = XPathUtils.getAttributeValue(element, TARGET_SYSTEM_ID);
-			String targetSystemKind = XPathUtils.getAttributeValue(element, TARGET_SYSTEM_KIND);
-			String targetRepositoryId = XPathUtils.getAttributeValue(element, TARGET_REPOSITORY_ID);
-			String targetRepositoryKind = XPathUtils.getAttributeValue(element, TARGET_REPOSITORY_KIND);
+			String targetArtifactId = XPathUtils.getAttributeValue(element, GenericArtifactHelper.TARGET_ARTIFACT_ID);
+			String targetSystemId = XPathUtils.getAttributeValue(element, GenericArtifactHelper.TARGET_SYSTEM_ID);
+			String targetSystemKind = XPathUtils.getAttributeValue(element, GenericArtifactHelper.TARGET_SYSTEM_KIND);
+			String targetRepositoryId = XPathUtils.getAttributeValue(element, GenericArtifactHelper.TARGET_REPOSITORY_ID);
+			String targetRepositoryKind = XPathUtils.getAttributeValue(element, GenericArtifactHelper.TARGET_REPOSITORY_KIND);
 			
 			String sourceArtifactLastModifiedDateString = XPathUtils.getAttributeValue(element, SOURCE_LAST_READ_TIME);
 			String targetArtifactLastModifiedDateString = XPathUtils.getAttributeValue(element, TARGET_LAST_READ_TIME);
-			String sourceArtifactVersion = XPathUtils.getAttributeValue(element, SOURCE_ARTIFACT_VERSION);
-			String targetArtifactVersion = XPathUtils.getAttributeValue(element, TARGET_ARTIFACT_VERSION);
+			String sourceArtifactVersion = XPathUtils.getAttributeValue(element, GenericArtifactHelper.SOURCE_ARTIFACT_VERSION);
+			String targetArtifactVersion = XPathUtils.getAttributeValue(element, GenericArtifactHelper.TARGET_ARTIFACT_VERSION);
 			
-			String artifactType = XPathUtils.getAttributeValue(element, ARTIFACT_TYPE);
+			String artifactType = XPathUtils.getAttributeValue(element, GenericArtifactHelper.ARTIFACT_TYPE);
 			//String lastReadTransactionId = XPathUtils.getAttributeValue(element, TRANSACTION_ID);
 			
-			if(artifactType.equals(ARTIFACT_TYPE_ATTACHMENT)) {
-				depParentSourceArtifactId = XPathUtils.getAttributeValue(element, DEP_PARENT_SOURCE_ARTIFACT_ID);
-				depParentSourceRepositoryId = XPathUtils.getAttributeValue(element, DEP_PARENT_SOURCE_REPOSITORY_ID);
-				depParentSourceRepositoryKind = XPathUtils.getAttributeValue(element, DEP_PARENT_SOURCE_REPOSITORY_KIND);
-				depParentTargetArtifactId = XPathUtils.getAttributeValue(element, DEP_PARENT_TARGET_ARTIFACT_ID);
-				depParentTargetRepositoryId = XPathUtils.getAttributeValue(element, DEP_PARENT_TARGET_REPOSITORY_ID);
-				depParentTargetRepositoryKind = XPathUtils.getAttributeValue(element, DEP_PARENT_TARGET_REPOSITORY_KIND);
+			if(artifactType.equals(GenericArtifactHelper.ARTIFACT_TYPE_ATTACHMENT)) {
+				depParentSourceArtifactId = XPathUtils.getAttributeValue(element, GenericArtifactHelper.DEP_PARENT_SOURCE_ARTIFACT_ID);
+				depParentSourceRepositoryId = XPathUtils.getAttributeValue(element, GenericArtifactHelper.DEP_PARENT_SOURCE_REPOSITORY_ID);
+				depParentSourceRepositoryKind = XPathUtils.getAttributeValue(element, GenericArtifactHelper.DEP_PARENT_SOURCE_REPOSITORY_KIND);
+				depParentTargetArtifactId = XPathUtils.getAttributeValue(element, GenericArtifactHelper.DEP_PARENT_TARGET_ARTIFACT_ID);
+				depParentTargetRepositoryId = XPathUtils.getAttributeValue(element, GenericArtifactHelper.DEP_PARENT_TARGET_REPOSITORY_ID);
+				depParentTargetRepositoryKind = XPathUtils.getAttributeValue(element, GenericArtifactHelper.DEP_PARENT_TARGET_REPOSITORY_KIND);
 			}
 			
 			java.util.Date sourceLastModifiedDate = null;
