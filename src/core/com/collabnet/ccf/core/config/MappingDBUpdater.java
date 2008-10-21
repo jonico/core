@@ -15,12 +15,40 @@ import org.openadaptor.core.exception.ValidationException;
 import org.openadaptor.core.lifecycle.LifecycleComponent;
 
 import com.collabnet.ccf.core.CCFRuntimeException;
+import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
 import com.collabnet.ccf.core.utils.DateUtil;
 import com.collabnet.ccf.core.utils.XPathUtils;
 
 public class MappingDBUpdater extends LifecycleComponent implements IDataProcessor{
+	private static final String DEP_PARENT_TARGET_REPOSITORY_KIND = "DEP_PARENT_TARGET_REPOSITORY_KIND";
+	private static final String DEP_PARENT_TARGET_REPOSITORY_ID = "DEP_PARENT_TARGET_REPOSITORY_ID";
+	private static final String DEP_PARENT_TARGET_ARTIFACT_ID = "DEP_PARENT_TARGET_ARTIFACT_ID";
+	private static final String DEP_PARENT_SOURCE_REPOSITORY_KIND = "DEP_PARENT_SOURCE_REPOSITORY_KIND";
+	private static final String DEP_PARENT_SOURCE_REPOSITORY_ID = "DEP_PARENT_SOURCE_REPOSITORY_ID";
+	private static final String DEP_PARENT_SOURCE_ARTIFACT_ID = "DEP_PARENT_SOURCE_ARTIFACT_ID";
+	private static final String DEP_CHILD_TARGET_REPOSITORY_KIND = "DEP_CHILD_TARGET_REPOSITORY_KIND";
+	private static final String DEP_CHILD_TARGET_REPOSITORY_ID = "DEP_CHILD_TARGET_REPOSITORY_ID";
+	private static final String DEP_CHILD_TARGET_ARTIFACT_ID = "DEP_CHILD_TARGET_ARTIFACT_ID";
+	private static final String DEP_CHILD_SOURCE_REPOSITORY_KIND = "DEP_CHILD_SOURCE_REPOSITORY_KIND";
+	private static final String DEP_CHILD_SOURCE_REPOSITORY_ID = "DEP_CHILD_SOURCE_REPOSITORY_ID";
+	private static final String DEP_CHILD_SOURCE_ARTIFACT_ID = "DEP_CHILD_SOURCE_ARTIFACT_ID";
+	private static final String ARTIFACT_TYPE = "ARTIFACT_TYPE";
+	private static final String TARGET_ARTIFACT_VERSION = "TARGET_ARTIFACT_VERSION";
+	private static final String SOURCE_ARTIFACT_VERSION = "SOURCE_ARTIFACT_VERSION";
+	private static final String TARGET_LAST_MODIFICATION_TIME = "TARGET_LAST_MODIFICATION_TIME";
+	private static final String SOURCE_LAST_MODIFICATION_TIME = "SOURCE_LAST_MODIFICATION_TIME";
+	private static final String TARGET_ARTIFACT_ID = "TARGET_ARTIFACT_ID";
+	private static final String SOURCE_ARTIFACT_ID = "SOURCE_ARTIFACT_ID";
+	private static final String TARGET_REPOSITORY_KIND = "TARGET_REPOSITORY_KIND";
+	private static final String TARGET_SYSTEM_KIND = "TARGET_SYSTEM_KIND";
+	private static final String SOURCE_REPOSITORY_KIND = "SOURCE_REPOSITORY_KIND";
+	private static final String SOURCE_SYSTEM_KIND = "SOURCE_SYSTEM_KIND";
+	private static final String TARGET_REPOSITORY_ID = "TARGET_REPOSITORY_ID";
+	private static final String TARGET_SYSTEM_ID = "TARGET_SYSTEM_ID";
+	private static final String SOURCE_REPOSITORY_ID = "SOURCE_REPOSITORY_ID";
+	private static final String SOURCE_SYSTEM_ID = "SOURCE_SYSTEM_ID";
 	private static final Log log = LogFactory.getLog(MappingDBUpdater.class);
 	private JDBCWriteConnector synchronizationStatusDatabaseUpdater = null;
 	private JDBCReadConnector identityMappingDatabaseReader = null;
@@ -81,7 +109,7 @@ public class MappingDBUpdater extends LifecycleComponent implements IDataProcess
 			}
 			
 			java.util.Date sourceLastModifiedDate = null;
-			if(sourceArtifactLastModifiedDateString.equalsIgnoreCase("Unknown")){
+			if(sourceArtifactLastModifiedDateString.equalsIgnoreCase(GenericArtifact.VALUE_UNKNOWN)){
 				String message = "Source artifact last modified date is populated as: "+sourceArtifactLastModifiedDateString;
 				log.error(message);
 				throw new CCFRuntimeException(message);
@@ -93,7 +121,7 @@ public class MappingDBUpdater extends LifecycleComponent implements IDataProcess
 			
 			java.util.Date targetLastModifiedDate = null;
 			
-			if(targetArtifactLastModifiedDateString.equalsIgnoreCase("Unknown")){
+			if(targetArtifactLastModifiedDateString.equalsIgnoreCase(GenericArtifact.VALUE_UNKNOWN)){
 				String message = "Target artifact last modified date is populated as: "+sourceArtifactLastModifiedDateString;
 				log.error(message);
 				throw new CCFRuntimeException(message);
@@ -170,10 +198,10 @@ public class MappingDBUpdater extends LifecycleComponent implements IDataProcess
 			inputParameters.add(0,"LAST_SOURCE_ARTIFACT_MODIFICATION_DATE",sourceTime);
 			inputParameters.add(1,"LAST_SOURCE_ARTIFACT_VERSION",sourceArtifactVersion);
 			inputParameters.add(2,"LAST_SOURCE_ARTIFACT_ID",sourceArtifactId);
-			inputParameters.add(3,"SOURCE_SYSTEM_ID",sourceSystemId);
-			inputParameters.add(4,"SOURCE_REPOSITORY_ID",sourceRepositoryId);
-			inputParameters.add(5,"TARGET_SYSTEM_ID",targetSystemId);
-			inputParameters.add(6,"TARGET_REPOSITORY_ID",targetRepositoryId);
+			inputParameters.add(3,SOURCE_SYSTEM_ID,sourceSystemId);
+			inputParameters.add(4,SOURCE_REPOSITORY_ID,sourceRepositoryId);
+			inputParameters.add(5,TARGET_SYSTEM_ID,targetSystemId);
+			inputParameters.add(6,TARGET_REPOSITORY_ID,targetRepositoryId);
 			
 			IOrderedMap[] params = new IOrderedMap[]{inputParameters};
 			synchronizationStatusDatabaseUpdater.connect();
@@ -274,33 +302,33 @@ public class MappingDBUpdater extends LifecycleComponent implements IDataProcess
 			String depChildTargetArtifactId, String depChildTargetRepositoryId, String depChildTargetRepositoryKind ){
 		IOrderedMap inputParameters = new OrderedHashMap();
 		
-		inputParameters.add(0,"SOURCE_SYSTEM_ID",sourceSystemId);
-		inputParameters.add(1,"SOURCE_REPOSITORY_ID",sourceRepositoryId);
-		inputParameters.add(2,"TARGET_SYSTEM_ID",targetSystemId);
-		inputParameters.add(3,"TARGET_REPOSITORY_ID",targetRepositoryId);
-		inputParameters.add(4,"SOURCE_SYSTEM_KIND",sourceSystemKind);
-		inputParameters.add(5,"SOURCE_REPOSITORY_KIND",sourceRepositoryKind);
-		inputParameters.add(6,"TARGET_SYSTEM_KIND",targetSystemKind);
-		inputParameters.add(7,"TARGET_REPOSITORY_KIND",targetRepositoryKind);
-		inputParameters.add(8,"SOURCE_ARTIFACT_ID",sourceArtifactId);
-		inputParameters.add(9,"TARGET_ARTIFACT_ID",targetArtifactId);
-		inputParameters.add(10,"SOURCE_LAST_MODIFICATION_TIME",sourceTime);
-		inputParameters.add(11,"TARGET_LAST_MODIFICATION_TIME",targetTime);
-		inputParameters.add(12,"SOURCE_ARTIFACT_VERSION",sourceArtifactVersion);
-		inputParameters.add(13,"TARGET_ARTIFACT_VERSION",targetArtifactVersion);
-		inputParameters.add(14,"ARTIFACT_TYPE",artifactType);
-		inputParameters.add(15,"DEP_CHILD_SOURCE_ARTIFACT_ID", depChildSourceArtifactId);
-		inputParameters.add(16,"DEP_CHILD_SOURCE_REPOSITORY_ID", depChildSourceRepositoryId);
-		inputParameters.add(17,"DEP_CHILD_SOURCE_REPOSITORY_KIND", depChildSourceRepositoryKind);
-		inputParameters.add(18,"DEP_CHILD_TARGET_ARTIFACT_ID", depChildTargetArtifactId);
-		inputParameters.add(19,"DEP_CHILD_TARGET_REPOSITORY_ID", depChildTargetRepositoryId);
-		inputParameters.add(20,"DEP_CHILD_TARGET_REPOSITORY_KIND", depChildTargetRepositoryKind);		
-		inputParameters.add(21,"DEP_PARENT_SOURCE_ARTIFACT_ID", depParentSourceArtifactId);
-		inputParameters.add(22,"DEP_PARENT_SOURCE_REPOSITORY_ID", depParentSourceRepositoryId);
-		inputParameters.add(23,"DEP_PARENT_SOURCE_REPOSITORY_KIND", depParentSourceRepositoryKind);
-		inputParameters.add(24,"DEP_PARENT_TARGET_ARTIFACT_ID", depParentTargetArtifactId);
-		inputParameters.add(25,"DEP_PARENT_TARGET_REPOSITORY_ID", depParentTargetRepositoryId);
-		inputParameters.add(26,"DEP_PARENT_TARGET_REPOSITORY_KIND", depParentTargetRepositoryKind);
+		inputParameters.add(0,SOURCE_SYSTEM_ID,sourceSystemId);
+		inputParameters.add(1,SOURCE_REPOSITORY_ID,sourceRepositoryId);
+		inputParameters.add(2,TARGET_SYSTEM_ID,targetSystemId);
+		inputParameters.add(3,TARGET_REPOSITORY_ID,targetRepositoryId);
+		inputParameters.add(4,SOURCE_SYSTEM_KIND,sourceSystemKind);
+		inputParameters.add(5,SOURCE_REPOSITORY_KIND,sourceRepositoryKind);
+		inputParameters.add(6,TARGET_SYSTEM_KIND,targetSystemKind);
+		inputParameters.add(7,TARGET_REPOSITORY_KIND,targetRepositoryKind);
+		inputParameters.add(8,SOURCE_ARTIFACT_ID,sourceArtifactId);
+		inputParameters.add(9,TARGET_ARTIFACT_ID,targetArtifactId);
+		inputParameters.add(10,SOURCE_LAST_MODIFICATION_TIME,sourceTime);
+		inputParameters.add(11,TARGET_LAST_MODIFICATION_TIME,targetTime);
+		inputParameters.add(12,SOURCE_ARTIFACT_VERSION,sourceArtifactVersion);
+		inputParameters.add(13,TARGET_ARTIFACT_VERSION,targetArtifactVersion);
+		inputParameters.add(14,ARTIFACT_TYPE,artifactType);
+		inputParameters.add(15,DEP_CHILD_SOURCE_ARTIFACT_ID, depChildSourceArtifactId);
+		inputParameters.add(16,DEP_CHILD_SOURCE_REPOSITORY_ID, depChildSourceRepositoryId);
+		inputParameters.add(17,DEP_CHILD_SOURCE_REPOSITORY_KIND, depChildSourceRepositoryKind);
+		inputParameters.add(18,DEP_CHILD_TARGET_ARTIFACT_ID, depChildTargetArtifactId);
+		inputParameters.add(19,DEP_CHILD_TARGET_REPOSITORY_ID, depChildTargetRepositoryId);
+		inputParameters.add(20,DEP_CHILD_TARGET_REPOSITORY_KIND, depChildTargetRepositoryKind);		
+		inputParameters.add(21,DEP_PARENT_SOURCE_ARTIFACT_ID, depParentSourceArtifactId);
+		inputParameters.add(22,DEP_PARENT_SOURCE_REPOSITORY_ID, depParentSourceRepositoryId);
+		inputParameters.add(23,DEP_PARENT_SOURCE_REPOSITORY_KIND, depParentSourceRepositoryKind);
+		inputParameters.add(24,DEP_PARENT_TARGET_ARTIFACT_ID, depParentTargetArtifactId);
+		inputParameters.add(25,DEP_PARENT_TARGET_REPOSITORY_ID, depParentTargetRepositoryId);
+		inputParameters.add(26,DEP_PARENT_TARGET_REPOSITORY_KIND, depParentTargetRepositoryKind);
 		
 		IOrderedMap[] data = new IOrderedMap[]{inputParameters};
 		identityMappingDatabaseInserter.connect();
@@ -314,16 +342,16 @@ public class MappingDBUpdater extends LifecycleComponent implements IDataProcess
 			String targetArtifactVersion, String artifactType){
 		IOrderedMap inputParameters = new OrderedHashMap();
 		
-		inputParameters.add(0,"SOURCE_LAST_MODIFICATION_TIME",sourceTime);
-		inputParameters.add(1,"TARGET_LAST_MODIFICATION_TIME",targetTime);
-		inputParameters.add(2,"SOURCE_ARTIFACT_VERSION",sourceArtifactVersion);
-		inputParameters.add(3,"TARGET_ARTIFACT_VERSION",targetArtifactVersion);
-		inputParameters.add(4,"SOURCE_SYSTEM_ID",sourceSystemId);
-		inputParameters.add(5,"SOURCE_REPOSITORY_ID",sourceRepositoryId);
-		inputParameters.add(6,"TARGET_SYSTEM_ID",targetSystemId);
-		inputParameters.add(7,"TARGET_REPOSITORY_ID",targetRepositoryId);
-		inputParameters.add(8,"SOURCE_ARTIFACT_ID",sourceArtifactId);
-		inputParameters.add(9,"ARTIFACT_TYPE",artifactType);
+		inputParameters.add(0,SOURCE_LAST_MODIFICATION_TIME,sourceTime);
+		inputParameters.add(1,TARGET_LAST_MODIFICATION_TIME,targetTime);
+		inputParameters.add(2,SOURCE_ARTIFACT_VERSION,sourceArtifactVersion);
+		inputParameters.add(3,TARGET_ARTIFACT_VERSION,targetArtifactVersion);
+		inputParameters.add(4,SOURCE_SYSTEM_ID,sourceSystemId);
+		inputParameters.add(5,SOURCE_REPOSITORY_ID,sourceRepositoryId);
+		inputParameters.add(6,TARGET_SYSTEM_ID,targetSystemId);
+		inputParameters.add(7,TARGET_REPOSITORY_ID,targetRepositoryId);
+		inputParameters.add(8,SOURCE_ARTIFACT_ID,sourceArtifactId);
+		inputParameters.add(9,ARTIFACT_TYPE,artifactType);
 		
 		IOrderedMap[] params = new IOrderedMap[]{inputParameters};
 		identityMappingDatabaseUpdater.connect();
