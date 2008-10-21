@@ -264,7 +264,7 @@ public class SFEEWriter extends AbstractWriter<Connection> implements IDataProce
 		return this.returnDocument(ga);
 	}
 
-	public Document updateArtifact(Document data) {
+	public Document updateArtifact(Document data, boolean forceOverride) {
 		GenericArtifact ga = null;
 		try {
 			ga = GenericArtifactHelper.createGenericArtifactJavaObject(data);
@@ -278,7 +278,6 @@ public class SFEEWriter extends AbstractWriter<Connection> implements IDataProce
 		String tracker = targetRepositoryId;
 		Connection connection = connect(ga);
 		ArtifactSoapDO result = null;
-		Boolean forceOverride = true;
 		try {
 			// update token or do conflict resolution
 			result = this
@@ -297,6 +296,10 @@ public class SFEEWriter extends AbstractWriter<Connection> implements IDataProce
 		}
 		if (result != null) {
 			this.populateTargetArtifactAttributes(ga, result);
+		}
+		else {
+			// conflict detected
+			ga.setArtifactAction(GenericArtifact.ArtifactActionValue.IGNORE);
 		}
 		return this.returnDocument(ga);
 	}

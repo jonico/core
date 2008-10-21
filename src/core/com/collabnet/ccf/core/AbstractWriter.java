@@ -192,6 +192,9 @@ public abstract class AbstractWriter<T> extends LifecycleComponent implements
 			Element element = XPathUtils.getRootElement(gaDocument);
 			String targetArtifactId = XPathUtils.getAttributeValue(element, GenericArtifactHelper.TARGET_ARTIFACT_ID);
 			String lastSyncVersionStr = XPathUtils.getAttributeValue(element, GenericArtifactHelper.TARGET_ARTIFACT_VERSION);
+			if (lastSyncVersionStr == null || lastSyncVersionStr.equalsIgnoreCase(GenericArtifact.VALUE_UNKNOWN)) {
+				lastSyncVersionStr = GenericArtifactHelper.ARTIFACT_VERSION_FORCE_RESYNC;
+			}
 			try{
 				lastSyncVersion = Integer.parseInt(lastSyncVersionStr);
 			}catch(NumberFormatException e){
@@ -200,8 +203,9 @@ public abstract class AbstractWriter<T> extends LifecycleComponent implements
 				log.error(message, e);
 				throw new CCFRuntimeException(message, e);
 			}
+			String conflictResolutionPolicy = XPathUtils.getAttributeValue(element, GenericArtifactHelper.CONFLICT_RESOLUTION_PRIORITY);
+			
 			if(lastSyncVersion < artifactCurrentVersion){
-				String conflictResolutionPolicy = XPathUtils.getAttributeValue(element, GenericArtifactHelper.CONFLICT_RESOLUTION_PRIORITY);
 				if(conflictResolutionPolicy.equals(GenericArtifact.VALUE_CONFLICT_RESOLUTION_PRIORITY_ALWAYS_IGNORE)){
 					logConflictResolutor.warn("Conflict detected for artifact "+targetArtifactId
 							+". Changes are ignored.");
@@ -210,11 +214,11 @@ public abstract class AbstractWriter<T> extends LifecycleComponent implements
 				else {
 					logConflictResolutor.info("Conflict detected for artifact "+targetArtifactId
 							+". Changes are overridden.");
-					gaDocument = this.updateArtifact(gaDocument);
+					gaDocument = this.updateArtifact(gaDocument,true);
 				}
 			}
 			else {
-				gaDocument = this.updateArtifact(gaDocument);
+				gaDocument = this.updateArtifact(gaDocument,!conflictResolutionPolicy.equals(GenericArtifact.VALUE_CONFLICT_RESOLUTION_PRIORITY_ALWAYS_IGNORE));
 			}
 		}
 		catch(GenericArtifactParsingException e){
@@ -225,7 +229,13 @@ public abstract class AbstractWriter<T> extends LifecycleComponent implements
 		return gaDocument; //TODO fix		
 	}
 
-	public abstract Document updateArtifact(Document gaDocument);
+	/**
+	 * Update the artifact
+	 * @param gaDocument generic artifact
+	 * @param forceOverride true if conflicting changes should be overridden
+	 * @return
+	 */
+	public abstract Document updateArtifact(Document gaDocument, boolean forceOverride);
 
 	public abstract int getArtifactVersion(Document gaDocument);
 

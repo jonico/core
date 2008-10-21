@@ -31,5 +31,6 @@
 	<classpathentry kind="lib" path="src/plugins/CEE/ProjectTracker/v50/lib/xmlsec-1.4.0.jar"/>
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/saaj.jar"/>
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/commons-httpclient_3.0.1.jar"/>
+	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/js_1_6R5.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

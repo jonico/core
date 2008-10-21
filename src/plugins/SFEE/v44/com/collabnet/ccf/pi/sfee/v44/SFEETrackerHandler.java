@@ -35,6 +35,7 @@ public class SFEETrackerHandler {
 	private ITrackerAppSoap mTrackerApp;
 
 	private static final Log log = LogFactory.getLog(SFEETrackerHandler.class);
+	private static final Log logConflictResolutor = LogFactory.getLog("com.collabnet.ccf.core.conflict.resolution");
 	
 	/**
 	 * Class constructor.
@@ -365,7 +366,8 @@ public class SFEETrackerHandler {
 					mainArtifactNotUpdated = true;
 				}
 				else {
-					log
+					
+					logConflictResolutor
 					.warn("Seems as if our copy of the artifact is too old to override a change for artifact with id: "
 							+ artifactData.getId()+ " in tracker " + artifactData.getFolderId());
 					return null;	

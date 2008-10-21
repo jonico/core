@@ -92,7 +92,13 @@ public class EntityService extends LifecycleComponent implements
 			}
 			
 			String sourceArtifactLastModifiedDateStr = XPathUtils.getAttributeValue(element, GenericArtifactHelper.SOURCE_ARTIFACT_LAST_MODIFICATION_DATE);
-			Date sourceArtifactLastModifiedDate = DateUtil.parse(sourceArtifactLastModifiedDateStr);
+			
+			Date sourceArtifactLastModifiedDate = null;
+			if (!sourceArtifactLastModifiedDateStr.equalsIgnoreCase(GenericArtifact.VALUE_UNKNOWN)) {
+				sourceArtifactLastModifiedDate = DateUtil.parse(sourceArtifactLastModifiedDateStr);
+			}
+			// use the earliest date possible
+			else sourceArtifactLastModifiedDate=new Date(0);
 			
 			int sourceArtifactVersionInt = Integer.parseInt(sourceArtifactVersion);
 			String targetArtifactIdFromTable = null;
@@ -106,13 +112,21 @@ public class EntityService extends LifecycleComponent implements
 				targetArtifactIdFromTable = results[0].toString();
 				Date sourceArtifactLastModifiedDateFromTable = (Date) results[1];
 				String sourceArtifactVersionFromTable = results[2].toString();
+				if (sourceArtifactVersionFromTable.equalsIgnoreCase(GenericArtifact.VALUE_UNKNOWN)) {
+					sourceArtifactVersionFromTable = GenericArtifactHelper.ARTIFACT_VERSION_FORCE_RESYNC;
+				}
 				int sourceArtifactVersionIntFromTable = Integer.parseInt(sourceArtifactVersionFromTable);
-				if(sourceArtifactLastModifiedDateFromTable.equals(sourceArtifactLastModifiedDate) &&
+				if(sourceArtifactLastModifiedDateFromTable.compareTo(sourceArtifactLastModifiedDate) <= 0 &&
 						sourceArtifactVersionIntFromTable >= sourceArtifactVersionInt)
 				{
-					log.warn("Seems the artifact has already been shipped. Duplicately shipping "
-							+ sourceArtifactId + " at " + sourceArtifactVersion);
-					return null;
+					if (sourceArtifactVersionInt == -1 && sourceArtifactVersionIntFromTable == -1) {
+						log.warn("It seems as if artifact synchronization is done exclusively with a system that does not support version control, so artifact will not be skipped.");
+					}
+					else {
+						log.warn("Seems the artifact has already been shipped. Skipped artifact with source artifact id "
+								+ sourceArtifactId + " and version " + sourceArtifactVersion);
+						return null;
+					}
 				}
 				targetArtifactVersion = results[3].toString();
 			}

@@ -1,5 +1,8 @@
 package com.collabnet.ccf.core.hospital;
 
+import java.sql.Timestamp;
+import java.util.Date;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dom4j.Document;
@@ -178,17 +181,25 @@ public class CCFExceptionToOrderedMapConvertor extends
 				
 				String artifactType = XPathUtils.getAttributeValue(element, GenericArtifactHelper.ARTIFACT_TYPE);
 				
-				java.util.Date sourceLastModifiedDate = null;
+				Date sourceLastModifiedDate = null;
 				if(!sourceArtifactLastModifiedDateString.equalsIgnoreCase(GenericArtifact.VALUE_UNKNOWN)){
 					sourceLastModifiedDate = DateUtil.parse(sourceArtifactLastModifiedDateString);
 				}
-				java.sql.Timestamp sourceTime = sourceLastModifiedDate == null?null:new java.sql.Timestamp(sourceLastModifiedDate.getTime());
+				else {
+					// use the earliest date possible
+					sourceLastModifiedDate = new Date(0);
+				}
+				java.sql.Timestamp sourceTime = new Timestamp(sourceLastModifiedDate.getTime());
 				
 				java.util.Date targetLastModifiedDate = null;
 				if(!targetArtifactLastModifiedDateString.equalsIgnoreCase(GenericArtifact.VALUE_UNKNOWN)){
 					targetLastModifiedDate = DateUtil.parse(targetArtifactLastModifiedDateString);
 				}
-				java.sql.Timestamp targetTime = targetLastModifiedDate == null?null:new java.sql.Timestamp(targetLastModifiedDate.getTime());
+				else {
+					// use the earliest date possible
+					targetLastModifiedDate = new Date(0);
+				}
+				java.sql.Timestamp targetTime = new Timestamp(targetLastModifiedDate.getTime());
 
 				// TODO Should we allow to set different column names for these
 				// properties?

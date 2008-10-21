@@ -1,5 +1,6 @@
 package com.collabnet.ccf.core.config;
 
+import java.util.Date;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
@@ -112,8 +113,9 @@ public class MappingDBUpdater extends LifecycleComponent implements IDataProcess
 			java.util.Date sourceLastModifiedDate = null;
 			if(sourceArtifactLastModifiedDateString.equalsIgnoreCase(GenericArtifact.VALUE_UNKNOWN)){
 				String message = "Source artifact last modified date is populated as: "+sourceArtifactLastModifiedDateString;
-				log.error(message);
-				throw new CCFRuntimeException(message);
+				log.warn(message);
+				// use the earliest date possible
+				sourceLastModifiedDate = new Date(0);
 			}
 			else {
 				sourceLastModifiedDate = DateUtil.parse(sourceArtifactLastModifiedDateString);
@@ -124,8 +126,9 @@ public class MappingDBUpdater extends LifecycleComponent implements IDataProcess
 			
 			if(targetArtifactLastModifiedDateString.equalsIgnoreCase(GenericArtifact.VALUE_UNKNOWN)){
 				String message = "Target artifact last modified date is populated as: "+sourceArtifactLastModifiedDateString;
-				log.error(message);
-				throw new CCFRuntimeException(message);
+				log.warn(message);
+				// use the earliest date possible
+				targetLastModifiedDate = new Date(0);
 			}
 			else {
 				//targetArtifactLastModifiedDateString = "June 26, 2008 11:02:26 AM GMT+05:30";

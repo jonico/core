@@ -82,7 +82,7 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 				ga = this.createProjectTrackerArtifact(ga);
 			}
 			else if(artifactAction == GenericArtifact.ArtifactActionValue.UPDATE){
-				ga = this.updateProjectTrackerArtifact(ga);
+				ga = this.updateProjectTrackerArtifact(ga,true);
 			}
 			else if(artifactAction == GenericArtifact.ArtifactActionValue.DELETE){
 				// INFO Delete not supported as of now
@@ -177,7 +177,7 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 		connectionManager.releaseConnection(twsclient);
 	}
 
-	private GenericArtifact updateProjectTrackerArtifact(GenericArtifact ga) {
+	private GenericArtifact updateProjectTrackerArtifact(GenericArtifact ga, boolean forceOverride) {
 		String targetArtifactId = ga.getTargetArtifactId();
 		String targetArtifactTypeNameSpace =
 			ptHelper.getArtifactTypeNamespaceFromFullyQualifiedArtifactId(targetArtifactId);
@@ -188,6 +188,7 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 		try {
 			int version = this.getArtifactVersion(targetArtifactId, new Date(0).getTime(),
 					new Date().getTime(), twsclient);
+			// TODO Consider forceOverride flag
 			List<ClientArtifact> cla = null;
 			cla = new ArrayList<ClientArtifact>();
 			ClientArtifact ca = this.getClientArtifactFromGenericArtifact(ga, twsclient,
@@ -668,9 +669,10 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 	}
 
 	@Override
-	public Document updateArtifact(Document gaDocument) {
+	public Document updateArtifact(Document gaDocument, boolean forceOverride) {
+		// TODO Consider forceOverride value
 		GenericArtifact ga = this.getGenericArtifact(gaDocument);
-		ga = this.updateProjectTrackerArtifact(ga);
+		ga = this.updateProjectTrackerArtifact(ga, forceOverride);
 		return this.returnGenericArtifactDocument(ga);
 	}
 

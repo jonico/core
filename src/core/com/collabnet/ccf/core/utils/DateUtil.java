@@ -8,11 +8,15 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.TimeZone;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 
 public class DateUtil {
 	private static final DateFormat dateFormat = GenericArtifactHelper.df;
 	private static final SimpleDateFormat qcDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+	private static final Log log = LogFactory.getLog(DateUtil.class);
 	
 	/**
 	 * Parses the QC specific date string into java.util.Date
@@ -62,7 +66,7 @@ public class DateUtil {
 		try {
 			return dateFormat.parse(dateString);
 		} catch (ParseException e) {
-			e.printStackTrace();
+			log.error("ParseException: "+e.getMessage()+"\nStacktrace: "+e.getStackTrace());
 		}
 		return null;
 	}

@@ -91,22 +91,6 @@ public class GenericArtifact {
 	private String artifactValue = null;
 
 	/**
-	 * This is the constant attribute values should set to if the value is not
-	 * (yet) known or the whole functionality is not supported
-	 */
-	public static final String VALUE_UNKNOWN = "unknown";
-
-	/**
-	 * Constant value for conflict resolution policy "always ignore"
-	 */
-	public static final String VALUE_CONFLICT_RESOLUTION_PRIORITY_ALWAYS_IGNORE = "alwaysIgnore";
-
-	/**
-	 * Constant value for conflict resolution policy "always override"
-	 */
-	public static final String VALUE_CONFLICT_RESOLUTION_PRIORITY_ALWAYS_OVERRIDE = "alwaysOverride";
-
-	/**
 	 * The value of this attribute could be either “complete” or
 	 * “changedFieldsOnly” – which denote how the source system has formed this
 	 * artifact. Typically, source systems are expected to provide a complete
@@ -133,31 +117,31 @@ public class GenericArtifact {
 	 * There is one reserved value "unknown" that is used if the source system
 	 * does not support version control.
 	 */
-	private String sourceArtifactVersion = VALUE_UNKNOWN;
+	private String sourceArtifactVersion = GenericArtifact.VALUE_UNKNOWN;
 	/**
 	 * This attribute contains the version of the artifact in the target system.
 	 * There is one reserved value "unknown" that is used if the source system
 	 * does not support version control.
 	 */
-	private String targetArtifactVersion = VALUE_UNKNOWN;
+	private String targetArtifactVersion = GenericArtifact.VALUE_UNKNOWN;
 	/**
 	 * This attribute contains the last transaction that was read. This is
 	 * updated by the reader and functions similar to lastModifiedDate.
 	 */
-	private String transactionId = VALUE_UNKNOWN;
+	private String transactionId = GenericArtifact.VALUE_UNKNOWN;
 
 	/**
 	 * This attribute contains the date when this artifact was lastly updated.
 	 * The more specific this date is, the better the polling components can do
 	 * its job.
 	 */
-	private String sourceArtifactLastModifiedDate = VALUE_UNKNOWN;
+	private String sourceArtifactLastModifiedDate = GenericArtifact.VALUE_UNKNOWN;
 	/**
 	 * This attribute contains the date when this artifact was lastly updated.
 	 * The more specific this date is, the better the polling components can do
 	 * its job.
 	 */
-	private String targetArtifactLastModifiedDate = VALUE_UNKNOWN;
+	private String targetArtifactLastModifiedDate = GenericArtifact.VALUE_UNKNOWN;
 
 	/**
 	 * If a conflict is detected in the target system, the value of this
@@ -165,7 +149,7 @@ public class GenericArtifact {
 	 * be overriden or not. Reserved values are "alwaysIgnore" and
 	 * "alwaysOverride".
 	 */
-	private String conflictResolutionPriority = VALUE_UNKNOWN;
+	private String conflictResolutionPriority = GenericArtifact.VALUE_UNKNOWN;
 
 	/**
 	 * This attribute determines, whether this is a plain artifact that contains
@@ -193,21 +177,21 @@ public class GenericArtifact {
 	 * ignore the artifact, so the artifactAction attribute should be set to
 	 * "ignore".
 	 */
-	private String errorCode = VALUE_UNKNOWN;
+	private String errorCode = GenericArtifact.VALUE_UNKNOWN;
 
 	/**
 	 * This attribute contains the nature of the source system of the artifact,
 	 * e. g. SourceForge EnterpriseEdition 4.4, CollabNet Enterprise Edition
 	 * 5.1, HP Quality Center 9.1, Conigma CCM.
 	 */
-	private String sourceSystemKind = VALUE_UNKNOWN;
+	private String sourceSystemKind = GenericArtifact.VALUE_UNKNOWN;
 
 	/**
 	 * This attribute contains the id of the source system. This id, together
 	 * with the source system kind, should be unique in the whole system
 	 * landscape.
 	 */
-	private String sourceSystemId = VALUE_UNKNOWN;
+	private String sourceSystemId = GenericArtifact.VALUE_UNKNOWN;
 
 	/**
 	 * This attribute contains the nature of the source repository of the
@@ -215,7 +199,7 @@ public class GenericArtifact {
 	 * EnterpriseEdition 4.4 Tracker Dependency, HP Quality Center 9.1 Defect,
 	 * Conigma CCM SWFM_CR.
 	 */
-	private String sourceRepositoryKind = VALUE_UNKNOWN;
+	private String sourceRepositoryKind = GenericArtifact.VALUE_UNKNOWN;
 
 	/**
 	 * This attribute contains the id of the source repository where this
@@ -225,7 +209,7 @@ public class GenericArtifact {
 	 * directlyassociated to a source repository (this might be the case for
 	 * dependencies, associations and attachments).
 	 */
-	private String sourceRepositoryId = VALUE_UNKNOWN;
+	private String sourceRepositoryId = GenericArtifact.VALUE_UNKNOWN;
 
 	/**
 	 * This attribute contains the id of the artifact in the source system.
@@ -233,21 +217,21 @@ public class GenericArtifact {
 	 * artifact has no direct id in the source system (this might be the case
 	 * for dependencies, associations and attachments).
 	 */
-	private String sourceArtifactId = VALUE_UNKNOWN;
+	private String sourceArtifactId = GenericArtifact.VALUE_UNKNOWN;
 
 	/**
 	 * This attribute contains the nature of the target system of the artifact,
 	 * e. g. SourceForge EnterpriseEdition 4.4, CollabNet Enterprise Edition
 	 * 5.1, HP Quality Center 9.1, Conigma CCM.
 	 */
-	private String targetSystemKind = VALUE_UNKNOWN;
+	private String targetSystemKind = GenericArtifact.VALUE_UNKNOWN;
 
 	/**
 	 * This attribute contains the id of the target system. This id, together
 	 * with the target system kind, should be unique in the whole system
 	 * landscape.
 	 */
-	private String targetSystemId = VALUE_UNKNOWN;
+	private String targetSystemId = GenericArtifact.VALUE_UNKNOWN;
 
 	/**
 	 * This attribute contains the nature of the target repository of the
@@ -255,7 +239,7 @@ public class GenericArtifact {
 	 * EnterpriseEdition 4.4 Task Dependency, HP Quality Center 9.1 Defect
 	 * Attachment, Conigma CCM SWFM_CR.
 	 */
-	private String targetRepositoryKind = VALUE_UNKNOWN;
+	private String targetRepositoryKind = GenericArtifact.VALUE_UNKNOWN;
 
 	/**
 	 * This attribute contains the nature of the target repository of the
@@ -263,7 +247,7 @@ public class GenericArtifact {
 	 * EnterpriseEdition 4.4 Task Dependency, HP Quality Center 9.1 Defect
 	 * Attachment, Conigma CCM SWFM_CR.
 	 */
-	private String targetRepositoryId = VALUE_UNKNOWN;
+	private String targetRepositoryId = GenericArtifact.VALUE_UNKNOWN;
 
 	/**
 	 * This attribute contains the id of the artifact in the target system.
@@ -274,7 +258,7 @@ public class GenericArtifact {
 	 * repository. Typically, the value will be "unknown" until this artifact
 	 * passed the entity service.
 	 */
-	private String targetArtifactId = VALUE_UNKNOWN;
+	private String targetArtifactId = GenericArtifact.VALUE_UNKNOWN;
 
 	/**
 	 * This attribute is only used if the artifact type is "dependency" or
@@ -283,7 +267,7 @@ public class GenericArtifact {
 	 * association/dependency respectively the nature of the source repository
 	 * of the parent of this attachment.
 	 */
-	private String depParentSourceRepositoryKind = VALUE_UNKNOWN;
+	private String depParentSourceRepositoryKind = GenericArtifact.VALUE_UNKNOWN;
 
 	/**
 	 * This attribute is only used if the artifact type is "dependency" or
@@ -293,7 +277,7 @@ public class GenericArtifact {
 	 * together with the source system id, should be sufficient to determine the
 	 * source repository.
 	 */
-	private String depParentSourceRepositoryId = VALUE_UNKNOWN;
+	private String depParentSourceRepositoryId = GenericArtifact.VALUE_UNKNOWN;
 
 	/**
 	 * This attribute is only used if the artifact type is "dependency" or
@@ -302,7 +286,7 @@ public class GenericArtifact {
 	 * respectively the id of the parent of this attachment in the source
 	 * system.
 	 */
-	private String depParentSourceArtifactId = VALUE_UNKNOWN;
+	private String depParentSourceArtifactId = GenericArtifact.VALUE_UNKNOWN;
 
 	/**
 	 * This attribute is only used if the artifact type is "dependency",
@@ -312,7 +296,7 @@ public class GenericArtifact {
 	 * 4.4 Tracker, SourceForge EnterpriseEdition 4.4 Task, HP Quality Center
 	 * 9.1 Defect, Conigma CCM SWFM_CR.
 	 */
-	private String depChildSourceRepositoryKind = VALUE_UNKNOWN;
+	private String depChildSourceRepositoryKind = GenericArtifact.VALUE_UNKNOWN;
 
 	/**
 	 * This attribute is only used if the artifact type is "dependency",
@@ -322,7 +306,7 @@ public class GenericArtifact {
 	 * the source system id, should be sufficient to determine the source
 	 * repository.
 	 */
-	private String depChildSourceRepositoryId = VALUE_UNKNOWN;
+	private String depChildSourceRepositoryId = GenericArtifact.VALUE_UNKNOWN;
 
 	/**
 	 * This attribute is only used if the artifact type is "dependency",
@@ -330,7 +314,7 @@ public class GenericArtifact {
 	 * attribute contains the id of the child artifact that takes part in the
 	 * defined association or dependency in the source system.
 	 */
-	private String depChildSourceArtifactId = VALUE_UNKNOWN;
+	private String depChildSourceArtifactId = GenericArtifact.VALUE_UNKNOWN;
 
 	/**
 	 * This attribute is only used if the artifact type is "dependency" or
@@ -340,7 +324,7 @@ public class GenericArtifact {
 	 * of the parent artifact of this attachment. Typically, the value will be
 	 * "unknown" until this artifact passes the entity service.
 	 */
-	private String depParentTargetRepositoryKind = VALUE_UNKNOWN;
+	private String depParentTargetRepositoryKind = GenericArtifact.VALUE_UNKNOWN;
 
 	/**
 	 * This attribute is only used if the artifact type is "dependency" or
@@ -351,7 +335,7 @@ public class GenericArtifact {
 	 * target repository. Typically, the value will be "unknown" until this
 	 * artifact passes the entity service.
 	 */
-	private String depParentTargetRepositoryId = VALUE_UNKNOWN;
+	private String depParentTargetRepositoryId = GenericArtifact.VALUE_UNKNOWN;
 
 	/**
 	 * This attribute is only used if the artifact type is "dependency" or
@@ -361,7 +345,7 @@ public class GenericArtifact {
 	 * target system. Typically, the value will be "unknown" until this artifact
 	 * passes the entity service.
 	 */
-	private String depParentTargetArtifactId = VALUE_UNKNOWN;
+	private String depParentTargetArtifactId = GenericArtifact.VALUE_UNKNOWN;
 
 	/**
 	 * This attribute is only used if the artifact type is "dependency",
@@ -372,7 +356,7 @@ public class GenericArtifact {
 	 * 9.1 Defect, Conigma CCM SWFM_CR. Typically, the value will be "unknown"
 	 * until this artifact passes the entity service.
 	 */
-	private String depChildTargetRepositoryKind = VALUE_UNKNOWN;
+	private String depChildTargetRepositoryKind = GenericArtifact.VALUE_UNKNOWN;
 
 	/**
 	 * This attribute is only used if the artifact type is "dependency",
@@ -383,7 +367,7 @@ public class GenericArtifact {
 	 * repository. Typically, the value will be "unknown" until this artifact
 	 * passes the entity service.
 	 */
-	private String depChildTargetRepositoryId = VALUE_UNKNOWN;
+	private String depChildTargetRepositoryId = GenericArtifact.VALUE_UNKNOWN;
 
 	/**
 	 * This attribute is only used if the artifact type is "dependency",
@@ -392,7 +376,7 @@ public class GenericArtifact {
 	 * defined association or dependency in the target system. Typically, the
 	 * value will be "unknown" until this artifact passes the entity service.
 	 */
-	private String depChildTargetArtifactId = VALUE_UNKNOWN;
+	private String depChildTargetArtifactId = GenericArtifact.VALUE_UNKNOWN;
 
 	/**
 	 * This attribute is used to store a reference to the document that was parsed to create this
@@ -401,6 +385,22 @@ public class GenericArtifact {
 	 * document will be changed as well to facilitate exception handling
 	 */
 	private Document sourceDocument;
+
+	/**
+	 * Constant value for conflict resolution policy "always override"
+	 */
+	public static final String VALUE_CONFLICT_RESOLUTION_PRIORITY_ALWAYS_OVERRIDE = "alwaysOverride";
+
+	/**
+	 * This is the constant attribute values should set to if the value is not
+	 * (yet) known or the whole functionality is not supported
+	 */
+	public static final String VALUE_UNKNOWN = "unknown";
+
+	/**
+	 * Constant value for conflict resolution policy "always ignore"
+	 */
+	public static final String VALUE_CONFLICT_RESOLUTION_PRIORITY_ALWAYS_IGNORE = "alwaysIgnore";
 
 	public final static String ERROR_TRANSFORMER_TRANSFORMATION = "transformerTransformationError";
 
