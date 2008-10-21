@@ -9,8 +9,11 @@ import org.openadaptor.auxil.orderedmap.IOrderedMap;
 import org.openadaptor.core.IComponent;
 import org.openadaptor.core.exception.MessageException;
 
+import com.collabnet.ccf.core.CCFRuntimeException;
+import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
+import com.collabnet.ccf.core.utils.DateUtil;
 import com.collabnet.ccf.core.utils.XPathUtils;
 
 /**
@@ -23,6 +26,7 @@ import com.collabnet.ccf.core.utils.XPathUtils;
  */
 public class CCFExceptionToOrderedMapConvertor extends
 		ExceptionToOrderedMapConvertor {
+	private static final String ERROR_CODE = "ERROR_CODE";
 	private static final String GENERICARTIFACT = "GENERIC_ARTIFACT";
 	private static final String TARGET_ARTIFACT_ID = "TARGET_ARTIFACT_ID";
 	private static final String SOURCE_ARTIFACT_ID = "SOURCE_ARTIFACT_ID";
@@ -34,6 +38,11 @@ public class CCFExceptionToOrderedMapConvertor extends
 	private static final String TARGET_SYSTEM_ID = "TARGET_SYSTEM_ID";
 	private static final String SOURCE_REPOSITORY_ID = "SOURCE_REPOSITORY_ID";
 	private static final String SOURCE_SYSTEM_ID = "SOURCE_SYSTEM_ID";
+	private static final String ARTIFACT_TYPE = "ARTIFACT_TYPE";
+	private static final String TARGET_ARTIFACT_VERSION = "TARGET_ARTIFACT_VERSION";
+	private static final String SOURCE_ARTIFACT_VERSION = "SOURCE_ARTIFACT_VERSION";
+	private static final String TARGET_LAST_MODIFICATION_TIME = "TARGET_LAST_MODIFICATION_TIME";
+	private static final String SOURCE_LAST_MODIFICATION_TIME = "SOURCE_LAST_MODIFICATION_TIME";
 
 	static final String EXCEPTION_MESSAGE = "EXCEPTION_MESSAGE";
 
@@ -159,6 +168,28 @@ public class CCFExceptionToOrderedMapConvertor extends
 						element, GenericArtifactHelper.TARGET_REPOSITORY_ID);
 				String targetRepositoryKind = XPathUtils.getAttributeValue(
 						element, GenericArtifactHelper.TARGET_REPOSITORY_KIND);
+				
+				String artifactErrorCode = XPathUtils.getAttributeValue(
+						element, GenericArtifactHelper.ERROR_CODE);
+
+				String sourceArtifactLastModifiedDateString = XPathUtils.getAttributeValue(element, GenericArtifactHelper.SOURCE_ARTIFACT_LAST_MODIFICATION_DATE);
+				String targetArtifactLastModifiedDateString = XPathUtils.getAttributeValue(element, GenericArtifactHelper.TARGET_ARTIFACT_LAST_MODIFICATION_DATE);
+				String sourceArtifactVersion = XPathUtils.getAttributeValue(element, GenericArtifactHelper.SOURCE_ARTIFACT_VERSION);
+				String targetArtifactVersion = XPathUtils.getAttributeValue(element, GenericArtifactHelper.TARGET_ARTIFACT_VERSION);
+				
+				String artifactType = XPathUtils.getAttributeValue(element, GenericArtifactHelper.ARTIFACT_TYPE);
+				
+				java.util.Date sourceLastModifiedDate = null;
+				if(!sourceArtifactLastModifiedDateString.equalsIgnoreCase(GenericArtifact.VALUE_UNKNOWN)){
+					sourceLastModifiedDate = DateUtil.parse(sourceArtifactLastModifiedDateString);
+				}
+				java.sql.Timestamp sourceTime = sourceLastModifiedDate == null?null:new java.sql.Timestamp(sourceLastModifiedDate.getTime());
+				
+				java.util.Date targetLastModifiedDate = null;
+				if(!targetArtifactLastModifiedDateString.equalsIgnoreCase(GenericArtifact.VALUE_UNKNOWN)){
+					targetLastModifiedDate = DateUtil.parse(targetArtifactLastModifiedDateString);
+				}
+				java.sql.Timestamp targetTime = targetLastModifiedDate == null?null:new java.sql.Timestamp(targetLastModifiedDate.getTime());
 
 				// TODO Should we allow to set different column names for these
 				// properties?
@@ -172,10 +203,16 @@ public class CCFExceptionToOrderedMapConvertor extends
 				map.put(TARGET_REPOSITORY_KIND, targetRepositoryKind);
 				map.put(SOURCE_ARTIFACT_ID, sourceArtifactId);
 				map.put(TARGET_ARTIFACT_ID, targetArtifactId);
+				map.put(ERROR_CODE, artifactErrorCode);
+				map.put(SOURCE_LAST_MODIFICATION_TIME,sourceTime);
+				map.put(TARGET_LAST_MODIFICATION_TIME,targetTime);
+				map.put(SOURCE_ARTIFACT_VERSION,sourceArtifactVersion);
+				map.put(TARGET_ARTIFACT_VERSION,targetArtifactVersion);
+				map.put(ARTIFACT_TYPE,artifactType);
 				map.put(GENERICARTIFACT, dataDoc.asXML());
 			} catch (GenericArtifactParsingException e) {
 				log
-						.warn("The data that reached the hospital is not a Generic Artifact");
+						.warn("The data that reached the hospital is not a valid Generic Artifact");
 				map.put(SOURCE_SYSTEM_ID, null);
 				map.put(SOURCE_REPOSITORY_ID, null);
 				map.put(TARGET_SYSTEM_ID, null);
@@ -187,6 +224,12 @@ public class CCFExceptionToOrderedMapConvertor extends
 				map.put(SOURCE_ARTIFACT_ID, null);
 				map.put(TARGET_ARTIFACT_ID, null);
 				map.put(GENERICARTIFACT, null);
+				map.put(ERROR_CODE, null);
+				map.put(SOURCE_LAST_MODIFICATION_TIME,null);
+				map.put(TARGET_LAST_MODIFICATION_TIME,null);
+				map.put(SOURCE_ARTIFACT_VERSION,null);
+				map.put(TARGET_ARTIFACT_VERSION,null);
+				map.put(ARTIFACT_TYPE,null);
 			}
 		} else {
 			map.put(SOURCE_SYSTEM_ID, null);
@@ -200,6 +243,12 @@ public class CCFExceptionToOrderedMapConvertor extends
 			map.put(SOURCE_ARTIFACT_ID, null);
 			map.put(TARGET_ARTIFACT_ID, null);
 			map.put(GENERICARTIFACT, null);
+			map.put(ERROR_CODE, null);
+			map.put(SOURCE_LAST_MODIFICATION_TIME,null);
+			map.put(TARGET_LAST_MODIFICATION_TIME,null);
+			map.put(SOURCE_ARTIFACT_VERSION,null);
+			map.put(TARGET_ARTIFACT_VERSION,null);
+			map.put(ARTIFACT_TYPE,null);
 		}
 		return map;
 	}
