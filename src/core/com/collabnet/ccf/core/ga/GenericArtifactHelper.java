@@ -405,6 +405,8 @@ public class GenericArtifactHelper {
 			}
 		}
 
+		// finally set reference to source XML document
+		genericArtifact.setSourceDocument(document);
 		return genericArtifact;
 	}
 

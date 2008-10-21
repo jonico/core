@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.apache.commons.codec.binary.Base64;
+import org.dom4j.Document;
 
 /**
  * 
@@ -392,6 +393,14 @@ public class GenericArtifact {
 	 * value will be "unknown" until this artifact passes the entity service.
 	 */
 	private String depChildTargetArtifactId = VALUE_UNKNOWN;
+
+	/**
+	 * This attribute is used to store a reference to the document that was parsed to create this
+	 * java representation of the generic artifact format. Currently, this reference is just
+	 * used for one reason: If the error code will be changed, the error code of the source
+	 * document will be changed as well to facilitate exception handling
+	 */
+	private Document sourceDocument;
 
 	public final static String ERROR_TRANSFORMER_TRANSFORMATION = "transformerTransformationError";
 
@@ -1005,8 +1014,17 @@ public class GenericArtifact {
 		return errorCode;
 	}
 
+	/**
+	 * This is the only method of this class that may change the XML document
+	 * that was used to create this java representation.
+	 * The error code will be adjusted to facilitate writing of exception handling routines
+	 * @param errorCode the new error code
+	 */
 	public void setErrorCode(String errorCode) {
 		this.errorCode = errorCode;
+		if (sourceDocument!=null) {
+			sourceDocument.getRootElement().addAttribute(GenericArtifactHelper.ERROR_CODE, errorCode);
+		}
 	}
 
 	public String getSourceArtifactVersion() {
@@ -1049,6 +1067,14 @@ public class GenericArtifact {
 
 	public void setTransactionId(String transactionId) {
 		this.transactionId = transactionId;
+	}
+	
+	public Document getSourceDocument() {
+		return sourceDocument;
+	}
+
+	public void setSourceDocument(Document document) {
+		this.sourceDocument = document;
 	}
 
 }
