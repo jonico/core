@@ -68,9 +68,12 @@ artifacts data from a CSV file into an SFEE tracker.
 				<entry key-ref="OrderedMap2XmlMapConverter" value-ref="XmlMap2GenericArtifactConverter" />
 				<entry key-ref="XmlMap2GenericArtifactConverter"
 					value-ref="SFEEWriter" />
+				<!-- Exception processors -->
+        		<entry key-ref="ExceptionConvertor" value-ref="HospitalWriter"/>
 			</map>
 		</property>
-		<property name="exceptionProcessor" ref="ExceptionHandler" />
+		<!-- <property name="exceptionProcessor" ref="ExceptionHandler" />  -->
+		<property name="exceptionProcessor" ref="ExceptionConvertor"/>
 	</bean>
 
 	<bean id="InputCSVFileReader"
@@ -130,6 +133,7 @@ artifacts data from a CSV file into an SFEE tracker.
 		<property name="maxIdleTimeForConnection" value="600000" />
 		<property name="scavengerInterval" value="120000"></property>
 		<property name="connectionFactory" ref="SFEEConnectionFactory"></property>
+		<property name="enableRetryAfterNetworkTimeout" value="false"/>
 	</bean>
 	<bean id="SFEEConnectionFactory"
 		class="com.collabnet.ccf.pi.sfee.v44.SFEEConnectionFactory">
@@ -167,4 +171,26 @@ artifacts data from a CSV file into an SFEE tracker.
   		<property name="hospitalFileName" value="${ccf.hospital.file}"/>
   		<property name="artifactsDirectory" value="${ccf.hospital.artifacts.directory}"></property>
   	</bean>
+  	
+  	<bean id="jdbcConnection" class="org.openadaptor.auxil.connector.jdbc.JDBCConnection">
+    <description>This defines the jdbc connection for the hospital.</description>
+    <property name="driver" value="${ccf.db.driver}" />
+	<property name="url" value="${ccf.db.url}" />
+	<property name="username" value="${ccf.db.username}" />
+	<property name="password" value="${ccf.db.password}" />
+  </bean>
+  
+  <bean id="ExceptionConvertor" class="com.collabnet.ccf.core.hospital.CCFExceptionToOrderedMapConvertor">
+  	<property name="adaptor" ref="Adaptor"/>
+  </bean>
+  
+  <bean id="HospitalWriter" class="org.openadaptor.auxil.connector.jdbc.writer.JDBCWriteConnector">
+		<property name="jdbcConnection" ref="jdbcConnection" />
+		<property name="writer">
+			<bean
+				class="org.openadaptor.auxil.connector.jdbc.writer.MapTableWriter">
+				<property name="tableName" value="HOSPITAL" />
+			</bean>
+		</property>
+  </bean>
 </beans>
