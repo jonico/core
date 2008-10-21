@@ -542,7 +542,6 @@ public class TrackerWebServicesClient {
 		}
 
  		TrackerUtil.debug("request changedArtifacts() between: " + new Date(from) + " and " + new Date(to)); 
-		System.out.println("request changedArtifacts() between: " + new Date(from) + " and " + new Date(to));
   		return theService.getChangedArtifactIDs(items, from, to);
 	}
 
