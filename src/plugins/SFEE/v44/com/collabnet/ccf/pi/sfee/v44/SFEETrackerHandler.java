@@ -284,10 +284,15 @@ public class SFEETrackerHandler {
 				mTrackerApp.setArtifactData(sessionId, artifactData, "Synchronized by Connector User", null,
 						null, null);
 			} catch (com.vasoftware.sf.soap44.fault.VersionMismatchFault e) {
-				log.warn("Stale initial update, trying again ...:", e);
+				logConflictResolutor.warn("Stale initial update, will override in any case ...:", e);
 				artifactData.setVersion(artifactData.getVersion()+1);
 				initialUpdated = true;
 			}
+		}
+		
+		// we have to increase the version number to add the comments
+		if (comments.length != 0) {
+			artifactData.setVersion(artifactData.getVersion()+1);
 		}
 		
 		for(String comment:comments) {
@@ -295,12 +300,13 @@ public class SFEETrackerHandler {
 			while (commentNotUpdated) {
 				try {
 					commentNotUpdated = false;
-					//artifactData = mTrackerApp.getArtifactData(sessionId, artifactData.getId());
-					artifactData.setVersion(artifactData.getVersion()+1);
 					mTrackerApp.setArtifactData(sessionId, artifactData, comment, null,
 					null, null);
+					//artifactData = mTrackerApp.getArtifactData(sessionId, artifactData.getId());
+					artifactData.setVersion(artifactData.getVersion()+1);
 				} catch (com.vasoftware.sf.soap44.fault.VersionMismatchFault e) {
-					log.warn("Stale comment update, trying again ...:", e);
+					logConflictResolutor.warn("Stale comment update, trying again ...:", e);
+					artifactData = mTrackerApp.getArtifactData(sessionId, artifactData.getId());
 					commentNotUpdated = true;
 				}
 			}
@@ -308,7 +314,9 @@ public class SFEETrackerHandler {
 		
 		// we have to increase the version after the update
 		// TODO Find out whether this really works if last modified date differs from actual last modified date
-		artifactData.setVersion(artifactData.getVersion()+1);
+		if (comments.length == 0) {
+			artifactData.setVersion(artifactData.getVersion()+1);
+		}
 		log.info("Artifact created: " + artifactData.getId());
 		return artifactData;
 	}
@@ -362,7 +370,7 @@ public class SFEETrackerHandler {
 						null, null);
 			} catch (com.vasoftware.sf.soap44.fault.VersionMismatchFault e) {
 				if (forceOverride) {
-					log.warn("Stale update, trying again ...:", e);
+					logConflictResolutor.warn("Stale update, trying again ...:", e);
 					mainArtifactNotUpdated = true;
 				}
 				else {
@@ -374,18 +382,22 @@ public class SFEETrackerHandler {
 				}
 			}
 		}
+		// increase version number for comment updates
+		if (comments.length != 0) { 
+			artifactData.setVersion(artifactData.getVersion()+1);
+		}
 		
 		for(String comment:comments) {
 			boolean commentNotUpdated = true;
 			while (commentNotUpdated) {
 				try {
 					commentNotUpdated = false;
-					//artifactData = mTrackerApp.getArtifactData(sessionId, Id);
-					artifactData.setVersion(artifactData.getVersion()+1);
 					mTrackerApp.setArtifactData(sessionId, artifactData, comment, null,
 					null, null);
+					artifactData.setVersion(artifactData.getVersion()+1);
 				} catch (com.vasoftware.sf.soap44.fault.VersionMismatchFault e) {
-					log.warn("Stale comment update, trying again ...:", e);
+					logConflictResolutor.warn("Stale comment update, trying again ...:", e);
+					artifactData = mTrackerApp.getArtifactData(sessionId, Id);
 					commentNotUpdated = true;
 				}
 			}
@@ -393,7 +405,9 @@ public class SFEETrackerHandler {
 		
 		// we have to increase the version after the update
 		// TODO Find out whether this really works if last modified date differs from actual last modified date
-		artifactData.setVersion(artifactData.getVersion()+1);
+		if (comments.length == 0) {
+			artifactData.setVersion(artifactData.getVersion()+1);
+		}
 		log.info("Artifact updated id: " + artifactData.getId()+ " in tracker " + artifactData.getFolderId());
 		return artifactData;
 	}

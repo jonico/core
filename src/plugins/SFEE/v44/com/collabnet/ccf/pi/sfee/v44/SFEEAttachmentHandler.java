@@ -42,6 +42,7 @@ public class SFEEAttachmentHandler {
 	 */
 	private static final Log log = LogFactory
 			.getLog(SFEEAttachmentHandler.class);
+	private static final Log logConflictResolutor = LogFactory.getLog("com.collabnet.ccf.core.conflict.resolution");
 	/** Tracker Soap API handle */
 	private ITrackerAppSoap mTrackerApp;
 
@@ -119,9 +120,9 @@ public class SFEEAttachmentHandler {
 						mTrackerApp.setArtifactData(sessionId, soapDo, comment,
 								fileName, mimeType, fileDescriptor);
 					} catch (com.vasoftware.sf.soap44.fault.VersionMismatchFault e) {
-						log.warn("Stale attachment update, trying again ...:",
+						logConflictResolutor.warn("Stale attachment update, trying again ...:",
 								e);
-						soapDo.setVersion(soapDo.getVersion() + 1);
+						soapDo = mTrackerApp.getArtifactData(sessionId, artifactId);
 						fileAttached = true;
 					}
 				}
