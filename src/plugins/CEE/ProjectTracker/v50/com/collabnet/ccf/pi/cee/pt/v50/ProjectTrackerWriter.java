@@ -447,22 +447,36 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 		if(trackerAttribute.getAttributeType().equals("MULTI_SELECT")){
 			ca.addAttributeValue(attributeNamespace, attributeTagName, null);
 			attributeValue = this.convertOptionValue(attributeNamespace, attributeTagName,
-					attributeValue, metadata);
+					attributeValue, metadata, false);
 			
 		}
 		else if(trackerAttribute.getAttributeType().equals("SINGLE_SELECT")){
 			ca.addAttributeValue(attributeNamespace, attributeTagName, null);
 			attributeValue = this.convertOptionValue(attributeNamespace, attributeTagName,
-					attributeValue, metadata);
+					attributeValue, metadata, false);
+		}
+		else if(trackerAttribute.getAttributeType().equals("STATE")){
+			attributeValue = this.convertOptionValue(attributeNamespace, attributeTagName,
+					attributeValue, metadata, true);
+			if(attributeValue != null){
+				ca.addAttributeValue(attributeNamespace, attributeTagName, null);
+			}
 		}
 		else if(trackerAttribute.getAttributeType().equals("USER")){
 			ca.addAttributeValue(attributeNamespace, attributeTagName, null);
 		}
-		ca.addAttributeValue(attributeNamespace, attributeTagName, attributeValue);
+		if(trackerAttribute.getAttributeType().equals("STATE")){
+			if(attributeValue != null) {
+				ca.addAttributeValue(attributeNamespace, attributeTagName, attributeValue);
+			}
+		}
+		else {
+			ca.addAttributeValue(attributeNamespace, attributeTagName, attributeValue);
+		}
 	}
 	
 	private String convertOptionValue(String attributeNamespace, String attributeTagName,
-			String attributeValue, ArtifactTypeMetadata metadata){
+			String attributeValue, ArtifactTypeMetadata metadata, boolean stateField){
 		String optionValue = null;
 		for(Attribute att:metadata.getAttribute()){
 			String namespace = att.getNamespace();
@@ -477,9 +491,10 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 				}
 			}
 		}
-		if(optionValue == null) throw new CCFRuntimeException("Option tagname for option "+attributeValue+
+		if(optionValue == null && (!stateField)) throw new CCFRuntimeException("Option tagname for option "+attributeValue+
 				"is not available in {"+attributeNamespace+"}"+attributeTagName);
-		return optionValue;
+		else
+			return optionValue;
 	}
 
 	private TrackerWebServicesClient getConnection(GenericArtifact ga){
