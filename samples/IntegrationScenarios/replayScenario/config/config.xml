@@ -56,6 +56,7 @@
 					-->
 					<list>
 						<ref bean="SFEEWriterErrorFilter" />
+						<ref bean="PTWriterErrorFilter" />
 					</list>
 				</entry>
 				
@@ -73,12 +74,22 @@
 						<ref bean="HospitalUpdatorSQLConverterReprocessed" />
 					</list>
 				</entry>
+				<entry key-ref="PTWriterErrorFilter">
+					<!--  Please plugin all filters here that can handle certain types of failed artifact
+						  You could group by component, error code, ... 
+					-->
+					<list>
+						<ref bean="PTEntityServiceXMLConverter" />
+						<ref bean="HospitalUpdatorSQLConverterReprocessed" />
+					</list>
+				</entry>
 				
 				<!--
 				This section is used to pipe the output of the XML converters behind the filters
 				into the main processing pipeline. 
 				 -->
 				<entry key-ref="SFEEEntityServiceXMLConverter" value-ref="SFEEEntityService" /> 
+				<entry key-ref="PTEntityServiceXMLConverter" value-ref="PTEntityService" />
 
 				
 				<!--
@@ -95,6 +106,11 @@
 				<entry key-ref="SFEETransformer" value-ref="SFEEEntityService" />
 				<entry key-ref="SFEEEntityService" value-ref="SFEEWriter" />
 				<entry key-ref="SFEEWriter"
+					value-ref="SynchronizationStatusAndIdentityMappingTableUpdater" />
+					
+				<entry key-ref="PTTransformer" value-ref="PTEntityService" />
+				<entry key-ref="PTEntityService" value-ref="PTWriter" />
+				<entry key-ref="PTWriter"
 					value-ref="SynchronizationStatusAndIdentityMappingTableUpdater" />
 				
 				<!-- 
@@ -128,10 +144,46 @@
 		<property name="filterOnMatch" value="false"/>
 	</bean>
 	
+	<bean id="PTWriterErrorFilter" class="org.openadaptor.auxil.processor.script.ScriptFilterProcessor">
+		<description>		
+		</description>
+		<property name="scriptProcessor">
+			<bean class="org.openadaptor.auxil.processor.script.MapScriptProcessor">
+					<property name="script">
+						<value>
+						 <![CDATA[
+						 	ERROR_CODE != null && ORIGINATING_COMPONENT == 'PTWriter'
+						 ]]>
+			  			</value>
+					</property>
+			</bean>
+		</property>
+		<!-- We ony let entries pass that fullfil the condition -->
+		<property name="filterOnMatch" value="false"/>
+	</bean>
+	
 	<!--
 	Place the XML converters here, you can always use the same code  
 	-->
 	<bean id="SFEEEntityServiceXMLConverter" class="org.openadaptor.auxil.processor.script.ScriptProcessor">
+		<description>
+			This component will convert the generic artifact part of the hospitalized
+			artifact into a Dom4J document. Furthermore it will use the transactionId
+			attribute to transport the id within the hospital to allow to differentiate
+			between successful and unsuccessful replays
+		</description>
+		<property name="script">
+			<value>
+			importPackage(Packages.org.dom4j);
+			var old_oa_data=oa_data;
+			oa_data=DocumentHelper.parseText(oa_data.get('GENERIC_ARTIFACT'));
+			oa_data.getRootElement().addAttribute("transactionId",old_oa_data.get('ID'));
+			oa_data.getRootElement().addAttribute("errorCode","ok");
+			</value>
+		</property>
+	</bean>
+	
+	<bean id="PTEntityServiceXMLConverter" class="org.openadaptor.auxil.processor.script.ScriptProcessor">
 		<description>
 			This component will convert the generic artifact part of the hospitalized
 			artifact into a Dom4J document. Furthermore it will use the transactionId
@@ -254,6 +306,17 @@
 		<property name="xsltDir" value="${ccf.xsltDir}" />
 	</bean>
 	
+	<bean id="PTTransformer"
+		class="com.collabnet.ccf.core.transformer.XsltProcessor">
+		<description>
+			The xsltDir specifies the directory in which the xsl files
+			are contained. The naming conventions for the xsl files need
+			to be followed. Name of an xsl file should be:
+			sourceSystem+sourceRepository+targetSystem+targetRepository.xsl
+		</description>
+		<property name="xsltDir" value="${ccf.xsltDir}" />
+	</bean>
+	
 	<!-- You may set a different user for the replay script to trigger initial resynchs -->
 	<bean id="SFEEConnectionManager"
 		class="com.collabnet.ccf.core.eis.connection.ConnectionManager">
@@ -272,6 +335,9 @@
 		<property name="connectionFactory"
 			ref="SFEEConnectionFactory">
 		</property>
+		<property name="useStandardTimeoutHandlingCode" value="false"/>
+        <property name="enableReloginAfterSessionTimeout" value="true"/>
+        <property name="enableRetryAfterNetworkTimeout" value="true"/>
 	</bean>
 	
 	<bean id="SFEEConnectionFactory"
@@ -319,8 +385,78 @@
 		</description>
 		<property name="identityMappingDatabaseReader"
 			ref="IndentityMappingDatabaseReader" />
-		<property name="hospitalDatabaseReader" ref="HospitalDatabaseReader"/>
-		<property name="skipNewerVersionsOfQuarantinedArtifacts" value="true"/>
+	</bean>
+	
+	<bean id="PTEntityService"
+		class="com.collabnet.ccf.core.EntityService">
+		<description>
+			This component is responsible for determining if the current
+			artifact that is being shipped is to be created or updated
+			in the target CEE system. It determines the artifact action
+			by checking if the artifact has an identity mapping already.
+			If the identity mapping does not exist then the
+			EntityService marks this artifact action as create otherwise
+			update. Please refer the
+			SynchronizationStatusAndIdentityMappingTableUpdater
+			component.
+		</description>
+		<property name="identityMappingDatabaseReader"
+			ref="IndentityMappingDatabaseReader" />
+	</bean>
+	
+	<bean id="PTWriter"
+        class="com.collabnet.ccf.pi.cee.pt.v50.ProjectTrackerWriter">
+        <description>
+            This reader reads the modified artifacts in the SFEE
+            system's tracker configured in the ${sfee.server.1.url} and
+            the sync info tables. It also reads all the related
+            dependent artifact details and converts them into Generic
+            Artifact XML document format and sends to the next component
+            in the pipeline. The next component in the piple line may be
+            an XSLT transformer component such as
+            com.collabnet.ccf.core.transformer.XsltProcessor or an
+            EntityService component depending on the target SFEE tracker
+            needs the data to be translated to fit into its fields or
+            not.
+        </description>
+        <property name="username" value="${cee.server.1.username}" />
+        <property name="password" value="${cee.server.1.password}" />
+        <property name="serverUrl" value="${cee.server.1.url}" />
+        <property name="connectionManager"
+            ref="CEEConnectionManager">
+        </property>
+    </bean>
+	<bean id="CEEConnectionManager"
+		class="com.collabnet.ccf.core.eis.connection.ConnectionManager">
+		<description>
+			The connection manager implements a connection pooling
+			mechanism where the connections to multiple systems are
+			cached for the readers and writers to retrieve when needed.
+			Before returning the connection to the client the connection
+			manager checks if the connection is live and only returns
+			valid connections. It assigns and manages one pool per
+			repository.
+		</description>
+		<property name="maxConnectionsPerPool" value="5"></property>
+		<property name="maxIdleTimeForConnection" value="600000" />
+		<property name="scavengerInterval" value="120000"></property>
+		<property name="connectionFactory"
+			ref="CEEConnectionFactory">	
+		</property>
+		<property name="useStandardTimeoutHandlingCode" value="true"/>
+        <property name="enableReloginAfterSessionTimeout" value="true"/>
+        <property name="enableRetryAfterNetworkTimeout" value="true"/>
+	</bean>
+	<bean id="CEEConnectionFactory"
+		class="com.collabnet.ccf.pi.cee.pt.v50.CollabNetConnectionFactory">
+		<description>
+			This bean is an implementation of the
+			com.collabnet.ccf.core.eis.connection.ConnectionFactory
+			interface. It is responsible to create and close an
+			connection for a given repository. In this case
+			SFEEConnectionFactory manages
+			com.collabnet.ccf.pi.sfee.v44.Connection objects.
+		</description>
 	</bean>
 	
 	<!-- 
@@ -382,21 +518,6 @@
 		<property name="batchSize" value="0" />
 		<property name="sql">
 			<value>${ccf.targetartifactid.sql}</value>
-		</property>
-	</bean>
-	
-	<bean id="HospitalDatabaseReader"
-		class="org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector">
-		<description>
-			This database reader component finds out whether an artifact has been 
-			quarantined in the hospital
-		</description>
-		<property name="jdbcConnection" ref="JDBCConnection" />
-		<!-- batch size of 0 or less means process all rows in one message batch. -->
-		<!-- batch size of one means process one row per message and so on -->
-		<property name="batchSize" value="0" />
-		<property name="sql">
-			<value>${ccf.hospitaldatabasereader.sql}</value>
 		</property>
 	</bean>
 
