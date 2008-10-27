@@ -88,14 +88,15 @@
 	</bean>
 	
 	<bean id="HospitalWriter" class="org.openadaptor.auxil.connector.jdbc.writer.JDBCWriteConnector">
-	<property name="jdbcConnection" ref="HospitalJDBCConnection" />
-	<property name="writer">
+		<property name="jdbcConnection" ref="HospitalJDBCConnection" />
+		<property name="writer">
 		<bean
 			class="org.openadaptor.auxil.connector.jdbc.writer.MapTableWriter">
 			<property name="tableName" value="HOSPITAL" />
 		</bean>
-	</property>
+		</property>
 	</bean>
+	
 	<bean id="CEE2SFEESynchronizationStatusPollingReader"
 		class="com.collabnet.ccf.core.test.plugins.SimpleLoopingPollingReadConnector">
 		<description>
@@ -204,7 +205,7 @@
 		class="org.openadaptor.auxil.connector.jdbc.JDBCConnection">
 		<description>
 			This defines jdbc connection that will be used by the
-			SynchronizationStatusPollingReader
+			HospitalWriter
 		</description>
 		<property name="driver" value="${ccf.db.driver}" />
 		<property name="url" value="${ccf.db.url}" />
