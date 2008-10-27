@@ -75,6 +75,20 @@ artifacts data from a CSV file into an SFEE tracker.
 		<!-- <property name="exceptionProcessor" ref="ExceptionHandler" />  -->
 		<property name="exceptionProcessor" ref="ExceptionConvertor"/>
 	</bean>
+	
+	<bean id="ExceptionConvertor" class="com.collabnet.ccf.core.hospital.CCFExceptionToOrderedMapConvertor">
+		<property name="adaptor" ref="Adaptor"/>
+	</bean>
+	
+	<bean id="HospitalWriter" class="org.openadaptor.auxil.connector.jdbc.writer.JDBCWriteConnector">
+	<property name="jdbcConnection" ref="jdbcConnection" />
+	<property name="writer">
+		<bean
+			class="org.openadaptor.auxil.connector.jdbc.writer.MapTableWriter">
+			<property name="tableName" value="HOSPITAL" />
+		</bean>
+	</property>
+	</bean>
 
 	<bean id="InputCSVFileReader"
 		class="org.openadaptor.auxil.connector.iostream.reader.FileReadConnector">
@@ -178,19 +192,5 @@ artifacts data from a CSV file into an SFEE tracker.
 	<property name="url" value="${ccf.db.url}" />
 	<property name="username" value="${ccf.db.username}" />
 	<property name="password" value="${ccf.db.password}" />
-  </bean>
-  
-  <bean id="ExceptionConvertor" class="com.collabnet.ccf.core.hospital.CCFExceptionToOrderedMapConvertor">
-  	<property name="adaptor" ref="Adaptor"/>
-  </bean>
-  
-  <bean id="HospitalWriter" class="org.openadaptor.auxil.connector.jdbc.writer.JDBCWriteConnector">
-		<property name="jdbcConnection" ref="jdbcConnection" />
-		<property name="writer">
-			<bean
-				class="org.openadaptor.auxil.connector.jdbc.writer.MapTableWriter">
-				<property name="tableName" value="HOSPITAL" />
-			</bean>
-		</property>
   </bean>
 </beans>
