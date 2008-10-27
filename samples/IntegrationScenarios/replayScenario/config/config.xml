@@ -50,7 +50,7 @@
 		</description>
 		<property name="processMap">
 			<map>
-				<entry key-ref="HospitalDatabaseReader">
+				<entry key-ref="QuarantinedArtifactsReader">
 					<!--  Please plugin all filters here that can handle certain types of failed artifact
 						  You could group by component, error code, ... 
 					-->
@@ -152,9 +152,9 @@
 	
 	<!--
 	Hospital related components are configured here
-	You typically just have to change the SQL query of the HospitalDatabaseReader 
+	You typically just have to change the SQL query of the QuarantinedArtifactsReader 
 	 -->
-	 <bean id="HospitalDatabaseReader"
+	 <bean id="QuarantinedArtifactsReader"
 		class="org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector">
 		<description>
 			This SQL statement retrieves all hospitaized artifacts
@@ -319,6 +319,8 @@
 		</description>
 		<property name="identityMappingDatabaseReader"
 			ref="IndentityMappingDatabaseReader" />
+		<property name="hospitalDatabaseReader" ref="HospitalDatabaseReader"/>
+		<property name="skipNewerVersionsOfQuarantinedArtifacts" value="true"/>
 	</bean>
 	
 	<!-- 
@@ -380,6 +382,21 @@
 		<property name="batchSize" value="0" />
 		<property name="sql">
 			<value>${ccf.targetartifactid.sql}</value>
+		</property>
+	</bean>
+	
+	<bean id="HospitalDatabaseReader"
+		class="org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector">
+		<description>
+			This database reader component finds out whether an artifact has been 
+			quarantined in the hospital
+		</description>
+		<property name="jdbcConnection" ref="JDBCConnection" />
+		<!-- batch size of 0 or less means process all rows in one message batch. -->
+		<!-- batch size of one means process one row per message and so on -->
+		<property name="batchSize" value="0" />
+		<property name="sql">
+			<value>${ccf.hospitaldatabasereader.sql}</value>
 		</property>
 	</bean>
 
