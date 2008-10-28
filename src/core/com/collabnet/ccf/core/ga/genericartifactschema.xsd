@@ -134,7 +134,7 @@ artifact was lastly updated in the target system.  There is one reserved value "
 			</xs:attribute>
 			<xs:attribute name="conflictResolutionPriority" type="xs:string" use="required">
 				<xs:annotation>
-					<xs:documentation>If a conflict is detected in the target system, the value of this attribute will be used to determine, whether the target artifact should be overriden or not. Reserved values are "alwaysIgnore" and "alwaysOverride".</xs:documentation>
+					<xs:documentation>If a conflict is detected in the target system, the value of this attribute will be used to determine, whether the target artifact should be overriden or not. Reserved values are "quarantineArtifact", "alwaysIgnore" and "alwaysOverride".</xs:documentation>
 				</xs:annotation>
 			</xs:attribute>
 			<xs:attribute name="artifactType" use="required">
@@ -266,7 +266,7 @@ artifact was lastly updated in the target system.  There is one reserved value "
 			</xs:attribute>
 			<xs:attribute name="transactionId" type="xs:string" use="required">
 				<xs:annotation>
-					<xs:documentation>This attribute defines the current transaction id. If multiple artifacts belong to the same transaction, this indicates that the data of these artifacts has been changed during one logical unit of work and that these changes belong semantically together. If the target system supports it, it should try to update all changes of one transaction at once and rollback partial changes if it is not able to replay all changes. The default valueof this attribute is "unknown".</xs:documentation>
+					<xs:documentation>This attribute will contain the hospital id if the artifact has been quarantined and is getting replayed. The default value of this attribute is "unknown".</xs:documentation>
 				</xs:annotation>
 			</xs:attribute>
 			<xs:attribute name="includesFieldMetaData" use="required">
