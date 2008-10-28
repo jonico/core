@@ -124,9 +124,9 @@ public class GenericArtifact {
 	 * does not support version control.
 	 */
 	private String targetArtifactVersion = GenericArtifact.VALUE_UNKNOWN;
+	
 	/**
-	 * This attribute contains the last transaction that was read. This is
-	 * updated by the reader and functions similar to lastModifiedDate.
+	 * This attribute will contain the hospital id if the artifact has been quarantined and is getting replayed. The default value of this attribute is "unknown".
 	 */
 	private String transactionId = GenericArtifact.VALUE_UNKNOWN;
 
@@ -146,7 +146,7 @@ public class GenericArtifact {
 	/**
 	 * If a conflict is detected in the target system, the value of this
 	 * attribute will be used to determine, whether the target artifact should
-	 * be overriden or not. Reserved values are "alwaysIgnore" and
+	 * be overriden or not. Reserved values are "quarantineArtifact", "alwaysIgnore" and
 	 * "alwaysOverride".
 	 */
 	private String conflictResolutionPriority = GenericArtifact.VALUE_UNKNOWN;
@@ -387,9 +387,14 @@ public class GenericArtifact {
 	private Document sourceDocument;
 
 	/**
-	 * Constant value for conflict resolution policy "always override"
+	 * Constant value for conflict resolution priority "alwaysOverride"
 	 */
 	public static final String VALUE_CONFLICT_RESOLUTION_PRIORITY_ALWAYS_OVERRIDE = "alwaysOverride";
+	
+	/**
+	 * Constant value for conflict resolution priority "quarantineArtifact"
+	 */
+	public static final String VALUE_CONFLICT_RESOLUTION_PRIORITY_QUARANTINE_ARTIFACT = "quarantineArtifact";
 
 	/**
 	 * This is the constant attribute values should set to if the value is not
@@ -398,7 +403,7 @@ public class GenericArtifact {
 	public static final String VALUE_UNKNOWN = "unknown";
 
 	/**
-	 * Constant value for conflict resolution policy "always ignore"
+	 * Constant value for conflict resolution priority "alwaysIgnore"
 	 */
 	public static final String VALUE_CONFLICT_RESOLUTION_PRIORITY_ALWAYS_IGNORE = "alwaysIgnore";
 
