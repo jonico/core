@@ -252,8 +252,8 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 		} catch (GenericArtifactParsingException e) {
 			String cause = "Problem occured while parsing the XML document to extract top-level attributes";
 			log.error(cause, e);
-			XPathUtils.addAttribute(element, GenericArtifactHelper.ERROR_CODE,
-					GenericArtifact.ERROR_GENERIC_ARTIFACT_PARSING);
+			XPathUtils.addAttribute(data.getRootElement(), GenericArtifactHelper.ERROR_CODE,
+						GenericArtifact.ERROR_GENERIC_ARTIFACT_PARSING);
 			throw new CCFRuntimeException(cause, e);
 		}
 
