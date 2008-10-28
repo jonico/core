@@ -358,7 +358,7 @@ public class SFEEAttachmentHandler {
 			for (AttachmentSoapRow row : attachmentRows) {
 				String fileName = row.getFileName();
 				String attachmentSizeStr = row.getFileSize();
-				String attachmentId = row.getStoredFileId();
+				//String attachmentId = row.getStoredFileId();
 				long attachmentSize = Long.parseLong(attachmentSizeStr);
 				if (fileName.startsWith(username + "_")) {
 					continue;

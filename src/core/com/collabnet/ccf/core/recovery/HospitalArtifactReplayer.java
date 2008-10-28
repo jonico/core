@@ -138,7 +138,8 @@ public class HospitalArtifactReplayer extends SpringAdaptor {
 	    }
 	  }
 
-	  private void loadBeanDefinitionsFromUrl(String url, GenericApplicationContext context) {
+	  @SuppressWarnings("deprecation")
+	private void loadBeanDefinitionsFromUrl(String url, GenericApplicationContext context) {
 	    BeanDefinitionReader reader = null;
 	    if (url.endsWith(".xml")) {
 	      reader = new XmlBeanDefinitionReader(context);

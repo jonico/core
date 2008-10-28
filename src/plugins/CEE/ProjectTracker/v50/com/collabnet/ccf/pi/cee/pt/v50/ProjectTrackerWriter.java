@@ -27,7 +27,6 @@ import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
-import com.collabnet.ccf.core.ga.GenericArtifact.ArtifactTypeValue;
 import com.collabnet.ccf.core.ga.GenericArtifactField.FieldValueTypeValue;
 import com.collabnet.ccf.core.utils.DateUtil;
 import com.collabnet.core.ws.exception.WSException;
@@ -50,63 +49,6 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 //	private ConnectionManager<TrackerWebServicesClient> connectionManager = null;
 	private MetaDataHelper metadataHelper = MetaDataHelper.getInstance();
 	ProjectTrackerHelper ptHelper = ProjectTrackerHelper.getInstance();
-	public Object[] processOld(Object data) {
-		GenericArtifact ga = null;
-		if(data instanceof Document){
-			ga = this.processXMLDocumentOld((Document)data);
-		}
-		Document doc = null;
-		try {
-			doc = GenericArtifactHelper.createGenericArtifactXMLDocument(ga);
-		} catch (GenericArtifactParsingException e) {
-			String message = "Exception while parsing artifact";
-			log.error(message, e);
-			throw new CCFRuntimeException(message, e);
-		}
-		return new Object[]{doc};
-	}
-	
-	public GenericArtifact processXMLDocumentOld(Document document){
-		GenericArtifact ga = null;
-		try {
-			ga = GenericArtifactHelper.createGenericArtifactJavaObject(document);
-	    } catch (GenericArtifactParsingException e) {
-			String cause = "Problem occured while parsing the GenericArtifact into Document";
-			log.error(cause, e);
-			throw new CCFRuntimeException(cause, e);
-		}
-	    GenericArtifact.ArtifactActionValue artifactAction = ga.getArtifactAction();
-	    GenericArtifact.ArtifactTypeValue artifactType = ga.getArtifactType();
-		if(artifactType == ArtifactTypeValue.PLAINARTIFACT){
-			if(artifactAction == GenericArtifact.ArtifactActionValue.CREATE){
-				ga = this.createProjectTrackerArtifact(ga);
-			}
-			else if(artifactAction == GenericArtifact.ArtifactActionValue.UPDATE){
-				ga = this.updateProjectTrackerArtifact(ga,true);
-			}
-			else if(artifactAction == GenericArtifact.ArtifactActionValue.DELETE){
-				// INFO Delete not supported as of now
-			}
-			else if(artifactAction == GenericArtifact.ArtifactActionValue.IGNORE){
-				// INFO - Ignoring the artifact and returning as it is
-			}
-		}
-		else if(artifactType == ArtifactTypeValue.ATTACHMENT){
-			if(artifactAction == GenericArtifact.ArtifactActionValue.CREATE){
-				ga = this.createProjectTrackerAttachment(ga);
-			}
-			else if(artifactAction == GenericArtifact.ArtifactActionValue.UPDATE){
-				// INFO Nothing to do
-			}
-			else if(artifactAction == GenericArtifact.ArtifactActionValue.DELETE){
-				// INFO Delete not supported as of now
-			}
-			else if(artifactAction == GenericArtifact.ArtifactActionValue.IGNORE){
-				// INFO - Ignoring the artifact and returning as it is
-			}
-		}
-		return ga;
-	}
 	
 	private GenericArtifact getGenericArtifact(Document document){
 		GenericArtifact ga = null;
@@ -177,7 +119,7 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 		connectionManager.releaseConnection(twsclient);
 	}
 
-	private GenericArtifact updateProjectTrackerArtifact(GenericArtifact ga, boolean forceOverride) {
+	private GenericArtifact updateProjectTrackerArtifact(GenericArtifact ga, String conflictResolutionPriority) {
 		String targetArtifactId = ga.getTargetArtifactId();
 		String targetArtifactTypeNameSpace =
 			ptHelper.getArtifactTypeNamespaceFromFullyQualifiedArtifactId(targetArtifactId);
@@ -205,8 +147,8 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 						ProjectTrackerReader.TRACKER_NAMESPACE, ProjectTrackerReader.MODIFIED_ON_FIELD);
 				Date modifiedOnDate = new Date(Long.parseLong(modifiedOn));
 				ga.setTargetArtifactLastModifiedDate(DateUtil.format(modifiedOnDate));
-				String createdOn = artifact.getAttributeValue(
-						ProjectTrackerReader.TRACKER_NAMESPACE, ProjectTrackerReader.CREATED_ON_FIELD);
+				//String createdOn = artifact.getAttributeValue(
+				//		ProjectTrackerReader.TRACKER_NAMESPACE, ProjectTrackerReader.CREATED_ON_FIELD);
 				ga.setTargetArtifactVersion(Integer.toString(version+1));
 			}
 		} catch (WSException e) {
@@ -684,10 +626,10 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 	}
 
 	@Override
-	public Document updateArtifact(Document gaDocument, boolean forceOverride) {
+	public Document updateArtifact(Document gaDocument, String conflictResolutionPriority) {
 		// TODO Consider forceOverride value
 		GenericArtifact ga = this.getGenericArtifact(gaDocument);
-		ga = this.updateProjectTrackerArtifact(ga, forceOverride);
+		ga = this.updateProjectTrackerArtifact(ga, conflictResolutionPriority);
 		return this.returnGenericArtifactDocument(ga);
 	}
 

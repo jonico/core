@@ -39,12 +39,12 @@ public class HospitalArtifactsReader {
 		String source = null;
 		StringBuffer exceptionTrace = new StringBuffer();
 		String gaFile = null;
-		boolean readingFailure = false;
+		//boolean readingFailure = false;
 		boolean readingTrace = false;
 		HospitalEntry entry = null;
 		while((line = reader.readLine()) != null){
 			if(line.contains(FAILURE_START)){
-				readingFailure = true;
+				//readingFailure = true;
 			}
 			if(line.contains(SOURCE_START)){
 				if(line.contains(SOURCE_END)){
@@ -72,7 +72,7 @@ public class HospitalArtifactsReader {
 				}
 			}
 			if(line.contains(FAILURE_END)){
-				readingFailure = false;
+				//readingFailure = false;
 				entry = new HospitalEntry();
 				entry.setDataFile(new File(gaFile));
 				entry.setExceptionTrace(exceptionTrace.toString());

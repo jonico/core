@@ -3,8 +3,6 @@ package com.collabnet.ccf.pi.sfee.v44;
 import java.rmi.RemoteException;
 import java.util.Date;
 
-import org.dom4j.Document;
-
 import junit.framework.TestCase;
 
 import com.collabnet.ccf.core.eis.connection.ConnectionException;
@@ -125,8 +123,9 @@ public class SFEEReaderTest extends TestCase {
 	public void testArtfactRetreival() throws RemoteException, MaxConnectionsReachedException, ConnectionException{
 		repositoryId = "tracker1215";
 		Connection connection = sfeeReader.connect(systemId, systemKind, repositoryId, repositoryKind, connectionInfo, credentialInfo);
-		ISourceForgeSoap soapApp = connection.getSfSoap();
-		Date lastModifiedDate = new Date(2007-1900,5,16,16,45,0);
+		//ISourceForgeSoap soapApp = connection.getSfSoap();
+		//Date lastModifiedDate = new Date(2007-1900,5,16,16,45,0);
+		Date lastModifiedDate = new Date(0);
 		ITrackerAppSoap trackerApp = (ITrackerAppSoap) ClientSoapStubFactory.getSoapStub(
 				ITrackerAppSoap.class, serverUrl);
 		String[] selectedColumns = { ArtifactSoapDO.COLUMN_ID,

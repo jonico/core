@@ -223,25 +223,23 @@ public abstract class AbstractWriter<T> extends LifecycleComponent implements
 				log.error(message, e);
 				throw new CCFRuntimeException(message, e);
 			}
-			String conflictResolutionPolicy = XPathUtils
+			String conflictResolutionPriority = XPathUtils
 					.getAttributeValue(element,
 							GenericArtifactHelper.CONFLICT_RESOLUTION_PRIORITY);
 
 			if (lastSyncVersion < artifactCurrentVersion) {
-				String sourceArtifactId = XPathUtils.getAttributeValue(
-						element, GenericArtifactHelper.SOURCE_ARTIFACT_ID);
-				String sourceSystemId = XPathUtils.getAttributeValue(
-						element, GenericArtifactHelper.SOURCE_SYSTEM_ID);
-				String sourceRepositoryId = XPathUtils
-						.getAttributeValue(element,
-								GenericArtifactHelper.SOURCE_REPOSITORY_ID);
-				String targetSystemId = XPathUtils.getAttributeValue(
-						element, GenericArtifactHelper.TARGET_SYSTEM_ID);
-				String targetRepositoryId = XPathUtils
-						.getAttributeValue(element,
-								GenericArtifactHelper.TARGET_REPOSITORY_ID);
-				
-				if (conflictResolutionPolicy
+				String sourceArtifactId = XPathUtils.getAttributeValue(element,
+						GenericArtifactHelper.SOURCE_ARTIFACT_ID);
+				String sourceSystemId = XPathUtils.getAttributeValue(element,
+						GenericArtifactHelper.SOURCE_SYSTEM_ID);
+				String sourceRepositoryId = XPathUtils.getAttributeValue(
+						element, GenericArtifactHelper.SOURCE_REPOSITORY_ID);
+				String targetSystemId = XPathUtils.getAttributeValue(element,
+						GenericArtifactHelper.TARGET_SYSTEM_ID);
+				String targetRepositoryId = XPathUtils.getAttributeValue(
+						element, GenericArtifactHelper.TARGET_REPOSITORY_ID);
+
+				if (conflictResolutionPriority
 						.equals(GenericArtifact.VALUE_CONFLICT_RESOLUTION_PRIORITY_ALWAYS_IGNORE)) {
 					logConflictResolutor
 							.warn("Conflict detected for artifact combination"
@@ -250,12 +248,12 @@ public abstract class AbstractWriter<T> extends LifecycleComponent implements
 									+ "-" + targetArtifactId
 									+ targetRepositoryId + "-" + targetSystemId
 									+ ". Changes are ignored.");
-					
+
 					XPathUtils.addAttribute(element,
 							GenericArtifactHelper.ARTIFACT_ACTION,
 							GenericArtifactHelper.ARTIFACT_ACTION_IGNORE);
-					
-				} else if (conflictResolutionPolicy
+
+				} else if (conflictResolutionPriority
 						.equals(GenericArtifact.VALUE_CONFLICT_RESOLUTION_PRIORITY_QUARANTINE_ARTIFACT)) {
 					String message = "Conflict detected for artifact combination"
 							+ sourceArtifactId
@@ -266,16 +264,16 @@ public abstract class AbstractWriter<T> extends LifecycleComponent implements
 							+ "-"
 							+ targetArtifactId
 							+ targetRepositoryId + "-" + targetSystemId;
-					
+
 					logConflictResolutor.warn(message
 							+ ". Artifact is quarantined in hospital.");
-					
+
 					XPathUtils.addAttribute(gaDocument.getRootElement(),
 							GenericArtifactHelper.ERROR_CODE,
 							GenericArtifact.ERROR_CONFLICT_DETECTED);
 					throw new CCFRuntimeException(message);
-					
-				} else {
+				} else if ((conflictResolutionPriority
+						.equals(GenericArtifact.VALUE_CONFLICT_RESOLUTION_PRIORITY_ALWAYS_OVERRIDE))) {
 					logConflictResolutor
 							.warn("Conflict detected for artifact combination"
 									+ sourceArtifactId + "-"
@@ -283,15 +281,34 @@ public abstract class AbstractWriter<T> extends LifecycleComponent implements
 									+ "-" + targetArtifactId
 									+ targetRepositoryId + "-" + targetSystemId
 									+ ". Changes are overridden.");
-					
-					gaDocument = this.updateArtifact(gaDocument, true);
+
+					gaDocument = this.updateArtifact(gaDocument,
+							conflictResolutionPriority);
+				} else {
+					String message = "Conflict detected for artifact combination"
+							+ sourceArtifactId
+							+ "-"
+							+ sourceRepositoryId
+							+ "-"
+							+ sourceSystemId
+							+ "-"
+							+ targetArtifactId
+							+ targetRepositoryId + "-" + targetSystemId;
+
+					logConflictResolutor
+							.warn(message
+									+ ". Since conflict resolution priority "
+									+ conflictResolutionPriority
+									+ " is unknown, the artifact is quarantined in the hospital.");
+
+					XPathUtils.addAttribute(gaDocument.getRootElement(),
+							GenericArtifactHelper.ERROR_CODE,
+							GenericArtifact.ERROR_CONFLICT_DETECTED);
+					throw new CCFRuntimeException(message);
 				}
 			} else {
-				gaDocument = this
-						.updateArtifact(
-								gaDocument,
-								!conflictResolutionPolicy
-										.equals(GenericArtifact.VALUE_CONFLICT_RESOLUTION_PRIORITY_ALWAYS_IGNORE));
+				gaDocument = this.updateArtifact(gaDocument,
+						conflictResolutionPriority);
 			}
 		} catch (GenericArtifactParsingException e) {
 			String cause = "Problem occured while parsing the XML document to extract top-level attributes";
@@ -305,16 +322,18 @@ public abstract class AbstractWriter<T> extends LifecycleComponent implements
 	}
 
 	/**
-	 * Update the artifact
+	 * Updates the artifact. The conflict detection and resolution has been
+	 * already implemented in the Abstract writer. However, if concurrent
+	 * updates happen the conflict resolution priority is needed again. Every
+	 * writer component has to implement concurrent access detection and
+	 * conflict resolution for this scenario by itself.
 	 * 
 	 * @param gaDocument
-	 *            generic artifact
-	 * @param forceOverride
-	 *            true if conflicting changes should be overridden
+	 * @param conflictResolutionPriority
 	 * @return
 	 */
 	public abstract Document updateArtifact(Document gaDocument,
-			boolean forceOverride);
+			String conflictResolutionPriority);
 
 	public abstract int getArtifactVersion(Document gaDocument);
 

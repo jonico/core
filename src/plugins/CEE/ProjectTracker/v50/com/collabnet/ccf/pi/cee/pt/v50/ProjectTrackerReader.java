@@ -201,8 +201,8 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 				 							InputStream is = handler.getInputStream();
 				 							byte [] bytes = new byte[1024*3];
 				 							int readCount = -1;
-				 							int available = 0;
-				 							while((available = is.available()) > 0 && (readCount = is.read(bytes)) != -1){
+				 							//int available = 0;
+				 							while(is.available() > 0 && (readCount = is.read(bytes)) != -1){
 				 								size += readCount;
 				 								if(readCount < bytes.length){
 				 									byte[] bytesTmp = new byte[readCount];

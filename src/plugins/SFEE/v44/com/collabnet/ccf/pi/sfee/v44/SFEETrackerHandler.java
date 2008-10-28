@@ -370,14 +370,14 @@ public class SFEETrackerHandler {
 						null, null);
 			} catch (com.vasoftware.sf.soap44.fault.VersionMismatchFault e) {
 				if (forceOverride) {
-					logConflictResolutor.warn("Stale update, trying again ...:", e);
+					logConflictResolutor.warn("Stale update for SFEE tracker item "+ Id +" in tracker "+trackerId+". Trying again ...", e);
 					mainArtifactNotUpdated = true;
 				}
 				else {
 					
 					logConflictResolutor
 					.warn("Seems as if our copy of the artifact is too old to override a change for artifact with id: "
-							+ artifactData.getId()+ " in tracker " + artifactData.getFolderId());
+							+ Id+ " in tracker " + trackerId);
 					return null;	
 				}
 			}

@@ -21,6 +21,7 @@ import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
 import com.collabnet.ccf.core.utils.DateUtil;
+import com.collabnet.ccf.core.utils.XPathUtils;
 import com.collabnet.ccf.pi.sfee.v44.meta.ArtifactMetaData;
 import com.vasoftware.sf.soap44.fault.InvalidSessionFault;
 import com.vasoftware.sf.soap44.webservices.sfmain.TrackerFieldSoapDO;
@@ -33,12 +34,16 @@ import com.vasoftware.sf.soap44.webservices.tracker.ArtifactSoapDO;
  * @author jnicolai
  * 
  */
-public class SFEEWriter extends AbstractWriter<Connection> implements IDataProcessor {
+public class SFEEWriter extends AbstractWriter<Connection> implements
+		IDataProcessor {
 
 	/**
 	 * log4j logger instance
 	 */
 	private static final Log log = LogFactory.getLog(SFEEWriter.class);
+
+	private static final Log logConflictResolutor = LogFactory
+			.getLog("com.collabnet.ccf.core.conflict.resolution");
 
 	/**
 	 * SFEE tracker handler instance
@@ -76,9 +81,9 @@ public class SFEEWriter extends AbstractWriter<Connection> implements IDataProce
 	private String resyncUserName;
 
 	/**
-	 * Password that belongs to the resync user. This user has to differ from the
-	 * ordinary user used to log in in order to force initial resyncs with the
-	 * source system once a new artifact has been created.
+	 * Password that belongs to the resync user. This user has to differ from
+	 * the ordinary user used to log in in order to force initial resyncs with
+	 * the source system once a new artifact has been created.
 	 */
 	private String resyncPassword;
 
@@ -89,73 +94,12 @@ public class SFEEWriter extends AbstractWriter<Connection> implements IDataProce
 	public SFEEWriter() {
 	}
 
-	/**
-	 * Main method to handle the creation, updating and deletion of SFEE tracker
-	 * items
-	 * 
-	 * @param data
-	 *            input XML document in generic XML artifact format
-	 * @return array of generated XML documents compliant to generic XML
-	 *         artifact schema
-	 */
-	// private Object[] processXMLDocument(Document data) {
-	// GenericArtifact ga = null;
-	// try {
-	// ga = GenericArtifactHelper.createGenericArtifactJavaObject(data);
-	// } catch (GenericArtifactParsingException e) {
-	// String cause = "Problem occured while parsing the GenericArtifact into
-	// Document";
-	// log.error(cause, e);
-	// throw new CCFRuntimeException(cause, e);
-	// }
-	//	    
-	//
-	//
-	// // this field is probably added from a read processor or read connector
-	// // component
-	//		
-	//
-	// // check whether we should create or update the artifact
-	// // TODO This has to be done on the artifactAction, not on the id value
-	// ArtifactSoapDO result = null;
-	// if(artifactType == GenericArtifact.ArtifactTypeValue.PLAINARTIFACT){
-	// if (artifactAction == GenericArtifact.ArtifactActionValue.CREATE) {
-	// //INFO asdasdas
-	// }
-	// else if(artifactAction == GenericArtifact.ArtifactActionValue.UPDATE) {
-	// // INFO update code moved
-	// }
-	// else if(artifactAction == GenericArtifact.ArtifactActionValue.DELETE){
-	// // INFO Delete is not yet implemented
-	// // trackerHandler.removeArtifact(getSessionId(),
-	// // soapDoObj.getId());
-	// }
-	// // INFO Repeat this for both create and update
-	// if(result != null){
-	// this.populateTargetArtifactAttributes(ga, result);
-	// }
-	// }
-	// else if(artifactType == GenericArtifact.ArtifactTypeValue.ATTACHMENT){
-	// //INFO Moved to separate method
-	// }
-	// Document document = null;
-	// try {
-	// document = GenericArtifactHelper.createGenericArtifactXMLDocument(ga);
-	// } catch (GenericArtifactParsingException e) {
-	// String cause = "Problem occured while parsing the GenericArtifact into
-	// Document";
-	// log.error(cause, e);
-	// ga.setErrorCode(GenericArtifact.ERROR_GENERIC_ARTIFACT_PARSING);
-	// throw new CCFRuntimeException(cause, e);
-	// }
-	// Object[] resultDocs = { document };
-	// return resultDocs;
-	// }
 	private void initializeArtifact(GenericArtifact ga) {
 		GenericArtifact.ArtifactActionValue artifactAction = ga
 				.getArtifactAction();
-		//GenericArtifact.ArtifactTypeValue artifactType = ga.getArtifactType();
-		//String sourceArtifactId = ga.getSourceArtifactId();
+		// GenericArtifact.ArtifactTypeValue artifactType =
+		// ga.getArtifactType();
+		// String sourceArtifactId = ga.getSourceArtifactId();
 		String targetRepositoryId = ga.getTargetRepositoryId();
 		String targetArtifactId = ga.getTargetArtifactId();
 		String tracker = targetRepositoryId;
@@ -186,25 +130,25 @@ public class SFEEWriter extends AbstractWriter<Connection> implements IDataProce
 					GenericArtifactField.FieldValueTypeValue.STRING);
 		}
 	}
-	
+
 	@Override
-	public boolean handleException(Throwable cause, ConnectionManager<Connection> connectionManager){
-		if(cause == null) return false;
-		if ((cause instanceof java.net.SocketException
-				|| cause instanceof java.net.UnknownHostException) && connectionManager.isEnableRetryAfterNetworkTimeout()) {
+	public boolean handleException(Throwable cause,
+			ConnectionManager<Connection> connectionManager) {
+		if (cause == null)
+			return false;
+		if ((cause instanceof java.net.SocketException || cause instanceof java.net.UnknownHostException)
+				&& connectionManager.isEnableRetryAfterNetworkTimeout()) {
 			return true;
-		}
-		else if(cause instanceof ConnectionException && connectionManager.isEnableRetryAfterNetworkTimeout()){
+		} else if (cause instanceof ConnectionException
+				&& connectionManager.isEnableRetryAfterNetworkTimeout()) {
 			return true;
-		}
-		else if (cause instanceof InvalidSessionFault && connectionManager.isEnableReloginAfterSessionTimeout()) {
+		} else if (cause instanceof InvalidSessionFault
+				&& connectionManager.isEnableReloginAfterSessionTimeout()) {
 			return true;
-		}
-		else if(cause instanceof RemoteException){
+		} else if (cause instanceof RemoteException) {
 			Throwable innerCause = cause.getCause();
 			return handleException(innerCause, connectionManager);
-		}
-		else if(cause instanceof CCFRuntimeException){
+		} else if (cause instanceof CCFRuntimeException) {
 			Throwable innerCause = cause.getCause();
 			return handleException(innerCause, connectionManager);
 		}
@@ -261,7 +205,8 @@ public class SFEEWriter extends AbstractWriter<Connection> implements IDataProce
 		return this.returnDocument(ga);
 	}
 
-	public Document updateArtifact(Document data, boolean forceOverride) {
+	public Document updateArtifact(Document data,
+			String conflictResolutionPriority) {
 		GenericArtifact ga = null;
 		try {
 			ga = GenericArtifactHelper.createGenericArtifactJavaObject(data);
@@ -276,14 +221,71 @@ public class SFEEWriter extends AbstractWriter<Connection> implements IDataProce
 		Connection connection = connect(ga);
 		ArtifactSoapDO result = null;
 		try {
-			// update token or do conflict resolution
-			result = this
-					.updateArtifact(ga, tracker, forceOverride, connection);
-			// if (result == null) {
-			// // conflict resolution has decided in favor of the
-			// // target copy
-			// return new Object[]{ga};
-			// }
+			// update and do conflict resolution
+			result = this.updateArtifact(ga, tracker,
+					conflictResolutionPriority, connection);
+			if (result == null) {
+				if (conflictResolutionPriority
+						.equals(GenericArtifact.VALUE_CONFLICT_RESOLUTION_PRIORITY_ALWAYS_IGNORE)) {
+					logConflictResolutor
+							.warn("Conflict detected for artifact combination"
+									+ ga.getSourceArtifactId() + "-"
+									+ ga.getSourceRepositoryId() + "-"
+									+ ga.getSourceSystemId() + "-"
+									+ ga.getTargetArtifactId()
+									+ ga.getTargetRepositoryId() + "-"
+									+ ga.getTargetSystemId()
+									+ ". Changes are ignored.");
+
+					ga
+							.setArtifactAction(GenericArtifact.ArtifactActionValue.IGNORE);
+				} else if (conflictResolutionPriority
+						.equals(GenericArtifact.VALUE_CONFLICT_RESOLUTION_PRIORITY_QUARANTINE_ARTIFACT)) {
+					String message = "Conflict detected for artifact combination"
+							+ ga.getSourceArtifactId()
+							+ "-"
+							+ ga.getSourceRepositoryId()
+							+ "-"
+							+ ga.getSourceSystemId()
+							+ "-"
+							+ ga.getTargetArtifactId()
+							+ ga.getTargetRepositoryId()
+							+ "-"
+							+ ga.getTargetSystemId();
+
+					logConflictResolutor.warn(message
+							+ ". Artifact is quarantined in hospital.");
+
+					XPathUtils.addAttribute(data.getRootElement(),
+							GenericArtifactHelper.ERROR_CODE,
+							GenericArtifact.ERROR_CONFLICT_DETECTED);
+					throw new CCFRuntimeException(message);
+				} else {
+					String message = "Conflict detected for artifact combination"
+							+ ga.getSourceArtifactId()
+							+ "-"
+							+ ga.getSourceRepositoryId()
+							+ "-"
+							+ ga.getSourceSystemId()
+							+ "-"
+							+ ga.getTargetArtifactId()
+							+ ga.getTargetRepositoryId()
+							+ "-"
+							+ ga.getTargetSystemId();
+
+					logConflictResolutor
+							.warn(message
+									+ ". Since conflict resolution priority "
+									+ conflictResolutionPriority
+									+ " is unknown, the artifact is quarantined in the hospital.");
+
+					XPathUtils.addAttribute(data.getRootElement(),
+							GenericArtifactHelper.ERROR_CODE,
+							GenericArtifact.ERROR_CONFLICT_DETECTED);
+					throw new CCFRuntimeException(message);
+
+				}
+			}
 		} catch (NumberFormatException e) {
 			log.error("Wrong data format of attribute for artifact "
 					+ data.asXML(), e);
@@ -293,8 +295,7 @@ public class SFEEWriter extends AbstractWriter<Connection> implements IDataProce
 		}
 		if (result != null) {
 			this.populateTargetArtifactAttributes(ga, result);
-		}
-		else {
+		} else {
 			// conflict detected
 			ga.setArtifactAction(GenericArtifact.ArtifactActionValue.IGNORE);
 		}
@@ -434,50 +435,8 @@ public class SFEEWriter extends AbstractWriter<Connection> implements IDataProce
 	 * @return - returns the updated artifact's ArtifactSoapDO object
 	 */
 	private ArtifactSoapDO updateArtifact(GenericArtifact ga, String tracker,
-			boolean forceOverride, Connection connection) {
-		// String id =
-		// SFEEWriter.getStringMandatoryGAField(ArtifactMetaData.SFEEFields.id,
-		// ga);
+			String conflictResolutionPriority, Connection connection) {
 		String id = ga.getTargetArtifactId();
-		// INFO conflict resolution is now done in AbstractWriter
-		// String conflictResolutionPriority =
-		// ga.getConflictResolutionPriority();
-		// ArtifactSoapDO currentTargetArtifact = null;
-		// try {
-		// currentTargetArtifact =
-		// trackerHandler.getTrackerItem(connection.getSessionId(), id);
-		// } catch (RemoteException e) {
-		// String cause = "While trying to get the current target artifact
-		// (before updating), an error occured";
-		// log.error(cause, e);
-		// ga.setErrorCode(GenericArtifact.ERROR_EXTERNAL_SYSTEM_CONNECTION);
-		// throw new CCFRuntimeException(cause, e);
-		// }
-		// int currentAritfactVersion = currentTargetArtifact.getVersion();
-		// String artifactVersionFromTable = ga.getTargetArtifactVersion();
-		// int artifactVersionIntFromTable = -1;
-		// if (!artifactVersionFromTable.equals(GenericArtifact.VALUE_UNKNOWN))
-		// {
-		// artifactVersionIntFromTable=
-		// Integer.parseInt(artifactVersionFromTable);
-		// }
-		// if(artifactVersionIntFromTable < currentAritfactVersion){
-		// //We have a conflict here. The target artifact is modified
-		// log.warn("The target artifact is modified. Indicates a
-		// conflict...!!!");
-		// if(conflictResolutionPriority.equals(
-		// GenericArtifact.VALUE_CONFLICT_RESOLUTION_PRIORITY_ALWAYS_IGNORE)){
-		// logConflictResolutor.warn("Conflict detected for SFEE artifact "+id
-		// +". Changes are ignored.");
-		// ga.setArtifactAction(GenericArtifact.ArtifactActionValue.IGNORE);
-		// return currentTargetArtifact;
-		// }
-		// else if(conflictResolutionPriority.equals(
-		// GenericArtifact.VALUE_CONFLICT_RESOLUTION_PRIORITY_ALWAYS_OVERRIDE)){
-		// logConflictResolutor.info("Conflict detected for SFEE artifact "+id
-		// +". Changes are overridden.");
-		// }
-		// }
 		ArrayList<String> flexFieldNames = new ArrayList<String>();
 		ArrayList<String> flexFieldTypes = new ArrayList<String>();
 		ArrayList<Object> flexFieldValues = new ArrayList<Object>();
@@ -536,12 +495,32 @@ public class SFEEWriter extends AbstractWriter<Connection> implements IDataProce
 		String[] comments = this.getComments(ga);
 		ArtifactSoapDO result = null;
 		try {
-			result = trackerHandler.updateArtifact(connection.getSessionId(),
-					folderId, description, category, group, status,
-					statusClass, customer, priority, estimatedHours,
-					actualHours, closeDate, assignedTo, reportedReleaseId,
-					resolvedReleaseId, flexFieldNames, flexFieldValues,
-					flexFieldTypes, title, id, comments, forceOverride);
+			result = trackerHandler
+					.updateArtifact(
+							connection.getSessionId(),
+							folderId,
+							description,
+							category,
+							group,
+							status,
+							statusClass,
+							customer,
+							priority,
+							estimatedHours,
+							actualHours,
+							closeDate,
+							assignedTo,
+							reportedReleaseId,
+							resolvedReleaseId,
+							flexFieldNames,
+							flexFieldValues,
+							flexFieldTypes,
+							title,
+							id,
+							comments,
+							conflictResolutionPriority
+									.equals(GenericArtifact.VALUE_CONFLICT_RESOLUTION_PRIORITY_ALWAYS_OVERRIDE));
+
 		} catch (RemoteException e) {
 			String cause = "While trying to update an artifact within SFEE, an error occured";
 			log.error(cause, e);
@@ -709,8 +688,9 @@ public class SFEEWriter extends AbstractWriter<Connection> implements IDataProce
 	}
 
 	/**
-	 * Returns the server URL of the CSFE/SFEE system that is
-	 * configured in the wiring file.
+	 * Returns the server URL of the CSFE/SFEE system that is configured in the
+	 * wiring file.
+	 * 
 	 * @return
 	 */
 	public String getServerUrl() {
@@ -718,9 +698,10 @@ public class SFEEWriter extends AbstractWriter<Connection> implements IDataProce
 	}
 
 	/**
-	 * Sets the  CSFE/SFEE system's SOAP server URL.
+	 * Sets the CSFE/SFEE system's SOAP server URL.
 	 * 
-	 * @param serverUrl - the URL of the source SFEE system.
+	 * @param serverUrl -
+	 *            the URL of the source SFEE system.
 	 */
 	public void setServerUrl(String serverUrl) {
 		this.serverUrl = serverUrl;
