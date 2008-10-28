@@ -271,7 +271,7 @@ artifact was lastly updated in the target system.  There is one reserved value "
 			</xs:attribute>
 			<xs:attribute name="includesFieldMetaData" use="required">
 				<xs:annotation>
-					<xs:documentation>This attribute indicates whether field specific meta-data like cardinality, nillability and alternative names will be shipped with this artifact. In most cases, this data will be ommitted due to performance reasons, however this data might be necessary for purposes like schema-generation and graphical mapping facilities. The only allowed values are "true" and "false".</xs:documentation>
+					<xs:documentation>This attribute indicates whether field specific meta-data like cardinality, nillability and alternative names will be shipped with this artifact. In most cases, this data will be omitted due to performance reasons, however this data might be necessary for purposes like schema-generation and graphical mapping facilities. The only allowed values are "true" and "false".</xs:documentation>
 				</xs:annotation>
 				<xs:simpleType>
 					<xs:restriction base="xs:string">
