@@ -42,7 +42,7 @@ import com.collabnet.ccf.core.utils.DateUtil;
  * @author madhusuthanan (madhusuthanan@collab.net)
  *
  */
-public class SampleReader extends AbstractReader {
+public class SampleReader extends AbstractReader<String> {
 
 	@Override
 	public List<GenericArtifact> getArtifactAttachments(Document syncInfo,
