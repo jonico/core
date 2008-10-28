@@ -57,6 +57,7 @@
 					<list>
 						<ref bean="SFEEWriterErrorFilter" />
 						<ref bean="PTWriterErrorFilter" />
+						<ref bean="MarkAsReprocessedFilter"/>
 					</list>
 				</entry>
 				
@@ -80,6 +81,12 @@
 					-->
 					<list>
 						<ref bean="PTEntityServiceXMLConverter" />
+						<ref bean="HospitalUpdatorSQLConverterReprocessed" />
+					</list>
+				</entry>
+				
+				<entry key-ref="MarkAsReprocessedFilter">
+					<list>
 						<ref bean="HospitalUpdatorSQLConverterReprocessed" />
 					</list>
 				</entry>
@@ -158,6 +165,28 @@
 					</property>
 			</bean>
 		</property>
+		<!-- We ony let entries pass that fullfil the condition -->
+		<property name="filterOnMatch" value="false"/>
+	</bean>
+	
+	<bean id="MarkAsReprocessedFilter" class="org.openadaptor.auxil.processor.script.ScriptFilterProcessor">
+		<description>
+		This filter will match no artifacts in its default settings.
+		If the filter condition is changed, all artifacts it will match
+		will be immediately marked as reprocessed without getting actually reprocessed.  		
+		</description>
+		<property name="scriptProcessor">
+			<bean class="org.openadaptor.auxil.processor.script.MapScriptProcessor">
+					<property name="script">
+						<value>
+						 <![CDATA[
+						 	false
+						 ]]>
+			  			</value>
+					</property>
+			</bean>
+		</property>
+		
 		<!-- We ony let entries pass that fullfil the condition -->
 		<property name="filterOnMatch" value="false"/>
 	</bean>
