@@ -413,19 +413,21 @@ public class GenericArtifact {
 
 	public final static String ERROR_EXTERNAL_SYSTEM_WRITE = "externalSystemWriteError";
 
-	public final static String ERROR_MAX_CONNECTIONS_REACHED_FOR_POOL = "maxConnectionReachedForPool";
+	public final static String ERROR_MAX_CONNECTIONS_REACHED_FOR_POOL = "maxConnectionReachedForPoolError";
 
 	public final static String ERROR_EXTERNAL_SYSTEM_CONNECTION = "connectionError";
 
 	public final static String ERROR_GENERIC_ARTIFACT_PARSING = "parsingError";
 
-	public final static String ERROR_GENERIC_ARTIFACT_NOT_SCHEMA_COMPLIANT = "notSchemaCompliant";
+	public final static String ERROR_GENERIC_ARTIFACT_NOT_SCHEMA_COMPLIANT = "notSchemaCompliantError";
 
 	public final static String ERROR_OK = "ok";
 	
 	public final static String ERROR_INTERNAL_DATABASE_TABLE_CORRUPT = "internalDatabaseTableCorruptionError";
 	
 	public final static String ERROR_INCORRECT_SQL_STATEMENT = "incorrectSQLStatementError";
+	
+	public final static String ERROR_CONFLICT_DETECTED = "conflictDetectedError";
 
 	/**
 	 * Create a new empty generic artifact All attributes will be set to
