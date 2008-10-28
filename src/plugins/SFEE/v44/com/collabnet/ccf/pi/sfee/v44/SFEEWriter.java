@@ -40,9 +40,6 @@ public class SFEEWriter extends AbstractWriter<Connection> implements IDataProce
 	 */
 	private static final Log log = LogFactory.getLog(SFEEWriter.class);
 
-	private static final Log logConflictResolutor = LogFactory
-			.getLog("com.collabnet.ccf.core.conflict.resolution");
-
 	/**
 	 * SFEE tracker handler instance
 	 */
@@ -157,8 +154,8 @@ public class SFEEWriter extends AbstractWriter<Connection> implements IDataProce
 	private void initializeArtifact(GenericArtifact ga) {
 		GenericArtifact.ArtifactActionValue artifactAction = ga
 				.getArtifactAction();
-		GenericArtifact.ArtifactTypeValue artifactType = ga.getArtifactType();
-		String sourceArtifactId = ga.getSourceArtifactId();
+		//GenericArtifact.ArtifactTypeValue artifactType = ga.getArtifactType();
+		//String sourceArtifactId = ga.getSourceArtifactId();
 		String targetRepositoryId = ga.getTargetRepositoryId();
 		String targetArtifactId = ga.getTargetArtifactId();
 		String tracker = targetRepositoryId;
