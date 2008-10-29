@@ -2,10 +2,15 @@ package com.collabnet.ccf.pi.cee.pt.v50;
 
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.Map.Entry;
 
 import javax.xml.rpc.ServiceException;
@@ -27,6 +32,7 @@ import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
+import com.collabnet.ccf.core.ga.GenericArtifact.ArtifactTypeValue;
 import com.collabnet.ccf.core.ga.GenericArtifactField.FieldValueTypeValue;
 import com.collabnet.ccf.core.utils.DateUtil;
 import com.collabnet.core.ws.exception.WSException;
@@ -126,15 +132,17 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 		String targetArtifactTypeTagName =
 			ptHelper.getArtifactTypeTagNameFromFullyQualifiedArtifactId(targetArtifactId);
 		TrackerWebServicesClient twsclient = this.getConnection(ga);
-		
+		String artifactId = ptHelper.getArtifactIdFromFullyQualifiedArtifactId(targetArtifactId);
 		try {
 			int version = this.getArtifactVersion(targetArtifactId, new Date(0).getTime(),
 					new Date().getTime(), twsclient);
 			// TODO Consider forceOverride flag
 			List<ClientArtifact> cla = null;
 			cla = new ArrayList<ClientArtifact>();
+			ClientArtifactListXMLHelper currentArtifactHelper = twsclient.getArtifactById(artifactId);
+			ClientArtifact currentArtifact = currentArtifactHelper.getAllArtifacts().get(0);
 			ClientArtifact ca = this.getClientArtifactFromGenericArtifact(ga, twsclient,
-					targetArtifactTypeNameSpace, targetArtifactTypeTagName);
+					targetArtifactTypeNameSpace, targetArtifactTypeTagName, currentArtifact);
 			cla.add(ca);
 			ClientArtifactListXMLHelper artifactHelper = twsclient.updateArtifactList(cla);
 			ptHelper.processWSErrors(artifactHelper);
@@ -212,7 +220,7 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 			List<ClientArtifact> cla = null;
 			cla = new ArrayList<ClientArtifact>();
 			ClientArtifact ca = this.getClientArtifactFromGenericArtifact(ga, twsclient,
-					targetArtifactTypeNamespace, targetArtifactTypeTagName);
+					targetArtifactTypeNamespace, targetArtifactTypeTagName,null);
 			cla.add(ca);
 			ClientArtifactListXMLHelper artifactHelper = twsclient.createArtifactList(cla);
 			ptHelper.processWSErrors(artifactHelper);
@@ -257,7 +265,8 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 	
 	private ClientArtifact getClientArtifactFromGenericArtifact(GenericArtifact ga,
 			TrackerWebServicesClient twsclient, String targetArtifactTypeNameSpace,
-			String targetArtifactTypeTagName){
+			String targetArtifactTypeTagName, ClientArtifact currentArtifact){
+		//llh
 		String targetArtifactId = ga.getTargetArtifactId();
 		String artifactId = null;
 		if(!targetArtifactId.equals(GenericArtifact.VALUE_UNKNOWN)){
@@ -275,7 +284,9 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 		if(artifactId != null) {
 			ca.addAttributeValue(TrackerWebServicesClient.DEFAULT_NAMESPACE, "id", artifactId);
 		}
+		Set<String> processedUserFields = new HashSet<String>();
 		for(GenericArtifactField field:ga.getAllGenericArtifactFields()){
+			//if(field.getFieldAction() == GenericArtifactField.FieldActionValue.DELETE) continue;
 			String fieldName = field.getFieldName();
 			String fieldDisplayName = null;
 			String namespace = ptHelper.getNamespace(fieldName);
@@ -286,13 +297,78 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 			else {
 				fieldDisplayName = ptHelper.getEntityName(fieldName);
 			}
+			String fullyQualifiedFieldTagName = null;
+			TrackerAttribute trackerAttribute = null;
+			if(!fieldName.equals("Comment")){
+				fullyQualifiedFieldTagName = this.getFullyQualifiedFieldTagName(fieldDisplayName,
+						namespace, trackerArtifactType);
+				trackerAttribute = trackerArtifactType.getAttribute(fullyQualifiedFieldTagName);
+			}
 			if(fieldName.equals("Comment")){
 				this.addComment(field,ca);
+			} else if(field.getFieldValueType() == GenericArtifactField.FieldValueTypeValue.USER) {
+				if(!processedUserFields.contains(fieldName)){
+					List<GenericArtifactField> gaUserFields = ga.getAllGenericArtifactFieldsWithSameFieldName(fieldName);
+					String attributeNamespace =
+						ptHelper.getArtifactTypeNamespaceFromFullyQualifiedArtifactType(fullyQualifiedFieldTagName);
+					String attributeTagName =
+						ptHelper.getArtifactTypeTagNameFromFullyQualifiedArtifactType(fullyQualifiedFieldTagName);
+					String[] currentValues = null;
+					
+					if(currentArtifact != null) {
+						currentValues = currentArtifact.getAttributeValues(attributeNamespace, attributeTagName);
+					}
+					else {
+						currentValues = new String[]{};
+					}
+					Set<String> currentUsers = new HashSet<String>();
+					for(int i=0; i < currentValues.length; i++){
+						currentUsers.add(currentValues[i]);
+					}
+					if(gaUserFields.size() == 1){
+						GenericArtifactField userField = gaUserFields.get(0);
+						String userFieldValue = (String) userField.getFieldValue();
+						if(userField.getFieldAction() == GenericArtifactField.FieldActionValue.DELETE){
+							Iterator<String> it = currentUsers.iterator(); 
+							while(it.hasNext()){
+								String user = it.next();
+								if(user.equals(userFieldValue)){
+									it.remove();
+								}
+							}
+						}
+						else {
+							boolean userFound = currentUsers.contains(userFieldValue);
+
+							if(!userFound){
+								Set<String> newUsers = new HashSet<String>();
+								newUsers.addAll(currentUsers);
+								newUsers.add(userFieldValue);
+								currentUsers = newUsers;
+							}
+						}
+						if(!currentUsers.isEmpty()){
+						for(String user:currentUsers){
+							if(user != null){
+								userField.setFieldValue(user);
+								this.addAttribute(userField, ca, trackerAttribute, fullyQualifiedFieldTagName, metadata);
+							}
+						}
+						}
+						else {
+							userField.setFieldValue("");
+							this.addAttribute(userField, ca, trackerAttribute, fullyQualifiedFieldTagName, metadata);
+						}
+					}
+					else {
+						for(GenericArtifactField userField:gaUserFields){
+							this.addAttribute(userField, ca, trackerAttribute, fullyQualifiedFieldTagName, metadata);
+						}
+					}
+					processedUserFields.add(fieldName);
+				}
 			}
 			else{
-				String fullyQualifiedFieldTagName = this.getFullyQualifiedFieldTagName(fieldDisplayName,
-						namespace, trackerArtifactType);
-				TrackerAttribute trackerAttribute = trackerArtifactType.getAttribute(fullyQualifiedFieldTagName);
 				this.addAttribute(field, ca, trackerAttribute, fullyQualifiedFieldTagName, metadata);
 			}
 		}
@@ -447,7 +523,8 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 		String connectionInfo = this.getServerUrl();
 		TrackerWebServicesClient twsclient = null;
 		try {
-			if ((!ga.getArtifactAction().equals(
+			if (ga.getArtifactType().equals(GenericArtifact.ArtifactTypeValue.ATTACHMENT)
+					|| (!ga.getArtifactAction().equals(
 					GenericArtifact.ArtifactActionValue.CREATE))
 					|| getResyncUserName() == null) {
 				String credentialInfo = this.getUsername()+
