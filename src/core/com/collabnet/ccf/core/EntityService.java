@@ -160,7 +160,7 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 				int sourceArtifactVersionIntFromTable = Integer
 						.parseInt(sourceArtifactVersionFromTable);
 				if (sourceArtifactLastModifiedDateFromTable
-						.compareTo(sourceArtifactLastModifiedDate) <= 0
+						.after(sourceArtifactLastModifiedDate)
 						|| sourceArtifactVersionIntFromTable >= sourceArtifactVersionInt) {
 					if (sourceArtifactVersionInt == -1
 							&& sourceArtifactVersionIntFromTable == -1) {
@@ -233,24 +233,49 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 									targetParentArtifactId);
 				}
 			}
-
-			if (targetArtifactIdFromTable != null) {
-				XPathUtils.addAttribute(element,
-						GenericArtifactHelper.TARGET_ARTIFACT_ID,
-						targetArtifactIdFromTable);
-				XPathUtils.addAttribute(element,
-						GenericArtifactHelper.ARTIFACT_ACTION,
-						GenericArtifactHelper.ARTIFACT_ACTION_UPDATE);
-				XPathUtils.addAttribute(element,
-						GenericArtifactHelper.TARGET_ARTIFACT_VERSION,
-						targetArtifactVersion);
-			} else {
-				XPathUtils.addAttribute(element,
-						GenericArtifactHelper.ARTIFACT_ACTION,
-						GenericArtifactHelper.ARTIFACT_ACTION_CREATE);
-			}
-		} catch (GenericArtifactParsingException e) {
-			String cause = "Problem occured while parsing the XML document to extract top-level attributes";
+			
+			if(targetArtifactIdFromTable != null) {
+				XPathUtils.addAttribute(element, GenericArtifactHelper.TARGET_ARTIFACT_ID, targetArtifactIdFromTable);
+				XPathUtils.addAttribute(element, GenericArtifactHelper.TARGET_ARTIFACT_VERSION, targetArtifactVersion);
+				if(artifactAction.equals(GenericArtifactHelper.ARTIFACT_ACTION_UNKNOWN)) {
+					XPathUtils.addAttribute(element, GenericArtifactHelper.ARTIFACT_ACTION,	GenericArtifactHelper.ARTIFACT_ACTION_UPDATE);
+				}
+				else if(artifactAction.equals(GenericArtifactHelper.ARTIFACT_ACTION_UPDATE)) {
+					// Do nothing. Because the artifact is already marked as update
+				}
+				else if(artifactAction.equals(GenericArtifactHelper.ARTIFACT_ACTION_CREATE)){
+					String cause = "The artifact action is marked as "+artifactAction
+						+".\nBut the Entity Service found a target artifact id "+targetArtifactIdFromTable+" for source artifact id "+sourceArtifactId;
+					log.error(cause);
+					throw new CCFRuntimeException(cause);
+				}
+				else if(artifactAction.equals(GenericArtifactHelper.ARTIFACT_ACTION_DELETE)) {
+					XPathUtils.addAttribute(element, GenericArtifactHelper.ARTIFACT_ACTION,	GenericArtifactHelper.ARTIFACT_ACTION_DELETE);
+				}
+		    }
+			else {
+				if(artifactAction.equals(GenericArtifactHelper.ARTIFACT_ACTION_UNKNOWN)) {
+					XPathUtils.addAttribute(element, GenericArtifactHelper.ARTIFACT_ACTION,	GenericArtifactHelper.ARTIFACT_ACTION_CREATE);
+				}
+				else if(artifactAction.equals(GenericArtifactHelper.ARTIFACT_ACTION_UPDATE)) {
+					String cause = "The artifact action is marked as "+artifactAction
+					+".\nBut the Entity Service could not find a target artifact id for source artifact id "+sourceArtifactId;
+					log.error(cause);
+					throw new CCFRuntimeException(cause);
+				}
+				else if(artifactAction.equals(GenericArtifactHelper.ARTIFACT_ACTION_CREATE)){
+					// Do nothing. Because the artifact is already marked as create
+				}
+				else if(artifactAction.equals(GenericArtifactHelper.ARTIFACT_ACTION_DELETE)) {
+					String cause = "The artifact action is marked as "+artifactAction
+					+".\nBut the Entity Service could not find a target artifact id for source artifact id "+sourceArtifactId;
+					log.error(cause);
+					throw new CCFRuntimeException(cause);
+				}
+		    }
+		}
+		catch(GenericArtifactParsingException e) {
+			String cause = "Problem occured while parsing the Document to extract specific attributes";
 			log.error(cause, e);
 			XPathUtils.addAttribute(data.getRootElement(), GenericArtifactHelper.ERROR_CODE,
 						GenericArtifact.ERROR_GENERIC_ARTIFACT_PARSING);
