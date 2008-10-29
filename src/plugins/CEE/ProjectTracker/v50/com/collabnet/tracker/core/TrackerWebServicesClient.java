@@ -3,6 +3,7 @@ package com.collabnet.tracker.core;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
+import java.io.StringWriter;
 import java.net.MalformedURLException;
 import java.net.Proxy;
 import java.net.URL;
@@ -25,6 +26,12 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.rpc.ServiceException;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 
 import org.apache.axis.AxisFault;
 import org.apache.axis.EngineConfiguration;
@@ -236,29 +243,25 @@ public class TrackerWebServicesClient {
 						nameSpaces.put(attributeNamespace, ++nameSpaceCount);
 					}
 		    		nsNumberString = "ns" + nameSpaces.get(attributeNamespace) + ":";
-					
+		    		Element attributeNode = doc.createElementNS(attributeNamespace, nsNumberString + attribute);
 					if (values.size() > 1 ||(attributeNamespace.equals(DEFAULT_NAMESPACE) &&
 									attribute.equals("id"))) {
 						for (String value: values) {
 							if(value != null){
-								Element attributeNode = doc.createElementNS(attributeNamespace, nsNumberString + attribute);
+								
 								Element valueNode = doc.createElementNS(DEFAULT_NAMESPACE, "ns1:value");
 								//valueNode.setNodeValue(value);
 								valueNode.appendChild(doc.createTextNode(value));
 								attributeNode.appendChild(valueNode);
-								
-								artifactNode.appendChild(attributeNode);
 							}
 						}
 					}
 					else {
 						// TODO: consider the namespace of the attributes?
-						Element attributeNode = doc.createElementNS(nsXNameSpace, nsNumberString + attribute);
 						//attributeNode.setNodeValue(values.get(0));
 						attributeNode.appendChild(doc.createTextNode(values.get(0)));
-						
-						artifactNode.appendChild(attributeNode);
 					}
+					artifactNode.appendChild(attributeNode);
 				}
 				List<ClientArtifactComment> comments = ca.getComments();
 				for(ClientArtifactComment comment:comments){
@@ -279,15 +282,14 @@ public class TrackerWebServicesClient {
 		sendMail.appendChild(doc.createTextNode("true"));
 		root.appendChild(sendMail);
 
-//		printResult(doc);
-		String docString = doc.getTextContent();
-		System.out.println(docString); 
+//		this.printDocument(doc);
 
 		Request req = toRequest(doc);
 		String reqString = req.toString();
 		System.out.println(reqString); 
 		Response r = theService.execute(toRequest(doc));
 		Document result = toDocument(r);
+//		this.printDocument(result);
 		ClientArtifactListXMLHelper helper = new ClientArtifactListXMLHelper(result);
 		return helper;
 	}
@@ -936,5 +938,19 @@ public class TrackerWebServicesClient {
 		postfixIndex = postfixIndex == -1 ? aUrl.length() : postfixIndex;
 		
 		return aUrl.substring(prefixIndex, postfixIndex);
+	}
+	private void printDocument(Document doc){
+		TransformerFactory tf = TransformerFactory.newInstance();
+		Transformer t;
+		try {
+			t = tf.newTransformer();
+			StringWriter sw = new StringWriter();
+			t.transform( new DOMSource(doc), new StreamResult(sw));
+			System.out.println(sw.toString());
+		} catch (TransformerConfigurationException e) {
+			e.printStackTrace();
+		} catch (TransformerException e) {
+			e.printStackTrace();
+		}
 	}
 }
