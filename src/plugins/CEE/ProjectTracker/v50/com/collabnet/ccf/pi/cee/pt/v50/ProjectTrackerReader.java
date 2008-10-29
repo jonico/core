@@ -58,7 +58,10 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 	private String connectorUserDisplayName = null;
 	
 	public static final String ATTACHMENT_TAG_NAME = "attachment";
-	public static final String ATTAACHMENT_ADDED_HISTORY_ACTIVITY_TYPE = "FileAddedDesc";
+	public static final String ATTACHMENT_ADDED_HISTORY_ACTIVITY_TYPE = "FileAddedDesc";
+	public static final String ATTACHMENT_DELETED_HISTORY_ACTIVITY_TYPE = "FileDeletedDesc";
+	public static final String URL_ADDED_HISTORY_ACTIVITY_TYPE = "UrlDescAdded";
+	public static final String URL_DELETED_HISTORY_ACTIVITY_TYPE = "UrlDescDeleted";
 	public static final String TRACKER_NAMESPACE = "urn:ws.tracker.collabnet.com";
 	public static final String CREATED_ON_FIELD = "createdOn";
 	public static final String MODIFIED_ON_FIELD = "modifiedOn";
@@ -144,8 +147,8 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 			 				{
 			 					String historyArtifactId = ha.getArtifactId();
 			 					if(historyArtifactId.equals(artifactIdentifier)){
-			 						if(ha.getTagName().equals(ATTACHMENT_TAG_NAME) &&
-			 								ha.getType().equals(ATTAACHMENT_ADDED_HISTORY_ACTIVITY_TYPE)){
+			 						if(ha.getTagName().equals(ATTACHMENT_TAG_NAME)){
+			 							if(ha.getType().equals(ATTACHMENT_ADDED_HISTORY_ACTIVITY_TYPE)){
 			 							String[] attachmentIds = ha.getNewValue();
 			 							for(String attachmentId:attachmentIds){
 			 								if(attachmentId == null) continue;
@@ -222,12 +225,68 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 				 							attachmentGAs.add(ga);
 			 							}
 			 						}
+			 							else if(ha.getType().equals(ATTACHMENT_DELETED_HISTORY_ACTIVITY_TYPE)){
+			 								String[] attachmentIds = ha.getOldValue();
+				 							for(String attachmentId:attachmentIds){
+				 								if(attachmentId == null) continue;
+				 								GenericArtifact ga = new GenericArtifact();
+				 								ga.setArtifactAction(GenericArtifact.ArtifactActionValue.DELETE);
+				 								ga.setSourceArtifactLastModifiedDate(DateUtil.format(modifiedOn));
+				 								ga.setArtifactMode(GenericArtifact.ArtifactModeValue.CHANGEDFIELDSONLY);
+				 								ga.setArtifactType(GenericArtifact.ArtifactTypeValue.ATTACHMENT);
+				 								ga.setDepParentSourceArtifactId(artifactId);
+				 								ga.setSourceArtifactId(attachmentId);
+				 								ga.setSourceArtifactVersion(Integer.toString(version));
+					 							populateSrcAndDestForAttachment(syncInfo, ga);
+					 							attachmentGAs.add(ga);
+			 							}
+			 						}
+			 							else if(ha.getType().equals(URL_ADDED_HISTORY_ACTIVITY_TYPE)){
+			 								String[] attachmentIds = ha.getNewValue();
+				 							for(String attachmentId:attachmentIds){
+				 								if(attachmentId == null) continue;
+				 								
+//				 								String attachmentName = attahcmentIDNameMap.get(attachmentId);
+				 								
+				 								GenericArtifact ga = new GenericArtifact();
+				 								ga.setArtifactAction(GenericArtifact.ArtifactActionValue.CREATE);
+				 								ga.setSourceArtifactLastModifiedDate(DateUtil.format(modifiedOn));
+				 								ga.setArtifactMode(GenericArtifact.ArtifactModeValue.CHANGEDFIELDSONLY);
+				 								ga.setArtifactType(GenericArtifact.ArtifactTypeValue.ATTACHMENT);
+				 								ga.setDepParentSourceArtifactId(artifactId);
+				 								ga.setSourceArtifactId(attachmentId);
+				 								ga.setSourceArtifactVersion(Integer.toString(version));
+				 								GenericArtifactField contentTypeField = 
+				 									ga.addNewField(AttachmentMetaData.ATTACHMENT_TYPE,
+				 											GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
+				 								contentTypeField.setFieldValue(AttachmentMetaData.AttachmentType.LINK);
+				 								contentTypeField.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
+				 								contentTypeField.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
+				 								GenericArtifactField sourceURLField = 
+				 									ga.addNewField(AttachmentMetaData.ATTACHMENT_SOURCE_URL,
+				 											GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
+				 								sourceURLField.setFieldValue(AttachmentMetaData.AttachmentType.LINK);
+				 								sourceURLField.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
+				 								sourceURLField.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
+				 								
+//				 								GenericArtifactField nameField = ga.addNewField(AttachmentMetaData.ATTACHMENT_NAME,
+//				 										GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
+//				 								nameField.setFieldValue(attachmentName);
+//				 								nameField.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
+//				 								nameField.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
+					 							populateSrcAndDestForAttachment(syncInfo, ga);
+					 							attachmentGAs.add(ga);
+				 							}
+			 							}
+			 							else if(ha.getType().equals(URL_DELETED_HISTORY_ACTIVITY_TYPE)){
+			 								
+			 							}
 			 					}
 			 				}
 		 				}
 		 			}
 				}
-				this.artifactHistoryList.set(null);
+			}
 			}
 		} catch (Exception e) {
 			String message = "Exception while getting the attachment data";
@@ -235,6 +294,7 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 			throw new CCFRuntimeException(message,e);
 		}
 		finally {
+			this.artifactHistoryList.set(null);
 			this.attahcmentIDNameMap = null;
 			getConnectionManager().releaseConnection(twsclient);
 		}
