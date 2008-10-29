@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry excluding="lib/**" kind="src" path="src/plugins/SFEE/v44"/>
-	<classpathentry excluding="Test/|lib" kind="src" path="src/plugins/CEE/ProjectTracker/v50"/>
+	<classpathentry excluding="Test/|lib/**" kind="src" path="src/plugins/CEE/ProjectTracker/v50"/>
 	<classpathentry kind="src" path="samples/IntegrationScenarios/customReader/src"/>
 	<classpathentry kind="src" path="tests"/>
 	<classpathentry excluding="lib/**" kind="src" path="src/core"/>
@@ -32,5 +32,6 @@
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/saaj.jar"/>
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/commons-httpclient_3.0.1.jar"/>
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/js_1_6R5.jar"/>
+	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/wsdl4j_1.6.2.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
