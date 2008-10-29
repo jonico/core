@@ -130,7 +130,7 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 					GenericArtifactField.FieldValueTypeValue.STRING);
 		}
 	}
-
+	
 	@Override
 	public boolean handleException(Throwable cause,
 			ConnectionManager<Connection> connectionManager) {
@@ -537,7 +537,8 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 		String targetRepositoryKind = ga.getTargetRepositoryKind();
 		Connection connection;
 		try {
-			if ((!ga.getArtifactAction().equals(
+			if (ga.getArtifactType().equals(GenericArtifact.ArtifactTypeValue.ATTACHMENT)
+					|| (!ga.getArtifactAction().equals(
 					GenericArtifact.ArtifactActionValue.CREATE))
 					|| getResyncUserName() == null) {
 				connection = connect(targetSystemId, targetSystemKind,
