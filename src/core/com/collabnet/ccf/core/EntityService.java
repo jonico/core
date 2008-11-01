@@ -48,6 +48,10 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 	private JDBCReadConnector hospitalDatabaseReader = null;
 
 	private boolean skipNewerVersionsOfQuarantinedAttachments;
+	
+	private long identityMapEventWaitTime = 500L;
+	
+	private int identityMapEventWaitCount = 4;
 
 	/**
 	 * openAdaptor Method to process all input and puts out the results This
@@ -246,8 +250,8 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 				else if(artifactAction.equals(GenericArtifactHelper.ARTIFACT_ACTION_CREATE)){
 					String cause = "The artifact action is marked as "+artifactAction
 						+".\nBut the Entity Service found a target artifact id "+targetArtifactIdFromTable+" for source artifact id "+sourceArtifactId;
-					log.error(cause);
-					throw new CCFRuntimeException(cause);
+					log.warn(cause);
+					XPathUtils.addAttribute(element, GenericArtifactHelper.ARTIFACT_ACTION,	GenericArtifactHelper.ARTIFACT_ACTION_UPDATE);
 				}
 				else if(artifactAction.equals(GenericArtifactHelper.ARTIFACT_ACTION_DELETE)) {
 					XPathUtils.addAttribute(element, GenericArtifactHelper.ARTIFACT_ACTION,	GenericArtifactHelper.ARTIFACT_ACTION_DELETE);
@@ -260,8 +264,8 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 				else if(artifactAction.equals(GenericArtifactHelper.ARTIFACT_ACTION_UPDATE)) {
 					String cause = "The artifact action is marked as "+artifactAction
 					+".\nBut the Entity Service could not find a target artifact id for source artifact id "+sourceArtifactId;
-					log.error(cause);
-					throw new CCFRuntimeException(cause);
+					log.warn(cause);
+					XPathUtils.addAttribute(element, GenericArtifactHelper.ARTIFACT_ACTION,	GenericArtifactHelper.ARTIFACT_ACTION_CREATE);
 				}
 				else if(artifactAction.equals(GenericArtifactHelper.ARTIFACT_ACTION_CREATE)){
 					// Do nothing. Because the artifact is already marked as create
@@ -325,11 +329,54 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 		inputParameters.add(targetRepositoryId);
 		inputParameters.add(sourceArtifactId);
 		inputParameters.add(artifactType);
+		String artifactAction = null;
+		try {
+			artifactAction = XPathUtils.getAttributeValue(
+					element, GenericArtifactHelper.ARTIFACT_ACTION);
+		} catch (GenericArtifactParsingException e) {
+			String cause = "Problem occured while parsing the Document to extract specific attributes";
+			log.error(cause, e);
+			XPathUtils.addAttribute(element, GenericArtifactHelper.ERROR_CODE,
+						GenericArtifact.ERROR_GENERIC_ARTIFACT_PARSING);
+			throw new CCFRuntimeException(cause, e);
+		}
+		boolean waitForIdentityMappedEvent = false;
+		int waitCount = 0;
 		identityMappingDatabaseReader.disconnect();
-		identityMappingDatabaseReader.connect();
-		Object[] resultSet = identityMappingDatabaseReader.next(
-				inputParameters, 1000);
-		identityMappingDatabaseReader.disconnect();
+		Object[] resultSet = null;
+		do {
+			identityMappingDatabaseReader.connect();
+			resultSet = identityMappingDatabaseReader.next(
+					inputParameters, 1000);
+			identityMappingDatabaseReader.disconnect();
+			if(artifactAction.equals(GenericArtifactHelper.ARTIFACT_ACTION_RESYNC)){
+				if(resultSet == null || resultSet.length == 0){
+					if(++waitCount < this.getIdentityMapEventWaitCount()){
+						waitForIdentityMappedEvent = true;
+						try {
+							log.debug("No identity mapping found for resync request of "+ sourceArtifactId + "-" + sourceRepositoryId + "-"
+									+ sourceSystemId + targetRepositoryId + "-"
+									+ targetSystemId +". Sleeping for " + this.getIdentityMapEventWaitTime() + " milliseconds...");
+							Thread.sleep(this.getIdentityMapEventWaitTime());
+						} catch (InterruptedException e) {
+							// INFO Digesting the interrupt
+						}
+					}
+					else {
+						log.warn("There was no prior identity mapping for the resync request "
+								+ sourceArtifactId + "-" + sourceRepositoryId + "-"
+								+ sourceSystemId + targetRepositoryId + "-"
+								+ targetSystemId
+								+ " in the identity mapping table even after the entity service waited for "
+								+ (waitCount * this.getIdentityMapEventWaitTime()) +" milliseconds. Allowing this artifact to be created on the target system.");
+						waitForIdentityMappedEvent = false;
+					}
+				}
+				else {
+					waitForIdentityMappedEvent = false;
+				}
+			}
+		} while(waitForIdentityMappedEvent);
 		Object[] results = null;
 		if (resultSet == null || resultSet.length == 0) {
 			log.debug(sourceArtifactId + "-" + sourceRepositoryId + "-"
@@ -644,6 +691,22 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 	 */
 	public boolean isSkipNewerVersionsOfQuarantinedArtifacts() {
 		return skipNewerVersionsOfQuarantinedAttachments;
+	}
+
+	public long getIdentityMapEventWaitTime() {
+		return identityMapEventWaitTime;
+	}
+
+	public void setIdentityMapEventWaitTime(long identityMapEventWaitTime) {
+		this.identityMapEventWaitTime = identityMapEventWaitTime;
+	}
+
+	public int getIdentityMapEventWaitCount() {
+		return identityMapEventWaitCount;
+	}
+
+	public void setIdentityMapEventWaitCount(int identityMapEventWaitCount) {
+		this.identityMapEventWaitCount = identityMapEventWaitCount;
 	}
 
 }
