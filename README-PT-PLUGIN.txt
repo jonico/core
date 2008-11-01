@@ -128,3 +128,28 @@ Meta data fields that are shipped by PT plugin
             <xsl:value-of select="."></xsl:value-of>
         </field>
     </xsl:template>
+
+5. PT artifact id
+    This field's value is encoded in a GenericArtifact field
+    with the name "{urn:ws.tracker.collabnet.com}ID:"
+    
+    To enable this field to be shipped to a target system, include
+    the following mapping in the XSLT transformation file.
+    
+    <xsl:template
+        match='ccf:field[@fieldName="{urn:ws.tracker.collabnet.com}ID:"]'>
+        <field>
+            <xsl:attribute name="fieldName">PT artifact id field Name on the target system</xsl:attribute>
+            <xsl:attribute name="fieldDisplayName">PT artifact id field display Name</xsl:attribute>
+            <xsl:attribute name="fieldAction"><xsl:value-of select="@fieldAction" /></xsl:attribute>
+            <xsl:attribute name="fieldType"><xsl:value-of select="@fieldType" /></xsl:attribute>
+            <xsl:attribute name="fieldValueHasChanged"><xsl:value-of select="@fieldValueHasChanged" /></xsl:attribute>
+            <xsl:attribute name="fieldValueType"><xsl:value-of select="@fieldValueType" /></xsl:attribute>
+            <xsl:attribute name="fieldValueIsNull"><xsl:value-of select="@fieldValueIsNull" /></xsl:attribute>
+            <xsl:attribute name="minOccurs"><xsl:value-of select="@minOccurs" /></xsl:attribute>
+            <xsl:attribute name="maxOccurs"><xsl:value-of select="@maxOccurs" /></xsl:attribute>
+            <xsl:attribute name="nullValueSupported"><xsl:value-of select="@nullValueSupported" /></xsl:attribute>
+            <xsl:attribute name="alternativeFieldName"><xsl:value-of select="@alternativeFieldName" /></xsl:attribute>
+            <xsl:value-of select="."></xsl:value-of>
+        </field>
+    </xsl:template>
