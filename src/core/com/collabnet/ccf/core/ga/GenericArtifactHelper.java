@@ -88,6 +88,7 @@ public class GenericArtifactHelper {
 	public static final String ARTIFACT_ACTION_DELETE = "delete";
 	public static final String ARTIFACT_ACTION_IGNORE = "ignore";
 	public static final String ARTIFACT_ACTION_UPDATE = "update";
+	public static final String ARTIFACT_ACTION_RESYNC = "resync";
 	public static final String ARTIFACT_ACTION_UNKNOWN = "unknown";
 
 	public static final String ARTIFACT_MODE_COMPLETE = "complete";
@@ -179,6 +180,8 @@ public class GenericArtifactHelper {
 				GenericArtifact.ArtifactActionValue.IGNORE);
 		artifactActionHashMap.put(ARTIFACT_ACTION_UPDATE,
 				GenericArtifact.ArtifactActionValue.UPDATE);
+		artifactActionHashMap.put(ARTIFACT_ACTION_RESYNC,
+				GenericArtifact.ArtifactActionValue.RESYNC);
 		artifactActionHashMap.put(ARTIFACT_ACTION_UNKNOWN,
 				GenericArtifact.ArtifactActionValue.UNKNOWN);
 
@@ -621,6 +624,10 @@ public class GenericArtifactHelper {
 		}
 		case UPDATE: {
 			addAttribute(root, ARTIFACT_ACTION, ARTIFACT_ACTION_UPDATE);
+			break;
+		}
+		case RESYNC: {
+			addAttribute(root, ARTIFACT_ACTION, ARTIFACT_ACTION_RESYNC);
 			break;
 		}
 		case UNKNOWN: {

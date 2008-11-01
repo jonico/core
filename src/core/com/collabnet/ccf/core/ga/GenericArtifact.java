@@ -44,7 +44,7 @@ public class GenericArtifact {
 	 * @author jnicolai
 	 */
 	public enum ArtifactActionValue {
-		CREATE, DELETE, UPDATE, IGNORE, UNKNOWN
+		CREATE, DELETE, UPDATE, IGNORE, RESYNC, UNKNOWN
 	};
 
 	/**

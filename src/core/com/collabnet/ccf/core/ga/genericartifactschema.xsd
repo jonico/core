@@ -105,6 +105,7 @@ possible values of action are "create", "update", "delete", and "ignore".</xs:do
 						<xs:enumeration value="delete"/>
 						<xs:enumeration value="update"/>
 						<xs:enumeration value="create"/>
+						<xs:enumeration value="resync"/>
 						<xs:enumeration value="ignore"/>
 					</xs:restriction>
 				</xs:simpleType>
