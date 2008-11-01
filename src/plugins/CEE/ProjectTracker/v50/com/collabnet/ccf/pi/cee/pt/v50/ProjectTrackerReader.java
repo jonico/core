@@ -29,6 +29,7 @@ import com.collabnet.ccf.core.eis.connection.MaxConnectionsReachedException;
 import com.collabnet.ccf.core.ga.AttachmentMetaData;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
+import com.collabnet.ccf.core.utils.CollectionUtils;
 import com.collabnet.ccf.core.utils.DateUtil;
 import com.collabnet.core.ws.exception.WSException;
 import com.collabnet.tracker.common.ClientArtifact;
@@ -73,7 +74,8 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 	private MetaDataHelper metadataHelper = MetaDataHelper.getInstance();
 	private HashMap<String, String> attahcmentIDNameMap = null;
 	// TODO Use ThreadLocal object to store these variables
-	private ThreadLocal<ArtifactHistoryList> artifactHistoryList = new ThreadLocal<ArtifactHistoryList>();
+	private static ThreadLocal<ArtifactHistoryList> artifactHistoryList = new ThreadLocal<ArtifactHistoryList>();
+	//private static ThreadLocal<HashMap<String, ClientArtifact>> artifactListTl = new ThreadLocal<HashMap<String, ClientArtifact>>();
 	ProjectTrackerHelper ptHelper = ProjectTrackerHelper.getInstance();
 	private static HashMap<String, GenericArtifactField.FieldValueTypeValue> ptGATypesMap =
 		new HashMap<String, GenericArtifactField.FieldValueTypeValue>();
@@ -385,11 +387,13 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 		}
 		String lastModifiedBy = artifact.getAttributeValue(TrackerWebServicesClient.DEFAULT_NAMESPACE,
 				TrackerWebServicesClient.MODIFIED_BY_FIELD_NAME);
+		GenericArtifact ga = new GenericArtifact();
 		if(lastModifiedBy.equals(username)){
 			return new ArrayList<GenericArtifact>();
+		} else if(lastModifiedBy.equals(this.getResyncUserName())){
+			ga.setArtifactAction(GenericArtifact.ArtifactActionValue.RESYNC);
 		}
 		List<GenericArtifact> gaList = new ArrayList<GenericArtifact>();
-		GenericArtifact ga = new GenericArtifact();
 		ga.setArtifactType(GenericArtifact.ArtifactTypeValue.PLAINARTIFACT);
 		ga.setArtifactMode(GenericArtifact.ArtifactModeValue.COMPLETE);
 		ga.setSourceArtifactId(artifactId);
@@ -405,7 +409,7 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 			String attributeNamespaceDiaplayName = "{"+attributeNamespace+"}"+attributeDisplayName;
 			GenericArtifactField.FieldValueTypeValue gaFieldType = null;
 			boolean isAttributeRequired = false;
-			if(attValues.size() > 0){
+			if(attValues != null && attValues.size() > 0 && (!CollectionUtils.isEmptyOrNull(attValues))){
 				isAttributeRequired = trackerAttribute.isRequired();
 				ptAttributeType = trackerAttribute.getAttributeType();
 				gaFieldType = ptGATypesMap.get(ptAttributeType);
@@ -420,11 +424,12 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 				if(trackerAttribute.getAttributeType().equals("USER")){
 					field.setFieldValueType(GenericArtifactField.FieldValueTypeValue.USER);
 				}
-				if(trackerAttribute.getAttributeType().equals("DATE")
+				else if(trackerAttribute.getAttributeType().equals("DATE")
 						|| attributeName.equals(CREATED_ON_FIELD_NAME)
 						|| attributeName.equals(MODIFIED_ON_FIELD_NAME)){
 					field.setFieldValueType(GenericArtifactField.FieldValueTypeValue.DATE);
 				}
+				continue;
 			}
 			for(String attValue:attValues){
 				if(StringUtils.isEmpty(attValue)) continue;
@@ -553,6 +558,7 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 		}
 		this.populateSrcAndDest(syncInfo, ga);
 		gaList.add(ga);
+		//artifactListTl.clear();
 		return gaList;
 	}
 	
