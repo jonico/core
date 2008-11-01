@@ -286,7 +286,6 @@ public class TrackerWebServicesClient {
 
 		Request req = toRequest(doc);
 		String reqString = req.toString();
-		System.out.println(reqString); 
 		Response r = theService.execute(toRequest(doc));
 		Document result = toDocument(r);
 //		this.printDocument(result);
@@ -573,7 +572,6 @@ public class TrackerWebServicesClient {
 		*/
 
  		TrackerUtil.debug("request artifactChanges() between: " + new Date(from) + " and " + new Date(to)); 
-		System.out.println("request artifactChanges() between: " + new Date(from) + " and " + new Date(to));
   		return theService.getArtifactChanges(ata, from, to);
 	}
 	
@@ -589,7 +587,6 @@ public class TrackerWebServicesClient {
         URL portAddress = mClient.constructServiceURL("/tracker/ArtifactHistory");
         ArtifactHistoryManager theService = service.getArtifactHistoryManager(portAddress);
  		TrackerUtil.debug("request artifactChanges() between: " + new Date(from) + " and " + new Date(to)); 
-		System.out.println("request artifactChanges() between: " + new Date(from) + " and " + new Date(to));
   		return theService.getArtifactHistory(artifactList, from, to);
 	}
 
@@ -840,6 +837,15 @@ public class TrackerWebServicesClient {
 
 		DataHandler handler = theService.getAttachment(taskId, Long.parseLong(attachmentId));
 		return handler;
+	}
+	
+	public void removeAttachment(String artifactId, long attachmentId) throws ServiceException,
+			WSException, RemoteException{
+		EngineConfiguration config = mClient.getEngineConfiguration();
+		AttachmentService service = new AttachmentServiceLocator(config);
+		URL portAddress = mClient.constructServiceURL("/tracker/Attachment");
+		AttachmentManager theService = service.getAttachmentService(portAddress);
+		theService.removeAttachment(artifactId, attachmentId);
 	}
 
 	/**
