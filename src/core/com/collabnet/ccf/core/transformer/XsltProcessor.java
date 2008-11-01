@@ -164,7 +164,7 @@ public class XsltProcessor extends Component implements IDataProcessor {
 			TransformerFactory factory = TransformerFactory.newInstance();
 			transform = factory.newTransformer(new StreamSource(url.getPath()));
 
-			log.info("Loaded XSLT [" + xsltFile + "] successfully");
+			log.debug("Loaded XSLT [" + xsltFile + "] successfully");
 		} catch (TransformerConfigurationException e) {
 			String cause = "Failed to load XSLT: [" + xsltFile +" ]"+  e.getMessage();
 			log.error(cause,e);
