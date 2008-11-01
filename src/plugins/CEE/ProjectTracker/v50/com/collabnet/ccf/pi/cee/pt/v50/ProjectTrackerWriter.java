@@ -146,6 +146,7 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 			cla.add(ca);
 			ClientArtifactListXMLHelper artifactHelper = twsclient.updateArtifactList(cla);
 			ptHelper.processWSErrors(artifactHelper);
+			log.info("Artifact "+targetArtifactId+" updated successfully with the changes from "+ga.getSourceArtifactId());
 			List<ClientArtifact> artifacts = artifactHelper.getAllArtifacts();
 			if(artifacts.size() == 1){
 				ClientArtifact artifact = artifacts.get(0);
@@ -224,16 +225,19 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 			cla.add(ca);
 			ClientArtifactListXMLHelper artifactHelper = twsclient.createArtifactList(cla);
 			ptHelper.processWSErrors(artifactHelper);
+			
 			List<ClientArtifact> artifacts = artifactHelper.getAllArtifacts();
 			if(artifacts.size() == 1) {
 				ClientArtifact artifact = artifacts.get(0);
-				ga.setTargetArtifactId("{"+targetArtifactTypeNamespace+"}"
-						+targetArtifactTypeTagName+":"+artifact.getArtifactID());
+				String targetArtifactId = "{"+targetArtifactTypeNamespace+"}"
+				+targetArtifactTypeTagName+":"+artifact.getArtifactID();
+				ga.setTargetArtifactId(targetArtifactId);
 				String createdOn = artifact.getAttributeValue(
 						ProjectTrackerReader.TRACKER_NAMESPACE, ProjectTrackerReader.CREATED_ON_FIELD);
 				Date createdOnDate = new Date(Long.parseLong(createdOn));
 				ga.setTargetArtifactLastModifiedDate(DateUtil.format(createdOnDate));
 				ga.setTargetArtifactVersion(Integer.toString(0));
+				log.info("Artifact " + targetArtifactId + " created successfully with the changes from " + ga.getSourceArtifactId());
 			}
 			else {
 				String message = "Artifact creation failed...!!!";
@@ -570,7 +574,7 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 	 */
 	public TrackerWebServicesClient connect(String systemId, String systemKind, String repositoryId,
 			String repositoryKind, String connectionInfo, String credentialInfo, boolean forceResync) throws MaxConnectionsReachedException, ConnectionException {
-		log.info("Getting connection to PT");
+		log.debug("Getting connection to PT");
 		ConnectionManager<TrackerWebServicesClient> connectionManager = 
 			(ConnectionManager<TrackerWebServicesClient>) this.getConnectionManager();
 		TrackerWebServicesClient connection = null;
@@ -671,7 +675,11 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 
 	@Override
 	public Document deleteAttachment(Document gaDocument) {
-		// TODO Auto-generated method stub
+//		GenericArtifact ga = this.getGenericArtifact(gaDocument);
+//		String targetArtifactId = ga.getTargetArtifactId();
+//		TrackerWebServicesClient twsclient = null;
+//		int version = 0;
+//		twsclient = this.getConnection(ga);
 		return null;
 	}
 
