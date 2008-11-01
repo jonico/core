@@ -354,6 +354,10 @@ public class SFEEReader extends AbstractReader<Connection> {
 					lastModifiedDate,isIgnoreConnectorUserUpdates()?this.getUsername():"");
 			GenericArtifact genericArtifact = artifactConverter.convert(artifact,
 					fieldsMap, lastModifiedDate, this.isIncludeFieldMetaData());
+			String lastModifiedBy = artifact.getLastModifiedBy();
+			if(lastModifiedBy.equals(this.getResyncUserName())){
+				genericArtifact.setArtifactAction(GenericArtifact.ArtifactActionValue.RESYNC);
+			}
 			populateSrcAndDest(syncInfo, genericArtifact);
 			gaList.add(genericArtifact);
 		} catch (RemoteException e) {
