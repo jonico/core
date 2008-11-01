@@ -77,7 +77,9 @@ public abstract class AbstractWriter<T> extends LifecycleComponent implements
 						throw new CCFRuntimeException(message);
 					}
 				} else if (artifactAction
-						.equals(GenericArtifactHelper.ARTIFACT_ACTION_UPDATE)) {
+						.equals(GenericArtifactHelper.ARTIFACT_ACTION_UPDATE) ||
+						artifactAction
+						.equals(GenericArtifactHelper.ARTIFACT_ACTION_RESYNC)) {
 					if (artifactType
 							.equals(GenericArtifactHelper.ARTIFACT_TYPE_PLAIN_ARTIFACT)) {
 						gaDocument = this.handleArtifactUpdate(gaDocument);
