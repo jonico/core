@@ -180,7 +180,7 @@ public class MappingDBUpdater extends LifecycleComponent implements
 				if (targetArtifactLastModifiedDateString
 						.equalsIgnoreCase(GenericArtifact.VALUE_UNKNOWN)) {
 					String message = "Target artifact last modified date is populated as: "
-							+ sourceArtifactLastModifiedDateString;
+							+ targetArtifactLastModifiedDateString;
 					log.warn(message);
 					// use the earliest date possible
 					targetLastModifiedDate = new Date(0);
