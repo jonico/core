@@ -42,6 +42,7 @@
 			<xsl:attribute name="targetRepositoryKind"><xsl:value-of select="@targetRepositoryKind" /></xsl:attribute>
 			<xsl:attribute name="targetSystemId"><xsl:value-of select="@targetSystemId" /></xsl:attribute>
 			<xsl:attribute name="targetSystemKind"><xsl:value-of select="@targetSystemKind" /></xsl:attribute>
+			<xsl:attribute name="sourceSystemEncoding"><xsl:value-of select="@sourceSystemEncoding" /></xsl:attribute>
 			<xsl:for-each select="field">
 			</xsl:for-each>
 			<xsl:apply-templates />
