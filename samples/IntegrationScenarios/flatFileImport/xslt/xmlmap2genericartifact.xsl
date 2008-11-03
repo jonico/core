@@ -25,6 +25,10 @@
 						<xsl:attribute name="errorCode">ok</xsl:attribute>
 						<xsl:attribute name="includesFieldMetaData">false</xsl:attribute>
 						<xsl:attribute name="targetArtifactId">unknown</xsl:attribute>  
+						<xsl:attribute name="sourceSystemTimezone">unknown</xsl:attribute>
+						<xsl:attribute name="sourceSystemEncoding">unknown</xsl:attribute>
+						<xsl:attribute name="targetSystemTimezone">unknown</xsl:attribute>
+						<xsl:attribute name="targetSystemEncoding">unknown</xsl:attribute>
 			<!-- Constant fields -->
 			<!--<field>
 				<xsl:attribute name="fieldName">customer</xsl:attribute>
