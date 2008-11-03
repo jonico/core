@@ -37,24 +37,32 @@
 			<param name="ConversionPattern" value="%-5p %d{ISO8601} - %m%n"/>
 		</layout>
 	</appender>
+	
+	<category name="com.collabnet" additivity="false">
+    	<level value="info"/>
+		<appender-ref ref="console" />
+		<appender-ref ref="R" />
+		<!-- <appender-ref ref="ErrorNotifier" />  -->
+  	</category>
+  	
+  	<category name="com.collabnet.ccf.core.conflict.resolution" additivity="false">
+    	<level value="info"/>
+    	<appender-ref ref="R" />
+		<appender-ref ref="ConflictNotifier" />
+  	</category>
+  	
+  	<category name="org.openadaptor" additivity="false">
+    	<level value="ERROR"/>
+    	<appender-ref ref="R" />
+    	<appender-ref ref="console" />
+  	</category>
+  	
 	<root>
 		<priority value="info"/>
 		<appender-ref ref="console"/>
 		<appender-ref ref="R"/>
 	</root>
 
-	<!--<logger name="com.collabnet">
-    	<level value="info"/>
-		<appender-ref ref="console" />
-		<appender-ref ref="R" />
-		<appender-ref ref="ErrorNotifier" />
-  	</logger>
-  	<logger name="com.collabnet.ccf.core.conflict.resolution">
-    	<level value="info"/>
-    	<appender-ref ref="R" />
-		<appender-ref ref="ConflictNotifier" />
-  	</logger>
-
---></log4j:configuration>
+</log4j:configuration>
 
   
