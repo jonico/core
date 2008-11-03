@@ -34,7 +34,7 @@
 			<xsl:attribute name="depParentTargetArtifactId"><xsl:value-of select="@depParentTargetArtifactId" /></xsl:attribute>
 			<xsl:attribute name="depParentTargetRepositoryId"><xsl:value-of select="@depParentTargetRepositoryId" /></xsl:attribute>
 			<xsl:attribute name="depParentTargetRepositoryKind"><xsl:value-of select="@depParentTargetRepositoryKind" /></xsl:attribute>
-			<xsl:attribute name="sourceSystemSystemTimezone"><xsl:value-of select="@sourceSystemTimezone" /></xsl:attribute>
+			<xsl:attribute name="sourceSystemTimezone"><xsl:value-of select="@sourceSystemTimezone" /></xsl:attribute>
 			<xsl:attribute name="sourceSystemEncoding"><xsl:value-of select="@sourceSystemEncoding" /></xsl:attribute>
 			<xsl:attribute name="targetSystemTimezone"><xsl:value-of select="@targetSystemTimezone" /></xsl:attribute>
 			<xsl:attribute name="targetSystemEncoding"><xsl:value-of select="@targetSystemEncoding" /></xsl:attribute>
