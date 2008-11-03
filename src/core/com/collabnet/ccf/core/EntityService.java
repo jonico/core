@@ -524,8 +524,7 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 					}
 					int sourceArtifactVersionIntFromTable = Integer
 							.parseInt(sourceArtifactVersionFromTable);
-					if (sourceArtifactLastModifiedDateFromTable
-							.compareTo(sourceArtifactLastModifiedDate) <= 0
+					if (sourceArtifactLastModifiedDateFromTable.after(sourceArtifactLastModifiedDate)
 							|| sourceArtifactVersionIntFromTable >= sourceArtifactVersionInt) {
 						if (sourceArtifactVersionInt == -1
 								&& sourceArtifactVersionIntFromTable == -1) {
