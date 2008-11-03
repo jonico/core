@@ -20,7 +20,9 @@
 			targetArtifactId="NEW" targetRepositoryId="tracker1002"
 			targetRepositoryKind="TRACKER" targetSystemId="cu011"
 			targetSystemKind="SFEE4.4" transactionId="0"
-			errorCode="ok" includesFieldMetaData="false">
+			errorCode="ok" includesFieldMetaData="false"
+			sourceSystemTimezone="unknown" targetSystemTimezone="unknown"
+			sourceSystemEncoding="unknown" targetSystemEncoding="unknown">
 			<xsl:attribute name="sourceArtifactId"><xsl:value-of select="$sourceArtifactId"/></xsl:attribute>
 			<xsl:apply-templates />
 		</artifact>
