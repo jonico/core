@@ -7,7 +7,7 @@ public class CollectionUtils {
 	public static boolean isEmptyOrNull(Collection c){
 		boolean empty = true;
 		for(Object o:c){
-			if(o != null){
+			if(!StringUtils.isEmpty((String)o)){
 				empty = false;
 			}
 		}

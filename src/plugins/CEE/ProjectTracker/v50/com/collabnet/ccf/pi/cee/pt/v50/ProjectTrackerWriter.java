@@ -1,6 +1,7 @@
 package com.collabnet.ccf.pi.cee.pt.v50;
 
 import java.rmi.RemoteException;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -17,6 +18,7 @@ import javax.xml.rpc.ServiceException;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.lang.time.DateUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dom4j.Document;
@@ -84,9 +86,26 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 		String targetArtifactId = ga.getDepParentTargetArtifactId();
 		String artifactId = ptHelper.getArtifactIdFromFullyQualifiedArtifactId(targetArtifactId);
 		TrackerWebServicesClient twsclient = this.getConnection(ga);
+		
+		String attachmentType = GenericArtifactHelper.getStringGAField(AttachmentMetaData.ATTACHMENT_TYPE, ga);
 		byte[] data = Base64.decodeBase64(ga.getArtifactValue().getBytes());
-		String attachmentMimeType = GenericArtifactHelper.getStringGAField(AttachmentMetaData.ATTACHMENT_MIME_TYPE, ga);
-		String attachmentName = GenericArtifactHelper.getStringGAField(AttachmentMetaData.ATTACHMENT_NAME, ga);
+		String attachmentMimeType = null;
+		String attachmentName = null;
+		if(attachmentType.equals(AttachmentMetaData.AttachmentType.LINK.toString())){
+			String url = GenericArtifactHelper.getStringGAField(AttachmentMetaData.ATTACHMENT_SOURCE_URL, ga);
+			data = url.getBytes();
+			attachmentMimeType = AttachmentMetaData.TEXT_PLAIN;
+			String parentSourceArtifactId = ga.getDepParentSourceArtifactId();
+			String attachmentArtifactId = ga.getSourceArtifactId();
+			attachmentName = "Link-attachment-"+parentSourceArtifactId+"-"+attachmentArtifactId+".txt";
+		}
+		else {
+			data = Base64.decodeBase64(ga.getArtifactValue().getBytes());
+			attachmentMimeType = GenericArtifactHelper.getStringGAField(AttachmentMetaData.ATTACHMENT_MIME_TYPE, ga);
+			attachmentName = GenericArtifactHelper.getStringGAField(AttachmentMetaData.ATTACHMENT_NAME, ga);
+		}
+		
+		
 		javax.mail.util.ByteArrayDataSource dataSource = new javax.mail.util.ByteArrayDataSource(data,attachmentMimeType);
 		dataSource.setName(attachmentName);
 		long attachmentId = -1;
@@ -134,8 +153,6 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 		TrackerWebServicesClient twsclient = this.getConnection(ga);
 		String artifactId = ptHelper.getArtifactIdFromFullyQualifiedArtifactId(targetArtifactId);
 		try {
-			int version = this.getArtifactVersion(targetArtifactId, new Date(0).getTime(),
-					new Date().getTime(), twsclient);
 			// TODO Consider forceOverride flag
 			List<ClientArtifact> cla = null;
 			cla = new ArrayList<ClientArtifact>();
@@ -158,7 +175,9 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 				ga.setTargetArtifactLastModifiedDate(DateUtil.format(modifiedOnDate));
 				//String createdOn = artifact.getAttributeValue(
 				//		ProjectTrackerReader.TRACKER_NAMESPACE, ProjectTrackerReader.CREATED_ON_FIELD);
-				ga.setTargetArtifactVersion(Integer.toString(version+1));
+				int version = this.getArtifactVersion(targetArtifactId, new Date(0).getTime(),
+						modifiedOnDate.getTime()+1, twsclient);
+				ga.setTargetArtifactVersion(Integer.toString(version));
 			}
 		} catch (WSException e) {
 			String message = "WSException while updating artifact " + targetArtifactId;
@@ -236,7 +255,9 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 						ProjectTrackerReader.TRACKER_NAMESPACE, ProjectTrackerReader.CREATED_ON_FIELD);
 				Date createdOnDate = new Date(Long.parseLong(createdOn));
 				ga.setTargetArtifactLastModifiedDate(DateUtil.format(createdOnDate));
-				ga.setTargetArtifactVersion(Integer.toString(0));
+				int version = this.getArtifactVersion(targetArtifactId, new Date(0).getTime(),
+						createdOnDate.getTime(), twsclient);
+				ga.setTargetArtifactVersion(Integer.toString(version));
 				log.info("Artifact " + targetArtifactId + " created successfully with the changes from " + ga.getSourceArtifactId());
 			}
 			else {
@@ -272,6 +293,7 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 			String targetArtifactTypeTagName, ClientArtifact currentArtifact){
 		//llh
 		String targetArtifactId = ga.getTargetArtifactId();
+		String targetSystemTimezone = ga.getTargetSystemTimezone();
 		String artifactId = null;
 		if(!targetArtifactId.equals(GenericArtifact.VALUE_UNKNOWN)){
 			artifactId = ptHelper.getArtifactIdFromFullyQualifiedArtifactId(targetArtifactId);
@@ -355,25 +377,25 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 						for(String user:currentUsers){
 							if(user != null){
 								userField.setFieldValue(user);
-								this.addAttribute(userField, ca, trackerAttribute, fullyQualifiedFieldTagName, metadata);
+								this.addAttribute(userField, ca, trackerAttribute, fullyQualifiedFieldTagName, metadata, targetSystemTimezone);
 							}
 						}
 						}
 						else {
 							userField.setFieldValue("");
-							this.addAttribute(userField, ca, trackerAttribute, fullyQualifiedFieldTagName, metadata);
+							this.addAttribute(userField, ca, trackerAttribute, fullyQualifiedFieldTagName, metadata, targetSystemTimezone);
 						}
 					}
 					else {
 						for(GenericArtifactField userField:gaUserFields){
-							this.addAttribute(userField, ca, trackerAttribute, fullyQualifiedFieldTagName, metadata);
+							this.addAttribute(userField, ca, trackerAttribute, fullyQualifiedFieldTagName, metadata, targetSystemTimezone);
 						}
 					}
 					processedUserFields.add(fieldName);
 				}
 			}
 			else{
-				this.addAttribute(field, ca, trackerAttribute, fullyQualifiedFieldTagName, metadata);
+				this.addAttribute(field, ca, trackerAttribute, fullyQualifiedFieldTagName, metadata, targetSystemTimezone);
 			}
 		}
 		return ca;
@@ -422,7 +444,7 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 
 	private void addAttribute(GenericArtifactField field, ClientArtifact ca,
 			TrackerAttribute trackerAttribute, String fullyQualifiedFieldTagName,
-			ArtifactTypeMetadata metadata) {
+			ArtifactTypeMetadata metadata, String targetSystemTimeZone) {
 		String attributeNamespace =
 			ptHelper.getArtifactTypeNamespaceFromFullyQualifiedArtifactType(fullyQualifiedFieldTagName);
 		String attributeTagName =
@@ -431,7 +453,7 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 		if(fieldValue == null) return;
 		else if(fieldValue instanceof String) {
 			if(StringUtils.isEmpty((String)fieldValue)){
-				return;
+//				return;
 			}
 		}
 		FieldValueTypeValue fieldType = field.getFieldValueType();
@@ -451,6 +473,13 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 		}
 		else if(fieldType == FieldValueTypeValue.DATETIME){
 			Date date = (Date) fieldValue;
+			if(!StringUtils.isEmpty(targetSystemTimeZone) && (!targetSystemTimeZone.equals(GenericArtifact.VALUE_UNKNOWN))){
+				try {
+					date = DateUtil.convertDate(date, targetSystemTimeZone);
+				} catch (ParseException e) {
+					//This will never happen
+				}
+			}
 			attributeValue = Long.toString(date.getTime());
 		}
 		else if(fieldType == FieldValueTypeValue.BOOLEAN){

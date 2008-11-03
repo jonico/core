@@ -36,6 +36,7 @@ import javax.xml.transform.stream.StreamResult;
 import org.apache.axis.AxisFault;
 import org.apache.axis.EngineConfiguration;
 import org.apache.axis.message.MessageElement;
+import org.apache.commons.lang.StringUtils;
 import org.w3c.dom.DOMImplementation;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -247,7 +248,7 @@ public class TrackerWebServicesClient {
 					if (values.size() > 1 ||(attributeNamespace.equals(DEFAULT_NAMESPACE) &&
 									attribute.equals("id"))) {
 						for (String value: values) {
-							if(value != null){
+							if(!(StringUtils.isEmpty(value))){
 								
 								Element valueNode = doc.createElementNS(DEFAULT_NAMESPACE, "ns1:value");
 								//valueNode.setNodeValue(value);

@@ -239,6 +239,12 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 				 								ga.setDepParentSourceArtifactId(artifactId);
 				 								ga.setSourceArtifactId(attachmentId);
 				 								ga.setSourceArtifactVersion(Integer.toString(version));
+				 								GenericArtifactField contentTypeField = 
+				 									ga.addNewField(AttachmentMetaData.ATTACHMENT_TYPE,
+				 											GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
+				 								contentTypeField.setFieldValue(AttachmentMetaData.AttachmentType.DATA);
+				 								contentTypeField.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
+				 								contentTypeField.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
 					 							populateSrcAndDestForAttachment(syncInfo, ga);
 					 							attachmentGAs.add(ga);
 			 							}
@@ -403,24 +409,23 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 			String ptAttributeType = null;
 			TrackerAttribute trackerAttribute = trackerArtifactType.getAttribute(attributeName);
 			if(trackerAttribute == null) continue;
+			ptAttributeType = trackerAttribute.getAttributeType();
 			String attributeDisplayName = trackerAttribute.getDisplayName();
 			String attributeNamespace = trackerAttribute.getNamespace();
 			String attributeTagName = trackerAttribute.getTagName();
 			String attributeNamespaceDiaplayName = "{"+attributeNamespace+"}"+attributeDisplayName;
 			GenericArtifactField.FieldValueTypeValue gaFieldType = null;
+			gaFieldType = ptGATypesMap.get(ptAttributeType);
 			boolean isAttributeRequired = false;
 			if(attValues != null && attValues.size() > 0 && (!CollectionUtils.isEmptyOrNull(attValues))){
 				isAttributeRequired = trackerAttribute.isRequired();
-				ptAttributeType = trackerAttribute.getAttributeType();
-				gaFieldType = ptGATypesMap.get(ptAttributeType);
 			}
 			else {
 				GenericArtifactField field = ga.addNewField(attributeNamespaceDiaplayName,
 						GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
 				field.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
-				field.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
-				field.setFieldValueHasChanged(true);
 				field.setFieldValueType(gaFieldType);
+				field.setFieldValueHasChanged(true);
 				if(trackerAttribute.getAttributeType().equals("USER")){
 					field.setFieldValueType(GenericArtifactField.FieldValueTypeValue.USER);
 				}

@@ -176,6 +176,12 @@ public abstract class AbstractReader<T> extends LifecycleComponent implements ID
 //				}
 				String artifactId = genericArtifact.getSourceArtifactId();
 				try {
+					String conflictResolution = this.getConflictResolutionPriority(syncInfo);
+					genericArtifact.setConflictResolutionPriority(conflictResolution);
+					genericArtifact.setSourceSystemTimezone(this.getSourceSystemTimezone(syncInfo));
+					genericArtifact.setTargetSystemTimezone(this.getTargetSystemTimezone(syncInfo));
+					genericArtifact.setSourceSystemEncoding(this.getSourceSystemEncoding(syncInfo));
+					genericArtifact.setTargetSystemEncoding(this.getTargetSystemEncoding(syncInfo));
 					Document returnDoc = GenericArtifactHelper.createGenericArtifactXMLDocument(genericArtifact);
 					Object[] returnObjects = new Object[] {returnDoc};
 					moveToTail(currentRecord);
@@ -336,6 +342,10 @@ public abstract class AbstractReader<T> extends LifecycleComponent implements ID
 				try {
 					String conflictResolution = this.getConflictResolutionPriority(syncInfo);
 					genericArtifact.setConflictResolutionPriority(conflictResolution);
+					genericArtifact.setSourceSystemTimezone(this.getSourceSystemTimezone(syncInfo));
+					genericArtifact.setTargetSystemTimezone(this.getTargetSystemTimezone(syncInfo));
+					genericArtifact.setSourceSystemEncoding(this.getSourceSystemEncoding(syncInfo));
+					genericArtifact.setTargetSystemEncoding(this.getTargetSystemEncoding(syncInfo));
 					Document returnDoc = GenericArtifactHelper.createGenericArtifactXMLDocument(genericArtifact);
 					Object[] returnObjects = new Object[] {returnDoc};
 					moveToTail(currentRecord);
@@ -649,6 +659,34 @@ public abstract class AbstractReader<T> extends LifecycleComponent implements ID
 	 */
 	public String getConflictResolutionPriority(Document syncInfo){
 		Node node= syncInfo.selectSingleNode("//CONFLICT_RESOLUTION_PRIORITY");
+		if (node==null)
+			return null;
+		return node.getText();
+	}
+	
+	public String getSourceSystemTimezone(Document syncInfo){
+		Node node= syncInfo.selectSingleNode("//SOURCE_SYSTEM_TIMEZONE");
+		if (node==null)
+			return null;
+		return node.getText();
+	}
+	
+	public String getTargetSystemTimezone(Document syncInfo){
+		Node node= syncInfo.selectSingleNode("//TARGET_SYSTEM_TIMEZONE");
+		if (node==null)
+			return null;
+		return node.getText();
+	}
+	
+	public String getSourceSystemEncoding(Document syncInfo){
+		Node node= syncInfo.selectSingleNode("//SOURCE_SYSTEM_ENCODING");
+		if (node==null)
+			return null;
+		return node.getText();
+	}
+	
+	public String getTargetSystemEncoding(Document syncInfo){
+		Node node= syncInfo.selectSingleNode("//TARGET_SYSTEM_ENCODING");
 		if (node==null)
 			return null;
 		return node.getText();
