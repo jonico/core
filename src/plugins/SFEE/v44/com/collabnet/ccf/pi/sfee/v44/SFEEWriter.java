@@ -176,6 +176,9 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 		} catch (GenericArtifactParsingException e) {
 			String cause = "Problem occured while parsing the GenericArtifact into Document";
 			log.error(cause, e);
+			XPathUtils.addAttribute(data.getRootElement(),
+					GenericArtifactHelper.ERROR_CODE,
+					GenericArtifact.ERROR_GENERIC_ARTIFACT_PARSING);
 			throw new CCFRuntimeException(cause, e);
 		}
 		this.initializeArtifact(ga);
@@ -736,6 +739,9 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 		} catch (GenericArtifactParsingException e) {
 			String cause = "Problem occured while parsing the GenericArtifact into Document";
 			log.error(cause, e);
+			XPathUtils.addAttribute(data.getRootElement(),
+					GenericArtifactHelper.ERROR_CODE,
+					GenericArtifact.ERROR_GENERIC_ARTIFACT_PARSING);
 			throw new CCFRuntimeException(cause, e);
 		}
 		this.initializeArtifact(ga);
