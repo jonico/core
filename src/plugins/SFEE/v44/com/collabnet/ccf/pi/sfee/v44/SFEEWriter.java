@@ -42,9 +42,6 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 	 */
 	private static final Log log = LogFactory.getLog(SFEEWriter.class);
 
-	private static final Log logConflictResolutor = LogFactory
-			.getLog("com.collabnet.ccf.core.conflict.resolution");
-
 	/**
 	 * SFEE tracker handler instance
 	 */
@@ -130,7 +127,7 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 					GenericArtifactField.FieldValueTypeValue.STRING);
 		}
 	}
-	
+
 	@Override
 	public boolean handleException(Throwable cause,
 			ConnectionManager<Connection> connectionManager) {
@@ -208,14 +205,17 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 		return this.returnDocument(ga);
 	}
 
-	public Document updateArtifact(Document data,
-			String conflictResolutionPriority) {
+	@Override
+	public Document updateArtifact(Document data) {
 		GenericArtifact ga = null;
 		try {
 			ga = GenericArtifactHelper.createGenericArtifactJavaObject(data);
 		} catch (GenericArtifactParsingException e) {
 			String cause = "Problem occured while parsing the GenericArtifact into Document";
 			log.error(cause, e);
+			XPathUtils.addAttribute(data.getRootElement(),
+					GenericArtifactHelper.ERROR_CODE,
+					GenericArtifact.ERROR_GENERIC_ARTIFACT_PARSING);
 			throw new CCFRuntimeException(cause, e);
 		}
 		this.initializeArtifact(ga);
@@ -225,82 +225,21 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 		ArtifactSoapDO result = null;
 		try {
 			// update and do conflict resolution
-			result = this.updateArtifact(ga, tracker,
-					conflictResolutionPriority, connection);
-			if (result == null) {
-				if (conflictResolutionPriority
-						.equals(GenericArtifact.VALUE_CONFLICT_RESOLUTION_PRIORITY_ALWAYS_IGNORE)) {
-					logConflictResolutor
-							.warn("Conflict detected for artifact combination"
-									+ ga.getSourceArtifactId() + "-"
-									+ ga.getSourceRepositoryId() + "-"
-									+ ga.getSourceSystemId() + "-"
-									+ ga.getTargetArtifactId()
-									+ ga.getTargetRepositoryId() + "-"
-									+ ga.getTargetSystemId()
-									+ ". Changes are ignored.");
-
-					ga
-							.setArtifactAction(GenericArtifact.ArtifactActionValue.IGNORE);
-				} else if (conflictResolutionPriority
-						.equals(GenericArtifact.VALUE_CONFLICT_RESOLUTION_PRIORITY_QUARANTINE_ARTIFACT)) {
-					String message = "Conflict detected for artifact combination"
-							+ ga.getSourceArtifactId()
-							+ "-"
-							+ ga.getSourceRepositoryId()
-							+ "-"
-							+ ga.getSourceSystemId()
-							+ "-"
-							+ ga.getTargetArtifactId()
-							+ ga.getTargetRepositoryId()
-							+ "-"
-							+ ga.getTargetSystemId();
-
-					logConflictResolutor.warn(message
-							+ ". Artifact is quarantined in hospital.");
-
-					XPathUtils.addAttribute(data.getRootElement(),
-							GenericArtifactHelper.ERROR_CODE,
-							GenericArtifact.ERROR_CONFLICT_DETECTED);
-					throw new CCFRuntimeException(message);
-				} else {
-					String message = "Conflict detected for artifact combination"
-							+ ga.getSourceArtifactId()
-							+ "-"
-							+ ga.getSourceRepositoryId()
-							+ "-"
-							+ ga.getSourceSystemId()
-							+ "-"
-							+ ga.getTargetArtifactId()
-							+ ga.getTargetRepositoryId()
-							+ "-"
-							+ ga.getTargetSystemId();
-
-					logConflictResolutor
-							.warn(message
-									+ ". Since conflict resolution priority "
-									+ conflictResolutionPriority
-									+ " is unknown, the artifact is quarantined in the hospital.");
-
-					XPathUtils.addAttribute(data.getRootElement(),
-							GenericArtifactHelper.ERROR_CODE,
-							GenericArtifact.ERROR_CONFLICT_DETECTED);
-					throw new CCFRuntimeException(message);
-
-				}
-			}
+			result = this.updateArtifact(ga, tracker,connection);
 		} catch (NumberFormatException e) {
-			log.error("Wrong data format of attribute for artifact "
-					+ data.asXML(), e);
-			return null;
+			String cause = "Number format exception while trying to extract the field data.";
+			log.error(cause, e);
+			XPathUtils.addAttribute(data.getRootElement(),
+					GenericArtifactHelper.ERROR_CODE,
+					GenericArtifact.ERROR_GENERIC_ARTIFACT_PARSING);
+			throw new CCFRuntimeException(cause, e);
 		} finally {
 			disconnect(connection);
 		}
+		
+		// otherwise a conflict has happened and the generic artifact has been already prepared
 		if (result != null) {
 			this.populateTargetArtifactAttributes(ga, result);
-		} else {
-			// conflict detected
-			ga.setArtifactAction(GenericArtifact.ArtifactActionValue.IGNORE);
 		}
 		return this.returnDocument(ga);
 	}
@@ -437,8 +376,7 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 	 * @param connection
 	 * @return - returns the updated artifact's ArtifactSoapDO object
 	 */
-	private ArtifactSoapDO updateArtifact(GenericArtifact ga, String tracker,
-			String conflictResolutionPriority, Connection connection) {
+	private ArtifactSoapDO updateArtifact(GenericArtifact ga, String tracker, Connection connection) {
 		String id = ga.getTargetArtifactId();
 		ArrayList<String> flexFieldNames = new ArrayList<String>();
 		ArrayList<String> flexFieldTypes = new ArrayList<String>();
@@ -498,31 +436,12 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 		String[] comments = this.getComments(ga);
 		ArtifactSoapDO result = null;
 		try {
-			result = trackerHandler
-					.updateArtifact(
-							connection.getSessionId(),
-							folderId,
-							description,
-							category,
-							group,
-							status,
-							statusClass,
-							customer,
-							priority,
-							estimatedHours,
-							actualHours,
-							closeDate,
-							assignedTo,
-							reportedReleaseId,
-							resolvedReleaseId,
-							flexFieldNames,
-							flexFieldValues,
-							flexFieldTypes,
-							title,
-							id,
-							comments,
-							conflictResolutionPriority
-									.equals(GenericArtifact.VALUE_CONFLICT_RESOLUTION_PRIORITY_ALWAYS_OVERRIDE));
+			result = trackerHandler.updateArtifact(ga, connection
+					.getSessionId(), folderId, description, category, group,
+					status, statusClass, customer, priority, estimatedHours,
+					actualHours, closeDate, assignedTo, reportedReleaseId,
+					resolvedReleaseId, flexFieldNames, flexFieldValues,
+					flexFieldTypes, title, id, comments);
 
 		} catch (RemoteException e) {
 			String cause = "While trying to update an artifact within SFEE, an error occured";
@@ -540,9 +459,10 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 		String targetRepositoryKind = ga.getTargetRepositoryKind();
 		Connection connection;
 		try {
-			if (ga.getArtifactType().equals(GenericArtifact.ArtifactTypeValue.ATTACHMENT)
+			if (ga.getArtifactType().equals(
+					GenericArtifact.ArtifactTypeValue.ATTACHMENT)
 					|| (!ga.getArtifactAction().equals(
-					GenericArtifact.ArtifactActionValue.CREATE))
+							GenericArtifact.ArtifactActionValue.CREATE))
 					|| getResyncUserName() == null) {
 				connection = connect(targetSystemId, targetSystemKind,
 						targetRepositoryId, targetRepositoryKind, serverUrl,
@@ -729,38 +649,6 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 	@Override
 	public Document deleteDependency(Document gaDocument) {
 		throw new CCFRuntimeException("deleteDependency is not implemented...!");
-	}
-
-	@Override
-	public int getArtifactVersion(Document data) {
-		GenericArtifact ga = null;
-		try {
-			ga = GenericArtifactHelper.createGenericArtifactJavaObject(data);
-		} catch (GenericArtifactParsingException e) {
-			String cause = "Problem occured while parsing the GenericArtifact into Document";
-			log.error(cause, e);
-			XPathUtils.addAttribute(data.getRootElement(),
-					GenericArtifactHelper.ERROR_CODE,
-					GenericArtifact.ERROR_GENERIC_ARTIFACT_PARSING);
-			throw new CCFRuntimeException(cause, e);
-		}
-		this.initializeArtifact(ga);
-		String targetArtifactId = ga.getTargetArtifactId();
-		Connection connection = connect(ga);
-		ArtifactSoapDO currentTargetArtifact = null;
-		try {
-			currentTargetArtifact = trackerHandler.getTrackerItem(connection
-					.getSessionId(), targetArtifactId);
-		} catch (RemoteException e) {
-			String cause = "While trying to get the current target artifact (before updating), an error occured";
-			log.error(cause, e);
-			ga.setErrorCode(GenericArtifact.ERROR_EXTERNAL_SYSTEM_CONNECTION);
-			throw new CCFRuntimeException(cause, e);
-		} finally {
-			disconnect(connection);
-		}
-		int currentAritfactVersion = currentTargetArtifact.getVersion();
-		return currentAritfactVersion;
 	}
 
 	@Override

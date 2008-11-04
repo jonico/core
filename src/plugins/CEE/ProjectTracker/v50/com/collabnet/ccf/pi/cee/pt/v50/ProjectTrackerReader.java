@@ -131,7 +131,7 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 		int version = 0;
 		try {
 			twsclient = this.getConnection(syncInfo);
-			ArtifactHistoryList ahl = this.artifactHistoryList.get();
+			ArtifactHistoryList ahl = artifactHistoryList.get();
 			History historyList[] = null;
 			if(ahl != null) historyList = ahl.getHistory();
 			if(historyList != null)
@@ -302,7 +302,7 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 			throw new CCFRuntimeException(message,e);
 		}
 		finally {
-			this.artifactHistoryList.set(null);
+			artifactHistoryList.set(null);
 			this.attahcmentIDNameMap = null;
 			getConnectionManager().releaseConnection(twsclient);
 		}
@@ -494,7 +494,7 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 						ArtifactHistoryList ahlVersion = 
 							twsclient.getChangeHistoryForArtifact(artifactIdentifier,
 									createdOnTime, toTime);
-						this.artifactHistoryList.set(ahlVersion);
+						artifactHistoryList.set(ahlVersion);
 						History[] historyList = ahlVersion.getHistory();
 						if(historyList != null && historyList.length == 1){
 							History history = historyList[0];

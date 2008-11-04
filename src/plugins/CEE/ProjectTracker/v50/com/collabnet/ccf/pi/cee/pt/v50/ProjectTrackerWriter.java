@@ -3,8 +3,6 @@ package com.collabnet.ccf.pi.cee.pt.v50;
 import java.rmi.RemoteException;
 import java.text.ParseException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashSet;
@@ -18,7 +16,6 @@ import javax.xml.rpc.ServiceException;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.lang.time.DateUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dom4j.Document;
@@ -34,7 +31,6 @@ import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
-import com.collabnet.ccf.core.ga.GenericArtifact.ArtifactTypeValue;
 import com.collabnet.ccf.core.ga.GenericArtifactField.FieldValueTypeValue;
 import com.collabnet.ccf.core.utils.DateUtil;
 import com.collabnet.core.ws.exception.WSException;
@@ -144,7 +140,12 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 		connectionManager.releaseConnection(twsclient);
 	}
 
-	private GenericArtifact updateProjectTrackerArtifact(GenericArtifact ga, String conflictResolutionPriority) {
+	/**
+	 * Update the artifact and do conflict resolution
+	 * @param ga generic artifact that was passed to update method
+	 * @return updated artifact or null if conflict resolution has decided not to update the artifact
+	 */
+	private GenericArtifact updateProjectTrackerArtifact(GenericArtifact ga) {
 		String targetArtifactId = ga.getTargetArtifactId();
 		String targetArtifactTypeNameSpace =
 			ptHelper.getArtifactTypeNamespaceFromFullyQualifiedArtifactId(targetArtifactId);
@@ -153,7 +154,6 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 		TrackerWebServicesClient twsclient = this.getConnection(ga);
 		String artifactId = ptHelper.getArtifactIdFromFullyQualifiedArtifactId(targetArtifactId);
 		try {
-			// TODO Consider forceOverride flag
 			List<ClientArtifact> cla = null;
 			cla = new ArrayList<ClientArtifact>();
 			ClientArtifactListXMLHelper currentArtifactHelper = twsclient.getArtifactById(artifactId);
@@ -161,21 +161,42 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 			ClientArtifact ca = this.getClientArtifactFromGenericArtifact(ga, twsclient,
 					targetArtifactTypeNameSpace, targetArtifactTypeTagName, currentArtifact);
 			cla.add(ca);
+			
+			// we need these fields to retrieve the version we like to modify
+			String modifiedOn = currentArtifact.getAttributeValue(
+					ProjectTrackerReader.TRACKER_NAMESPACE, ProjectTrackerReader.MODIFIED_ON_FIELD);
+			Date modifiedOnDate = new Date(Long.parseLong(modifiedOn));
+			ga.setTargetArtifactLastModifiedDate(DateUtil.format(modifiedOnDate));
+			//String createdOn = artifact.getAttributeValue(
+			//		ProjectTrackerReader.TRACKER_NAMESPACE, ProjectTrackerReader.CREATED_ON_FIELD);
+			int version = this.getArtifactVersion(targetArtifactId, new Date(0).getTime(),
+					modifiedOnDate.getTime()+1, twsclient);
+			
+			// now do conflict resolution
+			if (!AbstractWriter.handleConflicts(version, ga)) {
+				return null;
+			}
+			
+			// FIXME This is not atomic
 			ClientArtifactListXMLHelper artifactHelper = twsclient.updateArtifactList(cla);
+			
 			ptHelper.processWSErrors(artifactHelper);
 			log.info("Artifact "+targetArtifactId+" updated successfully with the changes from "+ga.getSourceArtifactId());
 			List<ClientArtifact> artifacts = artifactHelper.getAllArtifacts();
 			if(artifacts.size() == 1){
+				// FIXME This is not atomic too, what happened if the artifact has been changed again
 				ClientArtifact artifact = artifacts.get(0);
 				ga.setTargetArtifactId("{"+targetArtifactTypeNameSpace+"}"
 						+targetArtifactTypeTagName+":"+artifact.getArtifactID());
-				String modifiedOn = artifact.getAttributeValue(
+				
+				// now we have to retrieve the artifact version again
+				modifiedOn = artifact.getAttributeValue(
 						ProjectTrackerReader.TRACKER_NAMESPACE, ProjectTrackerReader.MODIFIED_ON_FIELD);
-				Date modifiedOnDate = new Date(Long.parseLong(modifiedOn));
+				modifiedOnDate = new Date(Long.parseLong(modifiedOn));
 				ga.setTargetArtifactLastModifiedDate(DateUtil.format(modifiedOnDate));
 				//String createdOn = artifact.getAttributeValue(
 				//		ProjectTrackerReader.TRACKER_NAMESPACE, ProjectTrackerReader.CREATED_ON_FIELD);
-				int version = this.getArtifactVersion(targetArtifactId, new Date(0).getTime(),
+				version = this.getArtifactVersion(targetArtifactId, new Date(0).getTime(),
 						modifiedOnDate.getTime()+1, twsclient);
 				ga.setTargetArtifactVersion(Integer.toString(version));
 			}
@@ -718,7 +739,7 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 		return null;
 	}
 
-	@Override
+	/*@Override
 	public int getArtifactVersion(Document gaDocument) {
 		GenericArtifact ga = this.getGenericArtifact(gaDocument);
 		String targetArtifactId = ga.getTargetArtifactId();
@@ -737,14 +758,20 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 			}
 		}
 		return version;
-	}
+	}*/
 
 	@Override
-	public Document updateArtifact(Document gaDocument, String conflictResolutionPriority) {
+	public Document updateArtifact(Document gaDocument) {
 		// TODO Consider forceOverride value
 		GenericArtifact ga = this.getGenericArtifact(gaDocument);
-		ga = this.updateProjectTrackerArtifact(ga, conflictResolutionPriority);
-		return this.returnGenericArtifactDocument(ga);
+		GenericArtifact result = this.updateProjectTrackerArtifact(ga);
+		// a conflict has happened so we return the modified original document
+		if (result == null) {
+			return this.returnGenericArtifactDocument(ga);
+		}
+		else {
+			return this.returnGenericArtifactDocument(result);
+		}
 	}
 
 	@Override

@@ -10,6 +10,7 @@ import java.util.List;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.collabnet.ccf.core.AbstractWriter;
 import com.collabnet.ccf.core.eis.connection.ConnectionManager;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.vasoftware.sf.soap44.types.SoapFieldValues;
@@ -322,21 +323,41 @@ public class SFEETrackerHandler {
 	}
 
 	/**
-	 * Updates an artifact.
-	 * 
+	 * Updates the artifact if conflict resolution priority allows it
+	 * @param ga generic artifact passed to the update method
+	 * @param sessionId
+	 * @param trackerId
+	 * @param description
+	 * @param category
+	 * @param group
+	 * @param status
+	 * @param statusClass
+	 * @param customer
+	 * @param priority
+	 * @param estimatedHours
+	 * @param actualHours
+	 * @param closeDate
+	 * @param assignedTo
+	 * @param reportedReleaseId
+	 * @param resolvedReleaseId
+	 * @param flexFieldNames
+	 * @param flexFieldValues
+	 * @param flexFieldTypes
+	 * @param title
+	 * @param Id
+	 * @param comments
+	 * @param conflictResolutionPriority
+	 * @return updated artifact or null if conflict resolution has decided not to update the artifact
 	 * @throws RemoteException
-	 *             when an error is encountered in creating the artifact.
-	 * @return the Updated artifact's ArtifactSoapDO object
 	 */
-	public ArtifactSoapDO updateArtifact(String sessionId, String trackerId,
+	public ArtifactSoapDO updateArtifact(GenericArtifact ga, String sessionId, String trackerId,
 			String description, String category, String group, String status,
 			String statusClass, String customer, int priority,
 			int estimatedHours, int actualHours, Date closeDate,
 			String assignedTo, String reportedReleaseId,
 			String resolvedReleaseId, List<String> flexFieldNames,
 			List<Object> flexFieldValues, List<String> flexFieldTypes,
-			String title, String Id, String[] comments,
-			boolean forceOverride)
+			String title, String Id, String[] comments)
 			throws RemoteException {
 		
 		boolean mainArtifactNotUpdated = true;
@@ -345,6 +366,10 @@ public class SFEETrackerHandler {
 			try {
 				mainArtifactNotUpdated = false;
 				artifactData = mTrackerApp.getArtifactData(sessionId, Id);
+				// do conflict resolution 
+				if (!AbstractWriter.handleConflicts(artifactData.getVersion(), ga)) {
+					return null;
+				}
 				SoapFieldValues flexFields = new SoapFieldValues();
 				flexFields.setNames(flexFieldNames.toArray(new String[0]));
 				flexFields.setValues(flexFieldValues.toArray());
@@ -369,17 +394,8 @@ public class SFEETrackerHandler {
 				mTrackerApp.setArtifactData(sessionId, artifactData, "Synchronized by Connector User", null,
 						null, null);
 			} catch (com.vasoftware.sf.soap44.fault.VersionMismatchFault e) {
-				if (forceOverride) {
 					logConflictResolutor.warn("Stale update for SFEE tracker item "+ Id +" in tracker "+trackerId+". Trying again ...", e);
 					mainArtifactNotUpdated = true;
-				}
-				else {
-					
-					logConflictResolutor
-					.warn("Seems as if our copy of the artifact is too old to override a change for artifact with id: "
-							+ Id+ " in tracker " + trackerId);
-					return null;	
-				}
 			}
 		}
 		// increase version number for comment updates

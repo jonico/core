@@ -77,9 +77,9 @@ public abstract class AbstractWriter<T> extends LifecycleComponent implements
 						throw new CCFRuntimeException(message);
 					}
 				} else if (artifactAction
-						.equals(GenericArtifactHelper.ARTIFACT_ACTION_UPDATE) ||
-						artifactAction
-						.equals(GenericArtifactHelper.ARTIFACT_ACTION_RESYNC)) {
+						.equals(GenericArtifactHelper.ARTIFACT_ACTION_UPDATE)
+						|| artifactAction
+								.equals(GenericArtifactHelper.ARTIFACT_ACTION_RESYNC)) {
 					if (artifactType
 							.equals(GenericArtifactHelper.ARTIFACT_TYPE_PLAIN_ARTIFACT)) {
 						gaDocument = this.handleArtifactUpdate(gaDocument);
@@ -202,142 +202,119 @@ public abstract class AbstractWriter<T> extends LifecycleComponent implements
 	public abstract Document updateAttachment(Document gaDocument);
 
 	private Document handleArtifactUpdate(Document gaDocument) {
-		int artifactCurrentVersion = this.getArtifactVersion(gaDocument);
-		int lastSyncVersion = -1;
-		try {
-			Element element = XPathUtils.getRootElement(gaDocument);
-			String targetArtifactId = XPathUtils.getAttributeValue(element,
-					GenericArtifactHelper.TARGET_ARTIFACT_ID);
-			String lastSyncVersionStr = XPathUtils.getAttributeValue(element,
-					GenericArtifactHelper.TARGET_ARTIFACT_VERSION);
-			if (lastSyncVersionStr == null
-					|| lastSyncVersionStr
-							.equalsIgnoreCase(GenericArtifact.VALUE_UNKNOWN)) {
-				lastSyncVersionStr = GenericArtifactHelper.ARTIFACT_VERSION_FORCE_RESYNC;
-			}
-			try {
-				lastSyncVersion = Integer.parseInt(lastSyncVersionStr);
-			} catch (NumberFormatException e) {
-				String message = "Last successful synchronization version of artifact "
-						+ targetArtifactId
-						+ " is not a number "
-						+ lastSyncVersionStr;
-				log.error(message, e);
-				throw new CCFRuntimeException(message, e);
-			}
-			String conflictResolutionPriority = XPathUtils
-					.getAttributeValue(element,
-							GenericArtifactHelper.CONFLICT_RESOLUTION_PRIORITY);
-
-			if (lastSyncVersion < artifactCurrentVersion) {
-				String sourceArtifactId = XPathUtils.getAttributeValue(element,
-						GenericArtifactHelper.SOURCE_ARTIFACT_ID);
-				String sourceSystemId = XPathUtils.getAttributeValue(element,
-						GenericArtifactHelper.SOURCE_SYSTEM_ID);
-				String sourceRepositoryId = XPathUtils.getAttributeValue(
-						element, GenericArtifactHelper.SOURCE_REPOSITORY_ID);
-				String targetSystemId = XPathUtils.getAttributeValue(element,
-						GenericArtifactHelper.TARGET_SYSTEM_ID);
-				String targetRepositoryId = XPathUtils.getAttributeValue(
-						element, GenericArtifactHelper.TARGET_REPOSITORY_ID);
-
-				if (conflictResolutionPriority
-						.equals(GenericArtifact.VALUE_CONFLICT_RESOLUTION_PRIORITY_ALWAYS_IGNORE)) {
-					logConflictResolutor
-							.warn("Conflict detected for artifact combination"
-									+ sourceArtifactId + "-"
-									+ sourceRepositoryId + "-" + sourceSystemId
-									+ "-" + targetArtifactId
-									+ targetRepositoryId + "-" + targetSystemId
-									+ ". Changes are ignored.");
-
-					XPathUtils.addAttribute(element,
-							GenericArtifactHelper.ARTIFACT_ACTION,
-							GenericArtifactHelper.ARTIFACT_ACTION_IGNORE);
-
-				} else if (conflictResolutionPriority
-						.equals(GenericArtifact.VALUE_CONFLICT_RESOLUTION_PRIORITY_QUARANTINE_ARTIFACT)) {
-					String message = "Conflict detected for artifact combination"
-							+ sourceArtifactId
-							+ "-"
-							+ sourceRepositoryId
-							+ "-"
-							+ sourceSystemId
-							+ "-"
-							+ targetArtifactId
-							+ targetRepositoryId + "-" + targetSystemId;
-
-					logConflictResolutor.warn(message
-							+ ". Artifact is quarantined in hospital.");
-
-					XPathUtils.addAttribute(gaDocument.getRootElement(),
-							GenericArtifactHelper.ERROR_CODE,
-							GenericArtifact.ERROR_CONFLICT_DETECTED);
-					throw new CCFRuntimeException(message);
-				} else if ((conflictResolutionPriority
-						.equals(GenericArtifact.VALUE_CONFLICT_RESOLUTION_PRIORITY_ALWAYS_OVERRIDE))) {
-					logConflictResolutor
-							.warn("Conflict detected for artifact combination"
-									+ sourceArtifactId + "-"
-									+ sourceRepositoryId + "-" + sourceSystemId
-									+ "-" + targetArtifactId
-									+ targetRepositoryId + "-" + targetSystemId
-									+ ". Changes are overridden.");
-
-					gaDocument = this.updateArtifact(gaDocument,
-							conflictResolutionPriority);
-				} else {
-					String message = "Conflict detected for artifact combination"
-							+ sourceArtifactId
-							+ "-"
-							+ sourceRepositoryId
-							+ "-"
-							+ sourceSystemId
-							+ "-"
-							+ targetArtifactId
-							+ targetRepositoryId + "-" + targetSystemId;
-
-					logConflictResolutor
-							.warn(message
-									+ ". Since conflict resolution priority "
-									+ conflictResolutionPriority
-									+ " is unknown, the artifact is quarantined in the hospital.");
-
-					XPathUtils.addAttribute(gaDocument.getRootElement(),
-							GenericArtifactHelper.ERROR_CODE,
-							GenericArtifact.ERROR_CONFLICT_DETECTED);
-					throw new CCFRuntimeException(message);
-				}
-			} else {
-				gaDocument = this.updateArtifact(gaDocument,
-						conflictResolutionPriority);
-			}
-		} catch (GenericArtifactParsingException e) {
-			String cause = "Problem occured while parsing the XML document to extract top-level attributes";
-			log.error(cause, e);
-			XPathUtils.addAttribute(gaDocument.getRootElement(),
-					GenericArtifactHelper.ERROR_CODE,
-					GenericArtifact.ERROR_GENERIC_ARTIFACT_PARSING);
-			throw new CCFRuntimeException(cause, e);
-		}
-		return gaDocument;
+			return this.updateArtifact(gaDocument);
 	}
 
 	/**
-	 * Updates the artifact. The conflict detection and resolution has been
-	 * already implemented in the Abstract writer. However, if concurrent
-	 * updates happen the conflict resolution priority is needed again. Every
-	 * writer component has to implement concurrent access detection and
-	 * conflict resolution for this scenario by itself.
+	 * This method should be called by every writer when the version of the
+	 * target artifact that should be updated is known It will return true if it
+	 * was able to solve the conflicts or no conflict has been detected. If it
+	 * returns false, the update must not happen but the generic artifact passed
+	 * to this method will be changed and has to be serialized to XML as return
+	 * value of the update method. It may also happen that this method throws a
+	 * CCFRuntimeException to quarantine an artifact.
 	 * 
+	 * @param artifactCurrentVersion
+	 *            version of the target artifact, the update method likes to
+	 *            change
 	 * @param gaDocument
-	 * @param conflictResolutionPriority
+	 *            document passed to the update method
+	 * @return true if update can happen, false if update must not happen and
+	 *         modified generic artifact has to be returned
+	 */
+	public static boolean handleConflicts(int artifactCurrentVersion,
+			GenericArtifact gaDocument) {
+		int lastSyncVersion = -1;
+		String targetArtifactId = gaDocument.getTargetArtifactId();
+		String lastSyncVersionStr = gaDocument.getTargetArtifactVersion();
+		if (lastSyncVersionStr == null
+				|| lastSyncVersionStr
+						.equalsIgnoreCase(GenericArtifact.VALUE_UNKNOWN)) {
+			lastSyncVersionStr = GenericArtifactHelper.ARTIFACT_VERSION_FORCE_RESYNC;
+		}
+		try {
+			lastSyncVersion = Integer.parseInt(lastSyncVersionStr);
+		} catch (NumberFormatException e) {
+			String message = "Last successful synchronization version of artifact "
+					+ targetArtifactId
+					+ " is not a number "
+					+ lastSyncVersionStr;
+			log.error(message, e);
+			throw new CCFRuntimeException(message, e);
+		}
+		String conflictResolutionPriority = gaDocument
+				.getConflictResolutionPriority();
+
+		if (lastSyncVersion < artifactCurrentVersion) {
+			String sourceArtifactId = gaDocument.getSourceArtifactId();
+			String sourceSystemId = gaDocument.getSourceSystemId();
+			String sourceRepositoryId = gaDocument.getSourceRepositoryId();
+			String targetSystemId = gaDocument.getTargetSystemId();
+			String targetRepositoryId = gaDocument.getTargetRepositoryId();
+
+			if (conflictResolutionPriority
+					.equals(GenericArtifact.VALUE_CONFLICT_RESOLUTION_PRIORITY_ALWAYS_IGNORE)) {
+				logConflictResolutor
+						.warn("Conflict detected for artifact combination"
+								+ sourceArtifactId + "-" + sourceRepositoryId
+								+ "-" + sourceSystemId + "-" + targetArtifactId
+								+ targetRepositoryId + "-" + targetSystemId
+								+ ". Changes are ignored.");
+
+				gaDocument
+						.setArtifactAction(GenericArtifact.ArtifactActionValue.IGNORE);
+				return false;
+			} else if (conflictResolutionPriority
+					.equals(GenericArtifact.VALUE_CONFLICT_RESOLUTION_PRIORITY_QUARANTINE_ARTIFACT)) {
+				String message = "Conflict detected for artifact combination"
+						+ sourceArtifactId + "-" + sourceRepositoryId + "-"
+						+ sourceSystemId + "-" + targetArtifactId
+						+ targetRepositoryId + "-" + targetSystemId;
+
+				logConflictResolutor.warn(message
+						+ ". Artifact is quarantined in hospital.");
+				gaDocument
+						.setErrorCode(GenericArtifact.ERROR_CONFLICT_DETECTED);
+				throw new CCFRuntimeException(message);
+			} else if ((conflictResolutionPriority
+					.equals(GenericArtifact.VALUE_CONFLICT_RESOLUTION_PRIORITY_ALWAYS_OVERRIDE))) {
+				logConflictResolutor
+						.warn("Conflict detected for artifact combination"
+								+ sourceArtifactId + "-" + sourceRepositoryId
+								+ "-" + sourceSystemId + "-" + targetArtifactId
+								+ targetRepositoryId + "-" + targetSystemId
+								+ ". Changes are overridden.");
+
+				return true;
+			} else {
+				String message = "Conflict detected for artifact combination"
+						+ sourceArtifactId + "-" + sourceRepositoryId + "-"
+						+ sourceSystemId + "-" + targetArtifactId
+						+ targetRepositoryId + "-" + targetSystemId;
+
+				logConflictResolutor
+						.warn(message
+								+ ". Since conflict resolution priority "
+								+ conflictResolutionPriority
+								+ " is unknown, the artifact is quarantined in the hospital.");
+
+				gaDocument
+						.setErrorCode(GenericArtifact.ERROR_CONFLICT_DETECTED);
+				throw new CCFRuntimeException(message);
+			}
+		} else {
+			return true;
+		}
+	}
+
+	/**
+	 * Updates the artifact. Do not forget to call
+	 * the conflict resolution method of this class
+	 * once the current version of the target artifact is known.
+	 * @param gaDocument
 	 * @return
 	 */
-	public abstract Document updateArtifact(Document gaDocument,
-			String conflictResolutionPriority);
-
-	public abstract int getArtifactVersion(Document gaDocument);
+	public abstract Document updateArtifact(Document gaDocument);
 
 	public abstract Document createDependency(Document gaDocument);
 
