@@ -166,7 +166,6 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 			String modifiedOn = currentArtifact.getAttributeValue(
 					ProjectTrackerReader.TRACKER_NAMESPACE, ProjectTrackerReader.MODIFIED_ON_FIELD);
 			Date modifiedOnDate = new Date(Long.parseLong(modifiedOn));
-			ga.setTargetArtifactLastModifiedDate(DateUtil.format(modifiedOnDate));
 			//String createdOn = artifact.getAttributeValue(
 			//		ProjectTrackerReader.TRACKER_NAMESPACE, ProjectTrackerReader.CREATED_ON_FIELD);
 			int version = this.getArtifactVersion(targetArtifactId, new Date(0).getTime(),
@@ -174,7 +173,7 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 			
 			// now do conflict resolution
 			if (!AbstractWriter.handleConflicts(version, ga)) {
-				return null;
+				return ga;
 			}
 			
 			// FIXME This is not atomic
@@ -762,16 +761,8 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 
 	@Override
 	public Document updateArtifact(Document gaDocument) {
-		// TODO Consider forceOverride value
 		GenericArtifact ga = this.getGenericArtifact(gaDocument);
-		GenericArtifact result = this.updateProjectTrackerArtifact(ga);
-		// a conflict has happened so we return the modified original document
-		if (result == null) {
-			return this.returnGenericArtifactDocument(ga);
-		}
-		else {
-			return this.returnGenericArtifactDocument(result);
-		}
+		return returnGenericArtifactDocument(updateProjectTrackerArtifact(ga));
 	}
 
 	@Override

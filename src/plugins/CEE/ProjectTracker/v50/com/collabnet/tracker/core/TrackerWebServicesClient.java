@@ -946,7 +946,7 @@ public class TrackerWebServicesClient {
 		
 		return aUrl.substring(prefixIndex, postfixIndex);
 	}
-	private void printDocument(Document doc){
+	/*private void printDocument(Document doc){
 		TransformerFactory tf = TransformerFactory.newInstance();
 		Transformer t;
 		try {
@@ -959,5 +959,5 @@ public class TrackerWebServicesClient {
 		} catch (TransformerException e) {
 			e.printStackTrace();
 		}
-	}
+	}*/
 }
