@@ -96,9 +96,7 @@ attachments), and when that happens, the source system should set this mode valu
 			</xs:attribute>
 			<xs:attribute name="artifactAction" use="required">
 				<xs:annotation>
-					<xs:documentation>This attribute defines if this artifact should be "create"d, "update"d, "delete"d or "ignore"d by the target system. As long the artifact has not yet passed the entity service (that may
-change the value), the value will typically be "create" or "delete", since the source system does not know whether the artifact has been already created in the target system. The four
-possible values of action are "create", "update", "delete", and "ignore".</xs:documentation>
+					<xs:documentation>This attribute defines if this artifact should be "create"d, "update"d, "delete"d, "resync"hed or "ignore"d by the target system. As long the artifact has not yet passed the entity service (that may change the value), the value will typically be "create" or "delete", since the source system does not know whether the artifact has been already created in the target system. The "resync" action is used to show that this artifact shipment is only done because an immediate resync after artifact creation was requested. The five possible values of action are "create", "update", "delete", "resync" and "ignore".</xs:documentation>
 				</xs:annotation>
 				<xs:simpleType>
 					<xs:restriction base="xs:string">
@@ -107,6 +105,7 @@ possible values of action are "create", "update", "delete", and "ignore".</xs:do
 						<xs:enumeration value="create"/>
 						<xs:enumeration value="resync"/>
 						<xs:enumeration value="ignore"/>
+						<xs:enumeration value="resync"/>
 					</xs:restriction>
 				</xs:simpleType>
 			</xs:attribute>
