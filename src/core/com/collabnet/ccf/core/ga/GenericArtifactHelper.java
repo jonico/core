@@ -2,6 +2,7 @@ package com.collabnet.ccf.core.ga;
 
 import java.text.DateFormat;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
@@ -40,8 +41,8 @@ import com.collabnet.ccf.core.utils.DateUtil;
  */
 public class GenericArtifactHelper {
 
-	public static final DateFormat df = DateFormat.getDateTimeInstance(
-			DateFormat.LONG, DateFormat.LONG, new Locale("en"));
+	public static final DateFormat df = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss.SSS Z");//DateFormat.getDateTimeInstance(
+			//DateFormat.FULL, DateFormat.FULL, new Locale("en"));
 	public static final String ARTIFACT_ROOT_ELEMENT_NAME = "artifact";
 	public static final String CCF_ARTIFACT_NAMESPACE = "http://ccf.open.collab.net/GenericArtifactV1.0";
 	public static final String CCF_NAMESPACE_PREFIX = "ccf";

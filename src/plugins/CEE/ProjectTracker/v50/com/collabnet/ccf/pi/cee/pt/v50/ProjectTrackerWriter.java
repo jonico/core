@@ -464,20 +464,50 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 
 	private void addAttribute(GenericArtifactField field, ClientArtifact ca,
 			TrackerAttribute trackerAttribute, String fullyQualifiedFieldTagName,
-			ArtifactTypeMetadata metadata, String targetSystemTimeZone) {
+			ArtifactTypeMetadata metadata, String targetSystemTimezone) {
 		String attributeNamespace =
 			ptHelper.getArtifactTypeNamespaceFromFullyQualifiedArtifactType(fullyQualifiedFieldTagName);
 		String attributeTagName =
 			ptHelper.getArtifactTypeTagNameFromFullyQualifiedArtifactType(fullyQualifiedFieldTagName);
 		Object fieldValue = field.getFieldValue();
-		if(fieldValue == null) return;
-		else if(fieldValue instanceof String) {
-			if(StringUtils.isEmpty((String)fieldValue)){
-//				return;
+
+		FieldValueTypeValue fieldType = field.getFieldValueType();
+		String attributeValue = convertAttributeValue(fieldType, fieldValue, targetSystemTimezone);
+		
+		if(trackerAttribute.getAttributeType().equals("MULTI_SELECT")){
+			ca.addAttributeValue(attributeNamespace, attributeTagName, null);
+			attributeValue = this.convertOptionValue(attributeNamespace, attributeTagName,
+					attributeValue, metadata, false);
+			
+		}
+		else if(trackerAttribute.getAttributeType().equals("SINGLE_SELECT")){
+			ca.addAttributeValue(attributeNamespace, attributeTagName, null);
+			attributeValue = this.convertOptionValue(attributeNamespace, attributeTagName,
+					attributeValue, metadata, false);
+		}
+		else if(trackerAttribute.getAttributeType().equals("STATE")){
+			ca.addAttributeValue(attributeNamespace, attributeTagName, null);
+			attributeValue = this.convertOptionValue(attributeNamespace, attributeTagName,
+					attributeValue, metadata, false);
+		}
+		else if(trackerAttribute.getAttributeType().equals("USER")){
+			ca.addAttributeValue(attributeNamespace, attributeTagName, null);
+		}
+		// INFO If this attribute is a DATE attribute then do not pass on null values to the web service
+		if(trackerAttribute.getAttributeType().equals("DATE")){
+			if(attributeValue != null) {
+				// INFO In case of a DATE attribute we set the value only when it is not null
+				ca.addAttributeValue(attributeNamespace, attributeTagName, attributeValue);
 			}
 		}
-		FieldValueTypeValue fieldType = field.getFieldValueType();
+		else {
+			ca.addAttributeValue(attributeNamespace, attributeTagName, attributeValue);
+		}
+	}
+	
+	private String convertAttributeValue(FieldValueTypeValue fieldType, Object fieldValue, String targetSystemTimezone){
 		String attributeValue = null;
+		if(fieldValue == null) return null;
 		if(fieldType == FieldValueTypeValue.STRING){
 			attributeValue = fieldValue.toString();
 		}
@@ -493,9 +523,9 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 		}
 		else if(fieldType == FieldValueTypeValue.DATETIME){
 			Date date = (Date) fieldValue;
-			if(!StringUtils.isEmpty(targetSystemTimeZone) && (!targetSystemTimeZone.equals(GenericArtifact.VALUE_UNKNOWN))){
+			if(!StringUtils.isEmpty(targetSystemTimezone) && (!targetSystemTimezone.equals(GenericArtifact.VALUE_UNKNOWN))){
 				try {
-					date = DateUtil.convertDate(date, targetSystemTimeZone);
+					date = DateUtil.convertDate(date, targetSystemTimezone);
 				} catch (ParseException e) {
 					//This will never happen
 				}
@@ -515,39 +545,12 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 		else if(fieldType == FieldValueTypeValue.USER){
 			attributeValue = fieldValue.toString();
 		}
-		if(trackerAttribute.getAttributeType().equals("MULTI_SELECT")){
-			ca.addAttributeValue(attributeNamespace, attributeTagName, null);
-			attributeValue = this.convertOptionValue(attributeNamespace, attributeTagName,
-					attributeValue, metadata, false);
-			
-		}
-		else if(trackerAttribute.getAttributeType().equals("SINGLE_SELECT")){
-			ca.addAttributeValue(attributeNamespace, attributeTagName, null);
-			attributeValue = this.convertOptionValue(attributeNamespace, attributeTagName,
-					attributeValue, metadata, false);
-		}
-		else if(trackerAttribute.getAttributeType().equals("STATE")){
-			attributeValue = this.convertOptionValue(attributeNamespace, attributeTagName,
-					attributeValue, metadata, true);
-			if(attributeValue != null){
-				ca.addAttributeValue(attributeNamespace, attributeTagName, null);
-			}
-		}
-		else if(trackerAttribute.getAttributeType().equals("USER")){
-			ca.addAttributeValue(attributeNamespace, attributeTagName, null);
-		}
-		if(trackerAttribute.getAttributeType().equals("STATE")){
-			if(attributeValue != null) {
-				ca.addAttributeValue(attributeNamespace, attributeTagName, attributeValue);
-			}
-		}
-		else {
-			ca.addAttributeValue(attributeNamespace, attributeTagName, attributeValue);
-		}
+		return attributeValue;
 	}
 	
 	private String convertOptionValue(String attributeNamespace, String attributeTagName,
 			String attributeValue, ArtifactTypeMetadata metadata, boolean stateField){
+		if(StringUtils.isEmpty(attributeValue)) return null;
 		String optionValue = null;
 		for(Attribute att:metadata.getAttribute()){
 			String namespace = att.getNamespace();
@@ -724,12 +727,41 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 
 	@Override
 	public Document deleteAttachment(Document gaDocument) {
-//		GenericArtifact ga = this.getGenericArtifact(gaDocument);
-//		String targetArtifactId = ga.getTargetArtifactId();
-//		TrackerWebServicesClient twsclient = null;
-//		int version = 0;
-//		twsclient = this.getConnection(ga);
-		return null;
+		GenericArtifact ga = this.getGenericArtifact(gaDocument);
+		String attachmentIdStr = ga.getTargetArtifactId();
+		String fullyQualifiedArtifactId = ga.getDepParentTargetArtifactId();
+		String artifactId = ptHelper.getArtifactIdFromFullyQualifiedArtifactId(fullyQualifiedArtifactId);
+		TrackerWebServicesClient twsclient = null;
+		int attachmentId = Integer.parseInt(attachmentIdStr);
+		//int version = 0;
+		twsclient = this.getConnection(ga);
+		try {
+			twsclient.removeAttachment(artifactId, attachmentId);
+		}catch (WSException e) {
+			String message = "WSException while deleting attachment "+attachmentIdStr+" of artifact " + fullyQualifiedArtifactId;
+			log.error(message, e);
+			throw new CCFRuntimeException(message, e);
+		} catch (RemoteException e) {
+			String message = "RemoteException while deleting attachment "+attachmentIdStr+" of artifact " + fullyQualifiedArtifactId;
+			log.error(message, e);
+			throw new CCFRuntimeException(message, e);
+		} catch (ServiceException e) {
+			String message = "ServiceException while deleting attachment "+attachmentIdStr+" of artifact " + fullyQualifiedArtifactId;
+			log.error(message, e);
+			throw new CCFRuntimeException(message, e);
+		}
+		Date now = new Date();
+		ga.setTargetArtifactLastModifiedDate(DateUtil.format(now));
+		int version = 1;
+		try {
+			version = this.getArtifactVersion(fullyQualifiedArtifactId, new Date(0).getTime(),
+					now.getTime(), twsclient);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		ga.setTargetArtifactVersion(Integer.toString(version));
+		return this.returnGenericArtifactDocument(ga);
 	}
 
 	@Override

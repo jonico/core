@@ -3,6 +3,7 @@ package com.collabnet.tracker.core;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringReader;
+import java.io.StringWriter;
 import java.net.MalformedURLException;
 import java.net.Proxy;
 import java.net.URL;
@@ -25,11 +26,19 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.rpc.ServiceException;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 
 import org.apache.axis.AxisFault;
 import org.apache.axis.EngineConfiguration;
 import org.apache.axis.message.MessageElement;
 import org.apache.commons.lang.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.w3c.dom.DOMImplementation;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -81,7 +90,7 @@ import com.collabnet.tracker.ws.query.QueryManagerServiceLocator;
  * 
  */
 public class TrackerWebServicesClient {
-
+	private static final Log log = LogFactory.getLog(TrackerWebServicesClient.class);
 	public static final String ISSUE_URL = "/servlets/Scarab?id=";
 
 	public static final String NEW_ISSUE_URL = "/servlets/Scarab/action/CreateArtifact";
@@ -253,7 +262,9 @@ public class TrackerWebServicesClient {
 					else {
 						// TODO: consider the namespace of the attributes?
 						//attributeNode.setNodeValue(values.get(0));
-						attributeNode.appendChild(doc.createTextNode(values.get(0)));
+						String value = values.get(0);
+						if(value == null) value = "";
+						attributeNode.appendChild(doc.createTextNode(value));
 					}
 					artifactNode.appendChild(attributeNode);
 				}
@@ -276,13 +287,15 @@ public class TrackerWebServicesClient {
 		sendMail.appendChild(doc.createTextNode("true"));
 		root.appendChild(sendMail);
 
-//		this.printDocument(doc);
+		if(log.isDebugEnabled())
+			this.printDocument(doc);
 
-		//Request req = toRequest(doc);
-		//String reqString = req.toString();
+		Request req = toRequest(doc);
+		String reqString = req.toString();
 		Response r = theService.execute(toRequest(doc));
 		Document result = toDocument(r);
-//		this.printDocument(result);
+		if(log.isDebugEnabled())
+			this.printDocument(result);
 		ClientArtifactListXMLHelper helper = new ClientArtifactListXMLHelper(result);
 		return helper;
 	}
@@ -939,18 +952,18 @@ public class TrackerWebServicesClient {
 		
 		return aUrl.substring(prefixIndex, postfixIndex);
 	}
-	/*private void printDocument(Document doc){
+	private void printDocument(Document doc){
 		TransformerFactory tf = TransformerFactory.newInstance();
 		Transformer t;
 		try {
 			t = tf.newTransformer();
 			StringWriter sw = new StringWriter();
 			t.transform( new DOMSource(doc), new StreamResult(sw));
-			System.out.println(sw.toString());
+			log.debug(sw.toString());
 		} catch (TransformerConfigurationException e) {
 			e.printStackTrace();
 		} catch (TransformerException e) {
 			e.printStackTrace();
 		}
-	}*/
+	}
 }

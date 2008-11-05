@@ -17,6 +17,7 @@ public class DateUtil {
 	private static final DateFormat dateFormat = GenericArtifactHelper.df;
 	private static final SimpleDateFormat qcDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 	private static final Log log = LogFactory.getLog(DateUtil.class);
+	public static final String GMT_TIME_ZONE_STRING = "GMT";
 	
 	/**
 	 * Parses the QC specific date string into java.util.Date
@@ -90,5 +91,44 @@ public class DateUtil {
 		DateFormat df = new SimpleDateFormat("EEE, d MMM yyyy HH:mm:ss.SSS Z");
 		df.setCalendar(cal);
 		return df.parse(df.format(cal.getTime()));
+	}
+	
+	public static boolean isAbsoluteDateInTimezone(Date date, String timeZone){
+		Calendar cal = new GregorianCalendar(TimeZone.getTimeZone(timeZone));
+		cal.setLenient(false);
+		cal.setTime(date);
+		int hour = cal.get(Calendar.HOUR_OF_DAY);
+		int minutes = cal.get(Calendar.MINUTE);
+		int seconds = cal.get(Calendar.SECOND);
+		int milliseconds = cal.get(Calendar.MILLISECOND);
+		if(hour ==0 && minutes == 0 && seconds == 0 && milliseconds == 0){
+			return true;
+		}
+		else {
+			return false;
+		}
+	}
+
+	public static Date convertToGMTAbsoluteDate(Date dateValue,
+			String sourceSystemTimezone) {
+		Calendar cal = new GregorianCalendar(TimeZone.getTimeZone(sourceSystemTimezone));
+		cal.setLenient(false);
+		cal.setTime(dateValue);
+		Calendar newCal = new GregorianCalendar(TimeZone.getTimeZone(GMT_TIME_ZONE_STRING));
+		newCal.set(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH),0,0,0);
+		newCal.set(Calendar.MILLISECOND, 0);
+		Date returnDate = newCal.getTime();
+		return returnDate;
+	}
+	public static Date convertGMTToTimezoneAbsoluteDate(Date dateValue,
+			String sourceSystemTimezone) {
+		Calendar cal = new GregorianCalendar(TimeZone.getTimeZone(GMT_TIME_ZONE_STRING));
+		cal.setLenient(false);
+		cal.setTime(dateValue);
+		Calendar newCal = new GregorianCalendar(TimeZone.getTimeZone(sourceSystemTimezone));
+		newCal.set(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH),0,0,0);
+		newCal.set(Calendar.MILLISECOND, 0);
+		Date returnDate = newCal.getTime();
+		return returnDate;
 	}
 }

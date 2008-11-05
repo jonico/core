@@ -2,6 +2,7 @@ package com.collabnet.ccf.pi.cee.pt.v50;
 
 import java.io.InputStream;
 import java.rmi.RemoteException;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -131,7 +132,7 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 		int version = 0;
 		try {
 			twsclient = this.getConnection(syncInfo);
-			ArtifactHistoryList ahl = artifactHistoryList.get();
+			ArtifactHistoryList ahl = this.artifactHistoryList.get();
 			History historyList[] = null;
 			if(ahl != null) historyList = ahl.getHistory();
 			if(historyList != null)
@@ -302,7 +303,7 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 			throw new CCFRuntimeException(message,e);
 		}
 		finally {
-			artifactHistoryList.set(null);
+			this.artifactHistoryList.set(null);
 			this.attahcmentIDNameMap = null;
 			getConnectionManager().releaseConnection(twsclient);
 		}
@@ -361,6 +362,7 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 		String artifactIdentifier = artifactId.substring(artifactId.lastIndexOf(":")+1);
 		String artifactTypeNamespace = trackerArtifactType.getNamespace();
 		String artifactTypeTagName = trackerArtifactType.getTagName();
+		String sourceSystemTimezone = this.getSourceSystemTimezone(syncInfo);
 		Date lastModifiedDate = this.getLastModifiedDate(syncInfo);
 		long fromTime = lastModifiedDate.getTime();
 		long toTime = System.currentTimeMillis();
@@ -454,27 +456,45 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 				if(trackerAttribute.getAttributeType().equals("USER")){
 					field.setFieldValueType(GenericArtifactField.FieldValueTypeValue.USER);
 				}
-				if(trackerAttribute.getAttributeType().equals("DATE")
-						|| attributeName.equals(CREATED_ON_FIELD_NAME)
-						|| attributeName.equals(MODIFIED_ON_FIELD_NAME)){
-					field.setFieldValueType(GenericArtifactField.FieldValueTypeValue.DATE);
-				}
 				
 				if(trackerAttribute.getAttributeType().equals("MULTI_SELECT") || 
-						trackerAttribute.getAttributeType().equals("SINGLE_SELECT")||
-						trackerAttribute.getAttributeType().equals("STATE")){
+						trackerAttribute.getAttributeType().equals("SINGLE_SELECT")){
 					ArtifactTypeMetadata metadata = metadataHelper.getArtifactTypeMetadata(
 							this.getRepositoryKey(syncInfo), artifactTypeNamespace, artifactTypeTagName);
 					attValue = this.convertOptionValue(attributeNamespace, attributeTagName,
-							attValue, metadata);
+							attValue, metadata, false);
 				}
-				if(trackerAttribute.getAttributeType().equals("DATE")
-						|| attributeName.equals(CREATED_ON_FIELD_NAME)
+				else if(trackerAttribute.getAttributeType().equals("STATE")){
+					ArtifactTypeMetadata metadata = metadataHelper.getArtifactTypeMetadata(
+							this.getRepositoryKey(syncInfo), artifactTypeNamespace, artifactTypeTagName);
+					attValue = this.convertOptionValue(attributeNamespace, attributeTagName,
+							attValue, metadata, true);
+				}
+				if(attributeName.equals(CREATED_ON_FIELD_NAME)
 						|| attributeName.equals(MODIFIED_ON_FIELD_NAME)){
+					field.setFieldValueType(GenericArtifactField.FieldValueTypeValue.DATETIME);
 					String dateStr = attValue;
 					if(!StringUtils.isEmpty(dateStr)){
 						Date date = new Date(Long.parseLong(dateStr));
 						field.setFieldValue(date);
+					}
+				}
+				else if(trackerAttribute.getAttributeType().equals("DATE")){
+					field.setFieldValueType(GenericArtifactField.FieldValueTypeValue.DATE);
+					String dateStr = attValue;
+					Date dateValue = null;
+					if(!StringUtils.isEmpty(dateStr)){
+						dateValue = new Date(Long.parseLong(dateStr));
+					}
+					if(dateValue != null){
+						if(DateUtil.isAbsoluteDateInTimezone(dateValue, sourceSystemTimezone)){
+							dateValue = DateUtil.convertToGMTAbsoluteDate(dateValue, sourceSystemTimezone);
+							field.setFieldValue(dateValue);
+						}
+						else {
+							field.setFieldValueType(GenericArtifactField.FieldValueTypeValue.DATETIME);
+							field.setFieldValue(dateValue);
+						}
 					}
 				}
 				else {
@@ -494,7 +514,7 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 						ArtifactHistoryList ahlVersion = 
 							twsclient.getChangeHistoryForArtifact(artifactIdentifier,
 									createdOnTime, toTime);
-						artifactHistoryList.set(ahlVersion);
+						this.artifactHistoryList.set(ahlVersion);
 						History[] historyList = ahlVersion.getHistory();
 						if(historyList != null && historyList.length == 1){
 							History history = historyList[0];
@@ -568,7 +588,7 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 	}
 	
 	private String convertOptionValue(String attributeNamespace, String attributeTagName,
-			String attributeValue, ArtifactTypeMetadata metadata){
+			String attributeValue, ArtifactTypeMetadata metadata, boolean isStateField){
 		String optionValue = null;
 		for(Attribute att:metadata.getAttribute()){
 			String namespace = att.getNamespace();
@@ -585,6 +605,9 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 					}
 				}
 			}
+		}
+		if(isStateField){
+			optionValue = attributeValue;
 		}
 		if(optionValue == null) throw new CCFRuntimeException("Option tagname for option "+attributeValue+
 				"is not available in {"+attributeNamespace+"}"+attributeTagName);
