@@ -527,14 +527,16 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 									if(historyTime > fromTime){
 										String reason = transaction.getReason();
 										String reasonUser = transaction.getModifiedBy();
-										reason = "\nReason provided by "+ reasonUser +"\n" + reason;
-										GenericArtifactField reasonField = ga.addNewField(REASON_FIELD_NAME,
-												GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD);
-										reasonField.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
-										reasonField.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
-										reasonField.setFieldValueHasChanged(true);
-										reasonField.setFieldValueType(gaFieldType);
-										reasonField.setFieldValue(reason);
+										if(!StringUtils.isEmpty(reason)) {
+											reason = "\nReason provided by "+ reasonUser +"\n" + reason;
+											GenericArtifactField reasonField = ga.addNewField(REASON_FIELD_NAME,
+													GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD);
+											reasonField.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
+											reasonField.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
+											reasonField.setFieldValueHasChanged(true);
+											reasonField.setFieldValueType(gaFieldType);
+											reasonField.setFieldValue(reason);
+										}
 									}
 								}
 							}
