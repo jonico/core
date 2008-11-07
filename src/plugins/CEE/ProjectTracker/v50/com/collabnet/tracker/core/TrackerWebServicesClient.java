@@ -810,6 +810,15 @@ public class TrackerWebServicesClient {
 		Metadata theService = service.getMetadataService(portAddress);
 		return theService.getMetadataForNewArtifact(new ArtifactType(artifactType, namespace, ""));
 	}
+	
+	public ArtifactTypeMetadata getMetaDataForArtifactType(String namespace, String artifactType)
+	throws ServiceException, WSException, RemoteException {
+		EngineConfiguration config = mClient.getEngineConfiguration();
+		MetadataService service = new MetadataServiceLocator(config);
+		URL portAddress = mClient.constructServiceURL("/tracker/Metadata");
+		Metadata theService = service.getMetadataService(portAddress);
+		return theService.getArtifactTypeMetadata(new ArtifactType(artifactType, namespace, ""));
+	}
 
 	
 	/**
