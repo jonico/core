@@ -526,6 +526,8 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 									long historyTime = transaction.getModifiedOn();
 									if(historyTime > fromTime){
 										String reason = transaction.getReason();
+										String reasonUser = transaction.getModifiedBy();
+										reason = "\nReason provided by "+ reasonUser +"\n" + reason;
 										GenericArtifactField reasonField = ga.addNewField(REASON_FIELD_NAME,
 												GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD);
 										reasonField.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);

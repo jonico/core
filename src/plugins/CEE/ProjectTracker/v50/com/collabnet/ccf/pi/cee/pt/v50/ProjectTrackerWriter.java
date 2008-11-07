@@ -500,6 +500,13 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 				ca.addAttributeValue(attributeNamespace, attributeTagName, attributeValue);
 			}
 		}
+		// INFO When creating an artifact if the LONG_TEXT fields are null the PT Web Services throws exception
+		else if(trackerAttribute.getAttributeType().equals("EMAIL")){
+			if(attributeValue != null) {
+				// INFO In case of a DATE attribute we set the value only when it is not null
+				ca.addAttributeValue(attributeNamespace, attributeTagName, attributeValue);
+			}
+		}
 		else {
 			ca.addAttributeValue(attributeNamespace, attributeTagName, attributeValue);
 		}

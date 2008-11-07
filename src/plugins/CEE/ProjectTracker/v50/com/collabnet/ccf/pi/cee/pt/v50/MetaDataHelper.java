@@ -43,7 +43,7 @@ public class MetaDataHelper {
 		String artifactTypeFullyQualifiedName = "{"+artifactTypeNamespace+"}"+artifactTypeTagName;
 		ArtifactTypeMetadata meta = null;
 		try {
-			meta = twsclient.getMetaDataForNewArtifact(artifactTypeNamespace,
+			meta = twsclient.getMetaDataForArtifactType(artifactTypeNamespace,
 					artifactTypeTagName);
 		} catch (WSException e) {
 			String message = "Web services exception when trying to get the "+
