@@ -863,8 +863,8 @@ public class GenericArtifact {
 	/**
 	 * @return the fieldValue
 	 */
-	public String getRawAttachmentData() {
-		return new String(Base64.decodeBase64(artifactValue.getBytes()));
+	public byte[] getRawAttachmentData() {
+		return Base64.decodeBase64(artifactValue.getBytes());
 	}
 
 	/**

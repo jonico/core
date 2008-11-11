@@ -18,6 +18,7 @@ public class AttachmentMetaData {
 	public static final String ATTACHMENT_MIME_TYPE = "attachmentMIMEType";
 	public static final String ATTACHMENT_VALUE_HAS_CHANGED = "attachmentValueHasChanged";
 	public static final String ATTACHMENT_VALUE_IS_NULL = "attachmentValueIsNull";
+	public static final String ATTACHMENT_DATA_FILE = "attachmentDataFile";
 	
 	/**
 	 * 
