@@ -1,5 +1,9 @@
 package com.collabnet.ccf.pi.cee.pt.v50;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.rmi.RemoteException;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -12,6 +16,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Map.Entry;
 
+import javax.activation.DataSource;
+import javax.activation.FileDataSource;
+import javax.mail.util.ByteArrayDataSource;
 import javax.xml.rpc.ServiceException;
 
 import org.apache.commons.codec.binary.Base64;
@@ -84,9 +91,11 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 		TrackerWebServicesClient twsclient = this.getConnection(ga);
 		
 		String attachmentType = GenericArtifactHelper.getStringGAField(AttachmentMetaData.ATTACHMENT_TYPE, ga);
-		byte[] data = Base64.decodeBase64(ga.getArtifactValue().getBytes());
+		byte[] data = null;
 		String attachmentMimeType = null;
 		String attachmentName = null;
+		DataSource dataSource = null;
+		File attachmentFile = null;
 		if(attachmentType.equals(AttachmentMetaData.AttachmentType.LINK.toString())){
 			String url = GenericArtifactHelper.getStringGAField(AttachmentMetaData.ATTACHMENT_SOURCE_URL, ga);
 			data = url.getBytes();
@@ -94,16 +103,33 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 			String parentSourceArtifactId = ga.getDepParentSourceArtifactId();
 			String attachmentArtifactId = ga.getSourceArtifactId();
 			attachmentName = "Link-attachment-"+parentSourceArtifactId+"-"+attachmentArtifactId+".txt";
+			ByteArrayDataSource baDS = new ByteArrayDataSource(data,attachmentMimeType);
+			baDS.setName(attachmentName);
+			dataSource = baDS;
 		}
 		else {
-			data = Base64.decodeBase64(ga.getArtifactValue().getBytes());
+			String attachmentDataFileName = GenericArtifactHelper.getStringGAField(
+					AttachmentMetaData.ATTACHMENT_DATA_FILE, ga);
 			attachmentMimeType = GenericArtifactHelper.getStringGAField(AttachmentMetaData.ATTACHMENT_MIME_TYPE, ga);
 			attachmentName = GenericArtifactHelper.getStringGAField(AttachmentMetaData.ATTACHMENT_NAME, ga);
+			if(StringUtils.isEmpty(attachmentDataFileName)){
+				data = ga.getRawAttachmentData();
+				ByteArrayDataSource baDS = new ByteArrayDataSource(data,attachmentMimeType);
+				baDS.setName(attachmentName);
+				dataSource = baDS;
+			}
+			else {
+				File attachmentDataFile = new File(attachmentDataFileName);
+				String tempDir = System.getProperty("java.io.tmpdir");
+				attachmentFile = new File(tempDir, attachmentName);
+				if(attachmentDataFile.exists()){
+					attachmentDataFile.renameTo(attachmentFile);
+					dataSource = new FileDataSource(attachmentFile);
+				}
+			}
 		}
 		
 		
-		javax.mail.util.ByteArrayDataSource dataSource = new javax.mail.util.ByteArrayDataSource(data,attachmentMimeType);
-		dataSource.setName(attachmentName);
 		long attachmentId = -1;
 		Date lastModifiedDate = null;
 		try {
@@ -123,6 +149,7 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 			throw new CCFRuntimeException(message, e);
 		}
 		finally {
+			if(attachmentFile != null) attachmentFile.delete();
 			this.releaseConnection(twsclient);
 		}
 		ga.setTargetArtifactId(Long.toString(attachmentId));
@@ -169,7 +196,7 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 			//String createdOn = artifact.getAttributeValue(
 			//		ProjectTrackerReader.TRACKER_NAMESPACE, ProjectTrackerReader.CREATED_ON_FIELD);
 			int version = this.getArtifactVersion(targetArtifactId, new Date(0).getTime(),
-					modifiedOnDate.getTime()+1, twsclient);
+					modifiedOnDate.getTime(), twsclient);
 			
 			// now do conflict resolution
 			if (!AbstractWriter.handleConflicts(version, ga)) {
@@ -196,7 +223,7 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 				//String createdOn = artifact.getAttributeValue(
 				//		ProjectTrackerReader.TRACKER_NAMESPACE, ProjectTrackerReader.CREATED_ON_FIELD);
 				version = this.getArtifactVersion(targetArtifactId, new Date(0).getTime(),
-						modifiedOnDate.getTime()+1, twsclient);
+						modifiedOnDate.getTime(), twsclient);
 				ga.setTargetArtifactVersion(Integer.toString(version));
 			}
 		} catch (WSException e) {
@@ -227,7 +254,7 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 		String artifactIdentifier = ptHelper.getArtifactIdFromFullyQualifiedArtifactId(artifactId);
 		ArtifactHistoryList ahlVersion = 
 			twsclient.getChangeHistoryForArtifact(artifactIdentifier,
-					createdOnTime, modifiedOnTime);
+					createdOnTime, modifiedOnTime+1);
 		History[] historyList = ahlVersion.getHistory();
 		int version = 0;
 		if(historyList != null && historyList.length == 1){
