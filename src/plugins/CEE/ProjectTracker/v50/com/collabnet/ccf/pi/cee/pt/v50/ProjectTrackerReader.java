@@ -1,5 +1,9 @@
 package com.collabnet.ccf.pi.cee.pt.v50;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.rmi.RemoteException;
 import java.text.ParseException;
@@ -132,7 +136,7 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 		int version = 0;
 		try {
 			twsclient = this.getConnection(syncInfo);
-			ArtifactHistoryList ahl = this.artifactHistoryList.get();
+			ArtifactHistoryList ahl = ProjectTrackerReader.artifactHistoryList.get();
 			History historyList[] = null;
 			if(ahl != null) historyList = ahl.getHistory();
 			if(historyList != null)
@@ -190,7 +194,6 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 			 								mimeTypeField.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
 			 								mimeTypeField.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
 				 							
-			 								StringBuffer buffer = new StringBuffer();
 			 								long size = 0;
 			 								DataHandler handler = null;
 			 								try{
@@ -204,26 +207,58 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 			 								}
 			 								String contentType = handler.getContentType();
 			 								mimeTypeField.setFieldValue(contentType);
-				 							InputStream is = handler.getInputStream();
-				 							byte [] bytes = new byte[1024*3];
-				 							int readCount = -1;
-				 							//int available = 0;
-				 							while(is.available() > 0 && (readCount = is.read(bytes)) != -1){
-				 								size += readCount;
-				 								if(readCount < bytes.length){
-				 									byte[] bytesTmp = new byte[readCount];
-				 									System.arraycopy(bytes, 0, bytesTmp, 0, readCount);
-				 									bytes = bytesTmp;
+			 								String axisFileName = handler.getName();
+		 									File attachmentAxisFile = new File(axisFileName);
+		 									size = attachmentAxisFile.length();
+		 									long maxAttachmentSize = this.getMaxAttachmentSizePerArtifact();
+		 									if(size > maxAttachmentSize){
+		 										log.warn("Attachment "+ attachmentName +" is of size "+size + " bytes."
+		 												+" This is more than the configured maximum attachment size"
+		 												+" that can be shipped in an artifact");
+		 										continue;
+		 									}
+				 							if(!this.isShipAttachmentsWithArtifact()){
+				 								File tempFile = null;
+				 								try {
+				 									if(attachmentAxisFile.exists()){
+					 									byte [] bytes = new byte[1024*3];
+					 									tempFile = File.createTempFile("PT_Attachment", "file");
+					 									
+					 									String attachmentDataFile = tempFile.getAbsolutePath();
+					 									int readBytes = 0;
+					 									FileOutputStream fos = new FileOutputStream(tempFile);
+					 									FileInputStream fis = new FileInputStream(attachmentAxisFile);
+					 									while((readBytes = fis.read(bytes)) != -1){
+					 										fos.write(bytes,0,readBytes);
+					 									}
+					 									fos.close();
+					 									GenericArtifactField attachmentDataFileField = 
+					 										ga.addNewField(AttachmentMetaData.ATTACHMENT_DATA_FILE, 
+					 											GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
+					 									attachmentDataFileField.setFieldValueType(
+					 											GenericArtifactField.FieldValueTypeValue.STRING);
+					 									attachmentDataFileField.setFieldValue(attachmentDataFile);
+					 									bytes = null;
+				 									}
+				 								} catch (IOException e) {
+				 									String message = "Could not write attahcment content to temp file."
+				 										+" Shipping the attachment with the artifact.";
+				 									log.error(message, e);
+				 									throw new CCFRuntimeException(message, e);
 				 								}
-				 								buffer.append(new String(Base64.encodeBase64(bytes)));
 				 							}
-				 							is.close();
+				 							else {
+				 								InputStream is = handler.getInputStream();
+					 							byte [] bytes = new byte[(int)size];
+					 							is.read(bytes);
+					 							is.close();
+					 							ga.setRawAttachmentData(bytes);
+				 							}
 				 							GenericArtifactField sizeField = ga.addNewField(AttachmentMetaData.ATTACHMENT_SIZE,
 			 										GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
 			 								sizeField.setFieldValue(size);
 			 								sizeField.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
 			 								sizeField.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
-				 							ga.setArtifactValue(buffer.toString());
 				 							populateSrcAndDestForAttachment(syncInfo, ga);
 				 							attachmentGAs.add(ga);
 			 							}
@@ -303,7 +338,7 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 			throw new CCFRuntimeException(message,e);
 		}
 		finally {
-			this.artifactHistoryList.set(null);
+			ProjectTrackerReader.artifactHistoryList.set(null);
 			this.attahcmentIDNameMap = null;
 			getConnectionManager().releaseConnection(twsclient);
 		}
@@ -514,7 +549,7 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 						ArtifactHistoryList ahlVersion = 
 							twsclient.getChangeHistoryForArtifact(artifactIdentifier,
 									createdOnTime, toTime);
-						this.artifactHistoryList.set(ahlVersion);
+						ProjectTrackerReader.artifactHistoryList.set(ahlVersion);
 						History[] historyList = ahlVersion.getHistory();
 						if(historyList != null && historyList.length == 1){
 							History history = historyList[0];
@@ -610,7 +645,7 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 				}
 			}
 		}
-		if(isStateField){
+		if(isStateField && StringUtils.isEmpty(optionValue)){
 			optionValue = attributeValue;
 		}
 		if(optionValue == null) throw new CCFRuntimeException("Option tagname for option "+attributeValue+
