@@ -45,6 +45,7 @@ public abstract class AbstractReader<T> extends LifecycleComponent implements ID
 	private HashSet<String> repositoryRecordsInRepositorySynchronizationWaitingList = null;
 	private long sleepInterval = -1;
 	private boolean shipAttachments = true;
+	private boolean shipAttachmentsWithArtifact = false;
 	private boolean includeFieldMetaData = false;
 	private Comparator<GenericArtifact> genericArtifactComparator = null;
 	public static final long DEFAULT_MAX_ATTACHMENT_SIZE_PER_ARTIFACT = 10 * 1024 * 1024;
@@ -797,5 +798,11 @@ public abstract class AbstractReader<T> extends LifecycleComponent implements ID
 	
 	public boolean handleException(Throwable rootCause,ConnectionManager<T> connectionManager){
 		return false;
+	}
+	public boolean isShipAttachmentsWithArtifact() {
+		return shipAttachmentsWithArtifact;
+	}
+	public void setShipAttachmentsWithArtifact(boolean shipAttachmentsWithArtifact) {
+		this.shipAttachmentsWithArtifact = shipAttachmentsWithArtifact;
 	}
 }
