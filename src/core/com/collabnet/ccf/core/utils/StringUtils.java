@@ -30,6 +30,9 @@ package com.collabnet.ccf.core.utils;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.mail.internet.AddressException;
+import javax.mail.internet.InternetAddress;
+
 
 
 /**
@@ -873,6 +876,30 @@ public class StringUtils {
 		 */
 		return (entityToChar(entity.substring(0, whereSemi)));
 	} // end method potentialEntityToChar(String)
+    
+    public static boolean isValidEmailAddress(String emailId){
+        if (StringUtils.isEmpty(emailId)) return false;
+        boolean result = true;
+        try {
+          InternetAddress emailAddr = new InternetAddress(emailId);
+          if ( ! hasNameAndDomain(emailId) ) {
+            result = false;
+          }
+        }
+        catch (AddressException ex){
+          result = false;
+        }
+        return result;
+      }
+
+      private static boolean hasNameAndDomain(String aEmailAddress){
+        String[] tokens = aEmailAddress.split("@");
+        return 
+         tokens.length == 2 &&
+         (!StringUtils.isEmpty( tokens[0] )) && 
+         (!StringUtils.isEmpty( tokens[1] )) ;
+      }
+
  
     
 } // end class StringUtils
