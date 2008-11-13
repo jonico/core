@@ -323,7 +323,26 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 				 							}
 			 							}
 			 							else if(ha.getType().equals(URL_DELETED_HISTORY_ACTIVITY_TYPE)){
-			 								
+			 								String[] attachmentIds = ha.getOldValue();
+				 							for(String attachmentId:attachmentIds){
+				 								if(attachmentId == null) continue;
+				 								GenericArtifact ga = new GenericArtifact();
+				 								ga.setArtifactAction(GenericArtifact.ArtifactActionValue.DELETE);
+				 								ga.setSourceArtifactLastModifiedDate(DateUtil.format(modifiedOn));
+				 								ga.setArtifactMode(GenericArtifact.ArtifactModeValue.CHANGEDFIELDSONLY);
+				 								ga.setArtifactType(GenericArtifact.ArtifactTypeValue.ATTACHMENT);
+				 								ga.setDepParentSourceArtifactId(artifactId);
+				 								ga.setSourceArtifactId(attachmentId);
+				 								ga.setSourceArtifactVersion(Integer.toString(version));
+				 								GenericArtifactField contentTypeField = 
+				 									ga.addNewField(AttachmentMetaData.ATTACHMENT_TYPE,
+				 											GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
+				 								contentTypeField.setFieldValue(AttachmentMetaData.AttachmentType.DATA);
+				 								contentTypeField.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
+				 								contentTypeField.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
+					 							populateSrcAndDestForAttachment(syncInfo, ga);
+					 							attachmentGAs.add(ga);
+				 							}
 			 							}
 			 					}
 			 				}
@@ -403,6 +422,7 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 		long toTime = System.currentTimeMillis();
 		TrackerWebServicesClient twsclient = null;
 		ClientArtifact artifact = null;
+		List<GenericArtifact> gaList = new ArrayList<GenericArtifact>();
 		try {
 			twsclient = this.getConnection(syncInfo);
 			ClientArtifactListXMLHelper listHelper = twsclient.getArtifactById(artifactIdentifier);
@@ -413,6 +433,10 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 			}
 			else if(artifacts.size() == 1){
 				artifact = artifacts.get(0);
+				String retreivedId = artifact.getArtifactID();
+				if(!retreivedId.equals(artifactIdentifier)){
+					return gaList;
+				}
 			}
 			else if(artifacts.size() > 1){
 				throw new CCFRuntimeException("More than one artifact were returned for id "+artifactIdentifier);
@@ -436,7 +460,6 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 		} else if(lastModifiedBy.equals(this.getResyncUserName())){
 			ga.setArtifactAction(GenericArtifact.ArtifactActionValue.RESYNC);
 		}
-		List<GenericArtifact> gaList = new ArrayList<GenericArtifact>();
 		ga.setArtifactType(GenericArtifact.ArtifactTypeValue.PLAINARTIFACT);
 		ga.setArtifactMode(GenericArtifact.ArtifactModeValue.COMPLETE);
 		ga.setSourceArtifactId(artifactId);

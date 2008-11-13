@@ -1,9 +1,6 @@
 package com.collabnet.ccf.pi.cee.pt.v50;
 
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.rmi.RemoteException;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -21,7 +18,6 @@ import javax.activation.FileDataSource;
 import javax.mail.util.ByteArrayDataSource;
 import javax.xml.rpc.ServiceException;
 
-import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -98,11 +94,12 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 		File attachmentFile = null;
 		if(attachmentType.equals(AttachmentMetaData.AttachmentType.LINK.toString())){
 			String url = GenericArtifactHelper.getStringGAField(AttachmentMetaData.ATTACHMENT_SOURCE_URL, ga);
+			url = "<html><body><a href=\""+url+"\">"+url+"</a></body></html>";
 			data = url.getBytes();
-			attachmentMimeType = AttachmentMetaData.TEXT_PLAIN;
+			attachmentMimeType = AttachmentMetaData.TEXT_HTML;
 			String parentSourceArtifactId = ga.getDepParentSourceArtifactId();
 			String attachmentArtifactId = ga.getSourceArtifactId();
-			attachmentName = "Link-attachment-"+parentSourceArtifactId+"-"+attachmentArtifactId+".txt";
+			attachmentName = "Link-attachment-"+parentSourceArtifactId+"-"+attachmentArtifactId+".html";
 			ByteArrayDataSource baDS = new ByteArrayDataSource(data,attachmentMimeType);
 			baDS.setName(attachmentName);
 			dataSource = baDS;
@@ -181,12 +178,28 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 		TrackerWebServicesClient twsclient = this.getConnection(ga);
 		String artifactId = ptHelper.getArtifactIdFromFullyQualifiedArtifactId(targetArtifactId);
 		try {
+			TrackerArtifactType trackerArtifactType = null;
+			String repositoryKey = this.getRepositoryKey(ga);
+			String repositoryId = ga.getTargetRepositoryId();
+			String artifactTypeDisplayName = repositoryId.substring(repositoryId.lastIndexOf(":")+1);
+			trackerArtifactType =
+				metadataHelper.getTrackerArtifactType(repositoryKey);
+			if(trackerArtifactType == null){
+				trackerArtifactType = metadataHelper.getTrackerArtifactType(repositoryKey,
+						artifactTypeDisplayName, twsclient);
+			}
+			if(targetArtifactTypeNameSpace == null ||
+					targetArtifactTypeTagName == null){
+				targetArtifactTypeNameSpace = trackerArtifactType.getNamespace();
+				targetArtifactTypeTagName = trackerArtifactType.getTagName();
+			}
 			List<ClientArtifact> cla = null;
 			cla = new ArrayList<ClientArtifact>();
 			ClientArtifactListXMLHelper currentArtifactHelper = twsclient.getArtifactById(artifactId);
 			ClientArtifact currentArtifact = currentArtifactHelper.getAllArtifacts().get(0);
 			ClientArtifact ca = this.getClientArtifactFromGenericArtifact(ga, twsclient,
-					targetArtifactTypeNameSpace, targetArtifactTypeTagName, currentArtifact);
+					targetArtifactTypeNameSpace, targetArtifactTypeTagName,
+					currentArtifact,trackerArtifactType);
 			cla.add(ca);
 			
 			// we need these fields to retrieve the version we like to modify
@@ -287,7 +300,7 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 			List<ClientArtifact> cla = null;
 			cla = new ArrayList<ClientArtifact>();
 			ClientArtifact ca = this.getClientArtifactFromGenericArtifact(ga, twsclient,
-					targetArtifactTypeNamespace, targetArtifactTypeTagName,null);
+					targetArtifactTypeNamespace, targetArtifactTypeTagName,null,trackerArtifactType);
 			cla.add(ca);
 			ClientArtifactListXMLHelper artifactHelper = twsclient.createArtifactList(cla);
 			ptHelper.processWSErrors(artifactHelper);
@@ -337,7 +350,8 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 	
 	private ClientArtifact getClientArtifactFromGenericArtifact(GenericArtifact ga,
 			TrackerWebServicesClient twsclient, String targetArtifactTypeNameSpace,
-			String targetArtifactTypeTagName, ClientArtifact currentArtifact){
+			String targetArtifactTypeTagName, ClientArtifact currentArtifact,
+			TrackerArtifactType trackerArtifactType){
 		//llh
 		String targetArtifactId = ga.getTargetArtifactId();
 		String targetSystemTimezone = ga.getTargetSystemTimezone();
@@ -346,8 +360,6 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 			artifactId = ptHelper.getArtifactIdFromFullyQualifiedArtifactId(targetArtifactId);
 		}
 		String repositoryKey = this.getRepositoryKey(ga);
-		TrackerArtifactType trackerArtifactType = metadataHelper.getTrackerArtifactType(repositoryKey,
-				targetArtifactTypeNameSpace, targetArtifactTypeTagName, twsclient);
 		ArtifactTypeMetadata metadata = metadataHelper.getArtifactTypeMetadata(repositoryKey,
 				targetArtifactTypeNameSpace, targetArtifactTypeTagName);
 
@@ -448,7 +460,7 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 		return ca;
 	}
 	
-	private String getFullyQualifiedFieldTagName(String fieldDisplayName, String artifactTypeTagName,
+	private String getFullyQualifiedFieldTagName(String fieldDisplayName, String artifactTypeNamespace,
 								TrackerArtifactType artifactType){
 		Map<String, TrackerAttribute> attributesMap =  artifactType.getAttributes();
 		String fullyQualifiedFieldTagName = null;
@@ -458,7 +470,7 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 			String displayName = attribute.getDisplayName();
 			String namespace = attribute.getNamespace();
 			if(displayName.equals(fieldDisplayName)){
-				if(artifactTypeTagName.equals(namespace)){
+				if(artifactTypeNamespace.equals(namespace)){
 					return attributeFullyQualifiedName;
 				}
 				else {
@@ -467,7 +479,7 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 					}
 					else {
 						String message = "There are two fields with the same name "
-							+fieldDisplayName+" in "+artifactTypeTagName+" "+artifactType.getDisplayName();
+							+fieldDisplayName+" in "+artifactTypeNamespace+" "+artifactType.getDisplayName();
 						log.error(message);
 						throw new CCFRuntimeException(message);
 					}
@@ -476,7 +488,7 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 		}
 		if(fullyQualifiedFieldTagName == null){
 			String message = "There is no field with the name "
-				+fieldDisplayName+" in "+artifactTypeTagName+" "+artifactType.getDisplayName();
+				+fieldDisplayName+" in "+artifactTypeNamespace+" "+artifactType.getDisplayName();
 			log.error(message);
 			throw new CCFRuntimeException(message);
 		}
@@ -530,7 +542,7 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 		// INFO When creating an artifact if the LONG_TEXT fields are null the PT Web Services throws exception
 		else if(trackerAttribute.getAttributeType().equals("EMAIL")){
 			if(attributeValue != null) {
-				// INFO In case of a DATE attribute we set the value only when it is not null
+				// INFO In case of a Long, text attribute we set the value only when it is not null
 				ca.addAttributeValue(attributeNamespace, attributeTagName, attributeValue);
 			}
 		}

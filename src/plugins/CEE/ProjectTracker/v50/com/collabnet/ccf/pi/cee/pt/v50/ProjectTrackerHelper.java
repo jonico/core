@@ -24,10 +24,17 @@ public class ProjectTrackerHelper {
 		return artifactIdentifier;
 	}
 	public String getArtifactTypeTagNameFromFullyQualifiedArtifactId(String fullyQualifiedArtifactId){
-		String artifactTypeTagName =
-			fullyQualifiedArtifactId.substring(fullyQualifiedArtifactId.lastIndexOf("}")+1,
-					fullyQualifiedArtifactId.lastIndexOf(":"));
-		return artifactTypeTagName;
+		int lastIndexOfCurlyBrace = fullyQualifiedArtifactId.lastIndexOf("}");
+		int lastIndexOfColon = fullyQualifiedArtifactId.lastIndexOf(":");
+		if(lastIndexOfCurlyBrace != -1 && lastIndexOfColon != -1) {
+			String artifactTypeTagName =
+				fullyQualifiedArtifactId.substring(lastIndexOfCurlyBrace+1,
+						lastIndexOfColon);
+			return artifactTypeTagName;
+		}
+		else {
+			return null;
+		}
 	}
 	public String getArtifactTypeNamespaceFromFullyQualifiedArtifactId(String fullyQualifiedArtifactId){
 		String artifactTypeNamespace =
@@ -40,9 +47,15 @@ public class ProjectTrackerHelper {
 		return artifactTypeTagName;
 	}
 	public String getArtifactTypeNamespaceFromFullyQualifiedArtifactType(String fullyQualifiedArtifactType){
-		String artifactTypeNamespace =
-			fullyQualifiedArtifactType.substring(1,fullyQualifiedArtifactType.lastIndexOf("}"));
-		return artifactTypeNamespace;
+		int indexOfClosingCurlyBrace = fullyQualifiedArtifactType.lastIndexOf("}");
+		if(indexOfClosingCurlyBrace != -1) {
+			String artifactTypeNamespace =
+				fullyQualifiedArtifactType.substring(1,indexOfClosingCurlyBrace);
+			return artifactTypeNamespace;
+		}
+		else {
+			return null;
+		}
 	}
 	public String getArtifactTypeNamespaceFromRepositoryId(String repositoryId){
 		String artifactTypeNamespace = repositoryId.substring(repositoryId.indexOf('{')+1,

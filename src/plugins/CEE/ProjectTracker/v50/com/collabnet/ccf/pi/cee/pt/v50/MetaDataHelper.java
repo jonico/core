@@ -98,17 +98,22 @@ public class MetaDataHelper {
 	
 	public TrackerArtifactType getTrackerArtifactType(String repositoryKey, String artifactTypeDisplayName,
 			TrackerWebServicesClient twsclient) throws WSException, RemoteException, ServiceException{
+		TrackerArtifactType artifactTypeForDisplayName = null;
+		artifactTypeForDisplayName = this.getTrackerArtifactType(repositoryKey);
+		if(artifactTypeForDisplayName != null){
+			return artifactTypeForDisplayName;
+		}
 		Collection<TrackerArtifactType> tAT = null;
 		tAT = twsclient.getArtifactTypes();
-		TrackerArtifactType artifactTypeForDisplayName = null;
 		for (TrackerArtifactType type : tAT )
 		{
 			String namespace = type.getNamespace();
 			String tagname = type.getTagName();
 			if(artifactTypeDisplayName.equals(type.getDisplayName()))
 			{
-				this.populateArtifactTypeMetadata(repositoryKey,
+				ArtifactTypeMetadata meta = this.populateArtifactTypeMetadata(repositoryKey,
 						namespace, tagname, twsclient);
+				type.populateAttributes(meta);
 				artifactTypeForDisplayName = type;
 				break;
 			}
