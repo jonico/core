@@ -1,0 +1,197 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+$Author: jonico $
+$HeadURL: http://ccf.open.collab.net/svn/ccf/trunk/samples/IntegrationScenarios/flatFileImport/config/config.xml $
+ -->
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+	<description>
+		<![CDATA[    
+  This sample demonstrates the capability of CCF to import 
+artifacts data from a CSV file into an CEE tracker.
+
+1. Configuring the CEE tracker information
+	The target repository to which the artifacts to be imported is configured in the
+	xslt/xmlmap2genericartifact.xsl file as 
+	targetRepositoryId="tracker1001"
+	targetSystemId="cu011"
+	Please change these values to the tracker id that you intend to import the
+	data
+	
+	Change the CEE SOAP server URL and password in the config/sfee.properties
+	file as shown below.
+	sfee.server.1.url=<CEE SOAP server URL>
+	sfee.server.1.username=<connector user>
+	sfee.server.1.password=<connector user's password>
+
+2. Please note that this integration scenario does not currently support
+	a) importing multi-select field values.
+		Multiselect field values will not be imported properly if there are
+		more than one field values are configured in the CSV file.
+	b) attachments import
+	c) importing comments
+  ]]>
+	</description>
+	<bean id="SystemPropertyConfigurer"
+		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="ignoreResourceNotFound" value="false" />
+		<property name="systemPropertiesMode">
+			<bean
+				id="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer.SYSTEM_PROPERTIES_MODE_OVERRIDE"
+				class="org.springframework.beans.factory.config.FieldRetrievingFactoryBean" />
+		</property>
+		<property name="locations">
+			<description>
+				Properties configured in these property files will be imported into the wiring file.
+				The file ccf.properties contains the properties for the CCF core components.
+				sfee.properties file contains the properties for the CEE plugin classes.
+			</description>
+			<list>
+				<value>classpath:ccf.properties</value>
+				<value>classpath:cee.properties</value>
+			</list>
+		</property>
+	</bean>
+	<bean id="Adaptor" class="org.openadaptor.core.adaptor.Adaptor">
+		<property name="messageProcessor" ref="Router" />
+	</bean>
+
+	<bean id="Router" class="org.openadaptor.core.router.Router">
+		<description>
+			Defines how different openadaptor components are connected to each other
+		</description>
+		<property name="processMap">
+			<map>
+				<entry key-ref="InputCSVFileReader" value-ref="InputCSVString2OrderedMapConverter" />
+				<entry key-ref="InputCSVString2OrderedMapConverter" value-ref="OrderedMap2XmlMapConverter" />
+				<entry key-ref="OrderedMap2XmlMapConverter" value-ref="XmlMap2GenericArtifactConverter" />
+				<entry key-ref="XmlMap2GenericArtifactConverter"
+					value-ref="PTWriter" />
+				<!-- Exception processors -->
+        		<entry key-ref="ExceptionConvertor" value-ref="HospitalWriter"/>
+			</map>
+		</property>
+		<!-- <property name="exceptionProcessor" ref="ExceptionHandler" />  -->
+		<property name="exceptionProcessor" ref="ExceptionConvertor"/>
+	</bean>
+	
+	<bean id="ExceptionConvertor" class="com.collabnet.ccf.core.hospital.CCFExceptionToOrderedMapConvertor">
+		<property name="adaptor" ref="Adaptor"/>
+	</bean>
+	
+	<bean id="HospitalWriter" class="org.openadaptor.auxil.connector.jdbc.writer.JDBCWriteConnector">
+	<property name="jdbcConnection" ref="HospitalJDBCConnection" />
+	<property name="writer">
+		<bean
+			class="org.openadaptor.auxil.connector.jdbc.writer.MapTableWriter">
+			<property name="tableName" value="HOSPITAL" />
+		</bean>
+	</property>
+	</bean>
+
+	<bean id="InputCSVFileReader"
+		class="org.openadaptor.auxil.connector.iostream.reader.FileReadConnector">
+		<description>
+			This read connector reads lines from a file.
+		</description>
+		<property name="filename" value="input/input.txt" />
+		<property name="dataReader">
+			<bean
+				class="org.openadaptor.auxil.connector.iostream.reader.string.LineReader">
+				<description>
+					This (regular expression) will exclude comments
+					(lines beginning with #)
+				</description>
+				<property name="excludeRegex" value="^#.*" />
+			</bean>
+		</property>
+	</bean>
+
+	<bean id="InputCSVString2OrderedMapConverter"
+		class="org.openadaptor.auxil.convertor.delimited.DelimitedStringToOrderedMapConvertor">
+		<description>
+			Strings are delimited by commas; each value in the string
+			will be associated with the corresponding 'name' in the
+			generated map. If the source file has some other character as the delimiter
+			configure the delimiter property with that character.
+		</description>
+		<property name="delimiter" value="," />
+		<property name="firstRecordContainsFieldNames" value="true" />
+		<property name="stripEnclosingQuotes" value="true" />
+		<property name="protectQuotedFields" value="true" />
+	</bean>
+
+	<bean id="OrderedMap2XmlMapConverter"
+		class="org.openadaptor.auxil.convertor.xml.OrderedMapToXmlConvertor">
+		<description>Convert the map into XML</description>
+		<property name="rootElementTag" value="artifact" />
+		<property name="returnXmlAsString" value="false"/>
+	</bean>
+	
+	<bean id="XmlMap2GenericArtifactConverter" class="com.collabnet.ccf.core.transformer.XsltProcessor">
+		<property name="xsltFile" value="xslt/xmlmap2genericartifact.xsl" />
+		<property name="xsltDir" value="" />
+	</bean>
+	<bean id="PTWriter"
+        class="com.collabnet.ccf.pi.cee.pt.v50.ProjectTrackerWriter">
+        <description>
+        </description>
+        <property name="username" value="${cee.server.1.username}" />
+        <property name="password" value="${cee.server.1.password}" />
+        <property name="serverUrl" value="${cee.server.1.url}" />
+        <property name="connectionManager"
+            ref="CEEConnectionManager">
+        </property>
+        <property name="resyncUserName" value="${cee.server.1.resync.username}"></property>
+        <property name="resyncPassword" value="${cee.server.1.resync.password}"></property>
+    </bean>
+    
+    <bean id="CEEConnectionManager"
+        class="com.collabnet.ccf.core.eis.connection.ConnectionManager">
+        <description>
+            The connection manager implements a connection pooling
+            mechanism where the connections to multiple systems are
+            cached for the readers and writers to retrieve when needed.
+            Before returning the connection to the client the connection
+            manager checks if the connection is live and only returns
+            valid connections. It assigns and manages one pool per
+            repository.
+        </description>
+        <property name="maxConnectionsPerPool" value="5"></property>
+        <property name="maxIdleTimeForConnection" value="600000" />
+        <property name="scavengerInterval" value="120000"></property>
+        <property name="connectionFactory"
+            ref="CEEConnectionFactory">
+        </property>
+        <property name="useStandardTimeoutHandlingCode" value="true"/>
+        <property name="enableReloginAfterSessionTimeout" value="true"/>
+        <property name="enableRetryAfterNetworkTimeout" value="true"/>
+    </bean>
+    
+    <bean id="CEEConnectionFactory"
+        class="com.collabnet.ccf.pi.cee.pt.v50.CollabNetConnectionFactory">
+        <description>
+            This bean is an implementation of the
+            com.collabnet.ccf.core.eis.connection.ConnectionFactory
+            interface. It is responsible to create and close an
+            connection for a given repository.
+        </description>
+        <property name="proxyUsed" value="false"></property>
+        <!-- <property name="proxyHost" value="proxyHostName"></property>
+        <property name="proxyPort" value="proxy port number"></property>
+        <property name="proxyType" value="HTTP/SOCKS"></property> -->
+    </bean>
+    
+    <bean id="HospitalJDBCConnection"
+        class="org.openadaptor.auxil.connector.jdbc.JDBCConnection">
+        <description>
+            This defines jdbc connection that will be used by the
+            HospitalWriter
+        </description>
+        <property name="driver" value="${ccf.db.driver}" />
+        <property name="url" value="${ccf.db.url}" />
+        <property name="username" value="${ccf.db.username}" />
+        <property name="password" value="${ccf.db.password}" />
+    </bean>
+</beans>
