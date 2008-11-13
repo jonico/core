@@ -51,6 +51,7 @@ public class ClientArtifactListXMLHelper {
 	private static final String TEXT_TAG = "text";
 	private static final String COMMENT_TAG = "comment";
 	private static final String ATTACHMENT_TAG = "attachment";
+	private static final String URL_TAG = "url";
 
 	private List<ClientArtifact> mArtifacts = new ArrayList<ClientArtifact>();
 
@@ -122,6 +123,10 @@ public class ClientArtifactListXMLHelper {
 				ClientArtifactAttachment attachment = getAttachment(attr);
 				if (attachment != null)
 					clientArtifact.addAttachment(attachment);
+			} else if (attr.getLocalName().equals(URL_TAG) && attr.getNamespaceURI().equals(NAMESPACE)) {
+				ClientArtifactAttachment attachment = getURLAttachment(attr);
+				if (attachment != null)
+					clientArtifact.addAttachment(attachment);
 			} else {
 				List<String> values = getTextValue(attr);
 				if (values != null) {
@@ -187,6 +192,51 @@ public class ClientArtifactListXMLHelper {
 				&& attachmentId != null && attachmentLocation != null && mimeType != null)
 			attachment = new ClientArtifactAttachment(createdBy, createdOn, attachmentName, description, attachmentId,
 					isFile, attachmentLocation, mimeType);
+		return attachment;
+	}
+	
+	private ClientArtifactAttachment getURLAttachment(Node node) {
+		ClientArtifactAttachment attachment = null;
+		Node child = node.getFirstChild();
+		String createdBy = null;
+		String createdOn = null;
+		String attachmentName = null;
+		String description = null;
+		String attachmentId = null;
+		String isFile = null;
+		String attachmentLocation = null;
+
+		while (child != null) {
+			if (child.getNodeType() == Node.ELEMENT_NODE) {
+				if (child.getLocalName().equals(CREATED_BY_TAG) && child.getNamespaceURI().equals(NAMESPACE)) {
+					Node n = child.getFirstChild();
+					createdBy = getNodeValue(n);
+				} else if (child.getLocalName().equals(CREATED_ON_TAG) && child.getNamespaceURI().equals(NAMESPACE)) {
+					Node n = child.getFirstChild();
+					createdOn = getNodeValue(n);
+				} else if (child.getLocalName().equals(NAME_TAG) && child.getNamespaceURI().equals(NAMESPACE)) {
+					Node n = child.getFirstChild();
+					attachmentName = getNodeValue(n);
+				} else if (child.getLocalName().equals(DESCRIPTION_TAG) && child.getNamespaceURI().equals(NAMESPACE)) {
+					Node n = child.getFirstChild();
+					description = getNodeValue(n);
+				} else if (child.getLocalName().equals(ID_TAG) && child.getNamespaceURI().equals(NAMESPACE)) {
+					Node n = child.getFirstChild();
+					attachmentId = getNodeValue(n);
+				} else if (child.getLocalName().equals(IS_FILE_TAG) && child.getNamespaceURI().equals(NAMESPACE)) {
+					Node n = child.getFirstChild();
+					isFile = getNodeValue(n);
+				} else if (child.getLocalName().equals(LOCATION_TAG) && child.getNamespaceURI().equals(NAMESPACE)) {
+					Node n = child.getFirstChild();
+					attachmentLocation = getNodeValue(n);
+				} 
+			}
+			child = child.getNextSibling();
+		}
+		if (createdBy != null && createdOn != null && attachmentName != null && description != null
+				&& attachmentId != null && attachmentLocation != null)
+			attachment = new ClientArtifactAttachment(createdBy, createdOn, attachmentName, description, attachmentId,
+					isFile, attachmentLocation, null);
 		return attachment;
 	}
 
