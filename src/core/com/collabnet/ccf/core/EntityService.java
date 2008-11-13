@@ -256,6 +256,9 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 				else if(artifactAction.equals(GenericArtifactHelper.ARTIFACT_ACTION_DELETE)) {
 					XPathUtils.addAttribute(element, GenericArtifactHelper.ARTIFACT_ACTION,	GenericArtifactHelper.ARTIFACT_ACTION_DELETE);
 				}
+				else if(artifactAction.equals(GenericArtifactHelper.ARTIFACT_ACTION_RESYNC)) {
+					// Do nothing. Because the artifact is already marked as update
+				}
 		    }
 			else {
 				if(artifactAction.equals(GenericArtifactHelper.ARTIFACT_ACTION_UNKNOWN)) {
@@ -263,7 +266,8 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 				}
 				else if(artifactAction.equals(GenericArtifactHelper.ARTIFACT_ACTION_UPDATE)) {
 					String cause = "The artifact action is marked as "+artifactAction
-					+".\nBut the Entity Service could not find a target artifact id for source artifact id "+sourceArtifactId;
+					+".\nBut the Entity Service could not find a target artifact id for source artifact id "+sourceArtifactId
+					+". Marking the artifact to create";
 					log.warn(cause);
 					XPathUtils.addAttribute(element, GenericArtifactHelper.ARTIFACT_ACTION,	GenericArtifactHelper.ARTIFACT_ACTION_CREATE);
 				}
@@ -275,6 +279,13 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 					+".\nBut the Entity Service could not find a target artifact id for source artifact id "+sourceArtifactId;
 					log.error(cause);
 					throw new CCFRuntimeException(cause);
+				}
+				else if(artifactAction.equals(GenericArtifactHelper.ARTIFACT_ACTION_RESYNC)) {
+					String cause = "The artifact action is marked as "+artifactAction
+					+".\nBut the Entity Service could not find a target artifact id for source artifact id "+sourceArtifactId
+					+". Marking the artifact to create";
+					log.warn(cause);
+					XPathUtils.addAttribute(element, GenericArtifactHelper.ARTIFACT_ACTION,	GenericArtifactHelper.ARTIFACT_ACTION_CREATE);
 				}
 		    }
 		}
