@@ -541,8 +541,8 @@ public class TrackerWebServicesClient {
             i++;
         }
         
-          Long to = new Long(System.currentTimeMillis());
-         long from = to.longValue();
+//          Long to = new Long(System.currentTimeMillis());
+         long from = 0;
 		try {
  			from = Long.parseLong(lastSynchDateTime);
 		} catch(NumberFormatException nfe) {
@@ -550,7 +550,7 @@ public class TrackerWebServicesClient {
 		}
 
  		TrackerUtil.debug("request changedArtifacts() between: " + new Date(from) + " and " + new Date(to)); 
-  		return theService.getChangedArtifactIDs(items, from, to);
+  		return theService.getChangedArtifactIDs(items, from, null);
 	}
 
 	/**
