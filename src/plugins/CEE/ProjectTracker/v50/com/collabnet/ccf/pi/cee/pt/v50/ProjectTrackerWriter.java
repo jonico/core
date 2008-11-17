@@ -92,14 +92,14 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 		String attachmentName = null;
 		DataSource dataSource = null;
 		File attachmentFile = null;
+		String sourceAttachmentId = ga.getSourceArtifactId();
+		String parentSourceArtifactId = ga.getDepParentSourceArtifactId();
 		if(attachmentType.equals(AttachmentMetaData.AttachmentType.LINK.toString())){
 			String url = GenericArtifactHelper.getStringGAField(AttachmentMetaData.ATTACHMENT_SOURCE_URL, ga);
 			url = "<html><body><a href=\""+url+"\">"+url+"</a></body></html>";
 			data = url.getBytes();
 			attachmentMimeType = AttachmentMetaData.TEXT_HTML;
-			String parentSourceArtifactId = ga.getDepParentSourceArtifactId();
-			String attachmentArtifactId = ga.getSourceArtifactId();
-			attachmentName = "Link-attachment-"+parentSourceArtifactId+"-"+attachmentArtifactId+".html";
+			attachmentName = "Link-attachment-"+parentSourceArtifactId+"-"+sourceAttachmentId+".html";
 			ByteArrayDataSource baDS = new ByteArrayDataSource(data,attachmentMimeType);
 			baDS.setName(attachmentName);
 			dataSource = baDS;
@@ -128,20 +128,35 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 		
 		
 		long attachmentId = -1;
-		Date lastModifiedDate = null;
 		try {
 			attachmentId = twsclient.postAttachment(artifactId, "Attachment added by Connector", dataSource);
-			lastModifiedDate = new Date();
+			ClientArtifactListXMLHelper currentArtifactHelper = twsclient.getArtifactById(artifactId);
+			ClientArtifact currentArtifact = currentArtifactHelper.getAllArtifacts().get(0);
+			String modifiedOn = currentArtifact.getAttributeValue(
+					ProjectTrackerReader.TRACKER_NAMESPACE, ProjectTrackerReader.MODIFIED_ON_FIELD);
+			long modifiedOnMilliSeconds = Long.parseLong(modifiedOn);
+			Date lastModifiedDate = new Date(modifiedOnMilliSeconds);
+			ga.setTargetArtifactId(Long.toString(attachmentId));
+			ga.setTargetArtifactLastModifiedDate(DateUtil.format(lastModifiedDate));
+			ga.setTargetArtifactVersion(Long.toString(modifiedOnMilliSeconds));
+			ga.setDepParentTargetRepositoryId(ga.getTargetRepositoryId());
+			ga.setDepParentTargetRepositoryKind(ga.getTargetRepositoryKind());
+			log.info("Attachment with id "+attachmentId+" is created for the PT artifact "+artifactId
+					+" with the attachment "+sourceAttachmentId + " from artifact " + parentSourceArtifactId);
 		} catch (WSException e) {
-			String message = "Exception while creating PT artifact";
+			String message = "Exception while creating PT artifact attachment";
 			log.error(message, e);
 			throw new CCFRuntimeException(message, e);
 		} catch (RemoteException e) {
-			String message = "Exception while creating PT artifact";
+			String message = "Exception while creating PT artifact attachment";
 			log.error(message, e);
 			throw new CCFRuntimeException(message, e);
 		} catch (ServiceException e) {
-			String message = "Exception while creating PT artifact";
+			String message = "Exception while creating PT artifact attachment";
+			log.error(message, e);
+			throw new CCFRuntimeException(message, e);
+		} catch (Exception e) {
+			String message = "Exception while creating PT artifact attachment";
 			log.error(message, e);
 			throw new CCFRuntimeException(message, e);
 		}
@@ -149,12 +164,6 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 			if(attachmentFile != null) attachmentFile.delete();
 			this.releaseConnection(twsclient);
 		}
-		ga.setTargetArtifactId(Long.toString(attachmentId));
-		ga.setTargetArtifactLastModifiedDate(DateUtil.format(lastModifiedDate));
-		ga.setTargetArtifactVersion("1");
-		//TODO Are these values valid?
-		ga.setDepParentTargetRepositoryId(ga.getTargetRepositoryId());
-		ga.setDepParentTargetRepositoryKind(ga.getTargetRepositoryKind());
 		return ga;
 	}
 
@@ -205,14 +214,13 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 			// we need these fields to retrieve the version we like to modify
 			String modifiedOn = currentArtifact.getAttributeValue(
 					ProjectTrackerReader.TRACKER_NAMESPACE, ProjectTrackerReader.MODIFIED_ON_FIELD);
-			Date modifiedOnDate = new Date(Long.parseLong(modifiedOn));
+			long modifiedOnMilliSeconds = Long.parseLong(modifiedOn);
+			Date modifiedOnDate = new Date(modifiedOnMilliSeconds);
 			//String createdOn = artifact.getAttributeValue(
 			//		ProjectTrackerReader.TRACKER_NAMESPACE, ProjectTrackerReader.CREATED_ON_FIELD);
-			int version = this.getArtifactVersion(targetArtifactId, new Date(0).getTime(),
-					modifiedOnDate.getTime(), twsclient);
 			
 			// now do conflict resolution
-			if (!AbstractWriter.handleConflicts(version, ga)) {
+			if (!AbstractWriter.handleConflicts(modifiedOnMilliSeconds, ga)) {
 				return ga;
 			}
 			
@@ -231,13 +239,13 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 				// now we have to retrieve the artifact version again
 				modifiedOn = artifact.getAttributeValue(
 						ProjectTrackerReader.TRACKER_NAMESPACE, ProjectTrackerReader.MODIFIED_ON_FIELD);
-				modifiedOnDate = new Date(Long.parseLong(modifiedOn));
+				long newModifiedOnMilliSeconds = Long.parseLong(modifiedOn);
+				modifiedOnDate = new Date(newModifiedOnMilliSeconds);
 				ga.setTargetArtifactLastModifiedDate(DateUtil.format(modifiedOnDate));
 				//String createdOn = artifact.getAttributeValue(
 				//		ProjectTrackerReader.TRACKER_NAMESPACE, ProjectTrackerReader.CREATED_ON_FIELD);
-				version = this.getArtifactVersion(targetArtifactId, new Date(0).getTime(),
-						modifiedOnDate.getTime(), twsclient);
-				ga.setTargetArtifactVersion(Integer.toString(version));
+				
+				ga.setTargetArtifactVersion(Long.toString(newModifiedOnMilliSeconds));
 			}
 		} catch (WSException e) {
 			String message = "WSException while updating artifact " + targetArtifactId;
@@ -262,23 +270,23 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 		return ga;
 	}
 	
-	private int getArtifactVersion(String artifactId, long createdOnTime, long modifiedOnTime,
-			TrackerWebServicesClient twsclient) throws Exception{
-		String artifactIdentifier = ptHelper.getArtifactIdFromFullyQualifiedArtifactId(artifactId);
-		ArtifactHistoryList ahlVersion = 
-			twsclient.getChangeHistoryForArtifact(artifactIdentifier,
-					createdOnTime, modifiedOnTime+1);
-		History[] historyList = ahlVersion.getHistory();
-		int version = 0;
-		if(historyList != null && historyList.length == 1){
-			History history = historyList[0];
-			HistoryTransaction[] transactionList = history.getHistoryTransaction();
-			if(transactionList != null){
-				version = transactionList.length;
-			}
-		}
-		return version;
-	}
+//	private int getArtifactVersion(String artifactId, long createdOnTime, long modifiedOnTime,
+//			TrackerWebServicesClient twsclient) throws Exception{
+//		String artifactIdentifier = ptHelper.getArtifactIdFromFullyQualifiedArtifactId(artifactId);
+//		ArtifactHistoryList ahlVersion = 
+//			twsclient.getChangeHistoryForArtifact(artifactIdentifier,
+//					createdOnTime, modifiedOnTime+1);
+//		History[] historyList = ahlVersion.getHistory();
+//		int version = 0;
+//		if(historyList != null && historyList.length == 1){
+//			History history = historyList[0];
+//			HistoryTransaction[] transactionList = history.getHistoryTransaction();
+//			if(transactionList != null){
+//				version = transactionList.length;
+//			}
+//		}
+//		return version;
+//	}
 	
 	private GenericArtifact createProjectTrackerArtifact(GenericArtifact ga) {
 		String targetRepositoryId = ga.getTargetRepositoryId();
@@ -313,11 +321,11 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 				ga.setTargetArtifactId(targetArtifactId);
 				String createdOn = artifact.getAttributeValue(
 						ProjectTrackerReader.TRACKER_NAMESPACE, ProjectTrackerReader.CREATED_ON_FIELD);
-				Date createdOnDate = new Date(Long.parseLong(createdOn));
+				long createdOnMilliSeconds = Long.parseLong(createdOn);
+				Date createdOnDate = new Date(createdOnMilliSeconds);
 				ga.setTargetArtifactLastModifiedDate(DateUtil.format(createdOnDate));
-				int version = this.getArtifactVersion(targetArtifactId, new Date(0).getTime(),
-						createdOnDate.getTime(), twsclient);
-				ga.setTargetArtifactVersion(Integer.toString(version));
+				
+				ga.setTargetArtifactVersion(Long.toString(createdOnMilliSeconds));
 				log.info("Artifact " + targetArtifactId + " created successfully with the changes from " + ga.getSourceArtifactId());
 			}
 			else {
@@ -779,10 +787,17 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 		String artifactId = ptHelper.getArtifactIdFromFullyQualifiedArtifactId(fullyQualifiedArtifactId);
 		TrackerWebServicesClient twsclient = null;
 		int attachmentId = Integer.parseInt(attachmentIdStr);
-		//int version = 0;
 		twsclient = this.getConnection(ga);
 		try {
 			twsclient.removeAttachment(artifactId, attachmentId);
+			ClientArtifactListXMLHelper currentArtifactHelper = twsclient.getArtifactById(artifactId);
+			ClientArtifact currentArtifact = currentArtifactHelper.getAllArtifacts().get(0);
+			String modifiedOn = currentArtifact.getAttributeValue(
+					ProjectTrackerReader.TRACKER_NAMESPACE, ProjectTrackerReader.MODIFIED_ON_FIELD);
+			long modifiedOnMilliSeconds = Long.parseLong(modifiedOn);
+			Date lastModifiedDate = new Date(modifiedOnMilliSeconds);
+			ga.setTargetArtifactLastModifiedDate(DateUtil.format(lastModifiedDate));
+			ga.setTargetArtifactVersion(Long.toString(modifiedOnMilliSeconds));
 		}catch (WSException e) {
 			String message = "WSException while deleting attachment "+attachmentIdStr+" of artifact " + fullyQualifiedArtifactId;
 			log.error(message, e);
@@ -795,18 +810,11 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 			String message = "ServiceException while deleting attachment "+attachmentIdStr+" of artifact " + fullyQualifiedArtifactId;
 			log.error(message, e);
 			throw new CCFRuntimeException(message, e);
-		}
-		Date now = new Date();
-		ga.setTargetArtifactLastModifiedDate(DateUtil.format(now));
-		int version = 1;
-		try {
-			version = this.getArtifactVersion(fullyQualifiedArtifactId, new Date(0).getTime(),
-					now.getTime(), twsclient);
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			String message = "ServiceException while deleting attachment "+attachmentIdStr+" of artifact " + fullyQualifiedArtifactId;
+			log.error(message, e);
+			throw new CCFRuntimeException(message, e);
 		}
-		ga.setTargetArtifactVersion(Integer.toString(version));
 		return this.returnGenericArtifactDocument(ga);
 	}
 
