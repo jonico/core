@@ -222,9 +222,9 @@ public abstract class AbstractWriter<T> extends LifecycleComponent implements
 	 * @return true if update can happen, false if update must not happen and
 	 *         modified generic artifact has to be returned
 	 */
-	public static boolean handleConflicts(int artifactCurrentVersion,
+	public static boolean handleConflicts(long artifactCurrentVersion,
 			GenericArtifact gaDocument) {
-		int lastSyncVersion = -1;
+		long lastSyncVersion = -1;
 		String targetArtifactId = gaDocument.getTargetArtifactId();
 		String lastSyncVersionStr = gaDocument.getTargetArtifactVersion();
 		if (lastSyncVersionStr == null
@@ -233,7 +233,7 @@ public abstract class AbstractWriter<T> extends LifecycleComponent implements
 			lastSyncVersionStr = GenericArtifactHelper.ARTIFACT_VERSION_FORCE_RESYNC;
 		}
 		try {
-			lastSyncVersion = Integer.parseInt(lastSyncVersionStr);
+			lastSyncVersion = Long.parseLong(lastSyncVersionStr);
 		} catch (NumberFormatException e) {
 			String message = "Last successful synchronization version of artifact "
 					+ targetArtifactId

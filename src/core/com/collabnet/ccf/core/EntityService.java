@@ -131,8 +131,8 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 			else
 				sourceArtifactLastModifiedDate = new Date(0);
 
-			int sourceArtifactVersionInt = Integer
-					.parseInt(sourceArtifactVersion);
+			long sourceArtifactVersionLong = Long
+					.parseLong(sourceArtifactVersion);
 			String targetArtifactIdFromTable = null;
 			String targetArtifactVersion = null;
 			if (sourceArtifactId
@@ -145,7 +145,7 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 			if (skipQuarantinedArtifact(element, sourceArtifactId,
 					sourceSystemId, sourceRepositoryId, targetSystemId,
 					targetRepositoryId, artifactType,
-					sourceArtifactLastModifiedDate, sourceArtifactVersionInt)) {
+					sourceArtifactLastModifiedDate, sourceArtifactVersionLong)) {
 				return new Object[] {};
 			}
 
@@ -161,13 +161,13 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 						.equalsIgnoreCase(GenericArtifact.VALUE_UNKNOWN)) {
 					sourceArtifactVersionFromTable = GenericArtifactHelper.ARTIFACT_VERSION_FORCE_RESYNC;
 				}
-				int sourceArtifactVersionIntFromTable = Integer
-						.parseInt(sourceArtifactVersionFromTable);
+				long sourceArtifactVersionLongFromTable = Long
+						.parseLong(sourceArtifactVersionFromTable);
 				if (sourceArtifactLastModifiedDateFromTable
 						.after(sourceArtifactLastModifiedDate)
-						|| sourceArtifactVersionIntFromTable >= sourceArtifactVersionInt) {
-					if (sourceArtifactVersionInt == -1
-							&& sourceArtifactVersionIntFromTable == -1) {
+						|| sourceArtifactVersionLongFromTable >= sourceArtifactVersionLong) {
+					if (sourceArtifactVersionLong == -1
+							&& sourceArtifactVersionLongFromTable == -1) {
 						log
 								.warn("It seems as if artifact synchronization is done exclusively with a system that does not support version control for combination "
 										+ sourceArtifactId
@@ -180,6 +180,11 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 										+ targetSystemId
 										+ " so artifact will not be skipped.");
 					} else {
+						log.debug("\nSource artifact last modified date in table"
+								+ DateUtil.format(sourceArtifactLastModifiedDateFromTable)
+								+ "\nSource artifact last modified date "+ DateUtil.format(sourceArtifactLastModifiedDate)
+								+ "\nSource artifact version from table "+ sourceArtifactVersionLongFromTable
+								+ "\nSource artifact version "+sourceArtifactVersionLong);
 						log
 								.warn("Seems the artifact has already been shipped in newer or same version. Skipped artifact with source artifact id "
 										+ sourceArtifactId
@@ -471,7 +476,7 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 			String sourceArtifactId, String sourceSystemId,
 			String sourceRepositoryId, String targetSystemId,
 			String targetRepositoryId, String artifactType,
-			Date sourceArtifactLastModifiedDate, int sourceArtifactVersionInt) {
+			Date sourceArtifactLastModifiedDate, long sourceArtifactVersionLong) {
 
 		// only if a connection to the hospital table is possible we can skip
 		// artifacts
@@ -533,12 +538,12 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 							.equalsIgnoreCase(GenericArtifact.VALUE_UNKNOWN)) {
 						sourceArtifactVersionFromTable = GenericArtifactHelper.ARTIFACT_VERSION_FORCE_RESYNC;
 					}
-					int sourceArtifactVersionIntFromTable = Integer
-							.parseInt(sourceArtifactVersionFromTable);
+					long sourceArtifactVersionLongFromTable = Long
+							.parseLong(sourceArtifactVersionFromTable);
 					if (sourceArtifactLastModifiedDateFromTable.after(sourceArtifactLastModifiedDate)
-							|| sourceArtifactVersionIntFromTable >= sourceArtifactVersionInt) {
-						if (sourceArtifactVersionInt == -1
-								&& sourceArtifactVersionIntFromTable == -1) {
+							|| sourceArtifactVersionLongFromTable >= sourceArtifactVersionLong) {
+						if (sourceArtifactVersionLong == -1
+								&& sourceArtifactVersionLongFromTable == -1) {
 							log
 									.warn("It seems as if artifact synchronization is done exclusively with a system that does not support version control, so artifact from combination "
 											+ sourceArtifactId
