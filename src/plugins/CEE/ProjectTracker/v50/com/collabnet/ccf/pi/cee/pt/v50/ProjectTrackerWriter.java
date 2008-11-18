@@ -392,12 +392,12 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 			}
 			String fullyQualifiedFieldTagName = null;
 			TrackerAttribute trackerAttribute = null;
-			if(!fieldName.equals("Comment")){
+			if(!fieldName.equals(ProjectTrackerReader.COMMENT_FIELD_NAME)){
 				fullyQualifiedFieldTagName = this.getFullyQualifiedFieldTagName(fieldDisplayName,
 						namespace, trackerArtifactType);
 				trackerAttribute = trackerArtifactType.getAttribute(fullyQualifiedFieldTagName);
 			}
-			if(fieldName.equals("Comment")){
+			if(fieldName.equals(ProjectTrackerReader.COMMENT_FIELD_NAME)){
 				this.addComment(field,ca);
 			} else if(field.getFieldValueType() == GenericArtifactField.FieldValueTypeValue.USER) {
 				if(!processedUserFields.contains(fieldName)){

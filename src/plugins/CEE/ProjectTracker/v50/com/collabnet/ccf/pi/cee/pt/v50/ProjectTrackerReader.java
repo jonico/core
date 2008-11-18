@@ -70,9 +70,17 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 	public static final String CREATED_ON_FIELD = "createdOn";
 	public static final String MODIFIED_ON_FIELD = "modifiedOn";
 	public static final String REASON_FIELD = "reason";
+	public static final String ID_FIELD = "id";
+	public static final String CREATED_BY_FIELD = "createdBy";
+	public static final String MODIFIED_BY_FIELD = "modifiedBy";
+	public static final String COMMENT_FIELD = "comment";
 	public static final String CREATED_ON_FIELD_NAME = "{"+TRACKER_NAMESPACE+"}"+CREATED_ON_FIELD;
 	public static final String MODIFIED_ON_FIELD_NAME = "{"+TRACKER_NAMESPACE+"}"+MODIFIED_ON_FIELD;
 	public static final String REASON_FIELD_NAME = "{"+TRACKER_NAMESPACE+"}"+REASON_FIELD;
+	public static final String ID_FIELD_NAME = "{"+TRACKER_NAMESPACE+"}"+ID_FIELD;
+	public static final String CREATED_BY_FIELD_NAME = "{"+TRACKER_NAMESPACE+"}"+CREATED_BY_FIELD;
+	public static final String MODIFIED_BY_FIELD_NAME = "{"+TRACKER_NAMESPACE+"}"+MODIFIED_BY_FIELD;
+	public static final String COMMENT_FIELD_NAME = "{"+TRACKER_NAMESPACE+"}"+COMMENT_FIELD;
 	private MetaDataHelper metadataHelper = MetaDataHelper.getInstance();
 	private HashMap<String, String> attahcmentIDNameMap = null;
 	// TODO Use ThreadLocal object to store these variables
@@ -478,8 +486,19 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 				isAttributeRequired = trackerAttribute.isRequired();
 			}
 			else {
-				GenericArtifactField field = ga.addNewField(attributeNamespaceDiaplayName,
+				GenericArtifactField field = null;
+				if(attributeName.equals(CREATED_ON_FIELD_NAME)
+						|| attributeName.equals(MODIFIED_ON_FIELD_NAME)
+						|| attributeName.equals(ID_FIELD_NAME)
+						|| attributeName.equals(CREATED_BY_FIELD_NAME)
+						|| attributeName.equals(MODIFIED_BY_FIELD_NAME)){
+					field = ga.addNewField(attributeName,
+							GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
+				}
+				else {
+					field = ga.addNewField(attributeNamespaceDiaplayName,
 						GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
+				}
 				field.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
 				field.setFieldValueType(gaFieldType);
 				field.setFieldValueHasChanged(true);
@@ -620,7 +639,7 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 				String commenter = comment.getCommenter();
 				commentText = "\nOriginal commenter: " + commenter + "\n" + commentText;
 				GenericArtifactField field = null;
-				field = ga.addNewField("Comment",
+				field = ga.addNewField(COMMENT_FIELD_NAME,
 						GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
 				field.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
 				field.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
