@@ -209,7 +209,8 @@ public class MappingDBUpdater extends LifecycleComponent implements
 				// this is necessary to get around the duplicate detection
 				// mechanism in case of initial resyncs
 				if (artifactAction
-						.equals(GenericArtifactHelper.ARTIFACT_ACTION_CREATE)) {
+						.equals(GenericArtifactHelper.ARTIFACT_ACTION_CREATE)
+						&& artifactType.equals(GenericArtifactHelper.ARTIFACT_TYPE_PLAIN_ARTIFACT)) {
 					targetArtifactVersion = GenericArtifactHelper.ARTIFACT_VERSION_FORCE_RESYNC;
 				}
 				createMapping(element, targetArtifactId, targetRepositoryId,
