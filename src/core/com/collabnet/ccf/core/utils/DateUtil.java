@@ -67,7 +67,7 @@ public class DateUtil {
 		try {
 			return dateFormat.parse(dateString);
 		} catch (ParseException e) {
-			log.error("ParseException: "+e.getMessage()+"\nStacktrace: "+e.getStackTrace());
+			log.error("ParseException: "+e.getMessage());
 		}
 		return null;
 	}
