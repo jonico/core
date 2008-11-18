@@ -1,10 +1,13 @@
 package com.collabnet.ccf.pi.sfee.v44;
 
 import java.rmi.RemoteException;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.List;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dom4j.Document;
@@ -20,6 +23,7 @@ import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
+import com.collabnet.ccf.core.ga.GenericArtifactField.FieldValueTypeValue;
 import com.collabnet.ccf.core.utils.DateUtil;
 import com.collabnet.ccf.core.utils.XPathUtils;
 import com.collabnet.ccf.pi.sfee.v44.meta.ArtifactMetaData;
@@ -291,6 +295,7 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 
 		List<GenericArtifactField> gaFields = ga
 				.getAllGenericArtifactFieldsWithSameFieldType(GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
+		String targetSystemTimezone = ga.getTargetSystemTimezone();
 		if (gaFields != null) {
 			for (GenericArtifactField gaField : gaFields) {
 				String fieldName = gaField.getFieldName();
@@ -299,7 +304,26 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 								.getFieldValueType());
 				flexFieldNames.add(fieldName);
 				flexFieldTypes.add(trackerFieldValueType);
-				Object value = gaField.getFieldValue();
+				Object value = null;
+				FieldValueTypeValue fieldType = gaField.getFieldValueType();
+				if(trackerFieldValueType.equals(TrackerFieldSoapDO.FIELD_TYPE_DATE)){
+					if(fieldType == FieldValueTypeValue.DATE){
+						GregorianCalendar gc = (GregorianCalendar) gaField.getFieldValue();
+						Date dateValue = gc.getTime();
+						if(DateUtil.isAbsoluteDateInTimezone(dateValue, "GMT")){
+							value = DateUtil.convertGMTToTimezoneAbsoluteDate(dateValue, targetSystemTimezone);
+						}
+						else {
+							value = dateValue;
+						}
+					}
+					else if(fieldType == FieldValueTypeValue.DATETIME){
+						value = gaField.getFieldValue();
+					}
+				}
+				else {
+					value = gaField.getFieldValue();
+				}
 				flexFieldValues.add(value);
 			}
 		}
@@ -383,6 +407,7 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 		ArrayList<Object> flexFieldValues = new ArrayList<Object>();
 		List<GenericArtifactField> gaFields = ga
 				.getAllGenericArtifactFieldsWithSameFieldType(GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
+		String targetSystemTimezone = ga.getTargetSystemTimezone();
 		if (gaFields != null) {
 			for (GenericArtifactField gaField : gaFields) {
 				String fieldName = gaField.getFieldName();
@@ -394,7 +419,26 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 				}
 				flexFieldNames.add(fieldName);
 				flexFieldTypes.add(trackerFieldValueType);
-				Object value = gaField.getFieldValue();
+				Object value = null;
+				FieldValueTypeValue fieldType = gaField.getFieldValueType();
+				if(trackerFieldValueType.equals(TrackerFieldSoapDO.FIELD_TYPE_DATE)){
+					if(fieldType == FieldValueTypeValue.DATE){
+						GregorianCalendar gc = (GregorianCalendar) gaField.getFieldValue();
+						Date dateValue = gc.getTime();
+						if(DateUtil.isAbsoluteDateInTimezone(dateValue, "GMT")){
+							value = DateUtil.convertGMTToTimezoneAbsoluteDate(dateValue, targetSystemTimezone);
+						}
+						else {
+							value = dateValue;
+						}
+					}
+					else if(fieldType == FieldValueTypeValue.DATETIME){
+						value = gaField.getFieldValue();
+					}
+				}
+				else {
+					value = gaField.getFieldValue();
+				}
 				flexFieldValues.add(value);
 			}
 		}

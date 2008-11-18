@@ -34,8 +34,8 @@ public class SFEEToGenericArtifactConverter {
 	 * @return - The converted GenericArtifact object
 	 */
 	public GenericArtifact convert(ArtifactSoapDO dataObject, HashMap<String, List<TrackerFieldSoapDO>> fieldsMap,
-			Date lastReadDate, boolean includeFieldMetaData) {
-		if(dataObject != null){
+			Date lastReadDate, boolean includeFieldMetaData, String sourceSystemTimezone) {
+		if(dataObject != null) {
 			ArtifactSoapDO artifactRow = dataObject;
 			GenericArtifact genericArtifact = new GenericArtifact();
 			genericArtifact.setArtifactType(GenericArtifact.ArtifactTypeValue.PLAINARTIFACT);
@@ -139,8 +139,9 @@ public class SFEEToGenericArtifactConverter {
 				field.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
 				field.setFieldValueType(fieldValueType);
 				// FIXME Why not use the flexFieldType array for this?
-				if(flexFieldTypes[i].equals(TrackerFieldSoapDO.FIELD_TYPE_DATE)){
-					field.setFieldValue(ArtifactMetaData.getDateFieldValue(flexFieldNames[i], flexFieldValues[i]));
+				if(flexFieldTypes[i].equals(TrackerFieldSoapDO.FIELD_TYPE_DATE)) {
+					ArtifactMetaData.setDateFieldValue(flexFieldNames[i], flexFieldValues[i],
+							sourceSystemTimezone, field);
 				}
 				else {
 					field.setFieldValue(flexFieldValues[i]);

@@ -324,6 +324,7 @@ public class SFEEReader extends AbstractReader<Connection> {
 		String sourceRepositoryId = this.getSourceRepositoryId(syncInfo);
 		String sourceRepositoryKind = this.getSourceRepositoryKind(syncInfo);
 		Date lastModifiedDate = this.getLastModifiedDate(syncInfo);
+		String sourceSystemTimezone = this.getSourceSystemTimezone(syncInfo);
 		Connection connection;
 		try {
 			connection = connect(sourceSystemId, sourceSystemKind, sourceRepositoryId,
@@ -353,7 +354,7 @@ public class SFEEReader extends AbstractReader<Connection> {
 			appHandler.addComments(artifact,
 					lastModifiedDate,isIgnoreConnectorUserUpdates()?this.getUsername():"");
 			GenericArtifact genericArtifact = artifactConverter.convert(artifact,
-					fieldsMap, lastModifiedDate, this.isIncludeFieldMetaData());
+					fieldsMap, lastModifiedDate, this.isIncludeFieldMetaData(), sourceSystemTimezone);
 			String lastModifiedBy = artifact.getLastModifiedBy();
 			if(lastModifiedBy.equals(this.getResyncUserName())){
 				genericArtifact.setArtifactAction(GenericArtifact.ArtifactActionValue.RESYNC);

@@ -9,6 +9,7 @@ import org.apache.commons.logging.LogFactory;
 
 import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactField.FieldValueTypeValue;
+import com.collabnet.ccf.core.utils.DateUtil;
 import com.vasoftware.sf.soap44.webservices.sfmain.TrackerFieldSoapDO;
 
 public class ArtifactMetaData {
@@ -151,18 +152,28 @@ public class ArtifactMetaData {
 		return null;
 	}
 	
-	public static Object getDateFieldValue(String fieldName, Object value){
+	public static void setDateFieldValue(String fieldName, Object value,
+			String sourceSystemTimezone, GenericArtifactField field){
+		Date dateValue = null;
 		if(value instanceof GregorianCalendar){
-			return ((GregorianCalendar)value).getTime();
+			dateValue = ((GregorianCalendar)value).getTime();
 		}
 		else if(value instanceof Date){
-			return value;
+			dateValue = (Date) value;
 		}
 		if(value instanceof String){
 			long dataValue = Long.parseLong((String) value)*1000;
 			Date returnDate = new Date(dataValue);
-			return returnDate;
+			dateValue = returnDate;
 		}
-		return value;
+		if(DateUtil.isAbsoluteDateInTimezone(dateValue, sourceSystemTimezone)){
+			dateValue = DateUtil.convertToGMTAbsoluteDate(dateValue, sourceSystemTimezone);
+			field.setFieldValue(dateValue);
+			field.setFieldValueType(GenericArtifactField.FieldValueTypeValue.DATE);
+		}
+		else {
+			field.setFieldValueType(GenericArtifactField.FieldValueTypeValue.DATETIME);
+			field.setFieldValue(dateValue);
+		}
 	}
 }
