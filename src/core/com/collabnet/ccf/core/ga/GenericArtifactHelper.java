@@ -10,7 +10,6 @@ import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 
 import javax.xml.datatype.XMLGregorianCalendar;
@@ -84,8 +83,8 @@ public class GenericArtifactHelper {
 	public static final String TARGET_SYSTEM_KIND = "targetSystemKind";
 	public static final String SOURCE_SYSTEM_TIMEZONE = "sourceSystemTimezone";
 	public static final String TARGET_SYSTEM_TIMEZONE = "targetSystemTimezone";
-	public static final String SOURCE_SYSTEM_ENCODING = "sourceSystemEncoding";
-	public static final String TARGET_SYSTEM_ENCODING = "targetSystemEncoding";
+	//public static final String SOURCE_SYSTEM_ENCODING = "sourceSystemEncoding";
+	//public static final String TARGET_SYSTEM_ENCODING = "targetSystemEncoding";
 
 	public static final String ARTIFACT_VERSION_FORCE_RESYNC = "-1";
 	
@@ -365,10 +364,10 @@ public class GenericArtifactHelper {
 				SOURCE_SYSTEM_TIMEZONE));
 		genericArtifact.setTargetSystemTimezone(getAttributeValue(root,
 				TARGET_SYSTEM_TIMEZONE));
-		genericArtifact.setSourceSystemEncoding(getAttributeValue(root,
-				SOURCE_SYSTEM_ENCODING));
-		genericArtifact.setTargetSystemEncoding(getAttributeValue(root,
-				TARGET_SYSTEM_ENCODING));
+		//genericArtifact.setSourceSystemEncoding(getAttributeValue(root,
+		//		SOURCE_SYSTEM_ENCODING));
+		//genericArtifact.setTargetSystemEncoding(getAttributeValue(root,
+		//		TARGET_SYSTEM_ENCODING));
 
 		// now add fields
 		List<Element> fields = getAllFieldElements(root);
@@ -793,10 +792,10 @@ public class GenericArtifactHelper {
 				.getSourceSystemTimezone());
 		addAttribute(root, TARGET_SYSTEM_TIMEZONE, genericArtifact
 				.getTargetSystemTimezone());
-		addAttribute(root, SOURCE_SYSTEM_ENCODING, genericArtifact
-				.getSourceSystemEncoding());
-		addAttribute(root, TARGET_SYSTEM_ENCODING, genericArtifact
-				.getTargetSystemEncoding());
+		//addAttribute(root, SOURCE_SYSTEM_ENCODING, genericArtifact
+		//		.getSourceSystemEncoding());
+		//addAttribute(root, TARGET_SYSTEM_ENCODING, genericArtifact
+		//		.getTargetSystemEncoding());
 		addAttribute(root, TRANSACTION_ID, genericArtifact.getTransactionId());
 
 		if (genericArtifact.getAllGenericArtifactFields() != null) {

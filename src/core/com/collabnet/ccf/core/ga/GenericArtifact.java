@@ -380,8 +380,8 @@ public class GenericArtifact {
 	
 	private String sourceSystemTimezone = GenericArtifact.VALUE_UNKNOWN;
 	private String targetSystemTimezone = GenericArtifact.VALUE_UNKNOWN;
-	private String sourceSystemEncoding = GenericArtifact.VALUE_UNKNOWN;
-	private String targetSystemEncoding = GenericArtifact.VALUE_UNKNOWN;
+	//private String sourceSystemEncoding = GenericArtifact.VALUE_UNKNOWN;
+	//private String targetSystemEncoding = GenericArtifact.VALUE_UNKNOWN;
 
 	/**
 	 * This attribute is used to store a reference to the document that was parsed to create this
@@ -1107,21 +1107,5 @@ public class GenericArtifact {
 
 	public void setTargetSystemTimezone(String targetSystemTimezone) {
 		this.targetSystemTimezone = targetSystemTimezone;
-	}
-
-	public String getSourceSystemEncoding() {
-		return sourceSystemEncoding;
-	}
-
-	public void setSourceSystemEncoding(String sourceSystemEncoding) {
-		this.sourceSystemEncoding = sourceSystemEncoding;
-	}
-
-	public String getTargetSystemEncoding() {
-		return targetSystemEncoding;
-	}
-
-	public void setTargetSystemEncoding(String targetSystemEncoding) {
-		this.targetSystemEncoding = targetSystemEncoding;
 	}
 }

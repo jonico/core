@@ -181,8 +181,8 @@ public abstract class AbstractReader<T> extends LifecycleComponent implements ID
 					genericArtifact.setConflictResolutionPriority(conflictResolution);
 					genericArtifact.setSourceSystemTimezone(this.getSourceSystemTimezone(syncInfo));
 					genericArtifact.setTargetSystemTimezone(this.getTargetSystemTimezone(syncInfo));
-					genericArtifact.setSourceSystemEncoding(this.getSourceSystemEncoding(syncInfo));
-					genericArtifact.setTargetSystemEncoding(this.getTargetSystemEncoding(syncInfo));
+					//genericArtifact.setSourceSystemEncoding(this.getSourceSystemEncoding(syncInfo));
+					//genericArtifact.setTargetSystemEncoding(this.getTargetSystemEncoding(syncInfo));
 					Document returnDoc = GenericArtifactHelper.createGenericArtifactXMLDocument(genericArtifact);
 					Object[] returnObjects = new Object[] {returnDoc};
 					moveToTail(currentRecord);
@@ -345,8 +345,8 @@ public abstract class AbstractReader<T> extends LifecycleComponent implements ID
 					genericArtifact.setConflictResolutionPriority(conflictResolution);
 					genericArtifact.setSourceSystemTimezone(this.getSourceSystemTimezone(syncInfo));
 					genericArtifact.setTargetSystemTimezone(this.getTargetSystemTimezone(syncInfo));
-					genericArtifact.setSourceSystemEncoding(this.getSourceSystemEncoding(syncInfo));
-					genericArtifact.setTargetSystemEncoding(this.getTargetSystemEncoding(syncInfo));
+					//genericArtifact.setSourceSystemEncoding(this.getSourceSystemEncoding(syncInfo));
+					//genericArtifact.setTargetSystemEncoding(this.getTargetSystemEncoding(syncInfo));
 					Document returnDoc = GenericArtifactHelper.createGenericArtifactXMLDocument(genericArtifact);
 					Object[] returnObjects = new Object[] {returnDoc};
 					moveToTail(currentRecord);
