@@ -21,6 +21,7 @@ public class GenericArtifactField {
 
 	/**
 	 * Constant value for field type "flexField"
+	 * Flex fields are user defined custom fields.
 	 */
 	public static final String VALUE_FIELD_TYPE_FLEX_FIELD = "flexField";
 
@@ -73,6 +74,7 @@ public class GenericArtifactField {
 	 * the field's value but a mechanism to differentiate different artifact
 	 * properties with the same name. Values might be "mandatoryField",
 	 * "flexField", "integrationData" or just a plain number.
+	 * Flex fields are user defined custom fields.
 	 */
 	private String fieldType = VALUE_UNKNOWN;
 
