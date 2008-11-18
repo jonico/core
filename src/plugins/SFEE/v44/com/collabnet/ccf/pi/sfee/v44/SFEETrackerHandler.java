@@ -481,7 +481,7 @@ public class SFEETrackerHandler {
 
 	public GenericArtifact createGenericArtifactsForChild(String sessionId,
 			ArtifactDependencySoapRow child, SFEEToGenericArtifactConverter artifactConverter,
-			Date lastModifiedDate) throws RemoteException {
+			Date lastModifiedDate, String sourceSystemTimezone) throws RemoteException {
 		String childArtifactId = child.getTargetId();
 		String parentArtifactId = child.getOriginId();
 		ArtifactSoapDO artifact = this.getTrackerItem(sessionId, childArtifactId);
@@ -490,7 +490,8 @@ public class SFEETrackerHandler {
 			SFEEAppHandler.loadTrackerFieldsInHashMap(trackerFields);
 		//TODO As of now hard coding includeFieldMetaData to false. Should be changed when we include
 		// dependencies.
-		GenericArtifact ga = artifactConverter.convert(artifact, fieldsMap, lastModifiedDate, false);
+		GenericArtifact ga = artifactConverter.convert(artifact, fieldsMap,
+				lastModifiedDate, false, sourceSystemTimezone);
 		ga.setDepParentSourceArtifactId(parentArtifactId);
 		ga.setSourceArtifactId(childArtifactId);
 		ga.setSourceRepositoryId(artifact.getFolderId());
