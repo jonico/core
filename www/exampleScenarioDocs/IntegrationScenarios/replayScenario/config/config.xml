@@ -38,7 +38,7 @@
 			</list>
 		</property>
 	</bean>
-	<bean id="Adaptor" class="org.openadaptor.core.adaptor.Adaptor">
+	<bean id="ReplayScenario" class="org.openadaptor.core.adaptor.Adaptor">
 		<property name="messageProcessor" ref="Router" />
 	</bean>
 
@@ -298,7 +298,7 @@
  	These components are needed to catch new exceptions and store them in the hospital
  	-->
 	<bean id="ExceptionConvertor" class="com.collabnet.ccf.core.hospital.CCFExceptionToOrderedMapConvertor">
-  		<property name="adaptor" ref="Adaptor"/>
+  		<property name="adaptor" ref="ReplayScenario"/>
 	</bean>
   
  	<bean id="HospitalWriter" class="org.openadaptor.auxil.connector.jdbc.writer.JDBCWriteConnector">

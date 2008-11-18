@@ -78,7 +78,7 @@ $HeadURL$
 			</list>
 		</property>
 	</bean>
-	<bean id="Adaptor" class="org.openadaptor.core.adaptor.Adaptor">
+	<bean id="FlatFileExport" class="org.openadaptor.core.adaptor.Adaptor">
 		<property name="messageProcessor" ref="Router" />
 	</bean>
 
@@ -90,6 +90,7 @@ $HeadURL$
 		</description>
 		<property name="processMap">
 			<map>
+			<entry key-ref="ExceptionConvertor" value-ref="HospitalWriter"/>
 			<entry key-ref="SynchronizationStatusPollingReader" value-ref="SFEEReader" />
 				<entry key-ref="SFEEReader"
 					value-ref="GenericArtifact2XmlMapConverter" />
@@ -101,8 +102,35 @@ $HeadURL$
 					value-ref="OutputCSVFileWriter" />
 			</map>
 		</property>
-		<property name="exceptionProcessor" ref="ExceptionHandler" />
+			<property name="exceptionProcessor" ref="ExceptionConvertor"/>
+<!--		<property name="exceptionProcessor" ref="ExceptionHandler" />-->
 	</bean>
+	<bean id="ExceptionConvertor" class="com.collabnet.ccf.core.hospital.CCFExceptionToOrderedMapConvertor">
+		<property name="adaptor" ref="FlatFileExport"/>
+	</bean>
+	
+	<bean id="HospitalWriter" class="org.openadaptor.auxil.connector.jdbc.writer.JDBCWriteConnector">
+		<property name="jdbcConnection" ref="HospitalJDBCConnection" />
+		<property name="writer">
+		<bean
+			class="org.openadaptor.auxil.connector.jdbc.writer.MapTableWriter">
+			<property name="tableName" value="HOSPITAL" />
+		</bean>
+		</property>
+	</bean>
+	
+	<bean id="HospitalJDBCConnection"
+		class="org.openadaptor.auxil.connector.jdbc.JDBCConnection">
+		<description>
+			This defines jdbc connection that will be used by the
+			HospitalWriter
+		</description>
+		<property name="driver" value="${ccf.db.driver}" />
+		<property name="url" value="${ccf.db.url}" />
+		<property name="username" value="${ccf.db.username}" />
+		<property name="password" value="${ccf.db.password}" />
+	</bean>
+	
 	<bean id="SynchronizationStatusPollingReader"
 		class="com.collabnet.ccf.core.test.plugins.SimpleLoopingPollingReadConnector">
 		<description>
@@ -224,7 +252,7 @@ $HeadURL$
 		<property name="filename" value="output/csvoutputfile.dat" />
 		<property name="append" value="false" />
 	</bean>
-	<bean id="ExceptionHandler" class="com.collabnet.ccf.core.hospital.Ambulance">
+	<!--<bean id="ExceptionHandler" class="com.collabnet.ccf.core.hospital.Ambulance">
 		<description>
 			The ambulance class catches all the exceptions that are thrown and not caught
 			by any of the components in the pipe and logs the infromation such as the component
@@ -234,4 +262,5 @@ $HeadURL$
   		<property name="hospitalFileName" value="${ccf.hospital.file}"/>
   		<property name="artifactsDirectory" value="${ccf.hospital.artifacts.directory}"></property>
   	</bean>
+-->
 </beans>

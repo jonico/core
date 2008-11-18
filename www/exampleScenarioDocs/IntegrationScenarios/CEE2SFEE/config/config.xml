@@ -35,7 +35,7 @@
 			</list>
 		</property>
 	</bean>
-	<bean id="Adaptor" class="org.openadaptor.core.adaptor.Adaptor">
+	<bean id="CEE2SFEE" class="org.openadaptor.core.adaptor.Adaptor">
 		<property name="messageProcessor" ref="Router" />
 	</bean>
 
@@ -72,7 +72,7 @@
 	</bean>
 	
 	<bean id="ExceptionConvertor" class="com.collabnet.ccf.core.hospital.CCFExceptionToOrderedMapConvertor">
-		<property name="adaptor" ref="Adaptor"/>
+		<property name="adaptor" ref="CEE2SFEE"/>
 	</bean>
 	
 	<bean id="HospitalWriter" class="org.openadaptor.auxil.connector.jdbc.writer.JDBCWriteConnector">

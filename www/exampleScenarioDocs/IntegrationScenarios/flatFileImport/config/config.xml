@@ -53,7 +53,7 @@ artifacts data from a CSV file into an SFEE tracker.
 			</list>
 		</property>
 	</bean>
-	<bean id="Adaptor" class="org.openadaptor.core.adaptor.Adaptor">
+	<bean id="FlatFileImport" class="org.openadaptor.core.adaptor.Adaptor">
 		<property name="messageProcessor" ref="Router" />
 	</bean>
 
@@ -77,7 +77,7 @@ artifacts data from a CSV file into an SFEE tracker.
 	</bean>
 	
 	<bean id="ExceptionConvertor" class="com.collabnet.ccf.core.hospital.CCFExceptionToOrderedMapConvertor">
-		<property name="adaptor" ref="Adaptor"/>
+		<property name="adaptor" ref="FlatFileImport"/>
 	</bean>
 	
 	<bean id="HospitalWriter" class="org.openadaptor.auxil.connector.jdbc.writer.JDBCWriteConnector">
@@ -175,7 +175,7 @@ artifacts data from a CSV file into an SFEE tracker.
 			value="Synchronized by Connector user" />
 		<property name="connectionManager" ref="SFEEConnectionManager"></property>
 	</bean>
-	<bean id="ExceptionHandler" class="com.collabnet.ccf.core.hospital.Ambulance">
+	<!--<bean id="ExceptionHandler" class="com.collabnet.ccf.core.hospital.Ambulance">
 		<description>
 			The ambulance class catches all the exceptions that are thrown and not caught
 			by any of the components in the pipe and logs the infromation such as the component
@@ -186,6 +186,7 @@ artifacts data from a CSV file into an SFEE tracker.
   		<property name="artifactsDirectory" value="${ccf.hospital.artifacts.directory}"></property>
   	</bean>
   	
+  	-->
   	<bean id="jdbcConnection" class="org.openadaptor.auxil.connector.jdbc.JDBCConnection">
     <description>This defines the jdbc connection for the hospital.</description>
     <property name="driver" value="${ccf.db.driver}" />
