@@ -21,7 +21,7 @@
 								</xs:attribute>
 								<xs:attribute name="fieldType" type="xs:string" use="required">
 									<xs:annotation>
-										<xs:documentation>This attribute contains the type of the field. This is not the type of the field's value but a mechanism to differentiate different artifact properties with the same name. Values might be "mandatoryField", "flexField", "integrationData" or just a plain number.</xs:documentation>
+										<xs:documentation>This attribute contains the type of the field. This is not the type of the field's value but a mechanism to differentiate different artifact properties with the same name. Values might be "mandatoryField", "flexField", "integrationData" or just a plain number. Flex fields are user defined custom fields.</xs:documentation>
 									</xs:annotation>
 								</xs:attribute>
 								<xs:attribute name="fieldValueHasChanged" use="required">
