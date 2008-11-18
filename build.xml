@@ -226,11 +226,6 @@
 				<include name="*.script" />
 			</fileset>
 		</copy>
-		<copy todir="build/package/CCFDBService">
-			<fileset dir="scripts">
-				<include name="startDB.*" />
-			</fileset>
-		</copy>
 		<mkdir dir="build/package/lib"/>
 		<copy todir="build/package/lib">
 			<fileset dir="build/jars">
