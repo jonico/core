@@ -89,16 +89,12 @@ public class ProjectTrackerHelper {
 	}
 	public String getEntityName(String input){
 		int start = input.indexOf("}");
-		int end = input.indexOf(":");
 		String entityName = null;
-		if(start < 0 && end < 0){
+		if(start < 0){
 			entityName = input;
 		}
-		else if(start >= 0 && end < 0){
+		else if(start >= 0){
 			entityName = input.substring(start+1);
-		}
-		else if(start >=0 && end >= 2){
-			entityName = input.substring(start+1, end);
 		}
 		return entityName;
 	}
