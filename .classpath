@@ -33,5 +33,6 @@
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/commons-httpclient_3.0.1.jar"/>
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/js_1_6R5.jar"/>
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/wsdl4j_1.6.2.jar"/>
+	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/wss4j-1.5.1.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
