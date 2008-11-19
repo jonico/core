@@ -60,6 +60,7 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 	private String username = null;
 	
 	private String connectorUserDisplayName = null;
+	private HashMap<String, String> movedArtifacts = new HashMap<String, String>();
 	
 	public static final String ATTACHMENT_TAG_NAME = "attachment";
 	public static final String ATTACHMENT_ADDED_HISTORY_ACTIVITY_TYPE = "FileAddedDesc";
@@ -427,6 +428,7 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 		TrackerWebServicesClient twsclient = null;
 		ClientArtifact artifact = null;
 		List<GenericArtifact> gaList = new ArrayList<GenericArtifact>();
+		boolean isMovedArtifact = false;
 		try {
 			twsclient = this.getConnection(syncInfo);
 			ClientArtifactListXMLHelper listHelper = twsclient.getArtifactById(artifactIdentifier);
@@ -439,6 +441,11 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 				artifact = artifacts.get(0);
 				String retreivedId = artifact.getArtifactID();
 				if(!retreivedId.equals(artifactIdentifier)){
+					movedArtifacts.put(retreivedId, artifactIdentifier);
+					isMovedArtifact = true;
+				}
+				else if(movedArtifacts.containsKey(artifactIdentifier)){
+					movedArtifacts.remove(artifactIdentifier);
 					return gaList;
 				}
 			}
