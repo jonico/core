@@ -219,13 +219,6 @@
 				<include name="setEnv.*" />
 			</fileset>
 		</copy>
-		<mkdir dir="build/package/CCFDBService/db"/>
-		<mkdir dir="build/package/CCFDBService/logs"/>
-		<copy todir="build/package/CCFDBService/db">
-			<fileset dir="config/db-schema">
-				<include name="*.script" />
-			</fileset>
-		</copy>
 		<mkdir dir="build/package/lib"/>
 		<copy todir="build/package/lib">
 			<fileset dir="build/jars">
