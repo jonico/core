@@ -43,17 +43,13 @@ import com.collabnet.tracker.common.ClientArtifactListXMLHelper;
 import com.collabnet.tracker.core.TrackerWebServicesClient;
 import com.collabnet.tracker.core.model.TrackerArtifactType;
 import com.collabnet.tracker.core.model.TrackerAttribute;
-import com.collabnet.tracker.ws.ArtifactHistoryList;
 import com.collabnet.tracker.ws.ArtifactTypeMetadata;
 import com.collabnet.tracker.ws.Attribute;
-import com.collabnet.tracker.ws.History;
-import com.collabnet.tracker.ws.HistoryTransaction;
 import com.collabnet.tracker.ws.Option;
 
 public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClient> {
 	private static final Log log = LogFactory.getLog(ProjectTrackerWriter.class);
 	private String serverUrl = null;
-//	private ConnectionManager<TrackerWebServicesClient> connectionManager = null;
 	private MetaDataHelper metadataHelper = MetaDataHelper.getInstance();
 	ProjectTrackerHelper ptHelper = ProjectTrackerHelper.getInstance();
 	
@@ -84,7 +80,6 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 	private GenericArtifact createProjectTrackerAttachment(GenericArtifact ga) {
 		String targetArtifactId = ga.getDepParentTargetArtifactId();
 		String artifactId = ptHelper.getArtifactIdFromFullyQualifiedArtifactId(targetArtifactId);
-		TrackerWebServicesClient twsclient = this.getConnection(ga);
 		
 		String attachmentType = GenericArtifactHelper.getStringGAField(AttachmentMetaData.ATTACHMENT_TYPE, ga);
 		byte[] data = null;
@@ -126,9 +121,10 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 			}
 		}
 		
-		
 		long attachmentId = -1;
+		TrackerWebServicesClient twsclient = null;
 		try {
+			twsclient = this.getConnection(ga);
 			attachmentId = twsclient.postAttachment(artifactId, "Attachment added by Connector", dataSource);
 			ClientArtifactListXMLHelper currentArtifactHelper = twsclient.getArtifactById(artifactId);
 			ClientArtifact currentArtifact = currentArtifactHelper.getAllArtifacts().get(0);
@@ -162,7 +158,9 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 		}
 		finally {
 			if(attachmentFile != null) attachmentFile.delete();
-			this.releaseConnection(twsclient);
+			if(twsclient != null) {
+				this.releaseConnection(twsclient);
+			}
 		}
 		return ga;
 	}
@@ -184,9 +182,10 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 			ptHelper.getArtifactTypeNamespaceFromFullyQualifiedArtifactId(targetArtifactId);
 		String targetArtifactTypeTagName =
 			ptHelper.getArtifactTypeTagNameFromFullyQualifiedArtifactId(targetArtifactId);
-		TrackerWebServicesClient twsclient = this.getConnection(ga);
+		TrackerWebServicesClient twsclient = null;
 		String artifactId = ptHelper.getArtifactIdFromFullyQualifiedArtifactId(targetArtifactId);
 		try {
+			twsclient = this.getConnection(ga);
 			TrackerArtifactType trackerArtifactType = null;
 			String repositoryKey = this.getRepositoryKey(ga);
 			String repositoryId = ga.getTargetRepositoryId();
@@ -265,28 +264,12 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 			throw new CCFRuntimeException(message, e);
 		}
 		finally {
-			this.releaseConnection(twsclient);
+			if(twsclient != null) {
+				this.releaseConnection(twsclient);
+			}
 		}
 		return ga;
 	}
-	
-//	private int getArtifactVersion(String artifactId, long createdOnTime, long modifiedOnTime,
-//			TrackerWebServicesClient twsclient) throws Exception{
-//		String artifactIdentifier = ptHelper.getArtifactIdFromFullyQualifiedArtifactId(artifactId);
-//		ArtifactHistoryList ahlVersion = 
-//			twsclient.getChangeHistoryForArtifact(artifactIdentifier,
-//					createdOnTime, modifiedOnTime+1);
-//		History[] historyList = ahlVersion.getHistory();
-//		int version = 0;
-//		if(historyList != null && historyList.length == 1){
-//			History history = historyList[0];
-//			HistoryTransaction[] transactionList = history.getHistoryTransaction();
-//			if(transactionList != null){
-//				version = transactionList.length;
-//			}
-//		}
-//		return version;
-//	}
 	
 	private GenericArtifact createProjectTrackerArtifact(GenericArtifact ga) {
 		String targetRepositoryId = ga.getTargetRepositoryId();
@@ -351,7 +334,9 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 			throw new CCFRuntimeException(message, e);
 		}
 		finally {
-			this.releaseConnection(twsclient);
+			if(twsclient != null) {
+				this.releaseConnection(twsclient);
+			}
 		}
 		return ga;
 	}
@@ -649,10 +634,16 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 						repositoryKind, connectionInfo, credentialInfo, true);
 			}
 		} catch (MaxConnectionsReachedException e) {
+			if(twsclient != null){
+				this.releaseConnection(twsclient);
+			}
 			String message = "Could not get connection for PT";
 			log.error(message, e);
 			throw new CCFRuntimeException(message, e);
 		} catch (ConnectionException e) {
+			if(twsclient != null){
+				this.releaseConnection(twsclient);
+			}
 			String message = "Could not get connection for PT";
 			log.error(message, e);
 			throw new CCFRuntimeException(message, e);
@@ -787,8 +778,8 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 		String artifactId = ptHelper.getArtifactIdFromFullyQualifiedArtifactId(fullyQualifiedArtifactId);
 		TrackerWebServicesClient twsclient = null;
 		int attachmentId = Integer.parseInt(attachmentIdStr);
-		twsclient = this.getConnection(ga);
 		try {
+			twsclient = this.getConnection(ga);
 			twsclient.removeAttachment(artifactId, attachmentId);
 			ClientArtifactListXMLHelper currentArtifactHelper = twsclient.getArtifactById(artifactId);
 			ClientArtifact currentArtifact = currentArtifactHelper.getAllArtifacts().get(0);
@@ -815,6 +806,11 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 			log.error(message, e);
 			throw new CCFRuntimeException(message, e);
 		}
+		finally {
+			if(twsclient != null) {
+				this.releaseConnection(twsclient);
+			}
+		}
 		return this.returnGenericArtifactDocument(ga);
 	}
 
@@ -823,27 +819,6 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 		// TODO Auto-generated method stub
 		return null;
 	}
-
-	/*@Override
-	public int getArtifactVersion(Document gaDocument) {
-		GenericArtifact ga = this.getGenericArtifact(gaDocument);
-		String targetArtifactId = ga.getTargetArtifactId();
-		TrackerWebServicesClient twsclient = null;
-		int version = 0;
-		try {
-			twsclient = this.getConnection(ga);
-			version = this.getArtifactVersion(targetArtifactId, new Date(0).getTime(),
-					new Date().getTime(), twsclient);
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} finally {
-			if(twsclient != null){
-				this.releaseConnection(twsclient);
-			}
-		}
-		return version;
-	}*/
 
 	@Override
 	public Document updateArtifact(Document gaDocument) {

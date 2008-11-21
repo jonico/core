@@ -121,7 +121,7 @@ public class SFEEReader extends AbstractReader<Connection> {
 		else if (cause instanceof InvalidSessionFault && connectionManager.isEnableReloginAfterSessionTimeout()) {
 			return true;
 		}
-		else if(cause instanceof RemoteException){
+		else if(cause instanceof RemoteException) {
 			Throwable innerCause = cause.getCause();
 			return handleException(innerCause, connectionManager);
 		}
@@ -294,7 +294,7 @@ public class SFEEReader extends AbstractReader<Connection> {
 		try {
 			attachments = attachmentHandler.listAttachments(connection.getSessionId(),
 					lastModifiedDate,isIgnoreConnectorUserUpdates()?getUsername():"",artifactIds, connection.getSfSoap(),
-					this.getMaxAttachmentSizePerArtifact());
+					this.getMaxAttachmentSizePerArtifact(),this.isShipAttachmentsWithArtifact());
 			for(GenericArtifact attachment:attachments){
 				populateSrcAndDestForAttachment(syncInfo, attachment);
 			}

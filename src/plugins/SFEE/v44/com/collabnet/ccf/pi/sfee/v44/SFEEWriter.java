@@ -371,6 +371,8 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 					actualHours, closeDate, assignedTo, reportedReleaseId,
 					resolvedReleaseId, flexFieldNames, flexFieldValues,
 					flexFieldTypes, title, comments);
+			log.info("New artifact "+result.getId()
+					+" is created with the change from " + ga.getSourceArtifactId());
 		} catch (RemoteException e) {
 			String cause = "While trying to create an artifact within SFEE, an error occured";
 			log.error(cause, e);
@@ -486,7 +488,7 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 					actualHours, closeDate, assignedTo, reportedReleaseId,
 					resolvedReleaseId, flexFieldNames, flexFieldValues,
 					flexFieldTypes, title, id, comments);
-
+			log.info("Artifact "+id+ " is updated successfully");
 		} catch (RemoteException e) {
 			String cause = "While trying to update an artifact within SFEE, an error occured";
 			log.error(cause, e);
@@ -687,7 +689,46 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 
 	@Override
 	public Document deleteAttachment(Document gaDocument) {
-		throw new CCFRuntimeException("deleteAttachment is not implemented...!");
+		GenericArtifact ga = null;
+		try {
+			ga = GenericArtifactHelper.createGenericArtifactJavaObject(gaDocument);
+		} catch (GenericArtifactParsingException e) {
+			String cause = "Problem occured while parsing the GenericArtifact into Document";
+			log.error(cause, e);
+			XPathUtils.addAttribute(gaDocument.getRootElement(),
+					GenericArtifactHelper.ERROR_CODE,
+					GenericArtifact.ERROR_GENERIC_ARTIFACT_PARSING);
+			throw new CCFRuntimeException(cause, e);
+		}
+		this.initializeArtifact(ga);
+		String targetRepositoryId = ga.getTargetRepositoryId();
+		String targetArtifactId = ga.getTargetArtifactId();
+		String artifactId = ga.getDepParentTargetArtifactId();
+		String tracker = targetRepositoryId;
+		Connection connection = null;
+		try {
+			connection = connect(ga);
+			attachmentHandler.deleteAttachment(connection, targetArtifactId, artifactId, ga);
+			log.info("Attachment "+targetArtifactId + "is deleted");
+		} catch (RemoteException e) {
+			String message = "Exception while deleting attachment "+artifactId;
+			log.error(message, e);
+			throw new CCFRuntimeException(message, e);
+		} finally {
+			if(connection != null) {
+				this.disconnect(connection);
+			}
+		}
+		Document returnDocument = null;;
+		try {
+			returnDocument = GenericArtifactHelper.createGenericArtifactXMLDocument(ga);
+		} catch (GenericArtifactParsingException e) {
+			String message = "Exception while deleting attachment "
+				+artifactId +". Could not parse Generic artifact";
+			log.error(message, e);
+			throw new CCFRuntimeException(message, e);
+		}
+		return returnDocument;
 	}
 
 	@Override

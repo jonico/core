@@ -1,19 +1,23 @@
 package com.collabnet.ccf.pi.sfee.v44;
 
 import java.io.BufferedInputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Set;
 
 import javax.activation.DataHandler;
+import javax.activation.DataSource;
+import javax.activation.FileDataSource;
 
-import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.collabnet.ccf.core.CCFRuntimeException;
 import com.collabnet.ccf.core.eis.connection.ConnectionManager;
 import com.collabnet.ccf.core.ga.AttachmentMetaData;
 import com.collabnet.ccf.core.ga.GenericArtifact;
@@ -26,6 +30,8 @@ import com.vasoftware.sf.soap44.webservices.filestorage.IFileStorageAppSoap;
 import com.vasoftware.sf.soap44.webservices.filestorage.ISimpleFileStorageAppSoap;
 import com.vasoftware.sf.soap44.webservices.sfmain.AttachmentSoapList;
 import com.vasoftware.sf.soap44.webservices.sfmain.AttachmentSoapRow;
+import com.vasoftware.sf.soap44.webservices.sfmain.AuditHistorySoapList;
+import com.vasoftware.sf.soap44.webservices.sfmain.AuditHistorySoapRow;
 import com.vasoftware.sf.soap44.webservices.sfmain.ISourceForgeSoap;
 import com.vasoftware.sf.soap44.webservices.tracker.ArtifactSoapDO;
 import com.vasoftware.sf.soap44.webservices.tracker.ITrackerAppSoap;
@@ -94,23 +100,47 @@ public class SFEEAttachmentHandler {
 	 *            Name of the file that is attached to this artifact
 	 * @param mimeType -
 	 *            MIME type of the file that is being attached.
-	 * @param data -
+	 * @param att -
 	 *            the file content
+	 * @param linkUrl 
 	 * 
 	 * @throws RemoteException -
 	 *             if any SOAP api call fails
 	 */
 	public ArtifactSoapDO attachFileToArtifact(String sessionId,
 			String artifactId, String comment, String fileName,
-			String mimeType, byte[] data) throws RemoteException {
+			String mimeType, GenericArtifact att, byte[] linkUrl) throws RemoteException {
 		ArtifactSoapDO soapDo = null;
+		String attachmentDataFileName = GenericArtifactHelper.getStringGAField(
+				AttachmentMetaData.ATTACHMENT_DATA_FILE, att);
 		boolean retryCall = true;
 		while (retryCall) {
 			retryCall = false;
-			String fileDescriptor = fileStorageApp.startFileUpload(sessionId);
+			String fileDescriptor = null;
 			try {
-				fileStorageApp.write(sessionId, fileDescriptor, data);
-				fileStorageApp.endFileUpload(sessionId, fileDescriptor);
+				byte[] data = null;
+				if(StringUtils.isEmpty(attachmentDataFileName)){
+					if(linkUrl == null) {
+						data = att.getRawAttachmentData();
+					}
+					else {
+						data = linkUrl;
+					}
+					fileDescriptor = fileStorageApp.startFileUpload(sessionId);
+					fileStorageApp.write(sessionId, fileDescriptor, data);
+					fileStorageApp.endFileUpload(sessionId, fileDescriptor);
+				}
+				else {
+					try {
+						DataSource dataSource = new FileDataSource(new File(attachmentDataFileName));
+						DataHandler dataHandler = new DataHandler(dataSource);
+						fileDescriptor = fileStorageSoapApp.uploadFile(sessionId, dataHandler);
+					} catch (IOException e) {
+						String message = "Exception while uploading the attachment "+ attachmentDataFileName;
+						log.error(message, e);
+						throw new CCFRuntimeException(message, e);
+					}
+				}
 
 				soapDo = mTrackerApp.getArtifactData(sessionId, artifactId);
 				boolean fileAttached = true;
@@ -154,11 +184,13 @@ public class SFEEAttachmentHandler {
 	 * @param fileId
 	 * @param size
 	 * @param folderId
+	 * @param shouldShipAttachmentsWithArtifact 
 	 * @return
 	 * @throws RemoteException
 	 */
 	public byte[] getAttachmentData(String sessionId, String fileId, long size,
-			String folderId) throws RemoteException {
+			String folderId, boolean shouldShipAttachmentsWithArtifact,
+			GenericArtifact ga) throws RemoteException {
 		boolean retryCall = true;
 		byte[] data = null;
 		while (retryCall) {
@@ -168,16 +200,38 @@ public class SFEEAttachmentHandler {
 			BufferedInputStream is = null;
 			try {
 				is = new BufferedInputStream(dataHandler.getInputStream());
-				// TODO not a safe cast here...
-				data = new byte[(int) size];
-				int readLength = is.read(data);
-				if (readLength == size) {
-					// Good that we read all the data
-				} else {
-					// FIXME What if the attachment's size has been changed in
-					// the mean time?
-					log
-							.error("While reading data from the attachment stream, less data than expected was returned.");
+				if(shouldShipAttachmentsWithArtifact) {
+					// TODO not a safe cast here...
+					data = new byte[(int) size];
+					int readLength = is.read(data);
+					if (readLength == size) {
+						// Good that we read all the data
+					} else {
+						// FIXME What if the attachment's size has been changed in
+						// the mean time?
+						log
+								.error("While reading data from the attachment stream, less data than expected was returned.");
+					}
+				}
+				else {
+					File tempFile = null;
+					data = new byte[1024*3];
+					tempFile = File.createTempFile("CSFE_Attachment", "file");
+					
+					String attachmentDataFile = tempFile.getAbsolutePath();
+					int readBytes = 0;
+					FileOutputStream fos = new FileOutputStream(tempFile);
+					while((readBytes = is.read(data)) != -1){
+						fos.write(data,0,readBytes);
+					}
+					fos.close();
+					GenericArtifactField attachmentDataFileField = 
+						ga.addNewField(AttachmentMetaData.ATTACHMENT_DATA_FILE, 
+							GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
+					attachmentDataFileField.setFieldValueType(
+							GenericArtifactField.FieldValueTypeValue.STRING);
+					attachmentDataFileField.setFieldValue(attachmentDataFile);
+					data = null;
 				}
 			} catch (IOException e) {
 				if (connectionManager.isEnableRetryAfterNetworkTimeout() 
@@ -233,19 +287,18 @@ public class SFEEAttachmentHandler {
 		attachmentName = userName + "_" + attachmentName;
 		String attachmentURL = GenericArtifactHelper.getStringFlexGAField(
 				AttachmentMetaData.ATTACHMENT_SOURCE_URL, att);
-		byte[] data = Base64.decodeBase64(att.getArtifactValue().getBytes());
 		GenericArtifact.ArtifactActionValue attAction = att.getArtifactAction();
 		ArtifactSoapDO artifact = null;
 		if (attAction == GenericArtifact.ArtifactActionValue.CREATE) {
 			if (AttachmentMetaData.AttachmentType.valueOf(contentType) == AttachmentMetaData.AttachmentType.DATA) {
 				artifact = this.attachFileToArtifact(sessionId, artifactId,
 						attachDescription, attachmentName, attachmentMimeType,
-						data);
+						att, null);
 			} else if (AttachmentMetaData.AttachmentType.valueOf(contentType) == AttachmentMetaData.AttachmentType.LINK) {
 				artifact = this
 						.attachFileToArtifact(sessionId, artifactId,
 								attachDescription, attachmentName + "link.txt",
-								AttachmentMetaData.TEXT_PLAIN, attachmentURL
+								AttachmentMetaData.TEXT_PLAIN, att, attachmentURL
 										.getBytes());
 			} else if (AttachmentMetaData.AttachmentType.valueOf(contentType) == AttachmentMetaData.AttachmentType.EMPTY) {
 				// TODO What should I do now?
@@ -275,6 +328,19 @@ public class SFEEAttachmentHandler {
 			att.setTargetArtifactId(attachmentRow.getAttachmentId());
 		}
 	}
+	
+	public void deleteAttachment(Connection connection, String attachmentId, String artifactId,
+			GenericArtifact att) throws RemoteException{
+		String sessionId = connection.getSessionId();
+		ISourceForgeSoap sfSoap = connection.getSfSoap();
+		sfSoap.deleteAttachment(sessionId, artifactId, attachmentId);
+		ArtifactSoapDO artifact = mTrackerApp.getArtifactData(sessionId, artifactId);
+		if (artifact != null) {
+			Date attachmentLastModifiedDate = artifact.getLastModifiedDate();
+			att.setTargetArtifactLastModifiedDate(DateUtil.format(attachmentLastModifiedDate));
+			att.setTargetArtifactVersion(Integer.toString(artifact.getVersion()));
+		}
+	}
 
 	private AttachmentSoapRow getAttachmentMetaData(String fileName,
 			Date createdDate, ISourceForgeSoap sourceForgeSoap,
@@ -300,36 +366,36 @@ public class SFEEAttachmentHandler {
 		return null;
 	}
 
-	/**
-	 * This method retrieves all the attachments for all the artifacts present
-	 * in the artifactRows Set and encoded them into GenericArtifact attachment
-	 * format.
-	 * 
-	 * @param sessionId
-	 * @param lastModifiedDate
-	 * @param username
-	 * @param artifactRows
-	 * @param sourceForgeSoap
-	 * @return
-	 * @throws RemoteException
-	 */
-	public List<GenericArtifact> listAttachments(String sessionId,
-			Date lastModifiedDate, String username,
-			Set<ArtifactSoapDO> artifactRows, ISourceForgeSoap sourceForgeSoap,
-			long maxAttachmentSizePerArtifact) throws RemoteException {
-		List<GenericArtifact> gaList = null;
-		List<String> artifactIds = new ArrayList<String>();
-		if (artifactRows != null && (!artifactIds.isEmpty())) {
-			for (ArtifactSoapDO artifact : artifactRows) {
-				String artifactId = artifact.getId();
-				artifactIds.add(artifactId);
-			}
-			gaList = this.listAttachments(sessionId, lastModifiedDate,
-					username, artifactIds, sourceForgeSoap,
-					maxAttachmentSizePerArtifact);
-		}
-		return gaList;
-	}
+//	/**
+//	 * This method retrieves all the attachments for all the artifacts present
+//	 * in the artifactRows Set and encoded them into GenericArtifact attachment
+//	 * format.
+//	 * 
+//	 * @param sessionId
+//	 * @param lastModifiedDate
+//	 * @param username
+//	 * @param artifactRows
+//	 * @param sourceForgeSoap
+//	 * @return
+//	 * @throws RemoteException
+//	 */
+//	public List<GenericArtifact> listAttachments(String sessionId,
+//			Date lastModifiedDate, String username,
+//			Set<ArtifactSoapDO> artifactRows, ISourceForgeSoap sourceForgeSoap,
+//			long maxAttachmentSizePerArtifact) throws RemoteException {
+//		List<GenericArtifact> gaList = null;
+//		List<String> artifactIds = new ArrayList<String>();
+//		if (artifactRows != null && (!artifactIds.isEmpty())) {
+//			for (ArtifactSoapDO artifact : artifactRows) {
+//				String artifactId = artifact.getId();
+//				artifactIds.add(artifactId);
+//			}
+//			gaList = this.listAttachments(sessionId, lastModifiedDate,
+//					username, artifactIds, sourceForgeSoap,
+//					maxAttachmentSizePerArtifact);
+//		}
+//		return gaList;
+//	}
 
 	/**
 	 * This method retrieves all the attachments for all the artifacts present
@@ -347,7 +413,8 @@ public class SFEEAttachmentHandler {
 	 */
 	public List<GenericArtifact> listAttachments(String sessionId,
 			Date lastModifiedDate, String username, List<String> artifactIds,
-			ISourceForgeSoap sourceForgeSoap, long maxAttachmentSizePerArtifact)
+			ISourceForgeSoap sourceForgeSoap, long maxAttachmentSizePerArtifact,
+			boolean shouldShipAttachmentsWithArtifact)
 			throws RemoteException {
 		List<GenericArtifact> attachmentGAs = new ArrayList<GenericArtifact>();
 		for (String artifactId : artifactIds) {
@@ -436,9 +503,12 @@ public class SFEEAttachmentHandler {
 					byte[] attachmentData = null;
 					attachmentData = this.getAttachmentData(sessionId, row
 							.getRawFileId(), Long.parseLong(row.getFileSize()),
-							artifactId);
-					ga.setArtifactValue(new String(Base64
-							.encodeBase64(attachmentData)));
+							artifactId, shouldShipAttachmentsWithArtifact, ga);
+					if(shouldShipAttachmentsWithArtifact) {
+						if(attachmentData != null) {
+							ga.setRawAttachmentData(attachmentData);
+						}
+					}
 					attachmentGAs.add(ga);
 				}
 			}

@@ -541,15 +541,13 @@ public class TrackerWebServicesClient {
             i++;
         }
         
-//          Long to = new Long(System.currentTimeMillis());
          long from = 0;
 		try {
  			from = Long.parseLong(lastSynchDateTime);
 		} catch(NumberFormatException nfe) {
-			
+			log.warn("From time is invalid "+lastSynchDateTime +". Resorting to 0");
 		}
 
-// 		TrackerUtil.debug("request changedArtifacts() between: " + new Date(from) + " and " + new Date(to)); 
   		return theService.getChangedArtifactIDs(items, from, null);
 	}
 

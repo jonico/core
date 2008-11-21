@@ -268,26 +268,26 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 				 							attachmentGAs.add(ga);
 			 							}
 			 						}
-			 							else if(ha.getType().equals(ATTACHMENT_DELETED_HISTORY_ACTIVITY_TYPE)){
-			 								String[] attachmentIds = ha.getOldValue();
-				 							for(String attachmentId:attachmentIds){
-				 								if(attachmentId == null) continue;
-				 								GenericArtifact ga = new GenericArtifact();
-				 								ga.setArtifactAction(GenericArtifact.ArtifactActionValue.DELETE);
-				 								ga.setSourceArtifactLastModifiedDate(DateUtil.format(modifiedOn));
-				 								ga.setArtifactMode(GenericArtifact.ArtifactModeValue.CHANGEDFIELDSONLY);
-				 								ga.setArtifactType(GenericArtifact.ArtifactTypeValue.ATTACHMENT);
-				 								ga.setDepParentSourceArtifactId(artifactId);
-				 								ga.setSourceArtifactId(attachmentId);
-				 								ga.setSourceArtifactVersion(Long.toString(modifiedOnMilliSeconds));
-				 								GenericArtifactField contentTypeField = 
-				 									ga.addNewField(AttachmentMetaData.ATTACHMENT_TYPE,
-				 											GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
-				 								contentTypeField.setFieldValue(AttachmentMetaData.AttachmentType.DATA);
-				 								contentTypeField.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
-				 								contentTypeField.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
-					 							populateSrcAndDestForAttachment(syncInfo, ga);
-					 							attachmentGAs.add(ga);
+			 						else if(ha.getType().equals(ATTACHMENT_DELETED_HISTORY_ACTIVITY_TYPE)){
+		 								String[] attachmentIds = ha.getOldValue();
+			 							for(String attachmentId:attachmentIds){
+			 								if(attachmentId == null) continue;
+			 								GenericArtifact ga = new GenericArtifact();
+			 								ga.setArtifactAction(GenericArtifact.ArtifactActionValue.DELETE);
+			 								ga.setSourceArtifactLastModifiedDate(DateUtil.format(modifiedOn));
+			 								ga.setArtifactMode(GenericArtifact.ArtifactModeValue.CHANGEDFIELDSONLY);
+			 								ga.setArtifactType(GenericArtifact.ArtifactTypeValue.ATTACHMENT);
+			 								ga.setDepParentSourceArtifactId(artifactId);
+			 								ga.setSourceArtifactId(attachmentId);
+			 								ga.setSourceArtifactVersion(Long.toString(modifiedOnMilliSeconds));
+			 								GenericArtifactField contentTypeField = 
+			 									ga.addNewField(AttachmentMetaData.ATTACHMENT_TYPE,
+			 											GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
+			 								contentTypeField.setFieldValue(AttachmentMetaData.AttachmentType.DATA);
+			 								contentTypeField.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
+			 								contentTypeField.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
+				 							populateSrcAndDestForAttachment(syncInfo, ga);
+				 							attachmentGAs.add(ga);
 			 							}
 			 						}
 			 							else if(ha.getType().equals(URL_ADDED_HISTORY_ACTIVITY_TYPE)){
@@ -364,7 +364,10 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 		finally {
 			ProjectTrackerReader.artifactHistoryList.set(null);
 			this.attahcmentIDNameMap = null;
-			getConnectionManager().releaseConnection(twsclient);
+			if(twsclient != null) {
+				getConnectionManager().releaseConnection(twsclient);
+				twsclient = null;
+			}
 		}
 		return attachmentGAs;
 	}
@@ -602,27 +605,31 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 						if(historyList != null && historyList.length == 1){
 							History history = historyList[0];
 							if(history != null){
-								for(HistoryTransaction transaction:history.getHistoryTransaction()){
-									long historyTime = transaction.getModifiedOn();
-									if(historyTime > fromTime){
-										String reason = transaction.getReason();
-										String reasonUser = transaction.getModifiedBy();
-										if(!StringUtils.isEmpty(reason)) {
-											reason = "\nReason provided by "+ reasonUser +"\n" + reason;
-											GenericArtifactField reasonField = ga.addNewField(REASON_FIELD_NAME,
-													GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD);
-											reasonField.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
-											reasonField.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
-											reasonField.setFieldValueHasChanged(true);
-											reasonField.setFieldValueType(gaFieldType);
-											reasonField.setFieldValue(reason);
+								HistoryTransaction[] transactions = history.getHistoryTransaction();
+								if(transactions != null) {
+									for(HistoryTransaction transaction:transactions){
+										if(transaction == null) continue;
+										long historyTime = transaction.getModifiedOn();
+										if(historyTime > fromTime){
+											String reason = transaction.getReason();
+											String reasonUser = transaction.getModifiedBy();
+											if(!StringUtils.isEmpty(reason)) {
+												reason = "\nReason provided by "+ reasonUser +"\n" + reason;
+												GenericArtifactField reasonField = ga.addNewField(REASON_FIELD_NAME,
+														GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD);
+												reasonField.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
+												reasonField.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
+												reasonField.setFieldValueHasChanged(true);
+												reasonField.setFieldValueType(gaFieldType);
+												reasonField.setFieldValue(reason);
+											}
 										}
 									}
 								}
 							}
 						}
 					} catch (Exception e) {
-						String message = "Exception while getting the version of the artifact";
+						String message = "Exception while getting the reason field of the artifact";
 						log.error(message, e);
 						throw new CCFRuntimeException(message,
 								e);
@@ -717,16 +724,19 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 			twsclient = this.connect(systemId, systemKind, repositoryId,
 					repositoryKind, connectionInfo, credentialInfo);
 		} catch (MaxConnectionsReachedException e) {
-			e.printStackTrace();
-			throw new CCFRuntimeException("Could not get connection for PT",e);
-		} catch (ConnectionException e) {
-			e.printStackTrace();
-			throw new CCFRuntimeException("Could not get connection for PT",e);
-		}
-		finally {
 			if(twsclient != null){
 				getConnectionManager().releaseConnection(twsclient);
 			}
+			String message = "Could not get connection for PT";
+			log.error(message, e);
+			throw new CCFRuntimeException(message, e);
+		} catch (ConnectionException e) {
+			if(twsclient != null){
+				getConnectionManager().releaseConnection(twsclient);
+			}
+			String message = "Could not get connection for PT";
+			log.error(message, e);
+			throw new CCFRuntimeException(message, e);
 		}
 		return twsclient;
 	}

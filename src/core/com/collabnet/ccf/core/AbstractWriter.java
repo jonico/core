@@ -41,7 +41,7 @@ public abstract class AbstractWriter<T> extends LifecycleComponent implements
 		return result;
 	}
 
-	private Object[] processXMLDocument(Document gaDocument) {
+	protected Object[] processXMLDocument(Document gaDocument) {
 		Element element = null;
 		int numberOfTries = 1;
 		boolean retry = false;
