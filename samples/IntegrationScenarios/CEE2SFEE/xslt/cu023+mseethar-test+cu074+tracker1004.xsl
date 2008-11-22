@@ -19,7 +19,6 @@
     </xsl:variable>
 	<xsl:template match='/ccf:artifact[@artifactType = "plainArtifact"]'>
 		<artifact xmlns="http://ccf.open.collab.net/GenericArtifactV1.0">
-			<artifact xmlns="http://ccf.open.collab.net/GenericArtifactV1.0">
 			<xsl:copy-of
                     select="@*" />
 			<xsl:apply-templates />
