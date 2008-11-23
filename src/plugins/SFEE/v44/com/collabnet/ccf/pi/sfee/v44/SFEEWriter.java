@@ -34,9 +34,9 @@ import com.vasoftware.sf.soap44.webservices.tracker.ArtifactSoapDO;
 /**
  * This component is responsible for writing SFEE tracker items encoded in the
  * generic XML artifact format back to the SFEE tracker
- * 
+ *
  * @author jnicolai
- * 
+ *
  */
 public class SFEEWriter extends AbstractWriter<Connection> implements
 		IDataProcessor {
@@ -240,7 +240,7 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 		} finally {
 			disconnect(connection);
 		}
-		
+
 		// otherwise a conflict has happened and the generic artifact has been already prepared
 		if (result != null) {
 			this.populateTargetArtifactAttributes(ga, result);
@@ -278,7 +278,7 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 	/**
 	 * Creates the artifact represented by the GenericArtifact object on the
 	 * target SFEE system
-	 * 
+	 *
 	 * @param ga -
 	 *            the GenericArtifact object
 	 * @param tracker -
@@ -395,7 +395,7 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 	/**
 	 * Creates the artifact represented by the GenericArtifact object on the
 	 * target SFEE system
-	 * 
+	 *
 	 * @param ga
 	 * @param tracker
 	 * @param forceOverride
@@ -488,7 +488,9 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 					actualHours, closeDate, assignedTo, reportedReleaseId,
 					resolvedReleaseId, flexFieldNames, flexFieldValues,
 					flexFieldTypes, title, id, comments);
-			log.info("Artifact "+id+ " is updated successfully");
+			if(result != null) {
+				log.info("Artifact "+id+ " is updated successfully");
+			}
 		} catch (RemoteException e) {
 			String cause = "While trying to update an artifact within SFEE, an error occured";
 			log.error(cause, e);
@@ -640,7 +642,7 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 
 	/**
 	 * Set the update comment
-	 * 
+	 *
 	 * @param updateComment
 	 *            see private attribute doc
 	 */
@@ -650,7 +652,7 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 
 	/**
 	 * Get the update comment
-	 * 
+	 *
 	 * @return see private attribute doc
 	 */
 	public String getUpdateComment() {
@@ -660,7 +662,7 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 	/**
 	 * Returns the server URL of the CSFE/SFEE system that is configured in the
 	 * wiring file.
-	 * 
+	 *
 	 * @return
 	 */
 	public String getServerUrl() {
@@ -669,7 +671,7 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 
 	/**
 	 * Sets the CSFE/SFEE system's SOAP server URL.
-	 * 
+	 *
 	 * @param serverUrl -
 	 *            the URL of the source SFEE system.
 	 */
@@ -748,12 +750,12 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 
 	/**
 	 * Sets the optional resync username
-	 * 
+	 *
 	 * The resync user name is used to login into the SFEE/CSFE instance
 	 * whenever an artifact should be created. This user has to differ from the
 	 * ordinary user used to log in in order to force initial resyncs with the
 	 * source system once a new artifact has been created.
-	 * 
+	 *
 	 * @param resyncUserName
 	 *            the resyncUserName to set
 	 */
@@ -767,7 +769,7 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 	 * user has to differ from the ordinary user used to log in in order to
 	 * force initial resyncs with the source system once a new artifact has been
 	 * created.
-	 * 
+	 *
 	 * @return the resyncUserName
 	 */
 	private String getResyncUserName() {
@@ -776,7 +778,7 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 
 	/**
 	 * Sets the optional resync password that belongs to the resync user
-	 * 
+	 *
 	 * @param resyncPassword
 	 *            the resyncPassword to set
 	 */
@@ -786,7 +788,7 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 
 	/**
 	 * Gets the optional resync password that belongs to the resync user
-	 * 
+	 *
 	 * @return the resyncPassword
 	 */
 	private String getResyncPassword() {
@@ -795,7 +797,7 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 
 	/**
 	 * Gets the mandatory password that belongs to the username
-	 * 
+	 *
 	 * @return the password
 	 */
 	private String getPassword() {
@@ -804,7 +806,7 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 
 	/**
 	 * Sets the password that belongs to the username
-	 * 
+	 *
 	 * @param password
 	 *            the password to set
 	 */
@@ -817,7 +819,7 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 	 * SFEE/CSFE instance whenever an artifact should be updated or extracted.
 	 * This user has to differ from the resync user in order to force initial
 	 * resyncs with the source system once a new artifact has been created.
-	 * 
+	 *
 	 * @return the userName
 	 */
 	public String getUsername() {
@@ -826,12 +828,12 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 
 	/**
 	 * Sets the mandatory username
-	 * 
+	 *
 	 * The user name is used to login into the SFEE/CSFE instance whenever an
 	 * artifact should be updated or extracted. This user has to differ from the
 	 * resync user in order to force initial resyncs with the source system once
 	 * a new artifact has been created.
-	 * 
+	 *
 	 * @param resyncUserName
 	 *            the resyncUserName to set
 	 */
