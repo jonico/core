@@ -1,6 +1,7 @@
 package com.collabnet.ccf.pi.cee.pt.v50;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.rmi.RemoteException;
 import java.text.ParseException;
 import java.util.ArrayList;
@@ -115,8 +116,20 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 				String tempDir = System.getProperty("java.io.tmpdir");
 				attachmentFile = new File(tempDir, attachmentName);
 				if(attachmentDataFile.exists()){
-					attachmentDataFile.renameTo(attachmentFile);
-					dataSource = new FileDataSource(attachmentFile);
+					boolean renamingSuccessful = attachmentDataFile.renameTo(attachmentFile);
+					if(renamingSuccessful) {
+						dataSource = new FileDataSource(attachmentFile);
+					}
+					else {
+						dataSource = new FileDataSource(attachmentDataFile);
+					}
+				}
+				else {
+					String message = "Attachment data file " + attachmentDataFileName
+						+ " does not exist.";
+					FileNotFoundException e = new FileNotFoundException(message);
+					log.error(message, e);
+					throw new CCFRuntimeException(message, e);
 				}
 			}
 		}
@@ -157,7 +170,13 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 			throw new CCFRuntimeException(message, e);
 		}
 		finally {
-			if(attachmentFile != null) attachmentFile.delete();
+			if(attachmentFile != null) {
+				boolean fileDeleted = attachmentFile.delete();
+				if(!fileDeleted){
+					log.warn("The temporary attachment file" + attachmentFile.getAbsolutePath()
+							+ " could not be deleted");
+				}
+			}
 			if(twsclient != null) {
 				this.releaseConnection(twsclient);
 			}
@@ -214,7 +233,7 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 			String modifiedOn = currentArtifact.getAttributeValue(
 					ProjectTrackerReader.TRACKER_NAMESPACE, ProjectTrackerReader.MODIFIED_ON_FIELD);
 			long modifiedOnMilliSeconds = Long.parseLong(modifiedOn);
-			Date modifiedOnDate = new Date(modifiedOnMilliSeconds);
+//			Date modifiedOnDate = new Date(modifiedOnMilliSeconds);
 			//String createdOn = artifact.getAttributeValue(
 			//		ProjectTrackerReader.TRACKER_NAMESPACE, ProjectTrackerReader.CREATED_ON_FIELD);
 			
@@ -239,7 +258,7 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 				modifiedOn = artifact.getAttributeValue(
 						ProjectTrackerReader.TRACKER_NAMESPACE, ProjectTrackerReader.MODIFIED_ON_FIELD);
 				long newModifiedOnMilliSeconds = Long.parseLong(modifiedOn);
-				modifiedOnDate = new Date(newModifiedOnMilliSeconds);
+				Date modifiedOnDate = new Date(newModifiedOnMilliSeconds);
 				ga.setTargetArtifactLastModifiedDate(DateUtil.format(modifiedOnDate));
 				//String createdOn = artifact.getAttributeValue(
 				//		ProjectTrackerReader.TRACKER_NAMESPACE, ProjectTrackerReader.CREATED_ON_FIELD);
