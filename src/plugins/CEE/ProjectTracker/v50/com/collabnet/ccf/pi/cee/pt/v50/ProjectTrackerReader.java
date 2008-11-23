@@ -458,7 +458,6 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 		String lastModifiedBy = null;
 		try {
 			twsclient = this.getConnection(syncInfo);
-			ProjectTrackerReader.artifactHistoryList.set(ahlVersion);
 			ClientArtifactListXMLHelper listHelper = twsclient.getArtifactById(artifactIdentifier);
 			List<ClientArtifact> artifacts = listHelper.getAllArtifacts();
 			ptHelper.processWSErrors(listHelper);
@@ -489,6 +488,7 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 			long createdOnTime = Long.parseLong(createdOnTimeMillis);
 			ahlVersion = twsclient.getChangeHistoryForArtifact(artifactIdentifier,
 					createdOnTime, toTime);
+			ProjectTrackerReader.artifactHistoryList.set(ahlVersion);
 		} catch (Exception e) {
 			String message = "Exception while getting the artifact data";
 			log.error(message, e);
