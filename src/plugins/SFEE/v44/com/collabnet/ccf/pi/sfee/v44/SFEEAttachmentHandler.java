@@ -30,8 +30,6 @@ import com.vasoftware.sf.soap44.webservices.filestorage.IFileStorageAppSoap;
 import com.vasoftware.sf.soap44.webservices.filestorage.ISimpleFileStorageAppSoap;
 import com.vasoftware.sf.soap44.webservices.sfmain.AttachmentSoapList;
 import com.vasoftware.sf.soap44.webservices.sfmain.AttachmentSoapRow;
-import com.vasoftware.sf.soap44.webservices.sfmain.AuditHistorySoapList;
-import com.vasoftware.sf.soap44.webservices.sfmain.AuditHistorySoapRow;
 import com.vasoftware.sf.soap44.webservices.sfmain.ISourceForgeSoap;
 import com.vasoftware.sf.soap44.webservices.tracker.ArtifactSoapDO;
 import com.vasoftware.sf.soap44.webservices.tracker.ITrackerAppSoap;
@@ -279,7 +277,6 @@ public class SFEEAttachmentHandler {
 				AttachmentMetaData.ATTACHMENT_TYPE, att);
 		String attachDescription = GenericArtifactHelper.getStringFlexGAField(
 				AttachmentMetaData.ATTACHMENT_DESCRIPTION, att);
-		System.out.println();
 		String attachmentMimeType = GenericArtifactHelper.getStringFlexGAField(
 				AttachmentMetaData.ATTACHMENT_MIME_TYPE, att);
 		String attachmentName = GenericArtifactHelper.getStringFlexGAField(
