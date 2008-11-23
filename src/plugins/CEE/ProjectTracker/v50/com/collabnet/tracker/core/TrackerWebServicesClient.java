@@ -235,8 +235,9 @@ public class TrackerWebServicesClient {
 			// Add each attribute
 			Map<String, List<String>> textAttributes = ca.getAttributes();
 			
-				for (String attribute: textAttributes.keySet()) {
-					List<String> values = textAttributes.get(attribute);
+				for (Map.Entry<String, List<String>> attributeEntry: textAttributes.entrySet()) {
+					String attribute = attributeEntry.getKey();
+					List<String> values = attributeEntry.getValue();
 
 					// strip the namespace from the attribute key
 		    		String[] parts = attribute.substring(1).split("\\}");
@@ -290,8 +291,6 @@ public class TrackerWebServicesClient {
 		if(log.isDebugEnabled())
 			this.printDocument(doc);
 
-		Request req = toRequest(doc);
-		String reqString = req.toString();
 		Response r = theService.execute(toRequest(doc));
 		Document result = toDocument(r);
 		if(log.isDebugEnabled())
