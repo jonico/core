@@ -619,8 +619,8 @@ public class StringUtils {
 		ENTITY_MAPPING = new HashMap<String, Character>(511);
 		CHAR_ENTITY_MAPPING = new HashMap<Character, String>(511);
 		for (int i = 0; i < entityKeys.length; i++) {
-			ENTITY_MAPPING.put(entityKeys[i], new Character(entityValues[i]));
-			CHAR_ENTITY_MAPPING.put(new Character(entityValues[i]),entityKeys[i]);
+			ENTITY_MAPPING.put(entityKeys[i], Character.valueOf(entityValues[i]));
+			CHAR_ENTITY_MAPPING.put(Character.valueOf(entityValues[i]),entityKeys[i]);
 		}
 	} // end static initialization block
 
@@ -882,6 +882,7 @@ public class StringUtils {
         boolean result = true;
         try {
           InternetAddress emailAddr = new InternetAddress(emailId);
+          emailAddr.validate();
           if ( ! hasNameAndDomain(emailId) ) {
             result = false;
           }

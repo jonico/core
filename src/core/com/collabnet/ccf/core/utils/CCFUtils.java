@@ -8,7 +8,7 @@ import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
 
 public final class CCFUtils {
 	public static final String delimiter = "-";
-	public static final String[] replaceCharacters = new String[]{":","\\{", "\\}", "/","\\\\"};
+	private static final String[] replaceCharacters = new String[]{":","\\{", "\\}", "/","\\\\"};
 	public static String getTempFileName(Document document) throws GenericArtifactParsingException{
 		Element element = document.getRootElement();
 		String sourceSystemId = XPathUtils.getAttributeValue(element, GenericArtifactHelper.SOURCE_SYSTEM_ID);
