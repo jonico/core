@@ -60,7 +60,9 @@ public class SslProtocolSocketFactory implements SecureProtocolSocketFactory {
 				String type = System.getProperty(KEY_STORE_TYPE, KeyStore.getDefaultType());
 				KeyStore keyStore = KeyStore.getInstance(type);
 				char[] password = System.getProperty(KEY_STORE_PASSWORD).toCharArray();
-				keyStore.load(new FileInputStream(System.getProperty(KEY_STORE)), password);
+				FileInputStream keyStoreInputStream = new FileInputStream(System.getProperty(KEY_STORE));
+				keyStore.load(keyStoreInputStream, password);
+				keyStoreInputStream.close();
 				KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
 				keyManagerFactory.init(keyStore, password);
 				keymanagers = keyManagerFactory.getKeyManagers();
