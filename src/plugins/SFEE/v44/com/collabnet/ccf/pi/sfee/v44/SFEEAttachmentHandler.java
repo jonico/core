@@ -37,7 +37,7 @@ import com.vasoftware.sf.soap44.webservices.tracker.ITrackerAppSoap;
 /**
  * This class is responsible for retrieving attachment data for an artifact from
  * a Source SFEE repository.
- * 
+ *
  * @author madhusuthanan
  */
 public class SFEEAttachmentHandler {
@@ -58,7 +58,7 @@ public class SFEEAttachmentHandler {
 
 	/**
 	 * Class constructor.
-	 * 
+	 *
 	 * @param serverUrl
 	 *            Soap server URL.
 	 * @param connectionManager
@@ -87,7 +87,7 @@ public class SFEEAttachmentHandler {
 	 * This method uploads the file and gets the new file descriptor returned
 	 * from the SFEE system. It then associates the file descriptor to the
 	 * artifact there by adding the attachment to the artifact.
-	 * 
+	 *
 	 * @param sessionId -
 	 *            The current session id
 	 * @param artifactId -
@@ -100,8 +100,8 @@ public class SFEEAttachmentHandler {
 	 *            MIME type of the file that is being attached.
 	 * @param att -
 	 *            the file content
-	 * @param linkUrl 
-	 * 
+	 * @param linkUrl
+	 *
 	 * @throws RemoteException -
 	 *             if any SOAP api call fails
 	 */
@@ -177,12 +177,12 @@ public class SFEEAttachmentHandler {
 
 	/**
 	 * Retrieves the attachment data for a given file id.
-	 * 
+	 *
 	 * @param sessionId
 	 * @param fileId
 	 * @param size
 	 * @param folderId
-	 * @param shouldShipAttachmentsWithArtifact 
+	 * @param shouldShipAttachmentsWithArtifact
 	 * @return
 	 * @throws RemoteException
 	 */
@@ -215,7 +215,7 @@ public class SFEEAttachmentHandler {
 					File tempFile = null;
 					data = new byte[1024*3];
 					tempFile = File.createTempFile("CSFE_Attachment", "file");
-					
+
 					String attachmentDataFile = tempFile.getAbsolutePath();
 					int readBytes = 0;
 					FileOutputStream fos = new FileOutputStream(tempFile);
@@ -223,8 +223,8 @@ public class SFEEAttachmentHandler {
 						fos.write(data,0,readBytes);
 					}
 					fos.close();
-					GenericArtifactField attachmentDataFileField = 
-						ga.addNewField(AttachmentMetaData.ATTACHMENT_DATA_FILE, 
+					GenericArtifactField attachmentDataFileField =
+						ga.addNewField(AttachmentMetaData.ATTACHMENT_DATA_FILE,
 							GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
 					attachmentDataFileField.setFieldValueType(
 							GenericArtifactField.FieldValueTypeValue.STRING);
@@ -232,7 +232,7 @@ public class SFEEAttachmentHandler {
 					data = null;
 				}
 			} catch (IOException e) {
-				if (connectionManager.isEnableRetryAfterNetworkTimeout() 
+				if (connectionManager.isEnableRetryAfterNetworkTimeout()
 						&& (!connectionManager
 								.isUseStandardTimeoutHandlingCode())) {
 					log
@@ -262,7 +262,7 @@ public class SFEEAttachmentHandler {
 	/**
 	 * This method decodes the attachment data from the incoming GenericArtifact
 	 * object and adds to the target SFEE system tracker's artifact.
-	 * 
+	 *
 	 * @param sessionId
 	 * @param att
 	 * @param artifactId
@@ -292,9 +292,10 @@ public class SFEEAttachmentHandler {
 						attachDescription, attachmentName, attachmentMimeType,
 						att, null);
 			} else if (AttachmentMetaData.AttachmentType.valueOf(contentType) == AttachmentMetaData.AttachmentType.LINK) {
+				attachmentName = attachmentName + "link.txt";
 				artifact = this
 						.attachFileToArtifact(sessionId, artifactId,
-								attachDescription, attachmentName + "link.txt",
+								attachDescription, attachmentName,
 								AttachmentMetaData.TEXT_PLAIN, att, attachmentURL
 										.getBytes());
 			} else if (AttachmentMetaData.AttachmentType.valueOf(contentType) == AttachmentMetaData.AttachmentType.EMPTY) {
@@ -304,12 +305,7 @@ public class SFEEAttachmentHandler {
 			// AttachmentMetaData.AttachmentType.UNKNOWN){
 			// //TODO What should I do now?
 			// }
-		} else if (attAction == GenericArtifact.ArtifactActionValue.DELETE) {
-			// TODO not implemented
 		}
-		// else if(attAction == GenericArtifact.ArtifactActionValue.RENAME){
-		// //TODO not implemented
-		// }
 		else if (attAction == GenericArtifact.ArtifactActionValue.UNKNOWN) {
 			// TODO What should be done if attachment action value is unknown
 			log.error("What shout I do now?");
@@ -319,13 +315,20 @@ public class SFEEAttachmentHandler {
 			AttachmentSoapRow attachmentRow = getAttachmentMetaData(
 					attachmentName, attachmentLastModifiedDate,
 					sourceForgeSoap, sessionId, artifactId);
-			att.setTargetArtifactLastModifiedDate(DateUtil.format(attachmentRow
-					.getDateCreated()));
-			att.setTargetArtifactVersion("1");
-			att.setTargetArtifactId(attachmentRow.getAttachmentId());
+			if(attachmentRow != null) {
+				att.setTargetArtifactLastModifiedDate(DateUtil.format(attachmentRow
+						.getDateCreated()));
+				att.setTargetArtifactVersion("1");
+				att.setTargetArtifactId(attachmentRow.getAttachmentId());
+			}
+			else {
+				att.setTargetArtifactLastModifiedDate(DateUtil.format(attachmentLastModifiedDate));
+				att.setTargetArtifactVersion("1");
+				att.setTargetArtifactId(GenericArtifact.VALUE_UNKNOWN);
+			}
 		}
 	}
-	
+
 	public void deleteAttachment(Connection connection, String attachmentId, String artifactId,
 			GenericArtifact att) throws RemoteException{
 		String sessionId = connection.getSessionId();
@@ -342,32 +345,28 @@ public class SFEEAttachmentHandler {
 	private AttachmentSoapRow getAttachmentMetaData(String fileName,
 			Date createdDate, ISourceForgeSoap sourceForgeSoap,
 			String sessionId, String artifactId) throws RemoteException {
-		Date artifactModifiedDate = new Date(
-				(createdDate.getTime() / 1000) * 1000);
 		AttachmentSoapList attachmentsList = sourceForgeSoap.listAttachments(
 				sessionId, artifactId);
 		AttachmentSoapRow[] attachmentRows = attachmentsList.getDataRows();
+		AttachmentSoapRow returnRow = null;
 		for (int i = 0; i < attachmentRows.length; i++) {
 			AttachmentSoapRow row = attachmentRows[i];
-			Date attachmentCreatedDate = new Date((row.getDateCreated()
-					.getTime() / 1000) * 1000);
-			if (row.getFileName().equals(fileName)
-					&& artifactModifiedDate.equals(attachmentCreatedDate)) {
-				return row;
-			}
-			if (i == attachmentRows.length - 1) {
-				log.warn("No attachments match with the name " + fileName
-						+ " created time " + createdDate);
+			if (row.getFileName().equals(fileName)) {
+				returnRow = row;
 			}
 		}
-		return null;
+		if(returnRow == null) {
+			log.warn("No attachments match with the name " + fileName
+					+ " created time " + createdDate);
+		}
+		return returnRow;
 	}
 
 //	/**
 //	 * This method retrieves all the attachments for all the artifacts present
 //	 * in the artifactRows Set and encoded them into GenericArtifact attachment
 //	 * format.
-//	 * 
+//	 *
 //	 * @param sessionId
 //	 * @param lastModifiedDate
 //	 * @param username
@@ -398,7 +397,7 @@ public class SFEEAttachmentHandler {
 	 * This method retrieves all the attachments for all the artifacts present
 	 * in the artifactRows Set and encoded them into GenericArtifact attachment
 	 * format.
-	 * 
+	 *
 	 * @param sessionId
 	 * @param lastModifiedDate
 	 * @param username
