@@ -518,7 +518,17 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 			String attributeDisplayName = trackerAttribute.getDisplayName();
 			String attributeNamespace = trackerAttribute.getNamespace();
 			String attributeTagName = trackerAttribute.getTagName();
-			String attributeNamespaceDiaplayName = "{"+attributeNamespace+"}"+attributeDisplayName;
+			String attributeNamespaceDiaplayName = null;
+			if(attributeName.equals(CREATED_ON_FIELD_NAME)
+					|| attributeName.equals(MODIFIED_ON_FIELD_NAME)
+					|| attributeName.equals(ID_FIELD_NAME)
+					|| attributeName.equals(CREATED_BY_FIELD_NAME)
+					|| attributeName.equals(MODIFIED_BY_FIELD_NAME)){
+				attributeNamespaceDiaplayName = attributeName;
+			}
+			else {
+				attributeNamespaceDiaplayName = "{"+attributeNamespace+"}"+attributeDisplayName;
+			}
 			GenericArtifactField.FieldValueTypeValue gaFieldType = null;
 			gaFieldType = ptGATypesMap.get(ptAttributeType);
 			boolean isAttributeRequired = false;
