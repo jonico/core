@@ -45,7 +45,7 @@ public abstract class AbstractWriter<T> extends LifecycleComponent implements
 		Element element = null;
 		int numberOfTries = 1;
 		boolean retry = false;
-
+		Object[] returnValue = null;
 		do {
 			int msToSleep = (numberOfTries - 1)
 					* connectionManager.getRetryIncrementTime();
@@ -66,7 +66,7 @@ public abstract class AbstractWriter<T> extends LifecycleComponent implements
 						gaDocument = this.createArtifact(gaDocument);
 					} else if (artifactType
 							.equals(GenericArtifactHelper.ARTIFACT_TYPE_ATTACHMENT)) {
-						gaDocument = this.createAttachment(gaDocument);
+						returnValue = this.createAttachment(gaDocument);
 					} else if (artifactType
 							.equals(GenericArtifactHelper.ARTIFACT_TYPE_DEPENDENCY)) {
 						gaDocument = this.createDependency(gaDocument);
@@ -177,8 +177,11 @@ public abstract class AbstractWriter<T> extends LifecycleComponent implements
 			}
 			++numberOfTries;
 		} while (retry);
-		Object[] returnValue = null;
-		if (gaDocument == null) {
+
+		if(returnValue != null){
+			return returnValue;
+		}
+		else if (gaDocument == null) {
 			returnValue = new Object[] {};
 		} else {
 			returnValue = new Object[] { gaDocument };
@@ -213,7 +216,7 @@ public abstract class AbstractWriter<T> extends LifecycleComponent implements
 	 * to this method will be changed and has to be serialized to XML as return
 	 * value of the update method. It may also happen that this method throws a
 	 * CCFRuntimeException to quarantine an artifact.
-	 * 
+	 *
 	 * @param artifactCurrentVersion
 	 *            version of the target artifact, the update method likes to
 	 *            change
@@ -318,7 +321,7 @@ public abstract class AbstractWriter<T> extends LifecycleComponent implements
 
 	public abstract Document createDependency(Document gaDocument);
 
-	public abstract Document createAttachment(Document gaDocument);
+	public abstract Document[] createAttachment(Document gaDocument);
 
 	public abstract Document createArtifact(Document gaDocument);
 
@@ -350,7 +353,7 @@ public abstract class AbstractWriter<T> extends LifecycleComponent implements
 	 * manage (create, close, pool) the connections from type T. Furthermore, it
 	 * contains timeout settings and the settings for the retry code in case of
 	 * network timeout and session fault related errors.
-	 * 
+	 *
 	 * @return the connection manager object
 	 */
 	public ConnectionManager<T> getConnectionManager() {
@@ -362,7 +365,7 @@ public abstract class AbstractWriter<T> extends LifecycleComponent implements
 	 * manage (create, close, pool) the connections from type T. Furthermore, it
 	 * contains timeout settings and the settings for the retry code in case of
 	 * network timeout and session fault related errors.
-	 * 
+	 *
 	 * @param connectionManager
 	 *            the connection manager object
 	 */

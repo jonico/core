@@ -26,11 +26,11 @@ import com.vasoftware.sf.soap44.webservices.tracker.ArtifactSoapDO;
 /**
  * This class retrieves the changed artifact details from an SFEE
  * system repository.
- * 
- *  It uses the last read time of the sync info and fetches all the 
+ *
+ *  It uses the last read time of the sync info and fetches all the
  *  artifact data that are changed after the last read time of the
  *  particular repository.
- *  
+ *
  * @author madhusuthanan (madhusuthanan@collab.net)
  *
  */
@@ -39,15 +39,15 @@ import com.vasoftware.sf.soap44.webservices.tracker.ArtifactSoapDO;
  *
  */
 public class SFEEReader extends AbstractReader<Connection> {
-    
+
 	private static final Log log = LogFactory.getLog(SFEEReader.class);
-	
+
 	private SFEETrackerHandler trackerHandler = null;
-	
+
 	private SFEEAttachmentHandler attachmentHandler = null;
-	
+
 	private SFEEToGenericArtifactConverter artifactConverter = null;
-	
+
 	private String serverUrl = null;
 
 	private String password = null;
@@ -55,7 +55,9 @@ public class SFEEReader extends AbstractReader<Connection> {
 	private String username = null;
 
 	private boolean ignoreConnectorUserUpdates = true;
-	
+
+	private ThreadLocal<ArtifactSoapDO> artifactContainer = new ThreadLocal<ArtifactSoapDO>();
+
 	/**
 	 * Constructs and Initializes the SFEEReader component.
 	 */
@@ -66,14 +68,14 @@ public class SFEEReader extends AbstractReader<Connection> {
 
     /**
      * Constructs and initializes the SFEEReader component with an id.
-     * 
+     *
      * @param id - The id of the SFEEReader component.
      */
     public SFEEReader(String id) {
 	    super(id);
 	    init();
 	}
-    
+
     /**
      * Initializes the SFEEToGenericArtifactConverter component.
      */
@@ -81,14 +83,14 @@ public class SFEEReader extends AbstractReader<Connection> {
     	artifactConverter = new SFEEToGenericArtifactConverter();
     }
 
-	
+
 	/**
 	 * Connects to the source SFEE system using the connectionInfo and credentialInfo
 	 * details.
-	 * 
+	 *
 	 * This method uses the ConnectionManager configured in the wiring file
 	 * for the SFEEReader
-	 *  
+	 *
 	 * @param systemId - The system id of the source SFEE system
 	 * @param systemKind - The system kind of the source SFEE system
 	 * @param repositoryId - The tracker id in the source SFEE system
@@ -96,8 +98,8 @@ public class SFEEReader extends AbstractReader<Connection> {
 	 * @param connectionInfo - The SFEE server URL
 	 * @param credentialInfo - User name and password concatenated with a delimiter.
 	 * @return - The connection object obtained from the ConnectionManager
-	 * @throws MaxConnectionsReachedException 
-	 * @throws ConnectionException 
+	 * @throws MaxConnectionsReachedException
+	 * @throws ConnectionException
 	 */
 	public Connection connect(String systemId, String systemKind, String repositoryId,
 			String repositoryKind, String connectionInfo, String credentialInfo) throws MaxConnectionsReachedException, ConnectionException {
@@ -107,7 +109,7 @@ public class SFEEReader extends AbstractReader<Connection> {
 			repositoryKind, connectionInfo, credentialInfo);
 		return connection;
 	}
-	
+
 	@Override
 	public boolean handleException(Throwable cause, ConnectionManager<Connection> connectionManager){
 		if(cause == null) return false;
@@ -131,20 +133,20 @@ public class SFEEReader extends AbstractReader<Connection> {
 		}
 		return false;
 	}
-	
+
 	/**
 	 * Releases the connection to the ConnectionManager.
-	 * 
+	 *
 	 * @param connection - The connection to be released to the ConnectionManager
 	 */
 	public void disconnect(Connection connection) {
 		getConnectionManager().releaseConnection(connection);
 	}
-	
+
 	/**
 	 * Populates the source and destination attributes for this GenericArtifact
 	 * object from the Sync Info database document.
-	 * 
+	 *
 	 * @param syncInfo
 	 * @param ga
 	 */
@@ -155,12 +157,12 @@ public class SFEEReader extends AbstractReader<Connection> {
 		String sourceSystemId = this.getSourceSystemId(syncInfo);
 		String sourceSystemKind = this.getSourceSystemKind(syncInfo);
 		String conflictResolutionPriority = this.getConflictResolutionPriority(syncInfo);
-		
+
 		String targetRepositoryId = this.getTargetRepositoryId(syncInfo);
 		String targetRepositoryKind = this.getTargetRepositoryKind(syncInfo);
 		String targetSystemId = this.getTargetSystemId(syncInfo);
 		String targetSystemKind = this.getTargetSystemKind(syncInfo);
-		
+
 		if(StringUtils.isEmpty(sourceArtifactId)){
 			List<GenericArtifactField> fields = ga.getAllGenericArtifactFieldsWithSameFieldName("Id");
 			for(GenericArtifactField field:fields){
@@ -173,17 +175,17 @@ public class SFEEReader extends AbstractReader<Connection> {
 		ga.setSourceSystemId(sourceSystemId);
 		ga.setSourceSystemKind(sourceSystemKind);
 		ga.setConflictResolutionPriority(conflictResolutionPriority);
-		
+
 		ga.setTargetRepositoryId(targetRepositoryId);
 		ga.setTargetRepositoryKind(targetRepositoryKind);
 		ga.setTargetSystemId(targetSystemId);
 		ga.setTargetSystemKind(targetSystemKind);
 	}
-	
+
 	/**
 	 * Populates the source and destination attributes for this GenericArtifact
 	 * object from the Sync Info database document.
-	 * 
+	 *
 	 * @param syncInfo
 	 * @param ga
 	 */
@@ -193,39 +195,39 @@ public class SFEEReader extends AbstractReader<Connection> {
 		String sourceRepositoryKind = this.getSourceRepositoryKind(syncInfo);
 		String sourceSystemId = this.getSourceSystemId(syncInfo);
 		String sourceSystemKind = this.getSourceSystemKind(syncInfo);
-		
+
 		String targetRepositoryId = this.getTargetRepositoryId(syncInfo);
 		String targetRepositoryKind = this.getTargetRepositoryKind(syncInfo);
 		String targetSystemId = this.getTargetSystemId(syncInfo);
 		String targetSystemKind = this.getTargetSystemKind(syncInfo);
-		
+
 		ga.setSourceRepositoryId(sourceRepositoryId);
 		ga.setSourceRepositoryKind(sourceRepositoryKind);
 		ga.setSourceSystemId(sourceSystemId);
 		ga.setSourceSystemKind(sourceSystemKind);
-		
+
 		ga.setDepParentSourceRepositoryId(sourceRepositoryId);
 		ga.setDepParentSourceRepositoryKind(sourceRepositoryKind);
-		
+
 		ga.setTargetRepositoryId(targetRepositoryId);
 		ga.setTargetRepositoryKind(targetRepositoryKind);
 		ga.setTargetSystemId(targetSystemId);
 		ga.setTargetSystemKind(targetSystemKind);
-		
+
 		ga.setDepParentTargetRepositoryId(targetRepositoryId);
 		ga.setDepParentTargetRepositoryKind(targetRepositoryKind);
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	@Override
 	public void validate(List exceptions) {
 		super.validate(exceptions);
-		
+
 		if (getResyncUserName() == null) {
 			log
 					.warn("resyncUserName-property has not been set, so that initial resyncs after artifact creation are not possible.");
 		}
-		
+
 		if(StringUtils.isEmpty(serverUrl)){
 			exceptions.add(new ValidationException("serverUrl-property not set",this));
 		}
@@ -254,14 +256,14 @@ public class SFEEReader extends AbstractReader<Connection> {
 
 	/**
 	 * Queries the artifact with the artifactId to find out if there are any
-	 * attachments added to the artifact after the last read time in the 
+	 * attachments added to the artifact after the last read time in the
 	 * Sync Info object.
 	 * If there are attachments added to this artifact after the last
-	 * read time for this tracker then the attachment data is retrieved 
+	 * read time for this tracker then the attachment data is retrieved
 	 * and returned as a GenericArtifact object.
 	 * If there are multiple attachments each of them are encoded in a
 	 * separate GenericArtifact object and returned in the list.
-	 * 
+	 *
 	 * @see com.collabnet.ccf.core.AbstractReader#getArtifactAttachments(org.dom4j.Document, java.lang.String)
 	 */
 	@Override
@@ -275,7 +277,7 @@ public class SFEEReader extends AbstractReader<Connection> {
 		Connection connection;
 		try {
 			connection = connect(sourceSystemId, sourceSystemKind, sourceRepositoryId,
-					sourceRepositoryKind, serverUrl, 
+					sourceRepositoryKind, serverUrl,
 					getUsername()+SFEEConnectionFactory.PARAM_DELIMITER+getPassword());
 		} catch (MaxConnectionsReachedException e) {
 			String cause = "Could not create connection to the SFEE system. Max connections reached for "+
@@ -292,12 +294,14 @@ public class SFEEReader extends AbstractReader<Connection> {
 		artifactIds.add(artifactId);
 		List<GenericArtifact> attachments = null;
 		try {
+			ArtifactSoapDO soapDO = artifactContainer.get();
 			attachments = attachmentHandler.listAttachments(connection.getSessionId(),
 					lastModifiedDate,isIgnoreConnectorUserUpdates()?getUsername():"",artifactIds, connection.getSfSoap(),
-					this.getMaxAttachmentSizePerArtifact(),this.isShipAttachmentsWithArtifact());
+					this.getMaxAttachmentSizePerArtifact(),this.isShipAttachmentsWithArtifact(), soapDO);
 			for(GenericArtifact attachment:attachments){
 				populateSrcAndDestForAttachment(syncInfo, attachment);
 			}
+			artifactContainer.set(null);
 		} catch (RemoteException e) {
 			String cause = "During the attachment retrieval process from SFEE, an error occured";
 			log.error(cause, e);
@@ -313,7 +317,7 @@ public class SFEEReader extends AbstractReader<Connection> {
 	 * data encoded in an GenericArtifact object.
 	 * The SFEEReader is capable of retrieving the artifact change history. But this
 	 * feature is turned off as of now.
-	 * 
+	 *
 	 * @see com.collabnet.ccf.core.AbstractReader#getArtifactData(org.dom4j.Document, java.lang.String)
 	 */
 	@Override
@@ -328,7 +332,7 @@ public class SFEEReader extends AbstractReader<Connection> {
 		Connection connection;
 		try {
 			connection = connect(sourceSystemId, sourceSystemKind, sourceRepositoryId,
-					sourceRepositoryKind, serverUrl, 
+					sourceRepositoryKind, serverUrl,
 					getUsername()+SFEEConnectionFactory.PARAM_DELIMITER+getPassword());
 		} catch (MaxConnectionsReachedException e) {
 			String cause = "Could not create connection to the SFEE system. Max connections reached for "+
@@ -361,6 +365,7 @@ public class SFEEReader extends AbstractReader<Connection> {
 			}
 			populateSrcAndDest(syncInfo, genericArtifact);
 			gaList.add(genericArtifact);
+			artifactContainer.set(artifact);
 		} catch (RemoteException e) {
 			String cause = "During the artifact retrieval process from SFEE, an error occured";
 			log.error(cause, e);
@@ -387,9 +392,9 @@ public class SFEEReader extends AbstractReader<Connection> {
 	 * This method queries the particular tracker in the source SFEE system
 	 * to check if there are artifacts changed/created after the last read time
 	 * coming in, in the Sync Info object.
-	 * 
+	 *
 	 * If there are changed artifacts their ids are returned in a List.
-	 * 
+	 *
 	 * @see com.collabnet.ccf.core.AbstractReader#getChangedArtifacts(org.dom4j.Document)
 	 */
 	@Override
@@ -409,7 +414,7 @@ public class SFEEReader extends AbstractReader<Connection> {
 		Connection connection;
 		try {
 			connection = connect(sourceSystemId, sourceSystemKind, sourceRepositoryId,
-					sourceRepositoryKind, serverUrl, 
+					sourceRepositoryKind, serverUrl,
 					getUsername()+SFEEConnectionFactory.PARAM_DELIMITER+getPassword());
 		} catch (MaxConnectionsReachedException e) {
 			String cause = "Could not create connection to the SFEE system. Max connections reached for "+
@@ -458,7 +463,7 @@ public class SFEEReader extends AbstractReader<Connection> {
 
 	/**
 	 * Sets the source CSFE/SFEE system's SOAP server URL.
-	 * 
+	 *
 	 * @param serverUrl - the URL of the source SFEE system.
 	 */
 	public void setServerUrl(String serverUrl) {
@@ -467,7 +472,7 @@ public class SFEEReader extends AbstractReader<Connection> {
 
 	/**
 	 * Gets the mandatory password that belongs to the username
-	 * 
+	 *
 	 * @return the password
 	 */
 	private String getPassword() {
@@ -476,7 +481,7 @@ public class SFEEReader extends AbstractReader<Connection> {
 
 	/**
 	 * Sets the password that belongs to the username
-	 * 
+	 *
 	 * @param password
 	 *            the password to set
 	 */
@@ -489,7 +494,7 @@ public class SFEEReader extends AbstractReader<Connection> {
 	 * SFEE/CSFE instance whenever an artifact should be updated or extracted.
 	 * This user has to differ from the resync user in order to force initial
 	 * resyncs with the source system once a new artifact has been created.
-	 * 
+	 *
 	 * @return the userName
 	 */
 	public String getUsername() {
@@ -498,12 +503,12 @@ public class SFEEReader extends AbstractReader<Connection> {
 
 	/**
 	 * Sets the mandatory username
-	 * 
+	 *
 	 * The user name is used to login into the SFEE/CSFE instance whenever an
 	 * artifact should be updated or extracted. This user has to differ from the
 	 * resync user in order to force initial resyncs with the source system once
 	 * a new artifact has been created.
-	 * 
+	 *
 	 * @param userName
 	 *            the username to set
 	 */
@@ -516,7 +521,7 @@ public class SFEEReader extends AbstractReader<Connection> {
 	 * This is the default behavior to avoid infinite update loops.
 	 * However, in artifact export scenarios, where all artifacts should be extracted, this
 	 * property should be set to false
-	 * @param ignoreConnectorUserUpdates whether to ignore artifacts that have been created 
+	 * @param ignoreConnectorUserUpdates whether to ignore artifacts that have been created
 	 * or lastly modified by the connector user
 	 */
 	public void setIgnoreConnectorUserUpdates(boolean ignoreConnectorUserUpdates) {
@@ -528,23 +533,23 @@ public class SFEEReader extends AbstractReader<Connection> {
 	 * This is the default behavior to avoid infinite update loops.
 	 * However, in artifact export scenarios, where all artifacts should be extracted, this
 	 * property should is set to false
-	 * @return the ignoreConnectorUserUpdates whether to ignore artifacts that have been created 
+	 * @return the ignoreConnectorUserUpdates whether to ignore artifacts that have been created
 	 * or lastly modified by the connector user
 	 */
 	public boolean isIgnoreConnectorUserUpdates() {
 		return ignoreConnectorUserUpdates;
 	}
-	
+
 	/**
 	 * Sets the optional resync username
-	 * 
+	 *
 	 * The resync user name is used to login into the SFEE/CSFE instance
 	 * whenever an artifact should be created. This user has to differ from the
 	 * ordinary user used to log in in order to force initial resyncs with the
 	 * source system once a new artifact has been created. This property can also
 	 * be set for the reader component in order to be able to differentiate
 	 * between artifacts created by ordinary users and artifacts to be resynced.
-	 * 
+	 *
 	 * @param resyncUserName
 	 *            the resyncUserName to set
 	 */
@@ -560,13 +565,13 @@ public class SFEEReader extends AbstractReader<Connection> {
 	 * created. This property can also
 	 * be set for the reader component in order to be able to differentiate
 	 * between artifacts created by ordinary users and artifacts to be resynced.
-	 * 
+	 *
 	 * @return the resyncUserName
 	 */
 	private String getResyncUserName() {
 		return resyncUserName;
 	}
-	
+
 	/**
 	 * Another user name that is used to login into the SFEE/CSFE instance This
 	 * user has to differ from the ordinary user used to log in in order to

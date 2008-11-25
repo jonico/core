@@ -248,7 +248,7 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 		return this.returnDocument(ga);
 	}
 
-	public Document createAttachment(Document data) {
+	public Document[] createAttachment(Document data) {
 		GenericArtifact ga = null;
 		try {
 			ga = GenericArtifactHelper.createGenericArtifactJavaObject(data);
@@ -260,10 +260,35 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 		this.initializeArtifact(ga);
 		Connection connection = connect(ga);
 		String targetParentArtifactId = ga.getDepParentTargetArtifactId();
+		GenericArtifact parentArtifact = null;
 		try {
 			attachmentHandler.handleAttachment(connection.getSessionId(), ga,
 					targetParentArtifactId, this.getUsername(), connection
 							.getSfSoap());
+			ArtifactSoapDO artifact = trackerHandler.getTrackerItem(connection.getSessionId(), targetParentArtifactId);
+			parentArtifact = new GenericArtifact();
+			parentArtifact.setArtifactType(GenericArtifact.ArtifactTypeValue.PLAINARTIFACT);
+			parentArtifact.setArtifactAction(GenericArtifact.ArtifactActionValue.UPDATE);
+			parentArtifact.setArtifactMode(GenericArtifact.ArtifactModeValue.CHANGEDFIELDSONLY);
+			parentArtifact.setConflictResolutionPriority(ga.getConflictResolutionPriority());
+			parentArtifact.setSourceArtifactId(ga.getDepParentSourceArtifactId());
+			parentArtifact.setSourceArtifactLastModifiedDate(ga.getSourceArtifactLastModifiedDate());
+			parentArtifact.setSourceArtifactVersion(ga.getSourceArtifactVersion());
+			parentArtifact.setSourceRepositoryId(ga.getSourceRepositoryId());
+			parentArtifact.setSourceSystemId(ga.getSourceSystemId());
+			parentArtifact.setSourceSystemKind(ga.getSourceSystemKind());
+			parentArtifact.setSourceRepositoryKind(ga.getSourceRepositoryKind());
+			parentArtifact.setSourceSystemTimezone(ga.getSourceSystemTimezone());
+
+			parentArtifact.setTargetArtifactId(targetParentArtifactId);
+			parentArtifact.setTargetArtifactLastModifiedDate(DateUtil.format(artifact.getLastModifiedDate()));
+			parentArtifact.setTargetArtifactVersion(Integer.toString(artifact.getVersion()));
+			parentArtifact.setTargetRepositoryId(ga.getTargetRepositoryId());
+			parentArtifact.setTargetRepositoryKind(ga.getTargetRepositoryKind());
+			parentArtifact.setTargetSystemId(ga.getTargetSystemId());
+			parentArtifact.setTargetSystemKind(ga.getTargetSystemKind());
+			parentArtifact.setTargetSystemTimezone(ga.getTargetSystemTimezone());
+
 		} catch (RemoteException e) {
 			String cause = "Problem occured while creating attachments in SFEE";
 			log.error(cause, e);
@@ -272,7 +297,10 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 		} finally {
 			disconnect(connection);
 		}
-		return this.returnDocument(ga);
+		Document parentArtifactDoc = returnDocument(parentArtifact);
+		Document attachmentDocument = this.returnDocument(ga);
+		Document[] retDocs = new Document[]{attachmentDocument, parentArtifactDoc};
+		return retDocs;
 	}
 
 	/**

@@ -27,15 +27,15 @@ import com.collabnet.ccf.core.utils.XPathUtils;
  * system has to be created, updated, deleted or ignored within the target
  * system. It will also try to find out the correct id of the artifact on the
  * target system.
- * 
+ *
  * It checks the version of the source artifact to see if that version of the
  * artifact already shipped there by avoiding duplicate artifact shipment.
- * 
+ *
  * Optionally, it can also find out whether the artifact has been quarantined in
  * the hospital and skip it.
- * 
+ *
  * @author jnicolai
- * 
+ *
  */
 public class EntityService extends LifecycleComponent implements IDataProcessor {
 	/**
@@ -48,9 +48,9 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 	private JDBCReadConnector hospitalDatabaseReader = null;
 
 	private boolean skipNewerVersionsOfQuarantinedAttachments;
-	
+
 	private long identityMapEventWaitTime = 500L;
-	
+
 	private int identityMapEventWaitCount = 4;
 
 	/**
@@ -78,7 +78,7 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 	 * Main method to handle the mapping and filtering of source artifacts to
 	 * target repository artifact items Also include the quarantined artifact
 	 * lookup code
-	 * 
+	 *
 	 * @param data
 	 *            input XML document in generic XML artifact format
 	 * @return array of generated XML documents compliant to generic XML
@@ -219,7 +219,10 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 						sourceParentRepositoryId, targetSystemId,
 						targetParentRepositoryId,
 						GenericArtifactHelper.ARTIFACT_TYPE_PLAIN_ARTIFACT);
-				String targetParentArtifactId = resultsDep[0].toString();
+				String targetParentArtifactId = null;
+				if(resultsDep != null && resultsDep[0] != null) {
+					targetParentArtifactId = resultsDep[0].toString();
+				}
 				if (StringUtils.isEmpty(targetParentArtifactId)) {
 					String cause = "Parent artifact " + sourceParentArtifactId
 							+ " for attachment " + sourceArtifactId
@@ -242,7 +245,7 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 									targetParentArtifactId);
 				}
 			}
-			
+
 			if(targetArtifactIdFromTable != null) {
 				XPathUtils.addAttribute(element, GenericArtifactHelper.TARGET_ARTIFACT_ID, targetArtifactIdFromTable);
 				XPathUtils.addAttribute(element, GenericArtifactHelper.TARGET_ARTIFACT_VERSION, targetArtifactVersion);
@@ -310,12 +313,12 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 	 * For a given source artifact id, source repository and the target
 	 * repository details, this method finds out the target artifact id mapped
 	 * to the source artifact id by looking up the identity mapping table.
-	 * 
+	 *
 	 * If the source artifact id had ever passed through the wiring the identity
 	 * mapping will contain the corresponding target artifact id. This method
 	 * fetches the target artifact id and returns. If there is no target
 	 * artifact id mapped to this source artifact id this method return a null.
-	 * 
+	 *
 	 * @param sourceArtifactId -
 	 *            The source artifact id that should be looked up for a target
 	 *            artifact id
@@ -329,7 +332,7 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 	 *            The repository id of the target artifact
 	 * @param artifactType -
 	 *            The artifact type
-	 * 
+	 *
 	 * @return array with target artifactId, sourceArtifactLastModifiedDate,
 	 *         sourceArtifactVersion, targetArtifactVersion (in this order)
 	 */
@@ -451,7 +454,7 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 	 * This method looks up whether the artifact has been quarantined in the
 	 * hospital and has not been reprocessed yet. If so, it will find out
 	 * whether to skip the artifact or not.
-	 * 
+	 *
 	 * @param sourceArtifactId -
 	 *            The source artifact id that should be looked up for a target
 	 *            artifact id
@@ -469,7 +472,7 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 	 *            version of the current artifact
 	 * @param sourceArtifactLastModifiedDate
 	 *            last modified date of the current artifact
-	 * 
+	 *
 	 * @return true if artifact should be skipped, false if not
 	 */
 	private boolean skipQuarantinedArtifact(Element element,
@@ -628,7 +631,7 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 	 * the processed artifact has been already mapped in a newer or equal
 	 * version the duplicate shipment detection algorithm will skip the
 	 * artifact.
-	 * 
+	 *
 	 * @param identityMappingDatabaseReader
 	 */
 	public JDBCReadConnector getIdentityMappingDatabaseReader() {
@@ -642,7 +645,7 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 	 * the processed artifact has been already mapped in a newer or equal
 	 * version the duplicate shipment detection algorithm will skip the
 	 * artifact.
-	 * 
+	 *
 	 * @param identityMappingDatabaseReader
 	 */
 	public void setIdentityMappingDatabaseReader(
@@ -660,7 +663,7 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 	 * artifact will be shipped. Otherwise the
 	 * skipNewerVersionsOfQuarantinedArtifacts property will determine whether
 	 * to skip newer versions as well.
-	 * 
+	 *
 	 * @return
 	 */
 	public JDBCReadConnector getHospitalDatabaseReader() {
@@ -677,7 +680,7 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 	 * artifact will be shipped. Otherwise the
 	 * skipNewerVersionsOfQuarantinedArtifacts property will determine whether
 	 * to skip newer versions as well.
-	 * 
+	 *
 	 * @param hospitalDatabaseReader
 	 */
 	public void setHospitalDatabaseReader(
@@ -689,7 +692,7 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 	 * This optional property (default value false) determines whether
 	 * non-reprocessed artifacts in the hospital should be skipped even if a
 	 * newer version of the artifact is available in the source system.
-	 * 
+	 *
 	 * @param skipNewerVersionsOfQuarantinedAttachments
 	 */
 	public void setSkipNewerVersionsOfQuarantinedArtifacts(
@@ -701,7 +704,7 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 	 * This optional property (default value false) determines whether
 	 * non-reprocessed artifacts in the hospital should be skipped even if a
 	 * newer version of the artifact is available in the source system.
-	 * 
+	 *
 	 * @param skipNewerVersionsOfQuarantinedAttachments
 	 */
 	public boolean isSkipNewerVersionsOfQuarantinedArtifacts() {

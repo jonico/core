@@ -404,13 +404,14 @@ public class SFEEAttachmentHandler {
 	 * @param artifactRows
 	 * @param sourceForgeSoap
 	 * @param maxAttachmentSizePerArtifact
+	 * @param soapDO
 	 * @return
 	 * @throws RemoteException
 	 */
 	public List<GenericArtifact> listAttachments(String sessionId,
 			Date lastModifiedDate, String username, List<String> artifactIds,
 			ISourceForgeSoap sourceForgeSoap, long maxAttachmentSizePerArtifact,
-			boolean shouldShipAttachmentsWithArtifact)
+			boolean shouldShipAttachmentsWithArtifact, ArtifactSoapDO soapDO)
 			throws RemoteException {
 		List<GenericArtifact> attachmentGAs = new ArrayList<GenericArtifact>();
 		for (String artifactId : artifactIds) {
@@ -439,15 +440,23 @@ public class SFEEAttachmentHandler {
 							.setIncludesFieldMetaData(GenericArtifact.IncludesFieldMetaDataValue.FALSE);
 					ga
 							.setArtifactAction(GenericArtifact.ArtifactActionValue.CREATE);
-					ga.setSourceArtifactLastModifiedDate(DateUtil
-							.format(createdDate));
+
 					ga
 							.setArtifactMode(GenericArtifact.ArtifactModeValue.CHANGEDFIELDSONLY);
 					ga
 							.setArtifactType(GenericArtifact.ArtifactTypeValue.ATTACHMENT);
 					ga.setDepParentSourceArtifactId(artifactId);
 					ga.setSourceArtifactId(row.getAttachmentId());
-					ga.setSourceArtifactVersion("1");
+					if(soapDO != null) {
+						ga.setSourceArtifactVersion(Integer.toString(soapDO.getVersion()));
+						ga.setSourceArtifactLastModifiedDate(DateUtil
+								.format(soapDO.getLastModifiedDate()));
+					}
+					else {
+						ga.setSourceArtifactVersion("1");
+						ga.setSourceArtifactLastModifiedDate(DateUtil
+								.format(createdDate));
+					}
 					GenericArtifactField contentTypeField = ga.addNewField(
 							AttachmentMetaData.ATTACHMENT_TYPE,
 							GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);

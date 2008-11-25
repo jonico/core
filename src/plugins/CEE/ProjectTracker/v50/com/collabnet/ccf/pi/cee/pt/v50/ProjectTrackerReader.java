@@ -86,6 +86,7 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 	private HashMap<String, String> attahcmentIDNameMap = null;
 	// TODO Use ThreadLocal object to store these variables
 	private static ThreadLocal<ArtifactHistoryList> artifactHistoryList = new ThreadLocal<ArtifactHistoryList>();
+	private ThreadLocal<ClientArtifact> artifactContainer = new ThreadLocal<ClientArtifact>();
 	//private static ThreadLocal<HashMap<String, ClientArtifact>> artifactListTl = new ThreadLocal<HashMap<String, ClientArtifact>>();
 	ProjectTrackerHelper ptHelper = ProjectTrackerHelper.getInstance();
 	private static HashMap<String, GenericArtifactField.FieldValueTypeValue> ptGATypesMap =
@@ -139,6 +140,15 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 				trackerArtifactType.getNamespace(), trackerArtifactType.getDisplayName());
 		ArrayList<GenericArtifact> attachmentGAs = new ArrayList<GenericArtifact>();
 		TrackerWebServicesClient twsclient = null;
+		ClientArtifact artifact = artifactContainer.get();
+		long modifiedOnTime = -1;
+		Date modifiedOnDate = null;
+		if(artifact != null) {
+			String modifiedOnTimeMillis = artifact.getAttributeValue(TrackerWebServicesClient.DEFAULT_NAMESPACE,
+					MODIFIED_ON_FIELD);
+			modifiedOnTime = Long.parseLong(modifiedOnTimeMillis);
+			modifiedOnDate = new Date(modifiedOnTime);
+		}
 		try {
 			twsclient = this.getConnection(syncInfo);
 			ArtifactHistoryList ahl = ProjectTrackerReader.artifactHistoryList.get();
@@ -169,12 +179,22 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 
 			 								GenericArtifact ga = new GenericArtifact();
 			 								ga.setArtifactAction(GenericArtifact.ArtifactActionValue.CREATE);
-			 								ga.setSourceArtifactLastModifiedDate(DateUtil.format(modifiedOn));
+			 								if(modifiedOnDate != null) {
+			 									ga.setSourceArtifactLastModifiedDate(DateUtil.format(modifiedOnDate));
+			 								}
+			 								else {
+			 									ga.setSourceArtifactLastModifiedDate(DateUtil.format(modifiedOn));
+			 								}
 			 								ga.setArtifactMode(GenericArtifact.ArtifactModeValue.CHANGEDFIELDSONLY);
 			 								ga.setArtifactType(GenericArtifact.ArtifactTypeValue.ATTACHMENT);
 			 								ga.setDepParentSourceArtifactId(artifactId);
 			 								ga.setSourceArtifactId(attachmentId);
-			 								ga.setSourceArtifactVersion(Long.toString(modifiedOnMilliSeconds));
+			 								if(modifiedOnTime != -1){
+			 									ga.setSourceArtifactVersion(Long.toString(modifiedOnTime));
+			 								}
+			 								else {
+			 									ga.setSourceArtifactVersion(Long.toString(modifiedOnMilliSeconds));
+			 								}
 			 								GenericArtifactField contentTypeField =
 			 									ga.addNewField(AttachmentMetaData.ATTACHMENT_TYPE,
 			 											GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
@@ -297,12 +317,22 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 			 								if(attachmentId == null) continue;
 			 								GenericArtifact ga = new GenericArtifact();
 			 								ga.setArtifactAction(GenericArtifact.ArtifactActionValue.DELETE);
-			 								ga.setSourceArtifactLastModifiedDate(DateUtil.format(modifiedOn));
+			 								if(modifiedOnDate != null) {
+			 									ga.setSourceArtifactLastModifiedDate(DateUtil.format(modifiedOnDate));
+			 								}
+			 								else {
+			 									ga.setSourceArtifactLastModifiedDate(DateUtil.format(modifiedOn));
+			 								}
 			 								ga.setArtifactMode(GenericArtifact.ArtifactModeValue.CHANGEDFIELDSONLY);
 			 								ga.setArtifactType(GenericArtifact.ArtifactTypeValue.ATTACHMENT);
 			 								ga.setDepParentSourceArtifactId(artifactId);
 			 								ga.setSourceArtifactId(attachmentId);
-			 								ga.setSourceArtifactVersion(Long.toString(modifiedOnMilliSeconds));
+			 								if(modifiedOnTime != -1){
+			 									ga.setSourceArtifactVersion(Long.toString(modifiedOnTime));
+			 								}
+			 								else {
+			 									ga.setSourceArtifactVersion(Long.toString(modifiedOnMilliSeconds));
+			 								}
 			 								GenericArtifactField contentTypeField =
 			 									ga.addNewField(AttachmentMetaData.ATTACHMENT_TYPE,
 			 											GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
@@ -322,12 +352,22 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 
 				 								GenericArtifact ga = new GenericArtifact();
 				 								ga.setArtifactAction(GenericArtifact.ArtifactActionValue.CREATE);
-				 								ga.setSourceArtifactLastModifiedDate(DateUtil.format(modifiedOn));
+				 								if(modifiedOnDate != null) {
+				 									ga.setSourceArtifactLastModifiedDate(DateUtil.format(modifiedOnDate));
+				 								}
+				 								else {
+				 									ga.setSourceArtifactLastModifiedDate(DateUtil.format(modifiedOn));
+				 								}
 				 								ga.setArtifactMode(GenericArtifact.ArtifactModeValue.CHANGEDFIELDSONLY);
 				 								ga.setArtifactType(GenericArtifact.ArtifactTypeValue.ATTACHMENT);
 				 								ga.setDepParentSourceArtifactId(artifactId);
 				 								ga.setSourceArtifactId(attachmentId);
-				 								ga.setSourceArtifactVersion(Long.toString(modifiedOnMilliSeconds));
+				 								if(modifiedOnTime != -1){
+				 									ga.setSourceArtifactVersion(Long.toString(modifiedOnTime));
+				 								}
+				 								else {
+				 									ga.setSourceArtifactVersion(Long.toString(modifiedOnMilliSeconds));
+				 								}
 				 								GenericArtifactField contentTypeField =
 				 									ga.addNewField(AttachmentMetaData.ATTACHMENT_TYPE,
 				 											GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
@@ -356,12 +396,22 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 				 								if(attachmentId == null) continue;
 				 								GenericArtifact ga = new GenericArtifact();
 				 								ga.setArtifactAction(GenericArtifact.ArtifactActionValue.DELETE);
-				 								ga.setSourceArtifactLastModifiedDate(DateUtil.format(modifiedOn));
+				 								if(modifiedOnDate != null) {
+				 									ga.setSourceArtifactLastModifiedDate(DateUtil.format(modifiedOnDate));
+				 								}
+				 								else {
+				 									ga.setSourceArtifactLastModifiedDate(DateUtil.format(modifiedOn));
+				 								}
 				 								ga.setArtifactMode(GenericArtifact.ArtifactModeValue.CHANGEDFIELDSONLY);
 				 								ga.setArtifactType(GenericArtifact.ArtifactTypeValue.ATTACHMENT);
 				 								ga.setDepParentSourceArtifactId(artifactId);
 				 								ga.setSourceArtifactId(attachmentId);
-				 								ga.setSourceArtifactVersion(Long.toString(modifiedOnMilliSeconds));
+				 								if(modifiedOnTime != -1){
+				 									ga.setSourceArtifactVersion(Long.toString(modifiedOnTime));
+				 								}
+				 								else {
+				 									ga.setSourceArtifactVersion(Long.toString(modifiedOnMilliSeconds));
+				 								}
 				 								GenericArtifactField contentTypeField =
 				 									ga.addNewField(AttachmentMetaData.ATTACHMENT_TYPE,
 				 											GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
@@ -386,6 +436,7 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 		}
 		finally {
 			ProjectTrackerReader.artifactHistoryList.set(null);
+			artifactContainer.set(null);
 			this.attahcmentIDNameMap = null;
 			if(twsclient != null) {
 				getConnectionManager().releaseConnection(twsclient);
@@ -478,6 +529,7 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 			else if(artifacts.size() > 1){
 				throw new CCFRuntimeException("More than one artifact were returned for id "+artifactIdentifier);
 			}
+			artifactContainer.set(artifact);
 			lastModifiedBy = artifact.getAttributeValue(TrackerWebServicesClient.DEFAULT_NAMESPACE,
 					TrackerWebServicesClient.MODIFIED_BY_FIELD_NAME);
 			if(lastModifiedBy.equals(username)){

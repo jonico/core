@@ -53,7 +53,7 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 	private String serverUrl = null;
 	private MetaDataHelper metadataHelper = MetaDataHelper.getInstance();
 	ProjectTrackerHelper ptHelper = ProjectTrackerHelper.getInstance();
-	
+
 	private GenericArtifact getGenericArtifact(Document document){
 		GenericArtifact ga = null;
 		try {
@@ -65,7 +65,7 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 		}
 	    return ga;
 	}
-	
+
 	private Document returnGenericArtifactDocument(GenericArtifact ga){
 		Document doc = null;
 		try {
@@ -77,11 +77,11 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 		}
 		return doc;
 	}
-	
-	private GenericArtifact createProjectTrackerAttachment(GenericArtifact ga) {
+
+	private GenericArtifact[] createProjectTrackerAttachment(GenericArtifact ga) {
 		String targetArtifactId = ga.getDepParentTargetArtifactId();
 		String artifactId = ptHelper.getArtifactIdFromFullyQualifiedArtifactId(targetArtifactId);
-		
+
 		String attachmentType = GenericArtifactHelper.getStringGAField(AttachmentMetaData.ATTACHMENT_TYPE, ga);
 		byte[] data = null;
 		String attachmentMimeType = null;
@@ -133,9 +133,10 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 				}
 			}
 		}
-		
+
 		long attachmentId = -1;
 		TrackerWebServicesClient twsclient = null;
+		GenericArtifact parentArtifact = null;
 		try {
 			twsclient = this.getConnection(ga);
 			attachmentId = twsclient.postAttachment(artifactId, "Attachment added by Connector", dataSource);
@@ -152,6 +153,28 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 			ga.setDepParentTargetRepositoryKind(ga.getTargetRepositoryKind());
 			log.info("Attachment with id "+attachmentId+" is created for the PT artifact "+artifactId
 					+" with the attachment "+sourceAttachmentId + " from artifact " + parentSourceArtifactId);
+			parentArtifact = new GenericArtifact();
+			parentArtifact.setArtifactType(GenericArtifact.ArtifactTypeValue.PLAINARTIFACT);
+			parentArtifact.setArtifactAction(GenericArtifact.ArtifactActionValue.UPDATE);
+			parentArtifact.setArtifactMode(GenericArtifact.ArtifactModeValue.CHANGEDFIELDSONLY);
+			parentArtifact.setConflictResolutionPriority(ga.getConflictResolutionPriority());
+			parentArtifact.setSourceArtifactId(ga.getDepParentSourceArtifactId());
+			parentArtifact.setSourceArtifactLastModifiedDate(ga.getSourceArtifactLastModifiedDate());
+			parentArtifact.setSourceArtifactVersion(ga.getSourceArtifactVersion());
+			parentArtifact.setSourceRepositoryId(ga.getSourceRepositoryId());
+			parentArtifact.setSourceSystemId(ga.getSourceSystemId());
+			parentArtifact.setSourceSystemKind(ga.getSourceSystemKind());
+			parentArtifact.setSourceRepositoryKind(ga.getSourceRepositoryKind());
+			parentArtifact.setSourceSystemTimezone(ga.getSourceSystemTimezone());
+
+			parentArtifact.setTargetArtifactId(targetArtifactId);
+			parentArtifact.setTargetArtifactLastModifiedDate(DateUtil.format(lastModifiedDate));
+			parentArtifact.setTargetArtifactVersion(Long.toString(modifiedOnMilliSeconds));
+			parentArtifact.setTargetRepositoryId(ga.getTargetRepositoryId());
+			parentArtifact.setTargetRepositoryKind(ga.getTargetRepositoryKind());
+			parentArtifact.setTargetSystemId(ga.getTargetSystemId());
+			parentArtifact.setTargetSystemKind(ga.getTargetSystemKind());
+			parentArtifact.setTargetSystemTimezone(ga.getTargetSystemTimezone());
 		} catch (WSException e) {
 			String message = "Exception while creating PT artifact attachment";
 			log.error(message, e);
@@ -181,11 +204,12 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 				this.releaseConnection(twsclient);
 			}
 		}
-		return ga;
+
+		return new GenericArtifact[]{ga, parentArtifact};
 	}
 
 	private void releaseConnection(TrackerWebServicesClient twsclient) {
-		ConnectionManager<TrackerWebServicesClient> connectionManager = 
+		ConnectionManager<TrackerWebServicesClient> connectionManager =
 				(ConnectionManager<TrackerWebServicesClient>) this.getConnectionManager();
 		connectionManager.releaseConnection(twsclient);
 	}
@@ -228,7 +252,7 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 					targetArtifactTypeNameSpace, targetArtifactTypeTagName,
 					currentArtifact,trackerArtifactType);
 			cla.add(ca);
-			
+
 			// we need these fields to retrieve the version we like to modify
 			String modifiedOn = currentArtifact.getAttributeValue(
 					ProjectTrackerReader.TRACKER_NAMESPACE, ProjectTrackerReader.MODIFIED_ON_FIELD);
@@ -236,15 +260,15 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 //			Date modifiedOnDate = new Date(modifiedOnMilliSeconds);
 			//String createdOn = artifact.getAttributeValue(
 			//		ProjectTrackerReader.TRACKER_NAMESPACE, ProjectTrackerReader.CREATED_ON_FIELD);
-			
+
 			// now do conflict resolution
 			if (!AbstractWriter.handleConflicts(modifiedOnMilliSeconds, ga)) {
 				return ga;
 			}
-			
+
 			// FIXME This is not atomic
 			ClientArtifactListXMLHelper artifactHelper = twsclient.updateArtifactList(cla);
-			
+
 			ptHelper.processWSErrors(artifactHelper);
 			log.info("Artifact "+targetArtifactId+" updated successfully with the changes from "+ga.getSourceArtifactId());
 			List<ClientArtifact> artifacts = artifactHelper.getAllArtifacts();
@@ -253,7 +277,7 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 				ClientArtifact artifact = artifacts.get(0);
 				ga.setTargetArtifactId("{"+targetArtifactTypeNameSpace+"}"
 						+targetArtifactTypeTagName+":"+artifact.getArtifactID());
-				
+
 				// now we have to retrieve the artifact version again
 				modifiedOn = artifact.getAttributeValue(
 						ProjectTrackerReader.TRACKER_NAMESPACE, ProjectTrackerReader.MODIFIED_ON_FIELD);
@@ -262,7 +286,7 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 				ga.setTargetArtifactLastModifiedDate(DateUtil.format(modifiedOnDate));
 				//String createdOn = artifact.getAttributeValue(
 				//		ProjectTrackerReader.TRACKER_NAMESPACE, ProjectTrackerReader.CREATED_ON_FIELD);
-				
+
 				ga.setTargetArtifactVersion(Long.toString(newModifiedOnMilliSeconds));
 			}
 		} catch (WSException e) {
@@ -289,14 +313,14 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 		}
 		return ga;
 	}
-	
+
 	private GenericArtifact createProjectTrackerArtifact(GenericArtifact ga) {
 		String targetRepositoryId = ga.getTargetRepositoryId();
 		String repositoryKey = this.getRepositoryKey(ga);
 		String artifactTypeDisplayName = targetRepositoryId.substring(targetRepositoryId.lastIndexOf(":")+1);
-		
+
 		TrackerWebServicesClient twsclient = null;
-		
+
 		try {
 			twsclient = this.getConnection(ga);
 			TrackerArtifactType trackerArtifactType =
@@ -314,7 +338,7 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 			cla.add(ca);
 			ClientArtifactListXMLHelper artifactHelper = twsclient.createArtifactList(cla);
 			ptHelper.processWSErrors(artifactHelper);
-			
+
 			List<ClientArtifact> artifacts = artifactHelper.getAllArtifacts();
 			if(artifacts.size() == 1) {
 				ClientArtifact artifact = artifacts.get(0);
@@ -326,7 +350,7 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 				long createdOnMilliSeconds = Long.parseLong(createdOn);
 				Date createdOnDate = new Date(createdOnMilliSeconds);
 				ga.setTargetArtifactLastModifiedDate(DateUtil.format(createdOnDate));
-				
+
 				ga.setTargetArtifactVersion(Long.toString(createdOnMilliSeconds));
 				log.info("Artifact " + targetArtifactId + " created successfully with the changes from " + ga.getSourceArtifactId());
 			}
@@ -359,7 +383,7 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 		}
 		return ga;
 	}
-	
+
 	private ClientArtifact getClientArtifactFromGenericArtifact(GenericArtifact ga,
 			TrackerWebServicesClient twsclient, String targetArtifactTypeNameSpace,
 			String targetArtifactTypeTagName, ClientArtifact currentArtifact,
@@ -411,7 +435,7 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 					String attributeTagName =
 						ptHelper.getArtifactTypeTagNameFromFullyQualifiedArtifactType(fullyQualifiedFieldTagName);
 					String[] currentValues = null;
-					
+
 					if(currentArtifact != null) {
 						currentValues = currentArtifact.getAttributeValues(attributeNamespace, attributeTagName);
 					}
@@ -426,7 +450,7 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 						GenericArtifactField userField = gaUserFields.get(0);
 						String userFieldValue = (String) userField.getFieldValue();
 						if(userField.getFieldAction() == GenericArtifactField.FieldActionValue.DELETE){
-							Iterator<String> it = currentUsers.iterator(); 
+							Iterator<String> it = currentUsers.iterator();
 							while(it.hasNext()){
 								String user = it.next();
 								if(user.equals(userFieldValue)){
@@ -471,7 +495,7 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 		}
 		return ca;
 	}
-	
+
 	private String getFullyQualifiedFieldTagName(String fieldDisplayName, String artifactTypeNamespace,
 								TrackerArtifactType artifactType){
 		Map<String, TrackerAttribute> attributesMap =  artifactType.getAttributes();
@@ -524,12 +548,12 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 
 		FieldValueTypeValue fieldType = field.getFieldValueType();
 		String attributeValue = convertAttributeValue(fieldType, fieldValue, targetSystemTimezone);
-		
+
 		if(trackerAttribute.getAttributeType().equals("MULTI_SELECT")){
 			ca.addAttributeValue(attributeNamespace, attributeTagName, null);
 			attributeValue = this.convertOptionValue(attributeNamespace, attributeTagName,
 					attributeValue, metadata, false);
-			
+
 		}
 		else if(trackerAttribute.getAttributeType().equals("SINGLE_SELECT")){
 			ca.addAttributeValue(attributeNamespace, attributeTagName, null);
@@ -562,7 +586,7 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 			ca.addAttributeValue(attributeNamespace, attributeTagName, attributeValue);
 		}
 	}
-	
+
 	private String convertAttributeValue(FieldValueTypeValue fieldType, Object fieldValue, String targetSystemTimezone){
 		String attributeValue = null;
 		if(fieldValue == null) return null;
@@ -605,7 +629,7 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 		}
 		return attributeValue;
 	}
-	
+
 	private String convertOptionValue(String attributeNamespace, String attributeTagName,
 			String attributeValue, ArtifactTypeMetadata metadata, boolean stateField){
 		if(StringUtils.isEmpty(attributeValue)) return null;
@@ -669,14 +693,14 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 		}
 		return twsclient;
 	}
-	
+
 	/**
 	 * Connects to the source CEE system using the connectionInfo and credentialInfo
 	 * details.
-	 * 
+	 *
 	 * This method uses the ConnectionManager configured in the wiring file
 	 * for the CEEReader
-	 *  
+	 *
 	 * @param systemId - The system id of the source CEE system
 	 * @param systemKind - The system kind of the source CEE system
 	 * @param repositoryId - The tracker id in the source CEE system
@@ -685,13 +709,13 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 	 * @param credentialInfo - User name and password concatenated with a delimiter.
 	 * @param forceResync true if initial resync after artifact creation should be enforced
 	 * @return - The connection object obtained from the ConnectionManager
-	 * @throws MaxConnectionsReachedException 
-	 * @throws ConnectionException 
+	 * @throws MaxConnectionsReachedException
+	 * @throws ConnectionException
 	 */
 	public TrackerWebServicesClient connect(String systemId, String systemKind, String repositoryId,
 			String repositoryKind, String connectionInfo, String credentialInfo, boolean forceResync) throws MaxConnectionsReachedException, ConnectionException {
 		log.debug("Getting connection to PT");
-		ConnectionManager<TrackerWebServicesClient> connectionManager = 
+		ConnectionManager<TrackerWebServicesClient> connectionManager =
 			(ConnectionManager<TrackerWebServicesClient>) this.getConnectionManager();
 		TrackerWebServicesClient connection = null;
 		if (forceResync) {
@@ -704,7 +728,7 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 		}
 		return connection;
 	}
-	
+
 	private String getRepositoryKey(GenericArtifact ga){
 		String targetSystemId = ga.getTargetSystemId();
 		String targetRepositoryId = ga.getTargetRepositoryId();
@@ -728,7 +752,7 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 
 	/**
 	 * Sets the target CEE system's SOAP server URL.
-	 * 
+	 *
 	 * @param serverUrl - the URL of the source CEE system.
 	 */
 	public void setServerUrl(String serverUrl) {
@@ -771,10 +795,19 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 	}
 
 	@Override
-	public Document createAttachment(Document gaDocument) {
+	public Document[] createAttachment(Document gaDocument) {
 		GenericArtifact ga = this.getGenericArtifact(gaDocument);
-		ga = this.createProjectTrackerAttachment(ga);
-		return this.returnGenericArtifactDocument(ga);
+		GenericArtifact[] gas = null;
+		gas = this.createProjectTrackerAttachment(ga);
+		Document[] returnDocs = null;
+		if(gas != null) {
+			returnDocs = new Document[gas.length];
+			for(int i=0; i < gas.length; i++){
+				if(gas[i] != null)
+				returnDocs[i] = this.returnGenericArtifactDocument(gas[i]);
+			}
+		}
+		return returnDocs;
 	}
 
 	@Override
@@ -856,7 +889,7 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 		// TODO Auto-generated method stub
 		return null;
 	}
-	
+
 	@Override
 	public boolean handleException(Throwable cause, ConnectionManager<TrackerWebServicesClient> connectionManager){
 		// TODO What about invalid sessions?
@@ -878,7 +911,7 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 		}
 		return false;
 	}
-	
+
 	/**
 	 * Password that is used to login into the CEE instance in combination
 	 * with the username
@@ -907,12 +940,12 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 
 	/**
 	 * Sets the optional resync username
-	 * 
+	 *
 	 * The resync user name is used to login into the CEE instance
 	 * whenever an artifact should be created. This user has to differ from the
 	 * ordinary user used to log in in order to force initial resyncs with the
 	 * source system once a new artifact has been created.
-	 * 
+	 *
 	 * @param resyncUserName
 	 *            the resyncUserName to set
 	 */
@@ -926,7 +959,7 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 	 * user has to differ from the ordinary user used to log in in order to
 	 * force initial resyncs with the source system once a new artifact has been
 	 * created.
-	 * 
+	 *
 	 * @return the resyncUserName
 	 */
 	private String getResyncUserName() {
@@ -935,7 +968,7 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 
 	/**
 	 * Sets the optional resync password that belongs to the resync user
-	 * 
+	 *
 	 * @param resyncPassword
 	 *            the resyncPassword to set
 	 */
@@ -945,7 +978,7 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 
 	/**
 	 * Gets the optional resync password that belongs to the resync user
-	 * 
+	 *
 	 * @return the resyncPassword
 	 */
 	private String getResyncPassword() {
@@ -954,7 +987,7 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 
 	/**
 	 * Gets the mandatory password that belongs to the username
-	 * 
+	 *
 	 * @return the password
 	 */
 	private String getPassword() {
@@ -963,7 +996,7 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 
 	/**
 	 * Sets the password that belongs to the username
-	 * 
+	 *
 	 * @param password
 	 *            the password to set
 	 */
@@ -976,7 +1009,7 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 	 * CEE instance whenever an artifact should be updated or extracted.
 	 * This user has to differ from the resync user in order to force initial
 	 * resyncs with the source system once a new artifact has been created.
-	 * 
+	 *
 	 * @return the userName
 	 */
 	public String getUsername() {
@@ -985,12 +1018,12 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 
 	/**
 	 * Sets the mandatory username
-	 * 
+	 *
 	 * The user name is used to login into the CEE instance whenever an
 	 * artifact should be updated or extracted. This user has to differ from the
 	 * resync user in order to force initial resyncs with the source system once
 	 * a new artifact has been created.
-	 * 
+	 *
 	 * @param userName
 	 *            the user name to set
 	 */
