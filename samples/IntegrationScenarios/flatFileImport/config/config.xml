@@ -86,6 +86,39 @@ artifacts data from a CSV file into an SFEE tracker.
 		<bean
 			class="org.openadaptor.auxil.connector.jdbc.writer.MapTableWriter">
 			<property name="tableName" value="HOSPITAL" />
+			<property name="outputColumns">
+				<list>
+						<value>TIMESTAMP</value>
+						<value>EXCEPTION_CLASS_NAME</value>
+						<value>EXCEPTION_MESSAGE</value>
+						<value>CAUSE_EXCEPTION_CLASS_NAME</value>
+						<value>CAUSE_EXCEPTION_MESSAGE</value>
+						<value>STACK_TRACE</value>
+						<value>ADAPTOR_NAME</value>
+						<value>ORIGINATING_COMPONENT</value>
+						<value>DATA_TYPE</value>
+						<value>DATA</value>
+						<value>FIXED</value>
+						<value>REPROCESSED</value>
+						<value>SOURCE_SYSTEM_ID</value>
+						<value>SOURCE_REPOSITORY_ID</value>
+						<value>TARGET_SYSTEM_ID</value>
+						<value>TARGET_REPOSITORY_ID</value>
+						<value>SOURCE_SYSTEM_KIND</value>
+						<value>SOURCE_REPOSITORY_KIND</value>
+						<value>TARGET_SYSTEM_KIND</value>
+						<value>TARGET_REPOSITORY_KIND</value>
+						<value>SOURCE_ARTIFACT_ID</value>
+						<value>TARGET_ARTIFACT_ID</value>
+						<value>ERROR_CODE</value>
+						<value>SOURCE_LAST_MODIFICATION_TIME</value>
+						<value>TARGET_LAST_MODIFICATION_TIME</value>
+						<value>SOURCE_ARTIFACT_VERSION</value>
+						<value>TARGET_ARTIFACT_VERSION</value>
+						<value>ARTIFACT_TYPE</value>
+						<value>GENERIC_ARTIFACT</value>
+					</list>
+			</property>
 		</bean>
 	</property>
 	</bean>
