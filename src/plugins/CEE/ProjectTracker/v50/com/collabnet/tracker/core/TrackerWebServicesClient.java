@@ -85,9 +85,9 @@ import com.collabnet.tracker.ws.query.QueryManagerServiceLocator;
 /**
  * This is the interface to tracker through Axis.  This class handles all xml requests and
  * results through axis.
- * 
+ *
  * @author Shawn Minto
- * 
+ *
  */
 public class TrackerWebServicesClient {
 	private static final Log log = LogFactory.getLog(TrackerWebServicesClient.class);
@@ -102,13 +102,13 @@ public class TrackerWebServicesClient {
 	public static final String ATTACHMENT_URL = "/servlets/ScarabDownload/remcurreport/true/template/ViewAttachment.vm/attachid/**ID**/filename/**FILENAME**";
 
 	public static final String DEFAULT_NAMESPACE = "urn:ws.tracker.collabnet.com";
-	
+
 	public static final String HISTORY_URL_1 = "/servlets/Scarab/template/ViewIssue.vm/id/";
-	
+
 	public static final String HISTORY_URL_2 = "/eventsubmit_dosetissueview/foo/action/ViewIssue/tab/5/";
 
 	public static final String API_VERSION = "1.2.0";
-	
+
 	public static final String TEXT_TAG = "tag.type.text";
 	public static final String VALUE_TAG = "tag.type.value";
 
@@ -134,7 +134,7 @@ public class TrackerWebServicesClient {
 		this.httpUser = httpUser;
 		this.httpPassword = httpPassword;
 	}
-	
+
 	public List<ClientArtifact> getAllArtifacts(String artifactType, String nameSpace) throws Exception {
 		if (nameSpace == null) nameSpace = mClient.getDefaultNamespace();
         EngineConfiguration config = mClient.getEngineConfiguration();
@@ -154,19 +154,19 @@ public class TrackerWebServicesClient {
 	 * Get all of the server defined queries for the project
 	 * @return
 	 * @param artifact
-	 * @throws Exception 
 	 * @throws Exception
-	 * 
-	 * 
+	 * @throws Exception
+	 *
+	 *
 	 * NOTE: All artifact in the List must belong to the same namespace and artifactType
-	 * 
+	 *
 	 */
 	public ClientArtifactListXMLHelper createArtifactList(List<ClientArtifact> artifacts)
 				throws Exception {
 		Document doc = null;
 		doc = createNewXMLDocument(DEFAULT_NAMESPACE, "ns1:"+"createArtifactList");
 
-		ClientArtifactListXMLHelper helper = this.createOrUpdateArtifactList(doc, artifacts);
+		ClientArtifactListXMLHelper helper = this.createOrUpdateArtifactList(doc, artifacts, null);
 		return helper;
 	}
 
@@ -174,25 +174,25 @@ public class TrackerWebServicesClient {
 	 * Get all of the server defined queries for the project
 	 * @return
 	 * @param artifact
-	 * @throws Exception 
 	 * @throws Exception
-	 * 
-	 * 
+	 * @throws Exception
+	 *
+	 *
 	 * NOTE: All artifact in the List must belong to the same namespace and artifactType
-	 * 
+	 *
 	 */
-	public ClientArtifactListXMLHelper updateArtifactList(List<ClientArtifact> artifacts)
+	public ClientArtifactListXMLHelper updateArtifactList(List<ClientArtifact> artifacts, long lastReadOn)
 						throws Exception {
 		Document doc = null;
 		doc = createNewXMLDocument(DEFAULT_NAMESPACE, "ns1:"+"updateArtifactList");
-		
-		ClientArtifactListXMLHelper helper  = this.createOrUpdateArtifactList(doc, artifacts);
+
+		ClientArtifactListXMLHelper helper  = this.createOrUpdateArtifactList(doc, artifacts, lastReadOn);
 
 		return helper;
 	}
-	
+
 	public ClientArtifactListXMLHelper createOrUpdateArtifactList(Document doc,
-			List<ClientArtifact> artifacts) throws Exception{
+			List<ClientArtifact> artifacts, Long lastReadOn) throws Exception{
 		EngineConfiguration config = mClient.getEngineConfiguration();
 		DispatcherService service = new DispatcherServiceLocator(config);
 		URL portAddress = mClient.constructServiceURL("/ws/Dispatcher");
@@ -203,12 +203,12 @@ public class TrackerWebServicesClient {
 		root.appendChild(artifactListNode);
 
 		// TODO: Move all the below code to clientArtifact.java?
-		
+
 		HashMap<String, Integer> nameSpaces = new HashMap<String, Integer>();
 		//List<String> nameSpaces = new ArrayList<String>();
 		int nameSpaceCount = 1;
 		nameSpaces.put(DEFAULT_NAMESPACE,nameSpaceCount);
-		
+
 		for (int i = 0 ; i < artifacts.size() ; i++) {
 			ClientArtifact ca = artifacts.get(i);
 			String nsXNameSpace = ca.getNamespace();
@@ -218,23 +218,29 @@ public class TrackerWebServicesClient {
 			if (nameSpaces.get(nsXNameSpace) == null) {
 				nameSpaces.put(nsXNameSpace, ++nameSpaceCount);
 			}
-			
+
 			String nsNumberString = "ns" + nameSpaces.get(nsXNameSpace) + ":";
-			
+
 			Element artifactNode = doc.createElementNS(nsXNameSpace, nsNumberString + artifactType);
 			artifactListNode.appendChild(artifactNode);
 
 			Element modByNode = doc.createElementNS(DEFAULT_NAMESPACE, "ns1:"+MODIFIED_BY_FIELD_NAME);
 			modByNode.appendChild(doc.createTextNode(mClient.getUserName()));
 			artifactNode.appendChild(modByNode);
-
-			Element lastReadNode = doc.createElementNS(DEFAULT_NAMESPACE, "ns1:"+LAST_READ_ON_FIELD_NAME);
-			lastReadNode.appendChild(doc.createTextNode(Long.toString(new Date().getTime())));
-			artifactNode.appendChild(lastReadNode);
+			if(lastReadOn != null){
+				Element lastReadNode = doc.createElementNS(DEFAULT_NAMESPACE, "ns1:"+LAST_READ_ON_FIELD_NAME);
+				lastReadNode.appendChild(doc.createTextNode(Long.toString(lastReadOn)));
+				artifactNode.appendChild(lastReadNode);
+			}
+			else {
+				Element lastReadNode = doc.createElementNS(DEFAULT_NAMESPACE, "ns1:"+LAST_READ_ON_FIELD_NAME);
+				lastReadNode.appendChild(doc.createTextNode(Long.toString(new Date().getTime())));
+				artifactNode.appendChild(lastReadNode);
+			}
 
 			// Add each attribute
 			Map<String, List<String>> textAttributes = ca.getAttributes();
-			
+
 				for (Map.Entry<String, List<String>> attributeEntry: textAttributes.entrySet()) {
 					String attribute = attributeEntry.getKey();
 					List<String> values = attributeEntry.getValue();
@@ -252,7 +258,7 @@ public class TrackerWebServicesClient {
 									attribute.equals("id"))) {
 						for (String value: values) {
 							if(!(StringUtils.isEmpty(value))){
-								
+
 								Element valueNode = doc.createElementNS(DEFAULT_NAMESPACE, "ns1:value");
 								//valueNode.setNodeValue(value);
 								valueNode.appendChild(doc.createTextNode(value));
@@ -278,12 +284,12 @@ public class TrackerWebServicesClient {
 					commentNode.appendChild(textNode);
 					artifactNode.appendChild(commentNode);
 				}
-				
+
 //				Element reasonNode = doc.createElementNS("urn:ws.tracker.collabnet.com", "ns1:"+"reason");
 //				reasonNode.appendChild(doc.createTextNode("Synchronized by Connector"));
 //				artifactNode.appendChild(reasonNode);
 		} // for every artifact
-		
+
 		Element sendMail = doc.createElementNS(DEFAULT_NAMESPACE, "ns1:"+"sendEmail");
 		sendMail.appendChild(doc.createTextNode("true"));
 		root.appendChild(sendMail);
@@ -371,7 +377,7 @@ public class TrackerWebServicesClient {
 		String runQuery = "<getArtifactList xmlns='urn:ws.tracker.collabnet.com'> " + "  <namedQuery>"
 				+ "    <tagName>" + xmlName + "</tagName>" + "    <namespace>" + namespace + "</namespace>"
 				+ "</namedQuery></getArtifactList>";
-		
+
 		TrackerUtil.debug("executePredefinedQuery(): " + xmlName);
 		Response r = theService.execute(toRequest(createDocument(runQuery)));
 		Document result = toDocument(r);
@@ -392,19 +398,19 @@ public class TrackerWebServicesClient {
 		DispatcherService service = new DispatcherServiceLocator(config);
 		URL portAddress = mClient.constructServiceURL("/ws/Dispatcher");
 		Dispatcher theService = service.getDispatcher(portAddress);
-		
+
 		Document doc = createNewXMLDocument(DEFAULT_NAMESPACE, "ns1:"+"getNextPage");
 		Element root = doc.getDocumentElement();
 		Node newPageInfo = doc.importNode(pageInfo, true);
 		root.appendChild(newPageInfo);
-		
+
 		TrackerUtil.debug("getNextPage()");
 		Response r = theService.execute(toRequest(doc));
 		Document result = toDocument(r);
-	
+
 		return result;
 	}
-	
+
 	/**
 	 * This is a check to ensure that invalid next page calls are not sent to the server.
 	 * @param pageInfo
@@ -423,13 +429,13 @@ public class TrackerWebServicesClient {
 						throw new Exception(msg);
 					child.setTextContent(altQueryRef);
 				}
-				return; 
+				return;
 			}
 			child = child.getNextSibling();
 		}
 		throw new Exception(msg);
 	}
-	
+
 	private Document createNewXMLDocument(String namespace, String qualifiedTagName) {
 		DocumentBuilderFactory dbf;// = DocumentBuilderFactory.newInstance();
 		DocumentBuilder db;
@@ -499,7 +505,7 @@ public class TrackerWebServicesClient {
 				+ "<min>" + lastSyncDate + "</min>" + "<max>" + now + "</max>" + "</rangeCondition>" + "</modifiedOn>"
 				+ "</adhocQuery>" + "</getArtifactList>";
 
-		TrackerUtil.debug("request isChanged() for min: " + minTaskId + " max: " + maxTaskId); 
+		TrackerUtil.debug("request isChanged() for min: " + minTaskId + " max: " + maxTaskId);
 		Response r = theService.execute(toRequest(createDocument(runQuery)));
 		Document result = toDocument(r);
 		ClientArtifactListXMLHelper helper = new ClientArtifactListXMLHelper(result);
@@ -510,13 +516,13 @@ public class TrackerWebServicesClient {
 			return new ArrayList<String>(0);
 		}
 
-		
+
 		return helper.getAllArtifactIds();
 	}
-	
+
 	/**
 	 * Get changed artifacts since last synch time
-	 * 
+	 *
 	 * @param kinds
 	 * @param lastSynchDateTime
 	 * @return
@@ -527,7 +533,7 @@ public class TrackerWebServicesClient {
         ArtifactHistoryService service = new ArtifactHistoryServiceLocator(config);
         URL portAddress = mClient.constructServiceURL("/tracker/ArtifactHistory");
         ArtifactHistoryManager theService = service.getArtifactHistoryManager(portAddress);
-        
+
         ArtifactType[] items = new ArtifactType[kinds.size()];
         int i= 0;
         for(String artitfactNamespaceAndType: kinds) {
@@ -539,7 +545,7 @@ public class TrackerWebServicesClient {
             items[i].setTagName(artifactType);
             i++;
         }
-        
+
          long from = 0;
 		try {
  			from = Long.parseLong(lastSynchDateTime);
@@ -552,7 +558,7 @@ public class TrackerWebServicesClient {
 
 	/**
 	 * Get all artifact changes between from and to times
-	 * 
+	 *
 	 * @param ata
 	 * @param from
 	 * @param to
@@ -571,33 +577,32 @@ public class TrackerWebServicesClient {
 		try {
  			from = Long.parseLong(lastSynchDateTime);
 		} catch(NumberFormatException nfe) {
-			
+
 		}
 		*/
 
- 		TrackerUtil.debug("request artifactChanges() between: " + new Date(from) + " and " + new Date(to)); 
+ 		TrackerUtil.debug("request artifactChanges() between: " + new Date(from) + " and " + new Date(to));
   		return theService.getArtifactChanges(ata, from, to);
 	}
-	
+
 	public ArtifactHistoryList getChangeHistoryForArtifact(String artifactId, long from, Long to) throws Exception {
         String[] artifactList = new String[1];
         artifactList[0] = artifactId;
         return this.getChangeHistoryForArtifact(artifactList, from, to);
 	}
-	
+
 	public ArtifactHistoryList getChangeHistoryForArtifact(String[] artifactList, long from, Long to) throws ServiceException, WSException, RemoteException{
 		EngineConfiguration config = mClient.getEngineConfiguration();
         ArtifactHistoryService service = new ArtifactHistoryServiceLocator(config);
         URL portAddress = mClient.constructServiceURL("/tracker/ArtifactHistory");
         ArtifactHistoryManager theService = service.getArtifactHistoryManager(portAddress);
- 		TrackerUtil.debug("request artifactChanges() between: " + new Date(from) + " and " + new Date(to)); 
   		return theService.getArtifactHistory(artifactList, from, to);
 	}
 
 	/**
 	 * Converts a DOM Document to a Request object expected by the
 	 * Dispatcher.execute operation.
-	 * 
+	 *
 	 * @param document
 	 *            the Document to convert to a Request object
 	 * @return the Request object
@@ -610,20 +615,20 @@ public class TrackerWebServicesClient {
 	/**
 	 * Converts a Response returned by the Dispatcher.execute operation to a
 	 * Document object.
-	 * 
+	 *
 	 * @param response
 	 *            the Response returned by the Dispatcher.execute operation
 	 * @return the Document contained in the Response.
 	 * @throws Exception
 	 */
-	private Document toDocument(Response response) throws Exception {	
+	private Document toDocument(Response response) throws Exception {
 		TrackerUtil.debug("response from server");
 		return response.get_any()[0].getAsDocument();
 	}
 
 	/**
 	 * Constructs a DOM Document from String
-	 * 
+	 *
 	 * @param contents
 	 *            the XML document
 	 * @return the DOM representation of the document
@@ -655,7 +660,7 @@ public class TrackerWebServicesClient {
 			SystemStatusService service = new SystemStatusServiceLocator(config);
 			URL portAddress = mClient.constructServiceURL("/ws/SystemStatus");
 			SystemStatus theService = service.getSystemStatusService(portAddress);
-			
+
 			Version serverVer = theService.getVersion();
 			if(isVersionGreaterOrEqual(serverVer, "1.2.0")) {
 				ProjectInfo projInfo = theService.getProjectInfo(getProjectNameFromUrl());
@@ -663,15 +668,15 @@ public class TrackerWebServicesClient {
 					throw new TrackerException("This project does not support project tracker.");
 				}
 			}
-			
+
 			// see if user has access to pt
 			Collection<TrackerArtifactType> artifactTypes = getArtifactTypes();
 			if(artifactTypes.isEmpty()) {
 				throw new TrackerException("You do not have access to any artifact types in this project");
 			}
-			
+
 			validateApiVersion(theService.getVersion());
-			
+
 		} catch (AxisFault af) {
 			if (af.getMessage().toLowerCase().contains("no permission for web services - execute")) {
 				throw new TrackerException(
@@ -693,19 +698,19 @@ public class TrackerWebServicesClient {
 	/**
 	 * This checks to make sure the server version of the api is <= the client
 	 * version. If the server is downlevel, a tracker exception will be thrown
-	 * 
+	 *
 	 * @param ver
 	 * @throws TrackerException
 	 */
 	private void validateApiVersion(Version ver) throws TrackerException {
 		if(isVersionGreaterOrEqual(ver, API_VERSION))
 			return;
-		
-		String errorMsg = "Your CollabNet server is running API version " + ver.getApiVersion() + 
+
+		String errorMsg = "Your CollabNet server is running API version " + ver.getApiVersion() +
 		".  This version is supported but will not allow required artifact attributes to be validated on the client.";
 		throw new TrackerException(errorMsg);
 	}
-	
+
 	private boolean isVersionGreaterOrEqual(Version ver, String baselineVersion) {
 		StringTokenizer serverTokens = new StringTokenizer(ver.getApiVersion(), ".");
 		StringTokenizer clientTokens = new StringTokenizer(API_VERSION, ".");
@@ -736,7 +741,7 @@ public class TrackerWebServicesClient {
 	 * @throws WSException
 	 * @throws RemoteException
 	 */
-	public Collection<TrackerArtifactType> getArtifactTypes() 
+	public Collection<TrackerArtifactType> getArtifactTypes()
 			throws ServiceException, WSException, RemoteException {
 		EngineConfiguration config = mClient.getEngineConfiguration();
 		MetadataService service = new MetadataServiceLocator(config);
@@ -750,14 +755,14 @@ public class TrackerWebServicesClient {
 			if(repositoryData.getArtifactTypeFromKey(key) == null)
 				repositoryData.addArtifactType(new TrackerArtifactType(type));
 		}
-		
+
 		return repositoryData.getArtifactTypes();
 	}
-	
+
 	/**
 	 * Get the metadata for the given artifact.  The metadata contains the valid values
 	 * for attributes and the valid operations that can be performed on the attribute
-	 * 
+	 *
 	 * @param namespace
 	 * @param artifactType
 	 * @param artifactId
@@ -787,11 +792,11 @@ public class TrackerWebServicesClient {
 		return metaData;
 	}
 
-	
+
 	/**
 	 * Get the metadata that can be used when creating a new PT artifact.  This should be used
 	 * when artifact creation is supported
-	 * 
+	 *
 	 * @param namespace
 	 * @param artifactType
 	 * @return
@@ -807,7 +812,7 @@ public class TrackerWebServicesClient {
 		Metadata theService = service.getMetadataService(portAddress);
 		return theService.getMetadataForNewArtifact(new ArtifactType(artifactType, namespace, ""));
 	}
-	
+
 	public ArtifactTypeMetadata getMetaDataForArtifactType(String namespace, String artifactType)
 	throws ServiceException, WSException, RemoteException {
 		EngineConfiguration config = mClient.getEngineConfiguration();
@@ -817,10 +822,10 @@ public class TrackerWebServicesClient {
 		return theService.getArtifactTypeMetadata(new ArtifactType(artifactType, namespace, ""));
 	}
 
-	
+
 	/**
 	 * Attach a file to a PT artifact
-	 * 
+	 *
 	 * @param taskId
 	 * @param comment
 	 * @param attachment
@@ -840,7 +845,7 @@ public class TrackerWebServicesClient {
 		Arrays.sort(ids);
 		return ids[ids.length - 1];
 	}
-	
+
 	public DataHandler getDataHandlerForAttachment(String taskId, String attachmentId) throws
 			ServiceException, WSException, NumberFormatException, RemoteException{
 		EngineConfiguration config = mClient.getEngineConfiguration();
@@ -851,7 +856,7 @@ public class TrackerWebServicesClient {
 		DataHandler handler = theService.getAttachment(taskId, Long.parseLong(attachmentId));
 		return handler;
 	}
-	
+
 	public void removeAttachment(String artifactId, long attachmentId) throws ServiceException,
 			WSException, RemoteException{
 		EngineConfiguration config = mClient.getEngineConfiguration();
@@ -863,7 +868,7 @@ public class TrackerWebServicesClient {
 
 	/**
 	 * Download an attachment from PT
-	 * 
+	 *
 	 * @param taskId
 	 * @param attachmentId
 	 * @return
@@ -882,7 +887,7 @@ public class TrackerWebServicesClient {
 		DataHandler handler = theService.getAttachment(taskId, Long.parseLong(attachmentId));
 
 		return handler.getInputStream();
-//		
+//
 //		byte[] attachment = null;
 //		InputStream inputStream = null;
 //		ByteArrayOutputStream baos = null;
@@ -907,7 +912,7 @@ public class TrackerWebServicesClient {
 //		}
 	}
 
-	
+
 	public void updateAttributes() {
 		// TODO This should update the attribute information
 		// This is not implemented since the attribute information is retrieved
@@ -940,7 +945,7 @@ public class TrackerWebServicesClient {
 	public String getRepositoryUrl() {
 		return mClient.getURL();
 	}
-	
+
 	/**
 	 * Parses the project name from the repository url.
 	 * @return
@@ -949,13 +954,13 @@ public class TrackerWebServicesClient {
 		String aUrl = mClient.getURL();
 		if(aUrl == null)
 			return "";
-		
+
 		int prefixIndex = aUrl.indexOf("//");
 		int postfixIndex = aUrl.indexOf(".");
-		
+
 		prefixIndex = prefixIndex == -1 ? 0 : prefixIndex + 2;
 		postfixIndex = postfixIndex == -1 ? aUrl.length() : postfixIndex;
-		
+
 		return aUrl.substring(prefixIndex, postfixIndex);
 	}
 	private void printDocument(Document doc){

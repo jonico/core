@@ -7,6 +7,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -17,11 +18,18 @@ import com.vasoftware.sf.soap44.types.SoapFieldValues;
 import com.vasoftware.sf.soap44.types.SoapFilter;
 import com.vasoftware.sf.soap44.types.SoapSortKey;
 import com.vasoftware.sf.soap44.webservices.ClientSoapStubFactory;
+import com.vasoftware.sf.soap44.webservices.frs.IFrsAppSoap;
+import com.vasoftware.sf.soap44.webservices.frs.PackageSoapList;
+import com.vasoftware.sf.soap44.webservices.frs.PackageSoapRow;
+import com.vasoftware.sf.soap44.webservices.frs.ReleaseSoapDO;
+import com.vasoftware.sf.soap44.webservices.frs.ReleaseSoapList;
+import com.vasoftware.sf.soap44.webservices.frs.ReleaseSoapRow;
 import com.vasoftware.sf.soap44.webservices.sfmain.TrackerFieldSoapDO;
 import com.vasoftware.sf.soap44.webservices.tracker.ArtifactDependencySoapRow;
 import com.vasoftware.sf.soap44.webservices.tracker.ArtifactDetailSoapRow;
 import com.vasoftware.sf.soap44.webservices.tracker.ArtifactSoapDO;
 import com.vasoftware.sf.soap44.webservices.tracker.ITrackerAppSoap;
+import com.vasoftware.sf.soap44.webservices.tracker.TrackerSoapDO;
 import com.vasoftware.sf.soap44.webservices.tracker.TrackerSoapList;
 import com.vasoftware.sf.soap44.webservices.tracker.TrackerSoapRow;
 
@@ -34,19 +42,20 @@ public class SFEETrackerHandler {
 	 * Tracker Soap API handle
 	 */
 	private ITrackerAppSoap mTrackerApp;
+	IFrsAppSoap fileReleaseApp = null;
 
 	private static final Log log = LogFactory.getLog(SFEETrackerHandler.class);
 	private static final Log logConflictResolutor = LogFactory.getLog("com.collabnet.ccf.core.conflict.resolution");
-	
+
 	/**
 	 * Class constructor.
-	 * 
+	 *
 	 * @param serverUrl - The source SFEE SOAP server URL
-	 * @param connectionManager 
+	 * @param connectionManager
 	 */
 	public SFEETrackerHandler(String serverUrl, ConnectionManager<Connection> connectionManager) {
 		// enable this if you do not like to have the retry code enabled
-		
+
 		if (connectionManager.isUseStandardTimeoutHandlingCode()) {
 			mTrackerApp = (ITrackerAppSoap) ClientSoapStubFactory.getSoapStub(
 				ITrackerAppSoap.class, serverUrl);
@@ -54,11 +63,13 @@ public class SFEETrackerHandler {
 		else {
 			mTrackerApp = new TrackerAppSoapTimeoutWrapper(serverUrl,connectionManager);
 		}
+		fileReleaseApp =
+			(IFrsAppSoap) ClientSoapStubFactory.getSoapStub(IFrsAppSoap.class, serverUrl);
 	}
 
 	/**
 	 * Get parent artifact dependencies for a certain artifact
-	 * 
+	 *
 	 * @throws RemoteException
 	 */
 	public ArtifactDependencySoapRow[] getArtifactParentDependencies(
@@ -70,7 +81,7 @@ public class SFEETrackerHandler {
 
 	/**
 	 * Get child artifact dependencies for a certain artifact
-	 * 
+	 *
 	 * @throws RemoteException
 	 */
 	public ArtifactDependencySoapRow[] getArtifactChildDependencies(
@@ -82,7 +93,7 @@ public class SFEETrackerHandler {
 
 	/**
 	 * Verifies tracker ID
-	 * 
+	 *
 	 * @param sessionId
 	 *            User session id.
 	 * @param projectId
@@ -115,10 +126,10 @@ public class SFEETrackerHandler {
 
 	/**
 	 * Return all changed tracker items in a List
-	 * 
+	 *
 	 * @param sessionID
 	 * @param trackerId
-	 * @param connectorUser 
+	 * @param connectorUser
 	 * @return null if only duplicates were found, else a list of changed
 	 *         tracker items
 	 * @throws RemoteException
@@ -174,7 +185,7 @@ public class SFEETrackerHandler {
 
 	/**
 	 * Returns the artifact with the artifactId as id.
-	 * 
+	 *
 	 * @param sessionID
 	 * @param artifactId
 	 * @return
@@ -203,7 +214,7 @@ public class SFEETrackerHandler {
 
 	/**
 	 * Return all tracker items that have the value fieldValue in field
-	 * 
+	 *
 	 * @param sessionID
 	 * @param trackerId
 	 * @param fieldname
@@ -222,10 +233,10 @@ public class SFEETrackerHandler {
 				false, false).getDataRows();
 		return rows;
 	}
-	
+
 	/**
 	 * Returns the custom or flex fields for a particular tracker
-	 * 
+	 *
 	 * @param sessionID
 	 * @param trackerId
 	 * @return
@@ -240,7 +251,7 @@ public class SFEETrackerHandler {
 
 	/**
 	 * Creates an artifact.
-	 * 
+	 *
 	 * @throws RemoteException
 	 *             when an error is encountered in creating the artifact.
 	 * @return Newly created artifact
@@ -277,7 +288,7 @@ public class SFEETrackerHandler {
 		newFlexFields.setValues(flexFieldValues.toArray());
 		newFlexFields.setTypes(flexFieldTypes.toArray(new String[0]));
 		artifactData.setFlexFields(newFlexFields);
-		
+
 		boolean initialUpdated = true;
 		while (initialUpdated) {
 			try {
@@ -290,12 +301,12 @@ public class SFEETrackerHandler {
 				initialUpdated = true;
 			}
 		}
-		
+
 		// we have to increase the version number to add the comments
 		if (comments.length != 0) {
 			artifactData.setVersion(artifactData.getVersion()+1);
 		}
-		
+
 		for(String comment:comments) {
 			boolean commentNotUpdated = true;
 			while (commentNotUpdated) {
@@ -312,7 +323,7 @@ public class SFEETrackerHandler {
 				}
 			}
 		}
-		
+
 		// we have to increase the version after the update
 		// TODO Find out whether this really works if last modified date differs from actual last modified date
 		if (comments.length == 0) {
@@ -359,14 +370,14 @@ public class SFEETrackerHandler {
 			List<Object> flexFieldValues, List<String> flexFieldTypes,
 			String title, String Id, String[] comments)
 			throws RemoteException {
-		
+
 		boolean mainArtifactNotUpdated = true;
 		ArtifactSoapDO artifactData = null;
 		while (mainArtifactNotUpdated) {
 			try {
 				mainArtifactNotUpdated = false;
 				artifactData = mTrackerApp.getArtifactData(sessionId, Id);
-				// do conflict resolution 
+				// do conflict resolution
 				if (!AbstractWriter.handleConflicts(artifactData.getVersion(), ga)) {
 					return null;
 				}
@@ -374,7 +385,7 @@ public class SFEETrackerHandler {
 				flexFields.setNames(flexFieldNames.toArray(new String[0]));
 				flexFields.setValues(flexFieldValues.toArray());
 				flexFields.setTypes(flexFieldTypes.toArray(new String[0]));
-				
+
 				artifactData.setFolderId(trackerId);
 				artifactData.setTitle(title);
 				artifactData.setDescription(description);
@@ -399,10 +410,10 @@ public class SFEETrackerHandler {
 			}
 		}
 		// increase version number for comment updates
-		if (comments.length != 0) { 
+		if (comments.length != 0) {
 			artifactData.setVersion(artifactData.getVersion()+1);
 		}
-		
+
 		for(String comment:comments) {
 			boolean commentNotUpdated = true;
 			while (commentNotUpdated) {
@@ -418,7 +429,7 @@ public class SFEETrackerHandler {
 				}
 			}
 		}
-		
+
 		// we have to increase the version after the update
 		// TODO Find out whether this really works if last modified date differs from actual last modified date
 		if (comments.length == 0) {
@@ -431,7 +442,7 @@ public class SFEETrackerHandler {
 	/**
 	 * Returns the value of the flex field with the name fieldName
 	 * for the artifact with the artifact id artifactId
-	 * 
+	 *
 	 * @param sessionID
 	 * @param fieldName
 	 * @param artifactID
@@ -448,7 +459,7 @@ public class SFEETrackerHandler {
 	/**
 	 * Returns the value of the flex field with the name fieldName
 	 * from the ArtifactSoapDO object
-	 * 
+	 *
 	 * @param fieldName
 	 * @param artifact
 	 * @param fieldType
@@ -486,7 +497,7 @@ public class SFEETrackerHandler {
 		String parentArtifactId = child.getOriginId();
 		ArtifactSoapDO artifact = this.getTrackerItem(sessionId, childArtifactId);
 		TrackerFieldSoapDO[] trackerFields = this.getFlexFields(sessionId, artifact.getFolderId());
-		HashMap<String, List<TrackerFieldSoapDO>> fieldsMap = 
+		HashMap<String, List<TrackerFieldSoapDO>> fieldsMap =
 			SFEEAppHandler.loadTrackerFieldsInHashMap(trackerFields);
 		//TODO As of now hard coding includeFieldMetaData to false. Should be changed when we include
 		// dependencies.
@@ -497,5 +508,50 @@ public class SFEETrackerHandler {
 		ga.setSourceRepositoryId(artifact.getFolderId());
 		ga.setArtifactType(GenericArtifact.ArtifactTypeValue.DEPENDENCY);
 		return ga;
+	}
+
+	public void convertReleaseIds(String sessionId, ArtifactSoapDO artifact) throws RemoteException {
+		String reportedReleaseId = artifact.getReportedReleaseId();
+		String resolvedReleaseId = artifact.getResolvedReleaseId();
+		if(!StringUtils.isEmpty(reportedReleaseId)) {
+			ReleaseSoapDO releaseDO = fileReleaseApp.getReleaseData(sessionId, reportedReleaseId);
+			String title = releaseDO.getTitle();
+			artifact.setReportedReleaseId(title);
+		}
+		if(!StringUtils.isEmpty(resolvedReleaseId)){
+			ReleaseSoapDO releaseDO = fileReleaseApp.getReleaseData(sessionId, resolvedReleaseId);
+			String title = releaseDO.getTitle();
+			artifact.setResolvedReleaseId(title);
+		}
+
+	}
+
+	public String convertReleaseId(String sessionId, String releaseId, String trackerId) throws RemoteException {
+		if(!StringUtils.isEmpty(releaseId) && !StringUtils.isEmpty(trackerId)) {
+			TrackerSoapDO trackerDO = mTrackerApp.getTrackerData(sessionId, trackerId);
+			String projectId = trackerDO.getProjectId();
+			PackageSoapList packageList = fileReleaseApp.getPackageList(sessionId, projectId);
+			if(packageList != null) {
+				PackageSoapRow[] packages = packageList.getDataRows();
+				if(packages != null && packages.length > 0) {
+					for(PackageSoapRow packageRow:packages) {
+						String packageId = packageRow.getId();
+						ReleaseSoapList releasesList = fileReleaseApp.getReleaseList(sessionId, packageId);
+						if(releasesList != null) {
+							ReleaseSoapRow[] releases = releasesList.getDataRows();
+							if(releases != null && releases.length > 0) {
+								for(ReleaseSoapRow release:releases) {
+									String title = release.getTitle();
+									if(title.equals(releaseId)) {
+										return release.getId();
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+		return releaseId;
 	}
 }

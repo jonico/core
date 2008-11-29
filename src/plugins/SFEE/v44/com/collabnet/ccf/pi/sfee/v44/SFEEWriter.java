@@ -1,13 +1,11 @@
 package com.collabnet.ccf.pi.sfee.v44;
 
 import java.rmi.RemoteException;
-import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.List;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dom4j.Document;
@@ -393,6 +391,10 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 		String[] comments = this.getComments(ga);
 		ArtifactSoapDO result = null;
 		try {
+			reportedReleaseId = trackerHandler.convertReleaseId(connection.getSessionId(),
+					reportedReleaseId, folderId);
+			resolvedReleaseId = trackerHandler.convertReleaseId(connection.getSessionId(),
+					resolvedReleaseId, folderId);
 			result = trackerHandler.createArtifact(connection.getSessionId(),
 					folderId, description, category, group, status,
 					statusClass, customer, priority, estimatedHours,
@@ -510,6 +512,10 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 		String[] comments = this.getComments(ga);
 		ArtifactSoapDO result = null;
 		try {
+			reportedReleaseId = trackerHandler.convertReleaseId(connection.getSessionId(),
+					reportedReleaseId, folderId);
+			resolvedReleaseId = trackerHandler.convertReleaseId(connection.getSessionId(),
+					resolvedReleaseId, folderId);
 			result = trackerHandler.updateArtifact(ga, connection
 					.getSessionId(), folderId, description, category, group,
 					status, statusClass, customer, priority, estimatedHours,
@@ -655,15 +661,16 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 		if (gaFields != null) {
 			commentsSize = gaFields.size();
 		}
-		if (commentsSize == 0) {
-			comments = new String[] { this.getUpdateComment() };
-		} else {
+		if (commentsSize > 0) {
 			comments = new String[commentsSize];
 			for (int i = 0; i < commentsSize; i++) {
 				GenericArtifactField field = gaFields.get(i);
 				String comment = (String) field.getFieldValue();
 				comments[i] = comment;
 			}
+		}
+		if(comments == null) {
+			comments = new String[0];
 		}
 		return comments;
 	}
@@ -718,7 +725,7 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 	}
 
 	@Override
-	public Document deleteAttachment(Document gaDocument) {
+	public Document[] deleteAttachment(Document gaDocument) {
 		GenericArtifact ga = null;
 		try {
 			ga = GenericArtifactHelper.createGenericArtifactJavaObject(gaDocument);
@@ -736,10 +743,34 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 		String artifactId = ga.getDepParentTargetArtifactId();
 		String tracker = targetRepositoryId;
 		Connection connection = null;
+		GenericArtifact parentArtifact = null;
 		try {
 			connection = connect(ga);
 			attachmentHandler.deleteAttachment(connection, targetArtifactId, artifactId, ga);
 			log.info("Attachment "+targetArtifactId + "is deleted");
+			ArtifactSoapDO artifact = trackerHandler.getTrackerItem(connection.getSessionId(), artifactId);
+			parentArtifact = new GenericArtifact();
+			parentArtifact.setArtifactType(GenericArtifact.ArtifactTypeValue.PLAINARTIFACT);
+			parentArtifact.setArtifactAction(GenericArtifact.ArtifactActionValue.UPDATE);
+			parentArtifact.setArtifactMode(GenericArtifact.ArtifactModeValue.CHANGEDFIELDSONLY);
+			parentArtifact.setConflictResolutionPriority(ga.getConflictResolutionPriority());
+			parentArtifact.setSourceArtifactId(ga.getDepParentSourceArtifactId());
+			parentArtifact.setSourceArtifactLastModifiedDate(ga.getSourceArtifactLastModifiedDate());
+			parentArtifact.setSourceArtifactVersion(ga.getSourceArtifactVersion());
+			parentArtifact.setSourceRepositoryId(ga.getSourceRepositoryId());
+			parentArtifact.setSourceSystemId(ga.getSourceSystemId());
+			parentArtifact.setSourceSystemKind(ga.getSourceSystemKind());
+			parentArtifact.setSourceRepositoryKind(ga.getSourceRepositoryKind());
+			parentArtifact.setSourceSystemTimezone(ga.getSourceSystemTimezone());
+
+			parentArtifact.setTargetArtifactId(artifactId);
+			parentArtifact.setTargetArtifactLastModifiedDate(DateUtil.format(artifact.getLastModifiedDate()));
+			parentArtifact.setTargetArtifactVersion(Integer.toString(artifact.getVersion()));
+			parentArtifact.setTargetRepositoryId(ga.getTargetRepositoryId());
+			parentArtifact.setTargetRepositoryKind(ga.getTargetRepositoryKind());
+			parentArtifact.setTargetSystemId(ga.getTargetSystemId());
+			parentArtifact.setTargetSystemKind(ga.getTargetSystemKind());
+			parentArtifact.setTargetSystemTimezone(ga.getTargetSystemTimezone());
 		} catch (RemoteException e) {
 			String message = "Exception while deleting attachment "+artifactId;
 			log.error(message, e);
@@ -749,16 +780,18 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 				this.disconnect(connection);
 			}
 		}
-		Document returnDocument = null;;
+		Document returnDocument = null;
+		Document returnParentDocument = null;
 		try {
 			returnDocument = GenericArtifactHelper.createGenericArtifactXMLDocument(ga);
+			returnParentDocument = GenericArtifactHelper.createGenericArtifactXMLDocument(parentArtifact);
 		} catch (GenericArtifactParsingException e) {
 			String message = "Exception while deleting attachment "
 				+artifactId +". Could not parse Generic artifact";
 			log.error(message, e);
 			throw new CCFRuntimeException(message, e);
 		}
-		return returnDocument;
+		return new Document[]{returnDocument, returnParentDocument};
 	}
 
 	@Override

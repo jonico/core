@@ -102,7 +102,7 @@ public abstract class AbstractWriter<T> extends LifecycleComponent implements
 						gaDocument = this.deleteArtifact(gaDocument);
 					} else if (artifactType
 							.equals(GenericArtifactHelper.ARTIFACT_TYPE_ATTACHMENT)) {
-						gaDocument = this.deleteAttachment(gaDocument);
+						returnValue = this.deleteAttachment(gaDocument);
 					} else if (artifactType
 							.equals(GenericArtifactHelper.ARTIFACT_TYPE_DEPENDENCY)) {
 						gaDocument = this.deleteDependency(gaDocument);
@@ -196,7 +196,7 @@ public abstract class AbstractWriter<T> extends LifecycleComponent implements
 
 	public abstract Document deleteDependency(Document gaDocument);
 
-	public abstract Document deleteAttachment(Document gaDocument);
+	public abstract Document[] deleteAttachment(Document gaDocument);
 
 	public abstract Document deleteArtifact(Document gaDocument);
 

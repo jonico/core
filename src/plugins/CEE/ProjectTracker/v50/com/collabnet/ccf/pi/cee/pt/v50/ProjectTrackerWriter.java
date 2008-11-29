@@ -267,7 +267,7 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 			}
 
 			// FIXME This is not atomic
-			ClientArtifactListXMLHelper artifactHelper = twsclient.updateArtifactList(cla);
+			ClientArtifactListXMLHelper artifactHelper = twsclient.updateArtifactList(cla, modifiedOnMilliSeconds);
 
 			ptHelper.processWSErrors(artifactHelper);
 			log.info("Artifact "+targetArtifactId+" updated successfully with the changes from "+ga.getSourceArtifactId());
@@ -823,13 +823,14 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 	}
 
 	@Override
-	public Document deleteAttachment(Document gaDocument) {
+	public Document[] deleteAttachment(Document gaDocument) {
 		GenericArtifact ga = this.getGenericArtifact(gaDocument);
 		String attachmentIdStr = ga.getTargetArtifactId();
 		String fullyQualifiedArtifactId = ga.getDepParentTargetArtifactId();
 		String artifactId = ptHelper.getArtifactIdFromFullyQualifiedArtifactId(fullyQualifiedArtifactId);
 		TrackerWebServicesClient twsclient = null;
 		int attachmentId = Integer.parseInt(attachmentIdStr);
+		GenericArtifact parentArtifact = null;
 		try {
 			twsclient = this.getConnection(ga);
 			twsclient.removeAttachment(artifactId, attachmentId);
@@ -841,6 +842,29 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 			Date lastModifiedDate = new Date(modifiedOnMilliSeconds);
 			ga.setTargetArtifactLastModifiedDate(DateUtil.format(lastModifiedDate));
 			ga.setTargetArtifactVersion(Long.toString(modifiedOnMilliSeconds));
+
+			parentArtifact = new GenericArtifact();
+			parentArtifact.setArtifactType(GenericArtifact.ArtifactTypeValue.PLAINARTIFACT);
+			parentArtifact.setArtifactAction(GenericArtifact.ArtifactActionValue.UPDATE);
+			parentArtifact.setArtifactMode(GenericArtifact.ArtifactModeValue.CHANGEDFIELDSONLY);
+			parentArtifact.setConflictResolutionPriority(ga.getConflictResolutionPriority());
+			parentArtifact.setSourceArtifactId(ga.getDepParentSourceArtifactId());
+			parentArtifact.setSourceArtifactLastModifiedDate(ga.getSourceArtifactLastModifiedDate());
+			parentArtifact.setSourceArtifactVersion(ga.getSourceArtifactVersion());
+			parentArtifact.setSourceRepositoryId(ga.getSourceRepositoryId());
+			parentArtifact.setSourceSystemId(ga.getSourceSystemId());
+			parentArtifact.setSourceSystemKind(ga.getSourceSystemKind());
+			parentArtifact.setSourceRepositoryKind(ga.getSourceRepositoryKind());
+			parentArtifact.setSourceSystemTimezone(ga.getSourceSystemTimezone());
+
+			parentArtifact.setTargetArtifactId(fullyQualifiedArtifactId);
+			parentArtifact.setTargetArtifactLastModifiedDate(DateUtil.format(lastModifiedDate));
+			parentArtifact.setTargetArtifactVersion(Long.toString(modifiedOnMilliSeconds));
+			parentArtifact.setTargetRepositoryId(ga.getTargetRepositoryId());
+			parentArtifact.setTargetRepositoryKind(ga.getTargetRepositoryKind());
+			parentArtifact.setTargetSystemId(ga.getTargetSystemId());
+			parentArtifact.setTargetSystemKind(ga.getTargetSystemKind());
+			parentArtifact.setTargetSystemTimezone(ga.getTargetSystemTimezone());
 		}catch (WSException e) {
 			String message = "WSException while deleting attachment "+attachmentIdStr+" of artifact " + fullyQualifiedArtifactId;
 			log.error(message, e);
@@ -863,7 +887,13 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 				this.releaseConnection(twsclient);
 			}
 		}
-		return this.returnGenericArtifactDocument(ga);
+		Document parentArtifactDocument = null;
+		if(parentArtifact != null){
+			parentArtifactDocument = this.returnGenericArtifactDocument(parentArtifact);
+		}
+		Document[] returnDocs =
+			new Document[]{this.returnGenericArtifactDocument(ga), parentArtifactDocument};
+		return returnDocs;
 	}
 
 	@Override

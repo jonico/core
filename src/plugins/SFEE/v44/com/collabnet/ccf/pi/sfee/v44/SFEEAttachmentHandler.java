@@ -404,14 +404,14 @@ public class SFEEAttachmentHandler {
 	 * @param artifactRows
 	 * @param sourceForgeSoap
 	 * @param maxAttachmentSizePerArtifact
-	 * @param soapDO
+	 * @param artifactData
 	 * @return
 	 * @throws RemoteException
 	 */
 	public List<GenericArtifact> listAttachments(String sessionId,
 			Date lastModifiedDate, String username, List<String> artifactIds,
 			ISourceForgeSoap sourceForgeSoap, long maxAttachmentSizePerArtifact,
-			boolean shouldShipAttachmentsWithArtifact, ArtifactSoapDO soapDO)
+			boolean shouldShipAttachmentsWithArtifact, GenericArtifact artifactData)
 			throws RemoteException {
 		List<GenericArtifact> attachmentGAs = new ArrayList<GenericArtifact>();
 		for (String artifactId : artifactIds) {
@@ -447,10 +447,10 @@ public class SFEEAttachmentHandler {
 							.setArtifactType(GenericArtifact.ArtifactTypeValue.ATTACHMENT);
 					ga.setDepParentSourceArtifactId(artifactId);
 					ga.setSourceArtifactId(row.getAttachmentId());
-					if(soapDO != null) {
-						ga.setSourceArtifactVersion(Integer.toString(soapDO.getVersion()));
-						ga.setSourceArtifactLastModifiedDate(DateUtil
-								.format(soapDO.getLastModifiedDate()));
+					if(artifactData != null) {
+						ga.setSourceArtifactVersion(artifactData.getSourceArtifactVersion());
+						ga.setSourceArtifactLastModifiedDate(
+								artifactData.getSourceArtifactLastModifiedDate());
 					}
 					else {
 						ga.setSourceArtifactVersion("1");

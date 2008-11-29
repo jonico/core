@@ -28,13 +28,13 @@ import com.collabnet.ccf.core.utils.DateUtil;
  * the wiring components.
  * 	It provides three methods for the plugin developers to implement. The plugin
  * developer should implement these methods by extending the AbstractReader.
- * 
+ *
  * The AbstractReader then gets the changed artifacts from the implemented methods
  * and sorts them according to their last modified date and sends them across.
  * It sends the artifacts one per Open Adaptor cycle.
- * 
+ *
  * The process method implements the streaming logic.
- * 
+ *
  * @author madhusuthanan (madhusuthanan@collab.net)
  *
  */
@@ -60,15 +60,15 @@ public abstract class AbstractReader<T> extends LifecycleComponent implements ID
 		super(id);
 		init();
 	}
-	
+
 	/**
 	 * Initializes the Reader with an empty repository records HashMap.
-	 * The repositories synchronization waiting list and the repository ids in 
+	 * The repositories synchronization waiting list and the repository ids in
 	 * the waiting list are also initialized.
 	 * It also creates a comparator that will be used to compare a set of
 	 * GenericArtifacts.
 	 * The comparator compares the GenericArtifacts according to the last
-	 * modified date of the artifacts. 
+	 * modified date of the artifacts.
 	 */
 	private void init(){
 		log.debug("Initializing the AbstractReader");
@@ -79,7 +79,7 @@ public abstract class AbstractReader<T> extends LifecycleComponent implements ID
 			public int compare(GenericArtifact first, GenericArtifact second) {
 				String firstLastModifiedDateStr = first.getSourceArtifactLastModifiedDate();
 				Date firstLastModifiedDate = DateUtil.parse(firstLastModifiedDateStr);
-				
+
 				String secondLastModifiedDateStr = first.getSourceArtifactLastModifiedDate();
 				Date secondLastModifiedDate = DateUtil.parse(secondLastModifiedDateStr);
 				if(firstLastModifiedDate.after(secondLastModifiedDate)){
@@ -118,8 +118,8 @@ public abstract class AbstractReader<T> extends LifecycleComponent implements ID
 			}
 		};
 	}
-	
-	/** 
+
+	/**
 	 * The process method queues the sync info documents from the sync info
 	 * readers. It then takes each repository one by one and asks the repository
 	 * reader (which is a sub class to this AbstractReader) if there are any
@@ -274,16 +274,21 @@ public abstract class AbstractReader<T> extends LifecycleComponent implements ID
 					int msToSleep = (numberOfTries - 1)	* connectionManager.getRetryIncrementTime();
 					int maxMsToSleep = connectionManager.getMaximumRetryWaitingTime();
 					try {
-						List<GenericArtifact> artifactData = this.getArtifactData(syncInfo, artifactId);
-						List<GenericArtifact> artifactAttachments = null;
-						if(shipAttachments){
-							artifactAttachments = this.getArtifactAttachments(syncInfo, artifactId);
-						} else {
-							artifactAttachments = new ArrayList<GenericArtifact>();
+						GenericArtifact artifactData = this.getArtifactData(syncInfo, artifactId);
+						if(artifactData != null) {
+							List<GenericArtifact> artifactAttachments = null;
+							if(shipAttachments){
+								artifactAttachments = this.getArtifactAttachments(syncInfo, artifactData);
+							} else {
+								artifactAttachments = new ArrayList<GenericArtifact>();
+							}
+							List<GenericArtifact> artifactDependencies = this.getArtifactDependencies(syncInfo, artifactId);
+
+							sortedGAs = combineAndSort(artifactData,artifactAttachments,artifactDependencies);
 						}
-						List<GenericArtifact> artifactDependencies = this.getArtifactDependencies(syncInfo, artifactId);
-						
-						sortedGAs = combineAndSort(artifactData,artifactAttachments,artifactDependencies);
+						else {
+							sortedGAs = new ArrayList<GenericArtifact>();
+						}
 					} catch(Exception e){
 						boolean connectionException = connectionManager.isUseStandardTimeoutHandlingCode() && this.handleException(e, connectionManager);
 						if(!connectionException){
@@ -336,7 +341,7 @@ public abstract class AbstractReader<T> extends LifecycleComponent implements ID
 					}
 					++numberOfTries;
 				} while(retry);
-				
+
 				artifactsToBeShippedList.addAll(sortedGAs);
 				if(artifactsToBeShippedList.isEmpty()) return new Object[]{};
 				GenericArtifact genericArtifact = artifactsToBeShippedList.remove(0);
@@ -379,60 +384,60 @@ public abstract class AbstractReader<T> extends LifecycleComponent implements ID
 	 * in the further runs this repository will not be taken into account for artifact
 	 * shipment (Unless the repository record is added again by the incoming synchronization
 	 * record).
-	 * 
+	 *
 	 * @param currentRecord - The repository record to be removed from the waiting list.
 	 */
 	private void removeFromWaitingList(RepositoryRecord currentRecord) {
 		repositorySynchronizationWaitingList.remove(currentRecord);
-		String currentSourceRepositoryId = currentRecord.getRepositoryId(); 
+		String currentSourceRepositoryId = currentRecord.getRepositoryId();
 		repositoryRecordsInRepositorySynchronizationWaitingList.remove(currentSourceRepositoryId);
 	}
-	
+
 	/**
 	 * Moves the repository to the tail of the waiting list so that in the
 	 * next immediate run the repository will not be considered for synchronization
 	 * (Unless it is the lone repository that is being sync-ed).
-	 * 
+	 *
 	 * @param currentRecord - The repository record to be moved to the tail.
 	 */
 	private void moveToTail(RepositoryRecord currentRecord){
 		repositorySynchronizationWaitingList.remove(currentRecord);
 		repositorySynchronizationWaitingList.add(currentRecord);
 	}
-	
+
 	/**
 	 * All the artifact data and dependent data generic artifacts are accumulated in
 	 * a single List and are sorted according to their last modified date so that
 	 * the artifact that was changed early will ship first.
-	 * 
+	 *
 	 * @param artifactData - The artifact's data
 	 * @param artifactAttachments - Attachments of an artifact
 	 * @param artifactDependencies - Dependent artifacts
-	 * 
+	 *
 	 * @return - The sorted list of Generic Artifact objects
 	 */
 	private List<GenericArtifact> combineAndSort(
-			List<GenericArtifact> artifactData,
+			GenericArtifact artifactData,
 			List<GenericArtifact> artifactAttachments,
 			List<GenericArtifact> artifactDependencies) {
 		ArrayList<GenericArtifact> gaList = new ArrayList<GenericArtifact>();
-		gaList.addAll(artifactData);
+		gaList.add(artifactData);
 		gaList.addAll(artifactAttachments);
 		gaList.addAll(artifactDependencies);
 		Collections.sort(gaList, genericArtifactComparator);
 		return gaList;
 	}
-	
+
 	/**
 	 * Sub classes should implement this method.
 	 * The implemented method should get all the dependent artifacts of the artifact
 	 * with the artifact id artifactId and convert them into Generic Artifact
 	 * object and return.
-	 * 
+	 *
 	 * If there are no dependent artifacts to be returned the implemented method
 	 * should return an empty List. It should not return null.
-	 * 
-	 * @param syncInfo - The synchronization info against which the changed artifacts 
+	 *
+	 * @param syncInfo - The synchronization info against which the changed artifacts
 	 * 					to be fetched
 	 * @param artifactId - The id of the artifact whose dependent artifacts should be
 	 * 					retrieved and returned.
@@ -440,19 +445,19 @@ public abstract class AbstractReader<T> extends LifecycleComponent implements ID
 	 */
 	public abstract List<GenericArtifact> getArtifactDependencies(Document syncInfo,
 			String artifactId);
-	
+
 	/**
 	 * Queries the source repository for any attachment changes for the given artifactId
 	 * and returns the changed attachments in a GenericArtifact object. If there are
 	 * no attachments changed an empty list is returned.
-	 * 
+	 *
 	 * @param syncInfo
-	 * @param artifactId
+	 * @param artifactData
 	 * @return
 	 */
 	public abstract List<GenericArtifact> getArtifactAttachments(Document syncInfo,
-			String artifactId);
-	
+			GenericArtifact artifactData);
+
 	/**
 	 * Returns the artifact data for the artifactId in a GenericArtifact
 	 * object. If the reader can return the artifact change history it
@@ -460,22 +465,22 @@ public abstract class AbstractReader<T> extends LifecycleComponent implements ID
 	 * If the reader doesn't have the capability of returning the artifact
 	 * change history it should return a list that contains the latest artifact
 	 *  data in a single GenericArtifact object added to the list.
-	 *  
+	 *
 	 * @param syncInfo
 	 * @param artifactId
 	 * @return
 	 */
-	public abstract List<GenericArtifact> getArtifactData(Document syncInfo,
+	public abstract GenericArtifact getArtifactData(Document syncInfo,
 			String artifactId);
-	
+
 	/**
 	 * Returns a list of changed artifacts' ids.
-	 * 
+	 *
 	 * @param syncInfo
 	 * @return
 	 */
 	public abstract List<String> getChangedArtifacts(Document syncInfo);
-	
+
 	public void reset(Object context) {
 	}
 
@@ -486,13 +491,13 @@ public abstract class AbstractReader<T> extends LifecycleComponent implements ID
 			log.error("connectionManager property is not set");
 			exceptions.add(new ValidationException("connectionManager property is not set",this));
 		}
-			
+
 		if(getSleepInterval() == -1){
 			log.error("sleepInterval is not set");
 			exceptions.add(new ValidationException("sleepInterval is not set",this));
 		}
 	}
-	
+
 	/**
 	 * Extracts and returns the last modified time of the artifact that was
 	 * sync-ed last.
@@ -513,7 +518,7 @@ public abstract class AbstractReader<T> extends LifecycleComponent implements ID
 		}
 		return null;
 	}
-	
+
 
 	/**
 	 * Returns the version of the artifact that was sync-ed in the last CCF cycle.
@@ -530,7 +535,7 @@ public abstract class AbstractReader<T> extends LifecycleComponent implements ID
 	/**
 	 * Returns the source artifact id that was sync-ed in the last
 	 * CCF cycle.
-	 * 
+	 *
 	 * @param syncInfo - The incoming sync info of a particular repository.
 	 * @return - The source artifact id that was sync-ed last for this repository.
 	 */
@@ -541,7 +546,7 @@ public abstract class AbstractReader<T> extends LifecycleComponent implements ID
 		return node.getText();
 	}
 
-	
+
 	/**
 	 * Extracts and returns the Source repository id from the sync info.
 	 * @param syncInfo - The incoming sync info for the repository.
@@ -553,7 +558,7 @@ public abstract class AbstractReader<T> extends LifecycleComponent implements ID
 			return null;
 		return node.getText();
 	}
-	
+
 	/**
 	 * Extracts and returns the Source repository kind from the sync info.
 	 * @param syncInfo - The incoming sync info for this repository.
@@ -568,7 +573,7 @@ public abstract class AbstractReader<T> extends LifecycleComponent implements ID
 
 	/**
 	 * Extracts and returns the Source system id from the sync info.
-	 * 
+	 *
 	 * @param syncInfo - the incoming sync info for this repository
 	 * @return - The source system id for this repository.
 	 */
@@ -578,7 +583,7 @@ public abstract class AbstractReader<T> extends LifecycleComponent implements ID
 			return null;
 		return node.getText();
 	}
-	
+
 	/**
 	 * Extracts and returns the source system kind from the sync info.
 	 * @param syncInfo - The incoming sync info for this repository.
@@ -602,10 +607,10 @@ public abstract class AbstractReader<T> extends LifecycleComponent implements ID
 			return null;
 		return node.getText();
 	}
-	
+
 	/**
 	 * Extracts and returns the target repository kind from the sync info.
-	 * 
+	 *
 	 * @param syncInfo - The incoming sync info for this repository.
 	 * @return - The target repository id extracted from this repository info.
 	 */
@@ -627,7 +632,7 @@ public abstract class AbstractReader<T> extends LifecycleComponent implements ID
 			return null;
 		return node.getText();
 	}
-	
+
 	/**
 	 * Extracts and returns the target system kind from the sync info.
 	 * @param syncInfo - The incoming sync info for this repository.
@@ -639,19 +644,18 @@ public abstract class AbstractReader<T> extends LifecycleComponent implements ID
 			return null;
 		return node.getText();
 	}
-	
+
 	protected Date getLastModifiedDate(Document syncInfo){
 		String lastModifiedDateString = this.getLastSourceArtifactModificationDate(syncInfo);
-		Date lastModifiedDate = null; 
+		Date lastModifiedDate = null;
 		if (!StringUtils.isEmpty(lastModifiedDateString)) {
 			lastModifiedDate=DateUtil.parse(lastModifiedDateString);
-			lastModifiedDate.setTime(lastModifiedDate.getTime()+1);
 		} else {
 			lastModifiedDate = new Date(0);
 		}
 		return lastModifiedDate;
 	}
-	
+
 	/**
 	 * Extracts and returns the conflictResolutionPriority for the
 	 * source repository.
@@ -664,35 +668,35 @@ public abstract class AbstractReader<T> extends LifecycleComponent implements ID
 			return null;
 		return node.getText();
 	}
-	
+
 	public String getSourceSystemTimezone(Document syncInfo){
 		Node node= syncInfo.selectSingleNode("//SOURCE_SYSTEM_TIMEZONE");
 		if (node==null)
 			return null;
 		return node.getText();
 	}
-	
+
 	public String getTargetSystemTimezone(Document syncInfo){
 		Node node= syncInfo.selectSingleNode("//TARGET_SYSTEM_TIMEZONE");
 		if (node==null)
 			return null;
 		return node.getText();
 	}
-	
+
 	public String getSourceSystemEncoding(Document syncInfo){
 		Node node= syncInfo.selectSingleNode("//SOURCE_SYSTEM_ENCODING");
 		if (node==null)
 			return null;
 		return node.getText();
 	}
-	
+
 	public String getTargetSystemEncoding(Document syncInfo){
 		Node node= syncInfo.selectSingleNode("//TARGET_SYSTEM_ENCODING");
 		if (node==null)
 			return null;
 		return node.getText();
 	}
-	
+
 	/**
 	 * Returns the configured sleep interval in milliseconds
 	 * @return
@@ -700,12 +704,12 @@ public abstract class AbstractReader<T> extends LifecycleComponent implements ID
 	public long getSleepInterval() {
 		return sleepInterval;
 	}
-	
+
 	/**
 	 * Sets the sleep interval in milliseconds. Sleep interval is the time
 	 * lag introduced by the AbstractReader when there are no artifacts
 	 * to be shipped in any of the repositories configured.
-	 * 
+	 *
 	 * @param sleepInterval
 	 */
 	public void setSleepInterval(long sleepInterval) {
@@ -714,7 +718,7 @@ public abstract class AbstractReader<T> extends LifecycleComponent implements ID
 	/**
 	 * Returns whether the attachments of the artifact should be shipped by the Reader
 	 * component.
-	 * 
+	 *
 	 * @return - true if the attachments will be shipped.
 	 * 		   - false if the attachments won't be shipped.
 	 */
@@ -723,7 +727,7 @@ public abstract class AbstractReader<T> extends LifecycleComponent implements ID
 	}
 	/**
 	 * Sets the flag whether to ship the attachments or not.
-	 * 
+	 *
 	 * @param shipAttachments - true if the attachment should be shipped
 	 * 						  - false if the attachments should not be shipped.
 	 */
@@ -733,7 +737,7 @@ public abstract class AbstractReader<T> extends LifecycleComponent implements ID
 	/**
 	 * Returns the maximum attachment size that will be shipped for an
 	 * artifact. The max attachment size is configured in bytes.
-	 * 
+	 *
 	 * @return - The maximum attachment size per artifact in bytes
 	 */
 	public long getMaxAttachmentSizePerArtifact() {
@@ -741,9 +745,9 @@ public abstract class AbstractReader<T> extends LifecycleComponent implements ID
 	}
 	/**
 	 * Sets the maximum attachment size to be shipped for an artifact.
-	 * If the attachment size is more than this configured value it 
+	 * If the attachment size is more than this configured value it
 	 * should not be shipped by the reader.
-	 * 
+	 *
 	 * @param maxAttachmentPerArtifact - the maximum attachment size that can
 	 * be shipped.
 	 */
@@ -753,7 +757,7 @@ public abstract class AbstractReader<T> extends LifecycleComponent implements ID
 	/**
 	 * Returns the flag that denotes if the Reader should include field meta data
 	 * for the artifacts that are shipped.
-	 * 
+	 *
 	 * @return - true if the field meta data should be shipped
 	 * 		   - false if the field meta data need not be shipped by the Reader.
 	 */
@@ -771,7 +775,7 @@ public abstract class AbstractReader<T> extends LifecycleComponent implements ID
 	public void setIncludeFieldMetaData(boolean includeFieldMetaData) {
 		this.includeFieldMetaData = includeFieldMetaData;
 	}
-	
+
 	/**
 	 * Get the connection manager. The connection manager is responsible to
 	 * manage (create, close, pool) the connections from type T.
@@ -795,7 +799,7 @@ public abstract class AbstractReader<T> extends LifecycleComponent implements ID
 	public void setConnectionManager(ConnectionManager<T> connectionManager) {
 		this.connectionManager = connectionManager;
 	}
-	
+
 	public boolean handleException(Throwable rootCause,ConnectionManager<T> connectionManager){
 		return false;
 	}

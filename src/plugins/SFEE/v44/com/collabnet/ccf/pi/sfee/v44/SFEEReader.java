@@ -56,8 +56,6 @@ public class SFEEReader extends AbstractReader<Connection> {
 
 	private boolean ignoreConnectorUserUpdates = true;
 
-	private ThreadLocal<ArtifactSoapDO> artifactContainer = new ThreadLocal<ArtifactSoapDO>();
-
 	/**
 	 * Constructs and Initializes the SFEEReader component.
 	 */
@@ -268,7 +266,8 @@ public class SFEEReader extends AbstractReader<Connection> {
 	 */
 	@Override
 	public List<GenericArtifact> getArtifactAttachments(Document syncInfo,
-			String artifactId) {
+			GenericArtifact artifactData) {
+		String artifactId = artifactData.getSourceArtifactId();
 		String sourceSystemId = this.getSourceSystemId(syncInfo);
 		String sourceSystemKind = this.getSourceSystemKind(syncInfo);
 		String sourceRepositoryId = this.getSourceRepositoryId(syncInfo);
@@ -294,14 +293,12 @@ public class SFEEReader extends AbstractReader<Connection> {
 		artifactIds.add(artifactId);
 		List<GenericArtifact> attachments = null;
 		try {
-			ArtifactSoapDO soapDO = artifactContainer.get();
 			attachments = attachmentHandler.listAttachments(connection.getSessionId(),
 					lastModifiedDate,isIgnoreConnectorUserUpdates()?getUsername():"",artifactIds, connection.getSfSoap(),
-					this.getMaxAttachmentSizePerArtifact(),this.isShipAttachmentsWithArtifact(), soapDO);
+					this.getMaxAttachmentSizePerArtifact(),this.isShipAttachmentsWithArtifact(), artifactData);
 			for(GenericArtifact attachment:attachments){
 				populateSrcAndDestForAttachment(syncInfo, attachment);
 			}
-			artifactContainer.set(null);
 		} catch (RemoteException e) {
 			String cause = "During the attachment retrieval process from SFEE, an error occured";
 			log.error(cause, e);
@@ -321,7 +318,7 @@ public class SFEEReader extends AbstractReader<Connection> {
 	 * @see com.collabnet.ccf.core.AbstractReader#getArtifactData(org.dom4j.Document, java.lang.String)
 	 */
 	@Override
-	public List<GenericArtifact> getArtifactData(Document syncInfo,
+	public GenericArtifact getArtifactData(Document syncInfo,
 			String artifactId) {
 		String sourceSystemId = this.getSourceSystemId(syncInfo);
 		String sourceSystemKind = this.getSourceSystemKind(syncInfo);
@@ -345,7 +342,7 @@ public class SFEEReader extends AbstractReader<Connection> {
 			log.error(cause, e);
 			throw new CCFRuntimeException(cause, e);
 		}
-		ArrayList<GenericArtifact> gaList = new ArrayList<GenericArtifact>();
+		GenericArtifact genericArtifact = null;
 		try {
 			TrackerFieldSoapDO[] trackerFields = null;
 			HashMap<String, List<TrackerFieldSoapDO>> fieldsMap = null;
@@ -354,18 +351,18 @@ public class SFEEReader extends AbstractReader<Connection> {
 				fieldsMap =	SFEEAppHandler.loadTrackerFieldsInHashMap(trackerFields);
 			}
 			ArtifactSoapDO artifact = trackerHandler.getTrackerItem(connection.getSessionId(), artifactId);
-			SFEEAppHandler appHandler = new SFEEAppHandler(connection.getSfSoap(), connection.getSessionId());
+			SFEEAppHandler appHandler = new SFEEAppHandler(connection.getSfSoap(),
+					connection.getSessionId(), this.getServerUrl());
 			appHandler.addComments(artifact,
 					lastModifiedDate,isIgnoreConnectorUserUpdates()?this.getUsername():"");
-			GenericArtifact genericArtifact = artifactConverter.convert(artifact,
+			trackerHandler.convertReleaseIds(connection.getSessionId(), artifact);
+			genericArtifact = artifactConverter.convert(artifact,
 					fieldsMap, lastModifiedDate, this.isIncludeFieldMetaData(), sourceSystemTimezone);
 			String lastModifiedBy = artifact.getLastModifiedBy();
 			if(lastModifiedBy.equals(this.getResyncUserName())){
 				genericArtifact.setArtifactAction(GenericArtifact.ArtifactActionValue.RESYNC);
 			}
 			populateSrcAndDest(syncInfo, genericArtifact);
-			gaList.add(genericArtifact);
-			artifactContainer.set(artifact);
 		} catch (RemoteException e) {
 			String cause = "During the artifact retrieval process from SFEE, an error occured";
 			log.error(cause, e);
@@ -373,7 +370,7 @@ public class SFEEReader extends AbstractReader<Connection> {
 		} finally {
 			this.disconnect(connection);
 		}
-		return gaList;
+		return genericArtifact;
 	}
 
 	/**

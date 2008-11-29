@@ -13,12 +13,12 @@ import com.collabnet.ccf.core.utils.DateUtil;
 
 /**
  * This sample reader provides a skeleton that can be used by
- * developers to create an adaptor without even going through the 
+ * developers to create an adaptor without even going through the
  * implementation details of the adaptors provided in CollabNet Connector
  * Framework.
- * 
+ *
  * To implement a reader we define a class that extends from AbstractReader.
- * AbstractReader provides four methods that should be implemented by the 
+ * AbstractReader provides four methods that should be implemented by the
  * plugin developer. They are
  * 		1. getChangedArtifacts
  * 		2. getArtifactData
@@ -26,17 +26,17 @@ import com.collabnet.ccf.core.utils.DateUtil;
  * 		4. getArtifactDependencies
  * All these methods should be implemented. If you don't want some of these methods
  * to be implemented, make these methods to return an empty list of GenericArtifacts.
- * 
+ *
  * However, the getChangedArtifacts method should be implemented to return the artifact
  * ids in a list. If this method is coded to return an empty list CCF will think
  * that there are no artifacts that need to be shipped to the target system.
- * 
+ *
  * After implementing the Reader let us proceed to create the mapping XSLT file
  * that is responsible to transform the GenericArtifact that we are sending
  * into a format that can be understood by the SFEEWriter.
  * Please refer the xslt file at
  * $CCF_HOME/samples/SFEE2SFEE/custom-reader/xslt
- * 
+ *
  * $CCF_HOME is the directory where you have extracted the CCF
  * zip file.
  * @author madhusuthanan (madhusuthanan@collab.net)
@@ -46,7 +46,7 @@ public class SampleReader extends AbstractReader<String> {
 
 	@Override
 	public List<GenericArtifact> getArtifactAttachments(Document syncInfo,
-			String artifactId) {
+			GenericArtifact artifactData) {
 		// Let us not worry about the attachments as of now
 		// So let us return an empty list of GenericArtifact s.
 		List<GenericArtifact> attachmentGAList = new ArrayList<GenericArtifact>();
@@ -54,7 +54,7 @@ public class SampleReader extends AbstractReader<String> {
 	}
 
 	@Override
-	public List<GenericArtifact> getArtifactData(Document syncInfo,
+	public GenericArtifact getArtifactData(Document syncInfo,
 			String artifactId) {
 		// CCF is asking us to return the data of an artifact
 		// Let us ship a dummy artifact across.
@@ -75,8 +75,8 @@ public class SampleReader extends AbstractReader<String> {
 		// We are shipping the whole artifact data
 		ga.setArtifactMode(GenericArtifact.ArtifactModeValue.COMPLETE);
 		// Let us assume that our repository supports versioning of the
-		// artifacts. Of course it does a very trivial versioning by marking 
-		// all the artifact's version as 1. 
+		// artifacts. Of course it does a very trivial versioning by marking
+		// all the artifact's version as 1.
 		ga.setSourceArtifactVersion("1");
 		// The artifacts that we are emitting does not include field
 		// metadata.
@@ -92,7 +92,7 @@ public class SampleReader extends AbstractReader<String> {
 		ga.setSourceSystemId(sourceSystemId);
 		String sourceSystemKind = this.getSourceSystemKind(syncInfo);
 		ga.setSourceSystemKind(sourceSystemKind);
-		
+
 		String targetRepositoryId = this.getTargetRepositoryId(syncInfo);
 		ga.setTargetRepositoryId(targetRepositoryId);
 		String targetRepositoryKind = this.getTargetRepositoryKind(syncInfo);
@@ -116,41 +116,39 @@ public class SampleReader extends AbstractReader<String> {
 		// 3. Status
 		// 4. Priority
 		// 5. Assigned To
-		
+
 		GenericArtifactField titleField = ga.addNewField("Title", GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD);
 		titleField.setFieldValueHasChanged(true);
 		titleField.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
 		titleField.setFieldValue("Sample artifact from Custom Reader");
 		titleField.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
-		
+
 		GenericArtifactField summaryField = ga.addNewField("Summary", GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD);
 		summaryField.setFieldValueHasChanged(true);
 		summaryField.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
 		summaryField.setFieldValue("This is the summary of the Sample artifact sent by the Custom Reader");
 		summaryField.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
-		
+
 		GenericArtifactField statusField = ga.addNewField("Status", GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD);
 		statusField.setFieldValueHasChanged(true);
 		statusField.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
 		statusField.setFieldValue("Open");
 		statusField.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
-		
+
 		GenericArtifactField priorityField = ga.addNewField("Priority", GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD);
 		priorityField.setFieldValueHasChanged(true);
 		priorityField.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
 		priorityField.setFieldValue("Highest");
 		priorityField.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
-		
+
 		GenericArtifactField assignedToField = ga.addNewField("Assigned To", GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD);
 		assignedToField.setFieldValueHasChanged(true);
 		assignedToField.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
 		assignedToField.setFieldValue("martian");
 		assignedToField.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
-		
+
 		//Let us add our sole GenericArtifact object into a list and return it
-		List<GenericArtifact> gaList = new ArrayList<GenericArtifact>();
-		gaList.add(ga);
-		return gaList;
+		return ga;
 	}
 
 	@Override
