@@ -25,7 +25,7 @@ public class GenericArtifact {
 	 * their name
 	 */
 	private HashMap<String, List<GenericArtifactField>> fieldNameHashMap = new HashMap<String, List<GenericArtifactField>>();
-	
+
 	/**
 	 * 
 	 * Possible values for the artifact mode, "changedFieldsOnly" and "complete"
@@ -39,7 +39,7 @@ public class GenericArtifact {
 	/**
 	 * 
 	 * Possible values for the artifact action, "create", "delete", "update",
-	 * "ignore"
+	 * "ignore", "resync"
 	 * 
 	 * @author jnicolai
 	 */
@@ -83,7 +83,7 @@ public class GenericArtifact {
 	 * This is a list that contains all field element
 	 */
 	private List<GenericArtifactField> allFieldList;
-	
+
 	/**
 	 * The value (content) of the artifact, encoded as BASE64 string. The
 	 * content is typically null unless it is an attachment.
@@ -103,11 +103,17 @@ public class GenericArtifact {
 
 	/**
 	 * This attribute defines if this artifact should be "create"d, "update"d,
-	 * "delete"d or "ignore"d by the target system. As long the artifact has not
-	 * yet passed the entity service (that may change the value), the value will
-	 * typically be "create" or "delete", since the source system does not know
-	 * whether the artifact has been already created in the target system. The
-	 * four possible values of action are "create", "update", "delete", and
+	 * "delete"d, "resync"hed or "ignore"d by the target system. As long the
+	 * artifact has not yet passed the entity service (that may change the
+	 * value), the value will typically be "create" or "delete", since the
+	 * source system does not know whether the artifact has been already created
+	 * in the target system. The "ignore" action will cause most components to
+	 * just pass the artifact without any modifications to the next component.
+	 * However, some special components can still do some actions (like updating
+	 * the synchronization status table) if this action occurs. The "resync"
+	 * action is used to show that this artifact shipment is only done because
+	 * an immediate resync after artifact creation was requested. The five
+	 * possible values of action are "create", "update", "delete", "resync" and
 	 * "ignore".
 	 */
 	private ArtifactActionValue artifactAction = ArtifactActionValue.UNKNOWN;
@@ -124,9 +130,11 @@ public class GenericArtifact {
 	 * does not support version control.
 	 */
 	private String targetArtifactVersion = GenericArtifact.VALUE_UNKNOWN;
-	
+
 	/**
-	 * This attribute will contain the hospital id if the artifact has been quarantined and is getting replayed. The default value of this attribute is "unknown".
+	 * This attribute will contain the hospital id if the artifact has been
+	 * quarantined and is getting replayed. The default value of this attribute
+	 * is "unknown".
 	 */
 	private String transactionId = GenericArtifact.VALUE_UNKNOWN;
 
@@ -146,8 +154,8 @@ public class GenericArtifact {
 	/**
 	 * If a conflict is detected in the target system, the value of this
 	 * attribute will be used to determine, whether the target artifact should
-	 * be overriden or not. Reserved values are "quarantineArtifact", "alwaysIgnore" and
-	 * "alwaysOverride".
+	 * be overriden or not. Reserved values are "quarantineArtifact",
+	 * "alwaysIgnore" and "alwaysOverride".
 	 */
 	private String conflictResolutionPriority = GenericArtifact.VALUE_UNKNOWN;
 
@@ -377,17 +385,18 @@ public class GenericArtifact {
 	 * value will be "unknown" until this artifact passes the entity service.
 	 */
 	private String depChildTargetArtifactId = GenericArtifact.VALUE_UNKNOWN;
-	
+
 	private String sourceSystemTimezone = GenericArtifact.VALUE_UNKNOWN;
 	private String targetSystemTimezone = GenericArtifact.VALUE_UNKNOWN;
-	//private String sourceSystemEncoding = GenericArtifact.VALUE_UNKNOWN;
-	//private String targetSystemEncoding = GenericArtifact.VALUE_UNKNOWN;
+	// private String sourceSystemEncoding = GenericArtifact.VALUE_UNKNOWN;
+	// private String targetSystemEncoding = GenericArtifact.VALUE_UNKNOWN;
 
 	/**
-	 * This attribute is used to store a reference to the document that was parsed to create this
-	 * java representation of the generic artifact format. Currently, this reference is just
-	 * used for one reason: If the error code will be changed, the error code of the source
-	 * document will be changed as well to facilitate exception handling
+	 * This attribute is used to store a reference to the document that was
+	 * parsed to create this java representation of the generic artifact format.
+	 * Currently, this reference is just used for one reason: If the error code
+	 * will be changed, the error code of the source document will be changed as
+	 * well to facilitate exception handling
 	 */
 	private Document sourceDocument;
 
@@ -395,7 +404,7 @@ public class GenericArtifact {
 	 * Constant value for conflict resolution priority "alwaysOverride"
 	 */
 	public static final String VALUE_CONFLICT_RESOLUTION_PRIORITY_ALWAYS_OVERRIDE = "alwaysOverride";
-	
+
 	/**
 	 * Constant value for conflict resolution priority "quarantineArtifact"
 	 */
@@ -427,11 +436,11 @@ public class GenericArtifact {
 	public final static String ERROR_GENERIC_ARTIFACT_NOT_SCHEMA_COMPLIANT = "notSchemaCompliantError";
 
 	public final static String ERROR_OK = "ok";
-	
+
 	public final static String ERROR_INTERNAL_DATABASE_TABLE_CORRUPT = "internalDatabaseTableCorruptionError";
-	
+
 	public final static String ERROR_INCORRECT_SQL_STATEMENT = "incorrectSQLStatementError";
-	
+
 	public final static String ERROR_CONFLICT_DETECTED = "conflictDetectedError";
 
 	/**
@@ -1009,13 +1018,12 @@ public class GenericArtifact {
 		}
 	}
 
-	/*public String getLastReadTransactionId() {
-		return transactionId;
-	}
-
-	public void setLastReadTransactionId(String transactionId) {
-		this.transactionId = transactionId;
-	}*/
+	/*
+	 * public String getLastReadTransactionId() { return transactionId; }
+	 * 
+	 * public void setLastReadTransactionId(String transactionId) {
+	 * this.transactionId = transactionId; }
+	 */
 
 	public IncludesFieldMetaDataValue getIncludesFieldMetaData() {
 		return includesFieldMetaData;
@@ -1032,14 +1040,17 @@ public class GenericArtifact {
 
 	/**
 	 * This is the only method of this class that may change the XML document
-	 * that was used to create this java representation.
-	 * The error code will be adjusted to facilitate writing of exception handling routines
-	 * @param errorCode the new error code
+	 * that was used to create this java representation. The error code will be
+	 * adjusted to facilitate writing of exception handling routines
+	 * 
+	 * @param errorCode
+	 *            the new error code
 	 */
 	public void setErrorCode(String errorCode) {
 		this.errorCode = errorCode;
-		if (sourceDocument!=null) {
-			sourceDocument.getRootElement().addAttribute(GenericArtifactHelper.ERROR_CODE, errorCode);
+		if (sourceDocument != null) {
+			sourceDocument.getRootElement().addAttribute(
+					GenericArtifactHelper.ERROR_CODE, errorCode);
 		}
 	}
 
@@ -1084,7 +1095,7 @@ public class GenericArtifact {
 	public void setTransactionId(String transactionId) {
 		this.transactionId = transactionId;
 	}
-	
+
 	public Document getSourceDocument() {
 		return sourceDocument;
 	}
