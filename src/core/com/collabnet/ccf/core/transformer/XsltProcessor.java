@@ -198,11 +198,15 @@ public class XsltProcessor extends Component implements IDataProcessor {
 			try {
 				document = (Document) record;
 				element=document.getRootElement();
-				String artifactAction = XPathUtils.getAttributeValue(element,
-						GenericArtifactHelper.ARTIFACT_ACTION);
-				if (artifactAction != null && artifactAction
-						.equals(GenericArtifactHelper.ARTIFACT_ACTION_IGNORE)) {
-					return new Object[] { document };
+				try {
+					String artifactAction = XPathUtils.getAttributeValue(element,
+							GenericArtifactHelper.ARTIFACT_ACTION);
+					if (artifactAction != null && artifactAction
+							.equals(GenericArtifactHelper.ARTIFACT_ACTION_IGNORE)) {
+						return new Object[] { document };
+					}
+				} catch (GenericArtifactParsingException e) {
+					// do nothing, this artifact does not seem to be a generic artifact
 				}
 				transform = constructFileNameAndFetchTransformer(document);
 			} catch (GenericArtifactParsingException e) {
