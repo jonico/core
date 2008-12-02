@@ -12,7 +12,6 @@
 		<pathelement location="build/classes" />
 		<pathelement location="src/core/lib/openadaptor-3.4/bootstrap.jar" />
 		<pathelement location="src/core/lib/openadaptor-3.4/openadaptor.jar" />
-		<pathelement location="src/core/lib/openadaptor-3.4/openadaptor-depends.jar" />
 		<pathelement location="src/core/lib/openadaptor-3.4/openadaptor-spring.jar" />
 		<pathelement location="src/core/lib/openadaptor-3.4/openadaptor-stub.jar" />
 		<pathelement location="src/core/lib/openadaptor-3.4/3rdparty/activation.jar" />
@@ -58,7 +57,6 @@
 		<pathelement location="src/core/lib/openadaptor-3.4/3rdparty/resolver_from_xerces_2.9.0.jar" />
 		<pathelement location="src/core/lib/openadaptor-3.4/3rdparty/rome_0.9.jar" />
 		<pathelement location="src/core/lib/openadaptor-3.4/3rdparty/saaj.jar" />
-		<pathelement location="src/core/lib/openadaptor-3.4/3rdparty/script.jar" />
 		<pathelement location="src/core/lib/openadaptor-3.4/3rdparty/serializer_from_xerces_2.9.0.jar" />
 		<pathelement location="src/core/lib/openadaptor-3.4/3rdparty/servlet-api_2.5-6.0.1.jar" />
 		<pathelement location="src/core/lib/openadaptor-3.4/3rdparty/spring_2.0.2.jar" />
