@@ -4,7 +4,7 @@
 	<appender name="console" class="org.apache.log4j.ConsoleAppender">
 		<param name="Target" value="System.out"/>
 		<layout class="org.apache.log4j.PatternLayout">
-			<param name="ConversionPattern" value="%5p [%t] (%F:%L) - %m%n"/>
+			<param name="ConversionPattern" value="%-5p %d{ISO8601} [%t] (%F:%L) - %m%n"/>
 		</layout>
 	</appender>
 	<appender name="R" class="org.apache.log4j.RollingFileAppender">
@@ -12,7 +12,7 @@
 		<param name="MaxFileSize" value="1024KB"/>
 		<param name="MaxBackupIndex" value="10"/>
 		<layout class="org.apache.log4j.PatternLayout">
-			<param name="ConversionPattern" value="%p %t %c - %m%n"/>
+			<param name="ConversionPattern" value="%-5p %d{ISO8601} %t %c - %m%n"/>
 		</layout>
 	</appender>
 	<appender name="ErrorNotifier" class="org.apache.log4j.net.SMTPAppender">
@@ -42,16 +42,22 @@
     	<level value="info"/>
 		<appender-ref ref="console" />
 		<appender-ref ref="R" />
-		<appender-ref ref="ErrorNotifier" />
+<!--		<appender-ref ref="ErrorNotifier" />-->
   	</category>
   	
   	<category name="com.collabnet.ccf.core.conflict.resolution" additivity="false">
     	<level value="info"/>
     	<appender-ref ref="R" />
-		<appender-ref ref="ConflictNotifier" />
+<!--		<appender-ref ref="ConflictNotifier" />-->
   	</category>
   	
   	<category name="org.openadaptor" additivity="false">
+    	<level value="ERROR"/>
+    	<appender-ref ref="R" />
+    	<appender-ref ref="console" />
+  	</category>
+  	
+  	<category name="org.springframework" additivity="false">
     	<level value="ERROR"/>
     	<appender-ref ref="R" />
     	<appender-ref ref="console" />
@@ -64,5 +70,3 @@
 	</root>
 
 </log4j:configuration>
-
-  
