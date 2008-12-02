@@ -157,7 +157,7 @@
 			<mkdir dir="samples/IntegrationScenarios/customReader/bin" />
 			<antcall target="clean">
 			</antcall>
-			<javac debug="true" debuglevel="${debuglevel}" 
+			<javac debug="true" debuglevel="${debuglevel}"
 				destdir="samples/IntegrationScenarios/customReader/bin"
 				source="${source}" target="${target}">
 				<src path="samples/IntegrationScenarios/customReader/src" />
@@ -246,7 +246,6 @@
 		<copy todir="build/package/samples">
 			<fileset dir="samples">
 				<include name="README.txt"/>
-				<include name="CEE/**/*"/>
 				<include name="IntegrationScenarios/**/*"/>
 				<include name="centralCCFDatabase/**/*"/>
 			</fileset>
@@ -260,14 +259,14 @@
 
     <target name="cleanup" description="Cleans all generated files">
           <delete dir="deploy"/>
-          <delete dir="production_installer"/>        
+          <delete dir="production_installer"/>
     </target>
 
     <target name="deploy" depends="cleanup,build">
           <property file="default.properties"/>
-         
+
       <mkdir dir="deploy"/>
-      <zip destfile="deploy/${tool.name}-${tool.version}.${tool.buildnumber}.zip" 
+      <zip destfile="deploy/${tool.name}-${tool.version}.${tool.buildnumber}.zip"
 	       basedir="build/package"/>
           <delete dir="build/package"/>
     </target>
@@ -276,7 +275,7 @@
          <mkdir dir="production_installer" />
          <exec executable="${env.NSIS_PATH}\makensis.exe">
              <arg value="installer\CollabNet Connector Framework.nsi"/>
-         </exec> 
+         </exec>
          <move file="installer\CollabNet Connector Framework-1.0-win32.exe" tofile="production_installer\Collabnet Connector Framework-1.0-win32.exe"/>
-    </target>	
+    </target>
 </project>
