@@ -146,7 +146,8 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 					sourceSystemId, sourceRepositoryId, targetSystemId,
 					targetRepositoryId, artifactType,
 					sourceArtifactLastModifiedDate, sourceArtifactVersionLong)) {
-				return new Object[] {};
+				XPathUtils.addAttribute(element, GenericArtifactHelper.ARTIFACT_ACTION,	GenericArtifactHelper.ARTIFACT_ACTION_IGNORE);
+				return new Object[] {data};
 			}
 
 			Object[] results = lookupTargetArtifact(element, sourceArtifactId,
@@ -198,6 +199,7 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 										+ sourceSystemId
 										+ targetRepositoryId
 										+ "-" + targetSystemId);
+						// TODO Set artifact ignore action?
 						return new Object[]{};
 					}
 				}

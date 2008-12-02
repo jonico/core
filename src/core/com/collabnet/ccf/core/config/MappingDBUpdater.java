@@ -87,43 +87,74 @@ public class MappingDBUpdater extends LifecycleComponent implements
 
 				String artifactAction = XPathUtils.getAttributeValue(element,
 						GenericArtifactHelper.ARTIFACT_ACTION);
-				if (artifactAction
-						.equals(GenericArtifactHelper.ARTIFACT_ACTION_IGNORE)) {
-					return new Object[] { data };
-				}
 
 				String sourceArtifactId = XPathUtils.getAttributeValue(element,
 						GenericArtifactHelper.SOURCE_ARTIFACT_ID);
+
+				String sourceArtifactVersion = XPathUtils.getAttributeValue(
+						element, GenericArtifactHelper.SOURCE_ARTIFACT_VERSION);
+
 				String sourceSystemId = XPathUtils.getAttributeValue(element,
 						GenericArtifactHelper.SOURCE_SYSTEM_ID);
-				String sourceSystemKind = XPathUtils.getAttributeValue(element,
-						GenericArtifactHelper.SOURCE_SYSTEM_KIND);
+
 				String sourceRepositoryId = XPathUtils.getAttributeValue(
 						element, GenericArtifactHelper.SOURCE_REPOSITORY_ID);
-				String sourceRepositoryKind = XPathUtils.getAttributeValue(
-						element, GenericArtifactHelper.SOURCE_REPOSITORY_KIND);
 
-				String targetArtifactId = XPathUtils.getAttributeValue(element,
-						GenericArtifactHelper.TARGET_ARTIFACT_ID);
 				String targetSystemId = XPathUtils.getAttributeValue(element,
 						GenericArtifactHelper.TARGET_SYSTEM_ID);
-				String targetSystemKind = XPathUtils.getAttributeValue(element,
-						GenericArtifactHelper.TARGET_SYSTEM_KIND);
+
 				String targetRepositoryId = XPathUtils.getAttributeValue(
 						element, GenericArtifactHelper.TARGET_REPOSITORY_ID);
-				String targetRepositoryKind = XPathUtils.getAttributeValue(
-						element, GenericArtifactHelper.TARGET_REPOSITORY_KIND);
 
 				String sourceArtifactLastModifiedDateString = XPathUtils
 						.getAttributeValue(
 								element,
 								GenericArtifactHelper.SOURCE_ARTIFACT_LAST_MODIFICATION_DATE);
+
+				java.util.Date sourceLastModifiedDate = null;
+				if (sourceArtifactLastModifiedDateString
+						.equalsIgnoreCase(GenericArtifact.VALUE_UNKNOWN)) {
+					String message = "Source artifact last modified date is populated as: "
+							+ sourceArtifactLastModifiedDateString;
+					log.warn(message);
+					// use the earliest date possible
+					sourceLastModifiedDate = new Date(0);
+				} else {
+					sourceLastModifiedDate = DateUtil
+							.parse(sourceArtifactLastModifiedDateString);
+				}
+
+				java.sql.Timestamp sourceTime = new java.sql.Timestamp(
+						sourceLastModifiedDate.getTime());
+
+				if (artifactAction
+						.equals(GenericArtifactHelper.ARTIFACT_ACTION_IGNORE)) {
+					updateSynchronizationStatusTable(data, sourceArtifactId,
+							sourceArtifactVersion, sourceSystemId,
+							sourceRepositoryId, targetSystemId,
+							targetRepositoryId, sourceTime);
+					return new Object[] { data };
+				}
+
+				String sourceSystemKind = XPathUtils.getAttributeValue(element,
+						GenericArtifactHelper.SOURCE_SYSTEM_KIND);
+				String sourceRepositoryKind = XPathUtils.getAttributeValue(
+						element, GenericArtifactHelper.SOURCE_REPOSITORY_KIND);
+
+				String targetArtifactId = XPathUtils.getAttributeValue(element,
+						GenericArtifactHelper.TARGET_ARTIFACT_ID);
+
+				String targetSystemKind = XPathUtils.getAttributeValue(element,
+						GenericArtifactHelper.TARGET_SYSTEM_KIND);
+
+				String targetRepositoryKind = XPathUtils.getAttributeValue(
+						element, GenericArtifactHelper.TARGET_REPOSITORY_KIND);
+
 				String targetArtifactLastModifiedDateString = XPathUtils
 						.getAttributeValue(
 								element,
 								GenericArtifactHelper.TARGET_ARTIFACT_LAST_MODIFICATION_DATE);
-				String sourceArtifactVersion = XPathUtils.getAttributeValue(
-						element, GenericArtifactHelper.SOURCE_ARTIFACT_VERSION);
+
 				String targetArtifactVersion = XPathUtils.getAttributeValue(
 						element, GenericArtifactHelper.TARGET_ARTIFACT_VERSION);
 
@@ -160,21 +191,6 @@ public class MappingDBUpdater extends LifecycleComponent implements
 									GenericArtifactHelper.DEP_PARENT_TARGET_REPOSITORY_KIND);
 				}
 
-				java.util.Date sourceLastModifiedDate = null;
-				if (sourceArtifactLastModifiedDateString
-						.equalsIgnoreCase(GenericArtifact.VALUE_UNKNOWN)) {
-					String message = "Source artifact last modified date is populated as: "
-							+ sourceArtifactLastModifiedDateString;
-					log.warn(message);
-					// use the earliest date possible
-					sourceLastModifiedDate = new Date(0);
-				} else {
-					sourceLastModifiedDate = DateUtil
-							.parse(sourceArtifactLastModifiedDateString);
-				}
-				java.sql.Timestamp sourceTime = new java.sql.Timestamp(
-						sourceLastModifiedDate.getTime());
-
 				java.util.Date targetLastModifiedDate = null;
 
 				if (targetArtifactLastModifiedDateString
@@ -210,7 +226,8 @@ public class MappingDBUpdater extends LifecycleComponent implements
 				// mechanism in case of initial resyncs
 				if (artifactAction
 						.equals(GenericArtifactHelper.ARTIFACT_ACTION_CREATE)
-						&& artifactType.equals(GenericArtifactHelper.ARTIFACT_TYPE_PLAIN_ARTIFACT)) {
+						&& artifactType
+								.equals(GenericArtifactHelper.ARTIFACT_TYPE_PLAIN_ARTIFACT)) {
 					targetArtifactVersion = GenericArtifactHelper.ARTIFACT_VERSION_FORCE_RESYNC;
 				}
 				createMapping(element, targetArtifactId, targetRepositoryId,
@@ -225,24 +242,10 @@ public class MappingDBUpdater extends LifecycleComponent implements
 						depParentSourceRepositoryKind, NULL_VALUE, NULL_VALUE,
 						NULL_VALUE, NULL_VALUE, NULL_VALUE, NULL_VALUE);
 
-				IOrderedMap inputParameters = new OrderedHashMap();
-				inputParameters.add(0,
-						"LAST_SOURCE_ARTIFACT_MODIFICATION_DATE", sourceTime);
-				inputParameters.add(1, "LAST_SOURCE_ARTIFACT_VERSION",
-						sourceArtifactVersion);
-				inputParameters.add(2, "LAST_SOURCE_ARTIFACT_ID",
-						sourceArtifactId);
-				inputParameters.add(3, SOURCE_SYSTEM_ID, sourceSystemId);
-				inputParameters
-						.add(4, SOURCE_REPOSITORY_ID, sourceRepositoryId);
-				inputParameters.add(5, TARGET_SYSTEM_ID, targetSystemId);
-				inputParameters
-						.add(6, TARGET_REPOSITORY_ID, targetRepositoryId);
-
-				IOrderedMap[] params = new IOrderedMap[] { inputParameters };
-				synchronizationStatusDatabaseUpdater.connect();
-				synchronizationStatusDatabaseUpdater.deliver(params);
-				synchronizationStatusDatabaseUpdater.disconnect();
+				updateSynchronizationStatusTable(data, sourceArtifactId,
+						sourceArtifactVersion, sourceSystemId,
+						sourceRepositoryId, targetSystemId, targetRepositoryId,
+						sourceTime);
 			} catch (GenericArtifactParsingException e) {
 				log
 						.error("There is some problem in extracting attributes from Document in EntityService!!!"
@@ -256,6 +259,28 @@ public class MappingDBUpdater extends LifecycleComponent implements
 		}
 
 		return new Object[] { data };
+	}
+
+	private void updateSynchronizationStatusTable(Object data,
+			String sourceArtifactId, String sourceArtifactVersion,
+			String sourceSystemId, String sourceRepositoryId,
+			String targetSystemId, String targetRepositoryId,
+			java.sql.Timestamp sourceTime) {
+		IOrderedMap inputParameters = new OrderedHashMap();
+		inputParameters.add(0, "LAST_SOURCE_ARTIFACT_MODIFICATION_DATE",
+				sourceTime);
+		inputParameters.add(1, "LAST_SOURCE_ARTIFACT_VERSION",
+				sourceArtifactVersion);
+		inputParameters.add(2, "LAST_SOURCE_ARTIFACT_ID", sourceArtifactId);
+		inputParameters.add(3, SOURCE_SYSTEM_ID, sourceSystemId);
+		inputParameters.add(4, SOURCE_REPOSITORY_ID, sourceRepositoryId);
+		inputParameters.add(5, TARGET_SYSTEM_ID, targetSystemId);
+		inputParameters.add(6, TARGET_REPOSITORY_ID, targetRepositoryId);
+
+		IOrderedMap[] params = new IOrderedMap[] { inputParameters };
+		synchronizationStatusDatabaseUpdater.connect();
+		synchronizationStatusDatabaseUpdater.deliver(params);
+		synchronizationStatusDatabaseUpdater.disconnect();
 	}
 
 	private void createMapping(Element element, String sourceArtifactId,
