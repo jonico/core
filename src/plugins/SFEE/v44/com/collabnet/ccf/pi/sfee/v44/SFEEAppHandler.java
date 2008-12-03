@@ -6,20 +6,11 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.collabnet.ccf.pi.sfee.v44.meta.ArtifactMetaData;
 import com.vasoftware.sf.soap44.types.SoapFieldValues;
-import com.vasoftware.sf.soap44.webservices.ClientSoapStubFactory;
-import com.vasoftware.sf.soap44.webservices.filestorage.ISimpleFileStorageAppSoap;
-import com.vasoftware.sf.soap44.webservices.frs.IFrsAppSoap;
-import com.vasoftware.sf.soap44.webservices.frs.PackageSoapList;
-import com.vasoftware.sf.soap44.webservices.frs.PackageSoapRow;
-import com.vasoftware.sf.soap44.webservices.frs.ReleaseSoapDO;
-import com.vasoftware.sf.soap44.webservices.frs.ReleaseSoapList;
-import com.vasoftware.sf.soap44.webservices.frs.ReleaseSoapRow;
 import com.vasoftware.sf.soap44.webservices.sfmain.CommentSoapList;
 import com.vasoftware.sf.soap44.webservices.sfmain.CommentSoapRow;
 import com.vasoftware.sf.soap44.webservices.sfmain.ISourceForgeSoap;
@@ -68,15 +59,15 @@ public class SFEEAppHandler {
 	 * @param connectorUser - The username that is configured to log into the SFEE
 	 * 						to retrieve the artifact data.
 	 */
-	public void addComments(ArtifactSoapDO artifact, Date lastModifiedDate, String connectorUser){
+	public void addComments(ArtifactSoapDO artifact, Date lastModifiedDate, String connectorUser, String resyncUser){
 		List<ArtifactSoapDO> artifactList = new ArrayList<ArtifactSoapDO>();
 		artifactList.add(artifact);
-		this.addComments(artifactList, artifact, lastModifiedDate, connectorUser);
+		this.addComments(artifactList, artifact, lastModifiedDate, connectorUser, resyncUser);
 	}
 
 	// FIXME Is a comment a flex field or could we transport it using another field type
 	private void addComments(List<ArtifactSoapDO> artifactHistory,
-			ArtifactSoapDO artifact, Date lastModifiedDate, String connectorUser) {
+			ArtifactSoapDO artifact, Date lastModifiedDate, String connectorUser, String resyncUser) {
 		try {
 			CommentSoapList commentList = mSfSoap.getCommentList(mSessionId, artifact.getId());
 			CommentSoapRow[] comments = commentList.getDataRows();
@@ -84,13 +75,16 @@ public class SFEEAppHandler {
 				for(CommentSoapRow comment:comments){
 					String createdBy = comment.getCreatedBy();
 					Date createdDate = comment.getDateCreated();
-					if(createdBy.equals(connectorUser)){
+					if(createdBy.equals(connectorUser)
+							|| createdBy.equals(resyncUser)){
 						continue;
 					}
-					if(lastModifiedDate.after(createdDate)){
+					if(lastModifiedDate.after(createdDate)
+							|| lastModifiedDate.equals(createdDate)){
 						continue;
 					}
 					String description = comment.getDescription();
+					description = "\nOriginal commenter: " + createdBy + "\n" + description;
 					boolean commentSet = false;
 					for(ArtifactSoapDO artifactDO:artifactHistory){
 						//TODO If nothing is matching what will happen?

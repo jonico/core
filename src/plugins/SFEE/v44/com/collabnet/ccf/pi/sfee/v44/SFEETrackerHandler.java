@@ -293,7 +293,7 @@ public class SFEETrackerHandler {
 		while (initialUpdated) {
 			try {
 				initialUpdated=false;
-				mTrackerApp.setArtifactData(sessionId, artifactData, "Synchronized by Connector User", null,
+				mTrackerApp.setArtifactData(sessionId, artifactData, null, null,
 						null, null);
 			} catch (com.vasoftware.sf.soap44.fault.VersionMismatchFault e) {
 				logConflictResolutor.warn("Stale initial update, will override in any case ...:", e);
@@ -402,7 +402,7 @@ public class SFEETrackerHandler {
 				artifactData.setStatusClass(statusClass);
 				artifactData.setCloseDate(closeDate);
 				artifactData.setResolvedReleaseId(resolvedReleaseId);
-				mTrackerApp.setArtifactData(sessionId, artifactData, "Synchronized by Connector User", null,
+				mTrackerApp.setArtifactData(sessionId, artifactData, null, null,
 						null, null);
 			} catch (com.vasoftware.sf.soap44.fault.VersionMismatchFault e) {
 					logConflictResolutor.warn("Stale update for SFEE tracker item "+ Id +" in tracker "+trackerId+". Trying again ...", e);

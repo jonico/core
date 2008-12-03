@@ -354,7 +354,7 @@ public class SFEEReader extends AbstractReader<Connection> {
 			SFEEAppHandler appHandler = new SFEEAppHandler(connection.getSfSoap(),
 					connection.getSessionId(), this.getServerUrl());
 			appHandler.addComments(artifact,
-					lastModifiedDate,isIgnoreConnectorUserUpdates()?this.getUsername():"");
+					lastModifiedDate,this.getUsername(), this.getResyncUserName());
 			trackerHandler.convertReleaseIds(connection.getSessionId(), artifact);
 			genericArtifact = artifactConverter.convert(artifact,
 					fieldsMap, lastModifiedDate, this.isIncludeFieldMetaData(), sourceSystemTimezone);
