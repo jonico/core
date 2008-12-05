@@ -60,7 +60,7 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 
 	private String serverUrl;
 
-	private boolean lookupReleaseNumbers = false;
+	private boolean translateTechnicalReleaseIds = false;
 
 	/**
 	 * Password that is used to login into the SFEE/CSFE instance in combination
@@ -393,7 +393,7 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 		String[] comments = this.getComments(ga);
 		ArtifactSoapDO result = null;
 		try {
-			if(this.lookupReleaseNumbers) {
+			if(this.translateTechnicalReleaseIds) {
 				reportedReleaseId = trackerHandler.convertReleaseId(connection.getSessionId(),
 						reportedReleaseId, folderId);
 				resolvedReleaseId = trackerHandler.convertReleaseId(connection.getSessionId(),
@@ -516,7 +516,7 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 		String[] comments = this.getComments(ga);
 		ArtifactSoapDO result = null;
 		try {
-			if(this.lookupReleaseNumbers) {
+			if(this.translateTechnicalReleaseIds) {
 				reportedReleaseId = trackerHandler.convertReleaseId(connection.getSessionId(),
 						reportedReleaseId, folderId);
 				resolvedReleaseId = trackerHandler.convertReleaseId(connection.getSessionId(),
@@ -908,11 +908,12 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 		this.username = username;
 	}
 
-	public boolean isLookupReleaseNumbers() {
-		return lookupReleaseNumbers;
+	public boolean isTranslateTechnicalReleaseIds() {
+		return translateTechnicalReleaseIds;
 	}
 
-	public void setLookupReleaseNumbers(boolean lookupReleaseNumbers) {
-		this.lookupReleaseNumbers = lookupReleaseNumbers;
+	public void setTranslateTechnicalReleaseIds(boolean translateTechnicalReleaseIds) {
+		this.translateTechnicalReleaseIds = translateTechnicalReleaseIds;
 	}
+
 }
