@@ -60,6 +60,8 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 
 	private String serverUrl;
 
+	private boolean lookupReleaseNumbers = false;
+
 	/**
 	 * Password that is used to login into the SFEE/CSFE instance in combination
 	 * with the username
@@ -391,10 +393,12 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 		String[] comments = this.getComments(ga);
 		ArtifactSoapDO result = null;
 		try {
-			reportedReleaseId = trackerHandler.convertReleaseId(connection.getSessionId(),
-					reportedReleaseId, folderId);
-			resolvedReleaseId = trackerHandler.convertReleaseId(connection.getSessionId(),
-					resolvedReleaseId, folderId);
+			if(this.lookupReleaseNumbers) {
+				reportedReleaseId = trackerHandler.convertReleaseId(connection.getSessionId(),
+						reportedReleaseId, folderId);
+				resolvedReleaseId = trackerHandler.convertReleaseId(connection.getSessionId(),
+						resolvedReleaseId, folderId);
+			}
 			result = trackerHandler.createArtifact(connection.getSessionId(),
 					folderId, description, category, group, status,
 					statusClass, customer, priority, estimatedHours,
@@ -512,10 +516,12 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 		String[] comments = this.getComments(ga);
 		ArtifactSoapDO result = null;
 		try {
-			reportedReleaseId = trackerHandler.convertReleaseId(connection.getSessionId(),
-					reportedReleaseId, folderId);
-			resolvedReleaseId = trackerHandler.convertReleaseId(connection.getSessionId(),
-					resolvedReleaseId, folderId);
+			if(this.lookupReleaseNumbers) {
+				reportedReleaseId = trackerHandler.convertReleaseId(connection.getSessionId(),
+						reportedReleaseId, folderId);
+				resolvedReleaseId = trackerHandler.convertReleaseId(connection.getSessionId(),
+						resolvedReleaseId, folderId);
+			}
 			result = trackerHandler.updateArtifact(ga, connection
 					.getSessionId(), folderId, description, category, group,
 					status, statusClass, customer, priority, estimatedHours,
@@ -900,5 +906,13 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 	 */
 	public void setUsername(String username) {
 		this.username = username;
+	}
+
+	public boolean isLookupReleaseNumbers() {
+		return lookupReleaseNumbers;
+	}
+
+	public void setLookupReleaseNumbers(boolean lookupReleaseNumbers) {
+		this.lookupReleaseNumbers = lookupReleaseNumbers;
 	}
 }
