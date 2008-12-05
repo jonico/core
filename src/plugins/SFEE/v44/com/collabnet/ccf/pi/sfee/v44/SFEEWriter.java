@@ -453,7 +453,7 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 				flexFieldTypes.add(trackerFieldValueType);
 				Object value = null;
 				FieldValueTypeValue fieldType = gaField.getFieldValueType();
-				if(trackerFieldValueType.equals(TrackerFieldSoapDO.FIELD_TYPE_DATE)){
+				if(trackerFieldValueType.equals(TrackerFieldSoapDO.FIELD_VALUE_TYPE_DATE)){
 					if(fieldType == FieldValueTypeValue.DATE){
 						GregorianCalendar gc = (GregorianCalendar) gaField.getFieldValue();
 						Date dateValue = gc.getTime();
