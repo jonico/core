@@ -13,16 +13,16 @@ import java.util.WeakHashMap;
  * parameterizing the connection object's class into the implemented class. In
  * the wiring configuration file they need to set the ConnectionFactory bean in
  * the ConnectionManager's connectionFactory property.
- * 
+ *
  * A sample wiring file snippet that configures a ConnectionManager to manage
  * SFEE connections is shown below. <code>
  * <bean id="SFEEConnectionManager"
  * 		class="com.collabnet.ccf.core.eis.connection.ConnectionManager">
  * 		<description>
- * 			The connection manager implements a connection pooling mechanism where the 
+ * 			The connection manager implements a connection pooling mechanism where the
  * 			connections to multiple systems are cached for the readers and writers
  * 			to retrieve when needed. Before returning the connection to the client
- * 			the connection manager checks if the connection is live and only returns 
+ * 			the connection manager checks if the connection is live and only returns
  * 			valid connections.
  * 			It assigns and manages one pool per repository.
  * 		</description>
@@ -37,29 +37,37 @@ import java.util.WeakHashMap;
  * 			This bean is an implementation of the com.collabnet.ccf.core.eis.connection.ConnectionFactory
  * 			interface. It is responsible to create and close an connection for a given
  * 			repository.
- * 
+ *
  * 			In this case SFEEConnectionFactory manages com.collabnet.ccf.pi.sfee.v44.Connection
  * 			objects.
  * 		</description>
  * 	</bean>
  * </code>
- * 
+ *
  * @author Madhusuthanan Seetharam (madhusuthanan@collab.net)
- * 
+ *
  * @param <T> -
  *            The class of the connection object to be managed As the connection
  *            object class will vary depending on the system that we connect,
  *            the connection manager needs to know the class of the connection
  *            object that it should manage.
- * 
+ *
  */
-public final class ConnectionManager<T> {
+public class ConnectionManager<T> {
 
 	/**
 	 * This object is used to pool connections in order not to open a new
 	 * connection for every single request
 	 */
-	private ConnectionPool<T> pool = new ConnectionPool<T>();
+	private ConnectionPool<T> pool = null;
+
+	public ConnectionManager(){
+		pool = new ConnectionPool<T>();
+	}
+
+	public ConnectionManager(ConnectionPool<T> pool){
+		this.pool = pool;
+	}
 
 	/**
 	 * This property (true by default) determines whether after a timeout while
@@ -100,7 +108,7 @@ public final class ConnectionManager<T> {
 
 	/**
 	 * Returns a Connection object for a particular system and repository
-	 * combination from the pool. The connection is used to 
+	 * combination from the pool. The connection is used to
 	 * update or extract artifacts.
 	 * This is typically done using different credential information than the ones
 	 * used to create artifacts. The credential information for updates
@@ -112,7 +120,7 @@ public final class ConnectionManager<T> {
 	 * information typically has the username and password concatenated by a
 	 * delimiter. The connection info and credential info are used by the
 	 * ConnectionFactory to create a connection.
-	 * 
+	 *
 	 * @param systemId -
 	 *            The system id for the system to which the connection is to be
 	 *            made
@@ -144,7 +152,7 @@ public final class ConnectionManager<T> {
 		return pool.getConnection(systemId, systemKind, repositoryId,
 				repositoryKind, connectionInfo, credentialInfoToUpdateAndExtract, this);
 	}
-	
+
 	/**
 	 * Returns a Connection object for a particular system and repository
 	 * combination from the pool. The connection is used to create new artifacts.
@@ -152,13 +160,13 @@ public final class ConnectionManager<T> {
 	 * used to update or extract artifacts. The credential information for updates
 	 * and extractions are the same to avoid infinite update loops and differ from
 	 * the credentials used to create artifacts in order to force an initial resync
-	 * after artifact creation.  
+	 * after artifact creation.
 	 * The connection information typically contains
 	 * the server url to which the connection to be made. The credential
 	 * information typically has the username and password concatenated by a
 	 * delimiter. The connection info and credential info are used by the
 	 * ConnectionFactory to create a connection.
-	 * 
+	 *
 	 * @param systemId -
 	 *            The system id for the system to which the connection is to be
 	 *            made
@@ -199,11 +207,15 @@ public final class ConnectionManager<T> {
 	 * accumulations of the connection objects will lead to the
 	 * MaxConnectionsReachedException on further calls to the getConnection()
 	 * method.
-	 * 
+	 *
 	 * @param connection
 	 */
 	public void releaseConnection(T connection) {
 		pool.releaseConnection(connection);
+	}
+
+	public void tearDown(){
+		pool.tearDown();
 	}
 
 	/**
@@ -211,7 +223,7 @@ public final class ConnectionManager<T> {
 	 * to a particular repository. This object is an instance of the class that
 	 * is implemented by the plugin developer by implementing the
 	 * ConnectionFactory interface.
-	 * 
+	 *
 	 * @param factory
 	 */
 	public void setConnectionFactory(ConnectionFactory<T> factory) {
@@ -220,7 +232,7 @@ public final class ConnectionManager<T> {
 
 	/**
 	 * Returns the ConnectionFactory object.
-	 * 
+	 *
 	 * @return - an instance of the ConnectionFactory class implemented by the
 	 *         plugin developer.
 	 */
@@ -230,7 +242,7 @@ public final class ConnectionManager<T> {
 
 	/**
 	 * Returns the maximum connection configured per pool.
-	 * 
+	 *
 	 * @return - Maximum connections limit per pool
 	 */
 	public int getMaxConnectionsPerPool() {
@@ -239,10 +251,10 @@ public final class ConnectionManager<T> {
 
 	/**
 	 * Sets the maximum number of connections allowed per pool.
-	 * 
+	 *
 	 * As the connection manager maintains a connection pool per repository this
 	 * property applies to each pool that is managed by the ConnectionManager.
-	 * 
+	 *
 	 * @param maxConnectionsPerPool -
 	 *            Maximum connections per pool
 	 */
@@ -252,7 +264,7 @@ public final class ConnectionManager<T> {
 
 	/**
 	 * Returns the maximum idle time for a connection object in milliseconds.
-	 * 
+	 *
 	 * @return - The maximum idle time for the connections in the pool.
 	 */
 	public long getMaxIdleTimeForConnection() {
@@ -264,7 +276,7 @@ public final class ConnectionManager<T> {
 	 * are connections that stay unused for a longer time than the
 	 * maxIdleTimeForConnection they are closed and removed by the scavenger
 	 * thread.
-	 * 
+	 *
 	 * @param maxIdleTimeForConnection -
 	 *            The maximum idle time for the connections in the pool.
 	 */
@@ -274,7 +286,7 @@ public final class ConnectionManager<T> {
 
 	/**
 	 * Returns the interval in which the scavenger thread is run
-	 * 
+	 *
 	 * @return - Interval between scavenger thread runs
 	 */
 	public long getScavengerInterval() {
@@ -283,11 +295,11 @@ public final class ConnectionManager<T> {
 
 	/**
 	 * Sets the interval between scavenger thread runs.
-	 * 
+	 *
 	 * The scavenger thread is responsible to close connections that are not
 	 * used for the maxIdleTimeForConnection. This property sets the interval
 	 * between two successive scavenger thread runs.
-	 * 
+	 *
 	 * @param scavengerInterval -
 	 *            Interval between successive scavenger thread runs.
 	 */
@@ -300,7 +312,7 @@ public final class ConnectionManager<T> {
 	 * can be retrieved later The connection is stored in a weak hash map so
 	 * that the entry is automaticaly removed if no component uses the
 	 * connection any more
-	 * 
+	 *
 	 * @param key
 	 * @param connection
 	 */
@@ -311,7 +323,7 @@ public final class ConnectionManager<T> {
 	/**
 	 * Returns the connection associated with the key if the connection is still
 	 * used
-	 * 
+	 *
 	 * @param key
 	 *            key under which the connection was registered
 	 * @return connection associated with the key or null if no connection was
@@ -323,7 +335,7 @@ public final class ConnectionManager<T> {
 
 	/**
 	 * Set whether to retry operations after a network timeout or not
-	 * 
+	 *
 	 * @param enableRetryAfterNetworkTimeout
 	 *            the enableRetryAfterNetworkTimeout to set
 	 */
@@ -335,7 +347,7 @@ public final class ConnectionManager<T> {
 	/**
 	 * Returns whether to retry operations after a network timeout or not
 	 * Default is true
-	 * 
+	 *
 	 * @return the enableRetryAfterNetworkTimeout
 	 */
 	public boolean isEnableRetryAfterNetworkTimeout() {
@@ -345,7 +357,7 @@ public final class ConnectionManager<T> {
 	/**
 	 * Sets whether to relogin and retry operations after a session timeout or
 	 * not
-	 * 
+	 *
 	 * @param enableReloginAfterSessionTimeout
 	 *            the enableReloginAfterSessionTimeout to set
 	 */
@@ -357,7 +369,7 @@ public final class ConnectionManager<T> {
 	/**
 	 * Returns whether to relogin and retry operations after a session timeout
 	 * or not Default is true
-	 * 
+	 *
 	 * @return the enableReloginAfterSessionTimeout
 	 */
 	public boolean isEnableReloginAfterSessionTimeout() {
@@ -368,7 +380,7 @@ public final class ConnectionManager<T> {
 	 * Sets whether to use the standard code for reconnects and relogins after
 	 * network related timeouts and invalid session objects or whether to use a
 	 * custom implementation
-	 * 
+	 *
 	 * @param useStandardTimeoutHandlingCode
 	 *            the useStandardTimeoutHandlingCode to set
 	 */
@@ -381,7 +393,7 @@ public final class ConnectionManager<T> {
 	 * Sets whether to use the standard code for reconnects and relogins after
 	 * network related timeouts and invalid session objects or whether to use a
 	 * custom implementation Default is false
-	 * 
+	 *
 	 * @return the useStandardTimeoutHandlingCode
 	 */
 	public boolean isUseStandardTimeoutHandlingCode() {
@@ -392,7 +404,7 @@ public final class ConnectionManager<T> {
 	 * Sets the value (default is 120000 ms) to specify the maximum amount of
 	 * milliseconds, the retry mechanism will wait before retrying an operation
 	 * after network related timeouts. The value is specified in milliseconds
-	 * 
+	 *
 	 * @param maximumRetryWaitingTime
 	 *            the maximumRetryWaitingTime to set
 	 */
@@ -405,7 +417,7 @@ public final class ConnectionManager<T> {
 	 * of milliseconds, the retry mechanism will wait before retrying an
 	 * operation after network related timeouts. The value is specified in
 	 * milliseconds
-	 * 
+	 *
 	 * @return the maximumRetryWaitingTime
 	 */
 	public int getMaximumRetryWaitingTime() {
@@ -416,7 +428,7 @@ public final class ConnectionManager<T> {
 	 * Set the value (default 5000 ms) to specify how much to increase the
 	 * sleeping interval for every try that is made to retry a timed out
 	 * operation.
-	 * 
+	 *
 	 * @param retryIncrementTime
 	 *            the retryIncrementTime to set
 	 */
@@ -428,7 +440,7 @@ public final class ConnectionManager<T> {
 	 * Get the value (default 5000 ms) to specify how much to increase the
 	 * sleeping interval for every try that is made to retry a timed out
 	 * operation.
-	 * 
+	 *
 	 * @return the retryIncrementTime
 	 */
 	public int getRetryIncrementTime() {

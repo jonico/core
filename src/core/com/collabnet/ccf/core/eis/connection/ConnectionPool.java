@@ -3,6 +3,7 @@ package com.collabnet.ccf.core.eis.connection;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -13,7 +14,7 @@ import org.apache.commons.logging.LogFactory;
  * of a pool of Connection pools.
  * Each system and repository combination is allowed to have maxConnectionsPerPool
  * number of connections.
- * 
+ *
  * When there is a request for a connection the ConnectionPool looks up the pool
  * for that system+repository for a free connection. If the pool contains a free
  * connection it returns the connection to the client. If there are no free connections
@@ -21,35 +22,35 @@ import org.apache.commons.logging.LogFactory;
  * requests the ConnectionFactory to create a new connection and returns it to the
  * client. If the pool reached the maxConnectionsPerPool a MaxConnectionsPerPoolReachedException
  * is thrown.
- * 
+ *
  * @author madhusuthanan (madhusuthanan@collab.net)
  *
  * @param <T>
  */
-public final class ConnectionPool<T> {
+public class ConnectionPool<T> {
 	private static final Log log = LogFactory.getLog(ConnectionPool.class);
 	private ConnectionFactory<T> factory = null;
-	private HashMap<String, ArrayList<ConnectionInfo>> connectionPool 
+	private HashMap<String, ArrayList<ConnectionInfo>> connectionPool
 					= new HashMap<String, ArrayList<ConnectionInfo>>();
 	private HashMap<T, ConnectionInfo> reversePoolMap = new HashMap<T, ConnectionInfo>();
 	private static final String KEY_DELIMITER = ":";
 	private long maxIdleTime = 2*60*1000;
 	public long scavengerInterval = 2*60*1000;
 	private int maxConnectionsPerPool = 5;
-	
+
 	public ConnectionPool(){
 		new Scavenger().start();
 	}
 	/**
 	 * Gets a free connection from the pool for the system, repository combination.
 	 * The connectionFactory should be set before asking for a connection from the pool.
-	 * 
+	 *
 	 * If is a free connection for this system and repository combination it is
 	 * returned to the caller.
 	 * If there are no free connections available and the maxConnectionsPerPool is not
-	 * reached then the ConnectionFactory is asked to create a new connection for the system and 
+	 * reached then the ConnectionFactory is asked to create a new connection for the system and
 	 * repository combination using the connectionInfo and the credentialInfo.
-	 * 
+	 *
 	 * @param systemId - System id for the system to which the connection is needed
 	 * @param systemKind - System lind for the system to which the connection is needed
 	 * @param repositoryId - Repository id for the repository to which the connection is
@@ -60,14 +61,14 @@ public final class ConnectionPool<T> {
 	 * @param credentialInfo - Credential information for the system and repository.
 	 * 							Typically contains the username and passwword for the
 	 * 							system and repository combination.
-	 * 
-	 * @return - Returns the free connection object or the connection object created by 
+	 *
+	 * @return - Returns the free connection object or the connection object created by
 	 * 			the ConnectionFactory
-	 *  
+	 *
 	 * @throws MaxConnectionsReachedException - If the configured maximum connections per
 	 * 										pool is reached for this system and repository
-	 * 										combination. 
-	 * @throws ConnectionException 
+	 * 										combination.
+	 * @throws ConnectionException
 	 */
 	public T getConnection(String systemId,
 			String systemKind, String repositoryId,
@@ -86,13 +87,13 @@ public final class ConnectionPool<T> {
 		}
 		return connection;
 	}
-	
+
 	/**
 	 * If the configured maximum number of connections per pool is not reached
 	 * the ConnectionFactory is requested to create a new connection for the
 	 * system and repository combination with the supplied connectionInfo and
 	 * the credentialInfo.
-	 * 
+	 *
 	 * @param systemId - System id for the system to which the connection is needed
 	 * @param systemKind - System lind for the system to which the connection is needed
 	 * @param repositoryId - Repository id for the repository to which the connection is
@@ -103,13 +104,13 @@ public final class ConnectionPool<T> {
 	 * @param credentialInfo - Credential information for the system and repository.
 	 * 							Typically contains the username and passwword for the
 	 * 							system and repository combination.
-	 * @param connectionManager 
-	 * @return - Returns the free connection object or the connection object created by 
+	 * @param connectionManager
+	 * @return - Returns the free connection object or the connection object created by
 	 * 			the ConnectionFactory
 	 * @throws MaxConnectionsReachedException - If the configured maximum connections per
 	 * 										pool is reached for this system and repository
-	 * 										combination. 
-	 * @throws ConnectionException 
+	 * 										combination.
+	 * @throws ConnectionException
 	 */
 	private T createConnection(String systemId,
 			String systemKind, String repositoryId,
@@ -132,7 +133,7 @@ public final class ConnectionPool<T> {
 		addToPool(key, info);
 		return createdConnection;
 	}
-	
+
 	/**
 	 * Determines if the pool with the key reached the maximum number of connections.
 	 * @param key - The key generated from the system and repository information.
@@ -155,7 +156,7 @@ public final class ConnectionPool<T> {
 		}
 		return false;
 	}
-	
+
 	/**
 	 * Adds the newly created connection to the pool.
 	 * @param key - The key to which this connection object to be bound.
@@ -175,11 +176,11 @@ public final class ConnectionPool<T> {
 		}
 	}
 	/**
-	 * Searches the connection pool for the key (that is generated by the system and 
+	 * Searches the connection pool for the key (that is generated by the system and
 	 * repository information)
 	 * The parameters are same as above for the getConnetion() and createConnection()
 	 * methods.
-	 * 
+	 *
 	 * @param systemId
 	 * @param systemKind
 	 * @param repositoryId
@@ -218,9 +219,9 @@ public final class ConnectionPool<T> {
 	}
 
 	/**
-	 * Marks the connection object in the pool as free there by releasing the 
+	 * Marks the connection object in the pool as free there by releasing the
 	 * connection back to the pool.
-	 * 
+	 *
 	 * @param connection - The connection object that should be released to the
 	 * 						pool.
 	 */
@@ -233,13 +234,37 @@ public final class ConnectionPool<T> {
 			info.returnedToPool();
 		}
 	}
+
+	public void tearDown(){
+		Set<Map.Entry<String, ArrayList<ConnectionInfo>>> entries = connectionPool.entrySet();
+		Iterator<Map.Entry<String, ArrayList<ConnectionInfo>>> it = entries.iterator();
+		while(it.hasNext()){
+			Map.Entry<String, ArrayList<ConnectionInfo>> entry = it.next();
+			String key = entry.getKey();
+			ArrayList<ConnectionInfo> connectionInfos = connectionPool.get(key);
+			synchronized(connectionInfos){
+				Iterator<ConnectionInfo> itCI = connectionInfos.iterator();
+				while(itCI.hasNext()){
+					ConnectionInfo info = itCI.next();
+					itCI.remove();
+					reversePoolMap.remove(info.getConnection());
+					try {
+						factory.closeConnection(info.getConnection());
+					} catch (ConnectionException e) {
+						log.warn("Could not close one of the pooled connections for "+key,e);
+					}
+				}
+			}
+		}
+	}
+
 	/**
 	 * Generates a unique key (which is nothing but a string generated by
 	 * concatenating the strings of systemId, systemKind, repositoryId, repositoryKind,
 	 * connectionInfo and credentialInfo) to identify the pool.
-	 * 
+	 *
 	 * Parameters are same as that of the getConnection() or createConnection() methods.
-	 * 
+	 *
 	 * @param systemId
 	 * @param systemKind
 	 * @param repositoryId
@@ -255,33 +280,33 @@ public final class ConnectionPool<T> {
 				repositoryId + KEY_DELIMITER + repositoryKind + KEY_DELIMITER +
 				connectionInfo + KEY_DELIMITER + credentialInfo;
 	}
-	
+
 	/**
 	 * Returns the ConnectionFactory object that is used by the ConnectionPool
 	 * to create and close connections for a particular system.
-	 * 
+	 *
 	 * @return - The ConnectionFactory object
 	 */
 	public ConnectionFactory<T> getFactory() {
 		return factory;
 	}
-	
+
 	/**
 	 * Sets the ConnectionFactory object that is used by the ConnectionPool to
 	 * create and close the connections.
-	 * 
+	 *
 	 * @param factory - The ConnectionFactory object
 	 */
 	public void setFactory(ConnectionFactory<T> factory) {
 		this.factory = factory;
 	}
-	
+
 	/**
 	 * The scavenger thread which is responsible to close and remove the connection
 	 * objects that are
 	 * 	1. not used longer than maxIdleTime
 	 *  2. not alive or got disconnected from the system.
-	 *  
+	 *
 	 * @author madhusuthanan
 	 *
 	 */
@@ -297,6 +322,11 @@ public final class ConnectionPool<T> {
 							ConnectionInfo info = it.next();
 							if(info.isFreeFor(maxIdleTime) ||
 									(!factory.isAlive(info.getConnection()))){
+								try {
+									factory.closeConnection(info.getConnection());
+								} catch (ConnectionException e) {
+									log.warn("Could not close one of the pooled connections for "+key,e);
+								}
 								it.remove();
 								reversePoolMap.remove(info.getConnection());
 							}
@@ -312,7 +342,7 @@ public final class ConnectionPool<T> {
 			}
 		}
 	}
-	
+
 	/**
 	 * This class's objects represent a connection in the pool.
 	 * It holds a reference to the Connection object for a particular
@@ -321,7 +351,7 @@ public final class ConnectionPool<T> {
 	 * A boolean value to indicate whether the Connection object
 	 * associated with this ConnectionInfo object is currently used
 	 * or not.
-	 * 
+	 *
 	 * @author madhusuthanan
 	 *
 	 */
@@ -330,7 +360,7 @@ public final class ConnectionPool<T> {
 		private T connection = null;
 		private long lastUsed = -1;
 		private String key = null;
-		
+
 		/**
 		 * Marks that the Connection object is currently used by a client
 		 * and sets the lastUsed time to the current time.
@@ -339,7 +369,7 @@ public final class ConnectionPool<T> {
 			isFree = false;
 			lastUsed = System.currentTimeMillis();
 		}
-		
+
 		/**
 		 * Marks that the Connection object associated with this method is
 		 * free and updates the lastUsed time of this Connection object to the
@@ -349,31 +379,31 @@ public final class ConnectionPool<T> {
 			lastUsed = System.currentTimeMillis();
 			isFree = true;
 		}
-		
+
 		/**
 		 * Signals whether the Connection object associated with this ConnectionInfo
 		 * object is free or not.
-		 * 
+		 *
 		 * @return - true if the Connection is free.
 		 * 			false otherwise
 		 */
 		public synchronized boolean isFree(){
 			return isFree;
 		}
-		
+
 		/**
 		 * Gives the Connection object associated with this ConnectionInfo
 		 * object.
-		 * 
+		 *
 		 * @return - The Connection object
 		 */
 		public synchronized T getConnection(){
 			return connection;
 		}
-		
+
 		/**
 		 * Associates a Connection object with this ConnectionInfo.
-		 * 
+		 *
 		 * @param connection - The Connection object to be associated
 		 */
 		public synchronized void setConnection(T connection){
@@ -401,35 +431,35 @@ public final class ConnectionPool<T> {
 			this.key = key;
 		}
 	}
-	
+
 	/**
 	 * Returns the maximum idle time for a Connection object in a pool.
-	 * 
+	 *
 	 * @return - The configured maximum idle time for a Connection object
 	 */
 	public long getMaxIdleTime() {
 		return maxIdleTime;
 	}
-	
+
 	/**
 	 * Sets the maximum idle time for a connection in the pool.
-	 * 
+	 *
 	 * @param maxIdleTime - The maximum time that a connection object
 	 * 						can exist unused in a pool
 	 */
 	public void setMaxIdleTime(long maxIdleTime) {
 		this.maxIdleTime = maxIdleTime;
 	}
-	
+
 	/**
 	 * Returns the interval between two successive scavenger thread runs.
-	 * 
+	 *
 	 * @return - Interval between two successive scavenger thread runs
 	 */
 	public long getScavengerInterval() {
 		return scavengerInterval;
 	}
-	
+
 	/**
 	 * Sets the interval between two successive scavenger thread runs
 	 * @param scavengerInterval - Interval between two successive scavenger runs
@@ -437,16 +467,16 @@ public final class ConnectionPool<T> {
 	public void setScavengerInterval(long scavengerInterval) {
 		this.scavengerInterval = scavengerInterval;
 	}
-	
+
 	/**
 	 * Returns the maximum number of connections configured per pool
-	 * 
+	 *
 	 * @return - max connections configured per pool.
 	 */
 	public int getMaxConnectionsPerPool() {
 		return maxConnectionsPerPool;
 	}
-	
+
 	/**
 	 * Sets the maximum number of connections per pool
 	 * @param maxConnectionsPerPool - Maximum mnumber of connections per pool

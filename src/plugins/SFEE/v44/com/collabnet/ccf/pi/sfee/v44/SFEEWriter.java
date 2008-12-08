@@ -460,12 +460,14 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 				if(trackerFieldValueType.equals(TrackerFieldSoapDO.FIELD_VALUE_TYPE_DATE)){
 					if(fieldType == FieldValueTypeValue.DATE){
 						GregorianCalendar gc = (GregorianCalendar) gaField.getFieldValue();
-						Date dateValue = gc.getTime();
-						if(DateUtil.isAbsoluteDateInTimezone(dateValue, "GMT")){
-							value = DateUtil.convertGMTToTimezoneAbsoluteDate(dateValue, targetSystemTimezone);
-						}
-						else {
-							value = dateValue;
+						if(gc != null){
+							Date dateValue = gc.getTime();
+							if(DateUtil.isAbsoluteDateInTimezone(dateValue, "GMT")){
+								value = DateUtil.convertGMTToTimezoneAbsoluteDate(dateValue, targetSystemTimezone);
+							}
+							else {
+								value = dateValue;
+							}
 						}
 					}
 					else if(fieldType == FieldValueTypeValue.DATETIME){
