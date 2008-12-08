@@ -56,6 +56,8 @@ public class SFEEReader extends AbstractReader<Connection> {
 
 	private boolean ignoreConnectorUserUpdates = true;
 
+	private boolean translateTechnicalReleaseIds = false;
+
 	/**
 	 * Constructs and Initializes the SFEEReader component.
 	 */
@@ -355,7 +357,9 @@ public class SFEEReader extends AbstractReader<Connection> {
 					connection.getSessionId(), this.getServerUrl());
 			appHandler.addComments(artifact,
 					lastModifiedDate,this.getUsername(), this.getResyncUserName());
-			trackerHandler.convertReleaseIds(connection.getSessionId(), artifact);
+			if(this.translateTechnicalReleaseIds) {
+				trackerHandler.convertReleaseIds(connection.getSessionId(), artifact);
+			}
 			genericArtifact = artifactConverter.convert(artifact,
 					fieldsMap, lastModifiedDate, this.isIncludeFieldMetaData(), sourceSystemTimezone);
 			String lastModifiedBy = artifact.getLastModifiedBy();
@@ -576,4 +580,12 @@ public class SFEEReader extends AbstractReader<Connection> {
 	 * created.
 	 */
 	private String resyncUserName;
+
+	public boolean isTranslateTechnicalReleaseIds() {
+		return translateTechnicalReleaseIds;
+	}
+
+	public void setTranslateTechnicalReleaseIds(boolean translateTechnicalReleaseIds) {
+		this.translateTechnicalReleaseIds = translateTechnicalReleaseIds;
+	}
 }
