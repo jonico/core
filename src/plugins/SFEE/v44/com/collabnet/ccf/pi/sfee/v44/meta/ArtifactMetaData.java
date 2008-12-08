@@ -32,12 +32,22 @@ public class ArtifactMetaData {
 	static {
 		fieldGAValueTypeFieldTypeMap.put(GenericArtifactField.FieldValueTypeValue.DATE,
 				TrackerFieldSoapDO.FIELD_VALUE_TYPE_DATE);
+		fieldGAValueTypeFieldTypeMap.put(GenericArtifactField.FieldValueTypeValue.DATETIME,
+				TrackerFieldSoapDO.FIELD_VALUE_TYPE_DATE);
 		fieldGAValueTypeFieldTypeMap.put(GenericArtifactField.FieldValueTypeValue.INTEGER,
 				TrackerFieldSoapDO.FIELD_VALUE_TYPE_INTEGER);
-		fieldGAValueTypeFieldTypeMap.put(GenericArtifactField.FieldValueTypeValue.STRING, 
+		fieldGAValueTypeFieldTypeMap.put(GenericArtifactField.FieldValueTypeValue.STRING,
+				TrackerFieldSoapDO.FIELD_VALUE_TYPE_STRING);
+		fieldGAValueTypeFieldTypeMap.put(GenericArtifactField.FieldValueTypeValue.DOUBLE,
 				TrackerFieldSoapDO.FIELD_VALUE_TYPE_STRING);
 		fieldGAValueTypeFieldTypeMap.put(GenericArtifactField.FieldValueTypeValue.USER,
 				TrackerFieldSoapDO.FIELD_VALUE_TYPE_USER);
+		fieldGAValueTypeFieldTypeMap.put(GenericArtifactField.FieldValueTypeValue.HTMLSTRING,
+				TrackerFieldSoapDO.FIELD_VALUE_TYPE_STRING);
+		fieldGAValueTypeFieldTypeMap.put(GenericArtifactField.FieldValueTypeValue.BASE64STRING,
+				TrackerFieldSoapDO.FIELD_VALUE_TYPE_STRING);
+		fieldGAValueTypeFieldTypeMap.put(GenericArtifactField.FieldValueTypeValue.BOOLEAN,
+				TrackerFieldSoapDO.FIELD_VALUE_TYPE_STRING);
 	}
 
 	public enum FIELD_TYPE {
@@ -45,7 +55,7 @@ public class ArtifactMetaData {
 		CONFIGURABLE,
 		USER_DEFINED /* Flex fields */
 	}
-	
+
 	public enum SFEEFields {
 		id("id", "ID", FIELD_TYPE.SYSTEM_DEFINED, GenericArtifactField.FieldValueTypeValue.STRING, true,""),
 		actualHours("actualHours", "Actual hours", FIELD_TYPE.CONFIGURABLE,GenericArtifactField.FieldValueTypeValue.INTEGER, false,""),
@@ -68,13 +78,13 @@ public class ArtifactMetaData {
 		estimatedHours("estimatedHours", "Estimated hours", FIELD_TYPE.CONFIGURABLE, GenericArtifactField.FieldValueTypeValue.INTEGER, false,""),
 		//flexFields(),
 		group("group", "Group", FIELD_TYPE.CONFIGURABLE, GenericArtifactField.FieldValueTypeValue.STRING, false,""),
-		priority("priority", "Priority", FIELD_TYPE.SYSTEM_DEFINED, GenericArtifactField.FieldValueTypeValue.INTEGER, false,""), 
+		priority("priority", "Priority", FIELD_TYPE.SYSTEM_DEFINED, GenericArtifactField.FieldValueTypeValue.INTEGER, false,""),
 		reportedReleaseId("reportedReleaseId", "Reported in release", FIELD_TYPE.CONFIGURABLE, GenericArtifactField.FieldValueTypeValue.STRING, false,"reportedInRelease"),
 		resolvedReleaseId("resolvedReleaseId", "Resolved in release", FIELD_TYPE.CONFIGURABLE, GenericArtifactField.FieldValueTypeValue.STRING, false,"resolvedInRelease"),
 		status("status", "Status", FIELD_TYPE.CONFIGURABLE, GenericArtifactField.FieldValueTypeValue.STRING, true,""),
 		statusClass("statusClass", "Status class", FIELD_TYPE.SYSTEM_DEFINED, GenericArtifactField.FieldValueTypeValue.STRING, false,""),
 		commentText("Comment Text", "Comment Text", FIELD_TYPE.SYSTEM_DEFINED, GenericArtifactField.FieldValueTypeValue.STRING, false,"");
-		
+
 		private String fieldName;
 		private String displayName;
 		private FIELD_TYPE fieldType;
@@ -140,7 +150,7 @@ public class ArtifactMetaData {
 		}
 		return null;
 	}
-	
+
 	public static String getSFEEFieldValueTypeForGAFieldType(FieldValueTypeValue fieldType) {
 		String fieldValueType = fieldGAValueTypeFieldTypeMap.get(fieldType);
 		if(fieldValueType != null){
@@ -151,7 +161,7 @@ public class ArtifactMetaData {
 		}
 		return null;
 	}
-	
+
 	public static void setDateFieldValue(String fieldName, Object value,
 			String sourceSystemTimezone, GenericArtifactField field){
 		Date dateValue = null;
