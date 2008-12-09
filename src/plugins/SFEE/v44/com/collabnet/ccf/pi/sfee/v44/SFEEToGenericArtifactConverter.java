@@ -17,7 +17,7 @@ import com.vasoftware.sf.soap44.webservices.tracker.TrackerFieldValueSoapDO;
 /**
  * The artifact data from the SFEE SOAP API calls are in the
  * ArtifactSoapDO object. This class converts the artifact data
- * contained in the ArtifactSoapDO objects into GenericArtifact object 
+ * contained in the ArtifactSoapDO objects into GenericArtifact object
  * @author madhusuthanan
  *
  */
@@ -25,12 +25,12 @@ public class SFEEToGenericArtifactConverter {
 	/**
 	 * Converts the artifact data contained in the ArtifactSoapDO object
 	 * into a GenricArtifact object
-	 * 
+	 *
 	 * @param dataObject - The ArtifactSoapDO object that needs to be converted into
 	 * 						a GenericArtifact object
 	 * @param fieldsMap - The custom/flex fields defined in the tracker
 	 * @param lastReadDate - Last read date for this tracker.
-	 * @param includeFieldMetaData 
+	 * @param includeFieldMetaData
 	 * @return - The converted GenericArtifact object
 	 */
 	public GenericArtifact convert(ArtifactSoapDO dataObject, HashMap<String, List<TrackerFieldSoapDO>> fieldsMap,
@@ -47,7 +47,7 @@ public class SFEEToGenericArtifactConverter {
 			else {
 				genericArtifact.setIncludesFieldMetaData(GenericArtifact.IncludesFieldMetaDataValue.FALSE);
 			}
-			
+
 			// FIXME These fields will never change, why not add the fields directly?
 			int actualHours = artifactRow.getActualHours();
 			this.createGenericArtifactField(ArtifactMetaData.SFEEFields.actualHours,
@@ -123,9 +123,9 @@ public class SFEEToGenericArtifactConverter {
 			int version = artifactRow.getVersion();
 			this.createGenericArtifactField(ArtifactMetaData.SFEEFields.version,
 					version, genericArtifact, fieldsMap, includeFieldMetaData);
-			
+
 			genericArtifact.setSourceArtifactVersion(Integer.toString(version));
-			
+
 			SoapFieldValues flexFields = artifactRow.getFlexFields();
 			String[] flexFieldNames = flexFields.getNames();
 			// FIXME This is where we get our type info for free, why not take it from there?
@@ -139,7 +139,7 @@ public class SFEEToGenericArtifactConverter {
 				field.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
 				field.setFieldValueType(fieldValueType);
 				// FIXME Why not use the flexFieldType array for this?
-				if(flexFieldTypes[i].equals(TrackerFieldSoapDO.FIELD_TYPE_DATE)) {
+				if(flexFieldTypes[i].equalsIgnoreCase(TrackerFieldSoapDO.FIELD_VALUE_TYPE_DATE)) {
 					ArtifactMetaData.setDateFieldValue(flexFieldNames[i], flexFieldValues[i],
 							sourceSystemTimezone, field);
 				}
@@ -148,7 +148,7 @@ public class SFEEToGenericArtifactConverter {
 				}
 				if(includeFieldMetaData){
 					TrackerFieldSoapDO fieldDO =
-						SFEEAppHandler.getTrackerFieldSoapDOForFlexField(fieldsMap, flexFieldNames[i]); 
+						SFEEAppHandler.getTrackerFieldSoapDOForFlexField(fieldsMap, flexFieldNames[i]);
 					field.setAlternativeFieldName(flexFieldNames[i]);
 					if(fieldDO.getRequired()){
 						field.setMinOccurs(1);
@@ -172,24 +172,24 @@ public class SFEEToGenericArtifactConverter {
 		}
 		return null;
 	}
-	
+
 	/**
 	 * Creates a GenericArtifactField object with the appropriate values provided
 	 * in the method call.
-	 * 
+	 *
 	 * @param fieldName - Name of the field
 	 * @param displayName - The field's display name
 	 * @param value - Value of the field
 	 * @param genericArtifact - The GenericArtifact object on which the new field should be created
 	 * @param fieldsMap - The custom/flex fields defined for this tracker.
-	 * @param includeFieldMetaData 
+	 * @param includeFieldMetaData
 	 * @return - Returns the newly created GenericArtifactField object
 	 */
 	private GenericArtifactField createGenericArtifactField(ArtifactMetaData.SFEEFields sfField,
 			Object value, GenericArtifact genericArtifact, HashMap<String,List<TrackerFieldSoapDO>> fieldsMap,
 			boolean includeFieldMetaData){
 		String fieldName = sfField.getFieldName();
-		
+
 		GenericArtifactField field = genericArtifact.addNewField(sfField.getFieldName(), GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD);
 		GenericArtifactField.FieldValueTypeValue fieldValueType = ArtifactMetaData.getFieldValueType(fieldName);
 		field.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
