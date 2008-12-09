@@ -135,12 +135,21 @@ public abstract class AbstractReader<T> extends LifecycleComponent implements ID
 	 * then the AbstractReader pauses the processing for sleepInterval milliseconds.
 	 */
 	public Object[] process(Object data) {
+		boolean restartConnector=false;
 		Document syncInfoIn = null;
 		if(data instanceof Document){
 			syncInfoIn = (Document) data;
 		} else {
 			return null;
 		}
+		
+		if (getAutoRestartPeriod() > 0) {
+			if (new Date().getTime() - startedDate.getTime() > getAutoRestartPeriod()) {
+				log.info("Preparing to restart CCF, flushing buffers ...");
+				restartConnector = true;
+			}
+		}
+		
 		String sourceRepositoryId = this.getSourceRepositoryId(syncInfoIn);
 		log.debug("Received the SyncInfo for repository with id " + sourceRepositoryId);
 		RepositoryRecord record = repositoryRecordHashMap.get(sourceRepositoryId);
@@ -194,7 +203,7 @@ public abstract class AbstractReader<T> extends LifecycleComponent implements ID
 					throw new CCFRuntimeException(cause, e);
 				}
 			}
-			else if(artifactsToBeReadList.isEmpty()){
+			else if(artifactsToBeReadList.isEmpty() && !restartConnector){
 				log.debug("There are no artifacts to be read. Checking if there are"+
 						" changed artifacts in repository " + sourceRepositoryId);
 				currentRecord.setSyncInfo(syncInfoIn);
@@ -262,7 +271,7 @@ public abstract class AbstractReader<T> extends LifecycleComponent implements ID
 				} while(retry);
 				artifactsToBeReadList.addAll(artifactsToBeRead);
 			}
-			if(!artifactsToBeReadList.isEmpty()) {
+			if(!artifactsToBeReadList.isEmpty() && !restartConnector) {
 				log.debug("There are "+artifactsToBeReadList.size()+
 						"artifacts to be read.");
 				String artifactId = artifactsToBeReadList.remove(0);
@@ -370,6 +379,10 @@ public abstract class AbstractReader<T> extends LifecycleComponent implements ID
 			}
 		}
 		try {
+			if (restartConnector) {
+				log.info("All buffers are flushed now ..., exit with exit code "+RESTART_EXIT_CODE);
+				System.exit(RESTART_EXIT_CODE);
+			}
 			log.debug("There are no artifacts to be shipped from any of the repositories. Sleeping");
 			Thread.sleep(sleepInterval);
 		} catch (InterruptedException e) {
@@ -809,4 +822,38 @@ public abstract class AbstractReader<T> extends LifecycleComponent implements ID
 	public void setShipAttachmentsWithArtifact(boolean shipAttachmentsWithArtifact) {
 		this.shipAttachmentsWithArtifact = shipAttachmentsWithArtifact;
 	}
+	
+	private static final int RESTART_EXIT_CODE = 42;
+	
+	/**
+	 * This field contains the date when the CCF was started
+	 */
+	private Date startedDate=new Date();
+	
+	/**
+	 * This property denotes after how many seconds the CCF will restart automatically
+	 */
+	private int autoRestartPeriod=-1;
+	
+	/**
+	 * If you set this property, the CCF will exit (with exit code 42)
+	 * after the number of seconds you have specified.
+	 * If CCF is wrapped by service wrapper, it will be restarted automatically.
+	 * This setting can be used to release resources from time to time.
+	 * If you do not set this property or set it to a negative value, the CCF will never exit.
+	 * @param autoRestartPeriod the autoRestartPeriod to set
+	 */
+	public void setAutoRestartPeriod(int autoRestartPeriod) {
+		this.autoRestartPeriod = autoRestartPeriod * 1000;
+	}
+
+	/**
+	 * Returns the number of seconds, after the CCF will exit with exit code 42 and will be restarted by the
+	 * ServiceWrapper. If the return value is negative, it will never exit/restarted.
+	 * @return the autoRestartPeriod
+	 */
+	public int getAutoRestartPeriod() {
+		return autoRestartPeriod;
+	}
+	
 }
