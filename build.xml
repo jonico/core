@@ -232,6 +232,10 @@
 			<fileset dir="src/core/lib/openadaptor-3.4">
 				<include name="*.jar" />
 			</fileset>
+			<fileset dir="src/core/lib/servicewrapper">
+				<include name="*.jar" />
+				<include name="*.dll" />
+			</fileset>
 			<fileset dir="src/core/lib/openadaptor-3.4/3rdparty">
 				<include name="*.jar" />
 			</fileset>
