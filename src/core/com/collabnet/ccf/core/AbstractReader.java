@@ -51,6 +51,7 @@ public abstract class AbstractReader<T> extends LifecycleComponent implements ID
 	public static final long DEFAULT_MAX_ATTACHMENT_SIZE_PER_ARTIFACT = 10 * 1024 * 1024;
 	private long maxAttachmentSizePerArtifact = DEFAULT_MAX_ATTACHMENT_SIZE_PER_ARTIFACT;
 	private ConnectionManager<T> connectionManager;
+	private static boolean restartConnector=false;
 
 	public AbstractReader(){
 		super();
@@ -135,7 +136,6 @@ public abstract class AbstractReader<T> extends LifecycleComponent implements ID
 	 * then the AbstractReader pauses the processing for sleepInterval milliseconds.
 	 */
 	public Object[] process(Object data) {
-		boolean restartConnector=false;
 		Document syncInfoIn = null;
 		if(data instanceof Document){
 			syncInfoIn = (Document) data;
@@ -146,7 +146,7 @@ public abstract class AbstractReader<T> extends LifecycleComponent implements ID
 		if (getAutoRestartPeriod() > 0) {
 			if (new Date().getTime() - startedDate.getTime() > getAutoRestartPeriod()) {
 				log.info("Preparing to restart CCF, flushing buffers ...");
-				restartConnector = true;
+				setRestartConnector(true);
 			}
 		}
 		
@@ -203,7 +203,7 @@ public abstract class AbstractReader<T> extends LifecycleComponent implements ID
 					throw new CCFRuntimeException(cause, e);
 				}
 			}
-			else if(artifactsToBeReadList.isEmpty() && !restartConnector){
+			else if(artifactsToBeReadList.isEmpty() && !isRestartConnector()){
 				log.debug("There are no artifacts to be read. Checking if there are"+
 						" changed artifacts in repository " + sourceRepositoryId);
 				currentRecord.setSyncInfo(syncInfoIn);
@@ -271,7 +271,7 @@ public abstract class AbstractReader<T> extends LifecycleComponent implements ID
 				} while(retry);
 				artifactsToBeReadList.addAll(artifactsToBeRead);
 			}
-			if(!artifactsToBeReadList.isEmpty() && !restartConnector) {
+			if(!artifactsToBeReadList.isEmpty() && !isRestartConnector()) {
 				log.debug("There are "+artifactsToBeReadList.size()+
 						"artifacts to be read.");
 				String artifactId = artifactsToBeReadList.remove(0);
@@ -379,7 +379,7 @@ public abstract class AbstractReader<T> extends LifecycleComponent implements ID
 			}
 		}
 		try {
-			if (restartConnector) {
+			if (isRestartConnector()) {
 				log.info("All buffers are flushed now ..., exit with exit code "+RESTART_EXIT_CODE);
 				System.exit(RESTART_EXIT_CODE);
 			}
@@ -854,6 +854,18 @@ public abstract class AbstractReader<T> extends LifecycleComponent implements ID
 	 */
 	public int getAutoRestartPeriod() {
 		return autoRestartPeriod;
+	}
+	/**
+	 * @param restartConnector the restartConnector to set
+	 */
+	public static void setRestartConnector(boolean restartConnector) {
+		AbstractReader.restartConnector = restartConnector;
+	}
+	/**
+	 * @return the restartConnector
+	 */
+	public static boolean isRestartConnector() {
+		return restartConnector;
 	}
 	
 }
