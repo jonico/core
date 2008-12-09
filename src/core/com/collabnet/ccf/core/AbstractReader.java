@@ -51,7 +51,18 @@ public abstract class AbstractReader<T> extends LifecycleComponent implements ID
 	public static final long DEFAULT_MAX_ATTACHMENT_SIZE_PER_ARTIFACT = 10 * 1024 * 1024;
 	private long maxAttachmentSizePerArtifact = DEFAULT_MAX_ATTACHMENT_SIZE_PER_ARTIFACT;
 	private ConnectionManager<T> connectionManager;
+	/**
+	 * If the restart connector variable is set to true, all readers will begin
+	 * to flush their buffers and exit with a special error code (42) that will
+	 * cause service wrapper to restart the connector. 
+	 */
 	private static boolean restartConnector=false;
+	
+	/**
+	 * If the shutDownConnector variable is set, this will cause service wrapper to flush all the buffers
+	 * and signal the shutdown hook thread that it is ready to exit
+	 */
+	private static boolean shutDownConnector=false;
 
 	public AbstractReader(){
 		super();
@@ -66,6 +77,7 @@ public abstract class AbstractReader<T> extends LifecycleComponent implements ID
 	 * Initializes the Reader with an empty repository records HashMap.
 	 * The repositories synchronization waiting list and the repository ids in
 	 * the waiting list are also initialized.
+	 * It will also create a shutdownHookListener that will set the shutDownConnector variable
 	 * It also creates a comparator that will be used to compare a set of
 	 * GenericArtifacts.
 	 * The comparator compares the GenericArtifacts according to the last
@@ -203,7 +215,7 @@ public abstract class AbstractReader<T> extends LifecycleComponent implements ID
 					throw new CCFRuntimeException(cause, e);
 				}
 			}
-			else if(artifactsToBeReadList.isEmpty() && !isRestartConnector()){
+			else if(artifactsToBeReadList.isEmpty() && !isRestartConnector() && !isShutDownConnector()){
 				log.debug("There are no artifacts to be read. Checking if there are"+
 						" changed artifacts in repository " + sourceRepositoryId);
 				currentRecord.setSyncInfo(syncInfoIn);
@@ -271,7 +283,7 @@ public abstract class AbstractReader<T> extends LifecycleComponent implements ID
 				} while(retry);
 				artifactsToBeReadList.addAll(artifactsToBeRead);
 			}
-			if(!artifactsToBeReadList.isEmpty() && !isRestartConnector()) {
+			if(!artifactsToBeReadList.isEmpty() && !isRestartConnector() && !isShutDownConnector()) {
 				log.debug("There are "+artifactsToBeReadList.size()+
 						"artifacts to be read.");
 				String artifactId = artifactsToBeReadList.remove(0);
@@ -382,6 +394,10 @@ public abstract class AbstractReader<T> extends LifecycleComponent implements ID
 			if (isRestartConnector()) {
 				log.info("All buffers are flushed now ..., exit with exit code "+RESTART_EXIT_CODE);
 				System.exit(RESTART_EXIT_CODE);
+			}
+			if (isShutDownConnector()) {
+				log.info("All buffers are flushed now ..., exit with exit code "+RESTART_EXIT_CODE);
+				System.exit(0);
 			}
 			log.debug("There are no artifacts to be shipped from any of the repositories. Sleeping");
 			Thread.sleep(sleepInterval);
@@ -866,6 +882,18 @@ public abstract class AbstractReader<T> extends LifecycleComponent implements ID
 	 */
 	public static boolean isRestartConnector() {
 		return restartConnector;
+	}
+	/**
+	 * @param shutDownConnector the shutDownConnector to set
+	 */
+	public static void setShutDownConnector(boolean shutDownConnector) {
+		AbstractReader.shutDownConnector = shutDownConnector;
+	}
+	/**
+	 * @return the shutDownConnector
+	 */
+	public static boolean isShutDownConnector() {
+		return shutDownConnector;
 	}
 	
 }
