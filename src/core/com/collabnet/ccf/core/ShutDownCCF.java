@@ -9,7 +9,9 @@ package com.collabnet.ccf.core;
  */
 public class ShutDownCCF {
 	public static void main(String[] args) {
-		// set appropriate variable to flush all buffers in the reader components 
-		AbstractReader.setShutDownConnector(true);
+		// set appropriate variable to flush all buffers in the reader components
+		if (!AbstractReader.isRestartConnector()) {
+			AbstractReader.setShutDownConnector(true);
+		}
 	}
 }

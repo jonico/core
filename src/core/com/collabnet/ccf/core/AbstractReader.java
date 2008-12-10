@@ -396,7 +396,7 @@ public abstract class AbstractReader<T> extends LifecycleComponent implements ID
 				System.exit(RESTART_EXIT_CODE);
 			}
 			if (isShutDownConnector()) {
-				log.info("All buffers are flushed now ..., exit with exit code "+RESTART_EXIT_CODE);
+				log.info("All buffers are flushed now ..., exit with exit code "+0);
 				System.exit(0);
 			}
 			log.debug("There are no artifacts to be shipped from any of the repositories. Sleeping");
