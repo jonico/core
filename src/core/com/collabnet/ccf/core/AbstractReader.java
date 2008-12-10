@@ -393,14 +393,16 @@ public abstract class AbstractReader<T> extends LifecycleComponent implements ID
 		try {
 			if (isRestartConnector()) {
 				log.info("All buffers are flushed now ..., exit with exit code "+RESTART_EXIT_CODE);
-				System.exit(RESTART_EXIT_CODE);
+				ShutDownCCF.exitCCF(RESTART_EXIT_CODE);
 			}
-			if (isShutDownConnector()) {
+			else if (isShutDownConnector()) {
 				log.info("All buffers are flushed now ..., exit with exit code "+0);
-				System.exit(0);
+				ShutDownCCF.exitCCF(0);
 			}
-			log.debug("There are no artifacts to be shipped from any of the repositories. Sleeping");
-			Thread.sleep(sleepInterval);
+			else {
+				log.debug("There are no artifacts to be shipped from any of the repositories. Sleeping");
+				Thread.sleep(sleepInterval);
+			}
 		} catch (InterruptedException e) {
 			String cause = "Thread is interrupted";
 			log.warn(cause, e);

@@ -1,5 +1,8 @@
 package com.collabnet.ccf.core;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 /**
  * This class is called by ServiceWrapper whenever
  * the application should terminate.
@@ -7,11 +10,35 @@ package com.collabnet.ccf.core;
  * @author jnicolai
  *
  */
-public class ShutDownCCF {
+public class ShutDownCCF extends Thread {
+	
+	private int exitCode;
+	private static final Log log = LogFactory.getLog(ShutDownCCF.class);
+	private static boolean alreadyExited=false;
 	public static void main(String[] args) {
 		// set appropriate variable to flush all buffers in the reader components
-		if (!AbstractReader.isRestartConnector()) {
-			AbstractReader.setShutDownConnector(true);
+		log.info("CCF has been informed to shutdown ...");
+		AbstractReader.setShutDownConnector(true);
+	}
+	
+	public static void exitCCF(int exitCode) {
+		synchronized(log) {
+			if (alreadyExited) {
+				log.info("CCF shutdown already in progress ...");
+			}
+			else {
+				alreadyExited=true;
+				new ShutDownCCF(exitCode).start();
+			}
 		}
+	}
+	
+	public ShutDownCCF(int exitCode) {
+		this.exitCode=exitCode;
+	}	
+		
+	public void run() {
+			log.info("Calling System.exit with exit code "+exitCode);
+			System.exit(exitCode);
 	}
 }
