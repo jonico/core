@@ -34,6 +34,7 @@ public class ShutDownCCF extends Thread {
 	}
 	
 	public ShutDownCCF(int exitCode) {
+		setDaemon(true);
 		this.exitCode=exitCode;
 	}	
 		
