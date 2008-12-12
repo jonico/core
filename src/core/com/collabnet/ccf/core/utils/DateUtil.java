@@ -18,7 +18,7 @@ public class DateUtil {
 	private static final SimpleDateFormat qcDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 	private static final Log log = LogFactory.getLog(DateUtil.class);
 	public static final String GMT_TIME_ZONE_STRING = "GMT";
-	
+
 	/**
 	 * Parses the QC specific date string into java.util.Date
 	 * object
@@ -32,7 +32,7 @@ public class DateUtil {
 	/**
 	 * Formats the incoming java.util.Date object into the QC
 	 * specific format.
-	 * 
+	 *
 	 * @param date - The Date object to be formatted in QC format.
 	 * @return the formatted date String
 	 */
@@ -43,7 +43,7 @@ public class DateUtil {
 	/**
 	 * Parses a date String that is in the GenericArtifact compatible format
 	 * into a java.util.Date object.
-	 * 
+	 *
 	 * @param dateString - The date String in the GenerciArtifact compatible format.
 	 * @return The java.util.Date object parsed from the GenericArtifact compatible
 	 * 				date format.
@@ -51,18 +51,18 @@ public class DateUtil {
 	public static Date parse(String dateString){
 		return parse(dateString, dateFormat);
 	}
-	
+
 	/**
 	 * Formats the given java.util.Date object into the GenericArtifact compatible
 	 * date format String
-	 * 
+	 *
 	 * @param date - The java.util.Date object that is to be formatted.
 	 * @return the formatted String in the GenericArtifact date format.
 	 */
 	public static String format(Date date){
 		return format(date, dateFormat);
 	}
-	
+
 	private static Date parse(String dateString, DateFormat dateFormat){
 		try {
 			return dateFormat.parse(dateString);
@@ -71,15 +71,15 @@ public class DateUtil {
 		}
 		return null;
 	}
-	
+
 	private static String format(Date date, DateFormat dateFormat){
 		return dateFormat.format(date);
 	}
-	
+
 	/**
 	 * Converts the given Date object into another date object with the
 	 * specified time zone information.
-	 * 
+	 *
 	 * @param date - The date that is to be converted to a different time zone.
 	 * @param toTimeZone - the time zone to which the date object should be converted.
 	 * @return the new Date object in the specified time zone.
@@ -92,7 +92,7 @@ public class DateUtil {
 		df.setCalendar(cal);
 		return df.parse(df.format(cal.getTime()));
 	}
-	
+
 	public static boolean isAbsoluteDateInTimezone(Date date, String timeZone){
 		Calendar cal = new GregorianCalendar(TimeZone.getTimeZone(timeZone));
 		cal.setLenient(false);
@@ -130,5 +130,16 @@ public class DateUtil {
 		newCal.set(Calendar.MILLISECOND, 0);
 		Date returnDate = newCal.getTime();
 		return returnDate;
+	}
+	public static Date convertDateToTimeZone(Date date, String toTimeZone) {
+		Calendar toCal = new GregorianCalendar(TimeZone.getTimeZone(toTimeZone));
+		Calendar fromCal = new GregorianCalendar();
+		fromCal.setTime(date);
+
+		toCal.set(fromCal.get(Calendar.YEAR), fromCal.get(Calendar.MONTH), fromCal.get(Calendar.DAY_OF_MONTH),
+				fromCal.get(Calendar.HOUR_OF_DAY),fromCal.get(Calendar.MINUTE),fromCal.get(Calendar.SECOND));
+		toCal.set(Calendar.MILLISECOND, fromCal.get(Calendar.MILLISECOND));
+
+		return toCal.getTime();
 	}
 }
