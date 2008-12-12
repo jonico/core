@@ -293,9 +293,9 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 				else if(artifactAction.equals(GenericArtifactHelper.ARTIFACT_ACTION_RESYNC)) {
 					String cause = "The artifact action is marked as "+artifactAction
 					+".\nBut the Entity Service could not find a target artifact id for source artifact id "+sourceArtifactId
-					+". Marking the artifact to create";
+					+". Discarding the artifact.";
 					log.warn(cause);
-					XPathUtils.addAttribute(element, GenericArtifactHelper.ARTIFACT_ACTION,	GenericArtifactHelper.ARTIFACT_ACTION_CREATE);
+					return new Object[]{};
 				}
 		    }
 		}
@@ -389,7 +389,7 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 								+ sourceSystemId + targetRepositoryId + "-"
 								+ targetSystemId
 								+ " in the identity mapping table even after the entity service waited for "
-								+ (waitCount * this.getIdentityMapEventWaitTime()) +" milliseconds. Allowing this artifact to be created on the target system.");
+								+ (waitCount * this.getIdentityMapEventWaitTime()) +" milliseconds. Discarding the artifact.");
 						waitForIdentityMappedEvent = false;
 					}
 				}
