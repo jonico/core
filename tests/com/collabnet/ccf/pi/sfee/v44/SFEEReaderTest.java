@@ -41,7 +41,7 @@ public class SFEEReaderTest extends TestCase {
 		systemId = "sysid";
 		connectionInfo = serverUrl;
 		repositoryId = "tracker1004";
-		sfeeReader = new SFEEReader("SFEEReader");
+		sfeeReader = new SFEEReader();
 		sfeeReader.setUsername(username);
 		sfeeReader.setPassword(password);
 		sfeeReader.setServerUrl(serverUrl);
