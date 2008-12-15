@@ -26,9 +26,9 @@ import com.collabnet.ccf.core.utils.XPathUtils;
  * The MappingDBUpdator is typically the last component in the pipeline. It
  * updates the synchronization status table and the identity mapping table after
  * the artifact has been saved in the target system.
- * 
+ *
  * @author jnicolai
- * 
+ *
  */
 public class MappingDBUpdater extends LifecycleComponent implements
 		IDataProcessor {
@@ -110,6 +110,8 @@ public class MappingDBUpdater extends LifecycleComponent implements
 						.getAttributeValue(
 								element,
 								GenericArtifactHelper.SOURCE_ARTIFACT_LAST_MODIFICATION_DATE);
+				String artifactType = XPathUtils.getAttributeValue(element,
+						GenericArtifactHelper.ARTIFACT_TYPE);
 
 				java.util.Date sourceLastModifiedDate = null;
 				if (sourceArtifactLastModifiedDateString
@@ -129,10 +131,12 @@ public class MappingDBUpdater extends LifecycleComponent implements
 
 				if (artifactAction
 						.equals(GenericArtifactHelper.ARTIFACT_ACTION_IGNORE)) {
-					updateSynchronizationStatusTable(data, sourceArtifactId,
-							sourceArtifactVersion, sourceSystemId,
-							sourceRepositoryId, targetSystemId,
-							targetRepositoryId, sourceTime);
+					if(!artifactType.equals(GenericArtifactHelper.ARTIFACT_TYPE_ATTACHMENT)){
+						updateSynchronizationStatusTable(data, sourceArtifactId,
+								sourceArtifactVersion, sourceSystemId,
+								sourceRepositoryId, targetSystemId,
+								targetRepositoryId, sourceTime);
+					}
 					return new Object[] { data };
 				}
 
@@ -158,8 +162,7 @@ public class MappingDBUpdater extends LifecycleComponent implements
 				String targetArtifactVersion = XPathUtils.getAttributeValue(
 						element, GenericArtifactHelper.TARGET_ARTIFACT_VERSION);
 
-				String artifactType = XPathUtils.getAttributeValue(element,
-						GenericArtifactHelper.ARTIFACT_TYPE);
+
 				// String lastReadTransactionId =
 				// XPathUtils.getAttributeValue(element, TRANSACTION_ID);
 
@@ -241,11 +244,12 @@ public class MappingDBUpdater extends LifecycleComponent implements
 						depParentSourceArtifactId, depParentSourceRepositoryId,
 						depParentSourceRepositoryKind, NULL_VALUE, NULL_VALUE,
 						NULL_VALUE, NULL_VALUE, NULL_VALUE, NULL_VALUE);
-
-				updateSynchronizationStatusTable(data, sourceArtifactId,
-						sourceArtifactVersion, sourceSystemId,
-						sourceRepositoryId, targetSystemId, targetRepositoryId,
-						sourceTime);
+				if(!artifactType.equals(GenericArtifactHelper.ARTIFACT_TYPE_ATTACHMENT)) {
+					updateSynchronizationStatusTable(data, sourceArtifactId,
+							sourceArtifactVersion, sourceSystemId,
+							sourceRepositoryId, targetSystemId, targetRepositoryId,
+							sourceTime);
+				}
 			} catch (GenericArtifactParsingException e) {
 				log
 						.error("There is some problem in extracting attributes from Document in EntityService!!!"
@@ -535,7 +539,7 @@ public class MappingDBUpdater extends LifecycleComponent implements
 
 	/**
 	 * Gets the database updater to update the synchronization status table
-	 * 
+	 *
 	 * @return
 	 */
 	public JDBCWriteConnector getSynchronizationStatusDatabaseUpdater() {
@@ -544,7 +548,7 @@ public class MappingDBUpdater extends LifecycleComponent implements
 
 	/**
 	 * Sets the database updater to update the synchronization status table
-	 * 
+	 *
 	 * @param synchronizationStatusDatabaseUpdater
 	 */
 	public void setSynchronizationStatusDatabaseUpdater(
@@ -555,7 +559,7 @@ public class MappingDBUpdater extends LifecycleComponent implements
 	/**
 	 * Gets the data base inserter that is used to insert a new artifact mapping
 	 * into the identity mapping table
-	 * 
+	 *
 	 * @return
 	 */
 	public JDBCWriteConnector getIdentityMappingDatabaseInserter() {
@@ -565,7 +569,7 @@ public class MappingDBUpdater extends LifecycleComponent implements
 	/**
 	 * Sets the data base inserter that is used to insert a new artifact mapping
 	 * into the identity mapping table
-	 * 
+	 *
 	 * @param identityMappingDatabaseInserter
 	 */
 	public void setIdentityMappingDatabaseInserter(
@@ -576,7 +580,7 @@ public class MappingDBUpdater extends LifecycleComponent implements
 	/**
 	 * Gets the (mandatory) data base reader that is used to retrieve the target
 	 * artifact id from the the identity mapping table.
-	 * 
+	 *
 	 * @param identityMappingDatabaseReader
 	 */
 	public JDBCReadConnector getIdentityMappingDatabaseReader() {
@@ -586,7 +590,7 @@ public class MappingDBUpdater extends LifecycleComponent implements
 	/**
 	 * Sets the (mandatory) data base reader that is used to retrieve the target
 	 * artifact id from the the identity mapping table.
-	 * 
+	 *
 	 * @param identityMappingDatabaseReader
 	 */
 	public void setIdentityMappingDatabaseReader(
@@ -597,7 +601,7 @@ public class MappingDBUpdater extends LifecycleComponent implements
 	/**
 	 * Gets the data base updater that is used to update an existing artifact
 	 * mapping in the identity mapping table
-	 * 
+	 *
 	 * @return
 	 */
 	public JDBCWriteConnector getIdentityMappingDatabaseUpdater() {
@@ -607,7 +611,7 @@ public class MappingDBUpdater extends LifecycleComponent implements
 	/**
 	 * Sets the data base updater that is used to update an existing artifact
 	 * mapping in the identity mapping table
-	 * 
+	 *
 	 * @param identityMappingUpdater
 	 */
 	public void setIdentityMappingDatabaseUpdater(
