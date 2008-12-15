@@ -24,7 +24,7 @@ public class ShutDownCCF extends Thread {
 	public static void exitCCF(int exitCode) {
 		synchronized(log) {
 			if (alreadyExited) {
-				log.info("CCF shutdown already in progress ...");
+				log.debug("CCF shutdown already in progress ...");
 			}
 			else {
 				alreadyExited=true;
