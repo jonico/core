@@ -27,4 +27,10 @@ public class SimpleLoopingPollingReadConnector extends
 		//}
 		return result;
 	}
+	
+	/*@Override
+	public void disconnect() {
+		log.info("My disconnect called");
+	}*/
+	
 }

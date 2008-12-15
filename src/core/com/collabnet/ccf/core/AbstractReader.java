@@ -13,9 +13,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dom4j.Document;
 import org.dom4j.Node;
+import org.openadaptor.core.Component;
 import org.openadaptor.core.IDataProcessor;
 import org.openadaptor.core.exception.ValidationException;
-import org.openadaptor.core.lifecycle.LifecycleComponent;
 
 import com.collabnet.ccf.core.eis.connection.ConnectionManager;
 import com.collabnet.ccf.core.ga.GenericArtifact;
@@ -38,7 +38,7 @@ import com.collabnet.ccf.core.utils.DateUtil;
  * @author madhusuthanan (madhusuthanan@collab.net)
  *
  */
-public abstract class AbstractReader<T> extends LifecycleComponent implements IDataProcessor {
+public abstract class AbstractReader<T> extends Component implements IDataProcessor {
 	private static final Log log = LogFactory.getLog(AbstractReader.class);
 	private HashMap<String, RepositoryRecord> repositoryRecordHashMap = null;
 	private ArrayList<RepositoryRecord> repositorySynchronizationWaitingList = null;
@@ -68,11 +68,11 @@ public abstract class AbstractReader<T> extends LifecycleComponent implements ID
 		super();
 		init();
 	}
-	public AbstractReader(String id){
-		super(id);
-		init();
-	}
 
+	public void reset(Object context) {
+		// do nothing here
+	}
+	
 	/**
 	 * Initializes the Reader with an empty repository records HashMap.
 	 * The repositories synchronization waiting list and the repository ids in
@@ -394,14 +394,10 @@ public abstract class AbstractReader<T> extends LifecycleComponent implements ID
 			if (isRestartConnector()) {
 				log.info("All buffers are flushed now ..., exit with exit code "+RESTART_EXIT_CODE);
 				ShutDownCCF.exitCCF(RESTART_EXIT_CODE);
-				// TODO Do we have to call this here?
-				stop();
 			}
 			else if (isShutDownConnector()) {
 				log.info("All buffers are flushed now ..., exit with exit code "+0);
 				ShutDownCCF.exitCCF(0);
-				// TODO Do we have to call this here?
-				stop();
 			}
 			else {
 				log.debug("There are no artifacts to be shipped from any of the repositories. Sleeping");
@@ -516,12 +512,8 @@ public abstract class AbstractReader<T> extends LifecycleComponent implements ID
 	 */
 	public abstract List<String> getChangedArtifacts(Document syncInfo);
 
-	public void reset(Object context) {
-	}
-
 	@SuppressWarnings("unchecked")
 	public void validate(List exceptions) {
-		super.validate(exceptions);
 		if (getConnectionManager() == null) {
 			log.error("connectionManager property is not set");
 			exceptions.add(new ValidationException("connectionManager property is not set",this));

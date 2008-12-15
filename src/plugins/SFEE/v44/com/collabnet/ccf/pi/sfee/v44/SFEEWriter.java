@@ -88,10 +88,6 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 	 */
 	private String resyncPassword;
 
-	public SFEEWriter(String id) {
-		super(id);
-	}
-
 	public SFEEWriter() {
 	}
 
@@ -748,10 +744,10 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 			throw new CCFRuntimeException(cause, e);
 		}
 		this.initializeArtifact(ga);
-		String targetRepositoryId = ga.getTargetRepositoryId();
+		//String targetRepositoryId = ga.getTargetRepositoryId();
 		String targetArtifactId = ga.getTargetArtifactId();
 		String artifactId = ga.getDepParentTargetArtifactId();
-		String tracker = targetRepositoryId;
+		//String tracker = targetRepositoryId;
 		Connection connection = null;
 		GenericArtifact parentArtifact = null;
 		try {

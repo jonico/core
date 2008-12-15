@@ -654,8 +654,8 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 					ga.setSourceArtifactVersion(Long.toString(modifiedOnMilliSeconds));
 				}
 				else if(attributeName.equals(CREATED_ON_FIELD_NAME)){
-					String createdOnStr = attValue;
-					long createdOnTime = Long.parseLong(createdOnStr);
+					//String createdOnStr = attValue;
+					//long createdOnTime = Long.parseLong(createdOnStr);
 				}
 			}
 		}

@@ -6,9 +6,9 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dom4j.Document;
 import org.dom4j.Element;
+import org.openadaptor.core.Component;
 import org.openadaptor.core.IDataProcessor;
 import org.openadaptor.core.exception.ValidationException;
-import org.openadaptor.core.lifecycle.LifecycleComponent;
 
 import com.collabnet.ccf.core.eis.connection.ConnectionManager;
 import com.collabnet.ccf.core.ga.GenericArtifact;
@@ -16,16 +16,12 @@ import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
 import com.collabnet.ccf.core.utils.XPathUtils;
 
-public abstract class AbstractWriter<T> extends LifecycleComponent implements
+public abstract class AbstractWriter<T> extends Component implements
 		IDataProcessor {
 	private static final Log log = LogFactory.getLog(AbstractWriter.class);
 	private static final Log logConflictResolutor = LogFactory
 			.getLog("com.collabnet.ccf.core.conflict.resolution");
 	private ConnectionManager<T> connectionManager = null;
-
-	public AbstractWriter(String id) {
-		super(id);
-	}
 
 	public AbstractWriter() {
 	}
@@ -340,7 +336,6 @@ public abstract class AbstractWriter<T> extends LifecycleComponent implements
 
 	@SuppressWarnings("unchecked")
 	public void validate(List exceptions) {
-		super.validate(exceptions);
 		if (getConnectionManager() == null) {
 			log.error("connectionManager property is not set");
 			exceptions.add(new ValidationException(

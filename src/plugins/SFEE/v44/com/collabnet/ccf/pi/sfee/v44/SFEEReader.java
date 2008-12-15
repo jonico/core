@@ -67,16 +67,6 @@ public class SFEEReader extends AbstractReader<Connection> {
 	}
 
     /**
-     * Constructs and initializes the SFEEReader component with an id.
-     *
-     * @param id - The id of the SFEEReader component.
-     */
-    public SFEEReader(String id) {
-	    super(id);
-	    init();
-	}
-
-    /**
      * Initializes the SFEEToGenericArtifactConverter component.
      */
     private void init(){
