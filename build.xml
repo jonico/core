@@ -211,13 +211,13 @@
 	</target>
 	<target name="package">
 		<delete dir="build/package"></delete>
-		<mkdir dir="build/package/bin"/>
+		<!--<mkdir dir="build/package/bin"/>
 		<copy todir="build/package/bin">
 			<fileset dir="scripts">
 				<include name="setEnv.*" />
 			</fileset>
 		</copy>
-		<mkdir dir="build/package/lib"/>
+		--><mkdir dir="build/package/lib"/>
 		<copy todir="build/package/lib">
 			<fileset dir="build/jars">
 				<include name="*.jar" />
