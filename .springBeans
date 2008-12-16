@@ -18,6 +18,8 @@
 		<config>samples/IntegrationScenarios/unidirectionalTransformation/config/config.xml</config>
 		<config>samples/IntegrationScenarios/genericArtifactImport/config/config.xml</config>
 		<config>samples/IntegrationScenarios/replayScenario/config/config.xml</config>
+		<config>samples/IntegrationScenarios/CEE2SFEE/config/config.xml</config>
+		<config>samples/IntegrationScenarios/SFEE2CEE/config/config.xml</config>
 	</configs>
 	<configSets>
 	</configSets>
