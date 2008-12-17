@@ -181,7 +181,7 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 										+ targetSystemId
 										+ " so artifact will not be skipped.");
 					} else {
-						log.debug("\nSource artifact last modified date in table"
+						log.warn("\nSource artifact last modified date in table"
 								+ DateUtil.format(sourceArtifactLastModifiedDateFromTable)
 								+ "\nSource artifact last modified date "+ DateUtil.format(sourceArtifactLastModifiedDate)
 								+ "\nSource artifact version from table "+ sourceArtifactVersionLongFromTable
@@ -191,7 +191,7 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 										+ sourceArtifactId
 										+ " and version "
 										+ sourceArtifactVersion
-										+ "for combination "
+										+ " for combination "
 										+ sourceArtifactId
 										+ "-"
 										+ sourceRepositoryId
