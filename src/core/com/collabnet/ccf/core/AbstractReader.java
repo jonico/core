@@ -157,7 +157,7 @@ public abstract class AbstractReader<T> extends Component implements IDataProces
 		
 		if (getAutoRestartPeriod() > 0) {
 			if (new Date().getTime() - startedDate.getTime() > getAutoRestartPeriod()) {
-				log.info("Preparing to restart CCF, flushing buffers ...");
+				log.debug("Preparing to restart CCF, flushing buffers ...");
 				setRestartConnector(true);
 			}
 		}
@@ -392,11 +392,11 @@ public abstract class AbstractReader<T> extends Component implements IDataProces
 		}
 		try {
 			if (isRestartConnector()) {
-				log.info("All buffers are flushed now ..., exit with exit code "+RESTART_EXIT_CODE);
+				log.debug("All buffers are flushed now ..., exit with exit code "+RESTART_EXIT_CODE);
 				ShutDownCCF.exitCCF(RESTART_EXIT_CODE);
 			}
 			else if (isShutDownConnector()) {
-				log.info("All buffers are flushed now ..., exit with exit code "+0);
+				log.debug("All buffers are flushed now ..., exit with exit code "+0);
 				ShutDownCCF.exitCCF(0);
 			}
 			else {
