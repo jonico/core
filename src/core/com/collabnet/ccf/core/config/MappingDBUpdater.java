@@ -284,7 +284,7 @@ public class MappingDBUpdater extends LifecycleComponent implements
 		IOrderedMap[] params = new IOrderedMap[] { inputParameters };
 		synchronizationStatusDatabaseUpdater.connect();
 		synchronizationStatusDatabaseUpdater.deliver(params);
-		synchronizationStatusDatabaseUpdater.disconnect();
+		//synchronizationStatusDatabaseUpdater.disconnect();
 	}
 
 	private void createMapping(Element element, String sourceArtifactId,
@@ -353,7 +353,7 @@ public class MappingDBUpdater extends LifecycleComponent implements
 		identityMappingDatabaseReader.connect();
 		Object[] resultSet = identityMappingDatabaseReader.next(
 				inputParameters, 1000);
-		identityMappingDatabaseReader.disconnect();
+		//identityMappingDatabaseReader.disconnect();
 
 		if (resultSet == null || resultSet.length == 0) {
 			targetArtifactId = null;
@@ -464,7 +464,7 @@ public class MappingDBUpdater extends LifecycleComponent implements
 		IOrderedMap[] data = new IOrderedMap[] { inputParameters };
 		identityMappingDatabaseInserter.connect();
 		identityMappingDatabaseInserter.deliver(data);
-		identityMappingDatabaseInserter.disconnect();
+		//identityMappingDatabaseInserter.disconnect();
 	}
 
 	private void updateIdentityMapping(String sourceSystemId,
@@ -489,7 +489,7 @@ public class MappingDBUpdater extends LifecycleComponent implements
 		IOrderedMap[] params = new IOrderedMap[] { inputParameters };
 		identityMappingDatabaseUpdater.connect();
 		identityMappingDatabaseUpdater.deliver(params);
-		identityMappingDatabaseUpdater.disconnect();
+		//identityMappingDatabaseUpdater.disconnect();
 	}
 
 	public void reset(Object context) {

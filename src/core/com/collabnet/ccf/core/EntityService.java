@@ -363,13 +363,13 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 		}
 		boolean waitForIdentityMappedEvent = false;
 		int waitCount = 0;
-		identityMappingDatabaseReader.disconnect();
+		//identityMappingDatabaseReader.disconnect();
 		Object[] resultSet = null;
 		do {
 			identityMappingDatabaseReader.connect();
 			resultSet = identityMappingDatabaseReader.next(
 					inputParameters, 1000);
-			identityMappingDatabaseReader.disconnect();
+			//identityMappingDatabaseReader.disconnect();
 			if(artifactAction.equals(GenericArtifactHelper.ARTIFACT_ACTION_RESYNC)){
 				if(resultSet == null || resultSet.length == 0){
 					if(++waitCount < this.getIdentityMapEventWaitCount()){
@@ -497,12 +497,12 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 		inputParameters.add(targetRepositoryId);
 		inputParameters.add(sourceArtifactId);
 		inputParameters.add(artifactType);
-		hospitalDatabaseReader.disconnect();
+		//hospitalDatabaseReader.disconnect();
 		hospitalDatabaseReader.connect();
 		// TODO Find out whether 10000 is enough in hard cases
 		Object[] resultSet = hospitalDatabaseReader
 				.next(inputParameters, 10000);
-		hospitalDatabaseReader.disconnect();
+		//hospitalDatabaseReader.disconnect();
 		if (resultSet == null || resultSet.length == 0) {
 			// artifact is not in the hospital
 			return false;
