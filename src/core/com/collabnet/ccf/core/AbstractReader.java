@@ -54,10 +54,10 @@ public abstract class AbstractReader<T> extends Component implements IDataProces
 	/**
 	 * If the restart connector variable is set to true, all readers will begin
 	 * to flush their buffers and exit with a special error code (42) that will
-	 * cause service wrapper to restart the connector. 
+	 * cause service wrapper to restart the connector.
 	 */
 	private static boolean restartConnector=false;
-	
+
 	/**
 	 * If the shutDownConnector variable is set, this will cause service wrapper to flush all the buffers
 	 * and signal the shutdown hook thread that it is ready to exit
@@ -72,7 +72,7 @@ public abstract class AbstractReader<T> extends Component implements IDataProces
 	public void reset(Object context) {
 		// do nothing here
 	}
-	
+
 	/**
 	 * Initializes the Reader with an empty repository records HashMap.
 	 * The repositories synchronization waiting list and the repository ids in
@@ -154,14 +154,14 @@ public abstract class AbstractReader<T> extends Component implements IDataProces
 		} else {
 			return null;
 		}
-		
+
 		if (getAutoRestartPeriod() > 0) {
 			if (new Date().getTime() - startedDate.getTime() > getAutoRestartPeriod()) {
 				log.debug("Preparing to restart CCF, flushing buffers ...");
 				setRestartConnector(true);
 			}
 		}
-		
+
 		String sourceRepositoryId = this.getSourceRepositoryId(syncInfoIn);
 		log.debug("Received the SyncInfo for repository with id " + sourceRepositoryId);
 		RepositoryRecord record = repositoryRecordHashMap.get(sourceRepositoryId);
@@ -229,6 +229,7 @@ public abstract class AbstractReader<T> extends Component implements IDataProces
 					int maxMsToSleep = connectionManager.getMaximumRetryWaitingTime();
 					try {
 						artifactsToBeRead = this.getChangedArtifacts(syncInfo);
+						retry = false;
 					} catch(Exception e){
 						boolean connectionException = connectionManager.isUseStandardTimeoutHandlingCode() && this.handleException(e, connectionManager);
 						if(!connectionException){
@@ -310,6 +311,7 @@ public abstract class AbstractReader<T> extends Component implements IDataProces
 						else {
 							sortedGAs = new ArrayList<GenericArtifact>();
 						}
+						retry = false;
 					} catch(Exception e){
 						boolean connectionException = connectionManager.isUseStandardTimeoutHandlingCode() && this.handleException(e, connectionManager);
 						if(!connectionException){
@@ -836,19 +838,19 @@ public abstract class AbstractReader<T> extends Component implements IDataProces
 	public void setShipAttachmentsWithArtifact(boolean shipAttachmentsWithArtifact) {
 		this.shipAttachmentsWithArtifact = shipAttachmentsWithArtifact;
 	}
-	
+
 	private static final int RESTART_EXIT_CODE = 42;
-	
+
 	/**
 	 * This field contains the date when the CCF was started
 	 */
 	private Date startedDate=new Date();
-	
+
 	/**
 	 * This property denotes after how many seconds the CCF will restart automatically
 	 */
 	private int autoRestartPeriod=-1;
-	
+
 	/**
 	 * If you set this property, the CCF will exit (with exit code 42)
 	 * after the number of seconds you have specified.
@@ -893,5 +895,5 @@ public abstract class AbstractReader<T> extends Component implements IDataProces
 	public static boolean isShutDownConnector() {
 		return shutDownConnector;
 	}
-	
+
 }

@@ -114,6 +114,7 @@ public abstract class AbstractWriter<T> extends Component implements
 					log.error(message);
 					throw new CCFRuntimeException(message);
 				}
+				retry = false;
 			} catch (GenericArtifactParsingException e) {
 				String message = "Could not parse incoming GenericArtifact XML";
 				log.error(message, e);
