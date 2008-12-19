@@ -181,7 +181,7 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 										+ targetSystemId
 										+ " so artifact will not be skipped.");
 					} else {
-						log.warn("\nSource artifact last modified date in table"
+						log.warn("\nSource artifact last modified date in table "
 								+ DateUtil.format(sourceArtifactLastModifiedDateFromTable)
 								+ "\nSource artifact last modified date "+ DateUtil.format(sourceArtifactLastModifiedDate)
 								+ "\nSource artifact version from table "+ sourceArtifactVersionLongFromTable
@@ -199,8 +199,8 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 										+ sourceSystemId
 										+ targetRepositoryId
 										+ "-" + targetSystemId);
-						// TODO Set artifact ignore action?
-						return new Object[]{};
+						XPathUtils.addAttribute(element, GenericArtifactHelper.ARTIFACT_ACTION,	GenericArtifactHelper.ARTIFACT_ACTION_IGNORE);
+						return new Object[] {data};
 					}
 				}
 				targetArtifactVersion = results[3].toString();
