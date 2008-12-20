@@ -532,6 +532,7 @@
 		<property name="identityMappingDatabaseInserter"
 			ref="IdentityMappingDatabaseInserter">
 		</property>
+		<property name="updateSynchronizationStatusTable" value="false"/>
 	</bean>
 	
 	<bean id="IndentityMappingDatabaseReader"
