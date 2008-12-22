@@ -29,7 +29,7 @@ artifacts from an SFEE tracker into a database table.
 	The table that needs to be exported with the SFEE artifacts
 	id configured in this file	as
 	<bean id="DatabaseTableWriter"
-		class="org.openadaptor.auxil.connector.jdbc.writer.MapTableWriter">
+		class="org.openadaptor.auxil.connector.jdbc.writer.map.MapTableWriter">
 		<description>
 			This is the writer object that writes the artifact data
 			into the database table.
@@ -82,7 +82,7 @@ artifacts from an SFEE tracker into a database table.
 		</description>
 		<property name="pollLimit" value="n" />
 		<property name="delegate" ref="SynchronizationStatusPollingReaderJdbcConnection" />
-		<property name="pollIntervalSecs" value="0" />
+		<property name="pollIntervalSecs" value="0" /><property name="reconnectDelegateBetweenPolls" value="false"/>
 	</bean>
 
 5. Please note that this integration scenario does not currently support
@@ -150,14 +150,14 @@ artifacts from an SFEE tracker into a database table.
 		<property name="jdbcConnection" ref="HospitalJDBCConnection" />
 		<property name="writer">
 		<bean
-			class="org.openadaptor.auxil.connector.jdbc.writer.MapTableWriter">
+			class="org.openadaptor.auxil.connector.jdbc.writer.map.MapTableWriter">
 			<property name="tableName" value="HOSPITAL" />
 		</bean>
 		</property>
 	</bean>
 	
 	<bean id="HospitalJDBCConnection"
-		class="org.openadaptor.auxil.connector.jdbc.JDBCConnection">
+		class="org.openadaptor.auxil.connector.jdbc.JDBCConnection" scope="prototype">
 		<description>
 			This defines jdbc connection that will be used by the
 			HospitalWriter
@@ -184,7 +184,7 @@ artifacts from an SFEE tracker into a database table.
 		</description>
 		<property name="pollLimit" value="2" />
 		<property name="delegate" ref="SynchronizationStatusDatabaseReader" />
-		<property name="pollIntervalSecs" value="0" />
+		<property name="pollIntervalSecs" value="0" /><property name="reconnectDelegateBetweenPolls" value="false"/>
 	</bean>
 	<bean id="SynchronizationStatusDatabaseReader"
 		class="org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector">
@@ -202,7 +202,7 @@ artifacts from an SFEE tracker into a database table.
 		</property>
 	</bean>
 	<bean id="JDBCConnection"
-		class="org.openadaptor.auxil.connector.jdbc.JDBCConnection">
+		class="org.openadaptor.auxil.connector.jdbc.JDBCConnection" scope="prototype">
 		<description>
 			This defines jdbc connection that will be used by the
 			SynchronizationStatusPollingReader
@@ -214,7 +214,7 @@ artifacts from an SFEE tracker into a database table.
 	</bean>
 	
 	<bean id="JdbcConnection"
-		class="org.openadaptor.auxil.connector.jdbc.JDBCConnection">
+		class="org.openadaptor.auxil.connector.jdbc.JDBCConnection" scope="prototype">
 		<description>
 			This defines jdbc connection that will be used by the
 			SynchronizationStatusPollingReader
@@ -293,7 +293,7 @@ artifacts from an SFEE tracker into a database table.
 		<property name="jdbcConnection" ref="JdbcConnection" />
 	</bean>
 	<bean id="DatabaseTableWriter"
-		class="org.openadaptor.auxil.connector.jdbc.writer.MapTableWriter">
+		class="org.openadaptor.auxil.connector.jdbc.writer.map.MapTableWriter">
 		<description>
 			This is the writer object that writes the artifact data
 			into the database table.
