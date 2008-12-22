@@ -30,7 +30,7 @@ public class SFEEAppHandler {
 
 	private ISourceForgeSoap mSfSoap;
 	private String mSessionId;
-	private String mServerURL;
+	//private String mServerURL;
 	/**
 	 * log4j logger instance
 	 */
@@ -38,7 +38,7 @@ public class SFEEAppHandler {
 	public SFEEAppHandler(ISourceForgeSoap sfSoap, String sessionId, String serverURL) {
 		this.mSfSoap = sfSoap;
 		this.mSessionId = sessionId;
-		this.mServerURL = serverURL;
+		//this.mServerURL = serverURL;
 	}
 
 	/**
