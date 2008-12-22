@@ -5,7 +5,7 @@ import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.openadaptor.auxil.connector.jdbc.writer.MapTableWriter;
+import org.openadaptor.auxil.connector.jdbc.writer.map.MapTableWriter;
 
 public class MapTableUpdater extends MapTableWriter {
 	private String sql = null;
@@ -24,12 +24,13 @@ public class MapTableUpdater extends MapTableWriter {
 	public void setSql(String sql) {
 		this.sql = sql;
 	}
-	protected PreparedStatement initialiseReusablePreparedStatement() {
+	
+	protected void initialiseReusablePreparedStatement() {
 		try {
-			return connection.prepareStatement(sql);
+			reusablePreparedStatement=connection.prepareStatement(sql);
 		} catch (SQLException e) {
 			log.error("While creating an prepared statement, an error occured: "+e.getMessage());
 		}
-		return null;
+		return;
 	}
 }

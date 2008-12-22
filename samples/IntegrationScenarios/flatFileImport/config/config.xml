@@ -84,7 +84,7 @@ artifacts data from a CSV file into an SFEE tracker.
 	<property name="jdbcConnection" ref="jdbcConnection" />
 	<property name="writer">
 		<bean
-			class="org.openadaptor.auxil.connector.jdbc.writer.MapTableWriter">
+			class="org.openadaptor.auxil.connector.jdbc.writer.map.MapTableWriter">
 			<property name="tableName" value="HOSPITAL" />
 			<property name="outputColumns">
 				<list>
@@ -220,7 +220,7 @@ artifacts data from a CSV file into an SFEE tracker.
   	</bean>
   	
   	-->
-  	<bean id="jdbcConnection" class="org.openadaptor.auxil.connector.jdbc.JDBCConnection">
+  	<bean id="jdbcConnection" class="org.openadaptor.auxil.connector.jdbc.JDBCConnection" scope="prototype">
     <description>This defines the jdbc connection for the hospital.</description>
     <property name="driver" value="${ccf.db.driver}" />
 	<property name="url" value="${ccf.db.url}" />

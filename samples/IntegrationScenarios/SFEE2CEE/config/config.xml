@@ -79,7 +79,7 @@
 		<property name="jdbcConnection" ref="HospitalJDBCConnection" />
 		<property name="writer">
 		<bean
-			class="org.openadaptor.auxil.connector.jdbc.writer.MapTableWriter">
+			class="org.openadaptor.auxil.connector.jdbc.writer.map.MapTableWriter">
 			<property name="tableName" value="HOSPITAL" />
 		</bean>
 		</property>
@@ -105,7 +105,7 @@
         <property name="pollLimit" value="-1" />
         <property name="delegate"
             ref="SFEE2CEESynchronizationStatusDatabaseReader" />
-        <property name="pollIntervalSecs" value="0" />
+        <property name="pollIntervalSecs" value="0" /><property name="reconnectDelegateBetweenPolls" value="false"/>
     </bean>
     
     <bean id="SFEE2CEESynchronizationStatusDatabaseReader"
@@ -127,7 +127,7 @@
     </bean>
 	
 	<bean id="SFEE2CEEJDBCConnection"
-		class="org.openadaptor.auxil.connector.jdbc.JDBCConnection">
+		class="org.openadaptor.auxil.connector.jdbc.JDBCConnection" scope="prototype">
 		<description>
 			This defines jdbc connection that will be used by the
 			SynchronizationStatusPollingReader
@@ -139,7 +139,7 @@
 	</bean>
 	
 	<bean id="HospitalJDBCConnection"
-		class="org.openadaptor.auxil.connector.jdbc.JDBCConnection">
+		class="org.openadaptor.auxil.connector.jdbc.JDBCConnection" scope="prototype">
 		<description>
 			This defines jdbc connection that will be used by the
 			HospitalWriter
@@ -372,7 +372,7 @@
 	</bean>
 	
 	<bean id="IdentityMappingTableInserter"
-		class="org.openadaptor.auxil.connector.jdbc.writer.MapTableWriter">
+		class="org.openadaptor.auxil.connector.jdbc.writer.map.MapTableWriter">
 		<description>
 			This is the writer object that writes the artifact mapping
 			information into the database table.

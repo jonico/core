@@ -5,7 +5,7 @@
 	<classpathentry kind="src" path="samples/IntegrationScenarios/customReader/src"/>
 	<classpathentry kind="src" path="tests"/>
 	<classpathentry excluding="lib/**" kind="src" path="src/core"/>
-	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/openadaptor.jar"/>
+	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/openadaptor.jar" sourcepath="C:/Documents and Settings/jnicolai/My Documents/openAdaptorSourceCode/src"/>
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/openadaptor-spring.jar"/>
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/activation.jar"/>
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/axis_1.4.jar"/>
@@ -34,5 +34,6 @@
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/js_1_6R5.jar"/>
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/wsdl4j_1.6.2.jar"/>
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/wss4j-1.5.1.jar"/>
+	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/joda-time-1.5.2.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
