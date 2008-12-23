@@ -172,7 +172,9 @@ public abstract class AbstractReader<T> extends Component implements IDataProces
 			repositoryRecordHashMap.put(sourceRepositoryId, record);
 		}
 		else {
-//			record.setSyncInfo(syncInfoIn);
+			if (record.getArtifactsToBeReadList().isEmpty() && record.getArtifactsToBeShippedList().isEmpty()) {
+				record.setSyncInfo(syncInfoIn);		
+			}
 		}
 		if(!repositoryRecordsInRepositorySynchronizationWaitingList.contains(sourceRepositoryId)){
 			log.debug(sourceRepositoryId + " is not on the waiting list. Adding....");
@@ -218,7 +220,7 @@ public abstract class AbstractReader<T> extends Component implements IDataProces
 			else if(artifactsToBeReadList.isEmpty() && !isRestartConnector() && !isShutDownConnector()){
 				log.debug("There are no artifacts to be read. Checking if there are"+
 						" changed artifacts in repository " + sourceRepositoryId);
-				currentRecord.setSyncInfo(syncInfoIn);
+				// currentRecord.setSyncInfo(syncInfoIn);
 				syncInfo = currentRecord.getSyncInfo();
 				// TODO Does it make sense to insert retry code here or is it better just to try it again later?
 				int numberOfTries = 1;
