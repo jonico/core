@@ -86,6 +86,9 @@ public class CCFExceptionToOrderedMapConvertor extends
 	private static final Log log = LogFactory
 			.getLog(CCFExceptionToOrderedMapConvertor.class);
 
+	static final String FIXED = "FIXED";
+	static final String REPROCESSED = "REPROCESSED";
+	
 	/**
 	 * Converts the <code>record</code> into an <code>IOrderedMap</code> .
 	 * 
@@ -95,6 +98,10 @@ public class CCFExceptionToOrderedMapConvertor extends
 	 */
 	@SuppressWarnings("unchecked")
 	protected Object convert(Object record) {
+		// we have to set these columns due to an SQL incompatibility issue with these fields
+		setFixedColName(FIXED);
+		setReprocessedColName(REPROCESSED);
+		
 		log.warn("Artifact reached ambulance");
 		// first of all we pass the record in our parent method
 		Object preprocessedMap = super.convert(record);
@@ -103,7 +110,14 @@ public class CCFExceptionToOrderedMapConvertor extends
 			return preprocessedMap;
 		}
 		IOrderedMap map = (IOrderedMap) preprocessedMap;
-
+		
+		// remove entities with wrong data type (string instead of boolean)
+		map.remove(FIXED);
+		map.remove(REPROCESSED);
+		
+		map.put(FIXED, false);
+		map.put(REPROCESSED, false);
+		
 		MessageException messageException = (MessageException) record;
 		map.put(exceptionMessageColName, messageException.getException()
 				.getMessage());
