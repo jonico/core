@@ -295,7 +295,8 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 					+".\nBut the Entity Service could not find a target artifact id for source artifact id "+sourceArtifactId
 					+". Discarding the artifact.";
 					log.warn(cause);
-					return new Object[]{};
+					XPathUtils.addAttribute(element, GenericArtifactHelper.ARTIFACT_ACTION,	GenericArtifactHelper.ARTIFACT_ACTION_IGNORE);
+					return new Object[] {data};
 				}
 		    }
 		}
