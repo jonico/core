@@ -191,10 +191,7 @@ public abstract class AbstractReader<T> extends Component implements
 			record = new RepositoryRecord(sourceRepositoryId, syncInfoIn);
 			repositoryRecordHashMap.put(sourceRepositoryId, record);
 		} else {
-			if (record.getArtifactsToBeReadList().isEmpty()
-					&& record.getArtifactsToBeShippedList().isEmpty()) {
-				record.setSyncInfo(syncInfoIn);
-			}
+			record.setNewSyncInfo(syncInfoIn);
 		}
 		if (!repositoryRecordsInRepositorySynchronizationWaitingList
 				.contains(sourceRepositoryId)) {
@@ -258,7 +255,8 @@ public abstract class AbstractReader<T> extends Component implements
 						.debug("There are no artifacts to be read. Checking if there are"
 								+ " changed artifacts in repository "
 								+ sourceRepositoryId);
-				// currentRecord.setSyncInfo(syncInfoIn);
+				// alll our buffers are flushed, we take new syncInfo now
+				currentRecord.switchToNewSyncInfo();
 				syncInfo = currentRecord.getSyncInfo();
 				// TODO Does it make sense to insert retry code here or is it
 				// better just to try it again later?
