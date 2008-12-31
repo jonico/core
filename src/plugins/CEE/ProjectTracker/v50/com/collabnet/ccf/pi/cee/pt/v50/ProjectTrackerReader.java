@@ -60,6 +60,7 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 	private String username = null;
 
 	private String connectorUserDisplayName = null;
+	private String resyncUserDisplayName = null;
 	private HashMap<String, String> movedArtifacts = new HashMap<String, String>();
 
 	public static final String ATTACHMENT_TAG_NAME = "attachment";
@@ -664,7 +665,8 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 			String commentDate = comment.getCommentDate();
 			long commentTime = Long.parseLong(commentDate);
 			String commentor = comment.getCommenter();
-			if(commentTime > fromTime && (!commentor.equals(this.getUsername()))){
+			if(commentTime > fromTime && (!commentor.equals(this.getUsername()))
+					&& (!commentor.equals(this.getResyncUserName()))) {
 				String commentText = comment.getCommentText();
 				String commenter = comment.getCommenter();
 				commentText = "\nOriginal commenter: " + commenter + "\n" + commentText;
@@ -690,7 +692,8 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 							if(historyTime > fromTime){
 								String reason = transaction.getReason();
 								String reasonUser = transaction.getModifiedBy();
-								if(reasonUser.equals(this.getConnectorUserDisplayName())){
+								if(reasonUser.equals(this.getConnectorUserDisplayName()) ||
+										reasonUser.equals(this.getResyncUserDisplayName())){
 									continue;
 								}
 								if(!StringUtils.isEmpty(reason)) {
@@ -1062,6 +1065,12 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 					this));
 		}
 
+		if (getResyncUserDisplayName() == null) {
+			log.error("resyncUserDisplayName-property not set");
+			exceptions.add(new ValidationException("resyncUserDisplayName-property not set",
+					this));
+		}
+
 		if (getServerUrl() == null) {
 			log.error("serverUrl-property not set");
 			exceptions.add(new ValidationException(
@@ -1110,5 +1119,13 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
 	 * created.
 	 */
 	private String resyncUserName;
+
+	public String getResyncUserDisplayName() {
+		return resyncUserDisplayName;
+	}
+
+	public void setResyncUserDisplayName(String resyncUserDisplayName) {
+		this.resyncUserDisplayName = resyncUserDisplayName;
+	}
 
 }

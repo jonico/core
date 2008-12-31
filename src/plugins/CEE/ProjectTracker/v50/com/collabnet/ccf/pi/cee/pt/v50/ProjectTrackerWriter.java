@@ -331,12 +331,12 @@ public class ProjectTrackerWriter extends AbstractWriter<TrackerWebServicesClien
 			}
 			String targetArtifactTypeNamespace = trackerArtifactType.getNamespace();
 			String targetArtifactTypeTagName = trackerArtifactType.getTagName();
-			List<ClientArtifact> cla = null;
-			cla = new ArrayList<ClientArtifact>();
+			//List<ClientArtifact> cla = null;
+			//cla = new ArrayList<ClientArtifact>();
 			ClientArtifact ca = this.getClientArtifactFromGenericArtifact(ga, twsclient,
 					targetArtifactTypeNamespace, targetArtifactTypeTagName,null,trackerArtifactType);
-			cla.add(ca);
-			ClientArtifactListXMLHelper artifactHelper = twsclient.createArtifactList(cla);
+			//cla.add(ca);
+			ClientArtifactListXMLHelper artifactHelper = twsclient.createArtifactList(ca);
 			ptHelper.processWSErrors(artifactHelper);
 
 			List<ClientArtifact> artifacts = artifactHelper.getAllArtifacts();

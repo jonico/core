@@ -15,6 +15,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -46,6 +47,8 @@ import org.w3c.dom.Node;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
+import com.collabnet.ccf.pi.cee.pt.v50.ProjectTrackerHelper;
+import com.collabnet.ccf.pi.cee.pt.v50.ProjectTrackerReader;
 import com.collabnet.core.ws.exception.WSException;
 import com.collabnet.core.ws.services.Dispatcher;
 import com.collabnet.core.ws.services.DispatcherService;
@@ -148,6 +151,45 @@ public class TrackerWebServicesClient {
         Document queryResponseDocument = toDocument(queryResponse);
         ClientArtifactListXMLHelper result = new ClientArtifactListXMLHelper(queryResponseDocument);
         return result.getAllArtifacts();
+	}
+
+	public ClientArtifactListXMLHelper createArtifactList(ClientArtifact artifact)
+																	throws Exception {
+		this.sanitizeComments(artifact);
+		Document doc = null;
+		doc = createNewXMLDocument(DEFAULT_NAMESPACE, "ns1:"+"createArtifactList");
+		ArrayList<ClientArtifact> caList = new ArrayList<ClientArtifact>();
+		caList.add(artifact);
+		ClientArtifactListXMLHelper helper = this.createOrUpdateArtifactList(doc, caList, null);
+		ProjectTrackerHelper ptHelper = ProjectTrackerHelper.getInstance();
+		ptHelper.processWSErrors(helper);
+		List<ClientArtifactComment> comments = artifact.getComments();
+		if(comments != null && comments.size() > 0){
+			List<ClientArtifact> responseArtifacts = helper.getAllArtifacts();
+			ClientArtifact responseArtifact = responseArtifacts.get(0);
+			String createdArtifactId =
+				responseArtifact.getAttributeValue(ProjectTrackerReader.TRACKER_NAMESPACE, "id");
+			artifact.addAttributeValue(ProjectTrackerReader.TRACKER_NAMESPACE, "id", createdArtifactId);
+			String modifiedOn = responseArtifact.getAttributeValue(
+					ProjectTrackerReader.TRACKER_NAMESPACE, ProjectTrackerReader.MODIFIED_ON_FIELD);
+			long modifiedOnMilliSeconds = Long.parseLong(modifiedOn);
+			helper = this.updateArtifactList(caList, modifiedOnMilliSeconds);
+		}
+		return helper;
+	}
+
+	private void sanitizeComments(ClientArtifact artifact){
+		List<ClientArtifactComment> comments = artifact.getComments();
+		if(comments != null) {
+			Iterator<ClientArtifactComment> itComments = comments.iterator();
+			while(itComments.hasNext()){
+				ClientArtifactComment comment = itComments.next();
+				String commentText = comment.getCommentText();
+				if(StringUtils.isEmpty(commentText)){
+					itComments.remove();
+				}
+			}
+		}
 	}
 
 	/**
