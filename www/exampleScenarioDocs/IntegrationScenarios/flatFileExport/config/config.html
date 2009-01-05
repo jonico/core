@@ -99,32 +99,7 @@
 	sfee.server.1.username=&lt;connector user&gt;
 	sfee.server.1.password=&lt;connector user's password&gt;
 
-2. Configuring the pollLimit
-	If there are n number of artifacts present in the SFEE tracker
-	you need to configure the pollLimit property for the SynchronizationStatusPollingReader
-	 as follows in this file
-	
-		&lt;bean id="SynchronizationStatusPollingReader"
-		class="com.collabnet.ccf.core.test.plugins.SimpleLoopingPollingReadConnector"&gt;
-		&lt;description&gt;
-			This polling connector polls the CCF database tables that contain the repository
-			mapping and the synchronization info and feeds the details to the source repository
-			reader piped down the line. Please refer the processMap configuration for the Router
-			bean.
-			
-			In this case this polling reader reads the synchronization status using the database
-			read connector configured in the property delegate.
-			
-			Polling interval seconds is configured as n to indicate that the polling reader should
-			read from the database read connector n number of times in order to ship all the
-			SFEE tracker artifacts.
-		&lt;/description&gt;
-		&lt;property name="pollLimit" value="n" /&gt;
-		&lt;property name="delegate" ref="SynchronizationStatusPollingReaderJdbcConnection" /&gt;
-		&lt;property name="pollIntervalSecs" value="0" /&gt;&lt;property name="reconnectDelegateBetweenPolls" value="false"/&gt;
-	&lt;/bean&gt;
-
-3. Please note that this integration scenario currently does not support
+2. Please note that this integration scenario currently does not support
 	a) exporting multi-select field values.
 		Mutiselect field values will not be exported properly if there are
 		more than one field values are selected in the tracker.
@@ -153,7 +128,7 @@
 			
 			Polling interval seconds is configured as 0 to indicate that the polling reader should
 			read from the database read connector continuously without and pauses in between.
-		</td></tr><tr><td colspan="3"><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">pollLimit</td><td>8</td><td/></tr><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">delegate</td><td><a href="#SynchronizationStatusDatabaseReader">SynchronizationStatusDatabaseReader</a></td><td/></tr><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">pollIntervalSecs</td><td>0</td><td/></tr><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">reconnectDelegateBetweenPolls</td><td>false</td><td/></tr></td></tr></table></p><p xmlns="http://www.w3.org/TR/xhtml1/strict"><table border="1" bgcolor="#CCCCCC"><colgroup><col bgcolor="#CCCCCC"/><col bgcolor="#FFFFFF"/><col bgcolor="#CCCCCC"/><col bgcolor="#FFFFFF"/></colgroup><tr bgcolor="#000099"><th colspan="3"><font color="white"><a class="th" name="SynchronizationStatusDatabaseReader">SynchronizationStatusDatabaseReader</a> : <a class="th">org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector</a> | <a class="th" href="../../../../javadocs/org/openadaptor/auxil/connector/jdbc/reader/JDBCReadConnector.html">JavaDoc</a> | <a class="th" href="../../../beans2config.html#org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector">BeansToConfig</a></font></th></tr><tr bgcolor="#CCCCCC"><td colspan="3">
+		</td></tr><tr><td colspan="3"><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">pollLimit</td><td>0</td><td/></tr><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">delegate</td><td><a href="#SynchronizationStatusDatabaseReader">SynchronizationStatusDatabaseReader</a></td><td/></tr><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">pollIntervalSecs</td><td>0</td><td/></tr><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">reconnectDelegateBetweenPolls</td><td>false</td><td/></tr></td></tr></table></p><p xmlns="http://www.w3.org/TR/xhtml1/strict"><table border="1" bgcolor="#CCCCCC"><colgroup><col bgcolor="#CCCCCC"/><col bgcolor="#FFFFFF"/><col bgcolor="#CCCCCC"/><col bgcolor="#FFFFFF"/></colgroup><tr bgcolor="#000099"><th colspan="3"><font color="white"><a class="th" name="SynchronizationStatusDatabaseReader">SynchronizationStatusDatabaseReader</a> : <a class="th">org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector</a> | <a class="th" href="../../../../javadocs/org/openadaptor/auxil/connector/jdbc/reader/JDBCReadConnector.html">JavaDoc</a> | <a class="th" href="../../../beans2config.html#org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector">BeansToConfig</a></font></th></tr><tr bgcolor="#CCCCCC"><td colspan="3">
 			This is the JDBC read connector used by the SynchronizationStatusPollingReader to read the
 			repository mapping and the synchronization info.
 		</td></tr><tr><td colspan="3"><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">jdbcConnection</td><td><a href="#JDBCConnection">JDBCConnection</a></td><td/></tr><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">batchSize</td><td>1</td><td/></tr><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">resultSetConverter</td><td><a href="#SynchronizationStatusXMLConverter">SynchronizationStatusXMLConverter</a></td><td/></tr><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">sql</td><td>${ccf.sfeereader.poller.sql}</td></tr></td></tr></table></p><p xmlns="http://www.w3.org/TR/xhtml1/strict"><table border="1" bgcolor="#CCCCCC"><colgroup><col bgcolor="#CCCCCC"/><col bgcolor="#FFFFFF"/><col bgcolor="#CCCCCC"/><col bgcolor="#FFFFFF"/></colgroup><tr bgcolor="#000099"><th colspan="3"><font color="white"><a class="th" name="JDBCConnection">JDBCConnection</a> : <a class="th">org.openadaptor.auxil.connector.jdbc.JDBCConnection</a> | <a class="th" href="../../../../javadocs/org/openadaptor/auxil/connector/jdbc/JDBCConnection.html">JavaDoc</a> | <a class="th" href="../../../beans2config.html#org.openadaptor.auxil.connector.jdbc.JDBCConnection">BeansToConfig</a></font></th></tr><tr bgcolor="#CCCCCC"><td colspan="3">
@@ -170,7 +145,7 @@
 			an XSLT transformer component such as com.collabnet.ccf.core.transformer.XsltProcessor
 			or an EntityService component depending on the target SFEE tracker needs the data
 			to be translated to fit into its fields or not.
-		</td></tr><tr><td colspan="3"><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">username</td><td>${sfee.server.1.username}</td><td/></tr><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">password</td><td>${sfee.server.1.password}</td><td/></tr><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">serverUrl</td><td>${sfee.server.1.url}</td><td/></tr><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">connectionManager</td><td><a href="#SFEEConnectionManager">SFEEConnectionManager</a></td><td/></tr><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">sleepInterval</td><td>1000</td><td/></tr><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">shipAttachments</td><td>false</td><td/></tr><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">ignoreConnectorUserUpdates</td><td>false</td><td/></tr></td></tr></table></p><p xmlns="http://www.w3.org/TR/xhtml1/strict"><table border="1" bgcolor="#CCCCCC"><colgroup><col bgcolor="#CCCCCC"/><col bgcolor="#FFFFFF"/><col bgcolor="#CCCCCC"/><col bgcolor="#FFFFFF"/></colgroup><tr bgcolor="#000099"><th colspan="3"><font color="white"><a class="th" name="SFEEConnectionManager">SFEEConnectionManager</a> : <a class="th">com.collabnet.ccf.core.eis.connection.ConnectionManager</a> | <a class="th" href="../../../../javadocs/com/collabnet/ccf/core/eis/connection/ConnectionManager.html">JavaDoc</a> | <a class="th" href="../../../beans2config.html#com.collabnet.ccf.core.eis.connection.ConnectionManager">BeansToConfig</a></font></th></tr><tr bgcolor="#CCCCCC"><td colspan="3">
+		</td></tr><tr><td colspan="3"><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">username</td><td>${sfee.server.1.username}</td><td/></tr><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">password</td><td>${sfee.server.1.password}</td><td/></tr><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">serverUrl</td><td>${sfee.server.1.url}</td><td/></tr><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">connectionManager</td><td><a href="#SFEEConnectionManager">SFEEConnectionManager</a></td><td/></tr><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">sleepInterval</td><td>1000</td><td/></tr><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">shipAttachments</td><td>false</td><td/></tr><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">ignoreConnectorUserUpdates</td><td>false</td><td/></tr><tr bgcolor="#FFFFFF"><td bgcolor="#CCCCCC">shutdownCCFAfterInitialSync</td><td>true</td><td/></tr></td></tr></table></p><p xmlns="http://www.w3.org/TR/xhtml1/strict"><table border="1" bgcolor="#CCCCCC"><colgroup><col bgcolor="#CCCCCC"/><col bgcolor="#FFFFFF"/><col bgcolor="#CCCCCC"/><col bgcolor="#FFFFFF"/></colgroup><tr bgcolor="#000099"><th colspan="3"><font color="white"><a class="th" name="SFEEConnectionManager">SFEEConnectionManager</a> : <a class="th">com.collabnet.ccf.core.eis.connection.ConnectionManager</a> | <a class="th" href="../../../../javadocs/com/collabnet/ccf/core/eis/connection/ConnectionManager.html">JavaDoc</a> | <a class="th" href="../../../beans2config.html#com.collabnet.ccf.core.eis.connection.ConnectionManager">BeansToConfig</a></font></th></tr><tr bgcolor="#CCCCCC"><td colspan="3">
 			The connection manager implements a connection pooling mechanism where the 
 			connections to multiple systems are cached for the readers and writers
 			to retrieve when needed. Before returning the connection to the client
