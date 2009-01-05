@@ -25,32 +25,7 @@ $HeadURL$
 	sfee.server.1.username=<connector user>
 	sfee.server.1.password=<connector user's password>
 
-2. Configuring the pollLimit
-	If there are n number of artifacts present in the SFEE tracker
-	you need to configure the pollLimit property for the SynchronizationStatusPollingReader
-	 as follows in this file
-	
-		<bean id="SynchronizationStatusPollingReader"
-		class="com.collabnet.ccf.core.test.plugins.SimpleLoopingPollingReadConnector">
-		<description>
-			This polling connector polls the CCF database tables that contain the repository
-			mapping and the synchronization info and feeds the details to the source repository
-			reader piped down the line. Please refer the processMap configuration for the Router
-			bean.
-			
-			In this case this polling reader reads the synchronization status using the database
-			read connector configured in the property delegate.
-			
-			Polling interval seconds is configured as n to indicate that the polling reader should
-			read from the database read connector n number of times in order to ship all the
-			SFEE tracker artifacts.
-		</description>
-		<property name="pollLimit" value="n" />
-		<property name="delegate" ref="SynchronizationStatusPollingReaderJdbcConnection" />
-		<property name="pollIntervalSecs" value="0" /><property name="reconnectDelegateBetweenPolls" value="false"/>
-	</bean>
-
-3. Please note that this integration scenario currently does not support
+2. Please note that this integration scenario currently does not support
 	a) exporting multi-select field values.
 		Mutiselect field values will not be exported properly if there are
 		more than one field values are selected in the tracker.
@@ -145,7 +120,7 @@ $HeadURL$
 			Polling interval seconds is configured as 0 to indicate that the polling reader should
 			read from the database read connector continuously without and pauses in between.
 		</description>
-		<property name="pollLimit" value="8" />
+		<property name="pollLimit" value="0" />
 		<property name="delegate" ref="SynchronizationStatusDatabaseReader" />
 		<property name="pollIntervalSecs" value="0" /><property name="reconnectDelegateBetweenPolls" value="false"/>
 	</bean>
@@ -204,6 +179,7 @@ $HeadURL$
 		<property name="sleepInterval" value="1000"></property>
 		<property name="shipAttachments" value="false" />
 		<property name="ignoreConnectorUserUpdates" value="false"/>
+		<property name="shutdownCCFAfterInitialSync" value="true"/>
 	</bean>
 	<bean id="SFEEConnectionManager"
 		class="com.collabnet.ccf.core.eis.connection.ConnectionManager">
