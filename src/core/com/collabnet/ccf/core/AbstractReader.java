@@ -68,6 +68,12 @@ public abstract class AbstractReader<T> extends Component implements
 	public static final long DEFAULT_MAX_ATTACHMENT_SIZE_PER_ARTIFACT = 10 * 1024 * 1024;
 	private long maxAttachmentSizePerArtifact = DEFAULT_MAX_ATTACHMENT_SIZE_PER_ARTIFACT;
 	private ConnectionManager<T> connectionManager;
+	
+	/**
+	 * This variable is set to false until we get the first reoccuring synchronization status record
+	 * which means that we have processed the initial synchronization status records
+	 */
+	private boolean connectorHasReadAllInitialSynchronizationStatusRecords=false;
 	/**
 	 * If the restart connector variable is set to true, all readers will begin
 	 * to flush their buffers and exit with a special error code (42) that will
@@ -191,6 +197,7 @@ public abstract class AbstractReader<T> extends Component implements
 			record = new RepositoryRecord(sourceRepositoryId, syncInfoIn);
 			repositoryRecordHashMap.put(sourceRepositoryId, record);
 		} else {
+			connectorHasReadAllInitialSynchronizationStatusRecords=true;
 			record.setNewSyncInfo(syncInfoIn);
 		}
 		if (!repositoryRecordsInRepositorySynchronizationWaitingList
@@ -482,7 +489,7 @@ public abstract class AbstractReader<T> extends Component implements
 				log
 						.debug("All buffers are flushed now ..., exit with exit code " + 0);
 				ShutDownCCF.exitCCF(0);
-			} else {
+			} else if (connectorHasReadAllInitialSynchronizationStatusRecords) {
 				log
 						.debug("There are no artifacts to be shipped from any of the repositories. Sleeping");
 				Thread.sleep(sleepInterval);
