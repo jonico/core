@@ -74,6 +74,14 @@ public abstract class AbstractReader<T> extends Component implements
 	 * which means that we have processed the initial synchronization status records
 	 */
 	private boolean connectorHasReadAllInitialSynchronizationStatusRecords=false;
+	
+	/**
+	 * Setting this variable to true causes the CCF to shutdown after there are no more out of date
+	 * artifacts of all repositories to be synchronized at this time.
+	 * This property is useful for scenarios that just like to take a snapshot of a repository.
+	 */
+	private boolean shutdownCCFAfterInitialSync=false;
+	
 	/**
 	 * If the restart connector variable is set to true, all readers will begin
 	 * to flush their buffers and exit with a special error code (42) that will
@@ -490,9 +498,15 @@ public abstract class AbstractReader<T> extends Component implements
 						.debug("All buffers are flushed now ..., exit with exit code " + 0);
 				ShutDownCCF.exitCCF(0);
 			} else if (connectorHasReadAllInitialSynchronizationStatusRecords) {
-				log
-						.debug("There are no artifacts to be shipped from any of the repositories. Sleeping");
-				Thread.sleep(sleepInterval);
+				if (isShutdownCCFAfterInitialSync()) {
+					log.info("All repositories are in synch at this time, shutting down");
+					setShutDownConnector(true);
+				}
+				else {
+					log
+							.debug("There are no artifacts to be shipped from any of the repositories. Sleeping");
+					Thread.sleep(sleepInterval);
+				}
 			}
 		} catch (InterruptedException e) {
 			String cause = "Thread is interrupted";
@@ -1041,4 +1055,27 @@ public abstract class AbstractReader<T> extends Component implements
 		return shutDownConnector;
 	}
 
+	/**
+	 * Setting this variable to true causes the CCF to shutdown after there are no more out of date
+	 * artifacts of all repositories to be synchronized at this time.
+	 * This property is useful for scenarios that just like to take a snapshot of a repository.
+	 * The default value is false (connector will not stop) 
+	 * 
+	 * @param shutdownCCFAfterInitialSync controls whether to stop after initial export
+	 */
+	public void setShutdownCCFAfterInitialSync(boolean shutdownCCFAfterInitialSync) {
+		this.shutdownCCFAfterInitialSync = shutdownCCFAfterInitialSync;
+	}
+
+	/**
+	 * If this property is set to true, the CCF shuts down after there are no more out of date
+	 * artifacts of all repositories to be synchronized at this time.
+	 * This property is useful for scenarios that just like to take a snapshot of a repository.
+	 * The default value is false (connector will not stop) 
+	 * 
+	 * @return true if connector stops after initial export
+	 */
+	public boolean isShutdownCCFAfterInitialSync() {
+		return shutdownCCFAfterInitialSync;
+	}
 }
