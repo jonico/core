@@ -24,5 +24,11 @@
     <directory>Generic Artifact Format</directory>
     <ordinal>4</ordinal>
   </subpage>
+  <subpage>
+    <id>r06jyr</id>
+    <name>Wiki</name>
+    <directory>Wiki</directory>
+    <ordinal>5</ordinal>
+  </subpage>
 </structure>
 
