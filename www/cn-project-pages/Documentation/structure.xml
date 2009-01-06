@@ -7,27 +7,27 @@
     <ordinal>1</ordinal>
   </subpage>
   <subpage>
+    <id>r06jyr</id>
+    <name>Wiki</name>
+    <directory>Wiki</directory>
+    <ordinal>2</ordinal>
+  </subpage>
+  <subpage>
     <id>lTTUmC</id>
     <name>How to get started</name>
     <directory>How to get started</directory>
-    <ordinal>2</ordinal>
+    <ordinal>3</ordinal>
   </subpage>
   <subpage>
     <id>u0EQt1</id>
     <name>FAQ</name>
     <directory>FAQ</directory>
-    <ordinal>3</ordinal>
+    <ordinal>4</ordinal>
   </subpage>
   <subpage>
     <id>nLKvgT</id>
     <name>Generic Artifact Format</name>
     <directory>Generic Artifact Format</directory>
-    <ordinal>4</ordinal>
-  </subpage>
-  <subpage>
-    <id>r06jyr</id>
-    <name>Wiki</name>
-    <directory>Wiki</directory>
     <ordinal>5</ordinal>
   </subpage>
 </structure>
