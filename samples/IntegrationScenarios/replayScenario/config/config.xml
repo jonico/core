@@ -141,7 +141,7 @@
 					<property name="script">
 						<value>
 						 <![CDATA[
-						 	ERROR_CODE != null && ORIGINATING_COMPONENT == 'SFEEWriter'
+						 	ERROR_CODE != null && (ORIGINATING_COMPONENT == 'SFEEWriter' || ORIGINATING_COMPONENT == 'SFEEEntityService')
 						 ]]>
 			  			</value>
 					</property>
@@ -159,7 +159,7 @@
 					<property name="script">
 						<value>
 						 <![CDATA[
-						 	ERROR_CODE != null && ORIGINATING_COMPONENT == 'PTWriter'
+						 	ERROR_CODE != null && (ORIGINATING_COMPONENT == 'PTWriter' || ORIGINATING_COMPONENT == 'PTEntityService')
 						 ]]>
 			  			</value>
 					</property>
