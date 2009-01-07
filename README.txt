@@ -36,7 +36,6 @@ System Requirements
 Getting Started
 ---------------
 This package comes with some preconfigured sample scenarios. For help on setting up the central CCF database and synchronizing the source and target systems, see the following:
-	- README.txt files in the samples directory
 	- Quick Start Guides to connect HP Quality center to CollabNet Project Tracker or SourceForge Tracker: http://help.collab.net/
         - Documentation in the CCF project: http://ccf.open.collab.net/servlets/ProjectProcess?pageID=aT1rGG&subpageID=lTTUmC
 	- Release Notes: http://help.collab.net/nav/11_2
