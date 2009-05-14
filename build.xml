@@ -275,7 +275,7 @@
 			<fileset dir="samples">
 				<include name="IntegrationScenarios/**/*"/>
 				<include name="centralCCFDatabase/**/*"/>
-				<include name="QCSFEE/**/*"/>
+				<include name="QCTF/**/*"/>
 				<include name="QCPT/**/*"/>
 				<include name="HospitalReplay/**/*"/>
 			</fileset>
