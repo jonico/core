@@ -46,7 +46,7 @@
 				imported into the wiring file. The file ccf.properties
 				contains the properties for the CCF core components.
 				sfee.properties file contains the properties for the
-				SFEE plugin classes.
+				TF plugin classes.
 			</description>
 			<list>
 				<value>classpath:ccf.properties</value>
@@ -68,8 +68,8 @@
 			<map>
 				<entry key-ref="ExceptionConvertor" value-ref="HospitalWriter"/>
 				<entry key-ref="SynchronizationStatusPollingReader"
-					value-ref="SFEEReader" />
-				<entry key-ref="SFEEReader"
+					value-ref="TFReader" />
+				<entry key-ref="TFReader"
 					value-ref="GenericArtifact2XmlMapConverter" />
 				<entry key-ref="GenericArtifact2XmlMapConverter"
 					value-ref="FileWriter" />
@@ -165,10 +165,10 @@
 		<property name="convertToString" value="false" />
 		<property name="rootElement" value="EmptySyncInf" />
 	</bean>
-	<bean id="SFEEReader"
+	<bean id="TFReader"
 		class="com.collabnet.ccf.pi.sfee.v44.SFEEReader">
 		<description>
-			This reader reads the modified artifacts in the SFEE
+			This reader reads the modified artifacts in the TF
 			system's tracker configured in the ${sfee.server.1.url} and
 			the sync info tables. It also reads all the related
 			dependent artifact details and converts them into Generic
@@ -176,7 +176,7 @@
 			in the pipeline. The next component in the piple line may be
 			an XSLT transformer component such as
 			com.collabnet.ccf.core.transformer.XsltProcessor or an
-			EntityService component depending on the target SFEE tracker
+			EntityService component depending on the target TF tracker
 			needs the data to be translated to fit into its fields or
 			not. In this sample scenario we configure a file writer that
 			will write the generic artifact xml into the file specified.
@@ -186,7 +186,7 @@
 		<property name="serverUrl" value="${sfee.server.1.url}" />
 		<property name="ignoreConnectorUserUpdates" value="false"/>
 		<property name="connectionManager"
-			ref="SFEEConnectionManager">
+			ref="TFConnectionManager">
 		</property>
 		<property name="sleepInterval" value="1000"></property>
 		<property name="maxAttachmentSizePerArtifact"
@@ -195,7 +195,7 @@
 		<property name="shutdownCCFAfterInitialSync" value="true"/>
 		<property name="bulkImport" value="true"/>
 	</bean>
-	<bean id="SFEEConnectionManager"
+	<bean id="TFConnectionManager"
 		class="com.collabnet.ccf.core.eis.connection.ConnectionManager">
 		<description>
 			The connection manager implements a connection pooling
@@ -210,17 +210,17 @@
 		<property name="maxIdleTimeForConnection" value="600000" />
 		<property name="scavengerInterval" value="120000"></property>
 		<property name="connectionFactory"
-			ref="SFEEConnectionFactory">
+			ref="TFConnectionFactory">
 		</property>
 	</bean>
-	<bean id="SFEEConnectionFactory"
+	<bean id="TFConnectionFactory"
 		class="com.collabnet.ccf.pi.sfee.v44.SFEEConnectionFactory">
 		<description>
 			This bean is an implementation of the
 			com.collabnet.ccf.core.eis.connection.ConnectionFactory
 			interface. It is responsible to create and close an
 			connection for a given repository. In this case
-			SFEEConnectionFactory manages
+			TFConnectionFactory manages
 			com.collabnet.ccf.pi.sfee.v44.Connection objects.
 		</description>
 	</bean>

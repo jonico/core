@@ -235,14 +235,14 @@
         class="com.collabnet.ccf.pi.cee.pt.v50.ProjectTrackerReader">
         <description>
             This reader reads the modified artifacts in the PT
-            system's tracker configured in the ${sfee.server.1.url} and
+            system's tracker configured in the ${cee.server.1.url} and
             the sync info tables. It also reads all the related
             dependent artifact details and converts them into Generic
             Artifact XML document format and sends to the next component
             in the pipeline. The next component in the piple line may be
             an XSLT transformer component such as
             com.collabnet.ccf.core.transformer.XsltProcessor or an
-            EntityService component depending on the target SFEE tracker
+            EntityService component depending on the target QC tracker
             needs the data to be translated to fit into its fields or
             not.
         </description>
@@ -399,7 +399,7 @@
             This component is responsible for creating the identity
             mapping for newly created artifacts in the target system. It
             also updates the synchronization status for a particular
-            repository. For SFEE systems the synchronization info is the
+            repository. For CEE systems the synchronization info is the
             last modified time of the last shipped artifact. If the
             EntityService determines the artifact action as create (that
             is this artifact is a new artifact in the source system and

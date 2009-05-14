@@ -26,12 +26,12 @@ $HeadURL$
 
 	<description><![CDATA[
   This integration scenario demonstrated the capability of CCF
-  to import artifacts data from a database table into an SFEE tracker.
+  to import artifacts data from a database table into an TF tracker.
 
-1. Configuring the SFEE tracker information	
-	Change the SFEE SOAP server URL and password in the config/sfee.properties
+1. Configuring the TF tracker information	
+	Change the TF SOAP server URL and password in the config/sfee.properties
 	file as shown below.
-	sfee.server.1.url=<SFEE SOAP server URL>
+	sfee.server.1.url=<TF SOAP server URL>
 	sfee.server.1.username=<connector user>
 	sfee.server.1.password=<connector user's password>
 
@@ -56,10 +56,10 @@ $HeadURL$
 	artifacts data. If you intend to change the table name edit the sql property
 	as SELECT * FROM <ARTIFACT_TABLE>
 
-3. Mapping database fields to SFEE tracker fields
+3. Mapping database fields to TF tracker fields
 	This is done in the XSLT file xslt/record2GenericArtifact.xsl
 	Change the field names in the template according to the 
-	field names in the database table and the SFEE tracker.
+	field names in the database table and the TF tracker.
 
 4. Please note that this integration scenario currently does not support
 	a) importing multi-select field values.
@@ -84,7 +84,7 @@ $HeadURL$
 			<description>
 				Properties configured in these property files will be imported into the wiring file.
 				The file ccf.properties contains the properties for the CCF core components.
-				sfee.properties file contains the properties for the SFEE plugin classes.
+				sfee.properties file contains the properties for the TF plugin classes.
 			</description>
 			<list>
 				<value>classpath:ccf.properties</value>
@@ -106,7 +106,7 @@ $HeadURL$
 			<map>
 				<entry key-ref="ExceptionConvertor" value-ref="HospitalWriter"/>
 				<entry key-ref="DatabaseTableReader" value-ref="Transformer" />
-				<entry key-ref="Transformer" value-ref="SFEEWriter" />
+				<entry key-ref="Transformer" value-ref="TFWriter" />
 			</map>
 		</property>
 <!--		<property name="exceptionProcessor" ref="ExceptionHandler" />-->
@@ -182,7 +182,7 @@ $HeadURL$
 		<property name="rootElement" value="record" />
 	</bean>
 	
-	<bean id="SFEEConnectionManager"
+	<bean id="TFConnectionManager"
 		class="com.collabnet.ccf.core.eis.connection.ConnectionManager">
 		<description>
 			The connection manager implements a connection pooling mechanism where the 
@@ -195,25 +195,25 @@ $HeadURL$
 		<property name="maxConnectionsPerPool" value="5"></property>
 		<property name="maxIdleTimeForConnection" value="600000" />
 		<property name="scavengerInterval" value="120000"></property>
-		<property name="connectionFactory" ref="SFEEConnectionFactory"></property>
+		<property name="connectionFactory" ref="TFConnectionFactory"></property>
 	</bean>
-	<bean id="SFEEConnectionFactory"
+	<bean id="TFConnectionFactory"
 		class="com.collabnet.ccf.pi.sfee.v44.SFEEConnectionFactory">
 		<description>
 			This bean is an implementation of the com.collabnet.ccf.core.eis.connection.ConnectionFactory
 			interface. It is responsible to create and close an connection for a given
 			repository.
-			In this case SFEEConnectionFactory manages com.collabnet.ccf.pi.sfee.v44.Connection
+			In this case TFConnectionFactory manages com.collabnet.ccf.pi.sfee.v44.Connection
 			objects.
 		</description>
 	</bean>
-	<bean id="SFEEWriter"
+	<bean id="TFWriter"
 		class="com.collabnet.ccf.pi.sfee.v44.SFEEWriter">
 		<description>
 			This data processor is responsible for writing the artifacts coming from the
-			EntitySerive into the target SFEE system.
+			EntitySerive into the target TF system.
 			It converts/extracts the data from the Generic Artifact XML and pushes to the
-			target SFEE system.
+			target TF system.
 		</description>
 		<property name="username" value="${sfee.server.1.username}" />
 		<property name="password" value="${sfee.server.1.password}" />
@@ -221,7 +221,7 @@ $HeadURL$
 			value="${sfee.server.1.url}" />
 		<property name="updateComment"
 			value="Synchronized by Connector user" />
-		<property name="connectionManager" ref="SFEEConnectionManager"></property>
+		<property name="connectionManager" ref="TFConnectionManager"></property>
 	</bean>
 	<bean id="JDBCConnection"
 		class="org.openadaptor.auxil.connector.jdbc.JDBCConnection" scope="prototype">

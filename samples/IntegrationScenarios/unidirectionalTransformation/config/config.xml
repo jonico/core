@@ -52,7 +52,7 @@
 				imported into the wiring file. The file ccf.properties
 				contains the properties for the CCF core components.
 				sfee.properties file contains the properties for the
-				SFEE plugin classes.
+				TF plugin classes.
 			</description>
 			<list>
 				<value>classpath:ccf.properties</value>
@@ -74,11 +74,11 @@
 			<map>
 				<entry key-ref="ExceptionConvertor" value-ref="HospitalWriter"/>
 				<entry key-ref="SynchronizationStatusPollingReader"
-					value-ref="SFEEReader" />
-				<entry key-ref="SFEEReader" value-ref="Transformer" />
+					value-ref="TFReader" />
+				<entry key-ref="TFReader" value-ref="Transformer" />
 				<entry key-ref="Transformer" value-ref="EntityService" />
-				<entry key-ref="EntityService" value-ref="SFEEWriter" />
-				<entry key-ref="SFEEWriter"
+				<entry key-ref="EntityService" value-ref="TFWriter" />
+				<entry key-ref="TFWriter"
 					value-ref="SynchronizationStatusAndIdentityMappingTableUpdater" />
 			</map>
 		</property>
@@ -145,10 +145,10 @@
 		<property name="pollIntervalSecs" value="0" /><property name="reconnectDelegateBetweenPolls" value="false"/>
 	</bean>
 
-	<bean id="SFEEReader"
+	<bean id="TFReader"
 		class="com.collabnet.ccf.pi.sfee.v44.SFEEReader">
 		<description>
-			This reader reads the modified artifacts in the SFEE
+			This reader reads the modified artifacts in the TF
 			system's tracker configured in the ${sfee.server.1.url} and
 			the sync info tables. It also reads all the related
 			dependent artifact details and converts them into Generic
@@ -156,7 +156,7 @@
 			in the pipeline. The next component in the piple line may be
 			an XSLT transformer component such as
 			com.collabnet.ccf.core.transformer.XsltProcessor or an
-			EntityService component depending on the target SFEE tracker
+			EntityService component depending on the target TF tracker
 			needs the data to be translated to fit into its fields or
 			not.
 		</description>
@@ -164,14 +164,14 @@
 		<property name="password" value="${sfee.server.1.password}" />
 		<property name="serverUrl" value="${sfee.server.1.url}" />
 		<property name="connectionManager"
-			ref="SFEEConnectionManager">
+			ref="TFConnectionManager">
 		</property>
 		<property name="sleepInterval" value="1000"></property>
 		<property name="maxAttachmentSizePerArtifact"
 			value="${sfee.max.attachmentsize.per.artifact}" />
 		<property name="shipAttachments" value="true"/>
 	</bean>
-	<bean id="SFEEConnectionManager"
+	<bean id="TFConnectionManager"
 		class="com.collabnet.ccf.core.eis.connection.ConnectionManager">
 		<description>
 			The connection manager implements a connection pooling
@@ -186,27 +186,27 @@
 		<property name="maxIdleTimeForConnection" value="600000" />
 		<property name="scavengerInterval" value="120000"></property>
 		<property name="connectionFactory"
-			ref="SFEEConnectionFactory">
+			ref="TFConnectionFactory">
 		</property>
 	</bean>
-	<bean id="SFEEConnectionFactory"
+	<bean id="TFConnectionFactory"
 		class="com.collabnet.ccf.pi.sfee.v44.SFEEConnectionFactory">
 		<description>
 			This bean is an implementation of the
 			com.collabnet.ccf.core.eis.connection.ConnectionFactory
 			interface. It is responsible to create and close an
 			connection for a given repository. In this case
-			SFEEConnectionFactory manages
+			TFConnectionFactory manages
 			com.collabnet.ccf.pi.sfee.v44.Connection objects.
 		</description>
 	</bean>
-	<bean id="SFEEWriter"
+	<bean id="TFWriter"
 		class="com.collabnet.ccf.pi.sfee.v44.SFEEWriter">
 		<description>
 			This data processor is responsible for writing the artifacts
-			coming from the EntitySerive into the target SFEE system. It
+			coming from the EntitySerive into the target TF system. It
 			converts/extracts the data from the Generic Artifact XML and
-			pushes to the target SFEE system.
+			pushes to the target TF system.
 		</description>
 		<property name="username" value="${sfee.server.1.username}" />
 		<property name="password" value="${sfee.server.1.password}" />
@@ -214,7 +214,7 @@
 		<property name="updateComment"
 			value="Synchronized by Connector user" />
 		<property name="connectionManager"
-			ref="SFEEConnectionManager">
+			ref="TFConnectionManager">
 		</property>
 	</bean>
 	<bean id="EntityService"
@@ -222,7 +222,7 @@
 		<description>
 			This component is responsible for determining if the current
 			artifact that is being shipped is to be created or updated
-			in the target SFEE system. It determines the artifact action
+			in the target TF system. It determines the artifact action
 			by checking if the artifact has an identity mapping already.
 			If the identity mapping does not exist then the
 			EntityService marks this artifact action as create otherwise
@@ -277,7 +277,7 @@
 			This component is responsible for creating the identity
 			mapping for newly created artifacts in the target system. It
 			also updates the synchronization status for a particular
-			repository. For SFEE systems the synchronization info is the
+			repository. For TF systems the synchronization info is the
 			last modified time of the last shipped artifact. If the
 			EntityService determines the artifact action as create (that
 			is this artifact is a new artifact in the source system and

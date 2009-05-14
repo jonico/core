@@ -26,9 +26,9 @@ $HeadURL$
 	<description>
 		<![CDATA[    
   This sample demonstrates the capability of CCF to import 
-artifacts data from a CSV file into an SFEE tracker.
+artifacts data from a CSV file into an TF tracker.
 
-1. Configuring the SFEE tracker information
+1. Configuring the TF tracker information
 	The target repository to which the artifacts to be imported is configured in the
 	xslt/xmlmap2genericartifact.xsl file as 
 	targetRepositoryId="tracker1001"
@@ -36,9 +36,9 @@ artifacts data from a CSV file into an SFEE tracker.
 	Please change these values to the tracker id that you intend to import the
 	data
 	
-	Change the SFEE SOAP server URL and password in the config/sfee.properties
+	Change the TF SOAP server URL and password in the config/sfee.properties
 	file as shown below.
-	sfee.server.1.url=<SFEE SOAP server URL>
+	sfee.server.1.url=<TF SOAP server URL>
 	sfee.server.1.username=<connector user>
 	sfee.server.1.password=<connector user's password>
 
@@ -62,7 +62,7 @@ artifacts data from a CSV file into an SFEE tracker.
 			<description>
 				Properties configured in these property files will be imported into the wiring file.
 				The file ccf.properties contains the properties for the CCF core components.
-				sfee.properties file contains the properties for the SFEE plugin classes.
+				sfee.properties file contains the properties for the TF plugin classes.
 			</description>
 			<list>
 				<value>classpath:ccf.properties</value>
@@ -84,7 +84,7 @@ artifacts data from a CSV file into an SFEE tracker.
 				<entry key-ref="InputCSVString2OrderedMapConverter" value-ref="OrderedMap2XmlMapConverter" />
 				<entry key-ref="OrderedMap2XmlMapConverter" value-ref="XmlMap2GenericArtifactConverter" />
 				<entry key-ref="XmlMap2GenericArtifactConverter"
-					value-ref="SFEEWriter" />
+					value-ref="TFWriter" />
 				<!-- Exception processors -->
         		<entry key-ref="ExceptionConvertor" value-ref="HospitalWriter"/>
 			</map>
@@ -184,7 +184,7 @@ artifacts data from a CSV file into an SFEE tracker.
 		<property name="xsltDir" value="" />
 		<property name="listenForFileUpdates" value="true"/>
 	</bean>
-	<bean id="SFEEConnectionManager"
+	<bean id="TFConnectionManager"
 		class="com.collabnet.ccf.core.eis.connection.ConnectionManager">
 		<description>
 			The connection manager implements a connection pooling mechanism where the 
@@ -197,26 +197,26 @@ artifacts data from a CSV file into an SFEE tracker.
 		<property name="maxConnectionsPerPool" value="5"></property>
 		<property name="maxIdleTimeForConnection" value="600000" />
 		<property name="scavengerInterval" value="120000"></property>
-		<property name="connectionFactory" ref="SFEEConnectionFactory"></property>
+		<property name="connectionFactory" ref="TFConnectionFactory"></property>
 		<property name="enableRetryAfterNetworkTimeout" value="false"/>
 	</bean>
-	<bean id="SFEEConnectionFactory"
+	<bean id="TFConnectionFactory"
 		class="com.collabnet.ccf.pi.sfee.v44.SFEEConnectionFactory">
 		<description>
 			This bean is an implementation of the com.collabnet.ccf.core.eis.connection.ConnectionFactory
 			interface. It is responsible to create and close an connection for a given
 			repository.
-			In this case SFEEConnectionFactory manages com.collabnet.ccf.pi.sfee.v44.Connection
+			In this case TFConnectionFactory manages com.collabnet.ccf.pi.sfee.v44.Connection
 			objects.
 		</description>
 	</bean>
-	<bean id="SFEEWriter"
+	<bean id="TFWriter"
 		class="com.collabnet.ccf.pi.sfee.v44.SFEEWriter">
 		<description>
 			This data processor is responsible for writing the artifacts coming from the
-			EntitySerive into the target SFEE system.
+			EntitySerive into the target TF system.
 			It converts/extracts the data from the Generic Artifact XML and pushes to the
-			target SFEE system.
+			target TF system.
 		</description>
 		<property name="username" value="${sfee.server.1.username}" />
 		<property name="password" value="${sfee.server.1.password}" />
@@ -224,7 +224,7 @@ artifacts data from a CSV file into an SFEE tracker.
 			value="${sfee.server.1.url}" />
 		<property name="updateComment"
 			value="Synchronized by Connector user" />
-		<property name="connectionManager" ref="SFEEConnectionManager"></property>
+		<property name="connectionManager" ref="TFConnectionManager"></property>
 	</bean>
 	<!--<bean id="ExceptionHandler" class="com.collabnet.ccf.core.hospital.Ambulance">
 		<description>

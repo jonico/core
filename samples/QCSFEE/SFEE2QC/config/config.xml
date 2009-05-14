@@ -25,8 +25,8 @@
 	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
 
 	<description><![CDATA[
-   This wiring synchronizes an SFEE/CSFE system with a QC system
-   To get a bidirectional synchronization, just start the QC To SFEE/CSFE scenario as well.
+   This wiring synchronizes an TF/CSFE system with a QC system
+   To get a bidirectional synchronization, just start the QC To TF/CSFE scenario as well.
   ]]></description>
 
 	<bean class="org.openadaptor.core.jmx.MBeanServer">
@@ -61,7 +61,7 @@
 			<description>
 				Properties configured in these property files will be imported into the wiring file.
 				The file ccf.properties contains the properties for the CCF core components.
-				sfee.properties file contains the properties for the SFEE plugin classes and
+				sfee.properties file contains the properties for the TF plugin classes and
 				qc.properties file contains the properties for the QC plugin classes.
 			</description>
 			<list>
@@ -71,7 +71,7 @@
 			</list>
 		</property>
 	</bean>
-	<bean id="SFEE2QC" class="org.openadaptor.core.adaptor.Adaptor">
+	<bean id="TF2QC" class="org.openadaptor.core.adaptor.Adaptor">
 		<property name="messageProcessor" ref="Router" />
 	</bean>
 
@@ -83,11 +83,11 @@
 		</description>
 		<property name="processMap">
 			<map>
-				<entry key-ref="SFEE2QCSynchronizationStatusPollingReader"
-					value-ref="SFEEReader" />
+				<entry key-ref="TF2QCSynchronizationStatusPollingReader"
+					value-ref="TFReader" />
 				
 				<!-- This plugs in the polling hospital -->
-				<entry key-ref="SFEEReader">
+				<entry key-ref="TFReader">
 					<list>
 						<ref bean="HospitalUpdatorSQLConverterReprocessed" />
 						<ref bean="QCEntityService" />
@@ -97,10 +97,10 @@
 				<entry key-ref="QCEntityService"
 					value-ref="QCTransformer" />
 				<entry key-ref="QCTransformer" value-ref="QCWriter" />
-				<entry key-ref="QCWriter" value-ref="SynchronizationStatusAndIdentityMappingTableUpdaterSFEE2QC" />
+				<entry key-ref="QCWriter" value-ref="SynchronizationStatusAndIdentityMappingTableUpdaterTF2QC" />
 				
 				<!-- This plugs in the polling hospital -->
-				<entry key-ref="SynchronizationStatusAndIdentityMappingTableUpdaterSFEE2QC"
+				<entry key-ref="SynchronizationStatusAndIdentityMappingTableUpdaterTF2QC"
 					value-ref="HospitalUpdatorSQLConverterFixed" />
 					
 				<!-- This plugs in the polling hospital -->	
@@ -118,7 +118,7 @@
 	</bean>
 
 	<bean id="ExceptionConvertor" class="com.collabnet.ccf.core.hospital.CCFExceptionToOrderedMapConvertor"><property name="logMessageTemplate" value="${ccf.logMessageTemplate}" /><property name="timestampFormat" value="yyyy-MM-dd HH:mm:ss zzz"/>
-		<property name="adaptor" ref="SFEE2QC"/>
+		<property name="adaptor" ref="TF2QC"/>
 	</bean>
 
 	<bean id="HospitalWriter" class="org.openadaptor.auxil.connector.jdbc.writer.JDBCWriteConnector">
@@ -143,7 +143,7 @@
 		<property name="password" value="${ccf.db.password}" />
 	</bean>
 
-	<bean id="SFEE2QCSynchronizationStatusPollingReader"
+	<bean id="TF2QCSynchronizationStatusPollingReader"
 		class="com.collabnet.ccf.core.test.plugins.SimpleLoopingPollingReadConnector">
 		<description>
 			This polling connector polls the CCF database tables that contain the repository
@@ -158,17 +158,17 @@
 			read from the database read connector continuously without and pauses in between.
 		</description>
 		<property name="pollLimit" value="-1" />
-		<property name="delegate" ref="SFEE2QCSynchronizationStatusPollingReaderJdbcConnection" />
+		<property name="delegate" ref="TF2QCSynchronizationStatusPollingReaderJdbcConnection" />
 		<property name="pollIntervalSecs" value="0" /><property name="reconnectDelegateBetweenPolls" value="false"/>
 	</bean>
 
-	<bean id="SFEE2QCSynchronizationStatusPollingReaderJdbcConnection"
+	<bean id="TF2QCSynchronizationStatusPollingReaderJdbcConnection"
 		class="org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector">
 		<description>
 			This is the JDBC read connector used by the SynchronizationStatusPollingReader to read the
 			repository mapping and the synchronization info.
 		</description>
-		<property name="jdbcConnection" ref="JdbcConnectionSFEE2QC" />
+		<property name="jdbcConnection" ref="JdbcConnectionTF2QC" />
 		<!-- batch size of 0 or less means process all rows in one message batch. -->
 		<!-- batch size of one means process one row per message and so on -->
 		<property name="batchSize" value="1" />
@@ -178,8 +178,8 @@
 		</property>
 	</bean>
 
-  	<bean id="SFEE2QCGenericArtifactSchemaValidator" class="com.collabnet.ccf.core.utils.XmlValidator">
-    	<description>This processor validates whether the artifacts produced by the SFEE reader are generic artifact schema compliant.</description>
+  	<bean id="TF2QCGenericArtifactSchemaValidator" class="com.collabnet.ccf.core.utils.XmlValidator">
+    	<description>This processor validates whether the artifacts produced by the TF reader are generic artifact schema compliant.</description>
     	<property name="schemaURL" value="config/genericartifactschema.xsd"/>
   	</bean>
 
@@ -197,15 +197,15 @@
 		class="com.collabnet.ccf.pi.qc.v90.QCConnectionFactory">
 	</bean>
 
-	<bean id="SFEEReader"
+	<bean id="TFReader"
 		class="com.collabnet.ccf.pi.sfee.v44.SFEEReader">
 		<description>
-			This reader reads the modified artifacts in the SFEE system's tracker configured in the
+			This reader reads the modified artifacts in the TF system's tracker configured in the
 			${sfee.server.1.url} and the sync info tables. It also reads all the related dependent artifact details
 			and converts them into Generic Artifact XML document format and sends to the
 			next component in the pipeline. The next component in the piple line may be
 			an XSLT transformer component such as com.collabnet.ccf.core.transformer.XsltProcessor
-			or an EntityService component depending on the target SFEE tracker needs the data
+			or an EntityService component depending on the target TF tracker needs the data
 			to be translated to fit into its fields or not.
 		</description>
 		<property name="username" value="${sfee.server.1.username}" />
@@ -213,7 +213,7 @@
 		<property name="resyncUserName" value="${sfee.server.1.resync.username}"></property>
 		<property name="serverUrl"
 			value="${sfee.server.1.url}" />
-		<property name="connectionManager" ref="SFEEConnectionManager"></property>
+		<property name="connectionManager" ref="TFConnectionManager"></property>
 		<property name="sleepInterval" value="1000"></property>
 		<property name="translateTechnicalReleaseIds" value="false"></property>
 		<property name="maxAttachmentSizePerArtifact" value="${sfee.max.attachmentsize.per.artifact}" />
@@ -224,7 +224,7 @@
 		<!-- This plugs in in the polling hospital -->
 		<property name="hospitalDatabaseReader" ref="HospitalDatabaseExtractor"/>
 	</bean>
-	<bean id="SFEEConnectionManager"
+	<bean id="TFConnectionManager"
 		class="com.collabnet.ccf.core.eis.connection.ConnectionManager">
 		<description>
 			The connection manager implements a connection pooling mechanism where the
@@ -237,28 +237,28 @@
 		<property name="maxConnectionsPerPool" value="5"></property>
 		<property name="maxIdleTimeForConnection" value="600000" />
 		<property name="scavengerInterval" value="120000"></property>
-		<property name="connectionFactory" ref="SFEEConnectionFactory"></property>
+		<property name="connectionFactory" ref="TFConnectionFactory"></property>
 		<property name="useStandardTimeoutHandlingCode" value="false"/>
         <property name="enableReloginAfterSessionTimeout" value="true"/>
         <property name="enableRetryAfterNetworkTimeout" value="true"/>
 	</bean>
 
-	<bean id="SFEEConnectionFactory"
+	<bean id="TFConnectionFactory"
 		class="com.collabnet.ccf.pi.sfee.v44.SFEEConnectionFactory">
 		<description>
 			This bean is an implementation of the com.collabnet.ccf.core.eis.connection.ConnectionFactory
 			interface. It is responsible to create and close an connection for a given
 			repository.
-			In this case SFEEConnectionFactory manages com.collabnet.ccf.pi.sfee.v44.Connection
+			In this case TFConnectionFactory manages com.collabnet.ccf.pi.sfee.v44.Connection
 			objects.
 		</description>
 	</bean>
 
-	<bean id="JdbcConnectionSFEE2QC"
+	<bean id="JdbcConnectionTF2QC"
 		class="org.openadaptor.auxil.connector.jdbc.JDBCConnection" scope="prototype">
 		<description>
 			This defines a jdbc connection that will be used
-			by all components that read from QC and write to SFEE
+			by all components that read from QC and write to TF
 		</description>
 		<property name="driver" value="${ccf.db.driver}" />
 		<property name="url" value="${ccf.db.url}" />
@@ -266,12 +266,12 @@
 		<property name="password" value="${ccf.db.password}" />
 	</bean>
 
-	<bean id="SynchronizationStatusAndIdentityMappingTableUpdaterSFEE2QC"
+	<bean id="SynchronizationStatusAndIdentityMappingTableUpdaterTF2QC"
 		class="com.collabnet.ccf.core.config.MappingDBUpdater">
 		<description>
 			This component is responsible for creating the identity mapping for newly created
 			artifacts in the target system. It also updates the synchronization status for a
-			particular repository. For SFEE systems the synchronization info is the last
+			particular repository. For TF systems the synchronization info is the last
 			modified time of the last shipped artifact.
 			If the EntityService determines the artifact action as create (that is this artifact
 			is a new artifact in the source system and doesn't have its identity mapping filled
@@ -280,11 +280,11 @@
 			The SynchronizationStatusAndIdentityMappingTableUpdater then takes the target artifact
 			id and creates an identity mapping entry for the source and target artifact ids.
 		</description>
-		<property name="synchronizationStatusDatabaseUpdater" ref="SynchronizationStatusDatabaseUpdaterSFEE2QC"></property>
-		<property name="identityMappingDatabaseReader" ref="IndentityMappingDatabaseReaderSFEE2QC" />
-		<property name="identityMappingDatabaseUpdater" ref="IdentityMappingDatabaseUpdaterSFEE2QC" />
+		<property name="synchronizationStatusDatabaseUpdater" ref="SynchronizationStatusDatabaseUpdaterTF2QC"></property>
+		<property name="identityMappingDatabaseReader" ref="IndentityMappingDatabaseReaderTF2QC" />
+		<property name="identityMappingDatabaseUpdater" ref="IdentityMappingDatabaseUpdaterTF2QC" />
 		<property name="identityMappingDatabaseInserter"
-			ref="IdentityMappingDatabaseInserterSFEE2QC">
+			ref="IdentityMappingDatabaseInserterTF2QC">
 		</property>
 	</bean>
 
@@ -294,14 +294,14 @@
 		<property name="rootElement" value="EmptySyncInf" />
 	</bean>
 
-	<bean id="IdentityMappingDatabaseInserterSFEE2QC"
+	<bean id="IdentityMappingDatabaseInserterTF2QC"
 		class="org.openadaptor.auxil.connector.jdbc.writer.JDBCWriteConnector">
 		<description>
 			This component updates the synchronization status for the current artifact.
 		</description>
 		<property name="writer" ref="IdentityMappingTableInserter"></property>
 		<property name="jdbcConnection"
-			ref="JdbcConnectionSFEE2QC">
+			ref="JdbcConnectionTF2QC">
 		</property>
 	</bean>
 
@@ -370,20 +370,20 @@
 			action as create otherwise update. Please refer the SynchronizationStatusAndIdentityMappingTableUpdater
 			component.
 		</description>
-		<property name="identityMappingDatabaseReader" ref="IndentityMappingDatabaseReaderSFEE2QC" />
-		<property name="hospitalDatabaseReader" ref="HospitalDatabaseReaderSFEE2QC"/>
+		<property name="identityMappingDatabaseReader" ref="IndentityMappingDatabaseReaderTF2QC" />
+		<property name="hospitalDatabaseReader" ref="HospitalDatabaseReaderTF2QC"/>
 		<property name="skipNewerVersionsOfQuarantinedArtifacts" value="false"/>
 		<property name="identityMapEventWaitCount" value="8"></property>
 		<property name="identityMapEventWaitTime" value="500"></property>
 	</bean>
 
-	<bean id="HospitalDatabaseReaderSFEE2QC"
+	<bean id="HospitalDatabaseReaderTF2QC"
 		class="org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector">
 		<description>
 			This database reader component finds out whether an artifact has been
 			quarantined in the hospital
 		</description>
-		<property name="jdbcConnection" ref="JdbcConnectionSFEE2QC" />
+		<property name="jdbcConnection" ref="JdbcConnectionTF2QC" />
 		<!-- batch size of 0 or less means process all rows in one message batch. -->
 		<!-- batch size of one means process one row per message and so on -->
 		<property name="batchSize" value="0" />
@@ -445,14 +445,14 @@
 		</property>
 	</bean>
 
-	<bean id="IndentityMappingDatabaseReaderSFEE2QC"
+	<bean id="IndentityMappingDatabaseReaderTF2QC"
 		class="org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector">
 		<description>
 			This database reader component reads the target artifact id from the databse
 			for a given source artifact id and the target repository and system information.
 		</description>
 		<property name="jdbcConnection"
-			ref="JdbcConnectionSFEE2QC" />
+			ref="JdbcConnectionTF2QC" />
 		<!-- batch size of 0 or less means process all rows in one message batch. -->
 		<!-- batch size of one means process one row per message and so on -->
 		<property name="batchSize" value="0" />
@@ -461,11 +461,11 @@
 		</property>
 	</bean>
 
-	<bean id="IdentityMappingDatabaseUpdaterSFEE2QC"
+	<bean id="IdentityMappingDatabaseUpdaterTF2QC"
 		class="org.openadaptor.auxil.connector.jdbc.writer.JDBCWriteConnector">
 		<property name="writer" ref="IdentityMappingTableUpdater"></property>
 		<property name="jdbcConnection"
-			ref="JdbcConnectionSFEE2QC">
+			ref="JdbcConnectionTF2QC">
 		</property>
 	</bean>
 
@@ -493,11 +493,11 @@
 		</property>
 	</bean>
 
-	<bean id="SynchronizationStatusDatabaseUpdaterSFEE2QC"
+	<bean id="SynchronizationStatusDatabaseUpdaterTF2QC"
 		class="org.openadaptor.auxil.connector.jdbc.writer.JDBCWriteConnector">
 		<property name="writer" ref="SynchronizationStatusTableUpdater"></property>
 		<property name="jdbcConnection"
-			ref="JdbcConnectionSFEE2QC">
+			ref="JdbcConnectionTF2QC">
 		</property>
 	</bean>
 

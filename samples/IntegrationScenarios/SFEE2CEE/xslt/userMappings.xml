@@ -6,7 +6,7 @@
 		<mapping target="barathi" source="barathi" />
 		<mapping target="pradeep" source="pradeep" />
 		<mapping target="jonico" source="jonico" />
-		<mapping target="madhusuthanan" source="mseethar" />
+		<mapping target="mseethar" source="madhusuthanan" />
 		<mapping target="gomathy" source="gomathy" />
 		<mapping target="karthikeyan_ct" source="karthikeyan" />
 		<mapping target="kavithas" source="kavitha" />

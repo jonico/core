@@ -173,7 +173,7 @@
             and converts them into Generic Artifact XML document format and sends to the
             next component in the pipeline. The next component in the pipeline may be
             an XSLT transformer component such as com.collabnet.ccf.core.transformer.XsltProcessor
-            or an EntityService component depending on the target SFEE tracker needs the data
+            or an EntityService component depending on the target PT tracker needs the data
             to be translated to fit into its fields or not.
         </description>
         <property name="resyncUserName" value="${qc.system.1.resync.username}"></property>

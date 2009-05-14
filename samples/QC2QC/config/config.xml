@@ -26,7 +26,7 @@
 
 	<description><![CDATA[
    This is the configuration for the CollabNet Connector Framework sample 
-   "Two way wiring Scenario". This wiring file configures a QC tracker and a SFEE tracker
+   "Two way wiring Scenario". This wiring file configures a QC tracker and a QC tracker
    to sync with each other.
   ]]></description>
 
@@ -62,7 +62,7 @@
 			<description>
 				Properties configured in these property files will be imported into the wiring file.
 				The file ccf.properties contains the properties for the CCF core components.
-				sfee.properties file contains the properties for the SFEE plugin classes and
+				sfee.properties file contains the properties for the TF plugin classes and
 				qc.properties file contains the properties for the QC plugin classes.
 			</description>
 			<list>
@@ -85,10 +85,10 @@
 		<property name="processMap">
 			<map>
 				<entry key-ref="ExceptionConvertor" value-ref="HospitalWriter"/>
-				<entry key-ref="QC2SFEESynchronizationStatusPollingReader"
+				<entry key-ref="QC2QCSynchronizationStatusPollingReader"
 					value-ref="QCReader" />
-				<entry key-ref="QCReader"	value-ref="QC2SFEEGenericArtifactSchemaValidator" />
-				<entry key-ref="QC2SFEEGenericArtifactSchemaValidator"	value-ref="QCEntityService" />	
+				<entry key-ref="QCReader"	value-ref="QC2QCGenericArtifactSchemaValidator" />
+				<entry key-ref="QC2QCGenericArtifactSchemaValidator"	value-ref="QCEntityService" />	
 				<entry key-ref="QCEntityService" value-ref="QCWriter" />
 				<entry key-ref="QCWriter" value-ref="SynchronizationStatusAndIdentityMappingTableUpdater" />
 			</map>
@@ -123,7 +123,7 @@
 		<property name="password" value="${ccf.db.password}" />
 	</bean>
 	
-	<bean id="QC2SFEESynchronizationStatusPollingReader"
+	<bean id="QC2QCSynchronizationStatusPollingReader"
 		class="com.collabnet.ccf.core.test.plugins.SimpleLoopingPollingReadConnector">
 		<description>
 			This polling connector polls the CCF database tables that contain the repository
@@ -138,11 +138,11 @@
 			read from the database read connector continuously without and pauses in between.
 		</description>
 		<property name="pollLimit" value="-1" />
-		<property name="delegate" ref="QC2SFEESynchronizationStatusPollingReaderJdbcConnection" />
+		<property name="delegate" ref="QC2QCSynchronizationStatusPollingReaderJdbcConnection" />
 		<property name="pollIntervalSecs" value="0" /><property name="reconnectDelegateBetweenPolls" value="false"/>
 	</bean>
 	
-	<bean id="QC2SFEESynchronizationStatusPollingReaderJdbcConnection"
+	<bean id="QC2QCSynchronizationStatusPollingReaderJdbcConnection"
 		class="org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector">
 		<description>
 			This is the JDBC read connector used by the SynchronizationStatusPollingReader to read the
@@ -158,8 +158,8 @@
 		</property>
 	</bean>
 	
-	<bean id="QC2SFEEGenericArtifactSchemaValidator" class="com.collabnet.ccf.core.utils.XmlValidator">
-    	<description>This processor validates whether the artifacts produced by the SFEE reader are generic artifact schema compliant.</description>
+	<bean id="QC2QCGenericArtifactSchemaValidator" class="com.collabnet.ccf.core.utils.XmlValidator">
+    	<description>This processor validates whether the artifacts produced by the TF reader are generic artifact schema compliant.</description>
     	<property name="schemaURL" value="config/genericartifactschema.xsd"/>
   	</bean>
   	
@@ -170,7 +170,7 @@
 			and converts them into Generic Artifact XML document format and sends to the
 			next component in the pipeline. The next component in the pipeline may be
 			an XSLT transformer component such as com.collabnet.ccf.core.transformer.XsltProcessor
-			or an EntityService component depending on the target SFEE tracker needs the data
+			or an EntityService component depending on the target TF tracker needs the data
 			to be translated to fit into its fields or not.
 		</description>
 		<property name="serverUrl" value="${qc.system.1.url}" />
@@ -197,7 +197,7 @@
 		<description>
 			This component is responsible for creating the identity mapping for newly created
 			artifacts in the target system. It also updates the synchronization status for a 
-			particular repository. For SFEE systems the synchronization info is the last
+			particular repository. For TF systems the synchronization info is the last
 			modified time of the last shipped artifact.
 			If the EntityService determines the artifact action as create (that is this artifact
 			is a new artifact in the source system and doesn't have its identity mapping filled
@@ -242,7 +242,7 @@
 		class="com.collabnet.ccf.core.EntityService">
 		<description>
 			This component is responsible for determining if the current artifact that is being
-			shipped is to be created or updated in the target SFEE system. It determines the artifact
+			shipped is to be created or updated in the target TF system. It determines the artifact
 			action by checking if the artifact has an identity mapping already.
 			If the identity mapping does not exist then the EntityService marks this artifact
 			action as create otherwise update. Please refer the SynchronizationStatusAndIdentityMappingTableUpdater
