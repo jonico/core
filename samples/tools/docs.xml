@@ -53,11 +53,11 @@
   <property name="src.examples.dir" value=".." />
   <property name="src.examples.tools.dir" value="." />
 
-  <property name="build.examples.docs.dir" value="../../www/exampleScenarioDocs" />
+  <property name="build.examples.docs.dir" value="../../../www/exampleScenarioDocs" />
   <property name="build.examples.images.dir" value="${build.examples.docs.dir}" />
 
-  <property name="filecomment.path.pattern1" value="$HeadURL: http://ccf.open.collab.net/svn/ccf/trunk/samples/"/>
-  <property name="filecomment.path.pattern2" value="\$HeadURL\: http\:\/\/ccf\.open\.collab\.net\/svn\/ccf\/trunk\/samples\/"/>
+  <property name="filecomment.path.pattern1" value="$HeadURL: http://ccf.open.collab.net/svn/ccf/trunk/core/samples/"/>
+  <property name="filecomment.path.pattern2" value="\$HeadURL\: http\:\/\/ccf\.open\.collab\.net\/svn\/ccf\/trunk\/core\/samples"/>
   <property name="filecomment.path.pattern3" value="this pattern will not be found"/>
   <property name="filecomment.path.pattern4" value="this pattern will not be found"/>
 
@@ -65,7 +65,7 @@
     <!-- Include all of the XML example files, except the ones that are not Spring XML config: -->
   <patternset id="example.xml.config.files">
     <include name="IntegrationScenarios/**/*.xml" />
-    <include name="QCSFEE/**/*.xml" />
+    <include name="QCTF/**/*.xml" />
     <include name="QCPT/**/*.xml" />
     <include name="QC2QC/**/*.xml" />
     <include name="HospitalReplay/**/*.xml" />
@@ -194,7 +194,7 @@
       <param name="filepathGlobPrefix3" expression="${filecomment.path.pattern3}" />
       <param name="filepathGlobPrefix4" expression="${filecomment.path.pattern4}" />
       <param name="showJavaDocLinks" expression="true" />
-      <param name="docsRelativeToTools" expression="../../../www/exampleScenarioDocs/" />
+      <param name="docsRelativeToTools" expression="../../../../www/exampleScenarioDocs/" />
       <param name="showConfigIndexLinks" expression="true" />
       <!-- JavaDoc relative path or an http(s) URL: (must have trailing slash) -->
       <param name="javaDocPath" expression="../javadocs/" />
@@ -266,7 +266,7 @@
     <copy todir="${build.examples.docs.dir}" overwrite="true" failonerror="true" flatten="false">
 		<fileset dir="../">		
     		<include name="IntegrationScenarios/**/*.xml" />
-    		<include name="QCSFEE/**/*.xml" />
+    		<include name="QCTF/**/*.xml" />
     		<include name="QCPT/**/*.xml" />
     		<include name="QC2QC/**/*.xml" />
     		<include name="HospitalReplay/**/*.xml" />
@@ -295,7 +295,7 @@
     <xslt basedir="${build.examples.docs.dir}" destdir="${build.examples.images.dir}" includes="cookbook_combined.xml" style="${src.examples.tools.dir}/xslt/allnodemaps.xsl">
       <param name="oaVersion" expression="${ant.project.name} version ${oa3.version.major} ${oa3.version.minor} build ${build.number}" />
       <param name="imageFileExtension" expression="${graphviz.image.fileextension}" />
-      <param name="docsRelativeToTools" expression="../../../www/exampleScenarioDocs/" />
+      <param name="docsRelativeToTools" expression="../../../../www/exampleScenarioDocs/" />
       <xmlcatalog refid="oa3XmlCatalog" />
       <mapper type="glob" from="cookbook_combined.xml" to="allimages.html" />
     </xslt>
