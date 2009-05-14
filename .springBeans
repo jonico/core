@@ -17,14 +17,14 @@
 		<config>samples/IntegrationScenarios/genericArtifactExport/config/config.xml</config>
 		<config>samples/IntegrationScenarios/unidirectionalTransformation/config/config.xml</config>
 		<config>samples/IntegrationScenarios/replayScenario/config/config.xml</config>
-		<config>samples/IntegrationScenarios/CEE2SFEE/config/config.xml</config>
-		<config>samples/IntegrationScenarios/SFEE2CEE/config/config.xml</config>
+		<config>samples/IntegrationScenarios/CEE2TF/config/config.xml</config>
+		<config>samples/IntegrationScenarios/TF2CEE/config/config.xml</config>
 		<config>samples/HospitalReplay/replayScenario/config/config.xml</config>
 		<config>samples/QC2QC/config/config.xml</config>
 		<config>samples/QCPT/PT2QC/config/config.xml</config>
 		<config>samples/QCPT/QC2PT/config/config.xml</config>
-		<config>samples/QCSFEE/QC2SFEE/config/config.xml</config>
-		<config>samples/QCSFEE/SFEE2QC/config/config.xml</config>
+		<config>samples/QCTF/QC2TF/config/config.xml</config>
+		<config>samples/QCTF/TF2QC/config/config.xml</config>
 		<config>samples/IntegrationScenarios/genericArtifactImport/config/config.xml</config>
 	</configs>
 	<configSets>
