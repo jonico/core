@@ -10,7 +10,6 @@
 		the specific language governing permissions and limitations under the
 		License.
 	-->
-<?altova_samplexml file:///C:/Documents%20and%20Settings/jnicolai/workspace/CCF/scripts/exampleartifactCSFE.xml?>
 <xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:ccf="http://ccf.open.collab.net/GenericArtifactV1.0" xmlns:fn="http://www.w3.org/2005/xpath-functions" xmlns:xslo="alias">
 	<xsl:namespace-alias stylesheet-prefix="xslo" result-prefix="xsl"/>
 	<xsl:template match="/element()" priority="2">
@@ -32,8 +31,8 @@
 	<xsl:template match="ccf:field" priority="2">
 		<xslo:template match="ccf:field[@fieldName='{@fieldName}' and @fieldType='{@fieldType}']" priority="2">
 			<xsl:element name="{@alternativeFieldName}">
-				<xslo:copy-of select="@fieldValueHasChanged"/>
-				<xslo:copy-of select="@fieldAction"/>
+				<!--<xslo:copy-of select="@fieldValueHasChanged"/>
+				<xslo:copy-of select="@fieldAction"/>-->
 				<xslo:value-of select="text()"/>
 			</xsl:element>
 		</xslo:template>

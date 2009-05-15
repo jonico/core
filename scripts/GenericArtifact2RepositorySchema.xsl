@@ -10,7 +10,6 @@
 		the specific language governing permissions and limitations under the
 		License.
 	-->
-<?altova_samplexml file:///C:/Documents%20and%20Settings/jnicolai/workspace/CCF/scripts/exampleartifactCSFE.xml?>
 <xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:ccf="http://ccf.open.collab.net/GenericArtifactV1.0" xmlns:fn="http://www.w3.org/2005/xpath-functions" xmlns="" exclude-result-prefixes="xsl xs fn ccf">
 	<xsl:variable name="rootnode" select="/node()"/>
 	<xsl:template match="/node()">
@@ -239,13 +238,12 @@ artifact was lastly updated in the target system.  There is one reserved value "
 	<xsl:template match="ccf:field">
 		<xsl:choose>
 			<xsl:when test='$rootnode/@includesFieldMetaData="true"'>
-				<xs:element name="{@alternativeFieldName}" minOccurs="{@minOccurs}" maxOccurs="{@maxOccurs}">
+				<xs:element name="{@alternativeFieldName}" minOccurs="{@minOccurs}" maxOccurs="{@maxOccurs}" type="xs:string">
 					<xs:annotation>
-						<xs:documentation>Field <xsl:value-of select="@alternativeFieldName"/> originally called <xsl:value-of select="@fieldName"/> of type <xsl:value-of select="@fieldType"/>
-						Nillable: <xsl:value-of select="@nullValueSupported"/>
+						<xs:documentation>Field <xsl:value-of select="@alternativeFieldName"/> originally called <xsl:value-of select="@fieldName"/> of type <xsl:value-of select="@fieldType"/> Nillable: <xsl:value-of select="@nullValueSupported"/>
 						</xs:documentation>
 					</xs:annotation>
-					<xs:complexType>
+					<!--<xs:complexType>
 						<xs:simpleContent>
 							<xs:extension base="xs:string">
 								<xs:attribute name="fieldValueHasChanged" use="required">
@@ -273,16 +271,16 @@ artifact was lastly updated in the target system.  There is one reserved value "
 								</xs:attribute>
 							</xs:extension>
 						</xs:simpleContent>
-					</xs:complexType>
+					</xs:complexType>-->
 				</xs:element>
 			</xsl:when>
 			<xsl:otherwise>
-				<xs:element name="{@fieldName}">
+				<xs:element name="{@fieldName}" type="xs:string">
 					<xs:annotation>
 						<xs:documentation>Field <xsl:value-of select="@fieldName"/>  of type <xsl:value-of select="@fieldType"/>
 						</xs:documentation>
 					</xs:annotation>
-					<xs:complexType>
+					<!--<xs:complexType>
 						<xs:simpleContent>
 							<xs:extension base="xs:string">
 								<xs:attribute name="fieldValueHasChanged" use="required">
@@ -310,7 +308,7 @@ artifact was lastly updated in the target system.  There is one reserved value "
 								</xs:attribute>
 							</xs:extension>
 						</xs:simpleContent>
-					</xs:complexType>
+					</xs:complexType>-->
 				</xs:element>
 			</xsl:otherwise>
 		</xsl:choose>

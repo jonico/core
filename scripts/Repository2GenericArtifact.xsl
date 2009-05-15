@@ -10,7 +10,6 @@
 		the specific language governing permissions and limitations under the
 		License.
 	-->
-<?altova_samplexml file:///C:/Documents%20and%20Settings/jnicolai/workspace/CCF/scripts/exampleartifactCSFE.xml?>
 <xsl:stylesheet version="2.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:ccf="http://ccf.open.collab.net/GenericArtifactV1.0" xmlns:fn="http://www.w3.org/2005/xpath-functions" xmlns:xslo="alias">
 	<xsl:namespace-alias stylesheet-prefix="xslo" result-prefix="xsl"/>
 	<xsl:template match="/element()" priority="2">
@@ -31,8 +30,8 @@
 	<xsl:template match="node()" priority="1"/>
 	<xsl:template match="ccf:field" priority="2">
 		<xslo:template match="{@alternativeFieldName}" priority="2">
-			<field fieldName="{@fieldName}" fieldType="{@fieldType}" fieldValueType="{@fieldValueType}" nullValueSupported="{@nullValueSupported}" minOccurs="{@minOccurs}" maxOccurs="{@maxOccurs}" alternativeFieldName="{@alternativeFieldName}" xmlns="http://ccf.open.collab.net/GenericArtifactV1.0">
-				<xslo:copy-of select="@*"/>
+			<field fieldName="{@fieldName}" fieldType="{@fieldType}" fieldValueType="{@fieldValueType}" nullValueSupported="{@nullValueSupported}" minOccurs="{@minOccurs}" maxOccurs="{@maxOccurs}" alternativeFieldName="{@alternativeFieldName}" fieldValueHasChanged="{@fieldValueHasChanged}" fieldAction="{@fieldAction}" xmlns="http://ccf.open.collab.net/GenericArtifactV1.0">
+<!--				<xslo:copy-of select="@*"/>-->
 				<xsl:choose>
 					<xsl:when test='@nullValueSupported="true"'>
 						<xslo:choose>
