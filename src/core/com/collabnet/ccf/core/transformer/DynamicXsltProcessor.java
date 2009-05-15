@@ -326,6 +326,9 @@ public class DynamicXsltProcessor extends Component implements IDataProcessor {
 					if (fileName != null) {
 						transform = lookupTransformer(result.getRootElement(), xsltDir+fileName);
 						result = (Document) transform(result, transform, result.getRootElement())[0];
+						if (log.isDebugEnabled()) {
+							log.debug("(Intermediate) transformation result: "+result.asXML());
+						}
 					}
 				}
 				return new Document[] {result};
