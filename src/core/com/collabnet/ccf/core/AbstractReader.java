@@ -688,6 +688,7 @@ public abstract class AbstractReader<T> extends Component implements
 				artifactState.setReplayedArtifact(true);
 				quarantinedArtifact.add(artifactState);
 			}
+			hospitalDatabaseReader.disconnect();
 		}
 		return quarantinedArtifact;
 	}

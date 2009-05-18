@@ -880,7 +880,9 @@ public class GenericArtifactHelper {
 						genericArtifactField.getFieldValueType());
 			}
 		}
-
+		root.addAttribute(new QName(SCHEMA_LOCATION_ATTRIBUTE,
+				new Namespace(SCHEMA_NAMESPACE_PREFIX, SCHEMA_NAMESPACE)),
+				CCF_SCHEMA_LOCATION);
 		return document;
 	}
 
@@ -926,12 +928,8 @@ public class GenericArtifactHelper {
 	 */
 	private static Element addRootElement(Document document,
 			String rootElementName, String rootElementNamespace) {
-		Element rootElement = document.addElement(rootElementName,
+		return document.addElement(rootElementName,
 				rootElementNamespace);
-		rootElement.addAttribute(new QName(SCHEMA_LOCATION_ATTRIBUTE,
-				new Namespace(SCHEMA_NAMESPACE_PREFIX, SCHEMA_NAMESPACE)),
-				CCF_SCHEMA_LOCATION);
-		return rootElement;
 	}
 
 	/**
