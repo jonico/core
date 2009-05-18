@@ -143,7 +143,7 @@
 		<property name="pollLimit" value="-1" />
 		<property name="delegate"
 			ref="CEE2TFSynchronizationStatusDatabaseReader" />
-		<property name="pollIntervalSecs" value="0" /><property name="reconnectDelegateBetweenPolls" value="false"/>
+		<property name="pollIntervalSecs" value="0" /><property name="reconnectDelegateBetweenPolls" value="true"/>
 	</bean>
 
 	<bean id="CEE2TFSynchronizationStatusDatabaseReader"

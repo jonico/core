@@ -163,7 +163,7 @@
         <property name="pollLimit" value="-1" />
         <property name="delegate"
             ref="SynchronizationStatusDatabaseReaderQC2PT" />
-        <property name="pollIntervalSecs" value="0" /><property name="reconnectDelegateBetweenPolls" value="false"/>
+        <property name="pollIntervalSecs" value="0" /><property name="reconnectDelegateBetweenPolls" value="true"/>
     </bean>
 
     <bean id="QCReader" class="com.collabnet.ccf.pi.qc.v90.QCReader">

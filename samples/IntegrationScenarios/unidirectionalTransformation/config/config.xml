@@ -142,7 +142,7 @@
 		<property name="pollLimit" value="-1" />
 		<property name="delegate"
 			ref="SynchronizationStatusDatabaseReader" />
-		<property name="pollIntervalSecs" value="0" /><property name="reconnectDelegateBetweenPolls" value="false"/>
+		<property name="pollIntervalSecs" value="0" /><property name="reconnectDelegateBetweenPolls" value="true"/>
 	</bean>
 
 	<bean id="TFReader"
