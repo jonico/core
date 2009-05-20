@@ -318,7 +318,7 @@
  	<!-- 
  	These components are needed to catch new exceptions and store them in the hospital
  	-->
-	<bean id="ExceptionConvertor" class="com.collabnet.ccf.core.hospital.CCFExceptionToOrderedMapConvertor"><property name="logMessageTemplate" value="${ccf.logMessageTemplate}" /><property name="timestampFormat" value="yyyy-MM-dd HH:mm:ss zzz"/>
+	<bean id="ExceptionConvertor" class="com.collabnet.ccf.core.hospital.CCFExceptionToOrderedMapConvertor"><property name="logMessageTemplate" value="${ccf.logMessageTemplate}" /><property name="timestampFormat" value="yyyy-MM-dd HH:mm:ss zzz"/><property name="onlyQuarantineGenericArtifacts" value="true"/>
   		<property name="adaptor" ref="ReplayScenario"/>
 	</bean>
   

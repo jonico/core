@@ -117,7 +117,7 @@
 		<property name="exceptionProcessor" ref="ExceptionConvertor"/>
     </bean>
 
-    <bean id="ExceptionConvertor" class="com.collabnet.ccf.core.hospital.CCFExceptionToOrderedMapConvertor"><property name="logMessageTemplate" value="${ccf.logMessageTemplate}" /><property name="timestampFormat" value="yyyy-MM-dd HH:mm:ss zzz"/>
+    <bean id="ExceptionConvertor" class="com.collabnet.ccf.core.hospital.CCFExceptionToOrderedMapConvertor"><property name="logMessageTemplate" value="${ccf.logMessageTemplate}" /><property name="timestampFormat" value="yyyy-MM-dd HH:mm:ss zzz"/><property name="onlyQuarantineGenericArtifacts" value="true"/>
 		<property name="adaptor" ref="QC2PT"/>
 	</bean>
 
@@ -163,7 +163,7 @@
         <property name="pollLimit" value="-1" />
         <property name="delegate"
             ref="SynchronizationStatusDatabaseReaderQC2PT" />
-        <property name="pollIntervalSecs" value="0" /><property name="reconnectDelegateBetweenPolls" value="true"/>
+        <property name="pollIntervalSecs" value="0" /><property name="reconnectDelegateBetweenPolls" value="false"/>
     </bean>
 
     <bean id="QCReader" class="com.collabnet.ccf.pi.qc.v90.QCReader">
