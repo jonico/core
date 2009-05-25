@@ -323,7 +323,7 @@ public class ProjectTrackerWriter extends
 			if (!AbstractWriter.handleConflicts(modifiedOnMilliSeconds, ga)) {
 				return ga;
 			}
-			
+
 			ClientArtifact ca = this.getClientArtifactFromGenericArtifact(ga,
 					twsclient, targetArtifactTypeNameSpace,
 					targetArtifactTypeTagName, currentArtifact,
@@ -410,6 +410,13 @@ public class ProjectTrackerWriter extends
 				trackerArtifactType = metadataHelper.getTrackerArtifactType(
 						repositoryKey, artifactTypeDisplayName, twsclient);
 			}
+
+			if (trackerArtifactType == null) {
+				throw new CCFRuntimeException("Artifact type for repository "
+						+ repositoryKey
+						+ " unknown, cannot synchronize repository.");
+			}
+
 			String targetArtifactTypeNamespace = trackerArtifactType
 					.getNamespace();
 			String targetArtifactTypeTagName = trackerArtifactType.getTagName();
@@ -525,64 +532,67 @@ public class ProjectTrackerWriter extends
 				if (!processedUserFields.contains(fieldName)) {
 					List<GenericArtifactField> gaUserFields = ga
 							.getAllGenericArtifactFieldsWithSameFieldName(fieldName);
-					//String attributeNamespace = ptHelper
-					//		.getArtifactTypeNamespaceFromFullyQualifiedArtifactType(fullyQualifiedFieldTagName);
-					//String attributeTagName = ptHelper
-					//		.getArtifactTypeTagNameFromFullyQualifiedArtifactType(fullyQualifiedFieldTagName);
-					//String[] currentValues = null;
+					// String attributeNamespace = ptHelper
+					// .getArtifactTypeNamespaceFromFullyQualifiedArtifactType(
+					// fullyQualifiedFieldTagName);
+					// String attributeTagName = ptHelper
+					// .getArtifactTypeTagNameFromFullyQualifiedArtifactType(
+					// fullyQualifiedFieldTagName);
+					// String[] currentValues = null;
 
-					//if (currentArtifact != null) {
-					//	currentValues = currentArtifact.getAttributeValues(
-					//			attributeNamespace, attributeTagName);
-					//} else {
-					//	currentValues = new String[] {};
-					//}
-					//Set<String> currentUsers = new HashSet<String>();
-					//for (int i = 0; i < currentValues.length; i++) {
-					//	currentUsers.add(currentValues[i]);
-					//}
-					//if (gaUserFields.size() == 1) {
-					//	GenericArtifactField userField = gaUserFields.get(0);
-					//	String userFieldValue = (String) userField
-					//			.getFieldValue();
-					//	if (userField.getFieldAction() == GenericArtifactField.FieldActionValue.DELETE) {
-					//		Iterator<String> it = currentUsers.iterator();
-					//		// FIXME Why not use remove method?
-					//		while (it.hasNext()) {
-					//			String user = it.next();
-					//			if (user.equals(userFieldValue)) {
-					//				it.remove();
-					//			}
-					//		}
-					//	} else {
-					//		boolean userFound = currentUsers
-					//				.contains(userFieldValue);
+					// if (currentArtifact != null) {
+					// currentValues = currentArtifact.getAttributeValues(
+					// attributeNamespace, attributeTagName);
+					// } else {
+					// currentValues = new String[] {};
+					// }
+					// Set<String> currentUsers = new HashSet<String>();
+					// for (int i = 0; i < currentValues.length; i++) {
+					// currentUsers.add(currentValues[i]);
+					// }
+					// if (gaUserFields.size() == 1) {
+					// GenericArtifactField userField = gaUserFields.get(0);
+					// String userFieldValue = (String) userField
+					// .getFieldValue();
+					// if (userField.getFieldAction() ==
+					// GenericArtifactField.FieldActionValue.DELETE) {
+					// Iterator<String> it = currentUsers.iterator();
+					// // FIXME Why not use remove method?
+					// while (it.hasNext()) {
+					// String user = it.next();
+					// if (user.equals(userFieldValue)) {
+					// it.remove();
+					// }
+					// }
+					// } else {
+					// boolean userFound = currentUsers
+					// .contains(userFieldValue);
 					//	
-					//		if (!userFound) {
-					//			Set<String> newUsers = new HashSet<String>();
-					//			newUsers.addAll(currentUsers);
-					//			newUsers.add(userFieldValue);
-					//			// FIXME Why not add directly?
-					//			currentUsers = newUsers;
-					//		}
-					//	}
-					//	if (!currentUsers.isEmpty()) {
-					//		for (String user : currentUsers) {
-					//			if (user != null) {
-					//				userField.setFieldValue(user);
-					//				this.addAttribute(userField, ca,
-					//						trackerAttribute,
-					//						fullyQualifiedFieldTagName,
-					//						metadata, targetSystemTimezone);
-					//			}
-					//		}
-					//	} else {
-					//		userField.setFieldValue("");
-					//		this.addAttribute(userField, ca, trackerAttribute,
-					//				fullyQualifiedFieldTagName, metadata,
-					//				targetSystemTimezone);
-					//	}
-					//} else {
+					// if (!userFound) {
+					// Set<String> newUsers = new HashSet<String>();
+					// newUsers.addAll(currentUsers);
+					// newUsers.add(userFieldValue);
+					// // FIXME Why not add directly?
+					// currentUsers = newUsers;
+					// }
+					// }
+					// if (!currentUsers.isEmpty()) {
+					// for (String user : currentUsers) {
+					// if (user != null) {
+					// userField.setFieldValue(user);
+					// this.addAttribute(userField, ca,
+					// trackerAttribute,
+					// fullyQualifiedFieldTagName,
+					// metadata, targetSystemTimezone);
+					// }
+					// }
+					// } else {
+					// userField.setFieldValue("");
+					// this.addAttribute(userField, ca, trackerAttribute,
+					// fullyQualifiedFieldTagName, metadata,
+					// targetSystemTimezone);
+					// }
+					// } else {
 					for (GenericArtifactField userField : gaUserFields) {
 						if (userField.getFieldValue() == null) {
 							userField.setFieldValue("");
@@ -591,7 +601,7 @@ public class ProjectTrackerWriter extends
 								fullyQualifiedFieldTagName, metadata,
 								targetSystemTimezone);
 					}
-					//}
+					// }
 					processedUserFields.add(fieldName);
 				}
 			} else {
@@ -944,35 +954,40 @@ public class ProjectTrackerWriter extends
 
 	@Override
 	public Document createDependency(Document gaDocument) {
-		//throw new CCFRuntimeException("createDependency is not implemented...!");
+		// throw new
+		// CCFRuntimeException("createDependency is not implemented...!");
 		log.warn("createDependency is not implemented...!");
 		return null;
 	}
 
 	@Override
 	public Document deleteArtifact(Document gaDocument) {
-		//throw new CCFRuntimeException("deleteArtifact is not implemented...!");
+		// throw new
+		// CCFRuntimeException("deleteArtifact is not implemented...!");
 		log.warn("deleteArtifact is not implemented...!");
 		return null;
 	}
 
 	@Override
 	public Document deleteDependency(Document gaDocument) {
-		//throw new CCFRuntimeException("deleteDependency is not implemented...!");
+		// throw new
+		// CCFRuntimeException("deleteDependency is not implemented...!");
 		log.warn("deleteDependency is not implemented...!");
 		return null;
 	}
 
 	@Override
 	public Document updateAttachment(Document gaDocument) {
-		//throw new CCFRuntimeException("updateAttachment is not implemented...!");
+		// throw new
+		// CCFRuntimeException("updateAttachment is not implemented...!");
 		log.warn("updateAttachment is not implemented...!");
 		return null;
 	}
 
 	@Override
 	public Document updateDependency(Document gaDocument) {
-		//throw new CCFRuntimeException("updateDependency is not implemented...!");
+		// throw new
+		// CCFRuntimeException("updateDependency is not implemented...!");
 		log.warn("updateDependency is not implemented...!");
 		return null;
 	}
