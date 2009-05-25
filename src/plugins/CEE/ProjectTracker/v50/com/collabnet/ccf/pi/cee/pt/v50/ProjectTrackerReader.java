@@ -121,7 +121,7 @@ public class ProjectTrackerReader extends
 	// private static ThreadLocal<HashMap<String, ClientArtifact>>
 	// artifactListTl = new ThreadLocal<HashMap<String, ClientArtifact>>();
 	ProjectTrackerHelper ptHelper = ProjectTrackerHelper.getInstance();
-	
+
 	private static HashMap<String, GenericArtifactField.FieldValueTypeValue> ptGATypesMap = new HashMap<String, GenericArtifactField.FieldValueTypeValue>();
 	static {
 		ptGATypesMap.put("SHORT_TEXT",
@@ -642,7 +642,7 @@ public class ProjectTrackerReader extends
 	/**
 	 * Populates the source and destination attributes for this GenericArtifact
 	 * object from the Sync Info database document.
-	 *
+	 * 
 	 * @param syncInfo
 	 * @param ga
 	 */
@@ -703,7 +703,8 @@ public class ProjectTrackerReader extends
 		String lastModifiedBy = null;
 		try {
 			try {
-				// this sleep is needed because PT signals artifact changes before it finished saving the data
+				// this sleep is needed because PT signals artifact changes
+				// before it finished saving the data
 				if (!isBulkImport()) {
 					Thread.sleep(500);
 				}
@@ -726,7 +727,8 @@ public class ProjectTrackerReader extends
 					movedArtifacts.put(retrievedId, artifactIdentifier);
 				} else if (movedArtifacts.containsKey(artifactIdentifier)) {
 					movedArtifacts.remove(artifactIdentifier);
-					log.debug("Artifact has been moved and will not be synchronized");
+					log
+							.debug("Artifact has been moved and will not be synchronized");
 					return null;
 				}
 			} else if (artifacts.size() > 1) {
@@ -737,8 +739,10 @@ public class ProjectTrackerReader extends
 			lastModifiedBy = artifact.getAttributeValue(
 					TrackerWebServicesClient.DEFAULT_NAMESPACE,
 					TrackerWebServicesClient.MODIFIED_BY_FIELD_NAME);
-			if (lastModifiedBy.equals(getUsername()) && isIgnoreConnectorUserUpdates()) {
-				log.debug("Artifact has been lastly modified by connector user and will not be synchronized");
+			if (lastModifiedBy.equals(getUsername())
+					&& isIgnoreConnectorUserUpdates()) {
+				log
+						.debug("Artifact has been lastly modified by connector user and will not be synchronized");
 				return null;
 			}
 			String createdOnTimeMillis = artifact.getAttributeValue(
@@ -759,7 +763,8 @@ public class ProjectTrackerReader extends
 			}
 		}
 		GenericArtifact ga = new GenericArtifact();
-		if (lastModifiedBy.equals(this.getResyncUserName()) && isIgnoreConnectorUserUpdates()) {
+		if (lastModifiedBy.equals(this.getResyncUserName())
+				&& isIgnoreConnectorUserUpdates()) {
 			ga.setArtifactAction(GenericArtifact.ArtifactActionValue.RESYNC);
 		}
 		ga.setArtifactType(GenericArtifact.ArtifactTypeValue.PLAINARTIFACT);
@@ -992,7 +997,7 @@ public class ProjectTrackerReader extends
 				linkIDNameMap = new HashMap<String, ClientArtifactAttachment>();
 			}
 			String attachmentId = attachment.getAttachmentId();
-			//String attachmentName = attachment.getAttachmentName();
+			// String attachmentName = attachment.getAttachmentName();
 			attachmentIDNameMap.put(attachmentId, attachment);
 			String isFile = attachment.getIsFile();
 			long attachmentCreatedOn = Long
@@ -1157,7 +1162,7 @@ public class ProjectTrackerReader extends
 		ArrayList<ArtifactState> artifactStatesDuplicate = new ArrayList<ArtifactState>();
 		ArrayList<ArtifactState> artifactStatesNew = new ArrayList<ArtifactState>();
 		boolean duplicateDetected = false;
-		HashMap <String, ArtifactState> artifactIdStateMap = new HashMap<String, ArtifactState>();
+		HashMap<String, ArtifactState> artifactIdStateMap = new HashMap<String, ArtifactState>();
 		try {
 			twsclient = this.getConnection(syncInfo);
 			if (trackerArtifactType == null) {
@@ -1165,6 +1170,11 @@ public class ProjectTrackerReader extends
 						repositoryKey, artifactTypeDisplayName, twsclient);
 			}
 
+			if (trackerArtifactType == null) {
+				throw new CCFRuntimeException("Artifact type for repository "
+						+ repositoryKey
+						+ " unknown, cannot synchronize repository.");
+			}
 			String namespace = trackerArtifactType.getNamespace();
 			String tagname = trackerArtifactType.getTagName();
 			String artifactTypeFullyQualifiedName = "{" + namespace + "}"
@@ -1192,49 +1202,63 @@ public class ProjectTrackerReader extends
 												+ ":"
 												+ historyActivity
 														.getArtifactId();
-										if(historyArtifactId.equals(lastShippedArtifactId)
+										if (historyArtifactId
+												.equals(lastShippedArtifactId)
 												&& fromTimeLong == modifiedOn) {
 											duplicateDetected = true;
 											continue;
 										}
-										
+
 										ArtifactState state = null;
 										if (artifactIdStateMap
 												.containsKey(historyArtifactId)) {
-											state = artifactIdStateMap.get(historyArtifactId);
-											state.setArtifactLastModifiedDate(new Date(modifiedOn));
-											state.setArtifactVersion(modifiedOn);
-											if(!duplicateDetected) {
-												artifactStatesDuplicate.remove(state);
-												artifactStatesDuplicate.add(state);
-											}
-											else {
+											state = artifactIdStateMap
+													.get(historyArtifactId);
+											state
+													.setArtifactLastModifiedDate(new Date(
+															modifiedOn));
+											state
+													.setArtifactVersion(modifiedOn);
+											if (!duplicateDetected) {
+												artifactStatesDuplicate
+														.remove(state);
+												artifactStatesDuplicate
+														.add(state);
+											} else {
 												artifactStatesNew.remove(state);
 												artifactStatesNew.add(state);
 											}
-										}
-										else {
+										} else {
 											state = new ArtifactState();
-											state.setArtifactId(historyArtifactId);
-											state.setArtifactLastModifiedDate(new Date(modifiedOn));
-											state.setArtifactVersion(modifiedOn);
-											artifactIdStateMap.put(historyArtifactId, state);
-											if(!duplicateDetected) {
-												artifactStatesDuplicate.add(state);
-											}
-											else {
+											state
+													.setArtifactId(historyArtifactId);
+											state
+													.setArtifactLastModifiedDate(new Date(
+															modifiedOn));
+											state
+													.setArtifactVersion(modifiedOn);
+											artifactIdStateMap.put(
+													historyArtifactId, state);
+											if (!duplicateDetected) {
+												artifactStatesDuplicate
+														.add(state);
+											} else {
 												artifactStatesNew.add(state);
 											}
 										}
-										if(this.isIgnoreConnectorUserUpdates()){
-											if(modifiedBy.equals(this.getUsername())){
-												state = artifactIdStateMap.get(historyArtifactId);
-												artifactIdStateMap.remove(historyArtifactId);
-												if(!duplicateDetected) {
-													artifactStatesDuplicate.remove(state);
-												}
-												else {
-													artifactStatesNew.remove(state);
+										if (this.isIgnoreConnectorUserUpdates()) {
+											if (modifiedBy.equals(this
+													.getUsername())) {
+												state = artifactIdStateMap
+														.get(historyArtifactId);
+												artifactIdStateMap
+														.remove(historyArtifactId);
+												if (!duplicateDetected) {
+													artifactStatesDuplicate
+															.remove(state);
+												} else {
+													artifactStatesNew
+															.remove(state);
 												}
 											}
 										}
@@ -1266,10 +1290,9 @@ public class ProjectTrackerReader extends
 				getConnectionManager().releaseConnection(twsclient);
 			}
 		}
-		if(duplicateDetected) {
+		if (duplicateDetected) {
 			return artifactStatesNew;
-		}
-		else {
+		} else {
 			return artifactStatesDuplicate;
 		}
 	}
@@ -1277,22 +1300,22 @@ public class ProjectTrackerReader extends
 	/**
 	 * Connects to the source CEE system using the connectionInfo and
 	 * credentialInfo details.
-	 *
+	 * 
 	 * This method uses the ConnectionManager configured in the wiring file for
 	 * the CEEReader
-	 *
-	 * @param systemId -
-	 *            The system id of the source CEE system
-	 * @param systemKind -
-	 *            The system kind of the source CEE system
-	 * @param repositoryId -
-	 *            The tracker id in the source CEE system
-	 * @param repositoryKind -
-	 *            The repository kind for the tracker
-	 * @param connectionInfo -
-	 *            The CEE server URL
-	 * @param credentialInfo -
-	 *            User name and password concatenated with a delimiter.
+	 * 
+	 * @param systemId
+	 *            - The system id of the source CEE system
+	 * @param systemKind
+	 *            - The system kind of the source CEE system
+	 * @param repositoryId
+	 *            - The tracker id in the source CEE system
+	 * @param repositoryKind
+	 *            - The repository kind for the tracker
+	 * @param connectionInfo
+	 *            - The CEE server URL
+	 * @param credentialInfo
+	 *            - User name and password concatenated with a delimiter.
 	 * @return - The connection object obtained from the ConnectionManager
 	 * @throws MaxConnectionsReachedException
 	 * @throws ConnectionException
@@ -1313,7 +1336,7 @@ public class ProjectTrackerReader extends
 	/**
 	 * Populates the source and destination attributes for this GenericArtifact
 	 * object from the Sync Info database document.
-	 *
+	 * 
 	 * @param syncInfo
 	 * @param ga
 	 */
@@ -1344,9 +1367,9 @@ public class ProjectTrackerReader extends
 
 	/**
 	 * Releases the connection to the ConnectionManager.
-	 *
-	 * @param connection -
-	 *            The connection to be released to the ConnectionManager
+	 * 
+	 * @param connection
+	 *            - The connection to be released to the ConnectionManager
 	 */
 	public void disconnect(TrackerWebServicesClient connection) {
 		getConnectionManager().releaseConnection(connection);
@@ -1355,7 +1378,7 @@ public class ProjectTrackerReader extends
 	/**
 	 * Returns the server URL of the CEE system that is configured in the wiring
 	 * file.
-	 *
+	 * 
 	 * @return
 	 */
 	public String getServerUrl() {
@@ -1364,9 +1387,9 @@ public class ProjectTrackerReader extends
 
 	/**
 	 * Sets the source CEE system's SOAP server URL.
-	 *
-	 * @param serverUrl -
-	 *            the URL of the source CEE system.
+	 * 
+	 * @param serverUrl
+	 *            - the URL of the source CEE system.
 	 */
 	public void setServerUrl(String serverUrl) {
 		this.serverUrl = serverUrl;
@@ -1374,7 +1397,7 @@ public class ProjectTrackerReader extends
 
 	/**
 	 * Gets the mandatory password that belongs to the username
-	 *
+	 * 
 	 * @return the password
 	 */
 	private String getPassword() {
@@ -1383,7 +1406,7 @@ public class ProjectTrackerReader extends
 
 	/**
 	 * Sets the password that belongs to the username
-	 *
+	 * 
 	 * @param password
 	 *            the password to set
 	 */
@@ -1396,7 +1419,7 @@ public class ProjectTrackerReader extends
 	 * instance whenever an artifact should be updated or extracted. This user
 	 * has to differ from the resync user in order to force initial resyncs with
 	 * the source system once a new artifact has been created.
-	 *
+	 * 
 	 * @return the userName
 	 */
 	public String getUsername() {
@@ -1405,12 +1428,12 @@ public class ProjectTrackerReader extends
 
 	/**
 	 * Sets the mandatory username
-	 *
+	 * 
 	 * The user name is used to login into the CEE instance whenever an artifact
 	 * should be updated or extracted. This user has to differ from the resync
 	 * user in order to force initial resyncs with the source system once a new
 	 * artifact has been created.
-	 *
+	 * 
 	 * @param usser
 	 *            name the user name to set
 	 */
@@ -1469,14 +1492,14 @@ public class ProjectTrackerReader extends
 
 	/**
 	 * Sets the optional resync username
-	 *
+	 * 
 	 * The resync user name is used to login into the CEE instance whenever an
 	 * artifact should be created. This user has to differ from the ordinary
 	 * user used to log in in order to force initial resyncs with the source
 	 * system once a new artifact has been created. This property can also be
 	 * set for the reader component in order to be able to differentiate between
 	 * artifacts created by ordinary users and artifacts to be resynced.
-	 *
+	 * 
 	 * @param resyncUserName
 	 *            the resyncUserName to set
 	 */
@@ -1492,7 +1515,7 @@ public class ProjectTrackerReader extends
 	 * created. This property can also be set for the reader component in order
 	 * to be able to differentiate between artifacts created by ordinary users
 	 * and artifacts to be resynced.
-	 *
+	 * 
 	 * @return the resyncUserName
 	 */
 	private String getResyncUserName() {
@@ -1520,7 +1543,7 @@ public class ProjectTrackerReader extends
 	 * be ignored This is the default behavior to avoid infinite update loops.
 	 * However, in artifact export scenarios, where all artifacts should be
 	 * extracted, this property should be set to false
-	 *
+	 * 
 	 * @param ignoreConnectorUserUpdates
 	 *            whether to ignore artifacts that have been created or lastly
 	 *            modified by the connector user
@@ -1534,7 +1557,7 @@ public class ProjectTrackerReader extends
 	 * should be ignored This is the default behavior to avoid infinite update
 	 * loops. However, in artifact export scenarios, where all artifacts should
 	 * be extracted, this property should is set to false
-	 *
+	 * 
 	 * @return the ignoreConnectorUserUpdates whether to ignore artifacts that
 	 *         have been created or lastly modified by the connector user
 	 */
@@ -1542,7 +1565,6 @@ public class ProjectTrackerReader extends
 		return ignoreConnectorUserUpdates;
 	}
 
-	
 	private boolean ignoreConnectorUserUpdates = true;
 
 }
