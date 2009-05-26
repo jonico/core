@@ -176,19 +176,19 @@ public class QCDefectHandler {
 			String message = "Attempt to lock the defect with id " + bugId
 					+ " failed";
 			log.error(message, e);
-			throw new CCFRuntimeException(message, e);
+			throw new CCFRuntimeException(message + ": "+e.getMessage(), e);
 		} catch (ComFailException e) {
 			bug.undo();
 			String message = "ComFailException while updating the defect with id "
 					+ bugId;
 			log.error(message, e);
-			throw new CCFRuntimeException(message, e);
+			throw new CCFRuntimeException(message + ": "+e.getMessage(), e);
 		} catch (Exception e) {
 			bug.undo();
 			String message = "Exception while updating the defect with id "
 					+ bugId;
 			log.error(message, e);
-			throw new CCFRuntimeException(message, e);
+			throw new CCFRuntimeException(message + ": "+e.getMessage(), e);
 		} finally {
 			if (bug != null) {
 				bug.unlockObject();
@@ -284,7 +284,7 @@ public class QCDefectHandler {
 			}
 			String message = "Exception while creating Bug " + bugId;
 			log.error(message, e);
-			throw new CCFRuntimeException(message, e);
+			throw new CCFRuntimeException(message + ": "+e.getMessage(), e);
 		} finally {
 			if (bug != null) {
 				bug.unlockObject();
