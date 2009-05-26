@@ -39,17 +39,11 @@
 		</field>
 	</xsl:template>
 	<xsl:template match='ccf:field[@fieldName="BG_RESPONSIBLE"]'>
-		<xsl:variable name="assignedToValue" as="xs:string"
-			select="." />
-		<xsl:choose>
-			<xsl:when test="$assignedToValue != ''">
-				<field>
-					<xsl:copy-of select="@*" />
-					<xsl:attribute name="fieldName">Assigned To</xsl:attribute>
-					<xsl:value-of select="." />
-				</field>
-			</xsl:when>
-		</xsl:choose>
+		<field>
+			<xsl:copy-of select="@*" />
+			<xsl:attribute name="fieldName">Assigned To</xsl:attribute>
+			<xsl:value-of select="." />
+		</field>
 	</xsl:template>
 	<xsl:template match='ccf:field[@fieldName="BG_USER_13"]'>
 		<field>
