@@ -783,10 +783,12 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 					.setErrorCode(GenericArtifact.ERROR_EXTERNAL_SYSTEM_CONNECTION);
 			throw new CCFRuntimeException(cause, e);
 		} finally {
-			boolean deletingSuccess = attachmentFile.delete();
-			if (!deletingSuccess) {
-				log.warn("Could not delete the attachment file "
-						+ attachmentFile.getAbsolutePath());
+			if (attachmentFile != null) {
+				boolean deletingSuccess = attachmentFile.delete();
+				if (!deletingSuccess) {
+					log.warn("Could not delete the attachment file "
+							+ attachmentFile.getAbsolutePath());
+				}
 			}
 			disconnect(connection);
 		}
