@@ -406,7 +406,7 @@ public class ProjectTrackerWriter extends
 			twsclient = this.getConnection(ga);
 			TrackerArtifactType trackerArtifactType = metadataHelper
 					.getTrackerArtifactType(repositoryKey);
-			if (trackerArtifactType == null) {
+			if (trackerArtifactType == null){
 				trackerArtifactType = metadataHelper.getTrackerArtifactType(
 						repositoryKey, artifactTypeDisplayName, twsclient);
 			}
