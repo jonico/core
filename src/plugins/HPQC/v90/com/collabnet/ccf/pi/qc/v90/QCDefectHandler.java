@@ -650,8 +650,8 @@ public class QCDefectHandler {
 		if (genArtifactFields != null && genArtifactFields.get(0) != null) {
 			String bgVts = qcGAHelper.findBgVtsFromQC(qcc, Integer
 					.parseInt(actionId), entityId);
-			genArtifactFields.get(0).setFieldValue((String) bgVts);
 			Date newBgVts = DateUtil.parseQCDate(bgVts);
+			genArtifactFields.get(0).setFieldValue(newBgVts);
 			String lastModifiedDate = DateUtil.format(newBgVts);
 			latestDefectArtifact
 					.setSourceArtifactLastModifiedDate(lastModifiedDate);
@@ -811,7 +811,7 @@ public class QCDefectHandler {
 	 * @param qcc
 	 * @param txnId
 	 * @return
-	 */
+	 *//*
 	public boolean checkForCreate(IConnection qcc, int txnId) {
 
 		Boolean check = false;
@@ -844,7 +844,7 @@ public class QCDefectHandler {
 			}
 		}
 		return check;
-	}
+	}*/
 
 	public void deleteDefect(String id) {
 		// Yet to implement

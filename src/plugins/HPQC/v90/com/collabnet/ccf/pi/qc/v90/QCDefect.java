@@ -232,7 +232,8 @@ public class QCDefect extends Bug implements IQCDefect {
 					String fieldValueAsString = null;
 					if (fieldName.equals("BG_VTS")) {
 						Date dateFieldValue = getFieldAsDate(fieldName);
-						thisField.setFieldValue(DateUtil.formatQCDate(dateFieldValue));
+						thisField.setFieldValue(dateFieldValue);
+						//thisField.setFieldValue(DateUtil.formatQCDate(dateFieldValue));
 						thisField.setFieldValueType(GenericArtifactField.FieldValueTypeValue.DATETIME);
 					} else {
 						fieldValueAsString = getFieldAsString(fieldName);
