@@ -67,6 +67,9 @@ public class QCDefectHandler {
 
 	public static IRecordSet executeSQL(IConnection qcc, String sql) {
 		ICommand command = null;
+		if (log.isDebugEnabled()) {
+			log.debug("Going to execute SQL statement "+sql);
+		}
 		try {
 			command = qcc.getCommand();
 			command.setCommandText(sql);
