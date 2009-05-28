@@ -163,7 +163,7 @@ public class QCDefectHandler {
 						bug.setField(fieldName, fieldValue);
 					} catch (ComFailException e) {
 						String message = "Exception while setting the value of field "
-								+ fieldName + " to " + fieldValue;
+								+ fieldName + " to " + fieldValue + ": "+ e.getMessage();
 						log.error(message, e);
 						throw new CCFRuntimeException(message, e);
 					}
@@ -264,7 +264,7 @@ public class QCDefectHandler {
 						bug.setField(fieldName, fieldValue);
 					} catch (Exception e) {
 						String message = "Exception while setting the value of field "
-								+ fieldName + " to " + fieldValue;
+								+ fieldName + " to " + fieldValue + ": "+ e.getMessage();
 						log.error(message, e);
 						throw new CCFRuntimeException(message, e);
 					}
