@@ -21,6 +21,7 @@
 package com.collabnet.ccf.pi.qc.v90;
 
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -219,8 +220,22 @@ public class QCConfigHelper {
 
 				// obtain the GenericArtifactField datatype from the columnType and editStyle
 				GenericArtifactField.FieldValueTypeValue fieldValueType = convertQCDataTypeToGADatatype(columnType, editStyle, columnName);
+				
+				boolean isMultiSelectField=false;
+				if (fieldValueType.equals(GenericArtifactField.FieldValueTypeValue.STRING)) {
+					String isMultiValue = rs.getFieldValueAsString(sfIsMultiValue);
+
+					if(columnType.equals("char") && editStyle!=null && isMultiValue!=null && !StringUtils.isEmpty(isMultiValue) &&
+							isMultiValue.equals("Y")){
+						if(editStyle.equals("ListCombo") || editStyle.equals("TreeCombo")) {
+							isMultiSelectField=true;
+						}
+					}
+				}
+				
 				field = genericArtifact.addNewField(columnName, GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
 				field.setFieldValueType(fieldValueType);
+				field.setMaxOccursValue(isMultiSelectField?GenericArtifactField.UNBOUNDED:"1");
 
 				// Only for the Comments field, the action value of the GenericArtifactField is set to APPEND. Later, this feature can be upgraded.
 				if(columnName!=null && columnName.equals("BG_DEV_COMMENTS"))

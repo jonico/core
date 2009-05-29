@@ -206,7 +206,7 @@ public class QCDefect extends Bug implements IQCDefect {
 			}
 			if (thisFieldsDatatype
 					.equals(GenericArtifactField.FieldValueTypeValue.STRING)) {
-				if(isMultiSelectField(thisField.getFieldName(),qcc)) {
+				if(thisField.getMaxOccurs() == GenericArtifactField.CARDINALITY_UNBOUNDED) {
 
 					String fieldValue = getFieldAsString(thisField.getFieldName());
 					List<String> fieldValues = new ArrayList<String>();
@@ -266,7 +266,7 @@ public class QCDefect extends Bug implements IQCDefect {
 	}
 
 
-	public boolean isMultiSelectField(String fieldName, IConnection qcc) {
+	/*public boolean isMultiSelectField(String fieldName, IConnection qcc) {
 
 		String sql = "SELECT * FROM SYSTEM_FIELD WHERE SF_TABLE_NAME='BUG' AND SF_COLUMN_NAME='"+fieldName+"'";
 		int rsCount = 0;
@@ -296,7 +296,7 @@ public class QCDefect extends Bug implements IQCDefect {
 		}
 
 		return false;
-	}
+	}*/
 
 
 
