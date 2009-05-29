@@ -35,6 +35,7 @@ public class RepositoryRecord {
 		artifactsToBeShippedList = new ArrayList<GenericArtifact>();
 		artifactsToBeReadList = new ArrayList<ArtifactState>();
 	}
+	
 	public String getRepositoryId() {
 		return repositoryId;
 	}
@@ -70,7 +71,11 @@ public class RepositoryRecord {
 	 */
 	public void setNewSyncInfo(Document newSyncInfo) {
 		this.newSyncInfo = newSyncInfo;
+		newSyncInfoReceived = true;
 	}
+	
+	private boolean newSyncInfoReceived = true;
+	
 	/**
 	 * @return the newSyncInfo
 	 */
@@ -84,5 +89,10 @@ public class RepositoryRecord {
 	 */
 	public void switchToNewSyncInfo() {
 		this.syncInfo = this.newSyncInfo;
+		newSyncInfoReceived=false;
+	}
+
+	public boolean isNewSyncInfoReceived() {
+		return newSyncInfoReceived;
 	}
 }

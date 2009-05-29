@@ -279,8 +279,8 @@ public abstract class AbstractReader<T> extends Component implements
 		RepositoryRecord currentRecord = null;
 		while (!repositorySynchronizationWaitingList.isEmpty()) {
 			currentRecord = repositorySynchronizationWaitingList.get(0);
-			log.debug("Processing the current repository " + repositoryKey
-					+ " record");
+			log.debug("Processing the current repository "
+					+ currentRecord.getRepositoryId() + " record");
 			// immediately move record to tail so that exceptions do not prevent
 			// other repositories
 			// from being synched
@@ -332,10 +332,17 @@ public abstract class AbstractReader<T> extends Component implements
 					&& !isRestartConnector()
 					&& !isShutDownConnector()
 					&& !(isShutdownCCFAfterInitialSync() && connectorHasReadAllInitialSynchronizationStatusRecords)) {
+				if (!currentRecord.isNewSyncInfoReceived()) {
+					log
+							.debug("Cannot retrieve new records for "
+									+ currentRecord.getRepositoryId()
+									+ " because new sync info has not yet been received.");
+					return new Object[] {};
+				}
 				log
 						.debug("There are no artifacts to be read. Checking if there are"
-								+ " changed artifacts in repository or in hospital"
-								+ repositoryKey);
+								+ " changed artifacts in repository or in hospital for "
+								+ currentRecord.getRepositoryId());
 				// all our buffers are flushed, we take new syncInfo now
 				currentRecord.switchToNewSyncInfo();
 				syncInfo = currentRecord.getSyncInfo();
@@ -431,7 +438,7 @@ public abstract class AbstractReader<T> extends Component implements
 			if (!artifactsToBeReadList.isEmpty() && !isRestartConnector()
 					&& !isShutDownConnector()) {
 				log.debug("There are " + artifactsToBeReadList.size()
-						+ "artifacts to be read.");
+						+ " artifacts to be read.");
 				ArtifactState artifactState = artifactsToBeReadList.remove(0);
 				List<GenericArtifact> sortedGAs = null;
 				if (artifactState.isReplayedArtifact()) {
@@ -608,7 +615,7 @@ public abstract class AbstractReader<T> extends Component implements
 				}
 			} else {
 				log.debug("No changed artifacts reported for "
-						+ sourceRepositoryId
+						+ currentRecord.getRepositoryId()
 						+ ". Removing it from the waiting list");
 				removeFromWaitingList(currentRecord);
 			}
