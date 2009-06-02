@@ -1,10 +1,10 @@
-                CollabNet Tracker Connector to HP Quality Center 4.1
-                ----------------------------------------------------
-                
+CollabNet Connector Framework
+Version 1.2.0
+                 
 Introduction:
 -------------             
-CollabNet Tracker Connector to HP Quality Center is based on CollabNet Connector Framework 1.1.
-It enables shipment of defect data from HP Quality Center to a CollabNet tracker (Project Tracker or SourceForge tracker), and vice versa.
+CollabNet Connector Framework enables shipment of defect data from HP Quality Center to a CollabNet tracker
+(Project Tracker or SourceForge tracker), and vice versa.
 
 For more information on the CollabNet Connector Framework please
 visit http://ccf.open.collab.net
@@ -25,13 +25,13 @@ System Requirements
         - Log in using the HP QC user name and password
 
 4. HP Quality Center
-    Quality Center versions 9.0 and 9.2 are supported
+    Quality Center versions 9.0, 9.2 and 10 are supported
     Quality Center installation with the following backend databases are tested
         1. SQL Server 8.00.760
         2. Oracle 10g
 
 5. Java Requirements
-    JDK 1.5 or above is required
+    JDK 1.6 or above is required
 
 Getting Started
 ---------------
