@@ -321,7 +321,6 @@
 	</xsl:template>
 	<xsl:template
 		match='ccf:field[@fieldName=concat($artifactTypeNameSpace,"Internal Reference")]'>
-		<xsl:variable name="priorityValue" as="xs:string" select="." />
 		<field>
 			<xsl:copy-of select="@*" />
 			<xsl:attribute name="fieldName">BG_USER_03</xsl:attribute>
@@ -330,7 +329,6 @@
 	</xsl:template>
 	<xsl:template
 		match='ccf:field[@fieldName=concat($artifactTypeNameSpace,"External Reference")]'>
-		<xsl:variable name="priorityValue" as="xs:string" select="." />
 		<field>
 			<xsl:copy-of select="@*" />
 			<xsl:attribute name="fieldName">BG_USER_14</xsl:attribute>

@@ -76,7 +76,7 @@
 			</map>
 		</property>
 		<!--<property name="exceptionProcessor" ref="ExceptionHandler" /> -->
-		<property name="exceptionProcessor" ref="ExceptionConvertor"/>
+		<property name="exceptionProcessor" ref="ExceptionConvertor"/><property name="metricsEnabled" value="true"/>
 	</bean>
 	
 	<bean id="ExceptionConvertor" class="com.collabnet.ccf.core.hospital.CCFExceptionToOrderedMapConvertor"><property name="logMessageTemplate" value="${ccf.logMessageTemplate}" /><property name="timestampFormat" value="yyyy-MM-dd HH:mm:ss zzz"/><property name="onlyQuarantineGenericArtifacts" value="true"/>

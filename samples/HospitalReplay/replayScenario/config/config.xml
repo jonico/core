@@ -154,7 +154,7 @@
 				 <entry key-ref="HospitalUpdatorSQLConverterFixed" value-ref="HospitalUpdator"/>	
 			</map>
 		</property>
-		<property name="exceptionProcessor" ref="ExceptionConvertor"/>
+		<property name="exceptionProcessor" ref="ExceptionConvertor"/><property name="metricsEnabled" value="true"/>
 	</bean>
 	
 	<!--  
