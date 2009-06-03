@@ -51,8 +51,8 @@ import com.vasoftware.sf.soap44.webservices.sfmain.TrackerFieldSoapDO;
 import com.vasoftware.sf.soap44.webservices.tracker.ArtifactSoapDO;
 
 /**
- * This component is responsible for writing SFEE tracker items encoded in the
- * generic XML artifact format back to the SFEE tracker
+ * This component is responsible for writing TF tracker items encoded in the
+ * generic XML artifact format back to the TF tracker
  * 
  * @author jnicolai
  * 
@@ -66,12 +66,12 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 	private static final Log log = LogFactory.getLog(SFEEWriter.class);
 
 	/**
-	 * SFEE tracker handler instance
+	 * TF tracker handler instance
 	 */
 	private SFEETrackerHandler trackerHandler;
 
 	/**
-	 * Comment used when updating SFEE tracker items
+	 * Comment used when updating TF tracker items
 	 */
 	private String updateComment;
 
@@ -84,18 +84,18 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 	private boolean translateTechnicalReleaseIds = false;
 
 	/**
-	 * Password that is used to login into the SFEE/CSFE instance in combination
+	 * Password that is used to login into the TF/CSFE instance in combination
 	 * with the username
 	 */
 	private String password;
 
 	/**
-	 * Username that is used to login into the SFEE/CSFE instance
+	 * Username that is used to login into the TF/CSFE instance
 	 */
 	private String username;
 
 	/**
-	 * Another user name that is used to login into the SFEE/CSFE instance This
+	 * Another user name that is used to login into the TF/CSFE instance This
 	 * user has to differ from the ordinary user used to log in in order to
 	 * force initial resyncs with the source system once a new artifact has been
 	 * created.
@@ -325,7 +325,7 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 					.setTargetSystemTimezone(ga.getTargetSystemTimezone());
 
 		} catch (RemoteException e) {
-			String cause = "Problem occured while creating attachments in SFEE";
+			String cause = "Problem occured while creating attachments in TF";
 			log.error(cause, e);
 			ga.setErrorCode(GenericArtifact.ERROR_EXTERNAL_SYSTEM_WRITE);
 			throw new CCFRuntimeException(cause, e);
@@ -341,14 +341,14 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 
 	/**
 	 * Creates the artifact represented by the GenericArtifact object on the
-	 * target SFEE system
+	 * target TF system
 	 * 
 	 * @param ga
 	 *            - the GenericArtifact object
 	 * @param tracker
-	 *            - The target SFEE tracker ID
+	 *            - The target TF tracker ID
 	 * @param connection
-	 *            - The Connection object for the target SFEE system
+	 *            - The Connection object for the target TF system
 	 * @return - the newly created artifact's ArtifactSoapDO object
 	 */
 	private ArtifactSoapDO createArtifact(GenericArtifact ga, String tracker,
@@ -449,7 +449,7 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 					+ " is created with the change from "
 					+ ga.getSourceArtifactId());
 		} catch (RemoteException e) {
-			String cause = "While trying to create an artifact within SFEE, an error occured";
+			String cause = "While trying to create an artifact within TF, an error occured";
 			log.error(cause, e);
 			ga.setErrorCode(GenericArtifact.ERROR_EXTERNAL_SYSTEM_WRITE);
 			throw new CCFRuntimeException(cause, e);
@@ -469,7 +469,7 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 
 	/**
 	 * Creates the artifact represented by the GenericArtifact object on the
-	 * target SFEE system
+	 * target TF system
 	 * 
 	 * @param ga
 	 * @param tracker
@@ -591,7 +591,7 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 				log.info("Artifact " + id + " is updated successfully");
 			}
 		} catch (RemoteException e) {
-			String cause = "While trying to update an artifact within SFEE, an error occured";
+			String cause = "While trying to update an artifact within TF, an error occured";
 			log.error(cause, e);
 			ga.setErrorCode(GenericArtifact.ERROR_EXTERNAL_SYSTEM_WRITE);
 			throw new CCFRuntimeException(cause, e);
@@ -621,14 +621,14 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 								+ getResyncPassword(), true);
 			}
 		} catch (MaxConnectionsReachedException e) {
-			String cause = "Could not create connection to the SFEE system. Max connections reached for "
+			String cause = "Could not create connection to the TF system. Max connections reached for "
 					+ serverUrl;
 			log.error(cause, e);
 			ga
 					.setErrorCode(GenericArtifact.ERROR_MAX_CONNECTIONS_REACHED_FOR_POOL);
 			throw new CCFRuntimeException(cause, e);
 		} catch (ConnectionException e) {
-			String cause = "Could not create connection to the SFEE system "
+			String cause = "Could not create connection to the TF system "
 					+ serverUrl;
 			log.error(cause, e);
 			ga.setErrorCode(GenericArtifact.ERROR_EXTERNAL_SYSTEM_CONNECTION);
@@ -758,7 +758,7 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 	}
 
 	/**
-	 * Returns the server URL of the CSFE/SFEE system that is configured in the
+	 * Returns the server URL of the CSFE/TF system that is configured in the
 	 * wiring file.
 	 * 
 	 * @return
@@ -768,10 +768,10 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 	}
 
 	/**
-	 * Sets the CSFE/SFEE system's SOAP server URL.
+	 * Sets the CSFE/TF system's SOAP server URL.
 	 * 
 	 * @param serverUrl
-	 *            - the URL of the source SFEE system.
+	 *            - the URL of the source TF system.
 	 */
 	public void setServerUrl(String serverUrl) {
 		this.serverUrl = serverUrl;
@@ -904,7 +904,7 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 	/**
 	 * Sets the optional resync username
 	 * 
-	 * The resync user name is used to login into the SFEE/CSFE instance
+	 * The resync user name is used to login into the TF/CSFE instance
 	 * whenever an artifact should be created. This user has to differ from the
 	 * ordinary user used to log in in order to force initial resyncs with the
 	 * source system once a new artifact has been created.
@@ -918,7 +918,7 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 
 	/**
 	 * Gets the optional resync username The resync user name is used to login
-	 * into the SFEE/CSFE instance whenever an artifact should be created. This
+	 * into the TF/CSFE instance whenever an artifact should be created. This
 	 * user has to differ from the ordinary user used to log in in order to
 	 * force initial resyncs with the source system once a new artifact has been
 	 * created.
@@ -969,7 +969,7 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 
 	/**
 	 * Gets the manadtory user name The user name is used to login into the
-	 * SFEE/CSFE instance whenever an artifact should be updated or extracted.
+	 * TF/CSFE instance whenever an artifact should be updated or extracted.
 	 * This user has to differ from the resync user in order to force initial
 	 * resyncs with the source system once a new artifact has been created.
 	 * 
@@ -982,7 +982,7 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 	/**
 	 * Sets the mandatory username
 	 * 
-	 * The user name is used to login into the SFEE/CSFE instance whenever an
+	 * The user name is used to login into the TF/CSFE instance whenever an
 	 * artifact should be updated or extracted. This user has to differ from the
 	 * resync user in order to force initial resyncs with the source system once
 	 * a new artifact has been created.

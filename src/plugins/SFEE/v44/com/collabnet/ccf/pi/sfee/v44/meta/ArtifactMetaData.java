@@ -84,7 +84,7 @@ public class ArtifactMetaData {
 		title("title", "Title", FIELD_TYPE.SYSTEM_DEFINED, GenericArtifactField.FieldValueTypeValue.STRING, true,""),
 		path("path", "Path", FIELD_TYPE.SYSTEM_DEFINED, GenericArtifactField.FieldValueTypeValue.STRING, false,""),
 		category("category", "Category", FIELD_TYPE.CONFIGURABLE, GenericArtifactField.FieldValueTypeValue.STRING, false,""),
-		/* This field is not set by the user. But SFEE automatically sets it when the state
+		/* This field is not set by the user. But TF automatically sets it when the state
 		 * changes to CLOSED
 		 * */
 		closeDate("closeDate", "Close date", FIELD_TYPE.SYSTEM_DEFINED, GenericArtifactField.FieldValueTypeValue.DATETIME, false,""),
@@ -174,7 +174,7 @@ public class ArtifactMetaData {
 			return fieldValueType;
 		}
 		else {
-			log.error("No SFEE type found for GA type " + fieldType);
+			log.error("No TF type found for GA type " + fieldType);
 		}
 		return null;
 	}

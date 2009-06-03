@@ -73,7 +73,7 @@ public class SFEETrackerHandler {
 	 * Class constructor.
 	 * 
 	 * @param serverUrl -
-	 *            The source SFEE SOAP server URL
+	 *            The source TF SOAP server URL
 	 * @param connectionManager
 	 */
 	public SFEETrackerHandler(String serverUrl,
@@ -588,7 +588,7 @@ public class SFEETrackerHandler {
 				if (!faultCode.getLocalPart().equals("VersionMismatchFault")) {
 					throw e;
 				}
-				logConflictResolutor.warn("Stale update for SFEE tracker item "
+				logConflictResolutor.warn("Stale update for TF tracker item "
 						+ Id + " in tracker " + trackerId
 						+ ". Trying again ...", e);
 				mainArtifactNotUpdated = true;

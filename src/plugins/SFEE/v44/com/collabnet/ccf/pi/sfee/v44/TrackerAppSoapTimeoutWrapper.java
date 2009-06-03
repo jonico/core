@@ -46,7 +46,7 @@ public class TrackerAppSoapTimeoutWrapper extends TimeoutWrapper implements
 	 * Class constructor.
 	 * 
 	 * @param serverUrl
-	 *            - The source SFEE SOAP server URL
+	 *            - The source TF SOAP server URL
 	 * @param connectionManager
 	 */
 	public TrackerAppSoapTimeoutWrapper(String serverUrl,

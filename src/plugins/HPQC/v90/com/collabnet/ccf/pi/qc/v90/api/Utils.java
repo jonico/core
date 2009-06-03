@@ -107,25 +107,7 @@ public class Utils {
 		
 		return s.trim();
 	}
-
-/*	public static Comment fromJIRAComment(JIRAComment jiraComment) {
-		Comment tdc = new Comment();
-		
-		String author = jiraComment.getAuthorFullName();
-		author += " (";
-		author += "@JIRA"+jiraComment.getId();
-		author += ")";
-		tdc.setAuthor(author);
-		
-		tdc.setCreated(jiraComment.getCreated());
-		
-		String body = jiraComment.getBody();
-		body = body.replaceAll("2QA:\\s+", "").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll("\\n", "<br>");
-		tdc.setBody(body);
-		
-		return tdc;
-	}
-*/ /* Commented for QC2SFEE */
+	
 	public static String formatComment(IComment comment) {
 		StringBuilder sb = new StringBuilder("<font color='#333300'><b> ");
 		sb.append(comment.getAuthor());

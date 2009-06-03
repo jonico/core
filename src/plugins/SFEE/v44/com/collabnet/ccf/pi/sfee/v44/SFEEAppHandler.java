@@ -35,7 +35,7 @@ import com.vasoftware.sf.soap44.webservices.sfmain.TrackerFieldSoapDO;
 import com.vasoftware.sf.soap44.webservices.tracker.ArtifactSoapDO;
 
 /**
- * This class works with the ISourceForgeSoap object for the source SFEE system
+ * This class works with the ISourceForgeSoap object for the source TF system
  * to get the Comment Texts entered by the users for an artifact.
  * 
  * @author madhusuthanan (madhusuthanan@collab.net)
@@ -63,11 +63,11 @@ public class SFEEAppHandler {
 	 * (represented by the ArtifactSoapDO) and adds all the comments that are
 	 * added after the lastModifiedDate into the ArtifcatSoapDO's flex fields
 	 * with the field name as "Comment Text" [as this is the name displayed in
-	 * the SFEE trackers for the Comments]
+	 * the TF trackers for the Comments]
 	 * 
 	 * It calls the private method addComments which can add comments for a list
 	 * of artifacts by querying the ISourceForgeSoap object for this particular
-	 * SFEE system.
+	 * TF system.
 	 * 
 	 * The comments added by the connector user are ignored by this method.
 	 * 
@@ -76,7 +76,7 @@ public class SFEEAppHandler {
 	 * @param lastModifiedDate -
 	 *            The last read time of this tracker
 	 * @param connectorUser -
-	 *            The username that is configured to log into the SFEE to
+	 *            The username that is configured to log into the TF to
 	 *            retrieve the artifact data.
 	 */
 	public void addComments(ArtifactSoapDO artifact, Date lastModifiedDate,

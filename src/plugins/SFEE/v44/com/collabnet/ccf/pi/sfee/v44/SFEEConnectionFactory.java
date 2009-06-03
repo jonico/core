@@ -45,7 +45,7 @@ public class SFEEConnectionFactory implements ConnectionFactory<Connection> {
 	public static final String PARAM_DELIMITER = ":";
 
 	/**
-	 * Logs out from the SFEE system and invalidates the session id.
+	 * Logs out from the TF system and invalidates the session id.
 	 * 
 	 * @see com.collabnet.ccf.core.eis.connection.ConnectionFactory#closeConnection(java.lang.Object)
 	 */
@@ -63,12 +63,12 @@ public class SFEEConnectionFactory implements ConnectionFactory<Connection> {
 	}
 
 	/**
-	 * Connection Factory implementation for the SFEE adaptor. 
+	 * Connection Factory implementation for the TF adaptor. 
 	 * 1. connectionInfo - contains the server URL.
 	 * 2. credentialInfo  - contains the user name and
 	 * password delimited by ':'
 	 * 
-	 * The Repository ID contains the SFEE tracker ID
+	 * The Repository ID contains the TF tracker ID
 	 */
 	public Connection createConnection(String systemId, String systemKind,
 			String repositoryId, String repositoryKind, String connectionInfo,
@@ -109,7 +109,7 @@ public class SFEEConnectionFactory implements ConnectionFactory<Connection> {
 			connection = new Connection(username, password, sfSoap, sessionId);
 			connectionManager.registerConnection(sessionId, connection);
 		} catch (RemoteException e) {
-			String cause = "While trying to login into SFEE "+ connectionInfo 
+			String cause = "While trying to login into TF "+ connectionInfo 
 								+" an exception occured: "+e.getMessage();
 			log.error(cause, e);
 			throw new ConnectionException(cause, e);

@@ -44,7 +44,7 @@ import com.vasoftware.sf.soap44.webservices.sfmain.TrackerFieldSoapDO;
 import com.vasoftware.sf.soap44.webservices.tracker.ArtifactSoapDO;
 
 /**
- * This class retrieves the changed artifact details from an SFEE system
+ * This class retrieves the changed artifact details from an TF system
  * repository.
  *
  * It uses the last read time of the sync info and fetches all the artifact data
@@ -78,7 +78,7 @@ public class SFEEReader extends AbstractReader<Connection> {
 	private boolean translateTechnicalReleaseIds = false;
 
 	/**
-	 * Constructs and Initializes the SFEEReader component.
+	 * Constructs and Initializes the TFReader component.
 	 */
 	public SFEEReader() {
 		super();
@@ -93,22 +93,22 @@ public class SFEEReader extends AbstractReader<Connection> {
 	}
 
 	/**
-	 * Connects to the source SFEE system using the connectionInfo and
+	 * Connects to the source TF system using the connectionInfo and
 	 * credentialInfo details.
 	 * 
 	 * This method uses the ConnectionManager configured in the wiring file for
-	 * the SFEEReader
+	 * the TFReader
 	 * 
 	 * @param systemId
-	 *            - The system id of the source SFEE system
+	 *            - The system id of the source TF system
 	 * @param systemKind
-	 *            - The system kind of the source SFEE system
+	 *            - The system kind of the source TF system
 	 * @param repositoryId
-	 *            - The tracker id in the source SFEE system
+	 *            - The tracker id in the source TF system
 	 * @param repositoryKind
 	 *            - The repository kind for the tracker
 	 * @param connectionInfo
-	 *            - The SFEE server URL
+	 *            - The TF server URL
 	 * @param credentialInfo
 	 *            - User name and password concatenated with a delimiter.
 	 * @return - The connection object obtained from the ConnectionManager
@@ -312,12 +312,12 @@ public class SFEEReader extends AbstractReader<Connection> {
 					getUsername() + SFEEConnectionFactory.PARAM_DELIMITER
 							+ getPassword());
 		} catch (MaxConnectionsReachedException e) {
-			String cause = "Could not create connection to the SFEE system. Max connections reached for "
+			String cause = "Could not create connection to the TF system. Max connections reached for "
 					+ serverUrl;
 			log.error(cause, e);
 			throw new CCFRuntimeException(cause, e);
 		} catch (ConnectionException e) {
-			String cause = "Could not create connection to the SFEE system "
+			String cause = "Could not create connection to the TF system "
 					+ serverUrl;
 			log.error(cause, e);
 			throw new CCFRuntimeException(cause, e);
@@ -337,7 +337,7 @@ public class SFEEReader extends AbstractReader<Connection> {
 				populateSrcAndDestForAttachment(syncInfo, attachment);
 			}
 		} catch (RemoteException e) {
-			String cause = "During the attachment retrieval process from SFEE, an error occured";
+			String cause = "During the attachment retrieval process from TF, an error occured";
 			log.error(cause, e);
 			throw new CCFRuntimeException(cause, e);
 		} finally {
@@ -348,7 +348,7 @@ public class SFEEReader extends AbstractReader<Connection> {
 
 	/**
 	 * Queries the tracker for the artifact with artifactId and returns its
-	 * latest data encoded in an GenericArtifact object. The SFEEReader is
+	 * latest data encoded in an GenericArtifact object. The TFReader is
 	 * capable of retrieving the artifact change history. But this feature is
 	 * turned off as of now.
 	 * 
@@ -370,12 +370,12 @@ public class SFEEReader extends AbstractReader<Connection> {
 					getUsername() + SFEEConnectionFactory.PARAM_DELIMITER
 							+ getPassword());
 		} catch (MaxConnectionsReachedException e) {
-			String cause = "Could not create connection to the SFEE system. Max connections reached for "
+			String cause = "Could not create connection to the TF system. Max connections reached for "
 					+ serverUrl;
 			log.error(cause, e);
 			throw new CCFRuntimeException(cause, e);
 		} catch (ConnectionException e) {
-			String cause = "Could not create connection to the SFEE system "
+			String cause = "Could not create connection to the TF system "
 					+ serverUrl;
 			log.error(cause, e);
 			throw new CCFRuntimeException(cause, e);
@@ -414,7 +414,7 @@ public class SFEEReader extends AbstractReader<Connection> {
 			}
 			populateSrcAndDest(syncInfo, genericArtifact);
 		} catch (RemoteException e) {
-			String cause = "During the artifact retrieval process from SFEE, an error occured";
+			String cause = "During the artifact retrieval process from TF, an error occured";
 			log.error(cause, e);
 			throw new CCFRuntimeException(cause, e);
 		} finally {
@@ -437,7 +437,7 @@ public class SFEEReader extends AbstractReader<Connection> {
 	}
 
 	/**
-	 * This method queries the particular tracker in the source SFEE system to
+	 * This method queries the particular tracker in the source TF system to
 	 * check if there are artifacts changed/created after the last read time
 	 * coming in, in the Sync Info object.
 	 * 
@@ -468,12 +468,12 @@ public class SFEEReader extends AbstractReader<Connection> {
 					getUsername() + SFEEConnectionFactory.PARAM_DELIMITER
 							+ getPassword());
 		} catch (MaxConnectionsReachedException e) {
-			String cause = "Could not create connection to the SFEE system. Max connections reached for "
+			String cause = "Could not create connection to the TF system. Max connections reached for "
 					+ serverUrl;
 			log.error(cause, e);
 			throw new CCFRuntimeException(cause, e);
 		} catch (ConnectionException e) {
-			String cause = "Could not create connection to the SFEE system "
+			String cause = "Could not create connection to the TF system "
 					+ serverUrl;
 			log.error(cause, e);
 			throw new CCFRuntimeException(cause, e);
@@ -490,7 +490,7 @@ public class SFEEReader extends AbstractReader<Connection> {
 					lastSynchronizedArtifactId, version,
 					isIgnoreConnectorUserUpdates() ? this.getUsername() : "");
 		} catch (RemoteException e) {
-			String cause = "During the changed artifacts retrieval process from SFEE, an exception occured";
+			String cause = "During the changed artifacts retrieval process from TF, an exception occured";
 			log.error(cause, e);
 			throw new CCFRuntimeException(cause, e);
 		} finally {
@@ -511,7 +511,7 @@ public class SFEEReader extends AbstractReader<Connection> {
 	}
 
 	/**
-	 * Returns the server URL of the source CSFE/SFEE system that is configured
+	 * Returns the server URL of the source CSFE/TF system that is configured
 	 * in the wiring file.
 	 * 
 	 * @return
@@ -521,10 +521,10 @@ public class SFEEReader extends AbstractReader<Connection> {
 	}
 
 	/**
-	 * Sets the source CSFE/SFEE system's SOAP server URL.
+	 * Sets the source CSFE/TF system's SOAP server URL.
 	 * 
 	 * @param serverUrl
-	 *            - the URL of the source SFEE system.
+	 *            - the URL of the source TF system.
 	 */
 	public void setServerUrl(String serverUrl) {
 		this.serverUrl = serverUrl;
@@ -551,7 +551,7 @@ public class SFEEReader extends AbstractReader<Connection> {
 
 	/**
 	 * Gets the mandatory user name The user name is used to login into the
-	 * SFEE/CSFE instance whenever an artifact should be updated or extracted.
+	 * TF/CSFE instance whenever an artifact should be updated or extracted.
 	 * This user has to differ from the resync user in order to force initial
 	 * resyncs with the source system once a new artifact has been created.
 	 * 
@@ -564,7 +564,7 @@ public class SFEEReader extends AbstractReader<Connection> {
 	/**
 	 * Sets the mandatory username
 	 * 
-	 * The user name is used to login into the SFEE/CSFE instance whenever an
+	 * The user name is used to login into the TF/CSFE instance whenever an
 	 * artifact should be updated or extracted. This user has to differ from the
 	 * resync user in order to force initial resyncs with the source system once
 	 * a new artifact has been created.
@@ -606,7 +606,7 @@ public class SFEEReader extends AbstractReader<Connection> {
 	/**
 	 * Sets the optional resync username
 	 * 
-	 * The resync user name is used to login into the SFEE/CSFE instance
+	 * The resync user name is used to login into the TF/CSFE instance
 	 * whenever an artifact should be created. This user has to differ from the
 	 * ordinary user used to log in in order to force initial resyncs with the
 	 * source system once a new artifact has been created. This property can
@@ -622,7 +622,7 @@ public class SFEEReader extends AbstractReader<Connection> {
 
 	/**
 	 * Gets the optional resync username The resync user name is used to login
-	 * into the SFEE/CSFE instance whenever an artifact should be created. This
+	 * into the TF/CSFE instance whenever an artifact should be created. This
 	 * user has to differ from the ordinary user used to log in in order to
 	 * force initial resyncs with the source system once a new artifact has been
 	 * created. This property can also be set for the reader component in order
@@ -636,7 +636,7 @@ public class SFEEReader extends AbstractReader<Connection> {
 	}
 
 	/**
-	 * Another user name that is used to login into the SFEE/CSFE instance This
+	 * Another user name that is used to login into the TF/CSFE instance This
 	 * user has to differ from the ordinary user used to log in in order to
 	 * force initial resyncs with the source system once a new artifact has been
 	 * created.

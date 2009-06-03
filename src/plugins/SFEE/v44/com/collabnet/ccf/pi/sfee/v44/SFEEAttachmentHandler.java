@@ -53,7 +53,7 @@ import com.vasoftware.sf.soap44.webservices.tracker.ITrackerAppSoap;
 
 /**
  * This class is responsible for retrieving attachment data for an artifact from
- * a Source SFEE repository.
+ * a Source TF repository.
  * 
  * @author madhusuthanan
  */
@@ -103,7 +103,7 @@ public class SFEEAttachmentHandler {
 
 	/**
 	 * This method uploads the file and gets the new file descriptor returned
-	 * from the SFEE system. It then associates the file descriptor to the
+	 * from the TF system. It then associates the file descriptor to the
 	 * artifact there by adding the attachment to the artifact.
 	 * 
 	 * @param sessionId
@@ -294,7 +294,7 @@ public class SFEEAttachmentHandler {
 
 	/**
 	 * This method decodes the attachment data from the incoming GenericArtifact
-	 * object and adds to the target SFEE system tracker's artifact.
+	 * object and adds to the target TF system tracker's artifact.
 	 * 
 	 * @param sessionId
 	 * @param att

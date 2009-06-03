@@ -31,36 +31,6 @@ import java.util.WeakHashMap;
  * the wiring configuration file they need to set the ConnectionFactory bean in
  * the ConnectionManager's connectionFactory property.
  *
- * A sample wiring file snippet that configures a ConnectionManager to manage
- * SFEE connections is shown below. <code>
- * <bean id="SFEEConnectionManager"
- * 		class="com.collabnet.ccf.core.eis.connection.ConnectionManager">
- * 		<description>
- * 			The connection manager implements a connection pooling mechanism where the
- * 			connections to multiple systems are cached for the readers and writers
- * 			to retrieve when needed. Before returning the connection to the client
- * 			the connection manager checks if the connection is live and only returns
- * 			valid connections.
- * 			It assigns and manages one pool per repository.
- * 		</description>
- * 		<property name="maxConnectionsPerPool" value="5"></property>
- * 		<property name="maxIdleTimeForConnection" value="600000" />
- * 		<property name="scavengerInterval" value="120000"></property>
- * 		<property name="connectionFactory" ref="SFEEConnectionFactory"></property>
- * 	</bean>
- * 	<bean id="SFEEConnectionFactory"
- * 		class="com.collabnet.ccf.pi.sfee.v44.SFEEConnectionFactory">
- * 		<description>
- * 			This bean is an implementation of the com.collabnet.ccf.core.eis.connection.ConnectionFactory
- * 			interface. It is responsible to create and close an connection for a given
- * 			repository.
- *
- * 			In this case SFEEConnectionFactory manages com.collabnet.ccf.pi.sfee.v44.Connection
- * 			objects.
- * 		</description>
- * 	</bean>
- * </code>
- *
  * @author Madhusuthanan Seetharam (madhusuthanan@collab.net)
  *
  * @param <T> -

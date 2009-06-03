@@ -62,7 +62,7 @@ public class TimeoutWrapper {
 				// first try, long error message
 				log
 						.warn(
-								"Network related problem occurred while calling SFEE/CSFE webservice. Try operation again",
+								"Network related problem occurred while calling TF/CSFE webservice. Try operation again",
 								e);
 			} else if (msToSleep < maxMsToSleep) {
 				// error occurred again, short error message, go to sleep
@@ -119,7 +119,7 @@ public class TimeoutWrapper {
 			// first try, long error message
 			log
 					.warn(
-							"Login related problem occurred while calling SFEE/CSFE webservice. Try logging in again",
+							"Login related problem occurred while calling TF/CSFE webservice. Try logging in again",
 							e);
 		} else {
 			log.warn("Login related error occured, trying relogin: "

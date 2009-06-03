@@ -97,7 +97,7 @@ public class Connection {
 	}
 	
 	/**
-	 * Returns the username that is used to login into the SFEE SOAP API server
+	 * Returns the username that is used to login into the TFTF SOAP API server
 	 * 
 	 * @return - The user name
 	 */

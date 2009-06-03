@@ -32,7 +32,7 @@ import com.vasoftware.sf.soap44.webservices.tracker.ArtifactSoapDO;
 import com.vasoftware.sf.soap44.webservices.tracker.TrackerFieldValueSoapDO;
 
 /**
- * The artifact data from the SFEE SOAP API calls are in the
+ * The artifact data from the TF SOAP API calls are in the
  * ArtifactSoapDO object. This class converts the artifact data
  * contained in the ArtifactSoapDO objects into GenericArtifact object
  * @author madhusuthanan
