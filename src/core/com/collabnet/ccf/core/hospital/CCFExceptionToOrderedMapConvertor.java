@@ -119,166 +119,202 @@ public class CCFExceptionToOrderedMapConvertor extends
 	 * @return an IOrderedMap representation of the MessageException contents
 	 */
 	protected Object convert(Object record) {
-		boolean quarantineException = true;
+		try {
+			boolean quarantineException = true;
 
-		// we have to set these columns due to an SQL incompatibility issue with
-		// these fields
-		setFixedColName(FIXED);
-		setReprocessedColName(REPROCESSED);
+			// we have to set these columns due to an SQL incompatibility issue
+			// with
+			// these fields
+			setFixedColName(FIXED);
+			setReprocessedColName(REPROCESSED);
 
-		// log.warn("Artifact reached ambulance");
-		// first of all we pass the record in our parent method
-		Object preprocessedMap = super.convert(record);
-		if (preprocessedMap == null
-				|| (!(preprocessedMap instanceof IOrderedMap))) {
-			return preprocessedMap;
-		}
-		IOrderedMap map = (IOrderedMap) preprocessedMap;
+			// log.warn("Artifact reached ambulance");
+			// first of all we pass the record in our parent method
+			Object preprocessedMap = super.convert(record);
+			if (preprocessedMap == null
+					|| (!(preprocessedMap instanceof IOrderedMap))) {
+				return preprocessedMap;
+			}
+			IOrderedMap map = (IOrderedMap) preprocessedMap;
 
-		// remove entities with wrong data type (string instead of boolean)
-		map.remove(FIXED);
-		map.remove(REPROCESSED);
+			// remove entities with wrong data type (string instead of boolean)
+			map.remove(FIXED);
+			map.remove(REPROCESSED);
 
-		map.put(FIXED, false);
-		map.put(REPROCESSED, false);
+			map.put(FIXED, false);
+			map.put(REPROCESSED, false);
 
-		MessageException messageException = (MessageException) record;
-		map.put(exceptionMessageColName, messageException.getException()
-				.getMessage());
+			MessageException messageException = (MessageException) record;
+			map.put(exceptionMessageColName, messageException.getException()
+					.getMessage());
 
-		Throwable cause = messageException.getException().getCause();
-		if (cause != null) {
-			map.put(causeExceptionClassColName, cause.getClass().getName());
-			map.put(causeExceptionMessageColName, cause.getMessage());
-		} else {
-			map.put(causeExceptionClassColName, NO_CAUSE_EXCEPTION);
-			map.put(causeExceptionMessageColName, NO_CAUSE_EXCEPTION);
-		}
+			Throwable cause = messageException.getException().getCause();
+			if (cause != null) {
+				map.put(causeExceptionClassColName, cause.getClass().getName());
+				map.put(causeExceptionMessageColName, cause.getMessage());
+			} else {
+				map.put(causeExceptionClassColName, NO_CAUSE_EXCEPTION);
+				map.put(causeExceptionMessageColName, NO_CAUSE_EXCEPTION);
+			}
 
-		Exception exception = messageException.getException();
-		StringBuffer stackTraceBuf = new StringBuffer();
-		StackTraceElement[] stackTrace = exception.getStackTrace();
-		for (int i = 0; i < stackTrace.length; i++) {
-			stackTraceBuf.append(stackTrace[i]);
-			stackTraceBuf.append("\n");
-		}
-		/* Append cause exception stack trace */
-		if (cause != null) {
-			stackTraceBuf.append("\n\n");
-			stackTrace = cause.getStackTrace();
+			Exception exception = messageException.getException();
+			StringBuffer stackTraceBuf = new StringBuffer();
+			StackTraceElement[] stackTrace = exception.getStackTrace();
 			for (int i = 0; i < stackTrace.length; i++) {
 				stackTraceBuf.append(stackTrace[i]);
 				stackTraceBuf.append("\n");
 			}
-		}
-		map.put(stackTraceColName, stackTraceBuf.toString());
-
-		String adaptorName = null == adaptor ? "Unknown" : adaptor.getId();
-		map.put(adaptorColName, adaptorName);
-
-		Object data = messageException.getData();
-		String dataType = null;
-		if (data != null) {
-			dataType = data.getClass().getName();
-		}
-		map.put(dataTypeColName, dataType);
-
-		if (data instanceof Document) {
-			Document dataDoc = (Document) data;
-			Element element = dataDoc.getRootElement();
-			try {
-				String sourceArtifactId = XPathUtils.getAttributeValue(element,
-						GenericArtifactHelper.SOURCE_ARTIFACT_ID);
-				String sourceSystemId = XPathUtils.getAttributeValue(element,
-						GenericArtifactHelper.SOURCE_SYSTEM_ID);
-				String sourceSystemKind = XPathUtils.getAttributeValue(element,
-						GenericArtifactHelper.SOURCE_SYSTEM_KIND);
-				String sourceRepositoryId = XPathUtils.getAttributeValue(
-						element, GenericArtifactHelper.SOURCE_REPOSITORY_ID);
-				String sourceRepositoryKind = XPathUtils.getAttributeValue(
-						element, GenericArtifactHelper.SOURCE_REPOSITORY_KIND);
-
-				String targetArtifactId = XPathUtils.getAttributeValue(element,
-						GenericArtifactHelper.TARGET_ARTIFACT_ID);
-				String targetSystemId = XPathUtils.getAttributeValue(element,
-						GenericArtifactHelper.TARGET_SYSTEM_ID);
-				String targetSystemKind = XPathUtils.getAttributeValue(element,
-						GenericArtifactHelper.TARGET_SYSTEM_KIND);
-				String targetRepositoryId = XPathUtils.getAttributeValue(
-						element, GenericArtifactHelper.TARGET_REPOSITORY_ID);
-				String targetRepositoryKind = XPathUtils.getAttributeValue(
-						element, GenericArtifactHelper.TARGET_REPOSITORY_KIND);
-
-				String artifactErrorCode = XPathUtils.getAttributeValue(
-						element, GenericArtifactHelper.ERROR_CODE);
-
-				String sourceArtifactLastModifiedDateString = XPathUtils
-						.getAttributeValue(
-								element,
-								GenericArtifactHelper.SOURCE_ARTIFACT_LAST_MODIFICATION_DATE);
-				String targetArtifactLastModifiedDateString = XPathUtils
-						.getAttributeValue(
-								element,
-								GenericArtifactHelper.TARGET_ARTIFACT_LAST_MODIFICATION_DATE);
-				String sourceArtifactVersion = XPathUtils.getAttributeValue(
-						element, GenericArtifactHelper.SOURCE_ARTIFACT_VERSION);
-				String targetArtifactVersion = XPathUtils.getAttributeValue(
-						element, GenericArtifactHelper.TARGET_ARTIFACT_VERSION);
-
-				String artifactType = XPathUtils.getAttributeValue(element,
-						GenericArtifactHelper.ARTIFACT_TYPE);
-
-				Date sourceLastModifiedDate = null;
-				if (!sourceArtifactLastModifiedDateString
-						.equalsIgnoreCase(GenericArtifact.VALUE_UNKNOWN)) {
-					sourceLastModifiedDate = DateUtil
-							.parse(sourceArtifactLastModifiedDateString);
-				} else {
-					// use the earliest date possible
-					sourceLastModifiedDate = new Date(0);
+			/* Append cause exception stack trace */
+			if (cause != null) {
+				stackTraceBuf.append("\n\n");
+				stackTrace = cause.getStackTrace();
+				for (int i = 0; i < stackTrace.length; i++) {
+					stackTraceBuf.append(stackTrace[i]);
+					stackTraceBuf.append("\n");
 				}
-				if (sourceLastModifiedDate == null) {
-					sourceLastModifiedDate = new Date(0);
-				}
-				java.sql.Timestamp sourceTime = new Timestamp(
-						sourceLastModifiedDate.getTime());
+			}
+			map.put(stackTraceColName, stackTraceBuf.toString());
 
-				java.util.Date targetLastModifiedDate = null;
-				if (!targetArtifactLastModifiedDateString
-						.equalsIgnoreCase(GenericArtifact.VALUE_UNKNOWN)) {
-					targetLastModifiedDate = DateUtil
-							.parse(targetArtifactLastModifiedDateString);
-				} else {
-					// use the earliest date possible
-					targetLastModifiedDate = new Date(0);
-				}
-				java.sql.Timestamp targetTime = new Timestamp(
-						targetLastModifiedDate.getTime());
+			String adaptorName = null == adaptor ? "Unknown" : adaptor.getId();
+			map.put(adaptorColName, adaptorName);
 
-				// TODO Should we allow to set different column names for these
-				// properties?
-				map.put(SOURCE_SYSTEM_ID, sourceSystemId);
-				map.put(SOURCE_REPOSITORY_ID, sourceRepositoryId);
-				map.put(TARGET_SYSTEM_ID, targetSystemId);
-				map.put(TARGET_REPOSITORY_ID, targetRepositoryId);
-				map.put(SOURCE_SYSTEM_KIND, sourceSystemKind);
-				map.put(SOURCE_REPOSITORY_KIND, sourceRepositoryKind);
-				map.put(TARGET_SYSTEM_KIND, targetSystemKind);
-				map.put(TARGET_REPOSITORY_KIND, targetRepositoryKind);
-				map.put(SOURCE_ARTIFACT_ID, sourceArtifactId);
-				map.put(TARGET_ARTIFACT_ID, targetArtifactId);
-				map.put(ERROR_CODE, artifactErrorCode);
-				map.put(SOURCE_LAST_MODIFICATION_TIME, sourceTime);
-				map.put(TARGET_LAST_MODIFICATION_TIME, targetTime);
-				map.put(SOURCE_ARTIFACT_VERSION, sourceArtifactVersion);
-				map.put(TARGET_ARTIFACT_VERSION, targetArtifactVersion);
-				map.put(ARTIFACT_TYPE, artifactType);
-				map.put(GENERICARTIFACT, dataDoc.asXML());
-			} catch (GenericArtifactParsingException e) {
-				// log
-				// .warn(
-				// "The data that reached the hospital is not a valid Generic Artifact"
-				// );
+			Object data = messageException.getData();
+			String dataType = null;
+			if (data != null) {
+				dataType = data.getClass().getName();
+			}
+			map.put(dataTypeColName, dataType);
+			Element element = null;
+			Document dataDoc = null;
+			if (data instanceof Document) {
+				dataDoc = (Document) data;
+				element = dataDoc.getRootElement();
+			}
+			if (element != null) {
+				try {
+					String sourceArtifactId = XPathUtils.getAttributeValue(
+							element, GenericArtifactHelper.SOURCE_ARTIFACT_ID);
+					String sourceSystemId = XPathUtils.getAttributeValue(
+							element, GenericArtifactHelper.SOURCE_SYSTEM_ID);
+					String sourceSystemKind = XPathUtils.getAttributeValue(
+							element, GenericArtifactHelper.SOURCE_SYSTEM_KIND);
+					String sourceRepositoryId = XPathUtils
+							.getAttributeValue(element,
+									GenericArtifactHelper.SOURCE_REPOSITORY_ID);
+					String sourceRepositoryKind = XPathUtils.getAttributeValue(
+							element,
+							GenericArtifactHelper.SOURCE_REPOSITORY_KIND);
+
+					String targetArtifactId = XPathUtils.getAttributeValue(
+							element, GenericArtifactHelper.TARGET_ARTIFACT_ID);
+					String targetSystemId = XPathUtils.getAttributeValue(
+							element, GenericArtifactHelper.TARGET_SYSTEM_ID);
+					String targetSystemKind = XPathUtils.getAttributeValue(
+							element, GenericArtifactHelper.TARGET_SYSTEM_KIND);
+					String targetRepositoryId = XPathUtils
+							.getAttributeValue(element,
+									GenericArtifactHelper.TARGET_REPOSITORY_ID);
+					String targetRepositoryKind = XPathUtils.getAttributeValue(
+							element,
+							GenericArtifactHelper.TARGET_REPOSITORY_KIND);
+
+					String artifactErrorCode = XPathUtils.getAttributeValue(
+							element, GenericArtifactHelper.ERROR_CODE);
+
+					String sourceArtifactLastModifiedDateString = XPathUtils
+							.getAttributeValue(
+									element,
+									GenericArtifactHelper.SOURCE_ARTIFACT_LAST_MODIFICATION_DATE);
+					String targetArtifactLastModifiedDateString = XPathUtils
+							.getAttributeValue(
+									element,
+									GenericArtifactHelper.TARGET_ARTIFACT_LAST_MODIFICATION_DATE);
+					String sourceArtifactVersion = XPathUtils
+							.getAttributeValue(
+									element,
+									GenericArtifactHelper.SOURCE_ARTIFACT_VERSION);
+					String targetArtifactVersion = XPathUtils
+							.getAttributeValue(
+									element,
+									GenericArtifactHelper.TARGET_ARTIFACT_VERSION);
+
+					String artifactType = XPathUtils.getAttributeValue(element,
+							GenericArtifactHelper.ARTIFACT_TYPE);
+
+					Date sourceLastModifiedDate = null;
+					if (!sourceArtifactLastModifiedDateString
+							.equalsIgnoreCase(GenericArtifact.VALUE_UNKNOWN)) {
+						sourceLastModifiedDate = DateUtil
+								.parse(sourceArtifactLastModifiedDateString);
+					} else {
+						// use the earliest date possible
+						sourceLastModifiedDate = new Date(0);
+					}
+					if (sourceLastModifiedDate == null) {
+						sourceLastModifiedDate = new Date(0);
+					}
+					java.sql.Timestamp sourceTime = new Timestamp(
+							sourceLastModifiedDate.getTime());
+
+					java.util.Date targetLastModifiedDate = null;
+					if (!targetArtifactLastModifiedDateString
+							.equalsIgnoreCase(GenericArtifact.VALUE_UNKNOWN)) {
+						targetLastModifiedDate = DateUtil
+								.parse(targetArtifactLastModifiedDateString);
+					} else {
+						// use the earliest date possible
+						targetLastModifiedDate = new Date(0);
+					}
+					java.sql.Timestamp targetTime = new Timestamp(
+							targetLastModifiedDate.getTime());
+
+					// TODO Should we allow to set different column names for
+					// these
+					// properties?
+					map.put(SOURCE_SYSTEM_ID, sourceSystemId);
+					map.put(SOURCE_REPOSITORY_ID, sourceRepositoryId);
+					map.put(TARGET_SYSTEM_ID, targetSystemId);
+					map.put(TARGET_REPOSITORY_ID, targetRepositoryId);
+					map.put(SOURCE_SYSTEM_KIND, sourceSystemKind);
+					map.put(SOURCE_REPOSITORY_KIND, sourceRepositoryKind);
+					map.put(TARGET_SYSTEM_KIND, targetSystemKind);
+					map.put(TARGET_REPOSITORY_KIND, targetRepositoryKind);
+					map.put(SOURCE_ARTIFACT_ID, sourceArtifactId);
+					map.put(TARGET_ARTIFACT_ID, targetArtifactId);
+					map.put(ERROR_CODE, artifactErrorCode);
+					map.put(SOURCE_LAST_MODIFICATION_TIME, sourceTime);
+					map.put(TARGET_LAST_MODIFICATION_TIME, targetTime);
+					map.put(SOURCE_ARTIFACT_VERSION, sourceArtifactVersion);
+					map.put(TARGET_ARTIFACT_VERSION, targetArtifactVersion);
+					map.put(ARTIFACT_TYPE, artifactType);
+					map.put(GENERICARTIFACT, dataDoc.asXML());
+				} catch (GenericArtifactParsingException e) {
+					// log
+					// .warn(
+					// "The data that reached the hospital is not a valid Generic Artifact"
+					// );
+					if (isOnlyQuarantineGenericArtifacts()) {
+						quarantineException = false;
+					}
+					map.put(SOURCE_SYSTEM_ID, null);
+					map.put(SOURCE_REPOSITORY_ID, null);
+					map.put(TARGET_SYSTEM_ID, null);
+					map.put(TARGET_REPOSITORY_ID, null);
+					map.put(SOURCE_SYSTEM_KIND, null);
+					map.put(SOURCE_REPOSITORY_KIND, null);
+					map.put(TARGET_SYSTEM_KIND, null);
+					map.put(TARGET_REPOSITORY_KIND, null);
+					map.put(SOURCE_ARTIFACT_ID, null);
+					map.put(TARGET_ARTIFACT_ID, null);
+					map.put(GENERICARTIFACT, dataDoc.asXML());
+					map.put(ERROR_CODE, null);
+					map.put(SOURCE_LAST_MODIFICATION_TIME, null);
+					map.put(TARGET_LAST_MODIFICATION_TIME, null);
+					map.put(SOURCE_ARTIFACT_VERSION, null);
+					map.put(TARGET_ARTIFACT_VERSION, null);
+					map.put(ARTIFACT_TYPE, null);
+				}
+			} else {
 				if (isOnlyQuarantineGenericArtifacts()) {
 					quarantineException = false;
 				}
@@ -292,7 +328,7 @@ public class CCFExceptionToOrderedMapConvertor extends
 				map.put(TARGET_REPOSITORY_KIND, null);
 				map.put(SOURCE_ARTIFACT_ID, null);
 				map.put(TARGET_ARTIFACT_ID, null);
-				map.put(GENERICARTIFACT, dataDoc.asXML());
+				map.put(GENERICARTIFACT, null);
 				map.put(ERROR_CODE, null);
 				map.put(SOURCE_LAST_MODIFICATION_TIME, null);
 				map.put(TARGET_LAST_MODIFICATION_TIME, null);
@@ -300,50 +336,35 @@ public class CCFExceptionToOrderedMapConvertor extends
 				map.put(TARGET_ARTIFACT_VERSION, null);
 				map.put(ARTIFACT_TYPE, null);
 			}
-		} else {
-			if (isOnlyQuarantineGenericArtifacts()) {
-				quarantineException = false;
-			}
-			map.put(SOURCE_SYSTEM_ID, null);
-			map.put(SOURCE_REPOSITORY_ID, null);
-			map.put(TARGET_SYSTEM_ID, null);
-			map.put(TARGET_REPOSITORY_ID, null);
-			map.put(SOURCE_SYSTEM_KIND, null);
-			map.put(SOURCE_REPOSITORY_KIND, null);
-			map.put(TARGET_SYSTEM_KIND, null);
-			map.put(TARGET_REPOSITORY_KIND, null);
-			map.put(SOURCE_ARTIFACT_ID, null);
-			map.put(TARGET_ARTIFACT_ID, null);
-			map.put(GENERICARTIFACT, null);
-			map.put(ERROR_CODE, null);
-			map.put(SOURCE_LAST_MODIFICATION_TIME, null);
-			map.put(TARGET_LAST_MODIFICATION_TIME, null);
-			map.put(SOURCE_ARTIFACT_VERSION, null);
-			map.put(TARGET_ARTIFACT_VERSION, null);
-			map.put(ARTIFACT_TYPE, null);
-		}
 
-		if (quarantineException) {
-			// TODO Do we have to care about the fact that the substituted
-			// values
-			// could potentially contain the place holders again?
-			String logMessage = logMessageTemplate;
-			for (Object key : map.keys()) {
-				Object value = map.get(key);
-				logMessage = logMessage.replace("<" + key.toString() + ">",
-						value == null ? "undefined" : value.toString());
-			}
-			log.error(logMessage);
-			return map;
-		} else {
-			StringBuffer errorMessage = new StringBuffer();
-			errorMessage
-					.append("Exception caught that is not going to be quarantined. Characteristics:\n");
-			for (Object key : map.keys()) {
+			if (quarantineException) {
+				// TODO Do we have to care about the fact that the substituted
+				// values
+				// could potentially contain the place holders again?
+				String logMessage = logMessageTemplate;
+				for (Object key : map.keys()) {
+					Object value = map.get(key);
+					logMessage = logMessage.replace("<" + key.toString() + ">",
+							value == null ? "undefined" : value.toString());
+				}
+				log.error(logMessage);
+				return map;
+			} else {
+				StringBuffer errorMessage = new StringBuffer();
 				errorMessage
-						.append(key.toString() + ": " + map.get(key) + "\n");
+						.append("Exception caught that is not going to be quarantined. Characteristics:\n");
+				for (Object key : map.keys()) {
+					errorMessage.append(key.toString() + ": " + map.get(key)
+							+ "\n");
+				}
+				log.warn(errorMessage.toString());
+				return null;
 			}
-			log.warn(errorMessage.toString());
+		} catch (Exception e) {
+			log
+					.error(
+							"While trying to quarantine an exception, an exception occured",
+							e);
 			return null;
 		}
 	}
