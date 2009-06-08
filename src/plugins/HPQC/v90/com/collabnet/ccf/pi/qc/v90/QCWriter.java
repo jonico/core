@@ -48,9 +48,9 @@ import com.collabnet.ccf.pi.qc.v90.api.IRecordSet;
 
 /**
  * This class writes the incoming defect data into QC making.
- *
+ * 
  * @author venugopal
- *
+ * 
  */
 public class QCWriter extends AbstractWriter<IConnection> implements
 		IDataProcessor {
@@ -92,6 +92,12 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 
 	private boolean comInitialized = false;
 
+	/**
+	 * If this property is set to true (true by default), locked defects will be
+	 * quarantined and the operation will never be retried
+	 */
+	private boolean immediatelyQuarantineLockedDefects = true;
+
 	public QCWriter() {
 		super();
 		Runtime.getRuntime().addShutdownHook(new CleanUpCOMHookQCWriter(this));
@@ -99,9 +105,9 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 
 	/**
 	 * Calls tear-Down method of QCWriter
-	 *
+	 * 
 	 * @author jnicolai
-	 *
+	 * 
 	 */
 	private static class CleanUpCOMHookQCWriter extends Thread {
 		// private static final Log log =
@@ -160,7 +166,7 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 
 	/**
 	 * Update the artifact and do conflict resolution
-	 *
+	 * 
 	 * @param connection
 	 * @param targetArtifactId
 	 * @param genericArtifact
@@ -210,7 +216,7 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 	/**
 	 * Converts the genericArtifactDocument into GenericArtifact Java object
 	 * using the GenericArtifactHelper methods.
-	 *
+	 * 
 	 * @param genericArtifactDocument
 	 * @return GenericArtifact The converted GenericArtifact from the dom4j
 	 *         Document.
@@ -307,7 +313,7 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 	/**
 	 * In the case of memo fields like Comments, the multiple values are
 	 * concatinated before writing them into the target system.
-	 *
+	 * 
 	 * @param genericArtifact
 	 * @return
 	 */
@@ -357,7 +363,7 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 
 	/**
 	 * Obtains the value of the specified field from the incoming Document.
-	 *
+	 * 
 	 * @param individualGenericArtifact
 	 * @param fieldName
 	 * @return String
@@ -378,7 +384,7 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 
 	/**
 	 * Checks if defect with the incoming defectId exists in the target system.
-	 *
+	 * 
 	 * @param bugId
 	 * @param connection
 	 * @return boolean Returns true if the defect exists, false otherwise.
@@ -435,7 +441,7 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 
 	/**
 	 * Establish a connection with QC system
-	 *
+	 * 
 	 * @param systemId
 	 *            Id indicating a QC system.
 	 * @param systemKind
@@ -453,7 +459,7 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 	 *            create artifacts by using another account to enforce an
 	 *            initial resync after artifact creation
 	 * @return IConnection The connection object
-	 *
+	 * 
 	 */
 	public IConnection connect(String systemId, String systemKind,
 			String repositoryId, String repositoryKind, String connectionInfo,
@@ -478,7 +484,7 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 
 	/**
 	 * Disconnects from the QC using the ConnectionManager.
-	 *
+	 * 
 	 * @param connection
 	 */
 	protected void disconnect(IConnection connection) {
@@ -521,8 +527,8 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 
 	/**
 	 * Setters and geters for various private variables of this class.
-	 *
-	 *
+	 * 
+	 * 
 	 */
 
 	public void reset(Object context) {
@@ -642,7 +648,8 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 		String attachmentDescription = GenericArtifactHelper.getStringGAField(
 				AttachmentMetaData.ATTACHMENT_DESCRIPTION, genericArtifact);
 		File attachmentFile = null;
-		if(contentDataType.equals(AttachmentMetaData.AttachmentType.DATA.toString())){
+		if (contentDataType.equals(AttachmentMetaData.AttachmentType.DATA
+				.toString())) {
 			if (StringUtils.isEmpty(attachmentDataFileName)) {
 				byte[] attachmentData = null;
 				attachmentData = genericArtifact.getRawAttachmentData();
@@ -663,11 +670,13 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 									+ " to that name. So deleted the file "
 									+ attachmentFile.getAbsolutePath());
 						} else {
-							log.info("The file " + attachmentFile.getAbsolutePath()
+							log.info("The file "
+									+ attachmentFile.getAbsolutePath()
 									+ " exists. But it could not be deleted.");
 						}
 					} else {
-						log.debug("The file " + attachmentFile.getAbsolutePath()
+						log.debug("The file "
+								+ attachmentFile.getAbsolutePath()
 								+ " does not exist. So "
 								+ attachmentDataFile.getAbsolutePath()
 								+ " can be moved to that name.");
@@ -685,7 +694,8 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 					String message = "The attachment data file "
 							+ attachmentDataFile.getAbsolutePath()
 							+ " does not exists. So the attchment "
-							+ attachmentName + " can not be uploaded to the bug "
+							+ attachmentName
+							+ " can not be uploaded to the bug "
 							+ targetArtifactId;
 					log.error(message);
 					throw new CCFRuntimeException(message);
@@ -694,12 +704,14 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 			if (attachmentFile == null || (!attachmentFile.exists())) {
 				String message = "The attachment data file "
 						+ attachmentFile.getAbsolutePath()
-						+ " does not exists. So the attchment " + attachmentName
-						+ " can not be uploaded to the bug " + targetArtifactId;
+						+ " does not exists. So the attchment "
+						+ attachmentName + " can not be uploaded to the bug "
+						+ targetArtifactId;
 				log.error(message);
 				throw new CCFRuntimeException(message);
 			} else if (attachmentFile.length() == 0) {
-				log.warn("The attchment file " + attachmentFile.getAbsolutePath()
+				log.warn("The attchment file "
+						+ attachmentFile.getAbsolutePath()
 						+ " contains no data. It is uploaded to the bug "
 						+ targetArtifactId + ", though.");
 			}
@@ -918,35 +930,40 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 
 	@Override
 	public Document createDependency(Document gaDocument) {
-		//throw new CCFRuntimeException("createDependency is not implemented...!");
+		// throw new
+		// CCFRuntimeException("createDependency is not implemented...!");
 		log.warn("createDependency is not implemented...!");
 		return null;
 	}
 
 	@Override
 	public Document deleteArtifact(Document gaDocument) {
-		//throw new CCFRuntimeException("deleteArtifact is not implemented...!");
+		// throw new
+		// CCFRuntimeException("deleteArtifact is not implemented...!");
 		log.warn("deleteArtifact is not implemented...!");
 		return null;
 	}
 
 	@Override
 	public Document deleteDependency(Document gaDocument) {
-		//throw new CCFRuntimeException("deleteDependency is not implemented...!");
+		// throw new
+		// CCFRuntimeException("deleteDependency is not implemented...!");
 		log.warn("deleteDependency is not implemented...!");
 		return null;
 	}
 
 	@Override
 	public Document updateAttachment(Document gaDocument) {
-		//throw new CCFRuntimeException("updateAttachment is not implemented...!");
+		// throw new
+		// CCFRuntimeException("updateAttachment is not implemented...!");
 		log.warn("updateAttachment is not implemented...!");
 		return null;
 	}
 
 	@Override
 	public Document updateDependency(Document gaDocument) {
-		//throw new CCFRuntimeException("updateDependency is not implemented...!");
+		// throw new
+		// CCFRuntimeException("updateDependency is not implemented...!");
 		log.warn("updateDependency is not implemented...!");
 		return null;
 	}
@@ -972,7 +989,8 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 					.contains("Your Quality Center session has been disconnected")) {
 				connectionErrorOccured = true;
 				this.reInitCOM();
-			} else if (message.contains("The Object is locked by")) {
+			} else if (message.contains("The Object is locked by")
+					&& !immediatelyQuarantineLockedDefects) {
 				// TODO Should we introduce another parameter in the connection
 				// manager for this?
 				connectionErrorOccured = true;
@@ -998,7 +1016,8 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 					&& connectionErrorOccured) {
 				return true;
 			}
-		} else if (rootCause instanceof DefectAlreadyLockedException) {
+		} else if (rootCause instanceof DefectAlreadyLockedException
+				&& !immediatelyQuarantineLockedDefects) {
 			return true;
 		} else if (rootCause instanceof CCFRuntimeException) {
 			Throwable cause = rootCause.getCause();
@@ -1009,7 +1028,7 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 
 	/**
 	 * Gets the mandatory password that belongs to the username
-	 *
+	 * 
 	 * @return the password
 	 */
 	private String getPassword() {
@@ -1018,7 +1037,7 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 
 	/**
 	 * Sets the password that belongs to the username
-	 *
+	 * 
 	 * @param password
 	 *            the password to set
 	 */
@@ -1031,7 +1050,7 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 	 * QC instance whenever an artifact should be updated or extracted. This
 	 * user has to differ from the resync user in order to force initial resyncs
 	 * with the source system once a new artifact has been created.
-	 *
+	 * 
 	 * @return the userName
 	 */
 	public String getUserName() {
@@ -1040,12 +1059,12 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 
 	/**
 	 * Sets the mandatory username
-	 *
+	 * 
 	 * The user name is used to login into the HP QC instance whenever an
 	 * artifact should be updated or extracted. This user has to differ from the
 	 * resync user in order to force initial resyncs with the source system once
 	 * a new artifact has been created.
-	 *
+	 * 
 	 * @param userName
 	 *            the user name to set
 	 */
@@ -1055,12 +1074,12 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 
 	/**
 	 * Sets the optional resync username
-	 *
+	 * 
 	 * The resync user name is used to login into the HP QC instance whenever an
 	 * artifact should be created. This user has to differ from the ordinary
 	 * user used to log in in order to force initial resyncs with the source
 	 * system once a new artifact has been created.
-	 *
+	 * 
 	 * @param resyncUserName
 	 *            the resyncUserName to set
 	 */
@@ -1074,7 +1093,7 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 	 * has to differ from the ordinary user used to log in in order to force
 	 * initial resyncs with the source system once a new artifact has been
 	 * created.
-	 *
+	 * 
 	 * @return the resyncUserName
 	 */
 	private String getResyncUserName() {
@@ -1083,7 +1102,7 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 
 	/**
 	 * Sets the optional resync password that belongs to the resync user
-	 *
+	 * 
 	 * @param resyncPassword
 	 *            the resyncPassword to set
 	 */
@@ -1093,7 +1112,7 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 
 	/**
 	 * Gets the optional resync password that belongs to the resync user
-	 *
+	 * 
 	 * @return the resyncPassword
 	 */
 	private String getResyncPassword() {
@@ -1102,6 +1121,23 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 
 	public QCDefectHandler getDefectHandler() {
 		return defectHandler;
+	}
+
+	/**
+	 * If this property is set to true (true by default), locked defects will be
+	 * quarantined and the operation will never be retried
+	 */
+	public void setImmediatelyQuarantineLockedDefects(
+			boolean immediatelyQuarantineLockedDefects) {
+		this.immediatelyQuarantineLockedDefects = immediatelyQuarantineLockedDefects;
+	}
+
+	/**
+	 * If this property is set to true (true by default), locked defects will be
+	 * quarantined and the operation will never be retried
+	 */
+	public boolean isImmediatelyQuarantineLockedDefects() {
+		return immediatelyQuarantineLockedDefects;
 	}
 
 }
