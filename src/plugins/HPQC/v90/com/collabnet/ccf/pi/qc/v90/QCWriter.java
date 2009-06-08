@@ -970,12 +970,12 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 
 	@Override
 	public boolean handleException(Throwable rootCause,
-			ConnectionManager<IConnection> connectionManager) {
+			ConnectionManager<IConnection> connectionManager, Document ga) {
 		if (rootCause == null)
 			return false;
 		if (rootCause instanceof ConnectionException) {
 			Throwable cause = rootCause.getCause();
-			handleException(cause, connectionManager);
+			handleException(cause, connectionManager, ga);
 			if (connectionManager.isEnableRetryAfterNetworkTimeout()) {
 				return true;
 			}
@@ -989,11 +989,15 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 					.contains("Your Quality Center session has been disconnected")) {
 				connectionErrorOccured = true;
 				this.reInitCOM();
-			} else if (message.contains("The Object is locked by")
-					&& !immediatelyQuarantineLockedDefects) {
-				// TODO Should we introduce another parameter in the connection
-				// manager for this?
-				connectionErrorOccured = true;
+			} else if (message.contains("The Object is locked by")) {
+				if (!immediatelyQuarantineLockedDefects) {
+					connectionErrorOccured = true;
+				} else {
+					// set new error code
+					ga.getRootElement().addAttribute(
+							GenericArtifactHelper.ERROR_CODE,
+							GenericArtifact.ERROR_OBJECT_LOCKED);
+				}
 			} else if (message.contains("The server threw an exception.")) {
 				connectionErrorOccured = true;
 				this.reInitCOM();
@@ -1016,12 +1020,18 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 					&& connectionErrorOccured) {
 				return true;
 			}
-		} else if (rootCause instanceof DefectAlreadyLockedException
-				&& !immediatelyQuarantineLockedDefects) {
-			return true;
+		} else if (rootCause instanceof DefectAlreadyLockedException) {
+			if (!immediatelyQuarantineLockedDefects) {
+				return true;
+			} else {
+				// set new error code
+				ga.getRootElement().addAttribute(
+						GenericArtifactHelper.ERROR_CODE,
+						GenericArtifact.ERROR_OBJECT_LOCKED);
+			}
 		} else if (rootCause instanceof CCFRuntimeException) {
 			Throwable cause = rootCause.getCause();
-			return handleException(cause, connectionManager);
+			return handleException(cause, connectionManager, ga);
 		}
 		return false;
 	}

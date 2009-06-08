@@ -151,7 +151,7 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 
 	@Override
 	public boolean handleException(Throwable cause,
-			ConnectionManager<Connection> connectionManager) {
+			ConnectionManager<Connection> connectionManager, Document ga) {
 		if (cause == null)
 			return false;
 		if ((cause instanceof java.net.SocketException || cause instanceof java.net.UnknownHostException)
@@ -168,10 +168,10 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 			}
 		} else if (cause instanceof RemoteException) {
 			Throwable innerCause = cause.getCause();
-			return handleException(innerCause, connectionManager);
+			return handleException(innerCause, connectionManager, ga);
 		} else if (cause instanceof CCFRuntimeException) {
 			Throwable innerCause = cause.getCause();
-			return handleException(innerCause, connectionManager);
+			return handleException(innerCause, connectionManager, ga);
 		}
 		return false;
 	}

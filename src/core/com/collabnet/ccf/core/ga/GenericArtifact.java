@@ -459,6 +459,8 @@ public class GenericArtifact {
 	public final static String ERROR_INCORRECT_SQL_STATEMENT = "incorrectSQLStatementError";
 
 	public final static String ERROR_CONFLICT_DETECTED = "conflictDetectedError";
+	
+	public final static String ERROR_OBJECT_LOCKED = "objectLocked";
 
 	/**
 	 * Create a new empty generic artifact All attributes will be set to

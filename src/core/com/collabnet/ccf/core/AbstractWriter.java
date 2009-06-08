@@ -139,7 +139,7 @@ public abstract class AbstractWriter<T> extends Component implements
 			} catch (Exception e) {
 				boolean connectionException = connectionManager
 						.isUseStandardTimeoutHandlingCode()
-						&& this.handleException(e, connectionManager);
+						&& this.handleException(e, connectionManager, gaDocument);
 				if (!connectionException) {
 					retry = false;
 					if (e instanceof CCFRuntimeException) {
@@ -204,7 +204,7 @@ public abstract class AbstractWriter<T> extends Component implements
 	}
 
 	public boolean handleException(Throwable rootCause,
-			ConnectionManager<T> connectionManager) {
+			ConnectionManager<T> connectionManager, Document ga) {
 		return false;
 	}
 

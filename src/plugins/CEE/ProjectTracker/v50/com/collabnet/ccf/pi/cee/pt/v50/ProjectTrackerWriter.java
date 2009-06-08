@@ -1100,7 +1100,7 @@ public class ProjectTrackerWriter extends
 
 	@Override
 	public boolean handleException(Throwable cause,
-			ConnectionManager<TrackerWebServicesClient> connectionManager) {
+			ConnectionManager<TrackerWebServicesClient> connectionManager, Document ga) {
 		// TODO What about invalid sessions?
 		if (cause == null)
 			return false;
@@ -1112,10 +1112,10 @@ public class ProjectTrackerWriter extends
 			return true;
 		} else if (cause instanceof RemoteException) {
 			Throwable innerCause = cause.getCause();
-			return handleException(innerCause, connectionManager);
+			return handleException(innerCause, connectionManager, ga);
 		} else if (cause instanceof CCFRuntimeException) {
 			Throwable innerCause = cause.getCause();
-			return handleException(innerCause, connectionManager);
+			return handleException(innerCause, connectionManager, ga);
 		}
 		return false;
 	}
