@@ -293,7 +293,7 @@ public class GenericArtifactField {
 		else if(maxOccurs == CARDINALITY_UNBOUNDED){
 			return UNBOUNDED;
 		}
-		return Integer.toString(minOccurs);
+		return Integer.toString(maxOccurs);
 	}
 	
 	public void setMinOccursValue(String minOccursStr) {
