@@ -71,6 +71,12 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 	private int identityMapEventWaitCount = 4;
 
 	/**
+	 * If this property is set to true (false by default),
+	 * resynched artifacts are even transported if a newer version has already been synchronized
+	 */
+	private boolean alwaysPassResynchedArtifacts=false;
+
+	/**
 	 * openAdaptor Method to process all input and puts out the results This
 	 * method will only handle Dom4J documents encoded in the generic XML schema
 	 */
@@ -211,7 +217,7 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 						// obvious resync duplicates are still filtered out
 						if ((!artifactAction
 								.equals(GenericArtifactHelper.ARTIFACT_ACTION_RESYNC))
-								|| (sourceArtifactVersionLongFromTable > sourceArtifactVersionLong)) {
+								|| ((sourceArtifactVersionLongFromTable > sourceArtifactVersionLong) && !isAlwaysPassResynchedArtifacts())) {
 							log
 									.warn("\nSource artifact last modified date in table "
 											+ DateUtil
@@ -826,6 +832,23 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 
 	public void setIdentityMapEventWaitCount(int identityMapEventWaitCount) {
 		this.identityMapEventWaitCount = identityMapEventWaitCount;
+	}
+
+	/**
+	 * If this property is set to true (false by default),
+	 * resynched artifacts are even transported if a newer version has already been synchronized
+	 * @param alwaysPassResynchedArtifacts
+	 */
+	public void setAlwaysPassResynchedArtifacts(boolean alwaysPassResynchedArtifacts) {
+		this.alwaysPassResynchedArtifacts = alwaysPassResynchedArtifacts;
+	}
+
+	/**
+	 * If this property is set to true (false by default),
+	 * resynched artifacts are even transported if a newer version has already been synchronized
+	 */
+	public boolean isAlwaysPassResynchedArtifacts() {
+		return alwaysPassResynchedArtifacts;
 	}
 
 }
