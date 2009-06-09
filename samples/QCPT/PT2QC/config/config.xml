@@ -601,4 +601,21 @@
 			<value>SELECT ID, GENERIC_ARTIFACT FROM HOSPITAL WHERE REPROCESSED = FALSE AND ERROR_CODE = 'replay' AND SOURCE_SYSTEM_ID = '?' and SOURCE_REPOSITORY_ID = '?' AND TARGET_SYSTEM_ID = '?' and TARGET_REPOSITORY_ID = '?' ORDER BY ID ASC LIMIT 1</value>
 		</property>
 	</bean>
+	
+	<bean id="mBeanExporter" class="org.springframework.jmx.export.MBeanExporter">
+		<property name="beans">
+			<map>
+				<entry key="CCF:name=AbstractReader" value-ref="PTReader"/>
+			</map>
+		</property>
+		<property name="assembler" ref="assembler"/>
+	</bean>
+	
+	<bean id="assembler" class="org.springframework.jmx.export.assembler.MethodNameBasedMBeanInfoAssembler">
+		<property name="managedMethods">
+			<list>
+				<value>getNumberOfWaitingArtifacts</value>
+			</list>
+		</property>
+	</bean>
 </beans>
