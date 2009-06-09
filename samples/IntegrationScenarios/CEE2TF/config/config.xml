@@ -330,7 +330,7 @@
         <property name="identityMappingDatabaseReader"
             ref="CEE2TFIndentityMappingDatabaseReader" />
         <property name="hospitalDatabaseReader" ref="CEE2TFHospitalDatabaseReader"/>
-		<property name="skipNewerVersionsOfQuarantinedArtifacts" value="false"/>
+		<property name="skipNewerVersionsOfQuarantinedArtifacts" value="false"/><property name="alwaysPassResynchedArtifacts" value="false"/>
     </bean>
 
     <bean id="CEE2TFHospitalDatabaseReader"

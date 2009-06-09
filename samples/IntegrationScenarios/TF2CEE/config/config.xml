@@ -329,7 +329,7 @@
 		<property name="identityMappingDatabaseReader"
 			ref="TF2CEEIndentityMappingDatabaseReader" />
 		<property name="hospitalDatabaseReader" ref="TF2CEEHospitalDatabaseReader"/>
-		<property name="skipNewerVersionsOfQuarantinedArtifacts" value="false"/>
+		<property name="skipNewerVersionsOfQuarantinedArtifacts" value="false"/><property name="alwaysPassResynchedArtifacts" value="false"/>
 	</bean>
 	
 	<bean id="TF2CEEHospitalDatabaseReader"

@@ -312,7 +312,7 @@
         <property name="identityMappingDatabaseReader"
             ref="IndentityMappingDatabaseReaderQC2PT" />
         <property name="hospitalDatabaseReader" ref="HospitalDatabaseReaderQC2PT"/>
-		<property name="skipNewerVersionsOfQuarantinedArtifacts" value="false"/>
+		<property name="skipNewerVersionsOfQuarantinedArtifacts" value="false"/><property name="alwaysPassResynchedArtifacts" value="false"/>
 		<property name="identityMapEventWaitCount" value="8"/>
 		<property name="identityMapEventWaitTime" value="500"/>
     </bean>
