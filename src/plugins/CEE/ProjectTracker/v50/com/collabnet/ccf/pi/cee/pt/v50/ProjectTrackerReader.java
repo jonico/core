@@ -783,20 +783,19 @@ public class ProjectTrackerReader extends
 			String attributeDisplayName = trackerAttribute.getDisplayName();
 			String attributeNamespace = trackerAttribute.getNamespace();
 			String attributeTagName = trackerAttribute.getTagName();
-			String attributeNamespaceDiaplayName = null;
+			String attributeNamespaceDisplayName = null;
 			if (attributeName.equals(CREATED_ON_FIELD_NAME)
 					|| attributeName.equals(MODIFIED_ON_FIELD_NAME)
 					|| attributeName.equals(ID_FIELD_NAME)
 					|| attributeName.equals(CREATED_BY_FIELD_NAME)
 					|| attributeName.equals(MODIFIED_BY_FIELD_NAME)) {
-				attributeNamespaceDiaplayName = attributeName;
+				attributeNamespaceDisplayName = attributeName;
 			} else {
-				attributeNamespaceDiaplayName = "{" + attributeNamespace + "}"
+				attributeNamespaceDisplayName = "{" + attributeNamespace + "}"
 						+ attributeDisplayName;
 			}
 			GenericArtifactField.FieldValueTypeValue gaFieldType = null;
 			gaFieldType = ptGATypesMap.get(ptAttributeType);
-			boolean isAttributeRequired = false;
 			if (trackerAttribute.getAttributeType().equals("USER")) {
 				attValues = getUserAttributesValuesFromHistory(
 						attributeNamespace, attributeTagName,
@@ -804,7 +803,7 @@ public class ProjectTrackerReader extends
 			}
 			if (attValues != null && attValues.size() > 0
 					&& (!CollectionUtils.isEmptyOrNull(attValues))) {
-				isAttributeRequired = trackerAttribute.isRequired();
+				// do nothing
 			} else {
 				GenericArtifactField field = null;
 				if (attributeName.equals(CREATED_ON_FIELD_NAME)
@@ -815,7 +814,7 @@ public class ProjectTrackerReader extends
 					field = ga.addNewField(attributeName,
 							GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
 				} else {
-					field = ga.addNewField(attributeNamespaceDiaplayName,
+					field = ga.addNewField(attributeNamespaceDisplayName,
 							GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
 				}
 				field
@@ -837,15 +836,10 @@ public class ProjectTrackerReader extends
 				if (StringUtils.isEmpty(attValue))
 					continue;
 				GenericArtifactField field = null;
-				if (isAttributeRequired) {
-					field = ga
+				field = ga
 							.addNewField(
-									attributeNamespaceDiaplayName,
-									GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD);
-				} else {
-					field = ga.addNewField(attributeNamespaceDiaplayName,
-							GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
-				}
+									attributeNamespaceDisplayName,
+									GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
 				field
 						.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
 				field
@@ -972,7 +966,7 @@ public class ProjectTrackerReader extends
 									GenericArtifactField reasonField = ga
 											.addNewField(
 													REASON_FIELD_NAME,
-													GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD);
+													GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
 									reasonField
 											.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
 									reasonField
@@ -1270,15 +1264,15 @@ public class ProjectTrackerReader extends
 				}
 			}
 		} catch (WSException e1) {
-			String message = "Web Service Exception while retreiving Artifact Type meta data";
+			String message = "Web Service Exception while retrieving Artifact Type meta data";
 			log.error(message, e1);
 			throw new CCFRuntimeException(message, e1);
 		} catch (RemoteException e1) {
-			String message = "Remote Exception while retreiving Artifact Type meta data";
+			String message = "Remote Exception while retrieving Artifact Type meta data";
 			log.error(message, e1);
 			throw new CCFRuntimeException(message, e1);
 		} catch (ServiceException e1) {
-			String message = "Service Exception while retreiving Artifact Type meta data";
+			String message = "Service Exception while retrieving Artifact Type meta data";
 			log.error(message, e1);
 			throw new CCFRuntimeException(message, e1);
 		} catch (Exception e) {
