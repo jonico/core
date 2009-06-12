@@ -972,8 +972,6 @@ public class ProjectTrackerReader extends
 									reasonField
 											.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
 									reasonField.setFieldValueHasChanged(true);
-									reasonField
-											.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
 									reasonField.setFieldValue(reason);
 								}
 							}
