@@ -696,6 +696,7 @@ public class ProjectTrackerReader extends
 		String sourceSystemTimezone = this.getSourceSystemTimezone(syncInfo);
 		Date lastModifiedDate = this.getLastModifiedDate(syncInfo);
 		long fromTime = lastModifiedDate.getTime();
+		boolean reloadedArtifactType = false;
 		// long toTime = System.currentTimeMillis();
 		TrackerWebServicesClient twsclient = null;
 		ClientArtifact artifact = null;
@@ -752,7 +753,339 @@ public class ProjectTrackerReader extends
 			ahlVersion = twsclient.getChangeHistoryForArtifact(
 					artifactIdentifier, createdOnTime, null);
 			ProjectTrackerReader.artifactHistoryList.set(ahlVersion);
+
+			GenericArtifact ga = new GenericArtifact();
+			if (lastModifiedBy.equals(this.getResyncUserName())
+					&& isIgnoreConnectorUserUpdates()) {
+				ga
+						.setArtifactAction(GenericArtifact.ArtifactActionValue.RESYNC);
+			}
+			ga.setArtifactType(GenericArtifact.ArtifactTypeValue.PLAINARTIFACT);
+			ga.setArtifactMode(GenericArtifact.ArtifactModeValue.COMPLETE);
+			ga.setSourceArtifactId(artifactId);
+			Map<String, List<String>> attributes = artifact.getAttributes();
+			for (Map.Entry<String, List<String>> entry : attributes.entrySet()) {
+				String attributeName = entry.getKey();
+				List<String> attValues = entry.getValue();
+				String ptAttributeType = null;
+				TrackerAttribute trackerAttribute = trackerArtifactType
+						.getAttribute(attributeName);
+				if (trackerAttribute == null) {
+					if (!reloadedArtifactType) {
+						log.warn("Unknown tracker attribute " + attributeName
+								+ ", reloading artifact type meta data ...");
+						// reload the meta data because artifact type might have
+						// been changed
+						String repositoryKey = this.getRepositoryKey(syncInfo);
+						String repositoryId = this
+								.getSourceRepositoryId(syncInfo);
+						String artifactTypeDisplayName = repositoryId
+								.substring(repositoryId.lastIndexOf(":") + 1);
+						trackerArtifactType = metadataHelper
+								.getTrackerArtifactType(repositoryKey,
+										artifactTypeDisplayName, twsclient,
+										false);
+						if (trackerArtifactType == null) {
+							throw new CCFRuntimeException(
+									"Artifact type for repository "
+											+ repositoryKey
+											+ " unknown, cannot synchronize repository.");
+						}
+						reloadedArtifactType = true;
+						// retry operation
+						trackerAttribute = trackerArtifactType
+								.getAttribute(attributeName);
+					}
+					if (trackerAttribute == null) {
+						log
+								.warn("Unknown tracker attribute "
+										+ attributeName
+										+ ", after reloading meta data, ignoring it ...");
+						continue;
+					}
+				}
+
+				ptAttributeType = trackerAttribute.getAttributeType();
+				String attributeDisplayName = trackerAttribute.getDisplayName();
+				String attributeNamespace = trackerAttribute.getNamespace();
+				String attributeTagName = trackerAttribute.getTagName();
+				String attributeNamespaceDisplayName = null;
+				if (attributeName.equals(CREATED_ON_FIELD_NAME)
+						|| attributeName.equals(MODIFIED_ON_FIELD_NAME)
+						|| attributeName.equals(ID_FIELD_NAME)
+						|| attributeName.equals(CREATED_BY_FIELD_NAME)
+						|| attributeName.equals(MODIFIED_BY_FIELD_NAME)) {
+					attributeNamespaceDisplayName = attributeName;
+				} else {
+					attributeNamespaceDisplayName = "{" + attributeNamespace
+							+ "}" + attributeDisplayName;
+				}
+				GenericArtifactField.FieldValueTypeValue gaFieldType = null;
+				gaFieldType = ptGATypesMap.get(ptAttributeType);
+				if (trackerAttribute.getAttributeType().equals("USER")) {
+					attValues = getUserAttributesValuesFromHistory(
+							attributeNamespace, attributeTagName,
+							attributeDisplayName, ahlVersion);
+				}
+				if (attValues != null && attValues.size() > 0
+						&& (!CollectionUtils.isEmptyOrNull(attValues))) {
+					// do nothing
+				} else {
+					GenericArtifactField field = null;
+					if (attributeName.equals(CREATED_ON_FIELD_NAME)
+							|| attributeName.equals(MODIFIED_ON_FIELD_NAME)
+							|| attributeName.equals(ID_FIELD_NAME)
+							|| attributeName.equals(CREATED_BY_FIELD_NAME)
+							|| attributeName.equals(MODIFIED_BY_FIELD_NAME)) {
+						field = ga
+								.addNewField(
+										attributeName,
+										GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
+					} else {
+						field = ga
+								.addNewField(
+										attributeNamespaceDisplayName,
+										GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
+					}
+					field
+							.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
+					field.setFieldValueType(gaFieldType);
+					field.setFieldValueHasChanged(true);
+					if (trackerAttribute.getAttributeType().equals("USER")) {
+						field
+								.setFieldValueType(GenericArtifactField.FieldValueTypeValue.USER);
+					} else if (trackerAttribute.getAttributeType().equals(
+							"DATE")
+							|| attributeName.equals(CREATED_ON_FIELD_NAME)
+							|| attributeName.equals(MODIFIED_ON_FIELD_NAME)) {
+						field
+								.setFieldValueType(GenericArtifactField.FieldValueTypeValue.DATETIME);
+					}
+					continue;
+				}
+				for (String attValue : attValues) {
+					if (StringUtils.isEmpty(attValue))
+						continue;
+					GenericArtifactField field = null;
+					field = ga.addNewField(attributeNamespaceDisplayName,
+							GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
+					field
+							.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
+					field
+							.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
+					field.setFieldValueHasChanged(true);
+					field.setFieldValueType(gaFieldType);
+					if (trackerAttribute.getAttributeType().equals("USER")) {
+						field
+								.setFieldValueType(GenericArtifactField.FieldValueTypeValue.USER);
+					}
+
+					boolean optionsConverted = false;
+					while (!optionsConverted) {
+						try {
+							if (trackerAttribute.getAttributeType().equals(
+									"MULTI_SELECT")
+									|| trackerAttribute.getAttributeType()
+											.equals("SINGLE_SELECT")) {
+								ArtifactTypeMetadata metadata = metadataHelper
+										.getArtifactTypeMetadata(this
+												.getRepositoryKey(syncInfo),
+												artifactTypeNamespace,
+												artifactTypeTagName);
+								attValue = this.convertOptionValue(
+										attributeNamespace, attributeTagName,
+										attValue, metadata, false);
+								optionsConverted = true;
+							} else if (trackerAttribute.getAttributeType()
+									.equals("STATE")) {
+								ArtifactTypeMetadata metadata = metadataHelper
+										.getArtifactTypeMetadata(this
+												.getRepositoryKey(syncInfo),
+												artifactTypeNamespace,
+												artifactTypeTagName);
+								attValue = this.convertOptionValue(
+										attributeNamespace, attributeTagName,
+										attValue, metadata, true);
+								optionsConverted = true;
+							}
+							else {
+								optionsConverted = true;
+							}
+						} catch (CCFRuntimeException e) {
+							if (!reloadedArtifactType) {
+								log
+										.warn(e.getMessage()
+												+ ", reloading artifact type meta data ...");
+								// reload the meta data because artifact type
+								// might have been changed
+								String repositoryKey = this
+										.getRepositoryKey(syncInfo);
+								String repositoryId = this
+										.getSourceRepositoryId(syncInfo);
+								String artifactTypeDisplayName = repositoryId
+										.substring(repositoryId
+												.lastIndexOf(":") + 1);
+								trackerArtifactType = metadataHelper
+										.getTrackerArtifactType(repositoryKey,
+												artifactTypeDisplayName,
+												twsclient, false);
+								if (trackerArtifactType == null) {
+									throw new CCFRuntimeException(
+											"Artifact type for repository "
+													+ repositoryKey
+													+ " unknown, cannot synchronize repository.");
+								}
+								reloadedArtifactType = true;
+							} else {
+								throw e;
+							}
+						}
+					}
+
+					if (attributeName.equals(CREATED_ON_FIELD_NAME)
+							|| attributeName.equals(MODIFIED_ON_FIELD_NAME)) {
+						field
+								.setFieldValueType(GenericArtifactField.FieldValueTypeValue.DATETIME);
+						String dateStr = attValue;
+						if (!StringUtils.isEmpty(dateStr)) {
+							Date date = new Date(Long.parseLong(dateStr));
+							field.setFieldValue(date);
+						}
+					} else if (trackerAttribute.getAttributeType().equals(
+							"DATE")) {
+						field
+								.setFieldValueType(GenericArtifactField.FieldValueTypeValue.DATE);
+						String dateStr = attValue;
+						Date dateValue = null;
+						if (!StringUtils.isEmpty(dateStr)) {
+							dateValue = new Date(Long.parseLong(dateStr));
+						}
+						if (dateValue != null) {
+							if (DateUtil.isAbsoluteDateInTimezone(dateValue,
+									sourceSystemTimezone)) {
+								dateValue = DateUtil.convertToGMTAbsoluteDate(
+										dateValue, sourceSystemTimezone);
+								field.setFieldValue(dateValue);
+							} else {
+								field
+										.setFieldValueType(GenericArtifactField.FieldValueTypeValue.DATETIME);
+								field.setFieldValue(dateValue);
+							}
+						}
+					} else {
+						field.setFieldValue(attValue);
+					}
+					if (attributeName.equals(MODIFIED_ON_FIELD_NAME)) {
+						String modifiedOnStr = attValue;
+						long modifiedOnMilliSeconds = Long
+								.parseLong(modifiedOnStr);
+						Date modifiedOnDate = new Date(modifiedOnMilliSeconds);
+						String lastModificationDate = DateUtil
+								.format(modifiedOnDate);
+						ga
+								.setSourceArtifactLastModifiedDate(lastModificationDate);
+						ga.setSourceArtifactVersion(Long
+								.toString(modifiedOnMilliSeconds));
+					} else if (attributeName.equals(CREATED_ON_FIELD_NAME)) {
+						// String createdOnStr = attValue;
+						// long createdOnTime = Long.parseLong(createdOnStr);
+					}
+				}
+			}
+			List<ClientArtifactComment> comments = artifact.getComments();
+			for (ClientArtifactComment comment : comments) {
+				String commentDate = comment.getCommentDate();
+				long commentTime = Long.parseLong(commentDate);
+				String commentor = comment.getCommenter();
+				if (commentTime > fromTime
+						&& (!commentor.equals(this.getUsername()) || !isIgnoreConnectorUserUpdates())
+						&& (!commentor.equals(this.getResyncUserName()) || !isIgnoreConnectorUserUpdates())) {
+					String commentText = comment.getCommentText();
+					String commenter = comment.getCommenter();
+					commentText = "\nOriginal commenter: " + commenter + "\n"
+							+ commentText;
+					GenericArtifactField field = null;
+					field = ga.addNewField(COMMENT_FIELD_NAME,
+							GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
+					field
+							.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
+					field
+							.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
+					field.setFieldValueHasChanged(true);
+					field.setFieldValue(commentText);
+				}
+			}
+			if (ahlVersion != null) {
+				History[] historyList = ahlVersion.getHistory();
+				if (historyList != null && historyList.length == 1) {
+					History history = historyList[0];
+					if (history != null) {
+						HistoryTransaction[] transactions = history
+								.getHistoryTransaction();
+						if (transactions != null) {
+							for (HistoryTransaction transaction : transactions) {
+								if (transaction == null)
+									continue;
+								long historyTime = transaction.getModifiedOn();
+								if (historyTime > fromTime) {
+									String reason = transaction.getReason();
+									String reasonUser = transaction
+											.getModifiedBy();
+									if ((reasonUser
+											.equals(getConnectorUserDisplayName()) && isIgnoreConnectorUserUpdates())
+											|| (reasonUser
+													.equals(getResyncUserDisplayName() == null ? ""
+															: getResyncUserDisplayName()) && isIgnoreConnectorUserUpdates())) {
+										continue;
+									}
+									if (!StringUtils.isEmpty(reason)) {
+										reason = "\nReason provided by "
+												+ reasonUser + "\n" + reason;
+										GenericArtifactField reasonField = ga
+												.addNewField(
+														REASON_FIELD_NAME,
+														GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
+										reasonField
+												.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
+										reasonField
+												.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
+										reasonField
+												.setFieldValueHasChanged(true);
+										reasonField.setFieldValue(reason);
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+			List<ClientArtifactAttachment> atts = artifact.getAttachments();
+			for (ClientArtifactAttachment attachment : atts) {
+				if (attachmentIDNameMap == null) {
+					attachmentIDNameMap = new HashMap<String, ClientArtifactAttachment>();
+				}
+				if (linkIDNameMap == null) {
+					linkIDNameMap = new HashMap<String, ClientArtifactAttachment>();
+				}
+				String attachmentId = attachment.getAttachmentId();
+				// String attachmentName = attachment.getAttachmentName();
+				attachmentIDNameMap.put(attachmentId, attachment);
+				String isFile = attachment.getIsFile();
+				long attachmentCreatedOn = Long.parseLong(attachment
+						.getCreatedOn());
+				if (attachmentCreatedOn > fromTime) {
+					if (isFile == null || isFile.equalsIgnoreCase("false")) {
+						linkIDNameMap.put(attachmentId, attachment);
+					}
+				}
+			}
+			this.populateSrcAndDest(syncInfo, ga);
+			return ga;
+
 		} catch (Exception e) {
+			if (e instanceof CCFRuntimeException) {
+				throw (CCFRuntimeException) e;
+			}
 			String message = "Exception while getting the artifact data";
 			log.error(message, e);
 			throw new CCFRuntimeException(message, e);
@@ -762,246 +1095,6 @@ public class ProjectTrackerReader extends
 				twsclient = null;
 			}
 		}
-		GenericArtifact ga = new GenericArtifact();
-		if (lastModifiedBy.equals(this.getResyncUserName())
-				&& isIgnoreConnectorUserUpdates()) {
-			ga.setArtifactAction(GenericArtifact.ArtifactActionValue.RESYNC);
-		}
-		ga.setArtifactType(GenericArtifact.ArtifactTypeValue.PLAINARTIFACT);
-		ga.setArtifactMode(GenericArtifact.ArtifactModeValue.COMPLETE);
-		ga.setSourceArtifactId(artifactId);
-		Map<String, List<String>> attributes = artifact.getAttributes();
-		for (Map.Entry<String, List<String>> entry : attributes.entrySet()) {
-			String attributeName = entry.getKey();
-			List<String> attValues = entry.getValue();
-			String ptAttributeType = null;
-			TrackerAttribute trackerAttribute = trackerArtifactType
-					.getAttribute(attributeName);
-			if (trackerAttribute == null)
-				continue;
-			ptAttributeType = trackerAttribute.getAttributeType();
-			String attributeDisplayName = trackerAttribute.getDisplayName();
-			String attributeNamespace = trackerAttribute.getNamespace();
-			String attributeTagName = trackerAttribute.getTagName();
-			String attributeNamespaceDisplayName = null;
-			if (attributeName.equals(CREATED_ON_FIELD_NAME)
-					|| attributeName.equals(MODIFIED_ON_FIELD_NAME)
-					|| attributeName.equals(ID_FIELD_NAME)
-					|| attributeName.equals(CREATED_BY_FIELD_NAME)
-					|| attributeName.equals(MODIFIED_BY_FIELD_NAME)) {
-				attributeNamespaceDisplayName = attributeName;
-			} else {
-				attributeNamespaceDisplayName = "{" + attributeNamespace + "}"
-						+ attributeDisplayName;
-			}
-			GenericArtifactField.FieldValueTypeValue gaFieldType = null;
-			gaFieldType = ptGATypesMap.get(ptAttributeType);
-			if (trackerAttribute.getAttributeType().equals("USER")) {
-				attValues = getUserAttributesValuesFromHistory(
-						attributeNamespace, attributeTagName,
-						attributeDisplayName, ahlVersion);
-			}
-			if (attValues != null && attValues.size() > 0
-					&& (!CollectionUtils.isEmptyOrNull(attValues))) {
-				// do nothing
-			} else {
-				GenericArtifactField field = null;
-				if (attributeName.equals(CREATED_ON_FIELD_NAME)
-						|| attributeName.equals(MODIFIED_ON_FIELD_NAME)
-						|| attributeName.equals(ID_FIELD_NAME)
-						|| attributeName.equals(CREATED_BY_FIELD_NAME)
-						|| attributeName.equals(MODIFIED_BY_FIELD_NAME)) {
-					field = ga.addNewField(attributeName,
-							GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
-				} else {
-					field = ga.addNewField(attributeNamespaceDisplayName,
-							GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
-				}
-				field
-						.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
-				field.setFieldValueType(gaFieldType);
-				field.setFieldValueHasChanged(true);
-				if (trackerAttribute.getAttributeType().equals("USER")) {
-					field
-							.setFieldValueType(GenericArtifactField.FieldValueTypeValue.USER);
-				} else if (trackerAttribute.getAttributeType().equals("DATE")
-						|| attributeName.equals(CREATED_ON_FIELD_NAME)
-						|| attributeName.equals(MODIFIED_ON_FIELD_NAME)) {
-					field
-							.setFieldValueType(GenericArtifactField.FieldValueTypeValue.DATETIME);
-				}
-				continue;
-			}
-			for (String attValue : attValues) {
-				if (StringUtils.isEmpty(attValue))
-					continue;
-				GenericArtifactField field = null;
-				field = ga
-							.addNewField(
-									attributeNamespaceDisplayName,
-									GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
-				field
-						.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
-				field
-						.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
-				field.setFieldValueHasChanged(true);
-				field.setFieldValueType(gaFieldType);
-				if (trackerAttribute.getAttributeType().equals("USER")) {
-					field
-							.setFieldValueType(GenericArtifactField.FieldValueTypeValue.USER);
-				}
-
-				if (trackerAttribute.getAttributeType().equals("MULTI_SELECT")
-						|| trackerAttribute.getAttributeType().equals(
-								"SINGLE_SELECT")) {
-					ArtifactTypeMetadata metadata = metadataHelper
-							.getArtifactTypeMetadata(this
-									.getRepositoryKey(syncInfo),
-									artifactTypeNamespace, artifactTypeTagName);
-					attValue = this.convertOptionValue(attributeNamespace,
-							attributeTagName, attValue, metadata, false);
-				} else if (trackerAttribute.getAttributeType().equals("STATE")) {
-					ArtifactTypeMetadata metadata = metadataHelper
-							.getArtifactTypeMetadata(this
-									.getRepositoryKey(syncInfo),
-									artifactTypeNamespace, artifactTypeTagName);
-					attValue = this.convertOptionValue(attributeNamespace,
-							attributeTagName, attValue, metadata, true);
-				}
-				if (attributeName.equals(CREATED_ON_FIELD_NAME)
-						|| attributeName.equals(MODIFIED_ON_FIELD_NAME)) {
-					field
-							.setFieldValueType(GenericArtifactField.FieldValueTypeValue.DATETIME);
-					String dateStr = attValue;
-					if (!StringUtils.isEmpty(dateStr)) {
-						Date date = new Date(Long.parseLong(dateStr));
-						field.setFieldValue(date);
-					}
-				} else if (trackerAttribute.getAttributeType().equals("DATE")) {
-					field
-							.setFieldValueType(GenericArtifactField.FieldValueTypeValue.DATE);
-					String dateStr = attValue;
-					Date dateValue = null;
-					if (!StringUtils.isEmpty(dateStr)) {
-						dateValue = new Date(Long.parseLong(dateStr));
-					}
-					if (dateValue != null) {
-						if (DateUtil.isAbsoluteDateInTimezone(dateValue,
-								sourceSystemTimezone)) {
-							dateValue = DateUtil.convertToGMTAbsoluteDate(
-									dateValue, sourceSystemTimezone);
-							field.setFieldValue(dateValue);
-						} else {
-							field
-									.setFieldValueType(GenericArtifactField.FieldValueTypeValue.DATETIME);
-							field.setFieldValue(dateValue);
-						}
-					}
-				} else {
-					field.setFieldValue(attValue);
-				}
-				if (attributeName.equals(MODIFIED_ON_FIELD_NAME)) {
-					String modifiedOnStr = attValue;
-					long modifiedOnMilliSeconds = Long.parseLong(modifiedOnStr);
-					Date modifiedOnDate = new Date(modifiedOnMilliSeconds);
-					String lastModificationDate = DateUtil
-							.format(modifiedOnDate);
-					ga.setSourceArtifactLastModifiedDate(lastModificationDate);
-					ga.setSourceArtifactVersion(Long
-							.toString(modifiedOnMilliSeconds));
-				} else if (attributeName.equals(CREATED_ON_FIELD_NAME)) {
-					// String createdOnStr = attValue;
-					// long createdOnTime = Long.parseLong(createdOnStr);
-				}
-			}
-		}
-		List<ClientArtifactComment> comments = artifact.getComments();
-		for (ClientArtifactComment comment : comments) {
-			String commentDate = comment.getCommentDate();
-			long commentTime = Long.parseLong(commentDate);
-			String commentor = comment.getCommenter();
-			if (commentTime > fromTime
-					&& (!commentor.equals(this.getUsername()) || !isIgnoreConnectorUserUpdates())
-					&& (!commentor.equals(this.getResyncUserName()) || !isIgnoreConnectorUserUpdates())) {
-				String commentText = comment.getCommentText();
-				String commenter = comment.getCommenter();
-				commentText = "\nOriginal commenter: " + commenter + "\n"
-						+ commentText;
-				GenericArtifactField field = null;
-				field = ga.addNewField(COMMENT_FIELD_NAME,
-						GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
-				field
-						.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
-				field
-						.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
-				field.setFieldValueHasChanged(true);
-				field.setFieldValue(commentText);
-			}
-		}
-		if (ahlVersion != null) {
-			History[] historyList = ahlVersion.getHistory();
-			if (historyList != null && historyList.length == 1) {
-				History history = historyList[0];
-				if (history != null) {
-					HistoryTransaction[] transactions = history
-							.getHistoryTransaction();
-					if (transactions != null) {
-						for (HistoryTransaction transaction : transactions) {
-							if (transaction == null)
-								continue;
-							long historyTime = transaction.getModifiedOn();
-							if (historyTime > fromTime) {
-								String reason = transaction.getReason();
-								String reasonUser = transaction.getModifiedBy();
-								if ((reasonUser
-										.equals(getConnectorUserDisplayName()) && isIgnoreConnectorUserUpdates())
-										|| (reasonUser
-												.equals(getResyncUserDisplayName() == null ? ""
-														: getResyncUserDisplayName()) && isIgnoreConnectorUserUpdates())) {
-									continue;
-								}
-								if (!StringUtils.isEmpty(reason)) {
-									reason = "\nReason provided by "
-											+ reasonUser + "\n" + reason;
-									GenericArtifactField reasonField = ga
-											.addNewField(
-													REASON_FIELD_NAME,
-													GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
-									reasonField
-											.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
-									reasonField
-											.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
-									reasonField.setFieldValueHasChanged(true);
-									reasonField.setFieldValue(reason);
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-		List<ClientArtifactAttachment> atts = artifact.getAttachments();
-		for (ClientArtifactAttachment attachment : atts) {
-			if (attachmentIDNameMap == null) {
-				attachmentIDNameMap = new HashMap<String, ClientArtifactAttachment>();
-			}
-			if (linkIDNameMap == null) {
-				linkIDNameMap = new HashMap<String, ClientArtifactAttachment>();
-			}
-			String attachmentId = attachment.getAttachmentId();
-			// String attachmentName = attachment.getAttachmentName();
-			attachmentIDNameMap.put(attachmentId, attachment);
-			String isFile = attachment.getIsFile();
-			long attachmentCreatedOn = Long
-					.parseLong(attachment.getCreatedOn());
-			if (attachmentCreatedOn > fromTime) {
-				if (isFile == null || isFile.equalsIgnoreCase("false")) {
-					linkIDNameMap.put(attachmentId, attachment);
-				}
-			}
-		}
-		this.populateSrcAndDest(syncInfo, ga);
-		return ga;
 	}
 
 	private List<String> getUserAttributesValuesFromHistory(
@@ -1158,8 +1251,9 @@ public class ProjectTrackerReader extends
 		try {
 			twsclient = this.getConnection(syncInfo);
 			if (trackerArtifactType == null) {
-				trackerArtifactType = metadataHelper.getTrackerArtifactType(
-						repositoryKey, artifactTypeDisplayName, twsclient);
+				trackerArtifactType = metadataHelper
+						.getTrackerArtifactType(repositoryKey,
+								artifactTypeDisplayName, twsclient, true);
 			}
 
 			if (trackerArtifactType == null) {

@@ -154,24 +154,37 @@ public abstract class AbstractReader<T> extends Component implements
 	public void reset(Object context) {
 		// do nothing here
 	}
-	
+
 	/**
-	 * Returns the number of artifacts waiting to be synchronized per synchronization status record
-	 * @param sourceSystemId source system id
-	 * @param sourceRepositoryId source repository id
-	 * @param targetSystemId target system id
-	 * @param targetRepositoryId target repository id
-	 * @return number of artifacts waiting for specific synchronization status record
+	 * Returns the number of artifacts waiting to be synchronized per
+	 * synchronization status record
+	 * 
+	 * @param sourceSystemId
+	 *            source system id
+	 * @param sourceRepositoryId
+	 *            source repository id
+	 * @param targetSystemId
+	 *            target system id
+	 * @param targetRepositoryId
+	 *            target repository id
+	 * @return number of artifacts waiting for specific synchronization status
+	 *         record
 	 */
-	public String getNumberOfWaitingArtifacts(String sourceSystemId, String sourceRepositoryId, String targetSystemId, String targetRepositoryId) {
+	public String getNumberOfWaitingArtifacts(String sourceSystemId,
+			String sourceRepositoryId, String targetSystemId,
+			String targetRepositoryId) {
 		String repositoryKey = sourceSystemId + ":" + sourceRepositoryId + ":"
-		+ targetSystemId + ":" + targetRepositoryId;
+				+ targetSystemId + ":" + targetRepositoryId;
 		RepositoryRecord record = repositoryRecordHashMap.get(repositoryKey);
 		if (record == null) {
 			return "Not in queue at the moment.";
-		}
-		else {
-			return Integer.toString(record.getArtifactsToBeReadList().size());
+		} else {
+			List<ArtifactState> list = record.getArtifactsToBeReadList();
+			if (list == null) {
+				return "0";
+			} else {
+				return Integer.toString(list.size());
+			}
 		}
 	}
 

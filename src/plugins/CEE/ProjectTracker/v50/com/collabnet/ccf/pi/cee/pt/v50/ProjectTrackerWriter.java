@@ -293,8 +293,9 @@ public class ProjectTrackerWriter extends
 			trackerArtifactType = metadataHelper
 					.getTrackerArtifactType(repositoryKey);
 			if (trackerArtifactType == null) {
-				trackerArtifactType = metadataHelper.getTrackerArtifactType(
-						repositoryKey, artifactTypeDisplayName, twsclient);
+				trackerArtifactType = metadataHelper
+						.getTrackerArtifactType(repositoryKey,
+								artifactTypeDisplayName, twsclient, true);
 			}
 			if (targetArtifactTypeNameSpace == null
 					|| targetArtifactTypeTagName == null) {
@@ -324,10 +325,38 @@ public class ProjectTrackerWriter extends
 				return ga;
 			}
 
-			ClientArtifact ca = this.getClientArtifactFromGenericArtifact(ga,
-					twsclient, targetArtifactTypeNameSpace,
-					targetArtifactTypeTagName, currentArtifact,
-					trackerArtifactType);
+			ClientArtifact ca = null;
+			boolean reloadedArtifactType = false;
+			boolean artifactConverted = false;
+			while (!artifactConverted) {
+				try {
+					ca = this.getClientArtifactFromGenericArtifact(ga,
+						twsclient, targetArtifactTypeNameSpace,
+						targetArtifactTypeTagName, currentArtifact,
+						trackerArtifactType);
+					artifactConverted= true;
+				} catch (CCFRuntimeException e) {
+					if (!reloadedArtifactType) {
+						log.warn(e.getMessage()
+								+ ", reloading artifact type meta data ...");
+						// reload the meta data because artifact type
+						// might have been changed
+
+						trackerArtifactType = metadataHelper
+						.getTrackerArtifactType(repositoryKey,
+								artifactTypeDisplayName, twsclient, false);
+						if (trackerArtifactType == null) {
+							throw new CCFRuntimeException(
+									"Artifact type for repository "
+											+ repositoryKey
+											+ " unknown, cannot synchronize repository.");
+						}
+						reloadedArtifactType = true;
+					} else {
+						throw e;
+					}
+				}
+			}
 			cla.add(ca);
 
 			// FIXME This is not atomic
@@ -406,9 +435,10 @@ public class ProjectTrackerWriter extends
 			twsclient = this.getConnection(ga);
 			TrackerArtifactType trackerArtifactType = metadataHelper
 					.getTrackerArtifactType(repositoryKey);
-			if (trackerArtifactType == null){
-				trackerArtifactType = metadataHelper.getTrackerArtifactType(
-						repositoryKey, artifactTypeDisplayName, twsclient);
+			if (trackerArtifactType == null) {
+				trackerArtifactType = metadataHelper
+						.getTrackerArtifactType(repositoryKey,
+								artifactTypeDisplayName, twsclient, true);
 			}
 
 			if (trackerArtifactType == null) {
@@ -422,9 +452,41 @@ public class ProjectTrackerWriter extends
 			String targetArtifactTypeTagName = trackerArtifactType.getTagName();
 			// List<ClientArtifact> cla = null;
 			// cla = new ArrayList<ClientArtifact>();
-			ClientArtifact ca = this.getClientArtifactFromGenericArtifact(ga,
-					twsclient, targetArtifactTypeNamespace,
-					targetArtifactTypeTagName, null, trackerArtifactType);
+			ClientArtifact ca = null;
+
+			boolean reloadedArtifactType = false;
+			boolean artifactConverted = false;
+			while (!artifactConverted) {
+				try {
+					ca = this.getClientArtifactFromGenericArtifact(ga,
+							twsclient, targetArtifactTypeNamespace,
+							targetArtifactTypeTagName, null,
+							trackerArtifactType);
+					artifactConverted = true;
+				} catch (CCFRuntimeException e) {
+					if (!reloadedArtifactType) {
+						log.warn(e.getMessage()
+								+ ", reloading artifact type meta data ...");
+						// reload the meta data because artifact type
+						// might have been changed
+
+						trackerArtifactType = metadataHelper
+								.getTrackerArtifactType(repositoryKey,
+										artifactTypeDisplayName, twsclient,
+										false);
+						if (trackerArtifactType == null) {
+							throw new CCFRuntimeException(
+									"Artifact type for repository "
+											+ repositoryKey
+											+ " unknown, cannot synchronize repository.");
+						}
+						reloadedArtifactType = true;
+					} else {
+						throw e;
+					}
+				}
+			}
+
 			// cla.add(ca);
 			ClientArtifactListXMLHelper artifactHelper = twsclient
 					.createArtifactList(ca);
@@ -636,7 +698,7 @@ public class ProjectTrackerWriter extends
 								+ artifactTypeNamespace
 								+ " "
 								+ artifactType.getDisplayName();
-						log.error(message);
+						// log.error(message);
 						throw new CCFRuntimeException(message);
 					}
 				}
@@ -646,7 +708,7 @@ public class ProjectTrackerWriter extends
 			String message = "There is no field with the name "
 					+ fieldDisplayName + " in " + artifactTypeNamespace + " "
 					+ artifactType.getDisplayName();
-			log.error(message);
+			// log.error(message);
 			throw new CCFRuntimeException(message);
 		}
 		return fullyQualifiedFieldTagName;
@@ -1100,7 +1162,8 @@ public class ProjectTrackerWriter extends
 
 	@Override
 	public boolean handleException(Throwable cause,
-			ConnectionManager<TrackerWebServicesClient> connectionManager, Document ga) {
+			ConnectionManager<TrackerWebServicesClient> connectionManager,
+			Document ga) {
 		// TODO What about invalid sessions?
 		if (cause == null)
 			return false;

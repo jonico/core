@@ -88,7 +88,7 @@ public class MetaDataHelper {
 		return meta;
 	}
 	
-	public TrackerArtifactType getTrackerArtifactType(String repositoryKey, String artifactTypeNamespace,
+	/*public TrackerArtifactType getTrackerArtifactType(String repositoryKey, String artifactTypeNamespace,
 					String artifactTypeTagName, TrackerWebServicesClient twsclient){
 		ArtifactTypeMetadata meta = getInstance().getArtifactTypeMetadata(repositoryKey);
 		if(meta == null){
@@ -99,7 +99,8 @@ public class MetaDataHelper {
 			new TrackerArtifactType(null,artifactTypeTagName,artifactTypeNamespace);
 		newArtifactType.populateAttributes(meta);
 		return newArtifactType;
-	}
+	}*/
+	
 	public TrackerArtifactType getTrackerArtifactType(String key) {
 		ArtifactTypeMetadata meta = getInstance().getArtifactTypeMetadata(key);
 		TrackerArtifactType trackerArtifactType = null;
@@ -114,11 +115,13 @@ public class MetaDataHelper {
 	}
 	
 	public TrackerArtifactType getTrackerArtifactType(String repositoryKey, String artifactTypeDisplayName,
-			TrackerWebServicesClient twsclient) throws WSException, RemoteException, ServiceException{
+			TrackerWebServicesClient twsclient, boolean useCache) throws WSException, RemoteException, ServiceException{
 		TrackerArtifactType artifactTypeForDisplayName = null;
-		artifactTypeForDisplayName = this.getTrackerArtifactType(repositoryKey);
-		if(artifactTypeForDisplayName != null){
-			return artifactTypeForDisplayName;
+		if (useCache) {
+			artifactTypeForDisplayName = this.getTrackerArtifactType(repositoryKey);
+			if(artifactTypeForDisplayName != null){
+				return artifactTypeForDisplayName;
+			}
 		}
 		Collection<TrackerArtifactType> tAT = null;
 		tAT = twsclient.getArtifactTypes();
