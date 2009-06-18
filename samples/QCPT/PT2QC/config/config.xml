@@ -372,7 +372,13 @@
 				var targetSystem = oa_data.selectSingleNode("@targetSystemId").getText().replace(":","-");
 				var sourceRepository = oa_data.selectSingleNode("@sourceRepositoryId").getText().replace(":","-");
 				var targetRepository = oa_data.selectSingleNode("@targetRepositoryId").getText().replace(":","-");
-				oa_data=sourceSystem+"+"+sourceRepository+"+"+targetSystem+"+"+targetRepository+".xsl";
+				var sourceRepositoryKind = oa_data.selectSingleNode("@sourceRepositoryKind").getText();
+				if (!sourceRepositoryKind.endsWith(".xsl")) {
+					oa_data=sourceSystem+"+"+sourceRepository+"+"+targetSystem+"+"+targetRepository+".xsl";
+				}
+				else {
+					oa_data="Graphical+"+sourceSystem+"+"+sourceRepository+"+"+targetSystem+"+"+targetRepository+".xsl";
+				}
 			}
 			</value>
 			<value>
