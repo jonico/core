@@ -20,8 +20,7 @@
 			elementFormDefault="qualified" attributeFormDefault="unqualified">
 			<xs:element name="{local-name()}">
 				<xs:annotation>
-					<xs:documentation>This is the root node for all entities of type <xsl:value-of
-						select="local-name()" />
+					<xs:documentation>This element contains all field names of your repository.
 					</xs:documentation>
 				</xs:annotation>
 				<xs:complexType>
@@ -29,8 +28,7 @@
 						<xs:element name="topLevelAttributes" minOccurs="1"
 							maxOccurs="1">
 							<xs:annotation>
-								<xs:documentation>This element contains all top level attributes. You should always map this field to the corresponding element of the target artifact.<xsl:value-of
-									select="local-name()" />
+								<xs:documentation>This element contains all top level attributes. You should always map this field to the corresponding element of the target artifact./>
 								</xs:documentation>
 							</xs:annotation>
 							<xs:complexType>
