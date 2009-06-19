@@ -321,7 +321,7 @@ public class DynamicXsltProcessor extends Component implements IDataProcessor {
 			if (!StringUtils.isEmpty(this.xsltDir)) {
 				Document result = document;
 				for (ScriptProcessor scriptProcessor : scriptProcessors) {
-					fileName = deriveFilename(result.getRootElement(), scriptProcessor);
+					fileName = deriveFilename(element, scriptProcessor);
 					// do not do anything if file name == null
 					if (fileName != null) {
 						transform = lookupTransformer(result.getRootElement(), xsltDir+fileName);
