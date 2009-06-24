@@ -182,18 +182,24 @@ public class ArtifactMetaData {
 	public static void setDateFieldValue(String fieldName, Object value,
 			String sourceSystemTimezone, GenericArtifactField field){
 		Date dateValue = null;
+		
 		if(value instanceof GregorianCalendar){
 			dateValue = ((GregorianCalendar)value).getTime();
 		}
 		else if(value instanceof Date){
 			dateValue = (Date) value;
 		}
-		if(value instanceof String){
+		else if(value instanceof String){
 			long dataValue = Long.parseLong((String) value)*1000;
 			Date returnDate = new Date(dataValue);
 			dateValue = returnDate;
 		}
-		if(DateUtil.isAbsoluteDateInTimezone(dateValue, sourceSystemTimezone)){
+		
+		if (dateValue == null) {
+			field.setFieldValue(null);
+			field.setFieldValueType(GenericArtifactField.FieldValueTypeValue.DATETIME);
+		}
+		else if(DateUtil.isAbsoluteDateInTimezone(dateValue, sourceSystemTimezone)){
 			dateValue = DateUtil.convertToGMTAbsoluteDate(dateValue, sourceSystemTimezone);
 			field.setFieldValue(dateValue);
 			field.setFieldValueType(GenericArtifactField.FieldValueTypeValue.DATE);
