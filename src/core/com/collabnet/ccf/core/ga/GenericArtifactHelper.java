@@ -880,8 +880,8 @@ public class GenericArtifactHelper {
 						genericArtifactField.getFieldValueType());
 			}
 		}
-		root.addAttribute(new QName(SCHEMA_LOCATION_ATTRIBUTE,
-				new Namespace(SCHEMA_NAMESPACE_PREFIX, SCHEMA_NAMESPACE)),
+		root.addAttribute(new QName(SCHEMA_LOCATION_ATTRIBUTE, new Namespace(
+				SCHEMA_NAMESPACE_PREFIX, SCHEMA_NAMESPACE)),
 				CCF_SCHEMA_LOCATION);
 		return document;
 	}
@@ -928,8 +928,7 @@ public class GenericArtifactHelper {
 	 */
 	private static Element addRootElement(Document document,
 			String rootElementName, String rootElementNamespace) {
-		return document.addElement(rootElementName,
-				rootElementNamespace);
+		return document.addElement(rootElementName, rootElementNamespace);
 	}
 
 	/**
@@ -1025,8 +1024,7 @@ public class GenericArtifactHelper {
 							+ " specified.");
 		}
 		}
-		if (fieldValue == null
-				|| (fieldValue != null && fieldValue.equals("0"))) {
+		if (fieldValue == null) {
 			addAttribute(field, FIELD_VALUE_IS_NULL, FIELD_VALUE_IS_NULL_TRUE);
 		} else {
 			addAttribute(field, FIELD_VALUE_IS_NULL, FIELD_VALUE_IS_NULL_FALSE);
