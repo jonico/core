@@ -51,9 +51,9 @@ import com.collabnet.ccf.core.utils.DateUtil;
  *
  * After implementing the Reader let us proceed to create the mapping XSLT file
  * that is responsible to transform the GenericArtifact that we are sending
- * into a format that can be understood by the TFWriter.
+ * into a format that can be understood by any CCF compatible writer component
  * Please refer the xslt file at
- * $CCF_HOME/samples/TF2TF/custom-reader/xslt
+ * $CCF_HOME/samples/IntegrationScenarios/customReader/xslt
  *
  * $CCF_HOME is the directory where you have extracted the CCF
  * zip file.
