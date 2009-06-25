@@ -41,6 +41,7 @@ import org.dom4j.XPath;
 import org.dom4j.xpath.DefaultXPath;
 import org.openadaptor.auxil.connector.iostream.EncodingAwareObject;
 
+import com.collabnet.ccf.core.CCFRuntimeException;
 import com.collabnet.ccf.core.ga.GenericArtifact.ArtifactActionValue;
 import com.collabnet.ccf.core.ga.GenericArtifact.ArtifactModeValue;
 import com.collabnet.ccf.core.ga.GenericArtifact.ArtifactTypeValue;
@@ -1075,7 +1076,7 @@ public class GenericArtifactHelper {
 			GenericArtifactField field = gaFields.get(0);
 			return field;
 		} else {
-			throw new RuntimeException(
+			throw new CCFRuntimeException(
 					"More than one mandatory field with the same field name: "
 							+ name);
 		}
@@ -1092,7 +1093,7 @@ public class GenericArtifactHelper {
 			GenericArtifactField field = gaFields.get(0);
 			return field;
 		} else {
-			throw new RuntimeException(
+			throw new CCFRuntimeException(
 					"More than one flex field with the same field name: "
 							+ name);
 		}
@@ -1120,18 +1121,24 @@ public class GenericArtifactHelper {
 
 	public static int getIntMandatoryGAField(String fieldName,
 			GenericArtifact ga) {
-		int fieldValue = 0;
-		GenericArtifactField gaField = getMandatoryGAField(fieldName, ga);
-		if (gaField != null) {
-			Object fieldValueObj = gaField.getFieldValue();
-			if (fieldValueObj instanceof String) {
-				String fieldValueString = (String) fieldValueObj;
-				fieldValue = Integer.parseInt(fieldValueString);
-			} else if (fieldValueObj instanceof Integer) {
-				fieldValue = ((Integer) fieldValueObj).intValue();
+		try {
+			int fieldValue = 0;
+			GenericArtifactField gaField = getMandatoryGAField(fieldName, ga);
+			if (gaField != null) {
+				Object fieldValueObj = gaField.getFieldValue();
+				if (fieldValueObj instanceof String) {
+					String fieldValueString = (String) fieldValueObj;
+					fieldValue = Integer.parseInt(fieldValueString);
+				} else if (fieldValueObj instanceof Integer) {
+					fieldValue = ((Integer) fieldValueObj).intValue();
+				}
 			}
+			return fieldValue;
+		} catch (NumberFormatException e) {
+			throw new CCFRuntimeException(
+					"Number format exception for mandatory field " + fieldName
+							+ " " + e.getMessage(), e);
 		}
-		return fieldValue;
 	}
 
 	public static Date getDateMandatoryGAField(String fieldName,
@@ -1143,6 +1150,10 @@ public class GenericArtifactHelper {
 			if (fieldValueObj instanceof String) {
 				String fieldValueString = (String) fieldValueObj;
 				fieldValue = DateUtil.parse(fieldValueString);
+				if (fieldValue == null) {
+					throw new CCFRuntimeException("Date parsing error occured for mandatory field "
+							+ fieldName);
+				}
 			} else if (fieldValueObj instanceof Date) {
 				fieldValue = (Date) fieldValueObj;
 			}
@@ -1170,7 +1181,7 @@ public class GenericArtifactHelper {
 			GenericArtifactField field = gaFields.get(0);
 			return field;
 		} else {
-			throw new RuntimeException(
+			throw new CCFRuntimeException(
 					"More than one flex field with the same field name: "
 							+ name);
 		}
