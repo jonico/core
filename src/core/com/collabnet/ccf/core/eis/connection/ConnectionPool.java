@@ -244,11 +244,13 @@ public class ConnectionPool<T> {
 	 */
 	public void releaseConnection(T connection){
 		ConnectionInfo info = reversePoolMap.get(connection);
-		String key = info.getKey();
-		ArrayList<ConnectionInfo> connectionInfos = connectionPool.get(key);
-		log.debug("Returning connection to pool...!");
-		synchronized(connectionInfos){
-			info.returnedToPool();
+		if (info != null) {
+			String key = info.getKey();
+			ArrayList<ConnectionInfo> connectionInfos = connectionPool.get(key);
+			log.debug("Returning connection to pool...!");
+			synchronized(connectionInfos){
+				info.returnedToPool();
+			}
 		}
 	}
 
