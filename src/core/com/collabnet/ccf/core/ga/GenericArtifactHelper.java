@@ -1137,7 +1137,7 @@ public class GenericArtifactHelper {
 		} catch (NumberFormatException e) {
 			throw new CCFRuntimeException(
 					"Number format exception for mandatory field " + fieldName
-							+ " " + e.getMessage(), e);
+							+ ": " + e.getMessage(), e);
 		}
 	}
 
