@@ -31,6 +31,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.collabnet.ccf.core.AbstractWriter;
+import com.collabnet.ccf.core.CCFRuntimeException;
 import com.collabnet.ccf.core.eis.connection.ConnectionManager;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
@@ -72,8 +73,8 @@ public class SFEETrackerHandler {
 	/**
 	 * Class constructor.
 	 * 
-	 * @param serverUrl -
-	 *            The source TF SOAP server URL
+	 * @param serverUrl
+	 *            - The source TF SOAP server URL
 	 * @param connectionManager
 	 */
 	public SFEETrackerHandler(String serverUrl,
@@ -351,7 +352,8 @@ public class SFEETrackerHandler {
 					artifactData.setVersion(artifactData.getVersion() + 1);
 				} catch (AxisFault e) {
 					javax.xml.namespace.QName faultCode = e.getFaultCode();
-					if (!faultCode.getLocalPart().equals("VersionMismatchFault")) {
+					if (!faultCode.getLocalPart()
+							.equals("VersionMismatchFault")) {
 						throw e;
 					}
 					logConflictResolutor.warn(
@@ -501,7 +503,13 @@ public class SFEETrackerHandler {
 					int fieldValue = 0;
 					if (fieldValueObj instanceof String) {
 						String fieldValueString = (String) fieldValueObj;
-						fieldValue = Integer.parseInt(fieldValueString);
+						try {
+							fieldValue = Integer.parseInt(fieldValueString);
+						} catch (NumberFormatException e) {
+							throw new CCFRuntimeException(
+									"Could not parse value of mandatory field priority: "
+											+ e.getMessage(), e);
+						}
 					} else if (fieldValueObj instanceof Integer) {
 						fieldValue = ((Integer) fieldValueObj).intValue();
 					}
@@ -514,7 +522,13 @@ public class SFEETrackerHandler {
 					int fieldValue = 0;
 					if (fieldValueObj instanceof String) {
 						String fieldValueString = (String) fieldValueObj;
-						fieldValue = Integer.parseInt(fieldValueString);
+						try {
+							fieldValue = Integer.parseInt(fieldValueString);
+						} catch (NumberFormatException e) {
+							throw new CCFRuntimeException(
+									"Could not parse value of mandatory field estimatedHours: "
+											+ e.getMessage(), e);
+						}
 					} else if (fieldValueObj instanceof Integer) {
 						fieldValue = ((Integer) fieldValueObj).intValue();
 					}
@@ -527,7 +541,13 @@ public class SFEETrackerHandler {
 					int fieldValue = 0;
 					if (fieldValueObj instanceof String) {
 						String fieldValueString = (String) fieldValueObj;
-						fieldValue = Integer.parseInt(fieldValueString);
+						try {
+							fieldValue = Integer.parseInt(fieldValueString);
+						} catch (NumberFormatException e) {
+							throw new CCFRuntimeException(
+									"Could not parse value of mandatory field actualHours: "
+											+ e.getMessage(), e);
+						}
 					} else if (fieldValueObj instanceof Integer) {
 						fieldValue = ((Integer) fieldValueObj).intValue();
 					}
@@ -612,7 +632,8 @@ public class SFEETrackerHandler {
 					artifactData.setVersion(artifactData.getVersion() + 1);
 				} catch (AxisFault e) {
 					javax.xml.namespace.QName faultCode = e.getFaultCode();
-					if (!faultCode.getLocalPart().equals("VersionMismatchFault")) {
+					if (!faultCode.getLocalPart()
+							.equals("VersionMismatchFault")) {
 						throw e;
 					}
 					logConflictResolutor.warn(
