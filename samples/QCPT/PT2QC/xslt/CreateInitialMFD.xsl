@@ -2,7 +2,7 @@
 
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:fo="http://www.w3.org/1999/XSL/Format" xmlns:fn="http://www.w3.org/2005/xpath-functions" version="2.0" exclude-result-prefixes="xsl xs fn">
   <xsl:template match="node()">
-    <mapping xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="12">  
+    <mapping xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="11">  
       <component name="defaultmap1" blackbox="0" editable="1"> 
         <properties SelectedLanguage="xslt"/>  
         <structure> 
