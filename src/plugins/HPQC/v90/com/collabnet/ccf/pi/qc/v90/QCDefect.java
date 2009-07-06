@@ -113,25 +113,7 @@ public class QCDefect extends Bug implements IQCDefect {
 		for (int cnt = 0; cnt < noOfFields; cnt++) {
 			GenericArtifactField thisField = allFields.get(cnt);
 
-			GenericArtifactField.FieldActionValue thisFieldsActionValue = thisField
-					.getFieldAction();
-			if (thisFieldsActionValue
-					.equals(GenericArtifactField.FieldActionValue.REPLACE)) {
-				thisField
-						.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
-			}
-			if (thisFieldsActionValue
-					.equals(GenericArtifactField.FieldActionValue.APPEND)) {
-				thisField
-						.setFieldAction(GenericArtifactField.FieldActionValue.APPEND);
-			} else
-				thisField
-						.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
-
-			// thisField.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
-
 			thisField.setFieldValueHasChanged(true);
-
 			GenericArtifactField.FieldValueTypeValue thisFieldsDatatype = thisField
 					.getFieldValueType();
 
