@@ -213,7 +213,13 @@ public class QCConfigHelper {
 					continue;
 				}
 				String columnType = rs.getFieldValueAsString(sfColumnType);
-				//String fieldDisplayName = rs.getFieldValue(sfUserLabel);
+				
+				// we only transport fields that have been configured by the user
+				String fieldDisplayName = rs.getFieldValueAsString(sfUserLabel);
+				if (fieldDisplayName == null) {
+					continue;
+				}
+				
 				String editStyle = rs.getFieldValueAsString(sfEditStyle);
 				// String isMultiValue = rs.getFieldValueAsString(sfIsMultiValue);
 				GenericArtifactField field;
@@ -237,11 +243,7 @@ public class QCConfigHelper {
 				field.setFieldValueType(fieldValueType);
 				field.setMaxOccursValue(isMultiSelectField?GenericArtifactField.UNBOUNDED:"1");
 
-				// Only for the Comments field, the action value of the GenericArtifactField is set to APPEND. Later, this feature can be upgraded.
-				if(columnName!=null && columnName.equals("BG_DEV_COMMENTS"))
-					field.setFieldAction(GenericArtifactField.FieldActionValue.APPEND);
-				if(columnName!=null && !(columnName.equals("BG_DEV_COMMENTS")) )
-					field.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
+				field.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
 			}
 		}
 		finally {
