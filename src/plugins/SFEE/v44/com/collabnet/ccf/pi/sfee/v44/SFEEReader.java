@@ -78,6 +78,12 @@ public class SFEEReader extends AbstractReader<Connection> {
 	private boolean translateTechnicalReleaseIds = false;
 
 	/**
+	 * This variable indicates whether no web services introduced in SFEE 4.4
+	 * SP1 HF1 should be used
+	 */
+	private boolean pre44SP1HF1System = false;
+
+	/**
 	 * Constructs and Initializes the TFReader component.
 	 */
 	public SFEEReader() {
@@ -348,9 +354,9 @@ public class SFEEReader extends AbstractReader<Connection> {
 
 	/**
 	 * Queries the tracker for the artifact with artifactId and returns its
-	 * latest data encoded in an GenericArtifact object. The TFReader is
-	 * capable of retrieving the artifact change history. But this feature is
-	 * turned off as of now.
+	 * latest data encoded in an GenericArtifact object. The TFReader is capable
+	 * of retrieving the artifact change history. But this feature is turned off
+	 * as of now.
 	 * 
 	 * @see com.collabnet.ccf.core.AbstractReader#getArtifactData(org.dom4j.Document,
 	 *      java.lang.String)
@@ -390,8 +396,15 @@ public class SFEEReader extends AbstractReader<Connection> {
 				fieldsMap = SFEEAppHandler
 						.loadTrackerFieldsInHashMap(trackerFields);
 			}
-			ArtifactSoapDO artifact = trackerHandler.getTrackerItem(connection
-					.getSessionId(), artifactId);
+			ArtifactSoapDO artifact = null;
+			if (isPre44SP1HF1System()) {
+				artifact = trackerHandler.getTrackerItem(connection
+						.getSessionId(), artifactId);
+			} else {
+				artifact = trackerHandler.getTrackerItemFull(connection
+						.getSessionId(), artifactId);
+			}
+
 			SFEEAppHandler appHandler = new SFEEAppHandler(connection
 					.getSfSoap(), connection.getSessionId(), this
 					.getServerUrl());
@@ -511,8 +524,8 @@ public class SFEEReader extends AbstractReader<Connection> {
 	}
 
 	/**
-	 * Returns the server URL of the source CSFE/TF system that is configured
-	 * in the wiring file.
+	 * Returns the server URL of the source CSFE/TF system that is configured in
+	 * the wiring file.
 	 * 
 	 * @return
 	 */
@@ -606,12 +619,12 @@ public class SFEEReader extends AbstractReader<Connection> {
 	/**
 	 * Sets the optional resync username
 	 * 
-	 * The resync user name is used to login into the TF/CSFE instance
-	 * whenever an artifact should be created. This user has to differ from the
-	 * ordinary user used to log in in order to force initial resyncs with the
-	 * source system once a new artifact has been created. This property can
-	 * also be set for the reader component in order to be able to differentiate
-	 * between artifacts created by ordinary users and artifacts to be resynced.
+	 * The resync user name is used to login into the TF/CSFE instance whenever
+	 * an artifact should be created. This user has to differ from the ordinary
+	 * user used to log in in order to force initial resyncs with the source
+	 * system once a new artifact has been created. This property can also be
+	 * set for the reader component in order to be able to differentiate between
+	 * artifacts created by ordinary users and artifacts to be resynced.
 	 * 
 	 * @param resyncUserName
 	 *            the resyncUserName to set
@@ -650,5 +663,28 @@ public class SFEEReader extends AbstractReader<Connection> {
 	public void setTranslateTechnicalReleaseIds(
 			boolean translateTechnicalReleaseIds) {
 		this.translateTechnicalReleaseIds = translateTechnicalReleaseIds;
+	}
+
+	/**
+	 * Sets whether no web service call introduced in SFEE 4.4 SP1 HF1 should be
+	 * used
+	 * 
+	 * @param pre44SP1HF1System
+	 *            true if no web services introduced in SFEE 4.4 SP1 HF1 should
+	 *            be used
+	 */
+	public void setPre44SP1HF1System(boolean pre44SP1HF1System) {
+		this.pre44SP1HF1System = pre44SP1HF1System;
+	}
+
+	/**
+	 * Returns whether no web service call introduced in SFEE 4.4 SP1 HF1 should
+	 * be used
+	 * 
+	 * @return true if no web services introduced in SFEE 4.4 SP1 HF1 should be
+	 *         used
+	 */
+	public boolean isPre44SP1HF1System() {
+		return pre44SP1HF1System;
 	}
 }

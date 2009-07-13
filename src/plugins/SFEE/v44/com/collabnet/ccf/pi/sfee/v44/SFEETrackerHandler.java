@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
@@ -211,7 +210,20 @@ public class SFEETrackerHandler {
 
 	/**
 	 * Returns the artifact with the artifactId as id.
-	 * 
+	 * Uses SP 1 HF 1 web service API 
+	 * @param sessionID
+	 * @param artifactId
+	 * @return
+	 * @throws RemoteException
+	 */
+	public ArtifactSoapDO getTrackerItemFull(String sessionID, String artifactId)
+			throws RemoteException {
+		return mTrackerApp.getArtifactDataFull(sessionID, artifactId);
+	}
+	
+	/**
+	 * Returns the artifact with the artifactId as id.
+	 * Uses pre SP 1 HF 1 web service API
 	 * @param sessionID
 	 * @param artifactId
 	 * @return
@@ -219,8 +231,10 @@ public class SFEETrackerHandler {
 	 */
 	public ArtifactSoapDO getTrackerItem(String sessionID, String artifactId)
 			throws RemoteException {
-		return mTrackerApp.getArtifactDataFull(sessionID, artifactId);
+		return mTrackerApp.getArtifactData(sessionID, artifactId);
 	}
+	
+	
 
 	public void createArtifactDependency(String sessionId, String originId,
 			String targetId, String description) throws RemoteException {
@@ -665,12 +679,12 @@ public class SFEETrackerHandler {
 	 * @param fieldType
 	 * @return
 	 * @throws RemoteException
-	 */
+	 *//*
 	public Object getFlexFieldValue(String sessionID, String fieldName,
 			String artifactID, String fieldType) throws RemoteException {
 		ArtifactSoapDO artifact = getTrackerItem(sessionID, artifactID);
 		return getFlexFieldValue(fieldName, artifact, fieldType);
-	}
+	}*/
 
 	/**
 	 * Returns the value of the flex field with the name fieldName from the
@@ -706,7 +720,7 @@ public class SFEETrackerHandler {
 		return null;
 	}
 
-	public GenericArtifact createGenericArtifactsForChild(String sessionId,
+	/*public GenericArtifact createGenericArtifactsForChild(String sessionId,
 			ArtifactDependencySoapRow child,
 			SFEEToGenericArtifactConverter artifactConverter,
 			Date lastModifiedDate, String sourceSystemTimezone)
@@ -729,7 +743,7 @@ public class SFEETrackerHandler {
 		ga.setSourceRepositoryId(artifact.getFolderId());
 		ga.setArtifactType(GenericArtifact.ArtifactTypeValue.DEPENDENCY);
 		return ga;
-	}
+	}*/
 
 	public void convertReleaseIds(String sessionId, ArtifactSoapDO artifact)
 			throws RemoteException {
