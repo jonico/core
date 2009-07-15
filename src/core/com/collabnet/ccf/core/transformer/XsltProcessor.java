@@ -237,7 +237,7 @@ public class XsltProcessor extends Component implements IDataProcessor {
 	 *             if the XSLT file is not defined in the properties, the file
 	 *             cannot be found or there was an error parsing it
 	 */
-	private Transformer loadXSLT(String xsltFile, Element element) {
+	private Transformer loadXSLT(File xsltFile, Element element) {
 		if (xsltFile == null) {
 			String cause = "xsltFile property not set";
 			log.error(cause);
@@ -355,7 +355,7 @@ public class XsltProcessor extends Component implements IDataProcessor {
 		}
 		transform = xsltFileNameTransformerMap.get(fileName);
 		if (transform == null) {
-			transform = loadXSLT(fileName, record.getRootElement());
+			transform = loadXSLT(new File(fileName), record.getRootElement());
 			xsltFileNameTransformerMap.put(fileName, transform);
 		}
 		return transform;
