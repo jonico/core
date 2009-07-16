@@ -33,7 +33,7 @@ public enum TrackerReportElement {
 	// GLOBAL NAMESPACE
 	CREATEDON("Created On:", "createdOn", true, true, true), CREATEDBY("Created By:", "createdBy", false, true, true), MODIFIEDON(
 			"Modified On:", "modifiedOn", true, true, true), MODIFIEDBY("Modified By:", "modifiedBy", false, true, true), ID(
-			"ID:", "id", true, true, true),
+			"ID:", "id", true, true, true), PROJECT("Project:", "project",true,true,true),
 
 	// comments
 	COMMENT_TEXT("Comment Text", "comment_text", true, true, true), COMMENT_DATE("Comment Date", "comment_date", true,

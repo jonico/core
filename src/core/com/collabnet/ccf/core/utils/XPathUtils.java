@@ -30,7 +30,6 @@ import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
 
 public class XPathUtils {
 
-	
 	private static final String ARTIFACT_ROOT_ELEMENT_NAME = "artifact";
 	private static final String CCF_ARTIFACT_NAMESPACE = "http://ccf.open.collab.net/GenericArtifactV1.0";
 	private static final String CCF_NAMESPACE_PREFIX = "ccf";
@@ -50,6 +49,10 @@ public class XPathUtils {
 	public static Element getRootElement(Document document)
 			throws GenericArtifactParsingException {
 		Element rootElement = document.getRootElement();
+		if (rootElement == null) {
+			throw new GenericArtifactParsingException(
+					"Received empty XML document. The reason might be an invalid data mapping.");
+		}
 		if (!ARTIFACT_ROOT_ELEMENT_NAME.equals(rootElement.getName()))
 			throw new GenericArtifactParsingException(
 					"Root-element of XML document is not named "
@@ -62,8 +65,7 @@ public class XPathUtils {
 							+ rootElement.getNamespaceURI());
 		return rootElement;
 	}
-	
-	
+
 	/**
 	 * Extracts the value of the supplied attribute
 	 * 
@@ -75,9 +77,9 @@ public class XPathUtils {
 	 * @throws GenericArtifactParsingException
 	 *             exception s thrown is attribute is missing
 	 */
-	public static String getAttributeValue(Element element,
-			String attributeName) throws GenericArtifactParsingException {
-		XPath xpath = new DefaultXPath("@"+ attributeName);
+	public static String getAttributeValue(Element element, String attributeName)
+			throws GenericArtifactParsingException {
+		XPath xpath = new DefaultXPath("@" + attributeName);
 		xpath.setNamespaceURIs(ccfNamespaceMap);
 		Node attributeNode = xpath.selectSingleNode(element);
 		if (attributeNode == null)
@@ -86,7 +88,7 @@ public class XPathUtils {
 		else
 			return attributeNode.getText();
 	}
-	
+
 	/**
 	 * Adds an attribute with the supplied value to the supplied element
 	 * 
@@ -100,7 +102,7 @@ public class XPathUtils {
 	public static void addAttribute(Element element, String attributeName,
 			String value) {
 		element.addAttribute(attributeName, value);
-		//element.remove();
+		// element.remove();
 	}
-	
+
 }
