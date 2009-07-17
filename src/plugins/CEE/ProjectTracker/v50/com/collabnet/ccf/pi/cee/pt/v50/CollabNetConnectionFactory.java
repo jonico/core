@@ -77,7 +77,7 @@ public class CollabNetConnectionFactory implements ConnectionFactory<TrackerWebS
 					projectName = splitProjectName[0];
 				}
 				else {
-					throw new IllegalArgumentException("Repository id is not valid."
+					throw new IllegalArgumentException("Repository id " + repositoryId + " is not valid."
 							+" Could not extract project name from repository id");
 				}
 			}

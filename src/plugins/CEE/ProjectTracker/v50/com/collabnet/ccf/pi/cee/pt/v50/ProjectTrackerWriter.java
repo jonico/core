@@ -101,82 +101,114 @@ public class ProjectTrackerWriter extends
 		String targetArtifactId = ga.getDepParentTargetArtifactId();
 		String artifactId = ptHelper
 				.getArtifactIdFromFullyQualifiedArtifactId(targetArtifactId);
-
-		String attachmentType = GenericArtifactHelper.getStringGAField(
-				AttachmentMetaData.ATTACHMENT_TYPE, ga);
+		TrackerWebServicesClient twsclient = null;
+		GenericArtifact parentArtifact = null;
 		byte[] data = null;
 		String attachmentMimeType = null;
 		String attachmentName = null;
 		DataSource dataSource = null;
 		File attachmentFile = null;
-		String sourceAttachmentId = ga.getSourceArtifactId();
-		String parentSourceArtifactId = ga.getDepParentSourceArtifactId();
-		if (attachmentType.equals(AttachmentMetaData.AttachmentType.LINK
-				.toString())) {
-			String url = GenericArtifactHelper.getStringGAField(
-					AttachmentMetaData.ATTACHMENT_SOURCE_URL, ga);
-			url = "<html><body><a href=\"" + url + "\">" + url
-					+ "</a></body></html>";
-			data = url.getBytes();
-			attachmentMimeType = AttachmentMetaData.TEXT_HTML;
-			attachmentName = "Link-attachment-" + parentSourceArtifactId + "-"
-					+ sourceAttachmentId + ".html";
-			ByteArrayDataSource baDS = new ByteArrayDataSource(data,
-					attachmentMimeType);
-			baDS.setName(attachmentName);
-			dataSource = baDS;
-		} else {
-			String attachmentDataFileName = GenericArtifactHelper
-					.getStringGAField(AttachmentMetaData.ATTACHMENT_DATA_FILE,
-							ga);
-			attachmentMimeType = GenericArtifactHelper.getStringGAField(
-					AttachmentMetaData.ATTACHMENT_MIME_TYPE, ga);
-			attachmentName = GenericArtifactHelper.getStringGAField(
-					AttachmentMetaData.ATTACHMENT_NAME, ga);
-			if (StringUtils.isEmpty(attachmentDataFileName)) {
-				data = ga.getRawAttachmentData();
+		String repositoryId = ga.getTargetRepositoryId();
+		try {
+			twsclient = this.getConnection(ga);
+			ClientArtifactListXMLHelper currentArtifactHelper = twsclient
+					.getArtifactById(artifactId);
+			ClientArtifact currentArtifact = currentArtifactHelper
+					.getAllArtifacts().get(0);
+			String retrievedProject = currentArtifact.getProject();
+			if (retrievedProject != null) {
+				String projectName = null;
+				if (repositoryId != null) {
+					String[] splitProjectName = repositoryId.split(":");
+					if (splitProjectName != null) {
+						if (splitProjectName.length >= 1) {
+							projectName = splitProjectName[0];
+						} else {
+							throw new IllegalArgumentException(
+									"Repository id " + repositoryId + " is not valid."
+											+ " Could not extract project name from repository id");
+						}
+					}
+				}
+				if (projectName != null) {
+					if (!retrievedProject.equals(projectName)) {
+						String retrievedArtifactId = currentArtifact
+								.getArtifactID();
+						log.warn("PT Artifact with id " + artifactId
+								+ " has moved from project " + projectName
+								+ " to artifact with id " + retrievedArtifactId
+								+ " in project " + retrievedProject
+								+ ", so do not ship it ...");
+						return new GenericArtifact [] {ga};
+					}
+				}
+			}
+
+			String attachmentType = GenericArtifactHelper.getStringGAField(
+					AttachmentMetaData.ATTACHMENT_TYPE, ga);
+			String sourceAttachmentId = ga.getSourceArtifactId();
+			String parentSourceArtifactId = ga.getDepParentSourceArtifactId();
+			if (attachmentType.equals(AttachmentMetaData.AttachmentType.LINK
+					.toString())) {
+				String url = GenericArtifactHelper.getStringGAField(
+						AttachmentMetaData.ATTACHMENT_SOURCE_URL, ga);
+				url = "<html><body><a href=\"" + url + "\">" + url
+						+ "</a></body></html>";
+				data = url.getBytes();
+				attachmentMimeType = AttachmentMetaData.TEXT_HTML;
+				attachmentName = "Link-attachment-" + parentSourceArtifactId
+						+ "-" + sourceAttachmentId + ".html";
 				ByteArrayDataSource baDS = new ByteArrayDataSource(data,
 						attachmentMimeType);
 				baDS.setName(attachmentName);
 				dataSource = baDS;
 			} else {
-				File attachmentDataFile = new File(attachmentDataFileName);
-				String tempDir = System.getProperty("java.io.tmpdir");
-				attachmentFile = new File(tempDir, attachmentName);
-				if (attachmentDataFile.exists()) {
-					boolean renamingSuccessful = attachmentDataFile
-							.renameTo(attachmentFile);
-					if (renamingSuccessful) {
-						dataSource = new FileDataSource(attachmentFile);
-					} else {
-						dataSource = new FileDataSource(attachmentDataFile);
-					}
+				String attachmentDataFileName = GenericArtifactHelper
+						.getStringGAField(
+								AttachmentMetaData.ATTACHMENT_DATA_FILE, ga);
+				attachmentMimeType = GenericArtifactHelper.getStringGAField(
+						AttachmentMetaData.ATTACHMENT_MIME_TYPE, ga);
+				attachmentName = GenericArtifactHelper.getStringGAField(
+						AttachmentMetaData.ATTACHMENT_NAME, ga);
+				if (StringUtils.isEmpty(attachmentDataFileName)) {
+					data = ga.getRawAttachmentData();
+					ByteArrayDataSource baDS = new ByteArrayDataSource(data,
+							attachmentMimeType);
+					baDS.setName(attachmentName);
+					dataSource = baDS;
 				} else {
-					String message = "Attachment data file "
-							+ attachmentDataFileName + " does not exist.";
-					FileNotFoundException e = new FileNotFoundException(message);
-					log.error(message, e);
-					throw new CCFRuntimeException(message, e);
+					File attachmentDataFile = new File(attachmentDataFileName);
+					String tempDir = System.getProperty("java.io.tmpdir");
+					attachmentFile = new File(tempDir, attachmentName);
+					if (attachmentDataFile.exists()) {
+						boolean renamingSuccessful = attachmentDataFile
+								.renameTo(attachmentFile);
+						if (renamingSuccessful) {
+							dataSource = new FileDataSource(attachmentFile);
+						} else {
+							dataSource = new FileDataSource(attachmentDataFile);
+						}
+					} else {
+						String message = "Attachment data file "
+								+ attachmentDataFileName + " does not exist.";
+						FileNotFoundException e = new FileNotFoundException(
+								message);
+						log.error(message, e);
+						throw new CCFRuntimeException(message, e);
+					}
 				}
 			}
-		}
-		String attachmentDescription = null;
-		attachmentDescription = GenericArtifactHelper.getStringGAField(
-				AttachmentMetaData.ATTACHMENT_DESCRIPTION, ga);
-		if (StringUtils.isEmpty(attachmentDescription)) {
-			attachmentDescription = "Attachment added by Connector";
-		}
-		long attachmentId = -1;
-		TrackerWebServicesClient twsclient = null;
-		GenericArtifact parentArtifact = null;
-		try {
-			twsclient = this.getConnection(ga);
+			String attachmentDescription = null;
+			attachmentDescription = GenericArtifactHelper.getStringGAField(
+					AttachmentMetaData.ATTACHMENT_DESCRIPTION, ga);
+			if (StringUtils.isEmpty(attachmentDescription)) {
+				attachmentDescription = "Attachment added by Connector";
+			}
+			long attachmentId = -1;
 			attachmentId = twsclient.postAttachment(artifactId,
 					attachmentDescription, dataSource);
-			ClientArtifactListXMLHelper currentArtifactHelper = twsclient
-					.getArtifactById(artifactId);
-			ClientArtifact currentArtifact = currentArtifactHelper
-					.getAllArtifacts().get(0);
+			currentArtifactHelper = twsclient.getArtifactById(artifactId);
+			currentArtifact = currentArtifactHelper.getAllArtifacts().get(0);
 			String modifiedOn = currentArtifact.getAttributeValue(
 					ProjectTrackerReader.TRACKER_NAMESPACE,
 					ProjectTrackerReader.MODIFIED_ON_FIELD);
@@ -310,6 +342,35 @@ public class ProjectTrackerWriter extends
 			ClientArtifact currentArtifact = currentArtifactHelper
 					.getAllArtifacts().get(0);
 
+			String retrievedProject = currentArtifact.getProject();
+			if (retrievedProject != null) {
+				String projectName = null;
+				if (repositoryId != null) {
+					String[] splitProjectName = repositoryId.split(":");
+					if (splitProjectName != null) {
+						if (splitProjectName.length >= 1) {
+							projectName = splitProjectName[0];
+						} else {
+							throw new IllegalArgumentException(
+									"Repository id " + repositoryId + " is not valid."
+											+ " Could not extract project name from repository id");
+						}
+					}
+				}
+				if (projectName != null) {
+					if (!retrievedProject.equals(projectName)) {
+						String retrievedArtifactId = currentArtifact
+								.getArtifactID();
+						log.warn("PT Artifact with id " + artifactId
+								+ " has moved from project " + projectName
+								+ " to artifact with id " + retrievedArtifactId
+								+ " in project " + retrievedProject
+								+ ", so do not ship it ...");
+						return ga;
+					}
+				}
+			}
+
 			// we need these fields to retrieve the version we like to modify
 			String modifiedOn = currentArtifact.getAttributeValue(
 					ProjectTrackerReader.TRACKER_NAMESPACE,
@@ -331,10 +392,10 @@ public class ProjectTrackerWriter extends
 			while (!artifactConverted) {
 				try {
 					ca = this.getClientArtifactFromGenericArtifact(ga,
-						twsclient, targetArtifactTypeNameSpace,
-						targetArtifactTypeTagName, currentArtifact,
-						trackerArtifactType);
-					artifactConverted= true;
+							twsclient, targetArtifactTypeNameSpace,
+							targetArtifactTypeTagName, currentArtifact,
+							trackerArtifactType);
+					artifactConverted = true;
 				} catch (CCFRuntimeException e) {
 					if (!reloadedArtifactType) {
 						log.warn(e.getMessage()
@@ -343,8 +404,9 @@ public class ProjectTrackerWriter extends
 						// might have been changed
 
 						trackerArtifactType = metadataHelper
-						.getTrackerArtifactType(repositoryKey,
-								artifactTypeDisplayName, twsclient, false);
+								.getTrackerArtifactType(repositoryKey,
+										artifactTypeDisplayName, twsclient,
+										false);
 						if (trackerArtifactType == null) {
 							throw new CCFRuntimeException(
 									"Artifact type for repository "

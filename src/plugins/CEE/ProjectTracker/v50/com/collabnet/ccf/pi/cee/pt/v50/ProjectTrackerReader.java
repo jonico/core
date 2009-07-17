@@ -84,7 +84,6 @@ public class ProjectTrackerReader extends
 
 	private String connectorUserDisplayName = null;
 	private String resyncUserDisplayName = null;
-	private HashMap<String, String> movedArtifacts = new HashMap<String, String>();
 
 	public static final String ATTACHMENT_TAG_NAME = "attachment";
 	public static final String ATTACHMENT_ADDED_HISTORY_ACTIVITY_TYPE = "FileAddedDesc";
@@ -723,14 +722,37 @@ public class ProjectTrackerReader extends
 						+ artifactIdentifier);
 			} else if (artifacts.size() == 1) {
 				artifact = artifacts.get(0);
-				String retrievedId = artifact.getArtifactID();
-				if (!retrievedId.equals(artifactIdentifier)) {
-					movedArtifacts.put(retrievedId, artifactIdentifier);
-				} else if (movedArtifacts.containsKey(artifactIdentifier)) {
-					movedArtifacts.remove(artifactIdentifier);
-					log
-							.debug("Artifact has been moved and will not be synchronized");
-					return null;
+				String retrievedProject = artifact.getProject();
+				if (retrievedProject != null) {
+					String sourceRepositoryId = this
+							.getSourceRepositoryId(syncInfo);
+					String projectName = null;
+					if (sourceRepositoryId != null) {
+						String[] splitProjectName = sourceRepositoryId
+								.split(":");
+						if (splitProjectName != null) {
+							if (splitProjectName.length >= 1) {
+								projectName = splitProjectName[0];
+							} else {
+								throw new IllegalArgumentException(
+										"Repository id " + sourceRepositoryId + " is not valid."
+												+ " Could not extract project name from repository id");
+							}
+						}
+					}
+					if (projectName != null) {
+						if (!retrievedProject.equals(projectName)) {
+							String retrievedArtifactId = artifact
+									.getArtifactID();
+							log.warn("PT Artifact with id " + artifactId
+									+ " has moved from project " + projectName
+									+ " to artifact with id "
+									+ retrievedArtifactId + " in project "
+									+ retrievedProject
+									+ ", so do not ship it ...");
+							return null;
+						}
+					}
 				}
 			} else if (artifacts.size() > 1) {
 				throw new CCFRuntimeException(
@@ -907,8 +929,7 @@ public class ProjectTrackerReader extends
 										attributeNamespace, attributeTagName,
 										attValue, metadata, true);
 								optionsConverted = true;
-							}
-							else {
+							} else {
 								optionsConverted = true;
 							}
 						} catch (CCFRuntimeException e) {

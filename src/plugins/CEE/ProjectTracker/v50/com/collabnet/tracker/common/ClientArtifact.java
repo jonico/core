@@ -150,6 +150,10 @@ public class ClientArtifact {
 	public String getArtifactID(){
 		return getAttributeValue("urn:ws.tracker.collabnet.com", "id");
 	}
+	
+	public String getProject() {
+		return getAttributeValue("urn:ws.tracker.collabnet.com", "project");
+	}
 
 	/**
 	 * @param namespace
