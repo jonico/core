@@ -30,7 +30,9 @@
 	<xsl:template match="node()" priority="1"/>
 	<xsl:template match="ccf:field" priority="2">
 		<xslo:template match="{@alternativeFieldName}" priority="2">
-			<field fieldName="{@fieldName}" fieldType="{@fieldType}" fieldValueType="{@fieldValueType}" nullValueSupported="{@nullValueSupported}" minOccurs="{@minOccurs}" maxOccurs="{@maxOccurs}" alternativeFieldName="{@alternativeFieldName}" fieldValueHasChanged="{@fieldValueHasChanged}" fieldAction="{@fieldAction}" xmlns="http://ccf.open.collab.net/GenericArtifactV1.0">
+			<field fieldType="{@fieldType}" fieldValueType="{@fieldValueType}" nullValueSupported="{@nullValueSupported}" minOccurs="{@minOccurs}" maxOccurs="{@maxOccurs}" fieldValueHasChanged="{@fieldValueHasChanged}" fieldAction="{@fieldAction}" xmlns="http://ccf.open.collab.net/GenericArtifactV1.0">
+				<xslo:attribute name="fieldName"><xsl:value-of select="@fieldName"/></xslo:attribute>
+				<xslo:attribute name="alternativeFieldName"><xsl:value-of select="@alternativeFieldName"/></xslo:attribute>
 <!--				<xslo:copy-of select="@*"/>-->
 				<xsl:choose>
 					<xsl:when test='@nullValueSupported="true"'>
