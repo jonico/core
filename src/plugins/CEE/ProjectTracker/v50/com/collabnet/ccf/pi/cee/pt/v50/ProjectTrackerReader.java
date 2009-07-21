@@ -686,12 +686,8 @@ public class ProjectTrackerReader extends
 
 	@Override
 	public GenericArtifact getArtifactData(Document syncInfo, String artifactId) {
-		TrackerArtifactType trackerArtifactType = this
-				.getTrackerArtifactTypeForArtifactId(syncInfo, artifactId);
 		String artifactIdentifier = artifactId.substring(artifactId
 				.lastIndexOf(":") + 1);
-		String artifactTypeNamespace = trackerArtifactType.getNamespace();
-		String artifactTypeTagName = trackerArtifactType.getTagName();
 		String sourceSystemTimezone = this.getSourceSystemTimezone(syncInfo);
 		Date lastModifiedDate = this.getLastModifiedDate(syncInfo);
 		long fromTime = lastModifiedDate.getTime();
@@ -722,6 +718,13 @@ public class ProjectTrackerReader extends
 						+ artifactIdentifier);
 			} else if (artifacts.size() == 1) {
 				artifact = artifacts.get(0);
+				String retrievedArtifactId = artifact.getArtifactID();
+				if (!artifactIdentifier.equals(retrievedArtifactId)) {
+					log.warn("Artifact seems to have moved, old id: "
+							+ artifactIdentifier + ", new id: "
+							+ retrievedArtifactId + ", so do not ship it ...");
+					return null;
+				}
 				String retrievedProject = artifact.getProject();
 				if (retrievedProject != null) {
 					String sourceRepositoryId = this
@@ -735,16 +738,17 @@ public class ProjectTrackerReader extends
 								projectName = splitProjectName[0];
 							} else {
 								throw new IllegalArgumentException(
-										"Repository id " + sourceRepositoryId + " is not valid."
+										"Repository id "
+												+ sourceRepositoryId
+												+ " is not valid."
 												+ " Could not extract project name from repository id");
 							}
 						}
 					}
 					if (projectName != null) {
 						if (!retrievedProject.equals(projectName)) {
-							String retrievedArtifactId = artifact
-									.getArtifactID();
-							log.warn("PT Artifact with id " + artifactId
+							log.warn("PT Artifact with id "
+									+ artifactIdentifier
 									+ " has moved from project " + projectName
 									+ " to artifact with id "
 									+ retrievedArtifactId + " in project "
@@ -785,6 +789,12 @@ public class ProjectTrackerReader extends
 			ga.setArtifactType(GenericArtifact.ArtifactTypeValue.PLAINARTIFACT);
 			ga.setArtifactMode(GenericArtifact.ArtifactModeValue.COMPLETE);
 			ga.setSourceArtifactId(artifactId);
+
+			TrackerArtifactType trackerArtifactType = this
+					.getTrackerArtifactTypeForArtifactId(syncInfo, artifactId);
+			String artifactTypeNamespace = trackerArtifactType.getNamespace();
+			String artifactTypeTagName = trackerArtifactType.getTagName();
+
 			Map<String, List<String>> attributes = artifact.getAttributes();
 			for (Map.Entry<String, List<String>> entry : attributes.entrySet()) {
 				String attributeName = entry.getKey();

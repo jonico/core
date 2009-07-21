@@ -115,6 +115,13 @@ public class ProjectTrackerWriter extends
 					.getArtifactById(artifactId);
 			ClientArtifact currentArtifact = currentArtifactHelper
 					.getAllArtifacts().get(0);
+			String retrievedArtifactId = currentArtifact.getArtifactID();
+			if (!artifactId.equals(retrievedArtifactId)) {
+				log.warn("Artifact seems to have moved, old id: " + artifactId
+						+ ", new id: " + retrievedArtifactId
+						+ ", so do not ship it ...");
+				return new GenericArtifact[] { ga };
+			}
 			String retrievedProject = currentArtifact.getProject();
 			if (retrievedProject != null) {
 				String projectName = null;
@@ -125,21 +132,21 @@ public class ProjectTrackerWriter extends
 							projectName = splitProjectName[0];
 						} else {
 							throw new IllegalArgumentException(
-									"Repository id " + repositoryId + " is not valid."
+									"Repository id "
+											+ repositoryId
+											+ " is not valid."
 											+ " Could not extract project name from repository id");
 						}
 					}
 				}
 				if (projectName != null) {
 					if (!retrievedProject.equals(projectName)) {
-						String retrievedArtifactId = currentArtifact
-								.getArtifactID();
 						log.warn("PT Artifact with id " + artifactId
 								+ " has moved from project " + projectName
 								+ " to artifact with id " + retrievedArtifactId
 								+ " in project " + retrievedProject
 								+ ", so do not ship it ...");
-						return new GenericArtifact [] {ga};
+						return new GenericArtifact[] { ga };
 					}
 				}
 			}
@@ -315,13 +322,54 @@ public class ProjectTrackerWriter extends
 		TrackerWebServicesClient twsclient = null;
 		String artifactId = ptHelper
 				.getArtifactIdFromFullyQualifiedArtifactId(targetArtifactId);
+		String repositoryId = ga.getTargetRepositoryId();
+		String repositoryKey = this.getRepositoryKey(ga);
+		String artifactTypeDisplayName = repositoryId
+				.substring(repositoryId.lastIndexOf(":") + 1);	
 		try {
 			twsclient = this.getConnection(ga);
+			List<ClientArtifact> cla = null;
+			cla = new ArrayList<ClientArtifact>();
+			ClientArtifactListXMLHelper currentArtifactHelper = twsclient
+					.getArtifactById(artifactId);
+			ClientArtifact currentArtifact = currentArtifactHelper
+					.getAllArtifacts().get(0);
+			String retrievedArtifactId = currentArtifact.getArtifactID();
+			if (!artifactId.equals(retrievedArtifactId)) {
+				log.warn("Artifact seems to have moved, old id: " + artifactId
+						+ ", new id: " + retrievedArtifactId
+						+ ", so do not ship it ...");
+				return ga;
+			}
+			String retrievedProject = currentArtifact.getProject();
+			if (retrievedProject != null) {
+				String projectName = null;
+				if (repositoryId != null) {
+					String[] splitProjectName = repositoryId.split(":");
+					if (splitProjectName != null) {
+						if (splitProjectName.length >= 1) {
+							projectName = splitProjectName[0];
+						} else {
+							throw new IllegalArgumentException(
+									"Repository id "
+											+ repositoryId
+											+ " is not valid."
+											+ " Could not extract project name from repository id");
+						}
+					}
+				}
+				if (projectName != null) {
+					if (!retrievedProject.equals(projectName)) {
+						log.warn("PT Artifact with id " + artifactId
+								+ " has moved from project " + projectName
+								+ " to artifact with id " + retrievedArtifactId
+								+ " in project " + retrievedProject
+								+ ", so do not ship it ...");
+						return ga;
+					}
+				}
+			}
 			TrackerArtifactType trackerArtifactType = null;
-			String repositoryKey = this.getRepositoryKey(ga);
-			String repositoryId = ga.getTargetRepositoryId();
-			String artifactTypeDisplayName = repositoryId
-					.substring(repositoryId.lastIndexOf(":") + 1);
 			trackerArtifactType = metadataHelper
 					.getTrackerArtifactType(repositoryKey);
 			if (trackerArtifactType == null) {
@@ -334,41 +382,6 @@ public class ProjectTrackerWriter extends
 				targetArtifactTypeNameSpace = trackerArtifactType
 						.getNamespace();
 				targetArtifactTypeTagName = trackerArtifactType.getTagName();
-			}
-			List<ClientArtifact> cla = null;
-			cla = new ArrayList<ClientArtifact>();
-			ClientArtifactListXMLHelper currentArtifactHelper = twsclient
-					.getArtifactById(artifactId);
-			ClientArtifact currentArtifact = currentArtifactHelper
-					.getAllArtifacts().get(0);
-
-			String retrievedProject = currentArtifact.getProject();
-			if (retrievedProject != null) {
-				String projectName = null;
-				if (repositoryId != null) {
-					String[] splitProjectName = repositoryId.split(":");
-					if (splitProjectName != null) {
-						if (splitProjectName.length >= 1) {
-							projectName = splitProjectName[0];
-						} else {
-							throw new IllegalArgumentException(
-									"Repository id " + repositoryId + " is not valid."
-											+ " Could not extract project name from repository id");
-						}
-					}
-				}
-				if (projectName != null) {
-					if (!retrievedProject.equals(projectName)) {
-						String retrievedArtifactId = currentArtifact
-								.getArtifactID();
-						log.warn("PT Artifact with id " + artifactId
-								+ " has moved from project " + projectName
-								+ " to artifact with id " + retrievedArtifactId
-								+ " in project " + retrievedProject
-								+ ", so do not ship it ...");
-						return ga;
-					}
-				}
 			}
 
 			// we need these fields to retrieve the version we like to modify
