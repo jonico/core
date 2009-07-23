@@ -720,7 +720,7 @@ public class ProjectTrackerReader extends
 				artifact = artifacts.get(0);
 				String retrievedArtifactId = artifact.getArtifactID();
 				if (!artifactIdentifier.equals(retrievedArtifactId)) {
-					log.warn("Artifact seems to have moved, old id: "
+					log.debug("Artifact seems to have moved, old id: "
 							+ artifactIdentifier + ", new id: "
 							+ retrievedArtifactId + ", so do not ship it ...");
 					return null;
@@ -747,7 +747,7 @@ public class ProjectTrackerReader extends
 					}
 					if (projectName != null) {
 						if (!retrievedProject.equals(projectName)) {
-							log.warn("PT Artifact with id "
+							log.debug("PT Artifact with id "
 									+ artifactIdentifier
 									+ " has moved from project " + projectName
 									+ " to artifact with id "
