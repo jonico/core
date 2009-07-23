@@ -1214,7 +1214,7 @@ public class ProjectTrackerReader extends
 		}
 		if (optionValue == null)
 			throw new CCFRuntimeException("Option tagname for option "
-					+ attributeValue + "is not available in {"
+					+ attributeValue + " is not available in {"
 					+ attributeNamespace + "}" + attributeTagName);
 		return optionValue;
 	}
