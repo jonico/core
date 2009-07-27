@@ -913,7 +913,29 @@ public class GenericArtifactHelper {
 	 * @return Content of the element encoded as String
 	 */
 	private static String getValue(Element element) {
-		return element.getText();
+		return removeInvalidXmlCharacters(element.getText());
+	}
+	
+	private static final String removeInvalidXmlCharacters(String input) {
+        if (input == null) {
+                return input;
+        }
+        char character;
+        StringBuffer sb = new StringBuffer();
+        for (int i =0; i<input.length(); i++) {
+                character = input.charAt(i);
+                //see http://www.w3.org/TR/2000/REC-xml-20001006#NT-Char for valid XML character list.
+                if ((character == 0x9)
+                                || (character == 0xA)
+                                || (character == 0xD)
+                                || ((character >= 0x20) && (character <= 0xD7FF))
+                                || ((character >= 0xE000) && (character <= 0xFFFD))
+                                || ((character >= 0x10000) && (character <= 0x10FFFF))
+                                ) {
+                sb.append(character);
+                }
+        }
+        return sb.toString();
 	}
 
 	/**

@@ -320,7 +320,9 @@ public class TrackerWebServicesClient {
 
 								Element valueNode = doc.createElementNS(DEFAULT_NAMESPACE, "ns1:value");
 								//valueNode.setNodeValue(value);
-								value = TrackerUtil.removeInvalidXmlCharacters(value);
+								// we do not need this line any more because the GenericArtifactXMLHelper will care
+								// about it
+								// value = TrackerUtil.removeInvalidXmlCharacters(value);
 								valueNode.appendChild(doc.createTextNode(value));
 								attributeNode.appendChild(valueNode);
 							}
