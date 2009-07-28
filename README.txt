@@ -1,13 +1,13 @@
 CollabNet Connector Framework
-Version 1.2.0
+Version 1.2.1
                  
 Introduction:
 -------------             
 CollabNet Connector Framework enables shipment of defect data from HP Quality Center to a CollabNet tracker
-(Project Tracker or SourceForge tracker), and vice versa.
+(Project Tracker or TeamForge tracker), and vice versa.
 
 For more information on the CollabNet Connector Framework please
-visit http://ccf.open.collab.net
+visit http://ccf.open.collab.net and http://help.collab.net
 
 System Requirements
 -------------------
@@ -32,17 +32,23 @@ System Requirements
 
 5. Java Requirements
     JDK 1.6 or above is required
+    
+6. User interface requirements
+    Eclipse 3.4 version which includes the XML editor (e. g. all downloads on eclipse.org that contain the Java IDE)
+
+7. Requirement for graphical field mapping feature
+    Standard edition of Altova MapForce version 2008 (rel 2) or 2009
+
 
 Getting Started
 ---------------
-This package comes with some preconfigured sample scenarios. For help on setting up the central CCF database and synchronizing the source and target systems, see the following:
-	- Quick Start Guides to connect HP Quality center to CollabNet Project Tracker or SourceForge Tracker: http://help.collab.net/
-        - Documentation in the CCF project: http://ccf.open.collab.net/servlets/ProjectProcess?pageID=aT1rGG&subpageID=lTTUmC
+For help on setting up CCF and its GUI, see the following:
+	- Quick Start Guides to connect HP Quality center to CollabNet Project Tracker or TeamForge Tracker: http://help.collab.net/
+    - Documentation in the CCF project: http://ccf.open.collab.net
 	- Release Notes on http://help.collab.net/
 	- Frequently Asked Questions: http://ccf.open.collab.net/wiki/Frequently_Asked_Questions
 
-Make sure that you set the email configuration in log4j.xml to receive auto-generated mails in case of issues.
 
-Support
+License
 -------
-Please refer to License.txt for support and other options.
+Please refer to License.txt for license information.
