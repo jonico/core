@@ -132,7 +132,7 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 		try {
 			result = super.process(data);
 		} finally {
-			if (this.connectCounts >= countBeforeCOMReinitialization) {
+			if (this.connectCounts >= getCountBeforeCOMReinitialization()) {
 				this.connectCounts = 0;
 				tearDownCOM();
 			}
@@ -176,7 +176,6 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 	protected void updateDefect(IConnection connection,
 			String targetArtifactId, GenericArtifact genericArtifact,
 			List<GenericArtifactField> allFields) throws Exception {
-		@SuppressWarnings("unused")
 		String targetSystemTimezone = genericArtifact.getTargetSystemTimezone();
 
 		// retrieve version to update
@@ -1148,6 +1147,25 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 	 */
 	public boolean isImmediatelyQuarantineLockedDefects() {
 		return immediatelyQuarantineLockedDefects;
+	}
+
+	/**
+	 * @param countBeforeCOMReinitialization sets the number of CCF operations
+	 * that will be performed before CCF will destroy all COM objects
+	 * This is to avoid COM memory leaks
+	 */
+	public void setCountBeforeCOMReinitialization(
+			int countBeforeCOMReinitialization) {
+		this.countBeforeCOMReinitialization = countBeforeCOMReinitialization;
+	}
+
+	/**
+	 * @return the number of CCF operations
+	 * that will be performed before CCF will destroy all COM objects
+	 * This is to avoid COM memory leaks
+	 */
+	public int getCountBeforeCOMReinitialization() {
+		return countBeforeCOMReinitialization;
 	}
 
 }
