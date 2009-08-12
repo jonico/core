@@ -80,7 +80,7 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 	public final String ARTIFACT_TYPE_PLAINARTIFACT = "plainartifact";
 	public final String ARTIFACT_TYPE_ATTACHMENT = "attachment";
 	private int connectCounts = 0;
-	private int countBeforeCOMReinitialization = 500;
+	private int countBeforeCOMReinitialization = 50000;
 
 	private String serverUrl;
 

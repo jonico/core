@@ -52,7 +52,7 @@ public class QCReader extends AbstractReader<IConnection> {
 	private QCDefectHandler defectHandler;
 	private QCGAHelper qcGAHelper;
 	private QCAttachmentHandler attachmentHandler;
-	private int countBeforeCOMReinitialization = 500;
+	private int countBeforeCOMReinitialization = 50000;
 
 	private String serverUrl;
 
