@@ -1387,15 +1387,15 @@ public class ProjectTrackerReader extends
 				}
 			}
 		} catch (WSException e1) {
-			String message = "Web Service Exception while retrieving Artifact Type meta data";
+			String message = "Web Service Exception while getting the changed artifacts";
 			log.error(message, e1);
 			throw new CCFRuntimeException(message, e1);
 		} catch (RemoteException e1) {
-			String message = "Remote Exception while retrieving Artifact Type meta data";
+			String message = "Remote Exception while getting the changed artifacts";
 			log.error(message, e1);
 			throw new CCFRuntimeException(message, e1);
 		} catch (ServiceException e1) {
-			String message = "Service Exception while retrieving Artifact Type meta data";
+			String message = "Service Exception while getting the changed artifacts";
 			log.error(message, e1);
 			throw new CCFRuntimeException(message, e1);
 		} catch (Exception e) {
