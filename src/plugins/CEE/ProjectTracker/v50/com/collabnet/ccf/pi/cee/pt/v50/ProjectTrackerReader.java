@@ -772,12 +772,12 @@ public class ProjectTrackerReader extends
 						.debug("Artifact has been lastly modified by connector user and will not be synchronized");
 				return null;
 			}
-			String createdOnTimeMillis = artifact.getAttributeValue(
-					TrackerWebServicesClient.DEFAULT_NAMESPACE,
-					CREATED_ON_FIELD);
-			long createdOnTime = Long.parseLong(createdOnTimeMillis);
+			//String createdOnTimeMillis = artifact.getAttributeValue(
+			//		TrackerWebServicesClient.DEFAULT_NAMESPACE,
+			//		CREATED_ON_FIELD);
+			// long createdOnTime = Long.parseLong(createdOnTimeMillis);
 			ahlVersion = twsclient.getChangeHistoryForArtifact(
-					artifactIdentifier, createdOnTime, null);
+					artifactIdentifier, fromTime, null);
 			ProjectTrackerReader.artifactHistoryList.set(ahlVersion);
 
 			GenericArtifact ga = new GenericArtifact();
@@ -854,11 +854,11 @@ public class ProjectTrackerReader extends
 				}
 				GenericArtifactField.FieldValueTypeValue gaFieldType = null;
 				gaFieldType = ptGATypesMap.get(ptAttributeType);
-				if (trackerAttribute.getAttributeType().equals("USER")) {
+				/*if (trackerAttribute.getAttributeType().equals("USER")) {
 					attValues = getUserAttributesValuesFromHistory(
 							attributeNamespace, attributeTagName,
 							attributeDisplayName, ahlVersion);
-				}
+				}*/
 				if (attValues != null && attValues.size() > 0
 						&& (!CollectionUtils.isEmptyOrNull(attValues))) {
 					// do nothing
@@ -1128,7 +1128,7 @@ public class ProjectTrackerReader extends
 		}
 	}
 
-	private List<String> getUserAttributesValuesFromHistory(
+	/*private List<String> getUserAttributesValuesFromHistory(
 			String attributeNamespace, String attributeTagName,
 			String attributeDisplayName, ArtifactHistoryList ahlVersion) {
 		List<String> userAttributeValues = new ArrayList<String>();
@@ -1186,7 +1186,7 @@ public class ProjectTrackerReader extends
 			}
 		}
 		return userAttributeValues;
-	}
+	}*/
 
 	private String convertOptionValue(String attributeNamespace,
 			String attributeTagName, String attributeValue,
