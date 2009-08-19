@@ -349,9 +349,9 @@ public class TrackerWebServicesClient {
 					artifactNode.appendChild(commentNode);
 				}
 
-//				Element reasonNode = doc.createElementNS("urn:ws.tracker.collabnet.com", "ns1:"+"reason");
-//				reasonNode.appendChild(doc.createTextNode("Synchronized by Connector"));
-//				artifactNode.appendChild(reasonNode);
+				Element reasonNode = doc.createElementNS("urn:ws.tracker.collabnet.com", "ns1:"+"reason");
+				reasonNode.appendChild(doc.createTextNode("Synchronized by Connector"));
+				artifactNode.appendChild(reasonNode);
 		} // for every artifact
 
 		Element sendMail = doc.createElementNS(DEFAULT_NAMESPACE, "ns1:"+"sendEmail");
