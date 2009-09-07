@@ -498,9 +498,6 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 				String trackerFieldValueType = ArtifactMetaData
 						.getSFEEFieldValueTypeForGAFieldType(gaField
 								.getFieldValueType());
-				if (trackerFieldValueType.equals("SfUser")) {
-					trackerFieldValueType = TrackerFieldSoapDO.FIELD_VALUE_TYPE_USER;
-				}
 				flexFieldNames.add(fieldName);
 				flexFieldTypes.add(trackerFieldValueType);
 				Object value = null;
