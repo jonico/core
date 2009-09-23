@@ -71,6 +71,7 @@ public class ProjectTrackerWriter extends
 	private String serverUrl = null;
 	private MetaDataHelper metadataHelper = MetaDataHelper.getInstance();
 	ProjectTrackerHelper ptHelper = ProjectTrackerHelper.getInstance();
+	private boolean provideReason = false;
 
 	private GenericArtifact getGenericArtifact(Document document) {
 		GenericArtifact ga = null;
@@ -436,7 +437,7 @@ public class ProjectTrackerWriter extends
 
 			// FIXME This is not atomic
 			ClientArtifactListXMLHelper artifactHelper = twsclient
-					.updateArtifactList(cla, modifiedOnMilliSeconds);
+					.updateArtifactList(cla, modifiedOnMilliSeconds, isProvideReason());
 
 			ptHelper.processWSErrors(artifactHelper);
 			log.info("Artifact " + targetArtifactId
@@ -564,7 +565,7 @@ public class ProjectTrackerWriter extends
 
 			// cla.add(ca);
 			ClientArtifactListXMLHelper artifactHelper = twsclient
-					.createArtifactList(ca);
+					.createArtifactList(ca, isProvideReason());
 			ptHelper.processWSErrors(artifactHelper);
 
 			List<ClientArtifact> artifacts = artifactHelper.getAllArtifacts();
@@ -1375,5 +1376,21 @@ public class ProjectTrackerWriter extends
 	 */
 	public void setUsername(String username) {
 		this.username = username;
+	}
+
+	/**
+	 * Determine whether every artifact update/creation should be justified with a default reason
+	 * @param provideReason
+	 */
+	public void setProvideReason(boolean provideReason) {
+		this.provideReason = provideReason;
+	}
+
+	/**
+	 * Returns whether every artifact creation/update will be justified with a default reason
+	 * @return true if reason is always provided, false if not
+	 */
+	public boolean isProvideReason() {
+		return provideReason;
 	}
 }

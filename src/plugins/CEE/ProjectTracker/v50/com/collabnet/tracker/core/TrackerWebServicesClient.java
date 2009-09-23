@@ -170,14 +170,14 @@ public class TrackerWebServicesClient {
         return result.getAllArtifacts();
 	}
 
-	public ClientArtifactListXMLHelper createArtifactList(ClientArtifact artifact)
+	public ClientArtifactListXMLHelper createArtifactList(ClientArtifact artifact, boolean provideReason)
 																	throws Exception {
 		this.sanitizeComments(artifact);
 		Document doc = null;
 		doc = createNewXMLDocument(DEFAULT_NAMESPACE, "ns1:"+"createArtifactList");
 		ArrayList<ClientArtifact> caList = new ArrayList<ClientArtifact>();
 		caList.add(artifact);
-		ClientArtifactListXMLHelper helper = this.createOrUpdateArtifactList(doc, caList, null);
+		ClientArtifactListXMLHelper helper = this.createOrUpdateArtifactList(doc, caList, null, provideReason);
 		ProjectTrackerHelper ptHelper = ProjectTrackerHelper.getInstance();
 		ptHelper.processWSErrors(helper);
 		List<ClientArtifactComment> comments = artifact.getComments();
@@ -190,7 +190,7 @@ public class TrackerWebServicesClient {
 			String modifiedOn = responseArtifact.getAttributeValue(
 					ProjectTrackerReader.TRACKER_NAMESPACE, ProjectTrackerReader.MODIFIED_ON_FIELD);
 			long modifiedOnMilliSeconds = Long.parseLong(modifiedOn);
-			helper = this.updateArtifactList(caList, modifiedOnMilliSeconds);
+			helper = this.updateArtifactList(caList, modifiedOnMilliSeconds, provideReason);
 		}
 		return helper;
 	}
@@ -220,12 +220,12 @@ public class TrackerWebServicesClient {
 	 * NOTE: All artifact in the List must belong to the same namespace and artifactType
 	 *
 	 */
-	public ClientArtifactListXMLHelper createArtifactList(List<ClientArtifact> artifacts)
+	public ClientArtifactListXMLHelper createArtifactList(List<ClientArtifact> artifacts, boolean provideReason)
 				throws Exception {
 		Document doc = null;
 		doc = createNewXMLDocument(DEFAULT_NAMESPACE, "ns1:"+"createArtifactList");
 
-		ClientArtifactListXMLHelper helper = this.createOrUpdateArtifactList(doc, artifacts, null);
+		ClientArtifactListXMLHelper helper = this.createOrUpdateArtifactList(doc, artifacts, null, provideReason);
 		return helper;
 	}
 
@@ -233,6 +233,7 @@ public class TrackerWebServicesClient {
 	 * Get all of the server defined queries for the project
 	 * @return
 	 * @param artifact
+	 * @param provideReason
 	 * @throws Exception
 	 * @throws Exception
 	 *
@@ -240,18 +241,18 @@ public class TrackerWebServicesClient {
 	 * NOTE: All artifact in the List must belong to the same namespace and artifactType
 	 *
 	 */
-	public ClientArtifactListXMLHelper updateArtifactList(List<ClientArtifact> artifacts, long lastReadOn)
+	public ClientArtifactListXMLHelper updateArtifactList(List<ClientArtifact> artifacts, long lastReadOn, boolean provideReason)
 						throws Exception {
 		Document doc = null;
 		doc = createNewXMLDocument(DEFAULT_NAMESPACE, "ns1:"+"updateArtifactList");
 
-		ClientArtifactListXMLHelper helper  = this.createOrUpdateArtifactList(doc, artifacts, lastReadOn);
+		ClientArtifactListXMLHelper helper  = this.createOrUpdateArtifactList(doc, artifacts, lastReadOn, provideReason);
 
 		return helper;
 	}
 
 	public ClientArtifactListXMLHelper createOrUpdateArtifactList(Document doc,
-			List<ClientArtifact> artifacts, Long lastReadOn) throws Exception{
+			List<ClientArtifact> artifacts, Long lastReadOn, boolean provideReason) throws Exception{
 		EngineConfiguration config = mClient.getEngineConfiguration();
 		DispatcherService service = new DispatcherServiceLocator(config);
 		URL portAddress = mClient.constructServiceURL("/ws/Dispatcher");
@@ -348,10 +349,11 @@ public class TrackerWebServicesClient {
 					commentNode.appendChild(textNode);
 					artifactNode.appendChild(commentNode);
 				}
-
-				Element reasonNode = doc.createElementNS("urn:ws.tracker.collabnet.com", "ns1:"+"reason");
-				reasonNode.appendChild(doc.createTextNode("Synchronized by Connector"));
-				artifactNode.appendChild(reasonNode);
+				if (provideReason) {
+					Element reasonNode = doc.createElementNS("urn:ws.tracker.collabnet.com", "ns1:"+"reason");
+					reasonNode.appendChild(doc.createTextNode("Synchronized by Connector"));
+					artifactNode.appendChild(reasonNode);
+				}
 		} // for every artifact
 
 		Element sendMail = doc.createElementNS(DEFAULT_NAMESPACE, "ns1:"+"sendEmail");
