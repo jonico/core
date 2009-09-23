@@ -256,6 +256,7 @@
         <property name="connectionManager"
             ref="CEEConnectionManager">
         </property>
+        <property name="provideReason" value="false"/>
         <property name="resyncUserName" value="${cee.server.1.resync.username}"></property>
         <property name="resyncPassword" value="${cee.server.1.resync.password}"></property>
     </bean>
