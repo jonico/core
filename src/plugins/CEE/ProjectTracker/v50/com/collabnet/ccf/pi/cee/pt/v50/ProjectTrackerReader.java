@@ -225,6 +225,10 @@ public class ProjectTrackerReader extends
 												String attachmentDescription = null;
 												ClientArtifactAttachment attachment = attachmentIDNameMap
 														.get(attachmentId);
+												if (attachment == null) {
+													log.warn("Attachment with id "+attachmentId + " does not exist!");
+													continue;
+												}
 												attachmentName = attachment
 														.getAttachmentName();
 												attachmentDescription = attachment
