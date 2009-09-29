@@ -729,7 +729,7 @@ public class QCDefectHandler {
 			if (fieldName.equals("BG_DEV_COMMENTS")) {
 				String oldFieldValue = newRs.getFieldValueAsString("AP_OLD_LONG_VALUE");
 				newFieldValue = newRs.getFieldValueAsString("AP_NEW_LONG_VALUE");
-				if (!StringUtils.isEmpty(oldFieldValue)) {
+				if (!StringUtils.isEmpty(newFieldValue) && !StringUtils.isEmpty(oldFieldValue)) {
 					if (newFieldValue.length() > oldFieldValue.length()) {
 						String strippedOldValue = this
 								.stripStartAndEndTags(oldFieldValue);
