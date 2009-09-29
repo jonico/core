@@ -692,7 +692,7 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 				} else {
 					String message = "The attachment data file "
 							+ attachmentDataFile.getAbsolutePath()
-							+ " does not exists. So the attchment "
+							+ " does not exist. So the attachment "
 							+ attachmentName
 							+ " can not be uploaded to the bug "
 							+ targetArtifactId;
@@ -703,13 +703,13 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 			if (attachmentFile == null || (!attachmentFile.exists())) {
 				String message = "The attachment data file "
 						+ attachmentFile.getAbsolutePath()
-						+ " does not exists. So the attchment "
+						+ " does not exist. So the attachment "
 						+ attachmentName + " can not be uploaded to the bug "
 						+ targetArtifactId;
 				log.error(message);
 				throw new CCFRuntimeException(message);
 			} else if (attachmentFile.length() == 0) {
-				log.warn("The attchment file "
+				log.warn("The attachment file "
 						+ attachmentFile.getAbsolutePath()
 						+ " contains no data. It is uploaded to the bug "
 						+ targetArtifactId + ", though.");

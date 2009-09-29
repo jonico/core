@@ -361,7 +361,7 @@ public class ProjectTrackerReader extends
 															tempFile = File
 																	.createTempFile(
 																			"PT_Attachment",
-																			"file");
+																			".file");
 
 															String attachmentDataFile = tempFile
 																	.getAbsolutePath();
@@ -378,6 +378,7 @@ public class ProjectTrackerReader extends
 																				0,
 																				readBytes);
 															}
+															fos.close();
 															GenericArtifactField attachmentDataFileField = ga
 																	.addNewField(
 																			AttachmentMetaData.ATTACHMENT_DATA_FILE,
@@ -389,7 +390,7 @@ public class ProjectTrackerReader extends
 															bytes = null;
 														}
 													} catch (IOException e) {
-														String message = "Could not write attahcment content to temp file."
+														String message = "Could not write attachment content to temp file."
 																+ " Shipping the attachment with the artifact.";
 														log.error(message, e);
 														throw new CCFRuntimeException(

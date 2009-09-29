@@ -102,7 +102,7 @@ public class QCAttachmentHandler {
 					}
 				} catch (Exception e) {
 					String message = "Exception while attaching the file "+
-							attachmentFile.getAbsolutePath() +" an attachment to defect "+entityId;
+							attachmentFile.getAbsolutePath() +" to defect "+entityId;
 					log.error(message, e);
 					throw new CCFRuntimeException(message, e);
 				}
