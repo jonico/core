@@ -183,8 +183,8 @@
         <property name="connectionManager" ref="QCConnectionManager"></property>
         <property name="sleepInterval" value="1000"></property>
         <property name="maxAttachmentSizePerArtifact" value="${qc.max.attachmentsize.per.artifact}" />
-        <!-- Let this restart every 5 hours -->
-		<property name="autoRestartPeriod" value="18000"/>
+        <!-- Let this restart every 6 hours -->
+		<property name="autoRestartPeriod" value="21600"/>
 		<property name="shipAttachments" value="true"/>
 		
 		<!-- This plugs in in the polling hospital -->
@@ -193,6 +193,7 @@
 
     <bean id="QCConnectionManager"
         class="com.collabnet.ccf.core.eis.connection.ConnectionManager">
+        <!-- Please set the number of connections to the number of project mappings you have -->
         <property name="maxConnectionsPerPool" value="5"></property>
         <property name="maxIdleTimeForConnection" value="600000" />
         <property name="scavengerInterval" value="120000"></property>

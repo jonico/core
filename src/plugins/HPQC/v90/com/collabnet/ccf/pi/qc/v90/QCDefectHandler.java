@@ -49,7 +49,7 @@ import com.jacob.com.ComFailException;
 
 /**
  * The Defect handler class provides support for listing and/or edit defects.
- *
+ * 
  */
 public class QCDefectHandler {
 
@@ -68,7 +68,7 @@ public class QCDefectHandler {
 	public static IRecordSet executeSQL(IConnection qcc, String sql) {
 		ICommand command = null;
 		if (log.isDebugEnabled()) {
-			log.debug("Going to execute SQL statement "+sql);
+			log.debug("Going to execute SQL statement " + sql);
 		}
 		try {
 			command = qcc.getCommand();
@@ -106,7 +106,7 @@ public class QCDefectHandler {
 
 	/**
 	 * Updates the defect identified by the incoming bugId in QC
-	 *
+	 * 
 	 * @param qcc
 	 *            The Connection object
 	 * @param bugId
@@ -117,7 +117,7 @@ public class QCDefectHandler {
 	 * @param connectorUser
 	 *            The connectorUser name used while updating the comments
 	 * @return IQCDefect Updated defect object
-	 *
+	 * 
 	 */
 	public IQCDefect updateDefect(IConnection qcc, String bugId,
 			List<GenericArtifactField> allFields, String connectorUser,
@@ -166,7 +166,11 @@ public class QCDefectHandler {
 						bug.setField(fieldName, fieldValue);
 					} catch (ComFailException e) {
 						String message = "Exception while setting the value of field "
-								+ fieldName + " to " + fieldValue + ": "+ e.getMessage();
+								+ fieldName
+								+ " to "
+								+ fieldValue
+								+ ": "
+								+ e.getMessage();
 						log.error(message, e);
 						throw new CCFRuntimeException(message, e);
 					}
@@ -177,21 +181,47 @@ public class QCDefectHandler {
 			bug.post();
 		} catch (DefectAlreadyLockedException e) {
 			String message = "Attempt to lock the defect with id " + bugId
-					+ " failed";
-			log.error(message, e);
-			throw new CCFRuntimeException(message + ": "+e.getMessage(), e);
+					+ " failed.";
+			// retrieving user who locked the bug
+			IRecordSet rs = null;
+			try {
+				rs = executeSQL(qcc,
+						"SELECT LK_USER FROM LOCKS WHERE LK_OBJECT_KEY = '"
+								+ bugId + "'");
+				if (rs.getRecordCount() != 1) {
+					message = message
+							+ " Could not find out the user who locked it.";
+				} else {
+					String userName = rs.getFieldValueAsString("LK_USER");
+					message = message + " Defect has been locked by user "
+							+ userName;
+				}
+			} catch (Exception f) {
+				// we do not want to throw a further exception in case we could
+				// not determine the log
+				message = message
+						+ " Could not find out the user who locked it: "
+						+ f.getMessage();
+			} finally {
+				if (rs != null) {
+					rs.safeRelease();
+					rs = null;
+				}
+			}
+
+			throw new CCFRuntimeException(message, e);
 		} catch (ComFailException e) {
 			bug.undo();
 			String message = "ComFailException while updating the defect with id "
 					+ bugId;
 			log.error(message, e);
-			throw new CCFRuntimeException(message + ": "+e.getMessage(), e);
+			throw new CCFRuntimeException(message + ": " + e.getMessage(), e);
 		} catch (Exception e) {
 			bug.undo();
 			String message = "Exception while updating the defect with id "
 					+ bugId;
 			log.error(message, e);
-			throw new CCFRuntimeException(message + ": "+e.getMessage(), e);
+			throw new CCFRuntimeException(message + ": " + e.getMessage(), e);
 		} finally {
 			if (bug != null) {
 				bug.unlockObject();
@@ -203,15 +233,15 @@ public class QCDefectHandler {
 
 	/**
 	 * Create the defect based on the incoming field values
-	 *
+	 * 
 	 * @param qcc
 	 *            The Connection object
 	 * @param List
 	 *            <GenericArtifactField> The values of each fields of the defect
 	 *            that need to be used while creation.
-	 *
+	 * 
 	 * @return IQCDefect Created defect object
-	 *
+	 * 
 	 */
 	public IQCDefect createDefect(IConnection qcc,
 			List<GenericArtifactField> allFields, String connectorUser,
@@ -256,7 +286,6 @@ public class QCDefectHandler {
 				 * Cannot be set from here: 1. BG_BUG_ID 2. BG_BUG_VER_STAMP 3.
 				 * BG_VTS Has some conditions: 1. BG_SUBJECT -> Can be set to a
 				 * Valid value that is present in the list.
-				 *
 				 */
 				if (!(allFieldNames.contains(allFields.get(cnt).getFieldName()))
 						&& !(fieldName.equals(QC_BUG_ID)
@@ -267,7 +296,11 @@ public class QCDefectHandler {
 						bug.setField(fieldName, fieldValue);
 					} catch (Exception e) {
 						String message = "Exception while setting the value of field "
-								+ fieldName + " to " + fieldValue + ": "+ e.getMessage();
+								+ fieldName
+								+ " to "
+								+ fieldValue
+								+ ": "
+								+ e.getMessage();
 						log.error(message, e);
 						throw new CCFRuntimeException(message, e);
 					}
@@ -287,7 +320,7 @@ public class QCDefectHandler {
 			}
 			String message = "Exception while creating Bug " + bugId;
 			log.error(message, e);
-			throw new CCFRuntimeException(message + ": "+e.getMessage(), e);
+			throw new CCFRuntimeException(message + ": " + e.getMessage(), e);
 		} finally {
 			if (bug != null) {
 				bug.unlockObject();
@@ -333,7 +366,7 @@ public class QCDefectHandler {
 
 	/**
 	 * Gets the value of the field in a suitable data type.
-	 *
+	 * 
 	 */
 	public String getProperFieldValue(GenericArtifactField thisField,
 			String targetSystemTimezone) {
@@ -374,7 +407,7 @@ public class QCDefectHandler {
 
 	/**
 	 * Return all defects modified between the given time range, in a map
-	 *
+	 * 
 	 */
 	@SuppressWarnings("unchecked")
 	public List<ArtifactState> getLatestChangedDefects(IConnection qcc,
@@ -389,7 +422,7 @@ public class QCDefectHandler {
 
 		log.debug(sql);
 		ArrayList<ArtifactState> changedDefects = new ArrayList<ArtifactState>();
-		HashMap <String, ArtifactState> artifactIdStateMap = new HashMap<String, ArtifactState>();
+		HashMap<String, ArtifactState> artifactIdStateMap = new HashMap<String, ArtifactState>();
 		IRecordSet rs = null;
 		try {
 			rs = executeSQL(qcc, sql);
@@ -408,8 +441,7 @@ public class QCDefectHandler {
 					state.setArtifactLastModifiedDate(actionDate);
 					state.setArtifactVersion(actionId);
 					changedDefects.add(state);
-				}
-				else {
+				} else {
 					ArtifactState state = new ArtifactState();
 					state.setArtifactId(bugId);
 					state.setArtifactLastModifiedDate(actionDate);
@@ -429,14 +461,14 @@ public class QCDefectHandler {
 
 	/**
 	 * Orders the values of the incoming HashMap according to its keys.
-	 *
+	 * 
 	 * @param HashMap
 	 *            This hashMap contains the transactionIds as values indexed by
 	 *            their defectIds.
 	 * @return List<String> This list of strings is the ordering of the keys of
 	 *         the incoming HashMaps, which are the defectIds, according to the
 	 *         order of their transactionIds
-	 *
+	 * 
 	 */
 	public List<String> orderByLatestTransactionIds(
 			Map<String, String> defectIdTransactionIdMap) {
@@ -581,7 +613,7 @@ public class QCDefectHandler {
 	/**
 	 * Assigns values of the incoming parameters to the incoming genericArtifact
 	 * and returns the updated one.
-	 *
+	 * 
 	 * @param latestDefectArtifact
 	 *            The GenericArtifact to which the following values need to be
 	 *            assigned.
@@ -622,7 +654,7 @@ public class QCDefectHandler {
 	/**
 	 * Obtains the artifactAction based on the date at which that defect was
 	 * created and the lastReadTime synchronization parameter.
-	 *
+	 * 
 	 * @param entityId
 	 *            The defectId for which the search has to be made in QC
 	 * @param actionId
@@ -711,7 +743,7 @@ public class QCDefectHandler {
 	/**
 	 * Gets the difference between the comment values of the previous and
 	 * current transaction pointed by actionId
-	 *
+	 * 
 	 * @param qcc
 	 * @param actionId
 	 * @return
@@ -727,9 +759,12 @@ public class QCDefectHandler {
 		for (int newCnt = 0; newCnt < newRc; newCnt++, newRs.next()) {
 			String fieldName = newRs.getFieldValueAsString("AP_FIELD_NAME");
 			if (fieldName.equals("BG_DEV_COMMENTS")) {
-				String oldFieldValue = newRs.getFieldValueAsString("AP_OLD_LONG_VALUE");
-				newFieldValue = newRs.getFieldValueAsString("AP_NEW_LONG_VALUE");
-				if (!StringUtils.isEmpty(newFieldValue) && !StringUtils.isEmpty(oldFieldValue)) {
+				String oldFieldValue = newRs
+						.getFieldValueAsString("AP_OLD_LONG_VALUE");
+				newFieldValue = newRs
+						.getFieldValueAsString("AP_NEW_LONG_VALUE");
+				if (!StringUtils.isEmpty(newFieldValue)
+						&& !StringUtils.isEmpty(oldFieldValue)) {
 					if (newFieldValue.length() > oldFieldValue.length()) {
 						String strippedOldValue = this
 								.stripStartAndEndTags(oldFieldValue);
@@ -789,7 +824,7 @@ public class QCDefectHandler {
 
 	/**
 	 * Returns the value of a particular field in the given GenericArtifact.
-	 *
+	 * 
 	 * @param individualGenericArtifact
 	 * @param fieldName
 	 * @return
@@ -807,44 +842,30 @@ public class QCDefectHandler {
 	/**
 	 * For a given transactionId, this returns whether it is a create or update
 	 * operation.
-	 *
+	 * 
 	 * @param qcc
 	 * @param txnId
 	 * @return
-	 *//*
-	public boolean checkForCreate(IConnection qcc, int txnId) {
-
-		Boolean check = false;
-		int newRc = 0;
-		String sql = "SELECT * FROM AUDIT_PROPERTIES WHERE AP_ACTION_ID= '"
-				+ txnId + "'";
-		IRecordSet newRs = null;
-		try {
-			newRs = executeSQL(qcc, sql);
-			if (newRs != null)
-				newRc = newRs.getRecordCount();
-
-			for (int newCnt = 0; newCnt < newRc; newCnt++, newRs.next()) {
-				String fieldName = newRs.getFieldValueAsString("AP_FIELD_NAME");
-				String oldFieldValue = null;
-				if (!(fieldName.equals("BG_DESCRIPTION")))
-					oldFieldValue = newRs.getFieldValueAsString("AP_OLD_VALUE");
-				else
-					oldFieldValue = newRs.getFieldValueAsString("AP_OLD_LONG_VALUE");
-
-				if (fieldName.equals("BG_VTS")
-						&& (oldFieldValue == null || (oldFieldValue != null && oldFieldValue
-								.equals(""))))
-					return true;
-			}
-		} finally {
-			if (newRs != null) {
-				newRs.safeRelease();
-				newRs = null;
-			}
-		}
-		return check;
-	}*/
+	 */
+	/*
+	 * public boolean checkForCreate(IConnection qcc, int txnId) {
+	 * 
+	 * Boolean check = false; int newRc = 0; String sql =
+	 * "SELECT * FROM AUDIT_PROPERTIES WHERE AP_ACTION_ID= '" + txnId + "'";
+	 * IRecordSet newRs = null; try { newRs = executeSQL(qcc, sql); if (newRs !=
+	 * null) newRc = newRs.getRecordCount();
+	 * 
+	 * for (int newCnt = 0; newCnt < newRc; newCnt++, newRs.next()) { String
+	 * fieldName = newRs.getFieldValueAsString("AP_FIELD_NAME"); String
+	 * oldFieldValue = null; if (!(fieldName.equals("BG_DESCRIPTION")))
+	 * oldFieldValue = newRs.getFieldValueAsString("AP_OLD_VALUE"); else
+	 * oldFieldValue = newRs.getFieldValueAsString("AP_OLD_LONG_VALUE");
+	 * 
+	 * if (fieldName.equals("BG_VTS") && (oldFieldValue == null ||
+	 * (oldFieldValue != null && oldFieldValue .equals("")))) return true; } }
+	 * finally { if (newRs != null) { newRs.safeRelease(); newRs = null; } }
+	 * return check; }
+	 */
 
 	public void deleteDefect(String id) {
 		// Yet to implement

@@ -198,6 +198,7 @@
     </bean>
     <bean id="QCConnectionManager"
         class="com.collabnet.ccf.core.eis.connection.ConnectionManager">
+        <!-- Please set the number of connections to the number of project mappings you have -->
         <property name="maxConnectionsPerPool" value="5"></property>
         <property name="maxIdleTimeForConnection" value="600000" />
         <property name="scavengerInterval" value="120000"></property>
@@ -247,6 +248,7 @@
             needs the data to be translated to fit into its fields or
             not.
         </description>
+        <property name="shipCommentsWithCreationDate" value ="false"/>
         <property name="username" value="${cee.server.1.username}" />
         <property name="resyncUserName" value="${cee.server.1.resync.username}"></property>
         <property name="connectorUserDisplayName" value="${cee.server.1.connector.user.displayName}" />
@@ -259,8 +261,8 @@
         <property name="sleepInterval" value="1000"></property>
         <property name="maxAttachmentSizePerArtifact"
             value="${cee.max.attachmentsize.per.artifact}" />
-        <!-- Let this restart every 3 hours -->
-		<property name="autoRestartPeriod" value="18000"/>
+        <!-- Let this restart every 6 hours -->
+		<property name="autoRestartPeriod" value="21600"/>
 		<property name="shipAttachments" value="true"/>
 		
 		<!-- This plugs in the polling hospital -->
