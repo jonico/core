@@ -121,6 +121,12 @@ public class ProjectTrackerReader extends
 	// artifactListTl = new ThreadLocal<HashMap<String, ClientArtifact>>();
 	ProjectTrackerHelper ptHelper = ProjectTrackerHelper.getInstance();
 
+	/**
+	 * If this property is true (false by default), comments will be shipped
+	 * with their creator date
+	 */
+	private boolean shipCommentsWithCreationDate = false;
+
 	private static HashMap<String, GenericArtifactField.FieldValueTypeValue> ptGATypesMap = new HashMap<String, GenericArtifactField.FieldValueTypeValue>();
 	static {
 		ptGATypesMap.put("SHORT_TEXT",
@@ -226,7 +232,10 @@ public class ProjectTrackerReader extends
 												ClientArtifactAttachment attachment = attachmentIDNameMap
 														.get(attachmentId);
 												if (attachment == null) {
-													log.warn("Attachment with id "+attachmentId + " does not exist!");
+													log
+															.warn("Attachment with id "
+																	+ attachmentId
+																	+ " does not exist!");
 													continue;
 												}
 												attachmentName = attachment
@@ -777,9 +786,9 @@ public class ProjectTrackerReader extends
 						.debug("Artifact has been lastly modified by connector user and will not be synchronized");
 				return null;
 			}
-			//String createdOnTimeMillis = artifact.getAttributeValue(
-			//		TrackerWebServicesClient.DEFAULT_NAMESPACE,
-			//		CREATED_ON_FIELD);
+			// String createdOnTimeMillis = artifact.getAttributeValue(
+			// TrackerWebServicesClient.DEFAULT_NAMESPACE,
+			// CREATED_ON_FIELD);
 			// long createdOnTime = Long.parseLong(createdOnTimeMillis);
 			ahlVersion = twsclient.getChangeHistoryForArtifact(
 					artifactIdentifier, fromTime, null);
@@ -859,11 +868,12 @@ public class ProjectTrackerReader extends
 				}
 				GenericArtifactField.FieldValueTypeValue gaFieldType = null;
 				gaFieldType = ptGATypesMap.get(ptAttributeType);
-				/*if (trackerAttribute.getAttributeType().equals("USER")) {
-					attValues = getUserAttributesValuesFromHistory(
-							attributeNamespace, attributeTagName,
-							attributeDisplayName, ahlVersion);
-				}*/
+				/*
+				 * if (trackerAttribute.getAttributeType().equals("USER")) {
+				 * attValues = getUserAttributesValuesFromHistory(
+				 * attributeNamespace, attributeTagName, attributeDisplayName,
+				 * ahlVersion); }
+				 */
 				if (attValues != null && attValues.size() > 0
 						&& (!CollectionUtils.isEmptyOrNull(attValues))) {
 					// do nothing
@@ -1038,7 +1048,12 @@ public class ProjectTrackerReader extends
 						&& (!commentor.equals(this.getResyncUserName()) || !isIgnoreConnectorUserUpdates())) {
 					String commentText = comment.getCommentText();
 					String commenter = comment.getCommenter();
-					commentText = "\nOriginal commenter: " + commenter + "\n"
+					commentText = (isShipCommentsWithCreationDate() ? "\nComment Creation Date: "
+							+ DateUtil.format(new Date(commentTime))
+							: "")
+							+ "\nOriginal commenter: "
+							+ commenter
+							+ "\n"
 							+ commentText;
 					GenericArtifactField field = null;
 					field = ga.addNewField(COMMENT_FIELD_NAME,
@@ -1133,65 +1148,31 @@ public class ProjectTrackerReader extends
 		}
 	}
 
-	/*private List<String> getUserAttributesValuesFromHistory(
-			String attributeNamespace, String attributeTagName,
-			String attributeDisplayName, ArtifactHistoryList ahlVersion) {
-		List<String> userAttributeValues = new ArrayList<String>();
-		if (ahlVersion != null) {
-			History[] histories = ahlVersion.getHistory();
-			if (histories != null) {
-				for (History history : histories) {
-					HistoryTransaction[] transactions = history
-							.getHistoryTransaction();
-					if (transactions != null) {
-						for (HistoryTransaction transaction : transactions) {
-							HistoryActivity[] activities = transaction
-									.getHistoryActivity();
-							for (HistoryActivity activity : activities) {
-								String namespace = activity.getNamespace();
-								String tagName = activity.getTagName();
-								if (namespace.equals(attributeNamespace)
-										&& tagName.equals(attributeTagName)) {
-									String[] newValues = activity.getNewValue();
-									String[] oldValues = activity.getOldValue();
-									if (oldValues != null && newValues != null) {
-										String oldValue = oldValues[0];
-										String newValue = newValues[0];
-										if (oldValue == null) {
-											if (!userAttributeValues
-													.contains(newValue)) {
-												userAttributeValues
-														.add(newValue);
-											}
-										} else if (newValue == null) {
-											if (userAttributeValues
-													.contains(oldValue)) {
-												userAttributeValues
-														.remove(oldValue);
-											}
-										} else {
-											// This part will not reach
-											if (!userAttributeValues
-													.contains(newValue)) {
-												userAttributeValues
-														.add(newValue);
-											}
-											if (userAttributeValues
-													.contains(oldValue)) {
-												userAttributeValues
-														.remove(oldValue);
-											}
-										}
-									}
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-		return userAttributeValues;
-	}*/
+	/*
+	 * private List<String> getUserAttributesValuesFromHistory( String
+	 * attributeNamespace, String attributeTagName, String attributeDisplayName,
+	 * ArtifactHistoryList ahlVersion) { List<String> userAttributeValues = new
+	 * ArrayList<String>(); if (ahlVersion != null) { History[] histories =
+	 * ahlVersion.getHistory(); if (histories != null) { for (History history :
+	 * histories) { HistoryTransaction[] transactions = history
+	 * .getHistoryTransaction(); if (transactions != null) { for
+	 * (HistoryTransaction transaction : transactions) { HistoryActivity[]
+	 * activities = transaction .getHistoryActivity(); for (HistoryActivity
+	 * activity : activities) { String namespace = activity.getNamespace();
+	 * String tagName = activity.getTagName(); if
+	 * (namespace.equals(attributeNamespace) &&
+	 * tagName.equals(attributeTagName)) { String[] newValues =
+	 * activity.getNewValue(); String[] oldValues = activity.getOldValue(); if
+	 * (oldValues != null && newValues != null) { String oldValue =
+	 * oldValues[0]; String newValue = newValues[0]; if (oldValue == null) { if
+	 * (!userAttributeValues .contains(newValue)) { userAttributeValues
+	 * .add(newValue); } } else if (newValue == null) { if (userAttributeValues
+	 * .contains(oldValue)) { userAttributeValues .remove(oldValue); } } else {
+	 * // This part will not reach if (!userAttributeValues .contains(newValue))
+	 * { userAttributeValues .add(newValue); } if (userAttributeValues
+	 * .contains(oldValue)) { userAttributeValues .remove(oldValue); } } } } } }
+	 * } } } } return userAttributeValues; }
+	 */
 
 	private String convertOptionValue(String attributeNamespace,
 			String attributeTagName, String attributeValue,
@@ -1685,6 +1666,27 @@ public class ProjectTrackerReader extends
 	 */
 	public boolean isIgnoreConnectorUserUpdates() {
 		return ignoreConnectorUserUpdates;
+	}
+
+	/**
+	 * Defines whether comments should be shipped with comment creation date
+	 * 
+	 * @param shipCommentsWithCreationDate
+	 *            true if creation date should be shipped, false if not
+	 *            (default)
+	 */
+	public void setShipCommentsWithCreationDate(
+			boolean shipCommentsWithCreationDate) {
+		this.shipCommentsWithCreationDate = shipCommentsWithCreationDate;
+	}
+
+	/**
+	 * Returns whether comments will be shipped with comment creation date
+	 * 
+	 * @return true if creation date will be shipped, false if not (default)
+	 */
+	public boolean isShipCommentsWithCreationDate() {
+		return shipCommentsWithCreationDate;
 	}
 
 	private boolean ignoreConnectorUserUpdates = true;
