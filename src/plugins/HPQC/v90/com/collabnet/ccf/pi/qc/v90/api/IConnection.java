@@ -28,7 +28,8 @@ public interface IConnection extends ILifeCycle {
 	void disconnectProject();
 	void releaseConnection();
 	boolean connected();
-	IFactory getBugFactory();
+	IBugFactory getBugFactory();
+	IRequirementsFactory getRequirementsFactory();
     public ICommand getCommand();
     public IHistory getHistory();
 	void disconnect();

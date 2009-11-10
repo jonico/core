@@ -248,7 +248,7 @@ public class Bug extends ActiveXComponent implements IBugActions {
 	}
 
 	public List<String> getAttachmentsNames() {
-		IFactoryList attachments = new Factory(getPropertyAsComponent("Attachments")).getFilter().getNewList();
+		IFactoryList attachments = new BugFactory(getPropertyAsComponent("Attachments")).getFilter().getNewList();
 		List<String> att = new ArrayList<String>();
 		for( int n=1; n<=attachments.getCount(); ++n ) {
 			Dispatch item = attachments.getItem(n);
@@ -271,7 +271,7 @@ public class Bug extends ActiveXComponent implements IBugActions {
 		int maxAttachmentUploadWaitCount = 10;
 		int waitCount = 0;
 		do{
-			IFactoryList attachments = new Factory(getPropertyAsComponent("Attachments")).getFilter().getNewList();
+			IFactoryList attachments = new BugFactory(getPropertyAsComponent("Attachments")).getFilter().getNewList();
 			for( int n=1; n<=attachments.getCount(); ++n ) {
 				Dispatch item = attachments.getItem(n);
 				String fileName = Dispatch.get(item, "FileName").toString();

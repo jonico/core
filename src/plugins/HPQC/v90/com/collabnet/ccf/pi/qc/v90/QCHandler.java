@@ -40,7 +40,7 @@ import com.collabnet.ccf.pi.qc.v90.api.DefectAlreadyLockedException;
 import com.collabnet.ccf.pi.qc.v90.api.IBug;
 import com.collabnet.ccf.pi.qc.v90.api.ICommand;
 import com.collabnet.ccf.pi.qc.v90.api.IConnection;
-import com.collabnet.ccf.pi.qc.v90.api.IFactory;
+import com.collabnet.ccf.pi.qc.v90.api.IBugFactory;
 import com.collabnet.ccf.pi.qc.v90.api.IFactoryList;
 import com.collabnet.ccf.pi.qc.v90.api.IFilter;
 import com.collabnet.ccf.pi.qc.v90.api.IRecordSet;
@@ -51,11 +51,11 @@ import com.jacob.com.ComFailException;
  * The Defect handler class provides support for listing and/or edit defects.
  * 
  */
-public class QCDefectHandler {
+public class QCHandler {
 
 	private static final String FIRST_TAGS = "<html><body>";
 	private static final String LAST_TAGS = "</body></html>";
-	private static final Log log = LogFactory.getLog(QCDefectHandler.class);
+	private static final Log log = LogFactory.getLog(QCHandler.class);
 	// private QCAttachmentHandler attachmentHandler;
 	private QCGAHelper qcGAHelper = new QCGAHelper();
 	private final static String QC_BUG_ID = "BG_BUG_ID";
@@ -79,10 +79,27 @@ public class QCDefectHandler {
 			command = null;
 		}
 	}
+	
+	public static String getRequirementTypeTechnicalId(IConnection qcc , String requirementTypeName) {
+		IRecordSet rs = null;
+		try {
+			rs = executeSQL(qcc, "SELECT TPR_TYPE_ID FROM REQ_TYPE WHERE TPR_NAME = '" + requirementTypeName + "'");
+			if (rs.getRecordCount() != 1) {
+				throw new CCFRuntimeException("Could not retrieve technical id for requirements type "+ requirementTypeName);
+			} else {
+				return rs.getFieldValueAsString("TPR_TYPE_ID");
+			}
+		} finally {
+			if (rs != null) {
+				rs.safeRelease();
+				rs = null;
+			}
+		}
+	}
 
 	// TODO review
 	public List<IQCDefect> getDefectsWithIds(IConnection qcc, List<Integer> ids) {
-		IFactory bf = qcc.getBugFactory();
+		IBugFactory bf = qcc.getBugFactory();
 		IFilter filter = bf.getFilter();
 
 		List<IQCDefect> tasks = new ArrayList<IQCDefect>();
@@ -123,7 +140,7 @@ public class QCDefectHandler {
 			List<GenericArtifactField> allFields, String connectorUser,
 			String targetSystemTimezone) {
 
-		IFactory bugFactory = null;
+		IBugFactory bugFactory = null;
 		IBug bug = null;
 		try {
 			bugFactory = qcc.getBugFactory();
@@ -247,7 +264,7 @@ public class QCDefectHandler {
 			List<GenericArtifactField> allFields, String connectorUser,
 			String targetSystemTimezone) throws RemoteException {
 
-		IFactory bugFactory = null;
+		IBugFactory bugFactory = null;
 		IBug bug = null;
 		try {
 			bugFactory = qcc.getBugFactory();
@@ -670,7 +687,7 @@ public class QCDefectHandler {
 	 *            defect created date and find out the artifactAction.
 	 * @return GenericArtifact Updated artifact
 	 */
-	public GenericArtifact getArtifactAction(
+	public GenericArtifact getArtifactActionForDefects(
 			GenericArtifact latestDefectArtifact, IConnection qcc,
 			String syncInfoTransactionId, String actionId, int entityId,
 			String lastReadTime) {
@@ -680,7 +697,7 @@ public class QCDefectHandler {
 		// Date lastReadDate = DateUtil.parse(lastReadTime);
 		// Date createdOn = qcGAHelper.getDefectCreatedDate(qcc, entityId);
 		if (genArtifactFields != null && genArtifactFields.get(0) != null) {
-			String bgVts = qcGAHelper.findBgVtsFromQC(qcc, Integer
+			String bgVts = qcGAHelper.findVtsFromQC(qcc, Integer
 					.parseInt(actionId), entityId);
 			Date newBgVts = DateUtil.parseQCDate(bgVts);
 			genArtifactFields.get(0).setFieldValue(newBgVts);
@@ -690,8 +707,48 @@ public class QCDefectHandler {
 		}
 		return latestDefectArtifact;
 	}
+	
+	/**
+	 * Obtains the artifactAction based on the date at which that requirement was
+	 * created and the lastReadTime synchronization parameter.
+	 * 
+	 * @param entityId
+	 *            The requirement Id for which the search has to be made in QC
+	 * @param actionId
+	 *            The transactionId at which it needs to be determined if the
+	 *            defect is a create or update.
+	 * @param qcc
+	 *            The Connection object
+	 * @param latestDefectArtifact
+	 *            The GenericArtifact into which the artifactAction is populated
+	 *            after it is determined.
+	 * @param lastReadTime
+	 *            This is synchronization parameter used to compare with the
+	 *            defect created date and find out the artifactAction.
+	 * @return GenericArtifact Updated artifact
+	 */
+	public GenericArtifact getArtifactActionForRequirements(
+			GenericArtifact latestDefectArtifact, IConnection qcc,
+			String syncInfoTransactionId, String actionId, int entityId,
+			String lastReadTime) {
 
-	public List<String> getTransactionIdsInRange(IConnection qcc, int entityId,
+		List<GenericArtifactField> genArtifactFields = latestDefectArtifact
+				.getAllGenericArtifactFieldsWithSameFieldName("RQ_VTS");
+		// Date lastReadDate = DateUtil.parse(lastReadTime);
+		// Date createdOn = qcGAHelper.getDefectCreatedDate(qcc, entityId);
+		if (genArtifactFields != null && genArtifactFields.get(0) != null) {
+			String rqVts = qcGAHelper.findVtsFromQC(qcc, Integer
+					.parseInt(actionId), entityId);
+			Date newRqVts = DateUtil.parseQCDate(rqVts);
+			genArtifactFields.get(0).setFieldValue(newRqVts);
+			String lastModifiedDate = DateUtil.format(newRqVts);
+			latestDefectArtifact
+					.setSourceArtifactLastModifiedDate(lastModifiedDate);
+		}
+		return latestDefectArtifact;
+	}
+
+	public List<String> getTransactionIdsInRangeForDefects(IConnection qcc, int entityId,
 			int syncInfoTxnId, int actionId, String connectorUser) {
 
 		List<String> listOfTxnIds = new ArrayList<String>();
@@ -707,7 +764,39 @@ public class QCDefectHandler {
 		IRecordSet newRs = null;
 		try {
 			newRs = executeSQL(qcc, sql);
-			log.debug("The SQL query in getTransactionIdsInRange::" + sql);
+			log.debug("The SQL query in getTransactionIdsInRangeForDefects::" + sql);
+			int newRc = newRs.getRecordCount();
+
+			for (int newCnt = 0; newCnt < newRc; newCnt++, newRs.next()) {
+				String fieldValue = newRs.getFieldValueAsString("AU_ACTION_ID");
+				listOfTxnIds.add(fieldValue);
+			}
+		} finally {
+			if (newRs != null) {
+				newRs.safeRelease();
+				newRs = null;
+			}
+		}
+		return listOfTxnIds;
+	}
+	
+	public List<String> getTransactionIdsInRangeForRequirements(IConnection qcc, int entityId,
+			int syncInfoTxnId, int actionId, String connectorUser) {
+
+		List<String> listOfTxnIds = new ArrayList<String>();
+
+		String sql = "SELECT AU_ACTION_ID FROM AUDIT_LOG WHERE AU_ACTION_ID > '"
+				+ syncInfoTxnId
+				+ "' AND AU_ACTION_ID <= '"
+				+ actionId
+				+ "' AND AU_ACTION!='DELETE' AND AU_ENTITY_TYPE='REQ' AND AU_USER!='"
+				+ connectorUser
+				+ "' AND AU_FATHER_ID='-1' AND AU_ENTITY_ID='"
+				+ entityId + "'";
+		IRecordSet newRs = null;
+		try {
+			newRs = executeSQL(qcc, sql);
+			log.debug("The SQL query in getTransactionIdsInRangeForRequirements::" + sql);
 			int newRc = newRs.getRecordCount();
 
 			for (int newCnt = 0; newCnt < newRc; newCnt++, newRs.next()) {
@@ -748,7 +837,7 @@ public class QCDefectHandler {
 	 * @param actionId
 	 * @return
 	 */
-	public String getDeltaOfComment(IRecordSet newRs) {
+	public String getDeltaOfCommentForDefects(IRecordSet newRs) {
 
 		String deltaComment = "";
 		String newFieldValue = null;
@@ -759,6 +848,62 @@ public class QCDefectHandler {
 		for (int newCnt = 0; newCnt < newRc; newCnt++, newRs.next()) {
 			String fieldName = newRs.getFieldValueAsString("AP_FIELD_NAME");
 			if (fieldName.equals("BG_DEV_COMMENTS")) {
+				String oldFieldValue = newRs
+						.getFieldValueAsString("AP_OLD_LONG_VALUE");
+				newFieldValue = newRs
+						.getFieldValueAsString("AP_NEW_LONG_VALUE");
+				if (!StringUtils.isEmpty(newFieldValue)
+						&& !StringUtils.isEmpty(oldFieldValue)) {
+					if (newFieldValue.length() > oldFieldValue.length()) {
+						String strippedOldValue = this
+								.stripStartAndEndTags(oldFieldValue);
+						String strippedNewValue = this
+								.stripStartAndEndTags(newFieldValue);
+						deltaComment += (strippedNewValue
+								.substring(strippedOldValue.length()));
+					} else if (newFieldValue.length() == oldFieldValue.length()) {
+						log.warn("QC comments not changed");
+					} else {
+						log.warn("New comment is smaller than old comment");
+					}
+				} else {
+					if (!StringUtils.isEmpty(newFieldValue)) {
+						deltaComment = newFieldValue;
+					}
+				}
+			}
+		}
+		if (StringUtils.isEmpty(newFieldValue))
+			return emptyString;
+		else {
+			deltaComment = deltaComment
+					.replaceAll(
+							"<[fF][oO][Nn][Tt]\\s*[cC][oO][lL][oO][rR]=[\"']#[0-9]{6,6}[\"']><b>_+</b></[fF][oO][Nn][Tt]>",
+							emptyString);
+			deltaComment = FIRST_TAGS + deltaComment + LAST_TAGS;
+			return deltaComment;
+		}
+	}
+	
+	/**
+	 * Gets the difference between the comment values of the previous and
+	 * current transaction pointed by actionId
+	 * 
+	 * @param qcc
+	 * @param actionId
+	 * @return
+	 */
+	public String getDeltaOfCommentForRequirements(IRecordSet newRs) {
+
+		String deltaComment = "";
+		String newFieldValue = null;
+		String emptyString = "";
+
+		int newRc = newRs.getRecordCount();
+
+		for (int newCnt = 0; newCnt < newRc; newCnt++, newRs.next()) {
+			String fieldName = newRs.getFieldValueAsString("AP_FIELD_NAME");
+			if (fieldName.equals("RQ_DEV_COMMENTS")) {
 				String oldFieldValue = newRs
 						.getFieldValueAsString("AP_OLD_LONG_VALUE");
 				newFieldValue = newRs
@@ -829,7 +974,7 @@ public class QCDefectHandler {
 	 * @param fieldName
 	 * @return
 	 */
-	public String getBugIdValueFromGenericArtifactInDefectHandler(
+	public String getIntegerValueFromGenericArtifactInDefectHandler(
 			GenericArtifact individualGenericArtifact, String fieldName) {
 
 		Integer intFieldValue = (Integer) individualGenericArtifact
@@ -873,7 +1018,7 @@ public class QCDefectHandler {
 
 	public IQCDefect[] getDefectsWithOtherSystemId(IConnection qcc,
 			String otherSystemIdField, String otherSystemIdValue) {
-		IFactory bugFactory = qcc.getBugFactory();
+		IBugFactory bugFactory = qcc.getBugFactory();
 		IFilter filter = bugFactory.getFilter();
 		IFactoryList factoryList;
 
@@ -892,5 +1037,57 @@ public class QCDefectHandler {
 		}
 		filter.safeRelease();
 		return qcDefectArray;
+	}
+
+	public List<ArtifactState> getLatestChangedRequirements(
+			IConnection qcc, String connectorUser, String transactionId,
+			String technicalRequirementsId) {
+		int rc = 0;
+		String sql = "SELECT AL.AU_ENTITY_ID AS AU_ENTITY_ID, AL.AU_ACTION_ID AS AU_ACTION_ID, AL.AU_TIME AS AU_TIME FROM AUDIT_LOG AL, REQ WHERE AL.AU_ENTITY_TYPE = 'REQ' AND AU_ACTION_ID > '"
+				+ transactionId
+				+ "' AND AL.AU_ACTION!='DELETE' AND AL.AU_USER != '"
+				+ connectorUser
+				+ "' AND AL.AU_FATHER_ID = '-1'"
+				+ " AND REQ.RQ_TYPE_ID = '" + technicalRequirementsId + "'"
+				+ " AND AL.AU_ENTITY_ID = REQ.RQ_REQ_ID"
+				+ " ORDER BY AU_ACTION_ID";
+
+		log.debug(sql);
+		ArrayList<ArtifactState> changedRequirements = new ArrayList<ArtifactState>();
+		HashMap<String, ArtifactState> artifactIdStateMap = new HashMap<String, ArtifactState>();
+		IRecordSet rs = null;
+		try {
+			rs = executeSQL(qcc, sql);
+			if (rs != null)
+				rc = rs.getRecordCount();
+
+			for (int cnt = 0; cnt < rc; cnt++, rs.next()) {
+				String reqId = rs.getFieldValueAsString("AU_ENTITY_ID");
+				String actionIdStr = rs.getFieldValueAsString("AU_ACTION_ID");
+				int actionId = Integer.parseInt(actionIdStr);
+				String actionDateStr = rs.getFieldValueAsString("AU_TIME");
+				Date actionDate = DateUtil.parseQCDate(actionDateStr);
+				if (artifactIdStateMap.containsKey(reqId)) {
+					ArtifactState state = artifactIdStateMap.get(reqId);
+					changedRequirements.remove(state);
+					state.setArtifactLastModifiedDate(actionDate);
+					state.setArtifactVersion(actionId);
+					changedRequirements.add(state);
+				} else {
+					ArtifactState state = new ArtifactState();
+					state.setArtifactId(reqId);
+					state.setArtifactLastModifiedDate(actionDate);
+					state.setArtifactVersion(actionId);
+					changedRequirements.add(state);
+					artifactIdStateMap.put(reqId, state);
+				}
+			}
+		} finally {
+			if (rs != null) {
+				rs.safeRelease();
+				rs = null;
+			}
+		}
+		return changedRequirements;
 	}
 }

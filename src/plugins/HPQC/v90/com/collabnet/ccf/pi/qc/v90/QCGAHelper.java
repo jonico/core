@@ -34,11 +34,14 @@ import com.collabnet.ccf.core.CCFRuntimeException;
 import com.collabnet.ccf.core.utils.DateUtil;
 import com.collabnet.ccf.pi.qc.v90.api.IBug;
 import com.collabnet.ccf.pi.qc.v90.api.IConnection;
-import com.collabnet.ccf.pi.qc.v90.api.IFactory;
+import com.collabnet.ccf.pi.qc.v90.api.IBugFactory;
 import com.collabnet.ccf.pi.qc.v90.api.IFactoryList;
 import com.collabnet.ccf.pi.qc.v90.api.IFilter;
 import com.collabnet.ccf.pi.qc.v90.api.IRecordSet;
+import com.collabnet.ccf.pi.qc.v90.api.IRequirement;
+import com.collabnet.ccf.pi.qc.v90.api.IRequirementsFactory;
 import com.collabnet.ccf.pi.qc.v90.api.dcom.Bug;
+import com.collabnet.ccf.pi.qc.v90.api.dcom.Requirement;
 /**
  * This class contains several methods that are used by QCDefectHandler, QCAttachmentHandler and QCWriter
  * and are Generic so that some of the functionalities could be reused in other components
@@ -50,6 +53,7 @@ import com.collabnet.ccf.pi.qc.v90.api.dcom.Bug;
 public class QCGAHelper {
 
 	private static final Log log = LogFactory.getLog(QCGAHelper.class);
+	
 	/**
 	 * Fetches the QC defect given the connection object and the defect ID to be
 	 * fetched.
@@ -62,7 +66,7 @@ public class QCGAHelper {
 	 *
 	 */
 	public QCDefect getDefectWithId(IConnection qcc, int id) {
-		IFactory bf = null;
+		IBugFactory bf = null;
 		IFilter filter = null;
 		IFactoryList fl = null;
 		IBug bug = null;
@@ -88,6 +92,46 @@ public class QCGAHelper {
 		QCDefect defect = new QCDefect((Bug) bug);
 
 		return defect;
+	}
+	
+	/**
+	 * Fetches the QC requirement given the connection object and the requirement ID to be
+	 * fetched.
+	 *
+	 * @param qcc
+	 *            The Connection object
+	 * @param id
+	 *            The requirement ID which needs to be fetched
+	 * @return QCDefect QCDefect object that represents a QC Defect
+	 *
+	 */
+	public QCRequirement getRequirementWithId(IConnection qcc, int id) {
+		IRequirementsFactory rf = null;
+		IFilter filter = null;
+		IFactoryList fl = null;
+		IRequirement requirement = null;
+		try {
+			rf = qcc.getRequirementsFactory();
+			filter = rf.getFilter();
+			filter.setFilter(QCConfigHelper.rqReqIdFieldName, Integer.toString(id));
+			fl = filter.getNewList();
+			requirement = fl.getRequirement(1);
+		} catch (Exception e) {
+			String message = "Exception caught in getRequirementWithId of QCHandler";
+			log.error(message);
+			throw new CCFRuntimeException(message, e);
+		} finally {
+			if(fl != null) {
+				fl.safeRelease();
+			}
+			if(filter != null) {
+				filter.safeRelease();
+			}
+			rf = null;
+		}
+		QCRequirement req = new QCRequirement((Requirement) requirement);
+
+		return req;
 	}
 
 	/**
@@ -167,7 +211,7 @@ public class QCGAHelper {
 		String fieldValue = null;
 		Date createdOn = new Date();
 		try {
-			rs = QCDefectHandler.executeSQL(qcc, sql);
+			rs = QCHandler.executeSQL(qcc, sql);
 			int rc = rs.getRecordCount();
 
 			for (int cnt = 0; cnt < rc; cnt++, rs.next()) {
@@ -198,13 +242,13 @@ public class QCGAHelper {
 	 * @param entityId
 	 * @return
 	 */
-	public String findBgVtsFromQC(IConnection qcc, int actionId, int entityId) {
+	public String findVtsFromQC(IConnection qcc, int actionId, int entityId) {
 
 		String sql = "SELECT * FROM AUDIT_LOG WHERE AU_ACTION_ID='" + actionId
 				+ "' AND AU_ACTION!='DELETE' AND AU_ENTITY_ID='" + entityId + "'";
 		IRecordSet newRs = null;
 		try {
-			newRs = QCDefectHandler.executeSQL(qcc, sql);
+			newRs = QCHandler.executeSQL(qcc, sql);
 			String auTime = newRs.getFieldValueAsString("AU_TIME");
 			return auTime;
 		}
@@ -233,7 +277,7 @@ public class QCGAHelper {
 				+ entityId + "' AND CR_REFERENCE like '%" + sanitizeStringForSQLLikeQuery(attachmentName,"\\") + "%' ESCAPE '\\'";
 		IRecordSet newRs = null;
 		try {
-			newRs = QCDefectHandler.executeSQL(qcc, sql);
+			newRs = QCHandler.executeSQL(qcc, sql);
 			if (newRs != null && newRs.getRecordCount() != 0) {
 				attachmentDetails = new ArrayList<String>();
 				String crRefId = newRs.getFieldValueAsString("CR_REF_ID");
@@ -284,7 +328,7 @@ public class QCGAHelper {
 		String sql = "SELECT AU_ENTITY_ID FROM AUDIT_LOG WHERE AU_FATHER_ID="+ deleteTransactionId +" AND AU_ENTITY_TYPE='CROS_REF' AND AU_DESCRIPTION LIKE '%"+sanitizeStringForSQLLikeQuery(attachmentName,"\\")+"' ESCAPE '\\'";
 		IRecordSet newRs = null;
 		try {
-			newRs = QCDefectHandler.executeSQL(qcc, sql);
+			newRs = QCHandler.executeSQL(qcc, sql);
 			if (newRs != null && newRs.getRecordCount() != 0) {
 				attachmentId = newRs.getFieldValueAsString("AU_ENTITY_ID");
 			}
@@ -312,7 +356,7 @@ public class QCGAHelper {
 	 * @param resyncUser resync user name
 	 * @return List<Object> -> String TransactionId and List of attachment names for the given defectId after the given transactionId
 	 */
-	public List<Object> getTxnIdAndAuDescription(String bugId, String txnId,
+	public List<Object> getTxnIdAndAuDescriptionForDefect(String bugId, String txnId,
 			IConnection qcc, String connectorUser, String resyncUser) {
 
 		List<Object> txnIdAndAuDescription = new ArrayList<Object>();
@@ -331,9 +375,9 @@ public class QCGAHelper {
 				+ txnId + "' order by au_action_id desc";
 		IRecordSet newRs = null;
 		try {
-			newRs = QCDefectHandler.executeSQL(qcc, sql);
+			newRs = QCHandler.executeSQL(qcc, sql);
 			int newRc = newRs.getRecordCount();
-			log.debug("In QCDefectHandler.getTxnIdAndAuDescription, sql=" + sql);
+			log.debug("In QCHandler.getTxnIdAndAuDescriptionForDefect, sql=" + sql);
 			if(newRc>0) {
 				for (int newCnt = 0; newCnt < newRc; newCnt++, newRs.next()) {
 					if (newCnt == 0){
@@ -377,6 +421,88 @@ public class QCGAHelper {
 		txnIdAndAuDescription.add((Object) modifiedBy);
 		return txnIdAndAuDescription;
 	}
+	
+	/**
+	 * Gets the value of the lastTransactionId of a defect and a list of descriptions for attachments (if any)
+	 *
+	 * @param requirementId
+	 * 			The  requirement Id for which the search has to be made in QC
+	 * @param txnId
+	 * 			The transactionId starting from which the search has to be made for a particular requirement id in QC
+	 * @param qcc
+	 *            The Connection object
+	 * @param connectorUser
+	 *            The connectorUser name used while updating the comments
+	 * @param resyncUser resync user name
+	 * @return List<Object> -> String TransactionId and List of attachment names for the given  requirement id after the given transactionId
+	 */
+	public List<Object> getTxnIdAndAuDescriptionForRequirement(String requirementId, String txnId,
+			IConnection qcc, String connectorUser, String resyncUser) {
+
+		List<Object> txnIdAndAuDescription = new ArrayList<Object>();
+		String transactionId = null;
+		String modifiedBy = null;
+		String resyncUserFilter = "";
+		if(!StringUtils.isEmpty(resyncUser)){
+			resyncUserFilter = "' and au_user !='"+resyncUser;
+		}
+		Map<String, Map<String, String>> addedAttachmentNames = new TreeMap<String, Map<String, String>>();
+		Map<String, Map<String, String>> deletedAttachmentNames = new TreeMap<String, Map<String, String>>();
+		String sql = "select AU_TIME, AU_ACTION_ID, AU_DESCRIPTION, AU_USER from audit_log where au_entity_id = '"
+				+ requirementId
+				//Removed and au_father_id='-1'
+				+ "' and au_action!='DELETE' and au_entity_type='REQ' and au_user !='"+connectorUser + resyncUserFilter +"' and au_action_id > '"
+				+ txnId + "' order by au_action_id desc";
+		IRecordSet newRs = null;
+		try {
+			newRs = QCHandler.executeSQL(qcc, sql);
+			int newRc = newRs.getRecordCount();
+			log.debug("In QCHandler.getTxnIdAndAuDescriptionForRequirement, sql=" + sql);
+			if(newRc>0) {
+				for (int newCnt = 0; newCnt < newRc; newCnt++, newRs.next()) {
+					if (newCnt == 0){
+						transactionId = newRs.getFieldValueAsString("AU_ACTION_ID");
+						modifiedBy = newRs.getFieldValueAsString("AU_USER");
+					}
+					String auDescription = newRs.getFieldValueAsString("AU_DESCRIPTION");
+					List<String> attachDescription = getAttachmentOperation(auDescription);
+					if (attachDescription != null && attachDescription.size() > 0) {
+						if (attachDescription.get(1) != null){
+							if(attachDescription.get(1).equals("added")) {
+								String addTransactionId = newRs.getFieldValueAsString("AU_ACTION_ID");
+								String addTime = newRs.getFieldValueAsString("AU_TIME");
+								Map<String, String> values = new TreeMap<String, String>();
+								values.put("AU_ACTION_ID", addTransactionId);
+								values.put("AU_TIME", addTime);
+								addedAttachmentNames.put(attachDescription.get(2), values);
+							}
+							else if(attachDescription.get(1).equals("deleted")){
+								String deleteTransactionId = newRs.getFieldValueAsString("AU_ACTION_ID");
+								String deleteTime = newRs.getFieldValueAsString("AU_TIME");
+								Map<String, String> values = new TreeMap<String, String>();
+								values.put("AU_ACTION_ID", deleteTransactionId);
+								values.put("AU_TIME", deleteTime);
+								deletedAttachmentNames.put(attachDescription.get(2), values);
+							}
+						}
+					}
+				}
+			}
+		}
+		finally {
+			if(newRs != null){
+				newRs.safeRelease();
+				newRs = null;
+			}
+		}
+		txnIdAndAuDescription.add((Object) transactionId);
+		txnIdAndAuDescription.add((Object) addedAttachmentNames);
+		txnIdAndAuDescription.add((Object) deletedAttachmentNames);
+		txnIdAndAuDescription.add((Object) modifiedBy);
+		return txnIdAndAuDescription;
+	}
+	
+	
 	/**
 	 * Gets the exact operation of the attachment i.e, added, deleted or updated
 	 *

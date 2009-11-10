@@ -61,7 +61,8 @@ public class QCConnectionFactory implements ConnectionFactory<IConnection> {
 		if(repositoryId != null){
 			String[] splitRepoId = repositoryId.split(PARAM_DELIMITER);
 			if(splitRepoId != null){
-				if(splitRepoId.length == 2){
+				// we now also accept a double hyphen to synchronize requirement types as well
+				if(splitRepoId.length == 2 || splitRepoId.length == 3){
 					domain = splitRepoId[0];
 					project = splitRepoId[1];
 				}

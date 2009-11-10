@@ -73,7 +73,7 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 	private static final Log log = LogFactory.getLog(QCWriter.class);
 	// private static final Log logConflictResolutor =
 	// LogFactory.getLog("com.collabnet.ccf.core.conflict.resolution");
-	private QCDefectHandler defectHandler;
+	private QCHandler defectHandler;
 	private QCAttachmentHandler attachmentHandler;
 	private QCGAHelper qcGAHelper;
 	// private ConnectionManager<IConnection> connectionManager = null;
@@ -266,7 +266,7 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 
 		IRecordSet newRs = null;
 		try {
-			newRs = QCDefectHandler.executeSQL(qcc, sql);
+			newRs = QCHandler.executeSQL(qcc, sql);
 			int newRc = newRs.getRecordCount();
 			log
 					.debug("In QCDefectHandler.getTxnIdAndAuDescription, sql="
@@ -518,7 +518,7 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 		}
 
 		if (exceptions.size() == 0) {
-			defectHandler = new QCDefectHandler();
+			defectHandler = new QCHandler();
 			attachmentHandler = new QCAttachmentHandler();
 			qcGAHelper = new QCGAHelper();
 		}
@@ -1128,7 +1128,7 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 		return resyncPassword;
 	}
 
-	public QCDefectHandler getDefectHandler() {
+	public QCHandler getDefectHandler() {
 		return defectHandler;
 	}
 

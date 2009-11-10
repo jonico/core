@@ -134,7 +134,7 @@ public class QCMigrator extends QCWriter {
 			}
 		}
 		IConnection connection = this.connect(genericArtifact);
-		QCDefectHandler defectHandler = this.getDefectHandler();
+		QCHandler defectHandler = this.getDefectHandler();
 		List<Integer> ids = new ArrayList<Integer>();
 		ids.add(qcDefectId);
 		List<IQCDefect> defects = defectHandler.getDefectsWithIds(connection, ids);

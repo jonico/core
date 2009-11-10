@@ -108,10 +108,10 @@ public class QCDefect extends Bug implements IQCDefect {
 			String actionId, String entityId, int commentDescriber,
 			int commentQualifier, List<String> attachmentNames,
 			String syncInfoTransactionId, String connectorUser,
-			QCDefectHandler defectHandler, String sourceSystemTimezone,
+			QCHandler defectHandler, String sourceSystemTimezone,
 			boolean isResync) {
-		genericArtifact = QCConfigHelper.getSchemaFields(qcc, isResync);
-		List<String> txnIds = defectHandler.getTransactionIdsInRange(qcc,
+		genericArtifact = QCConfigHelper.getSchemaFieldsForDefect(qcc, isResync);
+		List<String> txnIds = defectHandler.getTransactionIdsInRangeForDefects(qcc,
 				Integer.parseInt(entityId), Integer
 						.parseInt(syncInfoTransactionId), Integer
 						.parseInt(actionId), connectorUser);
@@ -243,7 +243,7 @@ public class QCDefect extends Bug implements IQCDefect {
 				auditPropertiesRS = defectHandler.getAuditPropertiesRecordSet(
 						qcc, txnIds);
 				deltaComment = defectHandler
-						.getDeltaOfComment(auditPropertiesRS);
+						.getDeltaOfCommentForDefects(auditPropertiesRS);
 			} finally {
 				if (auditPropertiesRS != null) {
 					auditPropertiesRS.safeRelease();

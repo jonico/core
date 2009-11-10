@@ -20,14 +20,16 @@ package com.collabnet.ccf.pi.qc.v90.api.dcom;
 
 import com.collabnet.ccf.pi.qc.v90.api.ICommand;
 import com.collabnet.ccf.pi.qc.v90.api.IConnection;
-import com.collabnet.ccf.pi.qc.v90.api.IFactory;
+import com.collabnet.ccf.pi.qc.v90.api.IBugFactory;
 import com.collabnet.ccf.pi.qc.v90.api.IHistory;
+import com.collabnet.ccf.pi.qc.v90.api.IRequirementsFactory;
 import com.jacob.activeX.ActiveXComponent;
 import com.jacob.com.Dispatch;
 
 public class Connection extends ActiveXComponent implements IConnection
 {
-	private IFactory factory = null;
+	private IBugFactory bugFactory = null;
+	private IRequirementsFactory requirementsFactory = null;
 	private ICommand command = null;
     /**
 	 *
@@ -90,12 +92,20 @@ public class Connection extends ActiveXComponent implements IConnection
         return getPropertyAsBoolean("Connected");
     }
 
-    public IFactory getBugFactory()
+    public IBugFactory getBugFactory()
     {
-    	if(factory == null){
-    		factory = new Factory(getPropertyAsComponent("BugFactory"));
+    	if(bugFactory == null){
+    		bugFactory = new BugFactory(getPropertyAsComponent("BugFactory"));
     	}
-        return factory;
+        return bugFactory;
+    }
+    
+    public IRequirementsFactory getRequirementsFactory()
+    {
+    	if(requirementsFactory == null){
+    		requirementsFactory = new RequirementsFactory(getPropertyAsComponent("ReqFactory"));
+    	}
+        return requirementsFactory;
     }
 
     public ICommand getCommand()
@@ -115,9 +125,13 @@ public class Connection extends ActiveXComponent implements IConnection
     public void disconnect()
     {
     	loggedIn = false;
-    	if(factory != null) {
-	    	factory.safeRelease();
-	    	factory = null;
+    	if(bugFactory != null) {
+	    	bugFactory.safeRelease();
+	    	bugFactory = null;
+    	}
+    	if(requirementsFactory != null) {
+	    	requirementsFactory.safeRelease();
+	    	requirementsFactory = null;
     	}
     	if(command != null) {
 	    	command.safeRelease();
