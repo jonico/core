@@ -21,9 +21,7 @@ import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -95,61 +93,6 @@ public class QCReader extends AbstractReader<IConnection> {
 	}
 
 	/**
-	 * Returns whether this repository id belongs to a defect repository
-	 * If not, it belongs to a requirements type
-	 * @param repositoryId repositoryId
-	 * @return true if repository id belongs to a defect repository
-	 */
-	public static boolean isDefectRepository(String repositoryId) {
-		String[] splitRepoId = repositoryId.split(QCConnectionFactory.PARAM_DELIMITER);
-		if(splitRepoId != null){
-			// we now also accept a double hyphen to synchronize requirement types as well
-			if(splitRepoId.length == 2){
-				return true;
-			}
-			else if (splitRepoId.length == 3) {
-				return false;
-			}
-			else {
-				throw new IllegalArgumentException("Repository Id "+repositoryId+" is invalid.");
-			}
-		}
-		throw new IllegalArgumentException("Repository Id "+repositoryId+" is invalid.");
-	}
-	
-	/**
-	 * Extracts the requirements type from the repository id (does a lookup and retrieve technical id for it)
-	 * @param repositoryId repository id
-	 * @param qcc HP QC connection
-	 * @return requirements type
-	 */
-	public String extractRequirementsType (String repositoryId, IConnection qcc) {
-		// first lookup the map
-		String requirementsType = repositoryIdToTechnicalRequirementsTypeIdMap.get(repositoryId);
-		if (requirementsType == null) {
-			// we have to extract the requirements type now
-			String[] splitRepoId = repositoryId.split(QCConnectionFactory.PARAM_DELIMITER);
-			if(splitRepoId != null){
-				// we now also accept a double hyphen to synchronize requirement types as well
-				if(splitRepoId.length == 3){
-					requirementsType = splitRepoId[2];
-					// now we have to retrieve the technical id for the requirements type
-					String technicalId = QCHandler.getRequirementTypeTechnicalId(qcc, requirementsType);
-					repositoryIdToTechnicalRequirementsTypeIdMap.put(repositoryId, technicalId);
-					return technicalId;
-				}
-				else {
-					throw new IllegalArgumentException("Repository Id "+repositoryId+" is invalid.");
-				}
-			} else {
-				throw new IllegalArgumentException("Repository Id "+repositoryId+" is invalid.");
-			}
-		} else {
-			return requirementsType;
-		}
-	}
-	
-	/**
 	 * Fetches the defect IDs that are changed depending on the synchronization
 	 * parameters.
 	 * 
@@ -192,8 +135,8 @@ public class QCReader extends AbstractReader<IConnection> {
 		}
 		// we have to extract defects
 		List<ArtifactState> artifactIds = null;
-		
-		if (isDefectRepository(sourceRepositoryId)) {
+
+		if (QCConnectionFactory.isDefectRepository(sourceRepositoryId)) {
 			try {
 				artifactIds = defectHandler.getLatestChangedDefects(connection,
 						isIgnoreConnectorUserUpdates() ? getUserName() : "",
@@ -209,8 +152,10 @@ public class QCReader extends AbstractReader<IConnection> {
 		} else {
 			try {
 				// we have to extract requirements
-				String technicalRequirementsId = extractRequirementsType(sourceRepositoryId, connection);
-				artifactIds = defectHandler.getLatestChangedRequirements(connection,
+				String technicalRequirementsId = QCConnectionFactory
+						.extractRequirementsType(sourceRepositoryId, connection);
+				artifactIds = defectHandler.getLatestChangedRequirements(
+						connection,
 						isIgnoreConnectorUserUpdates() ? getUserName() : "",
 						transactionId, technicalRequirementsId);
 			} catch (Exception e1) {
@@ -331,7 +276,8 @@ public class QCReader extends AbstractReader<IConnection> {
 		List<String> artifactIds = new ArrayList<String>();
 		artifactIds.add(sourceArtifactId);
 		List<GenericArtifact> attachments = new ArrayList<GenericArtifact>();
-		boolean isDefectRepository = isDefectRepository(sourceRepositoryId);
+		boolean isDefectRepository = QCConnectionFactory
+				.isDefectRepository(sourceRepositoryId);
 		try {
 			attachments = attachmentHandler.getLatestChangedAttachments(
 					attachments, connection,
@@ -342,7 +288,8 @@ public class QCReader extends AbstractReader<IConnection> {
 					sourceSystemKind, targetRepositoryId, targetRepositoryKind,
 					targetSystemId, targetSystemKind, this
 							.getMaxAttachmentSizePerArtifact(), this
-							.isShipAttachmentsWithArtifact(), isDefectRepository);
+							.isShipAttachmentsWithArtifact(),
+					isDefectRepository);
 			if (attachments != null) {
 				for (GenericArtifact ga : attachments) {
 					ga.setSourceArtifactLastModifiedDate(artifactData
@@ -411,17 +358,15 @@ public class QCReader extends AbstractReader<IConnection> {
 			throw new CCFRuntimeException(cause, e);
 		}
 		GenericArtifact latestArtifact = null;
-		if (isDefectRepository(sourceRepositoryId)) {
+		if (QCConnectionFactory.isDefectRepository(sourceRepositoryId)) {
 			try {
 				// we do not like to filter the resync user at this place, so we
 				// pass an empty string
 				List<Object> transactionIdAndAttachOperation = qcGAHelper
-						.getTxnIdAndAuDescriptionForDefect(
-								artifactId,
-								syncInfoTransactionId,
-								connection,
-								isIgnoreConnectorUserUpdates() ? getUserName() : "",
-								"");
+						.getTxnIdAndAuDescriptionForDefect(artifactId,
+								syncInfoTransactionId, connection,
+								isIgnoreConnectorUserUpdates() ? getUserName()
+										: "", "");
 				if (transactionIdAndAttachOperation == null)
 					return null;
 				String lastTransactionId = (String) transactionIdAndAttachOperation
@@ -429,7 +374,8 @@ public class QCReader extends AbstractReader<IConnection> {
 				String lastModifiedBy = (String) transactionIdAndAttachOperation
 						.get(3);
 				boolean isResync = false;
-				// we like to get the comments in case of an export even if the last
+				// we like to get the comments in case of an export even if the
+				// last
 				// user was the resync user
 				if (lastModifiedBy == null || lastTransactionId == null) {
 					return null;
@@ -442,8 +388,9 @@ public class QCReader extends AbstractReader<IConnection> {
 						Integer.parseInt(artifactId));
 				latestArtifact = latestDefect.getGenericArtifactObject(
 						connection, lastTransactionId, artifactId, this
-								.getCommentDescriber(), this.getCommentQualifier(),
-						null, syncInfoTransactionId,
+								.getCommentDescriber(), this
+								.getCommentQualifier(), null,
+						syncInfoTransactionId,
 						isIgnoreConnectorUserUpdates() ? getUserName() : "",
 						defectHandler, sourceSystemTimezone, isResync);
 				// if (latestDefectArtifact == null)
@@ -459,15 +406,15 @@ public class QCReader extends AbstractReader<IConnection> {
 				latestArtifact.setErrorCode("ok");
 				latestArtifact
 						.setIncludesFieldMetaData(GenericArtifact.IncludesFieldMetaDataValue.FALSE);
-	
+
 				sourceArtifactId = defectHandler
 						.getIntegerValueFromGenericArtifactInDefectHandler(
 								latestArtifact, "BG_BUG_ID");
-				latestArtifact = defectHandler.assignValues(
-						latestArtifact, sourceArtifactId, sourceRepositoryId,
+				latestArtifact = defectHandler.assignValues(latestArtifact,
+						sourceArtifactId, sourceRepositoryId,
 						sourceRepositoryKind, sourceSystemId, sourceSystemKind,
-						targetRepositoryId, targetRepositoryKind, targetSystemId,
-						targetSystemKind, lastTransactionId);
+						targetRepositoryId, targetRepositoryKind,
+						targetSystemId, targetSystemKind, lastTransactionId);
 				if (isResync) {
 					latestArtifact
 							.setArtifactAction(GenericArtifact.ArtifactActionValue.RESYNC);
@@ -482,16 +429,15 @@ public class QCReader extends AbstractReader<IConnection> {
 		} else {
 			// we are going to extract requirements
 			try {
-				String technicalRequirementsTypeId = extractRequirementsType(sourceRepositoryId, connection);
+				String technicalRequirementsTypeId = QCConnectionFactory
+						.extractRequirementsType(sourceRepositoryId, connection);
 				// we do not like to filter the resync user at this place, so we
 				// pass an empty string
 				List<Object> transactionIdAndAttachOperation = qcGAHelper
-						.getTxnIdAndAuDescriptionForRequirement(
-								artifactId,
-								syncInfoTransactionId,
-								connection,
-								isIgnoreConnectorUserUpdates() ? getUserName() : "",
-								"");
+						.getTxnIdAndAuDescriptionForRequirement(artifactId,
+								syncInfoTransactionId, connection,
+								isIgnoreConnectorUserUpdates() ? getUserName()
+										: "", "");
 				if (transactionIdAndAttachOperation == null)
 					return null;
 				String lastTransactionId = (String) transactionIdAndAttachOperation
@@ -499,7 +445,8 @@ public class QCReader extends AbstractReader<IConnection> {
 				String lastModifiedBy = (String) transactionIdAndAttachOperation
 						.get(3);
 				boolean isResync = false;
-				// we like to get the comments in case of an export even if the last
+				// we like to get the comments in case of an export even if the
+				// last
 				// user was the resync user
 				if (lastModifiedBy == null || lastTransactionId == null) {
 					return null;
@@ -508,40 +455,82 @@ public class QCReader extends AbstractReader<IConnection> {
 						&& isIgnoreConnectorUserUpdates()) {
 					isResync = true;
 				}
-				QCRequirement latestRequirement = qcGAHelper.getRequirementWithId(connection,
-						Integer.parseInt(artifactId));
-				log.warn("Father id: "+latestRequirement.getParentId());
-				latestArtifact = latestRequirement.getGenericArtifactObject(
-						connection, lastTransactionId, artifactId, this
-								.getCommentDescriber(), this.getCommentQualifier(),
-						null, syncInfoTransactionId,
-						isIgnoreConnectorUserUpdates() ? getUserName() : "",
-						defectHandler, sourceSystemTimezone, isResync, technicalRequirementsTypeId);
-				// if (latestDefectArtifact == null)
-				// return null;
-				latestArtifact = defectHandler.getArtifactActionForRequirements(
-						latestArtifact, connection, syncInfoTransactionId,
-						lastTransactionId, Integer.parseInt(artifactId),
-						fromTimestamp);
-				latestArtifact
-						.setArtifactMode(GenericArtifact.ArtifactModeValue.COMPLETE);
-				latestArtifact
-						.setArtifactType(GenericArtifact.ArtifactTypeValue.PLAINARTIFACT);
-				latestArtifact.setErrorCode("ok");
-				latestArtifact
-						.setIncludesFieldMetaData(GenericArtifact.IncludesFieldMetaDataValue.FALSE);
-	
-				sourceArtifactId = defectHandler
-						.getIntegerValueFromGenericArtifactInDefectHandler(
-								latestArtifact, "RQ_REQ_ID");
-				latestArtifact = defectHandler.assignValues(
-						latestArtifact, sourceArtifactId, sourceRepositoryId,
-						sourceRepositoryKind, sourceSystemId, sourceSystemKind,
-						targetRepositoryId, targetRepositoryKind, targetSystemId,
-						targetSystemKind, lastTransactionId);
-				if (isResync) {
+				QCRequirement latestRequirement = null;
+				try {
+					latestRequirement = qcGAHelper.getRequirementWithId(
+							connection, Integer.parseInt(artifactId));
+
+					latestArtifact = latestRequirement
+							.getGenericArtifactObject(
+									connection,
+									lastTransactionId,
+									artifactId,
+									this.getCommentDescriber(),
+									this.getCommentQualifier(),
+									null,
+									syncInfoTransactionId,
+									isIgnoreConnectorUserUpdates() ? getUserName()
+											: "", defectHandler,
+									sourceSystemTimezone, isResync,
+									technicalRequirementsTypeId);
+					// if (latestDefectArtifact == null)
+					// return null;
+					latestArtifact = defectHandler
+							.getArtifactActionForRequirements(latestArtifact,
+									connection, syncInfoTransactionId,
+									lastTransactionId, Integer
+											.parseInt(artifactId),
+									fromTimestamp);
 					latestArtifact
-							.setArtifactAction(GenericArtifact.ArtifactActionValue.RESYNC);
+							.setArtifactMode(GenericArtifact.ArtifactModeValue.COMPLETE);
+					latestArtifact
+							.setArtifactType(GenericArtifact.ArtifactTypeValue.PLAINARTIFACT);
+					latestArtifact.setErrorCode("ok");
+					latestArtifact
+							.setIncludesFieldMetaData(GenericArtifact.IncludesFieldMetaDataValue.FALSE);
+
+					sourceArtifactId = defectHandler
+							.getIntegerValueFromGenericArtifactInDefectHandler(
+									latestArtifact, "RQ_REQ_ID");
+					latestArtifact = defectHandler.assignValues(latestArtifact,
+							sourceArtifactId, sourceRepositoryId,
+							sourceRepositoryKind, sourceSystemId,
+							sourceSystemKind, targetRepositoryId,
+							targetRepositoryKind, targetSystemId,
+							targetSystemKind, lastTransactionId);
+
+					// set information about parent artifact
+					String parentId = latestRequirement.getParentId();
+					if (parentId != null && !parentId.equals("-1")) {
+						latestArtifact.setDepParentSourceArtifactId(parentId);
+						// find out requirement type of parent
+						QCRequirement parentRequirement = null;
+						try {
+							parentRequirement = qcGAHelper
+									.getRequirementWithId(connection, Integer
+											.parseInt(parentId));
+							String parentRequirementType = parentRequirement
+									.getTypeId();
+							latestArtifact
+									.setDepParentSourceRepositoryId(QCConnectionFactory
+											.generateDependentRepositoryId(
+													sourceRepositoryId,
+													parentRequirementType));
+						} finally {
+							if (parentRequirement != null) {
+								parentRequirement.safeRelease();
+							}
+						}
+					}
+
+					if (isResync) {
+						latestArtifact
+								.setArtifactAction(GenericArtifact.ArtifactActionValue.RESYNC);
+					}
+				} finally {
+					if (latestRequirement != null) {
+						latestRequirement.safeRelease();
+					}
 				}
 			} catch (Exception e1) {
 				String cause = "Error in fetching the defects from QC";
@@ -703,8 +692,8 @@ public class QCReader extends AbstractReader<IConnection> {
 	public GenericArtifact populateRequiredFields(
 			GenericArtifact emptyGenericArtifact, IConnection connection) {
 
-		emptyGenericArtifact = QCConfigHelper
-				.getSchemaFieldsForDefect(connection, false);
+		emptyGenericArtifact = QCConfigHelper.getSchemaFieldsForDefect(
+				connection, false);
 		emptyGenericArtifact
 				.setArtifactMode(GenericArtifact.ArtifactModeValue.UNKNOWN);
 		emptyGenericArtifact
@@ -788,8 +777,8 @@ public class QCReader extends AbstractReader<IConnection> {
 	/**
 	 * Sets the source HP QC system's server URL.
 	 * 
-	 * @param serverUrl -
-	 *            the URL of the source HP QC system.
+	 * @param serverUrl
+	 *            - the URL of the source HP QC system.
 	 */
 	public void setServerUrl(String serverUrl) {
 		this.serverUrl = serverUrl;
@@ -925,9 +914,10 @@ public class QCReader extends AbstractReader<IConnection> {
 	}
 
 	/**
-	 * @param countBeforeCOMReinitialization sets the number of CCF operations
-	 * that will be performed before CCF will destroy all COM objects
-	 * This is to avoid COM memory leaks
+	 * @param countBeforeCOMReinitialization
+	 *            sets the number of CCF operations that will be performed
+	 *            before CCF will destroy all COM objects This is to avoid COM
+	 *            memory leaks
 	 */
 	public void setCountBeforeCOMReinitialization(
 			int countBeforeCOMReinitialization) {
@@ -935,18 +925,12 @@ public class QCReader extends AbstractReader<IConnection> {
 	}
 
 	/**
-	 * @return the number of CCF operations
-	 * that will be performed before CCF will destroy all COM objects
-	 * This is to avoid COM memory leaks
+	 * @return the number of CCF operations that will be performed before CCF
+	 *         will destroy all COM objects This is to avoid COM memory leaks
 	 */
 	public int getCountBeforeCOMReinitialization() {
 		return countBeforeCOMReinitialization;
 	}
 
 	private boolean ignoreConnectorUserUpdates = true;
-
-	/**
-	 * This data structure maps the repository id to the corresponding requirements type's technical id
-	 */
-	private Map <String, String> repositoryIdToTechnicalRequirementsTypeIdMap = new HashMap<String, String>();
 }

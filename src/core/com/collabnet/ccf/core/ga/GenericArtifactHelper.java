@@ -335,7 +335,7 @@ public class GenericArtifactHelper {
 				.setTransactionId(getAttributeValue(root, TRANSACTION_ID));
 		// only read optional attributes if necessary
 		if (artifactType == ArtifactTypeValue.DEPENDENCY
-				|| artifactType == ArtifactTypeValue.ATTACHMENT) {
+				|| artifactType == ArtifactTypeValue.ATTACHMENT || artifactType == ArtifactTypeValue.PLAINARTIFACT) {
 			genericArtifact.setDepParentSourceArtifactId(getAttributeValue(
 					root, DEP_PARENT_SOURCE_ARTIFACT_ID));
 			genericArtifact.setDepParentSourceRepositoryId(getAttributeValue(
@@ -762,7 +762,7 @@ public class GenericArtifactHelper {
 
 		// only create optional attributes if necessary
 		if (artifactType == ArtifactTypeValue.DEPENDENCY
-				|| artifactType == ArtifactTypeValue.ATTACHMENT) {
+				|| artifactType == ArtifactTypeValue.ATTACHMENT || artifactType == ArtifactTypeValue.PLAINARTIFACT) {
 			addAttribute(root, DEP_PARENT_SOURCE_ARTIFACT_ID, genericArtifact
 					.getDepParentSourceArtifactId());
 			addAttribute(root, DEP_PARENT_SOURCE_REPOSITORY_ID, genericArtifact
@@ -778,7 +778,7 @@ public class GenericArtifactHelper {
 		}
 
 		// dependencies have even more optional attributes
-		if (artifactType == ArtifactTypeValue.DEPENDENCY) {
+		if (artifactType == ArtifactTypeValue.DEPENDENCY ) {
 			addAttribute(root, DEP_CHILD_SOURCE_ARTIFACT_ID, genericArtifact
 					.getDepChildSourceArtifactId());
 			addAttribute(root, DEP_CHILD_SOURCE_REPOSITORY_ID, genericArtifact

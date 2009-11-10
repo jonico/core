@@ -21,12 +21,14 @@
 package com.collabnet.ccf.pi.qc.v90;
 
 
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
+import com.collabnet.ccf.core.ga.GenericArtifactField.FieldValueTypeValue;
 import com.collabnet.ccf.pi.qc.v90.api.IConnection;
 import com.collabnet.ccf.pi.qc.v90.api.IRecordSet;
 
@@ -270,6 +272,14 @@ public class QCConfigHelper {
 
 				field
 						.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
+				
+				// special treatment for some fields (have to find out whether this is only due to the agile accelarator)
+				if (columnName.equals("RQ_TYPE_ID")) {
+					field.setFieldValueType(FieldValueTypeValue.STRING);
+				}
+				else if (columnName.equals("RQ_REQ_TIME")) {
+					field.setFieldValueType(FieldValueTypeValue.STRING);
+				}
 			}
 		} finally {
 			if (rs != null) {

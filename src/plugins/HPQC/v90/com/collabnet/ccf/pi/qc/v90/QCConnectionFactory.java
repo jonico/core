@@ -17,6 +17,9 @@
 
 package com.collabnet.ccf.pi.qc.v90;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -32,6 +35,10 @@ import com.collabnet.ccf.pi.qc.v90.api.IConnection;
 public class QCConnectionFactory implements ConnectionFactory<IConnection> {
 	public static final String PARAM_DELIMITER = "-";
 	private static final Log log = LogFactory.getLog(QCConnectionFactory.class);
+	/**
+	 * This data structure maps the repository id to the corresponding requirements type's technical id
+	 */
+	static Map <String, String> repositoryIdToTechnicalRequirementsTypeIdMap = new HashMap<String, String>();
 	public void closeConnection(IConnection connection) {
 		try {
 			connection.logout();
@@ -101,6 +108,82 @@ public class QCConnectionFactory implements ConnectionFactory<IConnection> {
 
 	public boolean isAlive(IConnection connection) {
 		return connection.isLoggedIn();
+	}
+
+	/**
+	 * Extracts the requirements type from the repository id (does a lookup and retrieve technical id for it)
+	 * @param repositoryId repository id
+	 * @param qcc HP QC connection
+	 * @return requirements type
+	 */
+	public static String extractRequirementsType (String repositoryId, IConnection qcc) {
+		// first lookup the map
+		String requirementsType = repositoryIdToTechnicalRequirementsTypeIdMap.get(repositoryId);
+		if (requirementsType == null) {
+			// we have to extract the requirements type now
+			String[] splitRepoId = repositoryId.split(PARAM_DELIMITER);
+			if(splitRepoId != null){
+				// we now also accept a double hyphen to synchronize requirement types as well
+				if(splitRepoId.length == 3){
+					requirementsType = splitRepoId[2];
+					// now we have to retrieve the technical id for the requirements type
+					String technicalId = QCHandler.getRequirementTypeTechnicalId(qcc, requirementsType);
+					repositoryIdToTechnicalRequirementsTypeIdMap.put(repositoryId, technicalId);
+					return technicalId;
+				}
+				else {
+					throw new IllegalArgumentException("Repository Id "+repositoryId+" is invalid.");
+				}
+			} else {
+				throw new IllegalArgumentException("Repository Id "+repositoryId+" is invalid.");
+			}
+		} else {
+			return requirementsType;
+		}
+	}
+
+	/**
+	 * Returns whether this repository id belongs to a defect repository
+	 * If not, it belongs to a requirements type
+	 * @param repositoryId repositoryId
+	 * @return true if repository id belongs to a defect repository
+	 */
+	public static boolean isDefectRepository(String repositoryId) {
+		String[] splitRepoId = repositoryId.split(PARAM_DELIMITER);
+		if(splitRepoId != null){
+			// we now also accept a double hyphen to synchronize requirement types as well
+			if(splitRepoId.length == 2){
+				return true;
+			}
+			else if (splitRepoId.length == 3) {
+				return false;
+			}
+			else {
+				throw new IllegalArgumentException("Repository Id "+repositoryId+" is invalid.");
+			}
+		}
+		throw new IllegalArgumentException("Repository Id "+repositoryId+" is invalid.");
+	}
+	
+	/**
+	 * Generates the repository name of a dependent repository
+	 * @param repositoryId repository id of the original repository
+	 * @param dependentRequirementsType informal name of the dependent requirements type
+	 * @return
+	 */
+	public static String generateDependentRepositoryId(String repositoryId, String dependentRequirementsType) {
+		String[] splitRepoId = repositoryId.split(PARAM_DELIMITER);
+		if(splitRepoId != null){
+			if (splitRepoId.length == 3) {
+				String domain = splitRepoId[0];
+				String project = splitRepoId[1];
+				return domain + PARAM_DELIMITER + project + PARAM_DELIMITER + dependentRequirementsType;
+			}
+			else {
+				throw new IllegalArgumentException("Repository Id "+repositoryId+" is invalid.");
+			}
+		}
+		throw new IllegalArgumentException("Repository Id "+repositoryId+" is invalid.");
 	}
 
 }

@@ -43,7 +43,7 @@ import com.collabnet.ccf.pi.qc.v90.api.IRequirementsFactory;
 import com.collabnet.ccf.pi.qc.v90.api.dcom.Bug;
 import com.collabnet.ccf.pi.qc.v90.api.dcom.Requirement;
 /**
- * This class contains several methods that are used by QCDefectHandler, QCAttachmentHandler and QCWriter
+ * This class contains several methods that are used by QCHandler, QCAttachmentHandler and QCWriter
  * and are Generic so that some of the functionalities could be reused in other components
  * if necessary. They deal with getting the defects, different fields from QC, writing into file and so on.
  *
