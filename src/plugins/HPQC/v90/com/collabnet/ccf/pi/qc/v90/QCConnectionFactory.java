@@ -111,12 +111,12 @@ public class QCConnectionFactory implements ConnectionFactory<IConnection> {
 	}
 
 	/**
-	 * Extracts the requirements type from the repository id (does a lookup and retrieve technical id for it)
+	 * Extracts the technical requirements type from the repository id (does a lookup and retrieve technical id for it)
 	 * @param repositoryId repository id
 	 * @param qcc HP QC connection
-	 * @return requirements type
+	 * @return technical requirements type
 	 */
-	public static String extractRequirementsType (String repositoryId, IConnection qcc) {
+	public static String extractTechnicalRequirementsType (String repositoryId, IConnection qcc) {
 		// first lookup the map
 		String requirementsType = repositoryIdToTechnicalRequirementsTypeIdMap.get(repositoryId);
 		if (requirementsType == null) {
@@ -139,6 +139,31 @@ public class QCConnectionFactory implements ConnectionFactory<IConnection> {
 			}
 		} else {
 			return requirementsType;
+		}
+	}
+	
+	/**
+	 * Extracts the informal requirements type from the repository id (does some parsing)
+	 * @param repositoryId repository id
+	 * @return informal requirements type
+	 */
+	public static String extractInformalRequirementsType (String repositoryId) {
+		if (repositoryId != null) {
+			// we have to extract the requirements type now
+			String[] splitRepoId = repositoryId.split(PARAM_DELIMITER);
+			if(splitRepoId != null){
+				// we now also accept a double hyphen to synchronize requirement types as well
+				if(splitRepoId.length == 3){
+					return splitRepoId[2];
+				}
+				else {
+					throw new IllegalArgumentException("Repository Id "+repositoryId+" is invalid.");
+				}
+			} else {
+				throw new IllegalArgumentException("Repository Id "+repositoryId+" is invalid.");
+			}
+		} else {
+			throw new IllegalArgumentException("Repository Id "+repositoryId+" is invalid.");
 		}
 	}
 

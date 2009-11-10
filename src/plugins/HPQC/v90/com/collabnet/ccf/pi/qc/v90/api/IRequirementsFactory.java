@@ -27,5 +27,7 @@ public interface IRequirementsFactory extends ILifeCycle {
     public void removeItem(String item);*/
 	
 	public IRequirement getItem(String key);
+	public IRequirement addItem(String item);
+    public void removeItem(String item);
 	IFilter getFilter();
 }

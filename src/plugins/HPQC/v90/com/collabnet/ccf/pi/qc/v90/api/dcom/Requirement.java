@@ -151,7 +151,7 @@ public class Requirement extends ActiveXComponent implements IRequirementsAction
 
     public void lockObject() throws DefectAlreadyLockedException {
         if( isLocked() ) {
-            throw new DefectAlreadyLockedException("Bug locked by another user");
+            throw new DefectAlreadyLockedException("Requirement locked by another user");
         } else {
             Dispatch.call(this, "LockObject");
             return;
@@ -276,8 +276,8 @@ public class Requirement extends ActiveXComponent implements IRequirementsAction
 		return getPropertyAsString("Comment");
 	}
 
-	public String getCount() {
-		return Integer.toString(getPropertyAsInt("ParentId"));
+	public int getCount() {
+		return getPropertyAsInt("ParentId");
 	}
 
 	public String getName() {
@@ -312,8 +312,60 @@ public class Requirement extends ActiveXComponent implements IRequirementsAction
 		return getPropertyAsString("TypeId");
 	}
 
-	public Boolean getVirtual() {
+	public boolean getVirtual() {
 		return getPropertyAsBoolean("Virtual");
+	}
+
+	public void post() {
+        Dispatch.call(this, "Post");
+    }
+
+    public void undo() {
+        Dispatch.call(this, "Undo");
+    }
+
+	public void setAuthor(String author) {
+		setProperty("Author" , author);
+		
+	}
+
+	public void setComment(String comment) {
+		setProperty("Comment" , comment);
+	}
+
+	public void setName(String name) {
+		setProperty("Name" , name);
+		
+	}
+
+	public void setParagraph(String paragraph) {
+		setProperty("Paragraph" , paragraph);
+		
+	}
+
+	public void setParentId(String parentId) {
+		setProperty("ParentId", Integer.parseInt(parentId));
+	}
+
+	public void setPriority(String priority) {
+		setProperty("Priority", priority);
+	}
+
+	public void setProduct(String product) {
+		setProperty("Product", product);
+	}
+
+	public void setReviewed(String reviewed) {
+		setProperty("Reviewed", reviewed);
+	}
+
+	public void setTypeId(String typeId) {
+		setProperty("TypeId", typeId);
+	}
+
+	public void move(int newParentId, int position) {
+		// Dispatch.invoke(this, "Move", 4, new Object[] { newParentId, position }, new int[2]);
+		Dispatch.call(this, "Move", newParentId, position);
 	}
 
 }

@@ -153,7 +153,7 @@ public class QCReader extends AbstractReader<IConnection> {
 			try {
 				// we have to extract requirements
 				String technicalRequirementsId = QCConnectionFactory
-						.extractRequirementsType(sourceRepositoryId, connection);
+						.extractTechnicalRequirementsType(sourceRepositoryId, connection);
 				artifactIds = defectHandler.getLatestChangedRequirements(
 						connection,
 						isIgnoreConnectorUserUpdates() ? getUserName() : "",
@@ -430,7 +430,7 @@ public class QCReader extends AbstractReader<IConnection> {
 			// we are going to extract requirements
 			try {
 				String technicalRequirementsTypeId = QCConnectionFactory
-						.extractRequirementsType(sourceRepositoryId, connection);
+						.extractTechnicalRequirementsType(sourceRepositoryId, connection);
 				// we do not like to filter the resync user at this place, so we
 				// pass an empty string
 				List<Object> transactionIdAndAttachOperation = qcGAHelper
@@ -519,6 +519,7 @@ public class QCReader extends AbstractReader<IConnection> {
 						} finally {
 							if (parentRequirement != null) {
 								parentRequirement.safeRelease();
+								parentRequirement = null;
 							}
 						}
 					}
@@ -530,6 +531,7 @@ public class QCReader extends AbstractReader<IConnection> {
 				} finally {
 					if (latestRequirement != null) {
 						latestRequirement.safeRelease();
+						latestRequirement = null;
 					}
 				}
 			} catch (Exception e1) {

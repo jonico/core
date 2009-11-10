@@ -179,7 +179,7 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 		String targetSystemTimezone = genericArtifact.getTargetSystemTimezone();
 
 		// retrieve version to update
-		List<String> targetAutimeAndTxnIdBeforeUpdate = getAutimeAndTxnId(
+		List<String> targetAutimeAndTxnIdBeforeUpdate = getAutimeAndTxnIdForDefect(
 				connection, targetArtifactId, null, ARTIFACT_TYPE_PLAINARTIFACT);
 		String targetTransactionIdBeforeUpdate = targetAutimeAndTxnIdBeforeUpdate
 				.get(0);
@@ -205,7 +205,56 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 				+ genericArtifact.getSourceRepositoryId());
 		genericArtifact.setTargetArtifactId(targetArtifactId);
 		// FIXME This is not atomic
-		List<String> targetAutimeAndTxnId = getAutimeAndTxnId(connection,
+		List<String> targetAutimeAndTxnId = getAutimeAndTxnIdForDefect(connection,
+				targetArtifactId, null, ARTIFACT_TYPE_PLAINARTIFACT);
+		genericArtifact.setTargetArtifactVersion(targetAutimeAndTxnId.get(0));
+		genericArtifact.setTargetArtifactLastModifiedDate(DateUtil
+				.format(DateUtil.parseQCDate(targetAutimeAndTxnId.get(1))));
+	}
+	
+	/**
+	 * Update the requirement and do conflict resolution
+	 * 
+	 * @param connection
+	 * @param targetArtifactId
+	 * @param genericArtifact
+	 * @param allFields
+	 * @throws Exception
+	 */
+	protected void updateRequirement(IConnection connection,
+			String targetArtifactId, GenericArtifact genericArtifact,
+			List<GenericArtifactField> allFields) throws Exception {
+		String targetSystemTimezone = genericArtifact.getTargetSystemTimezone();
+
+		// retrieve version to update
+		List<String> targetAutimeAndTxnIdBeforeUpdate = getAutimeAndTxnIdForRequirement(
+				connection, targetArtifactId, null, ARTIFACT_TYPE_PLAINARTIFACT);
+		String targetTransactionIdBeforeUpdate = targetAutimeAndTxnIdBeforeUpdate
+				.get(0);
+		int targetTransactionIdBeforeUpdateInt = Integer
+				.parseInt(targetTransactionIdBeforeUpdate);
+		// now do conflict resolution
+		if (!AbstractWriter.handleConflicts(targetTransactionIdBeforeUpdateInt,
+				genericArtifact)) {
+			return;
+		}
+		String targetParentArtifactId = genericArtifact.getDepParentTargetArtifactId();
+
+		// IQCDefect updatedArtifact = defectHandler.updateDefect(
+		// connection, targetArtifactId, allFields, this
+		// .getUserName(), targetSystemTimezone);
+
+		// FIXME This is not atomic
+		defectHandler.updateRequirement(connection, targetArtifactId, allFields,
+				this.getUserName(), targetSystemTimezone, targetParentArtifactId).safeRelease();
+		log.info("QC Requirement " + targetArtifactId + " on "
+				+ genericArtifact.getTargetRepositoryId()
+				+ " is updated successfully with the changes from "
+				+ genericArtifact.getSourceArtifactId() + " on "
+				+ genericArtifact.getSourceRepositoryId());
+		genericArtifact.setTargetArtifactId(targetArtifactId);
+		// FIXME This is not atomic
+		List<String> targetAutimeAndTxnId = getAutimeAndTxnIdForRequirement(connection,
 				targetArtifactId, null, ARTIFACT_TYPE_PLAINARTIFACT);
 		genericArtifact.setTargetArtifactVersion(targetAutimeAndTxnId.get(0));
 		genericArtifact.setTargetArtifactLastModifiedDate(DateUtil
@@ -237,7 +286,7 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 		return genericArtifact;
 	}
 
-	public List<String> getAutimeAndTxnId(IConnection qcc, String defectId,
+	public List<String> getAutimeAndTxnIdForDefect(IConnection qcc, String defectId,
 			String attachmentName, String identifier) {
 
 		List<String> txnIdAndAutime = new ArrayList<String>();
@@ -257,6 +306,78 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 			} else {
 				sql = "select AU_TIME, AU_ACTION_ID from audit_log where au_entity_id = '"
 						+ defectId
+						+ "' and au_entity_type='CROS_REF' and au_description like '%"
+						+ QCGAHelper.sanitizeStringForSQLLikeQuery(
+								attachmentName, "\\")
+						+ "' ESCAPE '\\' and au_father_id != '-1' order by au_action_id desc";
+			}
+		}
+
+		IRecordSet newRs = null;
+		try {
+			newRs = QCHandler.executeSQL(qcc, sql);
+			int newRc = newRs.getRecordCount();
+			log
+					.debug("In QCDefectHandler.getTxnIdAndAuDescription, sql="
+							+ sql);
+			for (int newCnt = 0; newCnt < newRc; newCnt++, newRs.next()) {
+				if (newCnt == 0) {
+					transactionId = newRs.getFieldValueAsString("AU_ACTION_ID");
+					auTime = newRs.getFieldValueAsString("AU_TIME");
+					if (identifier.equals(ARTIFACT_TYPE_PLAINARTIFACT)) {
+						String transactionDesc = newRs
+								.getFieldValueAsString("AU_DESCRIPTION");
+						if (transactionDesc != null) {
+							if (transactionDesc.contains("Attachment added:")) {
+								int transactionIdInt = Integer
+										.parseInt(transactionId);
+								transactionIdInt -= 2;
+								transactionId = Integer
+										.toString(transactionIdInt);
+							} else if (transactionDesc
+									.contains("Attachment deleted:")) {
+								int transactionIdInt = Integer
+										.parseInt(transactionId);
+								transactionIdInt -= 1;
+								transactionId = Integer
+										.toString(transactionIdInt);
+							}
+						}
+					}
+					break;
+				}
+			}
+		} finally {
+			if (newRs != null) {
+				newRs.safeRelease();
+			}
+		}
+		txnIdAndAutime.add(transactionId);
+		txnIdAndAutime.add(auTime);
+
+		return txnIdAndAutime;
+	}
+	
+	public List<String> getAutimeAndTxnIdForRequirement(IConnection qcc, String requirementId,
+			String attachmentName, String identifier) {
+
+		List<String> txnIdAndAutime = new ArrayList<String>();
+		String transactionId = null;
+		String auTime = null;
+		String sql = null;
+
+		if (identifier.equals(ARTIFACT_TYPE_PLAINARTIFACT))
+			sql = "select AU_TIME, AU_ACTION_ID, AU_DESCRIPTION from audit_log where au_entity_id = '"
+					+ requirementId
+					+ "' and au_entity_type='REQ' and au_father_id='-1' order by au_action_id desc";
+		else if (identifier.equals(ARTIFACT_TYPE_ATTACHMENT)) {
+			if (attachmentName == null) {
+				sql = "select AU_TIME, AU_ACTION_ID from audit_log where au_entity_id = '"
+						+ requirementId
+						+ "' and au_entity_type='CROS_REF' and au_father_id != '-1' order by au_action_id desc";
+			} else {
+				sql = "select AU_TIME, AU_ACTION_ID from audit_log where au_entity_id = '"
+						+ requirementId
 						+ "' and au_entity_type='CROS_REF' and au_description like '%"
 						+ QCGAHelper.sanitizeStringForSQLLikeQuery(
 								attachmentName, "\\")
@@ -589,35 +710,73 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 		IConnection connection = null;
 		List<GenericArtifactField> allFields = this
 				.getAllGenericArtfactFields(genericArtifact);
+		String targetRepositoryId = genericArtifact.getTargetRepositoryId();
 		try {
 			connection = this.connect(genericArtifact);
-			IQCDefect createdArtifact = defectHandler.createDefect(connection,
-					allFields, this.getUserName(), targetSystemTimezone);
-			if (createdArtifact != null) {
-				targetArtifactIdAfterCreation = createdArtifact.getId();
-				log.info("Defect " + targetArtifactIdAfterCreation
-						+ " is created on "
-						+ genericArtifact.getSourceRepositoryId()
-						+ " with the artifact details "
-						+ genericArtifact.getSourceArtifactId() + " on "
-						+ genericArtifact.getTargetRepositoryId());
-				genericArtifact
-						.setTargetArtifactId(targetArtifactIdAfterCreation);
-				// send this artifact to RCDU (Read Connector Database Updater)
-				// indicating a success in creating the artifact
-
-				List<String> targetAutimeAndTxnId = getAutimeAndTxnId(
-						connection, targetArtifactIdAfterCreation, null,
-						ARTIFACT_TYPE_PLAINARTIFACT);
-				genericArtifact.setTargetArtifactVersion(targetAutimeAndTxnId
-						.get(0));
-				genericArtifact.setTargetArtifactLastModifiedDate(DateUtil
-						.format(DateUtil.parseQCDate(targetAutimeAndTxnId
-								.get(1))));
+			if (QCConnectionFactory.isDefectRepository(targetRepositoryId)) {
+				IQCDefect createdArtifact = defectHandler.createDefect(connection,
+						allFields, this.getUserName(), targetSystemTimezone);
+				if (createdArtifact != null) {
+					targetArtifactIdAfterCreation = createdArtifact.getId();
+					log.info("Defect " + targetArtifactIdAfterCreation
+							+ " is created on "
+							+ genericArtifact.getSourceRepositoryId()
+							+ " with the artifact details "
+							+ genericArtifact.getSourceArtifactId() + " on "
+							+ genericArtifact.getTargetRepositoryId());
+					genericArtifact
+							.setTargetArtifactId(targetArtifactIdAfterCreation);
+					// send this artifact to RCDU (Read Connector Database Updater)
+					// indicating a success in creating the artifact
+	
+					List<String> targetAutimeAndTxnId = getAutimeAndTxnIdForDefect(
+							connection, targetArtifactIdAfterCreation, null,
+							ARTIFACT_TYPE_PLAINARTIFACT);
+					genericArtifact.setTargetArtifactVersion(targetAutimeAndTxnId
+							.get(0));
+					genericArtifact.setTargetArtifactLastModifiedDate(DateUtil
+							.format(DateUtil.parseQCDate(targetAutimeAndTxnId
+									.get(1))));
+				}
+			}
+			else {
+				// we create a requirement
+				IQCRequirement createdArtifact = null;
+				try {
+					String parentArtifactId = genericArtifact.getDepParentTargetArtifactId();
+					String informalRequirementsType = QCConnectionFactory.extractInformalRequirementsType(targetRepositoryId);
+					createdArtifact = defectHandler.createRequirement(connection,
+							allFields, this.getUserName(), targetSystemTimezone, informalRequirementsType, parentArtifactId);
+					if (createdArtifact != null) {
+						targetArtifactIdAfterCreation = createdArtifact.getId();
+						log.info("Requirement " + targetArtifactIdAfterCreation
+								+ " is created on "
+								+ genericArtifact.getSourceRepositoryId()
+								+ " with the artifact details "
+								+ genericArtifact.getSourceArtifactId() + " on "
+								+ genericArtifact.getTargetRepositoryId());
+						genericArtifact
+								.setTargetArtifactId(targetArtifactIdAfterCreation);
+						
+						List<String> targetAutimeAndTxnId = getAutimeAndTxnIdForRequirement(
+								connection, targetArtifactIdAfterCreation, null,
+								ARTIFACT_TYPE_PLAINARTIFACT);
+						genericArtifact.setTargetArtifactVersion(targetAutimeAndTxnId
+								.get(0));
+						genericArtifact.setTargetArtifactLastModifiedDate(DateUtil
+								.format(DateUtil.parseQCDate(targetAutimeAndTxnId
+										.get(1))));
+					}
+				} finally {
+					if (createdArtifact != null) {
+						createdArtifact.safeRelease();
+						createdArtifact = null;
+					}
+				}
 			}
 
 		} catch (RemoteException e) {
-			String cause = "Error while creating defect in QC";
+			String cause = "Error while creating artifact in QC";
 			log.error(cause, e);
 			genericArtifact
 					.setErrorCode(GenericArtifact.ERROR_EXTERNAL_SYSTEM_WRITE);
@@ -733,14 +892,14 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 			log.info("Attachment " + attachmentName + " is created with id "
 					+ attachmentId + " for defect " + targetArtifactId + " on "
 					+ genericArtifact.getTargetRepositoryId());
-			List<String> targetAutimeAndTxnId = getAutimeAndTxnId(connection,
+			List<String> targetAutimeAndTxnId = getAutimeAndTxnIdForDefect(connection,
 					attachmentId, attachmentName, ARTIFACT_TYPE_ATTACHMENT);
 			genericArtifact.setTargetArtifactVersion(targetAutimeAndTxnId
 					.get(0));
 			genericArtifact.setTargetArtifactLastModifiedDate(DateUtil
 					.format(DateUtil.parseQCDate(targetAutimeAndTxnId.get(1))));
 
-			List<String> targetAutimeAndTxnIdParentDefect = getAutimeAndTxnId(
+			List<String> targetAutimeAndTxnIdParentDefect = getAutimeAndTxnIdForDefect(
 					connection, targetArtifactId, null,
 					ARTIFACT_TYPE_PLAINARTIFACT);
 			parentArtifact = new GenericArtifact();
@@ -826,14 +985,14 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 			log.info("Attachment " + targetArtifactId
 					+ " is deleted from defect " + bugId + " on "
 					+ genericArtifact.getTargetRepositoryId());
-			List<String> targetAutimeAndTxnId = getAutimeAndTxnId(connection,
+			List<String> targetAutimeAndTxnId = getAutimeAndTxnIdForDefect(connection,
 					targetArtifactId, attachmentName, ARTIFACT_TYPE_ATTACHMENT);
 			genericArtifact.setTargetArtifactVersion(targetAutimeAndTxnId
 					.get(0));
 			genericArtifact.setTargetArtifactLastModifiedDate(DateUtil
 					.format(DateUtil.parseQCDate(targetAutimeAndTxnId.get(1))));
 
-			List<String> targetAutimeAndTxnIdParentDefect = getAutimeAndTxnId(
+			List<String> targetAutimeAndTxnIdParentDefect = getAutimeAndTxnIdForDefect(
 					connection, bugId, null, ARTIFACT_TYPE_PLAINARTIFACT);
 			parentArtifact = new GenericArtifact();
 			parentArtifact
@@ -900,19 +1059,25 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 		List<GenericArtifactField> allFields = this
 				.getAllGenericArtfactFields(genericArtifact);
 		String targetArtifactId = genericArtifact.getTargetArtifactId();
+		String targetRepositoryId = genericArtifact.getTargetRepositoryId();
 		IConnection connection = this.connect(genericArtifact);
 		try {
 			if (allFields != null) {
-				this.updateDefect(connection, targetArtifactId,
-						genericArtifact, allFields);
+				if (QCConnectionFactory.isDefectRepository(targetRepositoryId)) {
+					this.updateDefect(connection, targetArtifactId,
+							genericArtifact, allFields);
+				} else {
+					this.updateRequirement(connection, targetArtifactId,
+							genericArtifact, allFields);
+				}
 			} else {
-				String cause = "No field for the bug " + targetArtifactId
+				String cause = "No field for the artifact " + targetArtifactId
 						+ " is supplied";
 				log.error(cause);
 				throw new CCFRuntimeException(cause);
 			}
 		} catch (Exception e) {
-			String cause = "Exception occured while updating defect in QC:"
+			String cause = "Exception occured while updating artifact in QC:"
 					+ genericArtifact.toString();
 			log.error(cause, e);
 			genericArtifact

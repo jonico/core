@@ -44,7 +44,10 @@ import com.collabnet.ccf.pi.qc.v90.api.IBugFactory;
 import com.collabnet.ccf.pi.qc.v90.api.IFactoryList;
 import com.collabnet.ccf.pi.qc.v90.api.IFilter;
 import com.collabnet.ccf.pi.qc.v90.api.IRecordSet;
+import com.collabnet.ccf.pi.qc.v90.api.IRequirement;
+import com.collabnet.ccf.pi.qc.v90.api.IRequirementsFactory;
 import com.collabnet.ccf.pi.qc.v90.api.dcom.Bug;
+import com.collabnet.ccf.pi.qc.v90.api.dcom.Requirement;
 import com.jacob.com.ComFailException;
 
 /**
@@ -59,10 +62,14 @@ public class QCHandler {
 	// private QCAttachmentHandler attachmentHandler;
 	private QCGAHelper qcGAHelper = new QCGAHelper();
 	private final static String QC_BUG_ID = "BG_BUG_ID";
-	private final static String QC_DEV_COMMENTS = "BG_DEV_COMMENTS";
+	private final static String QC_REQ_ID = "RQ_REQ_ID";
+	private final static String QC_BG_DEV_COMMENTS = "BG_DEV_COMMENTS";
+	private final static String QC_RQ_DEV_COMMENTS = "RQ_DEV_COMMENTS";
 	private final static String QC_BUG_VER_STAMP = "BG_BUG_VER_STAMP";
-	private final static String QC_ATTACHMENT = "BG_ATTACHMENT";
-	private final static String QC_VTS = "BG_VTS";
+	private final static String QC_BG_ATTACHMENT = "BG_ATTACHMENT";
+	private final static String QC_RQ_ATTACHMENT = "RQ_ATTACHMENT";
+	private final static String QC_BG_VTS = "BG_VTS";
+	private final static String QC_RQ_VTS = "RQ_VTS";
 	private final static String UNDERSCORE_STRING = "<font color=\"#000080\"><b>________________________________________</b></font>";
 
 	public static IRecordSet executeSQL(IConnection qcc, String sql) {
@@ -79,13 +86,18 @@ public class QCHandler {
 			command = null;
 		}
 	}
-	
-	public static String getRequirementTypeTechnicalId(IConnection qcc , String requirementTypeName) {
+
+	public static String getRequirementTypeTechnicalId(IConnection qcc,
+			String requirementTypeName) {
 		IRecordSet rs = null;
 		try {
-			rs = executeSQL(qcc, "SELECT TPR_TYPE_ID FROM REQ_TYPE WHERE TPR_NAME = '" + requirementTypeName + "'");
+			rs = executeSQL(qcc,
+					"SELECT TPR_TYPE_ID FROM REQ_TYPE WHERE TPR_NAME = '"
+							+ requirementTypeName + "'");
 			if (rs.getRecordCount() != 1) {
-				throw new CCFRuntimeException("Could not retrieve technical id for requirements type "+ requirementTypeName);
+				throw new CCFRuntimeException(
+						"Could not retrieve technical id for requirements type "
+								+ requirementTypeName);
 			} else {
 				return rs.getFieldValueAsString("TPR_TYPE_ID");
 			}
@@ -119,6 +131,143 @@ public class QCHandler {
 		bf = null;
 
 		return tasks;
+	}
+
+	/**
+	 * Updates the requirement identified by the incoming requirement in QC
+	 * 
+	 * @param qcc
+	 *            The Connection object
+	 * @param requirementId
+	 *            The ID of the requirement to be updated
+	 * @param List
+	 *            <GenericArtifactField> The values of each fields of the
+	 *            requirement that need to be updated on the old values.
+	 * @param connectorUser
+	 *            The connectorUser name used while updating the comments
+	 * @param targetParentArtifactId
+	 * @return IQCRequirement Updated requirement object
+	 * 
+	 */
+	public IQCRequirement updateRequirement(IConnection qcc,
+			String requirementId, List<GenericArtifactField> allFields,
+			String connectorUser, String targetSystemTimezone,
+			String targetParentArtifactId) {
+
+		IRequirementsFactory reqFactory = null;
+		IRequirement req = null;
+		try {
+			reqFactory = qcc.getRequirementsFactory();
+			req = reqFactory.getItem(requirementId);
+			req.lockObject();
+			List<String> allFieldNames = new ArrayList<String>();
+			String fieldValue = null;
+			for (int cnt = 0; cnt < allFields.size(); cnt++) {
+
+				GenericArtifactField thisField = allFields.get(cnt);
+				String fieldName = thisField.getFieldName();
+				if (thisField.getFieldValueType().equals(
+						GenericArtifactField.FieldValueTypeValue.DATE)
+						|| thisField
+								.getFieldValueType()
+								.equals(
+										GenericArtifactField.FieldValueTypeValue.DATETIME))
+					fieldValue = getProperFieldValue(thisField,
+							targetSystemTimezone);
+				else
+					fieldValue = (String) thisField.getFieldValue();
+
+				if (fieldName.equals(QC_RQ_DEV_COMMENTS)) {
+					String oldFieldValue = req.getFieldAsString(fieldName);
+					if ((!StringUtils.isEmpty(oldFieldValue)
+							&& !StringUtils.isEmpty(fieldValue) && !oldFieldValue
+							.equals(fieldValue))
+							|| (StringUtils.isEmpty(oldFieldValue) && !StringUtils
+									.isEmpty(fieldValue))) {
+						fieldValue = getConcatinatedCommentValue(oldFieldValue,
+								fieldValue, connectorUser);
+					}
+				}
+				if (!(allFieldNames.contains(allFields.get(cnt).getFieldName()))
+						&& !(fieldName.equals(QC_REQ_ID)
+								|| fieldName.equals(QC_RQ_ATTACHMENT) || fieldName
+								.equals(QC_RQ_VTS))) {
+					try {
+						req.setField(fieldName, fieldValue);
+					} catch (ComFailException e) {
+						String message = "Exception while setting the value of field "
+								+ fieldName
+								+ " to "
+								+ fieldValue
+								+ ": "
+								+ e.getMessage();
+						log.error(message, e);
+						throw new CCFRuntimeException(message, e);
+					}
+				}
+				if (!fieldName.equals(QC_RQ_DEV_COMMENTS))
+					allFieldNames.add(fieldName);
+			}
+			
+			req.post();
+			// move to other parent if necessary
+			if (targetParentArtifactId != null
+					&& !targetParentArtifactId
+							.equals(GenericArtifact.VALUE_UNKNOWN)
+					&& !targetParentArtifactId.equals(req.getParentId())) {
+				req.move(Integer.parseInt(targetParentArtifactId), 1);
+			}
+			
+		} catch (DefectAlreadyLockedException e) {
+			String message = "Attempt to lock the requirement with id "
+					+ requirementId + " failed.";
+			// retrieving user who locked the bug
+			IRecordSet rs = null;
+			try {
+				rs = executeSQL(qcc,
+						"SELECT LK_USER FROM LOCKS WHERE LK_OBJECT_KEY = '"
+								+ requirementId + "'");
+				if (rs.getRecordCount() != 1) {
+					message = message
+							+ " Could not find out the user who locked it.";
+				} else {
+					String userName = rs.getFieldValueAsString("LK_USER");
+					message = message + " Requirement has been locked by user "
+							+ userName;
+				}
+			} catch (Exception f) {
+				// we do not want to throw a further exception in case we could
+				// not determine the log
+				message = message
+						+ " Could not find out the user who locked it: "
+						+ f.getMessage();
+			} finally {
+				if (rs != null) {
+					rs.safeRelease();
+					rs = null;
+				}
+			}
+
+			throw new CCFRuntimeException(message, e);
+		} catch (ComFailException e) {
+			req.undo();
+			String message = "ComFailException while updating the requirement with id "
+					+ requirementId;
+			log.error(message, e);
+			throw new CCFRuntimeException(message + ": " + e.getMessage(), e);
+		} catch (Exception e) {
+			req.undo();
+			String message = "Exception while updating the requirement with id "
+					+ requirementId;
+			log.error(message, e);
+			throw new CCFRuntimeException(message + ": " + e.getMessage(), e);
+		} finally {
+			if (req != null) {
+				req.unlockObject();
+			}
+			reqFactory = null;
+		}
+		return new QCRequirement((Requirement) req);
 	}
 
 	/**
@@ -163,7 +312,7 @@ public class QCHandler {
 				else
 					fieldValue = (String) thisField.getFieldValue();
 
-				if (fieldName.equals(QC_DEV_COMMENTS)) {
+				if (fieldName.equals(QC_BG_DEV_COMMENTS)) {
 					String oldFieldValue = bug.getFieldAsString(fieldName);
 					if ((!StringUtils.isEmpty(oldFieldValue)
 							&& !StringUtils.isEmpty(fieldValue) && !oldFieldValue
@@ -177,8 +326,8 @@ public class QCHandler {
 				if (!(allFieldNames.contains(allFields.get(cnt).getFieldName()))
 						&& !(fieldName.equals(QC_BUG_ID)
 								|| fieldName.equals(QC_BUG_VER_STAMP)
-								|| fieldName.equals(QC_ATTACHMENT) || fieldName
-								.equals(QC_VTS))) {
+								|| fieldName.equals(QC_BG_ATTACHMENT) || fieldName
+								.equals(QC_BG_VTS))) {
 					try {
 						bug.setField(fieldName, fieldValue);
 					} catch (ComFailException e) {
@@ -192,7 +341,7 @@ public class QCHandler {
 						throw new CCFRuntimeException(message, e);
 					}
 				}
-				if (!fieldName.equals(QC_DEV_COMMENTS))
+				if (!fieldName.equals(QC_BG_DEV_COMMENTS))
 					allFieldNames.add(fieldName);
 			}
 			bug.post();
@@ -287,7 +436,7 @@ public class QCHandler {
 				else
 					fieldValue = (String) thisField.getFieldValue();
 
-				if (fieldName.equals(QC_DEV_COMMENTS)) {
+				if (fieldName.equals(QC_BG_DEV_COMMENTS)) {
 					String oldFieldValue = bug.getFieldAsString(fieldName);
 					if ((!StringUtils.isEmpty(oldFieldValue)
 							&& !StringUtils.isEmpty(fieldValue) && !oldFieldValue
@@ -307,8 +456,8 @@ public class QCHandler {
 				if (!(allFieldNames.contains(allFields.get(cnt).getFieldName()))
 						&& !(fieldName.equals(QC_BUG_ID)
 								|| fieldName.equals(QC_BUG_VER_STAMP)
-								|| fieldName.equals(QC_ATTACHMENT) || fieldName
-								.equals(QC_VTS))) {
+								|| fieldName.equals(QC_BG_ATTACHMENT) || fieldName
+								.equals(QC_BG_VTS))) {
 					try {
 						bug.setField(fieldName, fieldValue);
 					} catch (Exception e) {
@@ -324,7 +473,7 @@ public class QCHandler {
 				} else {
 					log.debug(fieldName);
 				}
-				if (!fieldName.equals(QC_DEV_COMMENTS))
+				if (!fieldName.equals(QC_BG_DEV_COMMENTS))
 					allFieldNames.add(fieldName);
 			}
 			bug.post();
@@ -707,10 +856,10 @@ public class QCHandler {
 		}
 		return latestDefectArtifact;
 	}
-	
+
 	/**
-	 * Obtains the artifactAction based on the date at which that requirement was
-	 * created and the lastReadTime synchronization parameter.
+	 * Obtains the artifactAction based on the date at which that requirement
+	 * was created and the lastReadTime synchronization parameter.
 	 * 
 	 * @param entityId
 	 *            The requirement Id for which the search has to be made in QC
@@ -748,8 +897,8 @@ public class QCHandler {
 		return latestDefectArtifact;
 	}
 
-	public List<String> getTransactionIdsInRangeForDefects(IConnection qcc, int entityId,
-			int syncInfoTxnId, int actionId, String connectorUser) {
+	public List<String> getTransactionIdsInRangeForDefects(IConnection qcc,
+			int entityId, int syncInfoTxnId, int actionId, String connectorUser) {
 
 		List<String> listOfTxnIds = new ArrayList<String>();
 
@@ -764,7 +913,8 @@ public class QCHandler {
 		IRecordSet newRs = null;
 		try {
 			newRs = executeSQL(qcc, sql);
-			log.debug("The SQL query in getTransactionIdsInRangeForDefects::" + sql);
+			log.debug("The SQL query in getTransactionIdsInRangeForDefects::"
+					+ sql);
 			int newRc = newRs.getRecordCount();
 
 			for (int newCnt = 0; newCnt < newRc; newCnt++, newRs.next()) {
@@ -779,9 +929,10 @@ public class QCHandler {
 		}
 		return listOfTxnIds;
 	}
-	
-	public List<String> getTransactionIdsInRangeForRequirements(IConnection qcc, int entityId,
-			int syncInfoTxnId, int actionId, String connectorUser) {
+
+	public List<String> getTransactionIdsInRangeForRequirements(
+			IConnection qcc, int entityId, int syncInfoTxnId, int actionId,
+			String connectorUser) {
 
 		List<String> listOfTxnIds = new ArrayList<String>();
 
@@ -796,7 +947,9 @@ public class QCHandler {
 		IRecordSet newRs = null;
 		try {
 			newRs = executeSQL(qcc, sql);
-			log.debug("The SQL query in getTransactionIdsInRangeForRequirements::" + sql);
+			log
+					.debug("The SQL query in getTransactionIdsInRangeForRequirements::"
+							+ sql);
 			int newRc = newRs.getRecordCount();
 
 			for (int newCnt = 0; newCnt < newRc; newCnt++, newRs.next()) {
@@ -884,7 +1037,7 @@ public class QCHandler {
 			return deltaComment;
 		}
 	}
-	
+
 	/**
 	 * Gets the difference between the comment values of the previous and
 	 * current transaction pointed by actionId
@@ -1039,8 +1192,8 @@ public class QCHandler {
 		return qcDefectArray;
 	}
 
-	public List<ArtifactState> getLatestChangedRequirements(
-			IConnection qcc, String connectorUser, String transactionId,
+	public List<ArtifactState> getLatestChangedRequirements(IConnection qcc,
+			String connectorUser, String transactionId,
 			String technicalRequirementsId) {
 		int rc = 0;
 		String sql = "SELECT AL.AU_ENTITY_ID AS AU_ENTITY_ID, AL.AU_ACTION_ID AS AU_ACTION_ID, AL.AU_TIME AS AU_TIME FROM AUDIT_LOG AL, REQ WHERE AL.AU_ENTITY_TYPE = 'REQ' AND AU_ACTION_ID > '"
@@ -1048,7 +1201,9 @@ public class QCHandler {
 				+ "' AND AL.AU_ACTION!='DELETE' AND AL.AU_USER != '"
 				+ connectorUser
 				+ "' AND AL.AU_FATHER_ID = '-1'"
-				+ " AND REQ.RQ_TYPE_ID = '" + technicalRequirementsId + "'"
+				+ " AND REQ.RQ_TYPE_ID = '"
+				+ technicalRequirementsId
+				+ "'"
 				+ " AND AL.AU_ENTITY_ID = REQ.RQ_REQ_ID"
 				+ " ORDER BY AU_ACTION_ID";
 
@@ -1089,5 +1244,93 @@ public class QCHandler {
 			}
 		}
 		return changedRequirements;
+	}
+
+	public IQCRequirement createRequirement(IConnection qcc,
+			List<GenericArtifactField> allFields, String connectorUser,
+			String targetSystemTimezone, String informalRequirementsType,
+			String parentArtifactId) {
+		IRequirementsFactory reqFactory = null;
+		IRequirement req = null;
+		try {
+			reqFactory = qcc.getRequirementsFactory();
+			if (parentArtifactId != null
+					&& !parentArtifactId.equals(GenericArtifact.VALUE_UNKNOWN)) {
+				req = reqFactory.addItem(parentArtifactId);
+			} else {
+				req = reqFactory.addItem("-1");
+			}
+			req.lockObject();
+			req.setTypeId(informalRequirementsType);
+			List<String> allFieldNames = new ArrayList<String>();
+			String fieldValue = null;
+			for (int cnt = 0; cnt < allFields.size(); cnt++) {
+
+				GenericArtifactField thisField = allFields.get(cnt);
+				String fieldName = thisField.getFieldName();
+				if (thisField.getFieldValueType().equals(
+						GenericArtifactField.FieldValueTypeValue.DATE)
+						|| thisField
+								.getFieldValueType()
+								.equals(
+										GenericArtifactField.FieldValueTypeValue.DATETIME))
+					fieldValue = getProperFieldValue(thisField,
+							targetSystemTimezone);
+				else
+					fieldValue = (String) thisField.getFieldValue();
+
+				if (fieldName.equals(QC_RQ_DEV_COMMENTS)) {
+					String oldFieldValue = req.getFieldAsString(fieldName);
+					if ((!StringUtils.isEmpty(oldFieldValue)
+							&& !StringUtils.isEmpty(fieldValue) && !oldFieldValue
+							.equals(fieldValue))
+							|| (StringUtils.isEmpty(oldFieldValue) && !StringUtils
+									.isEmpty(fieldValue))) {
+						fieldValue = getConcatinatedCommentValue(oldFieldValue,
+								fieldValue, connectorUser);
+					}
+				}
+
+				if (!(allFieldNames.contains(allFields.get(cnt).getFieldName()))
+						&& !(fieldName.equals(QC_REQ_ID)
+								|| fieldName.equals(QC_RQ_ATTACHMENT) || fieldName
+								.equals(QC_RQ_VTS))) {
+					try {
+						req.setField(fieldName, fieldValue);
+					} catch (Exception e) {
+						String message = "Exception while setting the value of field "
+								+ fieldName
+								+ " to "
+								+ fieldValue
+								+ ": "
+								+ e.getMessage();
+						log.error(message, e);
+						throw new CCFRuntimeException(message, e);
+					}
+				} else {
+					log.debug(fieldName);
+				}
+				if (!fieldName.equals(QC_RQ_DEV_COMMENTS))
+					allFieldNames.add(fieldName);
+			}
+			req.post();
+		} catch (Exception e) {
+			String reqId = null;
+			if (req != null) {
+				reqId = req.getId();
+				reqFactory.removeItem(reqId);
+				req = null;
+			}
+			String message = "Exception while creating requirement " + reqId;
+			log.error(message, e);
+			throw new CCFRuntimeException(message + ": " + e.getMessage(), e);
+		} finally {
+			if (req != null) {
+				req.unlockObject();
+			}
+			reqFactory = null;
+		}
+
+		return new QCRequirement((Requirement) req);
 	}
 }
