@@ -262,7 +262,7 @@ public class QCGAHelper {
 
 	/**
 	 * Obtains the attachment ID, attachment Type (data or link) and attachment
-	 * description for a given defectId
+	 * description for a given entity
 	 *
 	 * @param qcc
 	 * @param entityId

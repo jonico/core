@@ -84,7 +84,7 @@ public class QCAttachmentHandler {
 	 *
 	 *
 	 */
-	public void createAttachment(IConnection qcc, String entityId,
+	public void createAttachmentForDefect(IConnection qcc, String entityId,
 			String attachmentName, String contentTypeValue, File attachmentFile,
 			String attachmentSourceUrl, String description){
 		IBugFactory bugFactory = null;
@@ -123,6 +123,79 @@ public class QCAttachmentHandler {
 			bugFactory = null;
 			if(bug != null){
 				bug.safeRelease();
+				bug = null;
+			}
+		}
+
+		return;
+	}
+	
+	
+	/**
+	 * Create the attachment for the requirement identified by the incoming requirement id in
+	 * QC
+	 *
+	 * @param qcc
+	 *            The Connection object
+	 * @param entityId
+	 *            The ID of the requirement to which the attachment need to be
+	 *            created
+	 * @param attachmentName
+	 *            The name of the file as attachment found in the source
+	 *            system's defect.
+	 * @param contentTypeValue
+	 *            Indicates if this is a DATA or LINK
+	 * @param data
+	 *            The byte[] of data
+	 * @param attachmentSourceUrl
+	 *            Link as attachment containing the exact link found in the
+	 *            source system's defect
+	 *
+	 *
+	 */
+	public void createAttachmentForRequirement(IConnection qcc, String entityId,
+			String attachmentName, String contentTypeValue, File attachmentFile,
+			String attachmentSourceUrl, String description){
+		IRequirementsFactory reqFactory = null;
+		IRequirement req = null;
+		try {
+			reqFactory = qcc.getRequirementsFactory();
+			req = reqFactory.getItem(entityId);
+			int type = 0;
+			if (contentTypeValue.equals(AttachmentMetaData.AttachmentType.DATA
+					.toString())) {
+				type = 1;
+				try {
+					if(StringUtils.isEmpty(description)) {
+						req.createNewAttachment(attachmentFile.getAbsolutePath(), type);
+					}
+					else {
+						req.createNewAttachment(attachmentFile.getAbsolutePath(), description, type);
+					}
+				} catch (Exception e) {
+					String message = "Exception while attaching the file "+
+							attachmentFile.getAbsolutePath() +" to requirement "+entityId;
+					log.error(message, e);
+					throw new CCFRuntimeException(message, e);
+				}
+			} else {
+				type = 2;
+				if(StringUtils.isEmpty(description)) {
+					req.createNewAttachment(attachmentSourceUrl, type);
+				}
+				else {
+					req.createNewAttachment(attachmentSourceUrl, description, type);
+				}
+			}
+		}
+		finally {
+			if (reqFactory != null) {
+				reqFactory.safeRelease();
+				reqFactory = null;
+			}
+			if(req != null){
+				req.safeRelease();
+				req = null;
 			}
 		}
 
@@ -661,7 +734,7 @@ public class QCAttachmentHandler {
 
 	}
 
-	public void deleteAttachment(IConnection qcc, String bugId, String attachmentId) {
+	public void deleteAttachmentForDefect(IConnection qcc, String bugId, String attachmentId) {
 		// TODO Validate if the attachment exists before deleting
 		// The QC API does not indicate whether it deleted the attachment or not.
 		IBugFactory bugFactory = null;
@@ -676,6 +749,35 @@ public class QCAttachmentHandler {
 			bugFactory = null;
 			if(bug != null){
 				bug.safeRelease();
+				bug = null;
+			}
+		}
+	}
+	
+	public void deleteAttachmentForRequirement(IConnection qcc, String bugId, String attachmentId) {
+		// TODO Validate if the attachment exists before deleting
+		// The QC API does not indicate whether it deleted the attachment or not.
+		IRequirementsFactory reqFactory = null;
+		IRequirement req = null;
+		IAttachmentFactory attachmentFactory = null;
+		try {
+			reqFactory = qcc.getRequirementsFactory();
+			req = reqFactory.getItem(bugId);
+			attachmentFactory = req.getAttachmentFactory();
+			attachmentFactory.removeItem(attachmentId);
+		}
+		finally {
+			if (reqFactory != null) {
+				reqFactory.safeRelease();
+				reqFactory = null;
+			}
+			if (attachmentFactory != null) {
+				attachmentFactory.safeRelease();
+				attachmentFactory = null;
+			}
+			if(req != null){
+				req.safeRelease();
+				req = null;
 			}
 		}
 	}

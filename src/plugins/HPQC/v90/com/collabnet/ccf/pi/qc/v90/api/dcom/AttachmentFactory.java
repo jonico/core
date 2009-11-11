@@ -19,6 +19,7 @@ package com.collabnet.ccf.pi.qc.v90.api.dcom;
 
 import com.collabnet.ccf.pi.qc.v90.api.IAttachment;
 import com.collabnet.ccf.pi.qc.v90.api.IAttachmentFactory;
+import com.collabnet.ccf.pi.qc.v90.api.IFilter;
 import com.jacob.activeX.ActiveXComponent;
 import com.jacob.com.Dispatch;
 import com.jacob.com.Variant;
@@ -51,5 +52,9 @@ public class AttachmentFactory extends ActiveXComponent implements IAttachmentFa
         Variant res = Dispatch.call(this, "RemoveItem", key);
         res.getvt();
 	}
+    
+    public IFilter getFilter(){
+        return new Filter(this);
+    }
 
 }

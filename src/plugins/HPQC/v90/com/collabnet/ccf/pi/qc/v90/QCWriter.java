@@ -790,7 +790,7 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 	@Override
 	public Document[] createAttachment(Document gaDocument) {
 		GenericArtifact genericArtifact = getArtifactFromDocument(gaDocument);
-		String targetArtifactId = genericArtifact
+		String parentArtifactId = genericArtifact
 				.getDepParentTargetArtifactId();
 		String attachmentName = getFieldValueFromGenericArtifact(
 				genericArtifact, AttachmentMetaData.getAttachmentName());
@@ -798,6 +798,7 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 				genericArtifact, AttachmentMetaData.getAttachmentType());
 		String attachmentSourceUrl = getFieldValueFromGenericArtifact(
 				genericArtifact, AttachmentMetaData.getAttachmentSourceUrl());
+		String targetRepositoryId = genericArtifact.getTargetRepositoryId();
 
 		String attachmentDataFileName = GenericArtifactHelper.getStringGAField(
 				AttachmentMetaData.ATTACHMENT_DATA_FILE, genericArtifact);
@@ -853,8 +854,8 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 							+ attachmentDataFile.getAbsolutePath()
 							+ " does not exist. So the attachment "
 							+ attachmentName
-							+ " can not be uploaded to the bug "
-							+ targetArtifactId;
+							+ " can not be uploaded to the artifact "
+							+ parentArtifactId;
 					log.error(message);
 					throw new CCFRuntimeException(message);
 				}
@@ -864,44 +865,74 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 						+ attachmentFile.getAbsolutePath()
 						+ " does not exist. So the attachment "
 						+ attachmentName + " can not be uploaded to the bug "
-						+ targetArtifactId;
+						+ parentArtifactId;
 				log.error(message);
 				throw new CCFRuntimeException(message);
 			} else if (attachmentFile.length() == 0) {
 				log.warn("The attachment file "
 						+ attachmentFile.getAbsolutePath()
 						+ " contains no data. It is uploaded to the bug "
-						+ targetArtifactId + ", though.");
+						+ parentArtifactId + ", though.");
 			}
 		}
 
 		IConnection connection = null;
 		GenericArtifact parentArtifact = null;
+		List<String> targetAutimeAndTxnId = null;
+		List<String> targetAutimeAndTxnIdParent = null;
 		try {
 			connection = this.connect(genericArtifact);
-			attachmentHandler.createAttachment(connection, targetArtifactId,
-					attachmentName, contentTypeValue, attachmentFile,
-					attachmentSourceUrl, attachmentDescription);
-			List<String> attachmentIdAndType = qcGAHelper.getFromTable(
-					connection, targetArtifactId, attachmentName);
-			String attachmentId = null;
-			if (attachmentIdAndType != null) {
-				attachmentId = attachmentIdAndType.get(0);
-				genericArtifact.setTargetArtifactId(attachmentId);
+			if (QCConnectionFactory.isDefectRepository(targetRepositoryId)) {
+				attachmentHandler.createAttachmentForDefect(connection, parentArtifactId,
+						attachmentName, contentTypeValue, attachmentFile,
+						attachmentSourceUrl, attachmentDescription);
+				List<String> attachmentIdAndType = qcGAHelper.getFromTable(
+						connection, parentArtifactId, attachmentName);
+				String attachmentId = null;
+				if (attachmentIdAndType != null) {
+					attachmentId = attachmentIdAndType.get(0);
+					genericArtifact.setTargetArtifactId(attachmentId);
+				}
+				log.info("Attachment " + attachmentName + " is created with id "
+						+ attachmentId + " for defect " + parentArtifactId + " on "
+						+ genericArtifact.getTargetRepositoryId());
+				targetAutimeAndTxnId = getAutimeAndTxnIdForDefect(connection,
+						attachmentId, attachmentName, ARTIFACT_TYPE_ATTACHMENT);
+				genericArtifact.setTargetArtifactVersion(targetAutimeAndTxnId
+						.get(0));
+				genericArtifact.setTargetArtifactLastModifiedDate(DateUtil
+						.format(DateUtil.parseQCDate(targetAutimeAndTxnId.get(1))));
+	
+				targetAutimeAndTxnIdParent = getAutimeAndTxnIdForDefect(
+						connection, parentArtifactId, null,
+						ARTIFACT_TYPE_PLAINARTIFACT);
+			} else {
+				// we have to attach to a requirement
+				attachmentHandler.createAttachmentForRequirement(connection, parentArtifactId,
+						attachmentName, contentTypeValue, attachmentFile,
+						attachmentSourceUrl, attachmentDescription);
+				List<String> attachmentIdAndType = qcGAHelper.getFromTable(
+						connection, parentArtifactId, attachmentName);
+				String attachmentId = null;
+				if (attachmentIdAndType != null) {
+					attachmentId = attachmentIdAndType.get(0);
+					genericArtifact.setTargetArtifactId(attachmentId);
+				}
+				log.info("Attachment " + attachmentName + " is created with id "
+						+ attachmentId + " for requirement " + parentArtifactId + " on "
+						+ genericArtifact.getTargetRepositoryId());
+				targetAutimeAndTxnId = getAutimeAndTxnIdForRequirement(connection,
+						attachmentId, attachmentName, ARTIFACT_TYPE_ATTACHMENT);
+				genericArtifact.setTargetArtifactVersion(targetAutimeAndTxnId
+						.get(0));
+				genericArtifact.setTargetArtifactLastModifiedDate(DateUtil
+						.format(DateUtil.parseQCDate(targetAutimeAndTxnId.get(1))));
+	
+				targetAutimeAndTxnIdParent = getAutimeAndTxnIdForRequirement(
+						connection, parentArtifactId, null,
+						ARTIFACT_TYPE_PLAINARTIFACT);
 			}
-			log.info("Attachment " + attachmentName + " is created with id "
-					+ attachmentId + " for defect " + targetArtifactId + " on "
-					+ genericArtifact.getTargetRepositoryId());
-			List<String> targetAutimeAndTxnId = getAutimeAndTxnIdForDefect(connection,
-					attachmentId, attachmentName, ARTIFACT_TYPE_ATTACHMENT);
-			genericArtifact.setTargetArtifactVersion(targetAutimeAndTxnId
-					.get(0));
-			genericArtifact.setTargetArtifactLastModifiedDate(DateUtil
-					.format(DateUtil.parseQCDate(targetAutimeAndTxnId.get(1))));
-
-			List<String> targetAutimeAndTxnIdParentDefect = getAutimeAndTxnIdForDefect(
-					connection, targetArtifactId, null,
-					ARTIFACT_TYPE_PLAINARTIFACT);
+			
 			parentArtifact = new GenericArtifact();
 			parentArtifact
 					.setArtifactType(GenericArtifact.ArtifactTypeValue.PLAINARTIFACT);
@@ -928,13 +959,13 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 			parentArtifact.setSourceSystemTimezone(genericArtifact
 					.getSourceSystemTimezone());
 
-			parentArtifact.setTargetArtifactId(targetArtifactId);
+			parentArtifact.setTargetArtifactId(parentArtifactId);
 			parentArtifact.setTargetArtifactLastModifiedDate(DateUtil
 					.format(DateUtil
-							.parseQCDate(targetAutimeAndTxnIdParentDefect
+							.parseQCDate(targetAutimeAndTxnIdParent
 									.get(1))));
 			parentArtifact
-					.setTargetArtifactVersion(targetAutimeAndTxnIdParentDefect
+					.setTargetArtifactVersion(targetAutimeAndTxnIdParent
 							.get(0));
 			parentArtifact.setTargetRepositoryId(genericArtifact
 					.getTargetRepositoryId());
@@ -945,7 +976,8 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 			parentArtifact.setTargetSystemKind(genericArtifact
 					.getTargetSystemKind());
 			parentArtifact.setTargetSystemTimezone(genericArtifact
-					.getTargetSystemTimezone());
+					.getTargetSystemTimezone());	
+		
 		} catch (Exception e) {
 			String cause = "Error while creating attachment in QC";
 			log.error(cause, e);
@@ -964,36 +996,58 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 		}
 
 		Document attachmentDoc = this.returnDocument(genericArtifact);
-		Document bugDoc = parentArtifact == null ? null : this
+		Document parentDoc = parentArtifact == null ? null : this
 				.returnDocument(parentArtifact);
-		return new Document[] { attachmentDoc, bugDoc };
+		return new Document[] { attachmentDoc, parentDoc };
 	}
 
 	@Override
 	public Document[] deleteAttachment(Document gaDocument) {
 		GenericArtifact genericArtifact = getArtifactFromDocument(gaDocument);
 		String targetArtifactId = genericArtifact.getTargetArtifactId();
-		String bugId = genericArtifact.getDepParentTargetArtifactId();
+		String parentArtifactId = genericArtifact.getDepParentTargetArtifactId();
+		String targetRepositoryId = genericArtifact.getTargetRepositoryId();
 		IConnection connection = null;
 		GenericArtifact parentArtifact = null;
+		List<String> targetAutimeAndTxnId = null;
+		List<String> targetAutimeAndTxnIdParent = null;
+		
 		try {
 			connection = this.connect(genericArtifact);
-			attachmentHandler.deleteAttachment(connection, bugId,
-					targetArtifactId);
-			String attachmentName = getFieldValueFromGenericArtifact(
-					genericArtifact, AttachmentMetaData.getAttachmentName());
-			log.info("Attachment " + targetArtifactId
-					+ " is deleted from defect " + bugId + " on "
-					+ genericArtifact.getTargetRepositoryId());
-			List<String> targetAutimeAndTxnId = getAutimeAndTxnIdForDefect(connection,
-					targetArtifactId, attachmentName, ARTIFACT_TYPE_ATTACHMENT);
+			if (QCConnectionFactory.isDefectRepository(targetRepositoryId)) {
+				attachmentHandler.deleteAttachmentForDefect(connection, parentArtifactId,
+						targetArtifactId);
+				String attachmentName = getFieldValueFromGenericArtifact(
+						genericArtifact, AttachmentMetaData.getAttachmentName());
+				log.info("Attachment " + targetArtifactId
+						+ " is deleted from defect " + parentArtifactId + " on "
+						+ genericArtifact.getTargetRepositoryId());
+				targetAutimeAndTxnId = getAutimeAndTxnIdForDefect(connection,
+						targetArtifactId, attachmentName, ARTIFACT_TYPE_ATTACHMENT);
+				
+				targetAutimeAndTxnIdParent = getAutimeAndTxnIdForDefect(
+						connection, parentArtifactId, null, ARTIFACT_TYPE_PLAINARTIFACT);
+			}
+			else {
+				attachmentHandler.deleteAttachmentForRequirement(connection, parentArtifactId,
+						targetArtifactId);
+				String attachmentName = getFieldValueFromGenericArtifact(
+						genericArtifact, AttachmentMetaData.getAttachmentName());
+				log.info("Attachment " + targetArtifactId
+						+ " is deleted from defect " + parentArtifactId + " on "
+						+ genericArtifact.getTargetRepositoryId());
+				targetAutimeAndTxnId = getAutimeAndTxnIdForRequirement(connection,
+						targetArtifactId, attachmentName, ARTIFACT_TYPE_ATTACHMENT);
+				
+				targetAutimeAndTxnIdParent = getAutimeAndTxnIdForRequirement(
+						connection, parentArtifactId, null, ARTIFACT_TYPE_PLAINARTIFACT);
+			}
 			genericArtifact.setTargetArtifactVersion(targetAutimeAndTxnId
 					.get(0));
 			genericArtifact.setTargetArtifactLastModifiedDate(DateUtil
 					.format(DateUtil.parseQCDate(targetAutimeAndTxnId.get(1))));
 
-			List<String> targetAutimeAndTxnIdParentDefect = getAutimeAndTxnIdForDefect(
-					connection, bugId, null, ARTIFACT_TYPE_PLAINARTIFACT);
+			
 			parentArtifact = new GenericArtifact();
 			parentArtifact
 					.setArtifactType(GenericArtifact.ArtifactTypeValue.PLAINARTIFACT);
@@ -1020,13 +1074,13 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 			parentArtifact.setSourceSystemTimezone(genericArtifact
 					.getSourceSystemTimezone());
 
-			parentArtifact.setTargetArtifactId(bugId);
+			parentArtifact.setTargetArtifactId(parentArtifactId);
 			parentArtifact.setTargetArtifactLastModifiedDate(DateUtil
 					.format(DateUtil
-							.parseQCDate(targetAutimeAndTxnIdParentDefect
+							.parseQCDate(targetAutimeAndTxnIdParent
 									.get(1))));
 			parentArtifact
-					.setTargetArtifactVersion(targetAutimeAndTxnIdParentDefect
+					.setTargetArtifactVersion(targetAutimeAndTxnIdParent
 							.get(0));
 			parentArtifact.setTargetRepositoryId(genericArtifact
 					.getTargetRepositoryId());
@@ -1040,7 +1094,7 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 					.getTargetSystemTimezone());
 		} catch (Exception e) {
 			String cause = "Exception while trying to delete attachment with id "
-					+ targetArtifactId + "from bug " + bugId;
+					+ targetArtifactId + "from bug " + parentArtifactId;
 			log.error(cause, e);
 			throw new CCFRuntimeException(cause, e);
 		} finally {
@@ -1048,9 +1102,9 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 				this.disconnect(connection);
 		}
 		Document attachmentDoc = this.returnDocument(genericArtifact);
-		Document bugDoc = parentArtifact == null ? null : this
+		Document parentDoc = parentArtifact == null ? null : this
 				.returnDocument(parentArtifact);
-		return new Document[] { attachmentDoc, bugDoc };
+		return new Document[] { attachmentDoc, parentDoc };
 	}
 
 	@Override
