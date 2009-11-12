@@ -319,6 +319,7 @@
 		</description>
 		<property name="identityMappingDatabaseReader" ref="IndentityMappingDatabaseReaderQC2TF" />
 		<property name="hospitalDatabaseReader" ref="HospitalDatabaseReaderQC2TF" />
+		<property name="parentIdentityMappingDatabaseReader" ref="ParentIndentityMappingDatabaseReaderQC2TF" />
 		<property name="skipNewerVersionsOfQuarantinedArtifacts" value="false"/><property name="alwaysPassResynchedArtifacts" value="false"/>
 		<property name="identityMapEventWaitCount" value="8"></property>
 		<property name="identityMapEventWaitTime" value="500"></property>
@@ -437,6 +438,22 @@
 		<property name="batchSize" value="0" />
 		<property name="sql">
 			<value>SELECT TARGET_ARTIFACT_ID, SOURCE_LAST_MODIFICATION_TIME, SOURCE_ARTIFACT_VERSION, TARGET_ARTIFACT_VERSION FROM IDENTITY_MAPPING WHERE SOURCE_SYSTEM_ID='?' AND SOURCE_REPOSITORY_ID='?' AND TARGET_SYSTEM_ID='?' AND TARGET_REPOSITORY_ID='?' AND SOURCE_ARTIFACT_ID='?' AND ARTIFACT_TYPE='?'</value>
+		</property>
+	</bean>
+	<bean id="ParentIndentityMappingDatabaseReaderQC2TF"
+		class="org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector">
+		<description>
+			This database reader component reads the target artifact id from the databse
+			for a given source artifact id and the target repository and system information.
+		</description>
+		<property name="jdbcConnection" ref="JdbcConnectionQC2TF" />
+		<!--
+			batch size of 0 or less means process all rows in one message batch.
+		-->
+		<!-- batch size of one means process one row per message and so on -->
+		<property name="batchSize" value="0" />
+		<property name="sql">
+			<value>SELECT TARGET_ARTIFACT_ID, SOURCE_LAST_MODIFICATION_TIME, SOURCE_ARTIFACT_VERSION, TARGET_ARTIFACT_VERSION, TARGET_REPOSITORY_ID FROM IDENTITY_MAPPING WHERE SOURCE_SYSTEM_ID='?' AND SOURCE_REPOSITORY_ID='?' AND TARGET_SYSTEM_ID='?' AND SOURCE_ARTIFACT_ID='?' AND ARTIFACT_TYPE='?' AND TARGET_REPOSITORY_ID IN (SELECT TARGET_REPOSITORY_ID FROM SYNCHRONIZATION_STATUS WHERE SOURCE_SYSTEM_ID = '?' AND TARGET_SYSTEM_ID = '?' AND SOURCE_REPOSITORY_ID = '?')</value>
 		</property>
 	</bean>
 	<bean id="IdentityMappingDatabaseUpdaterQC2TF"

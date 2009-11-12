@@ -379,6 +379,7 @@
 			component.
 		</description>
 		<property name="identityMappingDatabaseReader" ref="IndentityMappingDatabaseReaderTF2QC" />
+		<property name="parentIdentityMappingDatabaseReader" ref="ParentIndentityMappingDatabaseReaderTF2QC" />
 		<property name="hospitalDatabaseReader" ref="HospitalDatabaseReaderTF2QC"/>
 		<property name="skipNewerVersionsOfQuarantinedArtifacts" value="false"/><property name="alwaysPassResynchedArtifacts" value="false"/>
 		<property name="identityMapEventWaitCount" value="8"></property>
@@ -467,6 +468,22 @@
 		<property name="batchSize" value="0" />
 		<property name="sql">
 			<value>SELECT TARGET_ARTIFACT_ID, SOURCE_LAST_MODIFICATION_TIME, SOURCE_ARTIFACT_VERSION, TARGET_ARTIFACT_VERSION FROM IDENTITY_MAPPING WHERE SOURCE_SYSTEM_ID='?' AND SOURCE_REPOSITORY_ID='?' AND TARGET_SYSTEM_ID='?' AND TARGET_REPOSITORY_ID='?' AND SOURCE_ARTIFACT_ID='?' AND ARTIFACT_TYPE='?'</value>
+		</property>
+	</bean>
+	
+	<bean id="ParentIndentityMappingDatabaseReaderTF2QC"
+		class="org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector">
+		<description>
+			This database reader component reads the target artifact id from the databse
+			for a given source artifact id and the target repository and system information.
+		</description>
+		<property name="jdbcConnection"
+			ref="JdbcConnectionTF2QC" />
+		<!-- batch size of 0 or less means process all rows in one message batch. -->
+		<!-- batch size of one means process one row per message and so on -->
+		<property name="batchSize" value="0" />
+		<property name="sql">
+			<value>SELECT TARGET_ARTIFACT_ID, SOURCE_LAST_MODIFICATION_TIME, SOURCE_ARTIFACT_VERSION, TARGET_ARTIFACT_VERSION, TARGET_REPOSITORY_ID FROM IDENTITY_MAPPING WHERE SOURCE_SYSTEM_ID='?' AND SOURCE_REPOSITORY_ID='?' AND TARGET_SYSTEM_ID='?' AND SOURCE_ARTIFACT_ID='?' AND ARTIFACT_TYPE='?' AND TARGET_REPOSITORY_ID IN (SELECT TARGET_REPOSITORY_ID FROM SYNCHRONIZATION_STATUS WHERE SOURCE_SYSTEM_ID = '?' AND TARGET_SYSTEM_ID = '?' AND SOURCE_REPOSITORY_ID = '?')</value>
 		</property>
 	</bean>
 
