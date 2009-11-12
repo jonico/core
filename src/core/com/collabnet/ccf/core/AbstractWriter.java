@@ -38,6 +38,7 @@ public abstract class AbstractWriter<T> extends Component implements
 	private static final Log log = LogFactory.getLog(AbstractWriter.class);
 	private static final Log logConflictResolutor = LogFactory
 			.getLog("com.collabnet.ccf.core.conflict.resolution");
+
 	private ConnectionManager<T> connectionManager = null;
 
 	public AbstractWriter() {
@@ -139,7 +140,8 @@ public abstract class AbstractWriter<T> extends Component implements
 			} catch (Exception e) {
 				boolean connectionException = connectionManager
 						.isUseStandardTimeoutHandlingCode()
-						&& this.handleException(e, connectionManager, gaDocument);
+						&& this.handleException(e, connectionManager,
+								gaDocument);
 				if (!connectionException) {
 					retry = false;
 					if (e instanceof CCFRuntimeException) {
@@ -192,10 +194,9 @@ public abstract class AbstractWriter<T> extends Component implements
 			++numberOfTries;
 		} while (retry);
 
-		if(returnValue != null){
+		if (returnValue != null) {
 			return returnValue;
-		}
-		else if (gaDocument == null) {
+		} else if (gaDocument == null) {
 			returnValue = new Object[] {};
 		} else {
 			returnValue = new Object[] { gaDocument };
@@ -219,7 +220,7 @@ public abstract class AbstractWriter<T> extends Component implements
 	public abstract Document updateAttachment(Document gaDocument);
 
 	private Document handleArtifactUpdate(Document gaDocument) {
-			return this.updateArtifact(gaDocument);
+		return this.updateArtifact(gaDocument);
 	}
 
 	/**
@@ -230,7 +231,7 @@ public abstract class AbstractWriter<T> extends Component implements
 	 * to this method will be changed and has to be serialized to XML as return
 	 * value of the update method. It may also happen that this method throws a
 	 * CCFRuntimeException to quarantine an artifact.
-	 *
+	 * 
 	 * @param artifactCurrentVersion
 	 *            version of the target artifact, the update method likes to
 	 *            change
@@ -269,12 +270,40 @@ public abstract class AbstractWriter<T> extends Component implements
 			String targetSystemId = gaDocument.getTargetSystemId();
 			String targetRepositoryId = gaDocument.getTargetRepositoryId();
 
+			String transactionId = gaDocument.getTransactionId();
+			boolean replayedArtifact = (transactionId != null && !transactionId
+					.equals(GenericArtifact.VALUE_UNKNOWN));
+			boolean resynchedArtifact = gaDocument.getArtifactAction().equals(
+					GenericArtifactHelper.ARTIFACT_ACTION_RESYNC);
+			
+			if (replayedArtifact || resynchedArtifact) {
+				// no matter what the conflict resolution says, if this is a resync
+				// or replay, this change has to get through
+				logConflictResolutor
+						.warn("Conflict detected for artifact combination "
+								+ sourceArtifactId
+								+ "-"
+								+ sourceRepositoryId
+								+ "-"
+								+ sourceSystemId
+								+ "-"
+								+ targetArtifactId
+								+ "-"
+								+ targetRepositoryId
+								+ "-"
+								+ targetSystemId
+								+ ". However, changes are not ignored since this is an explicit "
+								+ (replayedArtifact ? "replay" : "resync")
+								+ " request.");
+				return true;
+			}
+
 			if (conflictResolutionPriority
 					.equals(GenericArtifact.VALUE_CONFLICT_RESOLUTION_PRIORITY_ALWAYS_IGNORE)) {
 				logConflictResolutor
-						.warn("Conflict detected for artifact combination"
+						.warn("Conflict detected for artifact combination "
 								+ sourceArtifactId + "-" + sourceRepositoryId
-								+ "-" + sourceSystemId + "-" + targetArtifactId
+								+ "-" + sourceSystemId + "-" + targetArtifactId + "-"
 								+ targetRepositoryId + "-" + targetSystemId
 								+ ". Changes are ignored.");
 
@@ -283,9 +312,9 @@ public abstract class AbstractWriter<T> extends Component implements
 				return false;
 			} else if (conflictResolutionPriority
 					.equals(GenericArtifact.VALUE_CONFLICT_RESOLUTION_PRIORITY_QUARANTINE_ARTIFACT)) {
-				String message = "Conflict detected for artifact combination"
+				String message = "Conflict detected for artifact combination "
 						+ sourceArtifactId + "-" + sourceRepositoryId + "-"
-						+ sourceSystemId + "-" + targetArtifactId
+						+ sourceSystemId + "-" + targetArtifactId + "-"
 						+ targetRepositoryId + "-" + targetSystemId;
 
 				logConflictResolutor.warn(message
@@ -296,17 +325,17 @@ public abstract class AbstractWriter<T> extends Component implements
 			} else if ((conflictResolutionPriority
 					.equals(GenericArtifact.VALUE_CONFLICT_RESOLUTION_PRIORITY_ALWAYS_OVERRIDE))) {
 				logConflictResolutor
-						.warn("Conflict detected for artifact combination"
+						.warn("Conflict detected for artifact combination "
 								+ sourceArtifactId + "-" + sourceRepositoryId
-								+ "-" + sourceSystemId + "-" + targetArtifactId
+								+ "-" + sourceSystemId + "-" + targetArtifactId + "-"
 								+ targetRepositoryId + "-" + targetSystemId
 								+ ". Changes are overridden.");
 
 				return true;
 			} else {
-				String message = "Conflict detected for artifact combination"
+				String message = "Conflict detected for artifact combination "
 						+ sourceArtifactId + "-" + sourceRepositoryId + "-"
-						+ sourceSystemId + "-" + targetArtifactId
+						+ sourceSystemId + "-" + targetArtifactId + "-"
 						+ targetRepositoryId + "-" + targetSystemId;
 
 				logConflictResolutor
@@ -325,9 +354,10 @@ public abstract class AbstractWriter<T> extends Component implements
 	}
 
 	/**
-	 * Updates the artifact. Do not forget to call
-	 * the conflict resolution method of this class
-	 * once the current version of the target artifact is known.
+	 * Updates the artifact. Do not forget to call the conflict resolution
+	 * method of this class once the current version of the target artifact is
+	 * known.
+	 * 
 	 * @param gaDocument
 	 * @return
 	 */
@@ -366,7 +396,7 @@ public abstract class AbstractWriter<T> extends Component implements
 	 * manage (create, close, pool) the connections from type T. Furthermore, it
 	 * contains timeout settings and the settings for the retry code in case of
 	 * network timeout and session fault related errors.
-	 *
+	 * 
 	 * @return the connection manager object
 	 */
 	public ConnectionManager<T> getConnectionManager() {
@@ -378,7 +408,7 @@ public abstract class AbstractWriter<T> extends Component implements
 	 * manage (create, close, pool) the connections from type T. Furthermore, it
 	 * contains timeout settings and the settings for the retry code in case of
 	 * network timeout and session fault related errors.
-	 *
+	 * 
 	 * @param connectionManager
 	 *            the connection manager object
 	 */
