@@ -215,7 +215,11 @@ public class QCHandler {
 					&& !targetParentArtifactId
 							.equals(GenericArtifact.VALUE_UNKNOWN)
 					&& !targetParentArtifactId.equals(req.getParentId())) {
-				req.move(Integer.parseInt(targetParentArtifactId), 1);
+				if (targetParentArtifactId.equals(GenericArtifact.VALUE_NONE)) {
+					req.move(-1, 1);
+				} else {
+					req.move(Integer.parseInt(targetParentArtifactId), 1);
+				}
 			}
 			
 		} catch (DefectAlreadyLockedException e) {
@@ -575,7 +579,6 @@ public class QCHandler {
 	 * Return all defects modified between the given time range, in a map
 	 * 
 	 */
-	@SuppressWarnings("unchecked")
 	public List<ArtifactState> getLatestChangedDefects(IConnection qcc,
 			String connectorUser, String transactionId) {
 
@@ -1255,7 +1258,8 @@ public class QCHandler {
 		try {
 			reqFactory = qcc.getRequirementsFactory();
 			if (parentArtifactId != null
-					&& !parentArtifactId.equals(GenericArtifact.VALUE_UNKNOWN)) {
+					&& !parentArtifactId.equals(GenericArtifact.VALUE_UNKNOWN) && 
+					!parentArtifactId.equals(GenericArtifact.VALUE_NONE)) {
 				req = reqFactory.addItem(parentArtifactId);
 			} else {
 				req = reqFactory.addItem("-1");

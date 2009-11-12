@@ -501,25 +501,29 @@ public class QCReader extends AbstractReader<IConnection> {
 
 					// set information about parent artifact
 					String parentId = latestRequirement.getParentId();
-					if (parentId != null && !parentId.equals("-1")) {
-						latestArtifact.setDepParentSourceArtifactId(parentId);
-						// find out requirement type of parent
-						QCRequirement parentRequirement = null;
-						try {
-							parentRequirement = qcGAHelper
-									.getRequirementWithId(connection, Integer
-											.parseInt(parentId));
-							String parentRequirementType = parentRequirement
-									.getTypeId();
-							latestArtifact
-									.setDepParentSourceRepositoryId(QCConnectionFactory
-											.generateDependentRepositoryId(
-													sourceRepositoryId,
-													parentRequirementType));
-						} finally {
-							if (parentRequirement != null) {
-								parentRequirement.safeRelease();
-								parentRequirement = null;
+					if (parentId != null) {
+						if (parentId.equals("-1")) {
+							latestArtifact.setDepParentSourceArtifactId(GenericArtifact.VALUE_NONE);
+						} else {
+							latestArtifact.setDepParentSourceArtifactId(parentId);
+							// find out requirement type of parent
+							QCRequirement parentRequirement = null;
+							try {
+								parentRequirement = qcGAHelper
+										.getRequirementWithId(connection, Integer
+												.parseInt(parentId));
+								String parentRequirementType = parentRequirement
+										.getTypeId();
+								latestArtifact
+										.setDepParentSourceRepositoryId(QCConnectionFactory
+												.generateDependentRepositoryId(
+														sourceRepositoryId,
+														parentRequirementType));
+							} finally {
+								if (parentRequirement != null) {
+									parentRequirement.safeRelease();
+									parentRequirement = null;
+								}
 							}
 						}
 					}

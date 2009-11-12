@@ -26,14 +26,11 @@ import org.apache.log4j.Logger;
 
 import com.collabnet.ccf.core.CCFRuntimeException;
 import com.collabnet.ccf.core.utils.DateUtil;
-import com.collabnet.ccf.pi.qc.v90.api.Comment;
 import com.collabnet.ccf.pi.qc.v90.api.DefectAlreadyLockedException;
 import com.collabnet.ccf.pi.qc.v90.api.IAttachment;
 import com.collabnet.ccf.pi.qc.v90.api.IAttachmentFactory;
-import com.collabnet.ccf.pi.qc.v90.api.IBugActions;
 import com.collabnet.ccf.pi.qc.v90.api.IFactoryList;
 import com.collabnet.ccf.pi.qc.v90.api.IRequirementsActions;
-import com.collabnet.ccf.pi.qc.v90.api.Utils;
 import com.jacob.activeX.ActiveXComponent;
 import com.jacob.com.DateUtilities;
 import com.jacob.com.Dispatch;
