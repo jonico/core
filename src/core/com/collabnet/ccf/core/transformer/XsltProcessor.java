@@ -293,17 +293,22 @@ public class XsltProcessor extends Component implements IDataProcessor {
 							element, GenericArtifactHelper.ARTIFACT_ACTION);
 					String transactionId = XPathUtils.getAttributeValue(
 							element, GenericArtifactHelper.TRANSACTION_ID);
+					String errorCode = XPathUtils.getAttributeValue(
+							element, GenericArtifactHelper.ERROR_CODE);
+					
 					// pass artifacts with ignore action
 					if (artifactAction != null
 							&& artifactAction
 									.equals(GenericArtifactHelper.ARTIFACT_ACTION_IGNORE) ) {
 						return new Object[] { document };
 					}
-					// do not transform artifacts to be replayed
+					// do not transform artifacts to be replayed (unless specific error code is set)
 					if (transactionId != null
 							&& !transactionId
 									.equals(GenericArtifact.VALUE_UNKNOWN) ) {
-						return new Object[] { document };
+						if (errorCode == null || !errorCode.equals(GenericArtifact.ERROR_REPLAYED_WITH_TRANSFORMATION)) {
+							return new Object[] { document };
+						}
 					}
 				} catch (GenericArtifactParsingException e) {
 					// do nothing, this artifact does not seem to be a generic

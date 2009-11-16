@@ -252,6 +252,7 @@
 		<property name="shipAttachments" value="true" />		
 		<!-- This plugs in the polling hospital -->
 		<property name="hospitalDatabaseReader" ref="HospitalDatabaseExtractor" />
+		<property name="nameOfEntityService" value="TFEntityService" />
 	</bean>
 	<bean id="QCConnectionManager" class="com.collabnet.ccf.core.eis.connection.ConnectionManager">
 		<!-- Please set the number of connections to the number of project mappings you have -->
@@ -560,7 +561,7 @@
 		<!-- batch size of one means process one row per message and so on -->
 		<property name="batchSize" value="0" />
 		<property name="sql">
-			<value>SELECT ID, GENERIC_ARTIFACT FROM HOSPITAL WHERE REPROCESSED = FALSE AND ERROR_CODE = 'replay' AND SOURCE_SYSTEM_ID = '?' and SOURCE_REPOSITORY_ID = '?' AND TARGET_SYSTEM_ID = '?' and TARGET_REPOSITORY_ID = '?' ORDER BY ID ASC LIMIT 1</value>
+			<value>SELECT ID, GENERIC_ARTIFACT, ORIGINATING_COMPONENT FROM HOSPITAL WHERE REPROCESSED = FALSE AND ERROR_CODE = 'replay' AND SOURCE_SYSTEM_ID = '?' and SOURCE_REPOSITORY_ID = '?' AND TARGET_SYSTEM_ID = '?' and TARGET_REPOSITORY_ID = '?' ORDER BY ID ASC LIMIT 1</value>
 		</property>
 	</bean>
 	

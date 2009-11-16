@@ -904,7 +904,7 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 		}
 		log.info("Only older non-reprocessed versions of artifact combination "
 				+ sourceArtifactId + "-" + sourceRepositoryId + "-"
-				+ sourceSystemId + targetRepositoryId + "-" + targetSystemId
+				+ sourceSystemId + "-" + targetRepositoryId + "-" + targetSystemId
 				+ " are in the hospital, so pass artifact ...");
 		return false;
 	}

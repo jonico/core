@@ -19,10 +19,14 @@ package com.collabnet.ccf.core;
 
 import java.util.Date;
 
+import com.collabnet.ccf.core.ga.GenericArtifact;
+
 public class ArtifactState {
 	private String artifactId;
 	private long artifactVersion;
 	private Date artifactLastModifiedDate;
+	
+	private String errorCode = GenericArtifact.ERROR_OK; 
 	
 	/**
 	 * this property is used to indicate whether this is a replayed (quarantined artifact) or not
@@ -74,5 +78,11 @@ public class ArtifactState {
 	}
 	public String getTransactionId() {
 		return transactionId;
+	}
+	public void setErrorCode(String errorCode) {
+		this.errorCode = errorCode;
+	}
+	public String getErrorCode() {
+		return errorCode;
 	}
 }
