@@ -1130,6 +1130,22 @@ public class GenericArtifactHelper {
 		}
 		return fieldValue;
 	}
+	
+	public static Boolean getBooleanMandatoryGAField(String fieldName,
+			GenericArtifact ga) {
+		Boolean fieldValue = null;
+		GenericArtifactField gaField = getMandatoryGAField(fieldName, ga);
+		if (gaField != null) {
+			Object fieldValueObj = gaField.getFieldValue();
+			if (fieldValueObj instanceof String) {
+				String fieldValueString = (String) fieldValueObj;
+				fieldValue = Boolean.parseBoolean(fieldValueString);
+			} else if (fieldValueObj instanceof Boolean) {
+				fieldValue = (Boolean) fieldValueObj;
+			}
+		}
+		return fieldValue;
+	}
 
 	public static String getStringFlexGAField(String fieldName,
 			GenericArtifact ga) {
