@@ -199,7 +199,7 @@
 	</bean>
 
 	<bean id="TFReader"
-		class="com.collabnet.ccf.pi.sfee.v44.SFEEReader">
+		class="com.collabnet.ccf.teamforge.TFReader">
 		<description>
 			This reader reads the modified artifacts in the TF system's tracker configured in the
 			${sfee.server.1.url} and the sync info tables. It also reads all the related dependent artifact details
@@ -247,12 +247,12 @@
 	</bean>
 
 	<bean id="TFConnectionFactory"
-		class="com.collabnet.ccf.pi.sfee.v44.SFEEConnectionFactory">
+		class="com.collabnet.ccf.teamforge.TFConnectionFactory">
 		<description>
 			This bean is an implementation of the com.collabnet.ccf.core.eis.connection.ConnectionFactory
 			interface. It is responsible to create and close an connection for a given
 			repository.
-			In this case TFConnectionFactory manages com.collabnet.ccf.pi.sfee.v44.Connection
+			In this case TFConnectionFactory manages TF connections
 			objects.
 		</description>
 	</bean>

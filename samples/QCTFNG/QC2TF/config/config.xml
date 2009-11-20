@@ -284,16 +284,16 @@
 		<property name="enableReloginAfterSessionTimeout" value="true" />
 		<property name="enableRetryAfterNetworkTimeout" value="true" />
 	</bean>
-	<bean id="TFConnectionFactory" class="com.collabnet.ccf.pi.sfee.v44.SFEEConnectionFactory">
+	<bean id="TFConnectionFactory" class="com.collabnet.ccf.teamforge.TFConnectionFactory">
 		<description>
 			This bean is an implementation of the com.collabnet.ccf.core.eis.connection.ConnectionFactory
 			interface. It is responsible to create and close an connection for a given
 			repository.
-			In this case TFConnectionFactory manages com.collabnet.ccf.pi.sfee.v44.Connection
+			In this case TFConnectionFactory manages TF connections
 			objects.
 		</description>
 	</bean>
-	<bean id="TFWriter" class="com.collabnet.ccf.pi.sfee.v44.SFEEWriter">
+	<bean id="TFWriter" class="com.collabnet.ccf.teamforge.TFWriter">
 		<description>
 			This data processor is responsible for writing the artifacts coming from the
 			EntitySerive into the target TF system.
