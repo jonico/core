@@ -49,6 +49,7 @@ import com.collabnet.ccf.core.utils.XPathUtils;
 import com.collabnet.ce.soap50.webservices.cemain.TrackerFieldSoapDO;
 import com.collabnet.teamforge.api.Connection;
 import com.collabnet.teamforge.api.PlanningFolderRuleViolationException;
+import com.collabnet.teamforge.api.planning.PlanningFolderDO;
 import com.collabnet.teamforge.api.tracker.ArtifactDO;
 
 /**
@@ -203,31 +204,140 @@ public class TFWriter extends AbstractWriter<Connection> implements
 					GenericArtifact.ERROR_GENERIC_ARTIFACT_PARSING);
 			throw new CCFRuntimeException(cause, e);
 		}
-		this.initializeArtifact(ga);
+
 		String targetRepositoryId = ga.getTargetRepositoryId();
 		String targetArtifactId = ga.getTargetArtifactId();
 		String tracker = targetRepositoryId;
 		Connection connection = connect(ga);
-		ArtifactDO result = null;
 		try {
-			result = this.createArtifact(ga, tracker, connection);
-			// update Id field after creating the artifact
-			targetArtifactId = result.getId();
-			TFGAHelper.addField(ga, TFArtifactMetaData.TFFields.id
-					.getFieldName(), targetArtifactId,
-					GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD,
-					GenericArtifactField.FieldValueTypeValue.STRING);
-		} catch (NumberFormatException e) {
-			log.error("Wrong data format of attribute for artifact "
-					+ data.asXML(), e);
-			return null;
+			if (TFConnectionFactory.isTrackerRepository(targetRepositoryId)) {
+				ArtifactDO result = null;
+				try {
+					this.initializeArtifact(ga);
+					result = this.createArtifact(ga, tracker, connection);
+					// update Id field after creating the artifact
+					targetArtifactId = result.getId();
+					TFGAHelper
+							.addField(
+									ga,
+									TFArtifactMetaData.TFFields.id
+											.getFieldName(),
+									targetArtifactId,
+									GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD,
+									GenericArtifactField.FieldValueTypeValue.STRING);
+					this.populateTargetArtifactAttributes(ga, result);
+					return this.returnDocument(ga);
+				} catch (NumberFormatException e) {
+					log.error("Wrong data format of attribute for artifact "
+							+ data.asXML(), e);
+					return null;
+				}
+			} else {
+				// we write planning folders, so first do a check whether we
+				// support this feature
+				if (!connection.supports53()) {
+					// we do not support planning folders
+					throw new CCFRuntimeException(
+							"Planning Folders are not supported since TeamForge target system does not provide them.");
+				}
+				PlanningFolderDO result = null;
+				String project = TFConnectionFactory
+						.extractProjectFromRepositoryId(targetRepositoryId);
+				result = createPlanningFolder(ga, project, connection);
+				targetArtifactId = result.getId();
+				TFGAHelper.addField(ga, TFArtifactMetaData.TFFields.id
+						.getFieldName(), targetArtifactId,
+						GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD,
+						GenericArtifactField.FieldValueTypeValue.STRING);
+				populateTargetArtifactAttributesFromPlanningFolder(ga, result);
+				return returnDocument(ga);
+			}
 		} finally {
 			disconnect(connection);
 		}
-		if (result != null) {
-			this.populateTargetArtifactAttributes(ga, result);
+
+	}
+
+	private PlanningFolderDO createPlanningFolder(GenericArtifact ga,
+			String project, Connection connection) {
+		
+		String targetSystemTimezone = ga.getTargetSystemTimezone();
+		String parentId = project;
+		String targetParentArtifactId = ga.getDepParentTargetArtifactId();
+		
+		if (targetParentArtifactId != null
+				&& !targetParentArtifactId.equals(GenericArtifact.VALUE_NONE)
+				&& !targetParentArtifactId
+						.equals(GenericArtifact.VALUE_UNKNOWN)) {
+			parentId = targetParentArtifactId;
 		}
-		return this.returnDocument(ga);
+
+		String title = GenericArtifactHelper.getStringMandatoryGAField(
+				TFArtifactMetaData.TFFields.title.getFieldName(), ga);
+		
+		
+		String description = GenericArtifactHelper.getStringMandatoryGAField(
+				TFArtifactMetaData.TFFields.description.getFieldName(), ga);
+		
+		Date startDate = null;
+		Date endDate = null;
+		
+		GenericArtifactField startDateField = GenericArtifactHelper
+			.getMandatoryGAField(TFArtifactMetaData.TFFields.startDate
+				.getFieldName(), ga);
+		
+		if (startDateField != null) {
+			GregorianCalendar gc = (GregorianCalendar) startDateField.getFieldValue();
+			if (gc != null) {
+				Date dateValue = gc.getTime();
+				if (DateUtil.isAbsoluteDateInTimezone(dateValue,
+					"GMT")) {
+					startDate = DateUtil
+						.convertGMTToTimezoneAbsoluteDate(
+							dateValue, targetSystemTimezone);
+				} else {
+					startDate = dateValue;
+				}
+			}
+		}
+		
+		
+		GenericArtifactField endDateField = GenericArtifactHelper
+			.getMandatoryGAField(TFArtifactMetaData.TFFields.endDate
+			.getFieldName(), ga);
+		
+		if (endDateField != null) {
+			GregorianCalendar gc = (GregorianCalendar) endDateField.getFieldValue();
+			if (gc != null) {
+				Date dateValue = gc.getTime();
+				if (DateUtil.isAbsoluteDateInTimezone(dateValue,
+					"GMT")) {
+					endDate = DateUtil
+						.convertGMTToTimezoneAbsoluteDate(
+							dateValue, targetSystemTimezone);
+				} else {
+					endDate = dateValue;
+				}
+			}
+		}
+		
+		PlanningFolderDO planningFolder = null;
+
+		try {
+			planningFolder = connection.getPlanningClient()
+					.createPlanningFolder(parentId, title, description,
+							startDate, endDate);
+		} catch (RemoteException e) {
+			String cause = "Could not create planning folder: "
+					+ e.getMessage();
+			log.error(cause, e);
+			ga.setErrorCode(GenericArtifact.ERROR_EXTERNAL_SYSTEM_WRITE);
+			throw new CCFRuntimeException(cause, e);
+		}
+		log.info("Created planning folder " + planningFolder.getId()
+				+ " in project " + project + " with parent " + parentId);
+
+		return planningFolder;
 	}
 
 	@Override
@@ -242,7 +352,8 @@ public class TFWriter extends AbstractWriter<Connection> implements
 					GenericArtifactHelper.ERROR_CODE,
 					GenericArtifact.ERROR_GENERIC_ARTIFACT_PARSING);
 			throw new CCFRuntimeException(cause, e);
-		}
+		} 
+		
 		this.initializeArtifact(ga);
 		String targetRepositoryId = ga.getTargetRepositoryId();
 		String tracker = targetRepositoryId;
@@ -512,6 +623,16 @@ public class TFWriter extends AbstractWriter<Connection> implements
 		ga.setTargetArtifactVersion(Integer.toString(result.getVersion()));
 	}
 
+	private void populateTargetArtifactAttributesFromPlanningFolder(
+			GenericArtifact ga, PlanningFolderDO result) {
+		ga.setTargetArtifactId(result.getId());
+		Date targetArtifactLastModifiedDate = result.getLastModifiedDate();
+		String targetArtifactLastModifiedDateStr = DateUtil
+				.format(targetArtifactLastModifiedDate);
+		ga.setTargetArtifactLastModifiedDate(targetArtifactLastModifiedDateStr);
+		ga.setTargetArtifactVersion(Integer.toString(result.getVersion()));
+	}
+
 	/**
 	 * Creates the artifact represented by the GenericArtifact object on the
 	 * target TF system
@@ -614,15 +735,19 @@ public class TFWriter extends AbstractWriter<Connection> implements
 			estimatedEffort = GenericArtifactHelper.getMandatoryGAField(
 					TFArtifactMetaData.TFFields.estimatedEffort.getFieldName(),
 					ga);
-			actualEffort = GenericArtifactHelper.getMandatoryGAField(
-					TFArtifactMetaData.TFFields.actualEffort.getFieldName(), ga);
+			actualEffort = GenericArtifactHelper
+					.getMandatoryGAField(
+							TFArtifactMetaData.TFFields.actualEffort
+									.getFieldName(), ga);
 			remainingEffort = GenericArtifactHelper.getMandatoryGAField(
-					TFArtifactMetaData.TFFields.remainingEffort.getFieldName(), ga);
+					TFArtifactMetaData.TFFields.remainingEffort.getFieldName(),
+					ga);
 			planningFolder = GenericArtifactHelper.getMandatoryGAField(
-					TFArtifactMetaData.TFFields.planningFolder.getFieldName(), ga);
+					TFArtifactMetaData.TFFields.planningFolder.getFieldName(),
+					ga);
 			autosumming = GenericArtifactHelper.getMandatoryGAField(
 					TFArtifactMetaData.TFFields.autosumming.getFieldName(), ga);
-			
+
 		}
 
 		GenericArtifactField closeDate = GenericArtifactHelper
@@ -645,12 +770,14 @@ public class TFWriter extends AbstractWriter<Connection> implements
 		String[] comments = this.getComments(ga);
 		ArtifactDO result = null;
 		try {
-			result = trackerHandler.updateArtifact(ga, connection, folderId, description, category, group,
-					status, statusClass, customer, priority, estimatedEffort,
-					actualEffort, closeDate, assignedTo, reportedReleaseId,
+			result = trackerHandler.updateArtifact(ga, connection, folderId,
+					description, category, group, status, statusClass,
+					customer, priority, estimatedEffort, actualEffort,
+					closeDate, assignedTo, reportedReleaseId,
 					resolvedReleaseId, flexFieldNames, flexFieldValues,
 					flexFieldTypes, overriddenFlexFields, title, id, comments,
-					translateTechnicalReleaseIds, remainingEffort, autosumming, planningFolder);
+					translateTechnicalReleaseIds, remainingEffort, autosumming,
+					planningFolder);
 			if (result != null) {
 				log.info("Artifact " + id + " is updated successfully");
 			}
@@ -660,7 +787,8 @@ public class TFWriter extends AbstractWriter<Connection> implements
 			ga.setErrorCode(GenericArtifact.ERROR_EXTERNAL_SYSTEM_WRITE);
 			throw new CCFRuntimeException(cause, e);
 		} catch (PlanningFolderRuleViolationException e) {
-			String cause = "While trying to update an artifact within TF, a planning folder rule violation occured: "+e.getMessage();
+			String cause = "While trying to update an artifact within TF, a planning folder rule violation occured: "
+					+ e.getMessage();
 			log.error(cause, e);
 			ga.setErrorCode(GenericArtifact.ERROR_EXTERNAL_SYSTEM_WRITE);
 			throw new CCFRuntimeException(cause, e);
@@ -872,7 +1000,8 @@ public class TFWriter extends AbstractWriter<Connection> implements
 			attachmentHandler.deleteAttachment(connection, targetArtifactId,
 					artifactId, ga);
 			log.info("Attachment " + targetArtifactId + "is deleted");
-			ArtifactDO artifact = trackerHandler.getTrackerItem(connection, artifactId);
+			ArtifactDO artifact = trackerHandler.getTrackerItem(connection,
+					artifactId);
 			parentArtifact = new GenericArtifact();
 			parentArtifact
 					.setArtifactType(GenericArtifact.ArtifactTypeValue.PLAINARTIFACT);

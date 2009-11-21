@@ -96,8 +96,8 @@ public class TFArtifactMetaData {
 		 * */
 		closeDate("closeDate", "Close date", FIELD_TYPE.SYSTEM_DEFINED, GenericArtifactField.FieldValueTypeValue.DATETIME, false,""),
 		createdDate("createdDate", "Created date", FIELD_TYPE.SYSTEM_DEFINED, GenericArtifactField.FieldValueTypeValue.DATETIME, false,""),
-		startDate("startDate", "Start date", FIELD_TYPE.SYSTEM_DEFINED, GenericArtifactField.FieldValueTypeValue.DATETIME, false,""),
-		endDate("endDate", "End date", FIELD_TYPE.SYSTEM_DEFINED, GenericArtifactField.FieldValueTypeValue.DATETIME, false,""),
+		startDate("startDate", "Start date", FIELD_TYPE.SYSTEM_DEFINED, GenericArtifactField.FieldValueTypeValue.DATE, false,""),
+		endDate("endDate", "End date", FIELD_TYPE.SYSTEM_DEFINED, GenericArtifactField.FieldValueTypeValue.DATE, false,""),
 		lastModifiedDate("lastModifiedDate", "Last modified date", FIELD_TYPE.SYSTEM_DEFINED, GenericArtifactField.FieldValueTypeValue.DATETIME, false,""),
 		customer("customer", "Customer", FIELD_TYPE.CONFIGURABLE, GenericArtifactField.FieldValueTypeValue.STRING, false,""),
 		description("description", "Description", FIELD_TYPE.SYSTEM_DEFINED, GenericArtifactField.FieldValueTypeValue.STRING, true,""),

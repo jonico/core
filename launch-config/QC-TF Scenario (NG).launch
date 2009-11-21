@@ -18,5 +18,5 @@
 <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-config file:config/config.xml"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="CCF"/>
 <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Djava.library.path=../../../src/plugins/HPQC/lib/jacob -Dcom.sun.management.jmxremote.port=10002 -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false"/>
-<stringAttribute key="org.eclipse.jdt.launching.WORKING_DIRECTORY" value="${workspace_loc:CCF/samples/QCTF/QC2TF}"/>
+<stringAttribute key="org.eclipse.jdt.launching.WORKING_DIRECTORY" value="${workspace_loc:CCF/samples/QCTFNG/QC2TF}"/>
 </launchConfiguration>

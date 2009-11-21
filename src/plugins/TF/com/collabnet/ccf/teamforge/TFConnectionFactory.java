@@ -45,6 +45,38 @@ public class TFConnectionFactory implements ConnectionFactory<Connection> {
 
 
 	/**
+	 * Returns whether this repository id belongs to a tracker
+	 * If not, it belongs to a planning folder
+	 * @param repositoryId repositoryId
+	 * @return true if repository id belongs to a tracker
+	 */
+	public static boolean isTrackerRepository(String repositoryId) {
+		return repositoryId.startsWith("tracker");
+	}
+	
+	/**
+	 * If the repository id contains the project id this will be returned
+	 * @param repositoryId
+	 * @return
+	 */
+	public static String extractProjectFromRepositoryId(String repositoryId) {
+		if(repositoryId != null){
+			String[] splitRepo = repositoryId.split("-");
+			if(splitRepo != null){
+				if(splitRepo.length != 2){
+					throw new IllegalArgumentException("Repository id is not valid.");
+				}
+				else {
+					return splitRepo[0];
+				}
+			}
+		}
+		throw new IllegalArgumentException("Repository id is not valid.");
+	}
+	
+	
+	
+	/**
 	 * Connection Factory implementation for the TF adaptor. 
 	 * 1. connectionInfo - contains the server URL.
 	 * 2. credentialInfo  - contains the user name and
