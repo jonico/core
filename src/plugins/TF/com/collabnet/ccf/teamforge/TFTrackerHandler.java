@@ -17,7 +17,6 @@
 
 package com.collabnet.ccf.teamforge;
 
-import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -46,6 +45,8 @@ import com.collabnet.teamforge.api.frs.PackageRow;
 import com.collabnet.teamforge.api.frs.ReleaseDO;
 import com.collabnet.teamforge.api.frs.ReleaseList;
 import com.collabnet.teamforge.api.frs.ReleaseRow;
+import com.collabnet.teamforge.api.planning.PlanningFolderDO;
+import com.collabnet.teamforge.api.planning.PlanningFolderRow;
 import com.collabnet.teamforge.api.tracker.ArtifactDO;
 import com.collabnet.teamforge.api.tracker.ArtifactDependencyRow;
 import com.collabnet.teamforge.api.tracker.ArtifactDetailRow;
@@ -764,5 +765,47 @@ public class TFTrackerHandler {
 			}
 		}
 		return releaseId;
+	}
+
+	public List<PlanningFolderDO> getChangedPlanningFolders(
+			Connection connection, String sourceRepositoryId,
+			Date lastModifiedDate, String lastSynchronizedArtifactId,
+			int version, String connectorUser, String project) throws RemoteException {
+		log.debug("Getting the changed planning folders from " + lastModifiedDate);
+		
+		PlanningFolderRow[] rows = connection.getPlanningClient().getPlanningFolderList(project, true).getDataRows();
+		ArrayList<PlanningFolderDO> detailRowsFull = new ArrayList<PlanningFolderDO>();
+		ArrayList<PlanningFolderDO> detailRowsNew = new ArrayList<PlanningFolderDO>();
+		// retrieve artifact details
+		log.debug("Getting the details of the changed planning folders");
+		boolean duplicateFound = false;
+		if (rows != null) {
+			for (int i = 0; i < rows.length; ++i) {
+				if (rows[i].getLastModifiedBy().equals(connectorUser)) {
+					continue;
+				}
+				if (!rows[i].getLastModifiedOn().after(lastModifiedDate)) {
+					continue;
+				}
+				String id = rows[i].getId();
+				PlanningFolderDO planningFolder = connection.getPlanningClient().getPlanningFolderData(id);
+				if (id.equals(lastSynchronizedArtifactId)) {	
+					if (version == planningFolder.getVersion()) {
+						duplicateFound = true;
+						continue;
+					}
+				}				
+				if (duplicateFound) {
+					detailRowsNew.add(planningFolder);
+				}
+				detailRowsFull.add(planningFolder);
+			}
+		}
+		if (!duplicateFound)
+			return detailRowsFull;
+		else if (detailRowsNew.isEmpty())
+			return null;
+		else
+			return detailRowsNew;
 	}
 }

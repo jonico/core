@@ -27,75 +27,97 @@ import com.collabnet.ccf.core.ga.GenericArtifact.ArtifactActionValue;
 import com.collabnet.ccf.core.utils.DateUtil;
 import com.collabnet.ce.soap50.webservices.cemain.TrackerFieldSoapDO;
 import com.collabnet.teamforge.api.FieldValues;
+import com.collabnet.teamforge.api.planning.PlanningFolderDO;
 import com.collabnet.teamforge.api.tracker.ArtifactDO;
 import com.collabnet.teamforge.api.tracker.TrackerFieldDO;
 import com.collabnet.teamforge.api.tracker.TrackerFieldValueDO;
 
 /**
- * The artifact data from the TF SOAP API calls are in the
- * ArtifactSoapDO object. This class converts the artifact data
- * contained in the ArtifactSoapDO objects into GenericArtifact object
+ * The artifact data from the TF SOAP API calls are in the ArtifactSoapDO
+ * object. This class converts the artifact data contained in the ArtifactSoapDO
+ * objects into GenericArtifact object
+ * 
  * @author madhusuthanan
- *
+ * 
  */
 public class TFToGenericArtifactConverter {
 	/**
-	 * Converts the artifact data contained in the ArtifactSoapDO object
-	 * into a GenricArtifact object
-	 *
-	 * @param dataObject - The ArtifactSoapDO object that needs to be converted into
-	 * 						a GenericArtifact object
-	 * @param fieldsMap - The custom/flex fields defined in the tracker
-	 * @param lastReadDate - Last read date for this tracker.
+	 * Converts the artifact data contained in the ArtifactSoapDO object into a
+	 * GenricArtifact object
+	 * 
+	 * @param dataObject
+	 *            - The ArtifactSoapDO object that needs to be converted into a
+	 *            GenericArtifact object
+	 * @param fieldsMap
+	 *            - The custom/flex fields defined in the tracker
+	 * @param lastReadDate
+	 *            - Last read date for this tracker.
 	 * @param includeFieldMetaData
 	 * @return - The converted GenericArtifact object
 	 */
-	public static GenericArtifact convertArtifact(boolean supports53, ArtifactDO dataObject, HashMap<String, List<TrackerFieldDO>> fieldsMap,
-			Date lastReadDate, boolean includeFieldMetaData, String sourceSystemTimezone) {
-		if(dataObject != null) {
+	public static GenericArtifact convertArtifact(boolean supports53,
+			ArtifactDO dataObject,
+			HashMap<String, List<TrackerFieldDO>> fieldsMap, Date lastReadDate,
+			boolean includeFieldMetaData, String sourceSystemTimezone) {
+		if (dataObject != null) {
 			ArtifactDO artifactRow = dataObject;
 			GenericArtifact genericArtifact = new GenericArtifact();
-			genericArtifact.setArtifactType(GenericArtifact.ArtifactTypeValue.PLAINARTIFACT);
-			genericArtifact.setArtifactMode(GenericArtifact.ArtifactModeValue.COMPLETE);
+			genericArtifact
+					.setArtifactType(GenericArtifact.ArtifactTypeValue.PLAINARTIFACT);
+			genericArtifact
+					.setArtifactMode(GenericArtifact.ArtifactModeValue.COMPLETE);
 			genericArtifact.setErrorCode("ok");
-			if(includeFieldMetaData){
-				genericArtifact.setIncludesFieldMetaData(GenericArtifact.IncludesFieldMetaDataValue.TRUE);
-			}
-			else {
-				genericArtifact.setIncludesFieldMetaData(GenericArtifact.IncludesFieldMetaDataValue.FALSE);
+			if (includeFieldMetaData) {
+				genericArtifact
+						.setIncludesFieldMetaData(GenericArtifact.IncludesFieldMetaDataValue.TRUE);
+			} else {
+				genericArtifact
+						.setIncludesFieldMetaData(GenericArtifact.IncludesFieldMetaDataValue.FALSE);
 			}
 
-			// FIXME These fields will never change, why not add the fields directly?
+			// FIXME These fields will never change, why not add the fields
+			// directly?
 			int actualEffort = artifactRow.getActualEffort();
 			int estimatedEffort = artifactRow.getEstimatedEffort();
 			if (!supports53) {
-				createGenericArtifactField(TFArtifactMetaData.TFFields.actualHours,
-					actualEffort, genericArtifact, fieldsMap, includeFieldMetaData);
-				createGenericArtifactField(TFArtifactMetaData.TFFields.estimatedHours,
-						estimatedEffort, genericArtifact, fieldsMap, includeFieldMetaData);
+				createGenericArtifactField(
+						TFArtifactMetaData.TFFields.actualHours, actualEffort,
+						genericArtifact, fieldsMap, includeFieldMetaData);
+				createGenericArtifactField(
+						TFArtifactMetaData.TFFields.estimatedHours,
+						estimatedEffort, genericArtifact, fieldsMap,
+						includeFieldMetaData);
 			} else {
-				createGenericArtifactField(TFArtifactMetaData.TFFields.actualEffort,
-						actualEffort, genericArtifact, fieldsMap, includeFieldMetaData);
-				createGenericArtifactField(TFArtifactMetaData.TFFields.estimatedEffort,
-						estimatedEffort, genericArtifact, fieldsMap, includeFieldMetaData);
-				
+				createGenericArtifactField(
+						TFArtifactMetaData.TFFields.actualEffort, actualEffort,
+						genericArtifact, fieldsMap, includeFieldMetaData);
+				createGenericArtifactField(
+						TFArtifactMetaData.TFFields.estimatedEffort,
+						estimatedEffort, genericArtifact, fieldsMap,
+						includeFieldMetaData);
+
 				int remainingEffort = artifactRow.getRemainingEffort();
-				createGenericArtifactField(TFArtifactMetaData.TFFields.remainingEffort,
-						remainingEffort, genericArtifact, fieldsMap, includeFieldMetaData);
-				
+				createGenericArtifactField(
+						TFArtifactMetaData.TFFields.remainingEffort,
+						remainingEffort, genericArtifact, fieldsMap,
+						includeFieldMetaData);
+
 				Boolean autosumming = artifactRow.getAutosumming();
-				createGenericArtifactField(TFArtifactMetaData.TFFields.autosumming,
-						autosumming, genericArtifact, fieldsMap, includeFieldMetaData);
-				
+				createGenericArtifactField(
+						TFArtifactMetaData.TFFields.autosumming, autosumming,
+						genericArtifact, fieldsMap, includeFieldMetaData);
+
 				String planningFolderId = artifactRow.getPlanningFolderId();
-				createGenericArtifactField(TFArtifactMetaData.TFFields.planningFolder,
-						planningFolderId, genericArtifact, fieldsMap, includeFieldMetaData);
+				createGenericArtifactField(
+						TFArtifactMetaData.TFFields.planningFolder,
+						planningFolderId, genericArtifact, fieldsMap,
+						includeFieldMetaData);
 			}
-			
-			
+
 			String assignedTo = artifactRow.getAssignedTo();
 			createGenericArtifactField(TFArtifactMetaData.TFFields.assignedTo,
-					assignedTo, genericArtifact, fieldsMap, includeFieldMetaData);
+					assignedTo, genericArtifact, fieldsMap,
+					includeFieldMetaData);
 			String category = artifactRow.getCategory();
 			createGenericArtifactField(TFArtifactMetaData.TFFields.category,
 					category, genericArtifact, fieldsMap, includeFieldMetaData);
@@ -107,8 +129,9 @@ public class TFToGenericArtifactConverter {
 					customer, genericArtifact, fieldsMap, includeFieldMetaData);
 			String description = artifactRow.getDescription();
 			createGenericArtifactField(TFArtifactMetaData.TFFields.description,
-					description, genericArtifact, fieldsMap, includeFieldMetaData);
-			
+					description, genericArtifact, fieldsMap,
+					includeFieldMetaData);
+
 			String group = artifactRow.getGroup();
 			createGenericArtifactField(TFArtifactMetaData.TFFields.group,
 					group, genericArtifact, fieldsMap, includeFieldMetaData);
@@ -116,23 +139,28 @@ public class TFToGenericArtifactConverter {
 			createGenericArtifactField(TFArtifactMetaData.TFFields.priority,
 					priority, genericArtifact, fieldsMap, includeFieldMetaData);
 			String reportedReleaseId = artifactRow.getReportedReleaseId();
-			createGenericArtifactField(TFArtifactMetaData.TFFields.reportedReleaseId,
-					reportedReleaseId, genericArtifact, fieldsMap, includeFieldMetaData);
+			createGenericArtifactField(
+					TFArtifactMetaData.TFFields.reportedReleaseId,
+					reportedReleaseId, genericArtifact, fieldsMap,
+					includeFieldMetaData);
 			String resolvedReleaseId = artifactRow.getResolvedReleaseId();
-			createGenericArtifactField(TFArtifactMetaData.TFFields.resolvedReleaseId,
-					resolvedReleaseId, genericArtifact, fieldsMap, includeFieldMetaData);
+			createGenericArtifactField(
+					TFArtifactMetaData.TFFields.resolvedReleaseId,
+					resolvedReleaseId, genericArtifact, fieldsMap,
+					includeFieldMetaData);
 			String status = artifactRow.getStatus();
 			createGenericArtifactField(TFArtifactMetaData.TFFields.status,
 					status, genericArtifact, fieldsMap, includeFieldMetaData);
 			String statusClass = artifactRow.getStatusClass();
 			createGenericArtifactField(TFArtifactMetaData.TFFields.statusClass,
-					statusClass, genericArtifact, fieldsMap, includeFieldMetaData);
+					statusClass, genericArtifact, fieldsMap,
+					includeFieldMetaData);
 			String folderId = artifactRow.getFolderId();
 			createGenericArtifactField(TFArtifactMetaData.TFFields.folderId,
 					folderId, genericArtifact, fieldsMap, includeFieldMetaData);
 			String path = artifactRow.getPath();
-			createGenericArtifactField(TFArtifactMetaData.TFFields.path,
-					path, genericArtifact, fieldsMap, includeFieldMetaData);
+			createGenericArtifactField(TFArtifactMetaData.TFFields.path, path,
+					genericArtifact, fieldsMap, includeFieldMetaData);
 			String title = artifactRow.getTitle();
 			createGenericArtifactField(TFArtifactMetaData.TFFields.title,
 					title, genericArtifact, fieldsMap, includeFieldMetaData);
@@ -141,24 +169,28 @@ public class TFToGenericArtifactConverter {
 					createdBy, genericArtifact, fieldsMap, includeFieldMetaData);
 			Date createdDate = artifactRow.getCreatedDate();
 			createGenericArtifactField(TFArtifactMetaData.TFFields.createdDate,
-					createdDate, genericArtifact, fieldsMap, includeFieldMetaData);
-			if(createdDate.after(lastReadDate)){
+					createdDate, genericArtifact, fieldsMap,
+					includeFieldMetaData);
+			if (createdDate.after(lastReadDate)) {
 				genericArtifact.setArtifactAction(ArtifactActionValue.CREATE);
-			}
-			else {
+			} else {
 				genericArtifact.setArtifactAction(ArtifactActionValue.UPDATE);
 			}
 			String id = artifactRow.getId();
-			createGenericArtifactField(TFArtifactMetaData.TFFields.id,
-					id, genericArtifact, fieldsMap, includeFieldMetaData);
+			createGenericArtifactField(TFArtifactMetaData.TFFields.id, id,
+					genericArtifact, fieldsMap, includeFieldMetaData);
 			genericArtifact.setSourceArtifactId(id);
 			String lastModifiedBy = artifactRow.getLastModifiedBy();
-			createGenericArtifactField(TFArtifactMetaData.TFFields.lastModifiedBy,
-					lastModifiedBy, genericArtifact, fieldsMap, includeFieldMetaData);
+			createGenericArtifactField(
+					TFArtifactMetaData.TFFields.lastModifiedBy, lastModifiedBy,
+					genericArtifact, fieldsMap, includeFieldMetaData);
 			Date lastModifiedDate = artifactRow.getLastModifiedDate();
-			createGenericArtifactField(TFArtifactMetaData.TFFields.lastModifiedDate,
-					lastModifiedDate, genericArtifact, fieldsMap, includeFieldMetaData);
-			genericArtifact.setSourceArtifactLastModifiedDate(DateUtil.format(lastModifiedDate));
+			createGenericArtifactField(
+					TFArtifactMetaData.TFFields.lastModifiedDate,
+					lastModifiedDate, genericArtifact, fieldsMap,
+					includeFieldMetaData);
+			genericArtifact.setSourceArtifactLastModifiedDate(DateUtil
+					.format(lastModifiedDate));
 			int version = artifactRow.getVersion();
 			createGenericArtifactField(TFArtifactMetaData.TFFields.version,
 					version, genericArtifact, fieldsMap, includeFieldMetaData);
@@ -167,42 +199,45 @@ public class TFToGenericArtifactConverter {
 
 			FieldValues flexFields = artifactRow.getFlexFields();
 			String[] flexFieldNames = flexFields.getNames();
-			// FIXME This is where we get our type info for free, why not take it from there?
+			// FIXME This is where we get our type info for free, why not take
+			// it from there?
 			String[] flexFieldTypes = flexFields.getTypes();
 			Object[] flexFieldValues = flexFields.getValues();
-			for(int i=0; i < flexFieldNames.length; i++){
+			for (int i = 0; i < flexFieldNames.length; i++) {
 				GenericArtifactField field;
-				GenericArtifactField.FieldValueTypeValue fieldValueType =
-					TFArtifactMetaData.getFieldValueTypeForFieldType(flexFieldTypes[i]);
-				field = genericArtifact.addNewField(flexFieldNames[i], GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
-				field.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
+				GenericArtifactField.FieldValueTypeValue fieldValueType = TFArtifactMetaData
+						.getFieldValueTypeForFieldType(flexFieldTypes[i]);
+				field = genericArtifact.addNewField(flexFieldNames[i],
+						GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
+				field
+						.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
 				field.setFieldValueType(fieldValueType);
-				// FIXME Why not use the flexFieldType array for this?
-				if(flexFieldTypes[i].equalsIgnoreCase(TrackerFieldSoapDO.FIELD_VALUE_TYPE_DATE)) {
-					TFArtifactMetaData.setDateFieldValue(flexFieldNames[i], flexFieldValues[i],
-							sourceSystemTimezone, field);
-				}
-				else {
+				if (flexFieldTypes[i]
+						.equalsIgnoreCase(TrackerFieldSoapDO.FIELD_VALUE_TYPE_DATE)) {
+					TFArtifactMetaData.setDateFieldValue(flexFieldNames[i],
+							flexFieldValues[i], sourceSystemTimezone, field);
+				} else {
 					field.setFieldValue(flexFieldValues[i]);
 				}
-				if(includeFieldMetaData){
-					TrackerFieldDO fieldDO =
-						TFAppHandler.getTrackerFieldSoapDOForFlexField(fieldsMap, flexFieldNames[i]);
+				if (includeFieldMetaData) {
+					TrackerFieldDO fieldDO = TFAppHandler
+							.getTrackerFieldSoapDOForFlexField(fieldsMap,
+									flexFieldNames[i]);
 					field.setAlternativeFieldName(flexFieldNames[i]);
-					if(fieldDO.getRequired()){
+					if (fieldDO.getRequired()) {
 						field.setMinOccurs(1);
-					}
-					else {
+					} else {
 						field.setMinOccurs(0);
 					}
-					if(flexFieldTypes[i].equals(TrackerFieldSoapDO.FIELD_TYPE_MULTISELECT)){
-						TrackerFieldValueDO[] fieldValues = fieldDO.getFieldValues();
+					if (flexFieldTypes[i]
+							.equals(TrackerFieldSoapDO.FIELD_TYPE_MULTISELECT)) {
+						TrackerFieldValueDO[] fieldValues = fieldDO
+								.getFieldValues();
 						field.setMaxOccurs(fieldValues.length);
-					}
-					else if(flexFieldTypes[i].equals(TrackerFieldSoapDO.FIELD_TYPE_MULTISELECT_USER)){
+					} else if (flexFieldTypes[i]
+							.equals(TrackerFieldSoapDO.FIELD_TYPE_MULTISELECT_USER)) {
 						field.setMaxOccursValue(GenericArtifactField.UNBOUNDED);
-					}
-					else {
+					} else {
 						field.setMaxOccurs(1);
 					}
 				}
@@ -213,60 +248,160 @@ public class TFToGenericArtifactConverter {
 	}
 
 	/**
-	 * Creates a GenericArtifactField object with the appropriate values provided
-	 * in the method call.
-	 *
-	 * @param fieldName - Name of the field
-	 * @param displayName - The field's display name
-	 * @param value - Value of the field
-	 * @param genericArtifact - The GenericArtifact object on which the new field should be created
-	 * @param fieldsMap - The custom/flex fields defined for this tracker.
+	 * Creates a GenericArtifactField object with the appropriate values
+	 * provided in the method call.
+	 * 
+	 * @param fieldName
+	 *            - Name of the field
+	 * @param displayName
+	 *            - The field's display name
+	 * @param value
+	 *            - Value of the field
+	 * @param genericArtifact
+	 *            - The GenericArtifact object on which the new field should be
+	 *            created
+	 * @param fieldsMap
+	 *            - The custom/flex fields defined for this tracker.
 	 * @param includeFieldMetaData
 	 * @return - Returns the newly created GenericArtifactField object
 	 */
-	private static GenericArtifactField createGenericArtifactField(TFArtifactMetaData.TFFields sfField,
-			Object value, GenericArtifact genericArtifact, HashMap<String,List<TrackerFieldDO>> fieldsMap,
-			boolean includeFieldMetaData){
+	private static GenericArtifactField createGenericArtifactField(
+			TFArtifactMetaData.TFFields sfField, Object value,
+			GenericArtifact genericArtifact,
+			HashMap<String, List<TrackerFieldDO>> fieldsMap,
+			boolean includeFieldMetaData) {
 		String fieldName = sfField.getFieldName();
 
-		GenericArtifactField field = genericArtifact.addNewField(sfField.getFieldName(), GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD);
-		GenericArtifactField.FieldValueTypeValue fieldValueType = TFArtifactMetaData.getFieldValueType(fieldName);
+		GenericArtifactField field = genericArtifact.addNewField(sfField
+				.getFieldName(),
+				GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD);
+		GenericArtifactField.FieldValueTypeValue fieldValueType = TFArtifactMetaData
+				.getFieldValueType(fieldName);
 		field.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
 		field.setFieldValueType(fieldValueType);
 		field.setFieldValueHasChanged(true);
-		if(value != null){
+		if (value != null) {
 			field.setFieldValue(value);
 		}
-		if(includeFieldMetaData){
+		if (includeFieldMetaData) {
 			field.setAlternativeFieldName(sfField.getDisplayName());
-			//TODO How do we determine if a field value can be null or not?
-//			field.setNullValueSupported(nullValueSupported);
-			if(sfField.getFieldType() == TFArtifactMetaData.FIELD_TYPE.SYSTEM_DEFINED){
-				if(sfField.isRequired()){
+			// TODO How do we determine if a field value can be null or not?
+			// field.setNullValueSupported(nullValueSupported);
+			if (sfField.getFieldType() == TFArtifactMetaData.FIELD_TYPE.SYSTEM_DEFINED) {
+				if (sfField.isRequired()) {
+					field.setMinOccurs(1);
+				} else {
+					field.setMinOccurs(0);
+				}
+				field.setMaxOccurs(1);
+			} else if (sfField.getFieldType() == TFArtifactMetaData.FIELD_TYPE.CONFIGURABLE) {
+				TrackerFieldDO fieldSoapDO = TFAppHandler
+						.getTrackerFieldSoapDOForFlexField(fieldsMap, fieldName);
+				if (fieldSoapDO == null) {
+					fieldSoapDO = TFAppHandler
+							.getTrackerFieldSoapDOForFlexField(fieldsMap,
+									sfField.getAlternateName());
+				}
+				boolean required = false;
+				if (fieldSoapDO != null) {
+					required = fieldSoapDO.getRequired();
+				}
+				if (required) {
 					field.setMinOccurs(1);
 				} else {
 					field.setMinOccurs(0);
 				}
 				field.setMaxOccurs(1);
 			}
-			else if(sfField.getFieldType() == TFArtifactMetaData.FIELD_TYPE.CONFIGURABLE){
-				TrackerFieldDO fieldSoapDO = TFAppHandler.getTrackerFieldSoapDOForFlexField(fieldsMap, fieldName);
-				if(fieldSoapDO == null){
-					fieldSoapDO = TFAppHandler.getTrackerFieldSoapDOForFlexField(fieldsMap, sfField.getAlternateName());
-				}
-				boolean required = false;
-				if(fieldSoapDO != null){
-					required = fieldSoapDO.getRequired();
-				}
-				if(required){
-					field.setMinOccurs(1);
-				}
-				else {
-					field.setMinOccurs(0);
-				}
-				field.setMaxOccurs(1);
-			}
 		}
 		return field;
+	}
+
+	public static GenericArtifact convertPlanningFolder(
+			PlanningFolderDO planningFolder, Date lastReadDate,
+			boolean includeFieldMetaData, String sourceSystemTimezone) {
+		if (planningFolder != null) {
+			PlanningFolderDO planningRow = planningFolder;
+			GenericArtifact genericArtifact = new GenericArtifact();
+			genericArtifact
+					.setArtifactType(GenericArtifact.ArtifactTypeValue.PLAINARTIFACT);
+			genericArtifact
+					.setArtifactMode(GenericArtifact.ArtifactModeValue.COMPLETE);
+			genericArtifact.setErrorCode("ok");
+			if (includeFieldMetaData) {
+				genericArtifact
+						.setIncludesFieldMetaData(GenericArtifact.IncludesFieldMetaDataValue.TRUE);
+			} else {
+				genericArtifact
+						.setIncludesFieldMetaData(GenericArtifact.IncludesFieldMetaDataValue.FALSE);
+			}
+
+			String description = planningRow.getDescription();
+			createGenericArtifactField(TFArtifactMetaData.TFFields.description,
+					description, genericArtifact, null, includeFieldMetaData);
+
+			String parentFolderId = planningRow.getParentFolderId();
+			createGenericArtifactField(
+					TFArtifactMetaData.TFFields.parentFolderId, parentFolderId,
+					genericArtifact, null, includeFieldMetaData);
+
+			String projectId = planningRow.getProjectId();
+			createGenericArtifactField(TFArtifactMetaData.TFFields.projectId,
+					projectId, genericArtifact, null, includeFieldMetaData);
+
+			String path = planningRow.getPath();
+
+			createGenericArtifactField(TFArtifactMetaData.TFFields.path, path,
+					genericArtifact, null, includeFieldMetaData);
+			String title = planningRow.getTitle();
+			createGenericArtifactField(TFArtifactMetaData.TFFields.title,
+					title, genericArtifact, null, includeFieldMetaData);
+			String createdBy = planningRow.getCreatedBy();
+
+			createGenericArtifactField(TFArtifactMetaData.TFFields.createdBy,
+					createdBy, genericArtifact, null, includeFieldMetaData);
+
+			Date createdDate = planningRow.getCreatedDate();
+			createGenericArtifactField(TFArtifactMetaData.TFFields.createdDate,
+					createdDate, genericArtifact, null, includeFieldMetaData);
+			if (createdDate.after(lastReadDate)) {
+				genericArtifact.setArtifactAction(ArtifactActionValue.CREATE);
+			} else {
+				genericArtifact.setArtifactAction(ArtifactActionValue.UPDATE);
+			}
+			String id = planningRow.getId();
+			createGenericArtifactField(TFArtifactMetaData.TFFields.id, id,
+					genericArtifact, null, includeFieldMetaData);
+			genericArtifact.setSourceArtifactId(id);
+			String lastModifiedBy = planningRow.getLastModifiedBy();
+			createGenericArtifactField(
+					TFArtifactMetaData.TFFields.lastModifiedBy, lastModifiedBy,
+					genericArtifact, null, includeFieldMetaData);
+			Date lastModifiedDate = planningRow.getLastModifiedDate();
+			createGenericArtifactField(
+					TFArtifactMetaData.TFFields.lastModifiedDate,
+					lastModifiedDate, genericArtifact, null,
+					includeFieldMetaData);
+			genericArtifact.setSourceArtifactLastModifiedDate(DateUtil
+					.format(lastModifiedDate));
+			int version = planningRow.getVersion();
+			createGenericArtifactField(TFArtifactMetaData.TFFields.version,
+					version, genericArtifact, null, includeFieldMetaData);
+
+			genericArtifact.setSourceArtifactVersion(Integer.toString(version));
+
+			Date startDate = planningRow.getStartDate();
+			GenericArtifactField startDateField = createGenericArtifactField(TFArtifactMetaData.TFFields.startDate,
+					startDate, genericArtifact, null, includeFieldMetaData);
+			TFArtifactMetaData.setPFDateFieldValue(startDate, sourceSystemTimezone, startDateField);
+
+			Date endDate = planningRow.getEndDate();
+			GenericArtifactField endDateField = createGenericArtifactField(TFArtifactMetaData.TFFields.endDate,
+					endDate, genericArtifact, null, includeFieldMetaData);
+			TFArtifactMetaData.setPFDateFieldValue(endDate, sourceSystemTimezone, endDateField);
+
+			return genericArtifact;
+		}
+		return null;
 	}
 }

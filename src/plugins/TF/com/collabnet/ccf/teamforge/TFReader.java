@@ -41,6 +41,7 @@ import com.collabnet.ccf.core.eis.connection.MaxConnectionsReachedException;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.teamforge.api.Connection;
+import com.collabnet.teamforge.api.planning.PlanningFolderDO;
 import com.collabnet.teamforge.api.tracker.ArtifactDO;
 import com.collabnet.teamforge.api.tracker.TrackerFieldDO;
 
@@ -293,6 +294,13 @@ public class TFReader extends AbstractReader<Connection> {
 		String sourceRepositoryId = this.getSourceRepositoryId(syncInfo);
 		String sourceRepositoryKind = this.getSourceRepositoryKind(syncInfo);
 		Date lastModifiedDate = this.getLastModifiedDate(syncInfo);
+		
+		if (!TFConnectionFactory.isTrackerRepository(sourceRepositoryId)) {
+			// we do not support attachments here
+			log.debug("Planning folders do not support attachments: "+sourceRepositoryId);
+			return new ArrayList<GenericArtifact>();
+		}
+		
 		Connection connection;
 		try {
 			connection = connect(sourceSystemId, sourceSystemKind,
@@ -368,40 +376,64 @@ public class TFReader extends AbstractReader<Connection> {
 			throw new CCFRuntimeException(cause, e);
 		}
 		GenericArtifact genericArtifact = null;
+		String lastModifiedBy = null;
 		try {
-			TrackerFieldDO[] trackerFields = null;
-			HashMap<String, List<TrackerFieldDO>> fieldsMap = null;
-			if (this.isIncludeFieldMetaData()) {
-				trackerFields = trackerHandler.getFlexFields(connection, sourceRepositoryId);
-				fieldsMap = TFAppHandler
-						.loadTrackerFieldsInHashMap(trackerFields);
-			}
-			ArtifactDO artifact = null;
-			if (isPre44SP1HF1System()) {
-				artifact = trackerHandler.getTrackerItem(connection, artifactId);
+			if (TFConnectionFactory.isTrackerRepository(sourceRepositoryId)) {
+				TrackerFieldDO[] trackerFields = null;
+				HashMap<String, List<TrackerFieldDO>> fieldsMap = null;
+				if (this.isIncludeFieldMetaData()) {
+					trackerFields = trackerHandler.getFlexFields(connection, sourceRepositoryId);
+					fieldsMap = TFAppHandler
+							.loadTrackerFieldsInHashMap(trackerFields);
+				}
+				ArtifactDO artifact = null;
+				if (isPre44SP1HF1System()) {
+					artifact = trackerHandler.getTrackerItem(connection, artifactId);
+				} else {
+					artifact = trackerHandler.getTrackerItemFull(connection, artifactId);
+				}
+	
+				TFAppHandler appHandler = new TFAppHandler(connection);
+				appHandler.addComments(artifact, lastModifiedDate,
+						isIgnoreConnectorUserUpdates() ? this.getUsername() : "",
+						isIgnoreConnectorUserUpdates() ? this.getResyncUserName()
+								: "");
+				if (this.translateTechnicalReleaseIds) {
+					trackerHandler.convertReleaseIds(connection,
+							artifact);
+				}
+				genericArtifact = TFToGenericArtifactConverter.convertArtifact(connection.supports53(), artifact, fieldsMap,
+						lastModifiedDate, this.isIncludeFieldMetaData(),
+						sourceSystemTimezone);
+				// now care about parent artifacts/planning folders
+				
+				lastModifiedBy = artifact.getLastModifiedBy();
 			} else {
-				artifact = trackerHandler.getTrackerItemFull(connection, artifactId);
+				// we retrieve planning folder data now
+				PlanningFolderDO planningFolder = connection.getPlanningClient().getPlanningFolderData(artifactId);
+				genericArtifact = TFToGenericArtifactConverter.convertPlanningFolder(planningFolder,
+						lastModifiedDate, this.isIncludeFieldMetaData(),
+						sourceSystemTimezone);
+				
+				// finally, we have to set some info about the parent
+				genericArtifact.setDepParentSourceRepositoryId(sourceRepositoryId);
+				if (planningFolder.getParentFolderId().startsWith("PlanningApp")) {
+					genericArtifact.setDepParentSourceArtifactId(GenericArtifact.VALUE_NONE);
+				} else {
+					genericArtifact.setDepParentSourceArtifactId(planningFolder.getParentFolderId());
+				}
+				
+				lastModifiedBy = planningFolder.getLastModifiedBy();
 			}
-
-			TFAppHandler appHandler = new TFAppHandler(connection);
-			appHandler.addComments(artifact, lastModifiedDate,
-					isIgnoreConnectorUserUpdates() ? this.getUsername() : "",
-					isIgnoreConnectorUserUpdates() ? this.getResyncUserName()
-							: "");
-			if (this.translateTechnicalReleaseIds) {
-				trackerHandler.convertReleaseIds(connection,
-						artifact);
-			}
-			genericArtifact = TFToGenericArtifactConverter.convertArtifact(connection.supports53(), artifact, fieldsMap,
-					lastModifiedDate, this.isIncludeFieldMetaData(),
-					sourceSystemTimezone);
-			String lastModifiedBy = artifact.getLastModifiedBy();
+			
 			if (lastModifiedBy.equals(this.getResyncUserName())
 					&& isIgnoreConnectorUserUpdates()) {
 				genericArtifact
 						.setArtifactAction(GenericArtifact.ArtifactActionValue.RESYNC);
 			}
+			
 			populateSrcAndDest(syncInfo, genericArtifact);
+			
 		} catch (RemoteException e) {
 			String cause = "During the artifact retrieval process from TF, an error occured";
 			log.error(cause, e);
@@ -467,35 +499,70 @@ public class TFReader extends AbstractReader<Connection> {
 			log.error(cause, e);
 			throw new CCFRuntimeException(cause, e);
 		}
-		Date lastModifiedDate = this.getLastModifiedDate(syncInfo);
-		if (lastModifiedDate == null) {
-			lastModifiedDate = new Date(0);
-		}
-		ArrayList<ArtifactState> artifactStates = new ArrayList<ArtifactState>();
-		List<ArtifactDO> artifactRows = null;
 		try {
-			artifactRows = trackerHandler.getChangedTrackerItems(connection, sourceRepositoryId, lastModifiedDate,
-					lastSynchronizedArtifactId, version,
-					isIgnoreConnectorUserUpdates() ? this.getUsername() : "");
-		} catch (RemoteException e) {
-			String cause = "During the changed artifacts retrieval process from TF, an exception occured";
-			log.error(cause, e);
-			throw new CCFRuntimeException(cause, e);
-		} finally {
+			Date lastModifiedDate = this.getLastModifiedDate(syncInfo);
+			if (lastModifiedDate == null) {
+				lastModifiedDate = new Date(0);
+			}
+			ArrayList<ArtifactState> artifactStates = new ArrayList<ArtifactState>();
+			
+			if (TFConnectionFactory.isTrackerRepository(sourceRepositoryId)) {
+				List<ArtifactDO> artifactRows = null;
+				try {
+					artifactRows = trackerHandler.getChangedTrackerItems(connection, sourceRepositoryId, lastModifiedDate,
+							lastSynchronizedArtifactId, version,
+							isIgnoreConnectorUserUpdates() ? this.getUsername() : "");
+				} catch (RemoteException e) {
+					String cause = "During the changed artifacts retrieval process from TF, an exception occured";
+					log.error(cause, e);
+					throw new CCFRuntimeException(cause, e);
+				}
+				if (artifactRows != null) {
+					for (ArtifactDO artifact : artifactRows) {
+						String artifactId = artifact.getId();
+						ArtifactState artifactState = new ArtifactState();
+						artifactState.setArtifactId(artifactId);
+						artifactState.setArtifactLastModifiedDate(artifact
+								.getLastModifiedDate());
+						artifactState.setArtifactVersion(artifact.getVersion());
+						artifactStates.add(artifactState);
+					}
+				}
+			}
+			else {
+				// we retrieve planning folders
+				if (!connection.supports53()) {
+					log.warn("Planning folder extraction requested, but this version of TF does not support planning folders: "+ sourceRepositoryId);
+				} else {
+					String project = TFConnectionFactory.extractProjectFromRepositoryId(sourceRepositoryId);
+					List<PlanningFolderDO> artifactRows = null;
+					try {
+						artifactRows = trackerHandler.getChangedPlanningFolders(connection, sourceRepositoryId, lastModifiedDate,
+								lastSynchronizedArtifactId, version,
+								isIgnoreConnectorUserUpdates() ? this.getUsername() : "", project);
+					} catch (RemoteException e) {
+						String cause = "During the changed planning folder retrieval process from TF, an exception occured";
+						log.error(cause, e);
+						throw new CCFRuntimeException(cause, e);
+					}
+					if (artifactRows != null) {
+						for (PlanningFolderDO planningFolder : artifactRows) {
+							String artifactId = planningFolder.getId();
+							ArtifactState artifactState = new ArtifactState();
+							artifactState.setArtifactId(artifactId);
+							artifactState.setArtifactLastModifiedDate(planningFolder
+									.getLastModifiedDate());
+							artifactState.setArtifactVersion(planningFolder.getVersion());
+							artifactStates.add(artifactState);
+						}
+					}
+				}
+			}
+			return artifactStates;
+		}
+		finally {
 			this.disconnect(connection);
 		}
-		if (artifactRows != null) {
-			for (ArtifactDO artifact : artifactRows) {
-				String artifactId = artifact.getId();
-				ArtifactState artifactState = new ArtifactState();
-				artifactState.setArtifactId(artifactId);
-				artifactState.setArtifactLastModifiedDate(artifact
-						.getLastModifiedDate());
-				artifactState.setArtifactVersion(artifact.getVersion());
-				artifactStates.add(artifactState);
-			}
-		}
-		return artifactStates;
 	}
 
 	/**
