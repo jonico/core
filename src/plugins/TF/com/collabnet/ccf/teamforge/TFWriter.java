@@ -67,6 +67,9 @@ public class TFWriter extends AbstractWriter<Connection> implements
 	 */
 	private static final Log log = LogFactory.getLog(TFWriter.class);
 
+	private static final Log logConflictResolutor = LogFactory
+			.getLog("com.collabnet.ccf.core.conflict.resolution");
+
 	/**
 	 * TF tracker handler instance
 	 */
@@ -260,11 +263,11 @@ public class TFWriter extends AbstractWriter<Connection> implements
 
 	private PlanningFolderDO createPlanningFolder(GenericArtifact ga,
 			String project, Connection connection) {
-		
+
 		String targetSystemTimezone = ga.getTargetSystemTimezone();
 		String parentId = project;
 		String targetParentArtifactId = ga.getDepParentTargetArtifactId();
-		
+
 		if (targetParentArtifactId != null
 				&& !targetParentArtifactId.equals(GenericArtifact.VALUE_NONE)
 				&& !targetParentArtifactId
@@ -274,53 +277,49 @@ public class TFWriter extends AbstractWriter<Connection> implements
 
 		String title = GenericArtifactHelper.getStringMandatoryGAField(
 				TFArtifactMetaData.TFFields.title.getFieldName(), ga);
-		
-		
+
 		String description = GenericArtifactHelper.getStringMandatoryGAField(
 				TFArtifactMetaData.TFFields.description.getFieldName(), ga);
-		
+
 		Date startDate = null;
 		Date endDate = null;
-		
+
 		GenericArtifactField startDateField = GenericArtifactHelper
-			.getMandatoryGAField(TFArtifactMetaData.TFFields.startDate
-				.getFieldName(), ga);
-		
+				.getMandatoryGAField(TFArtifactMetaData.TFFields.startDate
+						.getFieldName(), ga);
+
 		if (startDateField != null) {
-			GregorianCalendar gc = (GregorianCalendar) startDateField.getFieldValue();
+			GregorianCalendar gc = (GregorianCalendar) startDateField
+					.getFieldValue();
 			if (gc != null) {
 				Date dateValue = gc.getTime();
-				if (DateUtil.isAbsoluteDateInTimezone(dateValue,
-					"GMT")) {
-					startDate = DateUtil
-						.convertGMTToTimezoneAbsoluteDate(
+				if (DateUtil.isAbsoluteDateInTimezone(dateValue, "GMT")) {
+					startDate = DateUtil.convertGMTToTimezoneAbsoluteDate(
 							dateValue, targetSystemTimezone);
 				} else {
 					startDate = dateValue;
 				}
 			}
 		}
-		
-		
+
 		GenericArtifactField endDateField = GenericArtifactHelper
-			.getMandatoryGAField(TFArtifactMetaData.TFFields.endDate
-			.getFieldName(), ga);
-		
+				.getMandatoryGAField(TFArtifactMetaData.TFFields.endDate
+						.getFieldName(), ga);
+
 		if (endDateField != null) {
-			GregorianCalendar gc = (GregorianCalendar) endDateField.getFieldValue();
+			GregorianCalendar gc = (GregorianCalendar) endDateField
+					.getFieldValue();
 			if (gc != null) {
 				Date dateValue = gc.getTime();
-				if (DateUtil.isAbsoluteDateInTimezone(dateValue,
-					"GMT")) {
-					endDate = DateUtil
-						.convertGMTToTimezoneAbsoluteDate(
+				if (DateUtil.isAbsoluteDateInTimezone(dateValue, "GMT")) {
+					endDate = DateUtil.convertGMTToTimezoneAbsoluteDate(
 							dateValue, targetSystemTimezone);
 				} else {
 					endDate = dateValue;
 				}
 			}
 		}
-		
+
 		PlanningFolderDO planningFolder = null;
 
 		try {
@@ -335,7 +334,9 @@ public class TFWriter extends AbstractWriter<Connection> implements
 			throw new CCFRuntimeException(cause, e);
 		}
 		log.info("Created planning folder " + planningFolder.getId()
-				+ " in project " + project + " with parent " + parentId);
+				+ " in project " + project + " with parent " + parentId
+				+ " other system id: " + ga.getSourceArtifactId()
+				+ " in repository: " + ga.getSourceRepositoryId());
 
 		return planningFolder;
 	}
@@ -352,33 +353,216 @@ public class TFWriter extends AbstractWriter<Connection> implements
 					GenericArtifactHelper.ERROR_CODE,
 					GenericArtifact.ERROR_GENERIC_ARTIFACT_PARSING);
 			throw new CCFRuntimeException(cause, e);
-		} 
-		
-		this.initializeArtifact(ga);
-		String targetRepositoryId = ga.getTargetRepositoryId();
-		String tracker = targetRepositoryId;
+		}
 		Connection connection = connect(ga);
-		ArtifactDO result = null;
 		try {
-			// update and do conflict resolution
-			result = this.updateArtifact(ga, tracker, connection);
-		} catch (NumberFormatException e) {
-			String cause = "Number format exception while trying to extract the field data.";
-			log.error(cause, e);
-			XPathUtils.addAttribute(data.getRootElement(),
-					GenericArtifactHelper.ERROR_CODE,
-					GenericArtifact.ERROR_GENERIC_ARTIFACT_PARSING);
-			throw new CCFRuntimeException(cause, e);
+			String targetRepositoryId = ga.getTargetRepositoryId();
+			if (TFConnectionFactory.isTrackerRepository(targetRepositoryId)) {
+				this.initializeArtifact(ga);
+
+				String tracker = targetRepositoryId;
+
+				ArtifactDO result = null;
+				try {
+					// update and do conflict resolution
+					result = this.updateArtifact(ga, tracker, connection);
+				} catch (NumberFormatException e) {
+					String cause = "Number format exception while trying to extract the field data.";
+					log.error(cause, e);
+					XPathUtils.addAttribute(data.getRootElement(),
+							GenericArtifactHelper.ERROR_CODE,
+							GenericArtifact.ERROR_GENERIC_ARTIFACT_PARSING);
+					throw new CCFRuntimeException(cause, e);
+				}
+				// otherwise a conflict has happened and the generic artifact
+				// has been
+				// already prepared
+				if (result != null) {
+					this.populateTargetArtifactAttributes(ga, result);
+				}
+				return this.returnDocument(ga);
+			} else {
+				// we write planning folders, so first do a check whether we
+				// support this feature
+				if (!connection.supports53()) {
+					// we do not support planning folders
+					throw new CCFRuntimeException(
+							"Planning Folders are not supported since TeamForge target system does not provide them.");
+				}
+
+				PlanningFolderDO result = null;
+				try {
+					// update and do conflict resolution
+					String project = TFConnectionFactory
+							.extractProjectFromRepositoryId(targetRepositoryId);
+					result = updatePlanningFolder(ga, project, connection);
+				} catch (NumberFormatException e) {
+					String cause = "Number format exception while trying to extract the field data.";
+					log.error(cause, e);
+					XPathUtils.addAttribute(data.getRootElement(),
+							GenericArtifactHelper.ERROR_CODE,
+							GenericArtifact.ERROR_GENERIC_ARTIFACT_PARSING);
+					throw new CCFRuntimeException(cause, e);
+				} catch (RemoteException e) {
+					String cause = "While trying to update a planning folder within TF, an error occured";
+					log.error(cause, e);
+					ga
+							.setErrorCode(GenericArtifact.ERROR_EXTERNAL_SYSTEM_WRITE);
+					throw new CCFRuntimeException(cause, e);
+				} catch (PlanningFolderRuleViolationException e) {
+					String cause = "While trying to move a planning folder within TF, a planning folder rule violation occured";
+					log.error(cause, e);
+					ga
+							.setErrorCode(GenericArtifact.ERROR_EXTERNAL_SYSTEM_WRITE);
+					throw new CCFRuntimeException(cause, e);
+				}
+				// otherwise a conflict has happened and the generic artifact
+				// has been
+				// already prepared
+				if (result != null) {
+					populateTargetArtifactAttributesFromPlanningFolder(ga,
+							result);
+				}
+				return returnDocument(ga);
+			}
 		} finally {
 			disconnect(connection);
 		}
+	}
 
-		// otherwise a conflict has happened and the generic artifact has been
-		// already prepared
-		if (result != null) {
-			this.populateTargetArtifactAttributes(ga, result);
+	private PlanningFolderDO updatePlanningFolder(GenericArtifact ga,
+			String project, Connection connection) throws RemoteException,
+			PlanningFolderRuleViolationException {
+
+		String id = ga.getTargetArtifactId();
+
+		String targetSystemTimezone = ga.getTargetSystemTimezone();
+
+		GenericArtifactField description = GenericArtifactHelper
+				.getMandatoryGAField(TFArtifactMetaData.TFFields.description
+						.getFieldName(), ga);
+
+		GenericArtifactField title = GenericArtifactHelper.getMandatoryGAField(
+				TFArtifactMetaData.TFFields.title.getFieldName(), ga);
+
+		GenericArtifactField startDateField = GenericArtifactHelper
+				.getMandatoryGAField(TFArtifactMetaData.TFFields.startDate
+						.getFieldName(), ga);
+
+		if (startDateField != null && startDateField.getFieldValueHasChanged()) {
+			GregorianCalendar gc = (GregorianCalendar) startDateField
+					.getFieldValue();
+			if (gc != null) {
+				Date dateValue = gc.getTime();
+				if (DateUtil.isAbsoluteDateInTimezone(dateValue, "GMT")) {
+					startDateField.setFieldValue(DateUtil
+							.convertGMTToTimezoneAbsoluteDate(dateValue,
+									targetSystemTimezone));
+				} else {
+					startDateField.setFieldValue(dateValue);
+				}
+			}
 		}
-		return this.returnDocument(ga);
+
+		GenericArtifactField endDateField = GenericArtifactHelper
+				.getMandatoryGAField(TFArtifactMetaData.TFFields.endDate
+						.getFieldName(), ga);
+
+		if (endDateField != null && endDateField.getFieldValueHasChanged()) {
+			GregorianCalendar gc = (GregorianCalendar) endDateField
+					.getFieldValue();
+			if (gc != null) {
+				Date dateValue = gc.getTime();
+				if (DateUtil.isAbsoluteDateInTimezone(dateValue, "GMT")) {
+					endDateField.setFieldValue(DateUtil
+							.convertGMTToTimezoneAbsoluteDate(dateValue,
+									targetSystemTimezone));
+				} else {
+					endDateField.setFieldValue(dateValue);
+				}
+			}
+		}
+
+		boolean planningFolderNotUpdated = true;
+		PlanningFolderDO planningFolder = null;
+		while (planningFolderNotUpdated) {
+			try {
+				planningFolderNotUpdated = false;
+				planningFolder = connection.getPlanningClient()
+						.getPlanningFolderData(id);
+
+				// do conflict resolution
+				if (!AbstractWriter.handleConflicts(
+						planningFolder.getVersion(), ga)) {
+					return null;
+				}
+
+				if (title != null && title.getFieldValueHasChanged()) {
+					planningFolder.setTitle((String) title.getFieldValue());
+				}
+				if (description != null
+						&& description.getFieldValueHasChanged()) {
+					planningFolder.setDescription((String) description
+							.getFieldValue());
+				}
+				if (startDateField != null
+						&& startDateField.getFieldValueHasChanged()) {
+					planningFolder.setStartDate((Date) startDateField
+							.getFieldValue());
+				}
+				if (endDateField != null
+						&& endDateField.getFieldValueHasChanged()) {
+					planningFolder.setStartDate((Date) endDateField
+							.getFieldValue());
+				}
+
+				connection.getPlanningClient().setPlanningFolderData(
+						planningFolder);
+			} catch (AxisFault e) {
+				javax.xml.namespace.QName faultCode = e.getFaultCode();
+				if (!faultCode.getLocalPart().equals("VersionMismatchFault")) {
+					throw e;
+				}
+				logConflictResolutor.warn(
+						"Stale update for TF planning folder " + id
+								+ " in project " + project
+								+ ". Trying again ...", e);
+				planningFolderNotUpdated = true;
+			}
+		}
+
+		planningFolder.setVersion(planningFolder.getVersion() + 1);
+
+		// now we have to cope with moving planning folders around
+		String parentArtifactId = ga.getDepParentTargetArtifactId();
+		// first of all, if parent is unknown or null, we do not change anything
+		if (parentArtifactId != null
+				&& !parentArtifactId.equals(GenericArtifact.VALUE_UNKNOWN)) {
+			// check for the special case this is a top level PF
+			if (parentArtifactId.equals(GenericArtifact.VALUE_NONE)) {
+				// check whether this is already a top level planning folder
+				if (!planningFolder.getParentFolderId().startsWith(
+						"PlanningApp")) {
+					// move to top
+					connection.getPlanningClient().movePlanningFolder(id,
+							project);
+					planningFolder.setVersion(planningFolder.getVersion() + 1);
+				}
+			} else {
+				// check whether correct parent is already assigned
+				if (!parentArtifactId
+						.equals(planningFolder.getParentFolderId())) {
+					connection.getPlanningClient().movePlanningFolder(id,
+							parentArtifactId);
+					planningFolder.setVersion(planningFolder.getVersion() + 1);
+				}
+			}
+		}
+		log.info("Planning folder updated. TF Id: " + planningFolder.getId()
+				+ " in project " + project + " other system id: "
+				+ ga.getSourceArtifactId() + " in repository: "
+				+ ga.getSourceRepositoryId());
+		return planningFolder;
 	}
 
 	public Document[] createAttachment(Document data) {
