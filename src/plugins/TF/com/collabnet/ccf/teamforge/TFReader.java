@@ -43,6 +43,7 @@ import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.teamforge.api.Connection;
 import com.collabnet.teamforge.api.planning.PlanningFolderDO;
 import com.collabnet.teamforge.api.tracker.ArtifactDO;
+import com.collabnet.teamforge.api.tracker.ArtifactDependencyRow;
 import com.collabnet.teamforge.api.tracker.TrackerFieldDO;
 
 /**
@@ -78,7 +79,18 @@ public class TFReader extends AbstractReader<Connection> {
 	 * This variable indicates whether no web services introduced in SFEE 4.4
 	 * SP1 HF1 should be used
 	 */
-	private boolean pre44SP1HF1System = false;	
+	private boolean pre44SP1HF1System = false;
+
+	/**
+	 * Determines whether parent info should be fetched for tracker items (default is false)
+	 */
+	private boolean retrieveParentInfoForTrackerItems = false;
+
+	
+	/**
+	 * Determines whether parent info should be fetched for planning folders (default is true)
+	 */
+	private boolean retrieveParentInfoForPlanningFolders = true;	
 
 
 	/**
@@ -406,6 +418,31 @@ public class TFReader extends AbstractReader<Connection> {
 						lastModifiedDate, this.isIncludeFieldMetaData(),
 						sourceSystemTimezone);
 				// now care about parent artifacts/planning folders
+				// first we find out whether we have a parent artifact or not
+				if (isRetrieveParentInfoForTrackerItems()) {
+					ArtifactDependencyRow[] parents = trackerHandler.getArtifactParentDependencies(connection, artifactId);
+					if (parents.length == 0) {
+						// we do not have any parent, so maybe we set a planning folder as our parent
+						if (connection.supports53()) {
+							String planningFolderId = artifact.getPlanningFolderId();
+							if (planningFolderId == null) {
+								genericArtifact.setDepParentSourceArtifactId(GenericArtifact.VALUE_NONE);
+							} else {
+								genericArtifact.setDepParentSourceArtifactId(planningFolderId);
+								// we have to set the repository id as well => we have to retrieve the planning folder
+								PlanningFolderDO planningFolder = connection.getPlanningClient().getPlanningFolderData(planningFolderId);
+								genericArtifact.setDepParentSourceRepositoryId(planningFolder.getProjectId()+"-planningFolders");
+							}
+						}
+					} else {
+						// only take first entry of this record
+						ArtifactDependencyRow parent = parents[0];
+						String parentId = parent.getOriginId();
+						genericArtifact.setDepParentSourceArtifactId(parentId);
+						ArtifactDO parentArtifact = trackerHandler.getTrackerItem(connection, parentId);
+						genericArtifact.setDepParentSourceRepositoryId(parentArtifact.getFolderId());
+					}
+				}
 				
 				lastModifiedBy = artifact.getLastModifiedBy();
 			} else {
@@ -416,11 +453,13 @@ public class TFReader extends AbstractReader<Connection> {
 						sourceSystemTimezone);
 				
 				// finally, we have to set some info about the parent
-				genericArtifact.setDepParentSourceRepositoryId(sourceRepositoryId);
-				if (planningFolder.getParentFolderId().startsWith("PlanningApp")) {
-					genericArtifact.setDepParentSourceArtifactId(GenericArtifact.VALUE_NONE);
-				} else {
-					genericArtifact.setDepParentSourceArtifactId(planningFolder.getParentFolderId());
+				if (isRetrieveParentInfoForPlanningFolders()) {
+					genericArtifact.setDepParentSourceRepositoryId(sourceRepositoryId);
+					if (planningFolder.getParentFolderId().startsWith("PlanningApp")) {
+						genericArtifact.setDepParentSourceArtifactId(GenericArtifact.VALUE_NONE);
+					} else {
+						genericArtifact.setDepParentSourceArtifactId(planningFolder.getParentFolderId());
+					}
 				}
 				
 				lastModifiedBy = planningFolder.getLastModifiedBy();
@@ -728,5 +767,39 @@ public class TFReader extends AbstractReader<Connection> {
 	 */
 	public boolean isPre44SP1HF1System() {
 		return pre44SP1HF1System;
+	}
+
+	/**
+	 * Defines whether parent info for tracker items should be retrieved (default set to false)
+	 * @param retrieveParentInfoForTrackerItems
+	 */
+	public void setRetrieveParentInfoForTrackerItems(
+			boolean retrieveParentInfoForTrackerItems) {
+		this.retrieveParentInfoForTrackerItems = retrieveParentInfoForTrackerItems;
+	}
+
+	/**
+	 * Returns whether parent info for tracker items should be retrieved (default set to false)
+	 * @return true if parent info should be retrieved, false if not
+	 */
+	public boolean isRetrieveParentInfoForTrackerItems() {
+		return retrieveParentInfoForTrackerItems;
+	}
+
+	/**
+	 * Defines whether parent info for planning folders should be retrieved (default set to false)
+	 * @param retrieveParentInfoForPlanningFolders
+	 */
+	public void setRetrieveParentInfoForPlanningFolders(
+			boolean retrieveParentInfoForPlanningFolders) {
+		this.retrieveParentInfoForPlanningFolders = retrieveParentInfoForPlanningFolders;
+	}
+
+	/**
+	 * Returns whether parent info for planning folders should be retrieved (default set to false)
+	 * @return @return true if parent info should be retrieved, false if not
+	 */
+	public boolean isRetrieveParentInfoForPlanningFolders() {
+		return retrieveParentInfoForPlanningFolders;
 	}
 }

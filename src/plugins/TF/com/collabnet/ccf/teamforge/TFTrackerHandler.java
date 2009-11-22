@@ -34,6 +34,7 @@ import com.collabnet.ccf.core.eis.connection.ConnectionManager;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.utils.DateUtil;
+import com.collabnet.ce.soap50.webservices.tracker.Artifact2SoapDO;
 import com.collabnet.ce.soap50.webservices.tracker.ArtifactSoapDO;
 import com.collabnet.teamforge.api.Connection;
 import com.collabnet.teamforge.api.FieldValues;
@@ -87,7 +88,8 @@ public class TFTrackerHandler {
 	 */
 	public ArtifactDependencyRow[] getArtifactParentDependencies(
 			Connection connection, String artifactId) throws RemoteException {
-		return connection.getTrackerClient().getParentDependencyList(artifactId).getDataRows();
+		return connection.getTrackerClient()
+				.getParentDependencyList(artifactId).getDataRows();
 	}
 
 	/**
@@ -97,7 +99,8 @@ public class TFTrackerHandler {
 	 */
 	public ArtifactDependencyRow[] getArtifactChildDependencies(
 			Connection connection, String artifactId) throws RemoteException {
-		return connection.getTrackerClient().getChildDependencyList(artifactId).getDataRows();
+		return connection.getTrackerClient().getChildDependencyList(artifactId)
+				.getDataRows();
 	}
 
 	/**
@@ -116,15 +119,29 @@ public class TFTrackerHandler {
 			throws RemoteException {
 		log.debug("Getting the changed artifacts from " + lastModifiedDate);
 		// only select ID of row because we have to get the details in any case
+		// FIXME get rid of this once we have fixed the problem in ctf5latest
+		String[] selectedColumns53 = { ArtifactSoapDO.COLUMN_ID,
+				ArtifactSoapDO.COLUMN_LAST_MODIFIED_DATE,
+				ArtifactSoapDO.COLUMN_VERSION,
+				Artifact2SoapDO.COLUMN_AUTOSUMMING };
 		String[] selectedColumns = { ArtifactSoapDO.COLUMN_ID,
 				ArtifactSoapDO.COLUMN_LAST_MODIFIED_DATE,
 				ArtifactSoapDO.COLUMN_VERSION };
+
 		SortKey[] sortKeys = { new SortKey(
 				ArtifactSoapDO.COLUMN_LAST_MODIFIED_DATE, true) };
-		Filter[] filter = { new Filter("modifiedAfter",
-				Filter.DATE_FORMAT.format(lastModifiedDate)) };
-		ArtifactDetailRow[] rows = connection.getTrackerClient().getArtifactDetailList(trackerId, selectedColumns, filter, sortKeys, 0, -1,
-				false, true).getDataRows();
+		Filter[] filter = { new Filter("modifiedAfter", Filter.DATE_FORMAT
+				.format(lastModifiedDate)) };
+		ArtifactDetailRow[] rows = null;
+		if (!connection.supports53()) {
+			rows = connection.getTrackerClient().getArtifactDetailList(
+					trackerId, selectedColumns, filter, sortKeys, 0, -1, false,
+					true).getDataRows();
+		} else {
+			rows = connection.getTrackerClient().getArtifactDetailList(
+					trackerId, selectedColumns53, filter, sortKeys, 0, -1,
+					false, true).getDataRows();
+		}
 		if (rows != null) {
 			log.debug("There were " + rows.length + " artifacts changed");
 		}
@@ -140,7 +157,8 @@ public class TFTrackerHandler {
 						&& lastArtifactVersion == rows[i].getVersion()) {
 					duplicateFound = true;
 				} else {
-					ArtifactDO artifactData = connection.getTrackerClient().getArtifactData(id);
+					ArtifactDO artifactData = connection.getTrackerClient()
+							.getArtifactData(id);
 					if (!artifactData.getLastModifiedBy().equals(connectorUser)) {
 						if (duplicateFound) {
 							detailRowsNew.add(artifactData);
@@ -159,21 +177,23 @@ public class TFTrackerHandler {
 	}
 
 	/**
-	 * Returns the artifact with the artifactId as id.
-	 * Uses SP 1 HF 1 web service API 
+	 * Returns the artifact with the artifactId as id. Uses SP 1 HF 1 web
+	 * service API
+	 * 
 	 * @param sessionID
 	 * @param artifactId
 	 * @return
 	 * @throws RemoteException
 	 */
-	public ArtifactDO getTrackerItemFull(Connection connection, String artifactId)
-			throws RemoteException {
+	public ArtifactDO getTrackerItemFull(Connection connection,
+			String artifactId) throws RemoteException {
 		return connection.getTrackerClient().getArtifactDataFull(artifactId);
 	}
-	
+
 	/**
-	 * Returns the artifact with the artifactId as id.
-	 * Uses pre SP 1 HF 1 web service API
+	 * Returns the artifact with the artifactId as id. Uses pre SP 1 HF 1 web
+	 * service API
+	 * 
 	 * @param sessionID
 	 * @param artifactId
 	 * @return
@@ -183,25 +203,24 @@ public class TFTrackerHandler {
 			throws RemoteException {
 		return connection.getTrackerClient().getArtifactData(artifactId);
 	}
-	
-	
 
-	public void createArtifactDependency(Connection connection, String originId,
-			String targetId, String description) throws RemoteException, PlanningFolderRuleViolationException {
-		connection.getTrackerClient().createArtifactDependency(originId, targetId,
-				description);
+	public void createArtifactDependency(Connection connection,
+			String originId, String targetId, String description)
+			throws RemoteException, PlanningFolderRuleViolationException {
+		connection.getTrackerClient().createArtifactDependency(originId,
+				targetId, description);
 	}
 
-	public void removeArtifactDependency(Connection connection, String originId,
-			String targetId) throws RemoteException {
-		connection.getTrackerClient().removeArtifactDependency(originId, targetId);
+	public void removeArtifactDependency(Connection connection,
+			String originId, String targetId) throws RemoteException {
+		connection.getTrackerClient().removeArtifactDependency(originId,
+				targetId);
 	}
 
 	public void removeArtifact(Connection connection, String artifactId)
 			throws RemoteException {
 		connection.getTrackerClient().deleteArtifact(artifactId);
 	}
-
 
 	/**
 	 * Returns the custom or flex fields for a particular tracker
@@ -211,9 +230,10 @@ public class TFTrackerHandler {
 	 * @return
 	 * @throws RemoteException
 	 */
-	public TrackerFieldDO[] getFlexFields(Connection connection, String trackerId)
-			throws RemoteException {
-		TrackerFieldDO[] rows = connection.getTrackerClient().getFields(trackerId);
+	public TrackerFieldDO[] getFlexFields(Connection connection,
+			String trackerId) throws RemoteException {
+		TrackerFieldDO[] rows = connection.getTrackerClient().getFields(
+				trackerId);
 		return rows;
 	}
 
@@ -223,7 +243,7 @@ public class TFTrackerHandler {
 	 * @throws RemoteException
 	 *             when an error is encountered in creating the artifact.
 	 * @return Newly created artifact
-	 * @throws PlanningFolderRuleViolationException 
+	 * @throws PlanningFolderRuleViolationException
 	 */
 	public ArtifactDO createArtifact(Connection connection, String trackerId,
 			String description, String category, String group, String status,
@@ -233,7 +253,8 @@ public class TFTrackerHandler {
 			String resolvedReleaseId, List<String> flexFieldNames,
 			List<Object> flexFieldValues, List<String> flexFieldTypes,
 			String title, String[] comments, int remainingEfforts,
-			boolean autosumming, String planningFolderId) throws RemoteException, PlanningFolderRuleViolationException {
+			boolean autosumming, String planningFolderId)
+			throws RemoteException, PlanningFolderRuleViolationException {
 
 		FieldValues flexFields = new FieldValues();
 		flexFields.setNames(flexFieldNames.toArray(new String[0]));
@@ -241,17 +262,16 @@ public class TFTrackerHandler {
 		flexFields.setTypes(flexFieldTypes.toArray(new String[0]));
 
 		ArtifactDO artifactData = connection.getTrackerClient().createArtifact(
-				trackerId, title, description, group, category, // category
+				trackerId, title, description, group,
+				category, // category
 				status, // status
 				customer, // customer
 				priority, // priority
 				estimatedEfforts, // estimatedHours
-				remainingEfforts,
-				autosumming,
+				remainingEfforts, autosumming,
 				assignedTo, // assigned user name
-				reportedReleaseId, 
-				planningFolderId,
-				flexFields, null, null, null);
+				reportedReleaseId, planningFolderId, flexFields, null, null,
+				null);
 		artifactData.setActualEffort(actualEfforts);
 		artifactData.setStatusClass(statusClass);
 		artifactData.setCloseDate(closeDate);
@@ -266,8 +286,8 @@ public class TFTrackerHandler {
 		while (initialUpdated) {
 			try {
 				initialUpdated = false;
-				connection.getTrackerClient().setArtifactData(artifactData, null,
-						null, null, null);
+				connection.getTrackerClient().setArtifactData(artifactData,
+						null, null, null, null);
 			} catch (AxisFault e) {
 				javax.xml.namespace.QName faultCode = e.getFaultCode();
 				if (!faultCode.getLocalPart().equals("VersionMismatchFault")) {
@@ -307,7 +327,8 @@ public class TFTrackerHandler {
 					}
 					logConflictResolutor.warn(
 							"Stale comment update, trying again ...:", e);
-					artifactData = connection.getTrackerClient().getArtifactData(artifactData.getId());
+					artifactData = connection.getTrackerClient()
+							.getArtifactData(artifactData.getId());
 					commentNotUpdated = true;
 				}
 			}
@@ -354,7 +375,7 @@ public class TFTrackerHandler {
 	 * @return updated artifact or null if conflict resolution has decided not
 	 *         to update the artifact
 	 * @throws RemoteException
-	 * @throws PlanningFolderRuleViolationException 
+	 * @throws PlanningFolderRuleViolationException
 	 */
 	public ArtifactDO updateArtifact(GenericArtifact ga, Connection connection,
 			GenericArtifactField trackerId, GenericArtifactField description,
@@ -369,15 +390,19 @@ public class TFTrackerHandler {
 			List<String> flexFieldNames, List<Object> flexFieldValues,
 			List<String> flexFieldTypes, Set<String> overriddenFlexFields,
 			GenericArtifactField title, String Id, String[] comments,
-			boolean translateTechnicalReleaseIds, GenericArtifactField remainingEfforts,
-			GenericArtifactField autosumming, GenericArtifactField planningFolderId) throws RemoteException, PlanningFolderRuleViolationException {
+			boolean translateTechnicalReleaseIds,
+			GenericArtifactField remainingEfforts,
+			GenericArtifactField autosumming,
+			GenericArtifactField planningFolderId) throws RemoteException,
+			PlanningFolderRuleViolationException {
 
 		boolean mainArtifactNotUpdated = true;
 		ArtifactDO artifactData = null;
 		while (mainArtifactNotUpdated) {
 			try {
 				mainArtifactNotUpdated = false;
-				artifactData = connection.getTrackerClient().getArtifactData(Id);
+				artifactData = connection.getTrackerClient()
+						.getArtifactData(Id);
 				// do conflict resolution
 				if (!AbstractWriter.handleConflicts(artifactData.getVersion(),
 						ga)) {
@@ -389,8 +414,7 @@ public class TFTrackerHandler {
 				ArrayList<String> finalFlexFieldTypes = new ArrayList<String>();
 				ArrayList<Object> finalFlexFieldValues = new ArrayList<Object>();
 
-				FieldValues currentFlexFields = artifactData
-						.getFlexFields();
+				FieldValues currentFlexFields = artifactData.getFlexFields();
 				String[] currentFlexFieldNames = currentFlexFields.getNames();
 				Object[] currentFlexFieldValues = currentFlexFields.getValues();
 				String[] currentFlexFieldTypes = currentFlexFields.getTypes();
@@ -503,7 +527,7 @@ public class TFTrackerHandler {
 					}
 					artifactData.setActualEffort(fieldValue);
 				}
-				
+
 				if (remainingEfforts != null
 						&& remainingEfforts.getFieldValueHasChanged()) {
 					Object fieldValueObj = remainingEfforts.getFieldValue();
@@ -527,11 +551,13 @@ public class TFTrackerHandler {
 					artifactData.setAssignedTo((String) assignedTo
 							.getFieldValue());
 				}
-				
-				if (planningFolderId != null && planningFolderId.getFieldValueHasChanged()) {
-					artifactData.setPlanningFolderId((String) planningFolderId.getFieldValue());
+
+				if (planningFolderId != null
+						&& planningFolderId.getFieldValueHasChanged()) {
+					artifactData.setPlanningFolderId((String) planningFolderId
+							.getFieldValue());
 				}
-				
+
 				if (autosumming != null
 						&& autosumming.getFieldValueHasChanged()) {
 					Object fieldValueObj = autosumming.getFieldValue();
@@ -544,7 +570,6 @@ public class TFTrackerHandler {
 					}
 					artifactData.setAutosumming(fieldValue);
 				}
-				
 
 				if (statusClass != null
 						&& statusClass.getFieldValueHasChanged()) {
@@ -588,8 +613,8 @@ public class TFTrackerHandler {
 
 				artifactData.setFlexFields(flexFields);
 
-				connection.getTrackerClient().setArtifactData(artifactData, null,
-						null, null, null);
+				connection.getTrackerClient().setArtifactData(artifactData,
+						null, null, null, null);
 			} catch (AxisFault e) {
 				javax.xml.namespace.QName faultCode = e.getFaultCode();
 				if (!faultCode.getLocalPart().equals("VersionMismatchFault")) {
@@ -625,7 +650,8 @@ public class TFTrackerHandler {
 					}
 					logConflictResolutor.warn(
 							"Stale comment update, trying again ...:", e);
-					artifactData = connection.getTrackerClient().getArtifactData(Id);
+					artifactData = connection.getTrackerClient()
+							.getArtifactData(Id);
 					commentNotUpdated = true;
 				}
 			}
@@ -652,12 +678,13 @@ public class TFTrackerHandler {
 	 * @param fieldType
 	 * @return
 	 * @throws RemoteException
-	 *//*
-	public Object getFlexFieldValue(String sessionID, String fieldName,
-			String artifactID, String fieldType) throws RemoteException {
-		ArtifactSoapDO artifact = getTrackerItem(sessionID, artifactID);
-		return getFlexFieldValue(fieldName, artifact, fieldType);
-	}*/
+	 */
+	/*
+	 * public Object getFlexFieldValue(String sessionID, String fieldName,
+	 * String artifactID, String fieldType) throws RemoteException {
+	 * ArtifactSoapDO artifact = getTrackerItem(sessionID, artifactID); return
+	 * getFlexFieldValue(fieldName, artifact, fieldType); }
+	 */
 
 	/**
 	 * Returns the value of the flex field with the name fieldName from the
@@ -693,42 +720,39 @@ public class TFTrackerHandler {
 		return null;
 	}
 
-	/*public GenericArtifact createGenericArtifactsForChild(String sessionId,
-			ArtifactDependencySoapRow child,
-			SFEEToGenericArtifactConverter artifactConverter,
-			Date lastModifiedDate, String sourceSystemTimezone)
-			throws RemoteException {
-		String childArtifactId = child.getTargetId();
-		String parentArtifactId = child.getOriginId();
-		ArtifactSoapDO artifact = this.getTrackerItem(sessionId,
-				childArtifactId);
-		TrackerFieldSoapDO[] trackerFields = this.getFlexFields(sessionId,
-				artifact.getFolderId());
-		HashMap<String, List<TrackerFieldSoapDO>> fieldsMap = SFEEAppHandler
-				.loadTrackerFieldsInHashMap(trackerFields);
-		// TODO As of now hard coding includeFieldMetaData to false. Should be
-		// changed when we include
-		// dependencies.
-		GenericArtifact ga = artifactConverter.convert(artifact, fieldsMap,
-				lastModifiedDate, false, sourceSystemTimezone);
-		ga.setDepParentSourceArtifactId(parentArtifactId);
-		ga.setSourceArtifactId(childArtifactId);
-		ga.setSourceRepositoryId(artifact.getFolderId());
-		ga.setArtifactType(GenericArtifact.ArtifactTypeValue.DEPENDENCY);
-		return ga;
-	}*/
+	/*
+	 * public GenericArtifact createGenericArtifactsForChild(String sessionId,
+	 * ArtifactDependencySoapRow child, SFEEToGenericArtifactConverter
+	 * artifactConverter, Date lastModifiedDate, String sourceSystemTimezone)
+	 * throws RemoteException { String childArtifactId = child.getTargetId();
+	 * String parentArtifactId = child.getOriginId(); ArtifactSoapDO artifact =
+	 * this.getTrackerItem(sessionId, childArtifactId); TrackerFieldSoapDO[]
+	 * trackerFields = this.getFlexFields(sessionId, artifact.getFolderId());
+	 * HashMap<String, List<TrackerFieldSoapDO>> fieldsMap = SFEEAppHandler
+	 * .loadTrackerFieldsInHashMap(trackerFields); // TODO As of now hard coding
+	 * includeFieldMetaData to false. Should be // changed when we include //
+	 * dependencies. GenericArtifact ga = artifactConverter.convert(artifact,
+	 * fieldsMap, lastModifiedDate, false, sourceSystemTimezone);
+	 * ga.setDepParentSourceArtifactId(parentArtifactId);
+	 * ga.setSourceArtifactId(childArtifactId);
+	 * ga.setSourceRepositoryId(artifact.getFolderId());
+	 * ga.setArtifactType(GenericArtifact.ArtifactTypeValue.DEPENDENCY); return
+	 * ga; }
+	 */
 
 	public void convertReleaseIds(Connection connection, ArtifactDO artifact)
 			throws RemoteException {
 		String reportedReleaseId = artifact.getReportedReleaseId();
 		String resolvedReleaseId = artifact.getResolvedReleaseId();
 		if (!StringUtils.isEmpty(reportedReleaseId)) {
-			ReleaseDO releaseDO = connection.getFrsClient().getReleaseData(reportedReleaseId);
+			ReleaseDO releaseDO = connection.getFrsClient().getReleaseData(
+					reportedReleaseId);
 			String title = releaseDO.getTitle();
 			artifact.setReportedReleaseId(title);
 		}
 		if (!StringUtils.isEmpty(resolvedReleaseId)) {
-			ReleaseDO releaseDO = connection.getFrsClient().getReleaseData(resolvedReleaseId);
+			ReleaseDO releaseDO = connection.getFrsClient().getReleaseData(
+					resolvedReleaseId);
 			String title = releaseDO.getTitle();
 			artifact.setResolvedReleaseId(title);
 		}
@@ -738,9 +762,11 @@ public class TFTrackerHandler {
 	public String convertReleaseId(Connection connection, String releaseId,
 			String trackerId) throws RemoteException {
 		if (!StringUtils.isEmpty(releaseId) && !StringUtils.isEmpty(trackerId)) {
-			TrackerDO trackerDO = connection.getTrackerClient().getTrackerData(trackerId);
+			TrackerDO trackerDO = connection.getTrackerClient().getTrackerData(
+					trackerId);
 			String projectId = trackerDO.getProjectId();
-			PackageList packageList = connection.getFrsClient().getPackageList(projectId);
+			PackageList packageList = connection.getFrsClient().getPackageList(
+					projectId);
 			if (packageList != null) {
 				PackageRow[] packages = packageList.getDataRows();
 				if (packages != null && packages.length > 0) {
@@ -749,8 +775,7 @@ public class TFTrackerHandler {
 						ReleaseList releasesList = connection.getFrsClient()
 								.getReleaseList(packageId);
 						if (releasesList != null) {
-							ReleaseRow[] releases = releasesList
-									.getDataRows();
+							ReleaseRow[] releases = releasesList.getDataRows();
 							if (releases != null && releases.length > 0) {
 								for (ReleaseRow release : releases) {
 									String title = release.getTitle();
@@ -770,10 +795,13 @@ public class TFTrackerHandler {
 	public List<PlanningFolderDO> getChangedPlanningFolders(
 			Connection connection, String sourceRepositoryId,
 			Date lastModifiedDate, String lastSynchronizedArtifactId,
-			int version, String connectorUser, String project) throws RemoteException {
-		log.debug("Getting the changed planning folders from " + lastModifiedDate);
-		
-		PlanningFolderRow[] rows = connection.getPlanningClient().getPlanningFolderList(project, true).getDataRows();
+			int version, String connectorUser, String project)
+			throws RemoteException {
+		log.debug("Getting the changed planning folders from "
+				+ lastModifiedDate);
+
+		PlanningFolderRow[] rows = connection.getPlanningClient()
+				.getPlanningFolderList(project, true).getDataRows();
 		ArrayList<PlanningFolderDO> detailRowsFull = new ArrayList<PlanningFolderDO>();
 		ArrayList<PlanningFolderDO> detailRowsNew = new ArrayList<PlanningFolderDO>();
 		// retrieve artifact details
@@ -788,13 +816,14 @@ public class TFTrackerHandler {
 					continue;
 				}
 				String id = rows[i].getId();
-				PlanningFolderDO planningFolder = connection.getPlanningClient().getPlanningFolderData(id);
-				if (id.equals(lastSynchronizedArtifactId)) {	
+				PlanningFolderDO planningFolder = connection
+						.getPlanningClient().getPlanningFolderData(id);
+				if (id.equals(lastSynchronizedArtifactId)) {
 					if (version == planningFolder.getVersion()) {
 						duplicateFound = true;
 						continue;
 					}
-				}				
+				}
 				if (duplicateFound) {
 					detailRowsNew.add(planningFolder);
 				}

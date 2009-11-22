@@ -225,6 +225,8 @@
 		<!-- This plugs in in the polling hospital -->
 		<property name="hospitalDatabaseReader" ref="HospitalDatabaseExtractor"/>
 		<property name="nameOfEntityService" value="QCEntityService" />
+		<property name="retrieveParentInfoForPlanningFolders" value="true" />
+		<property name="retrieveParentInfoForTrackerItems" value="true" />
 	</bean>
 	<bean id="TFConnectionManager"
 		class="com.collabnet.ccf.core.eis.connection.ConnectionManager">
