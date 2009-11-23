@@ -772,6 +772,24 @@ public class TFWriter extends AbstractWriter<Connection> implements
 				resolvedReleaseId = trackerHandler.convertReleaseId(connection,
 						resolvedReleaseId, folderId);
 			}
+			
+			// now we have to deal with the parent dependencies
+			String parentId = ga.getDepParentTargetArtifactId();
+			boolean associateWithParent = false;
+			if (parentId != null && !parentId.equals(GenericArtifact.VALUE_UNKNOWN) && !parentId.equals(GenericArtifact.VALUE_NONE)) {
+				// parent is a planning folder
+				if (parentId.startsWith("plan")) {
+					planningFolder = parentId;
+				} else {
+					associateWithParent = true;
+					if (planningFolder == null) {
+						ArtifactDO parentArtifact = connection.getTrackerClient().getArtifactData(parentId);
+						planningFolder = parentArtifact.getPlanningFolderId();
+					}
+					
+				}
+			}
+			
 			result = trackerHandler.createArtifact(connection, folderId,
 					description, category, group, status, statusClass,
 					customer, priority, estimatedEffort, actualEffort,
@@ -779,6 +797,12 @@ public class TFWriter extends AbstractWriter<Connection> implements
 					resolvedReleaseId, flexFieldNames, flexFieldValues,
 					flexFieldTypes, title, comments, remainingEffort,
 					autosumming, planningFolder);
+			
+			// now create parent dependency
+			if (associateWithParent) {
+				trackerHandler.createArtifactDependency(connection, parentId, result.getId(), "CCF created parent-child dependency");
+			}
+			
 			log.info("New artifact " + result.getId()
 					+ " is created with the change from "
 					+ ga.getSourceArtifactId());

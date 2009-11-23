@@ -1133,7 +1133,7 @@ public class GenericArtifactHelper {
 	
 	public static Boolean getBooleanMandatoryGAField(String fieldName,
 			GenericArtifact ga) {
-		Boolean fieldValue = null;
+		Boolean fieldValue = false;
 		GenericArtifactField gaField = getMandatoryGAField(fieldName, ga);
 		if (gaField != null) {
 			Object fieldValueObj = gaField.getFieldValue();
