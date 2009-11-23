@@ -371,6 +371,10 @@ public class TFTrackerHandler {
 	 * @param title
 	 * @param Id
 	 * @param comments
+	 * @param newParentId
+	 * @param associateWithParent
+	 * @param currentParentId
+	 * @param deleteOldParentAssociation
 	 * @param conflictResolutionPriority
 	 * @return updated artifact or null if conflict resolution has decided not
 	 *         to update the artifact
@@ -393,10 +397,13 @@ public class TFTrackerHandler {
 			boolean translateTechnicalReleaseIds,
 			GenericArtifactField remainingEfforts,
 			GenericArtifactField autosumming,
-			GenericArtifactField planningFolderId) throws RemoteException,
-			PlanningFolderRuleViolationException {
+			GenericArtifactField planningFolderId,
+			boolean deleteOldParentAssociation, String currentParentId,
+			boolean associateWithParent, String newParentId)
+			throws RemoteException, PlanningFolderRuleViolationException {
 
 		boolean mainArtifactNotUpdated = true;
+		boolean oldParentRemoved = false;
 		ArtifactDO artifactData = null;
 		while (mainArtifactNotUpdated) {
 			try {
@@ -407,6 +414,11 @@ public class TFTrackerHandler {
 				if (!AbstractWriter.handleConflicts(artifactData.getVersion(),
 						ga)) {
 					return null;
+				}
+				
+				if (deleteOldParentAssociation && !oldParentRemoved) {
+					removeArtifactDependency(connection, currentParentId, Id);
+					oldParentRemoved = true;
 				}
 
 				// here we store the values which will be really sent
@@ -663,6 +675,11 @@ public class TFTrackerHandler {
 		if (comments.length == 0) {
 			artifactData.setVersion(artifactData.getVersion() + 1);
 		}
+		
+		if (associateWithParent) {
+			createArtifactDependency(connection, newParentId, Id, "CCF generated parent-child relationship");
+		}
+		
 		log.info("Artifact updated id: " + artifactData.getId()
 				+ " in tracker " + artifactData.getFolderId());
 		return artifactData;

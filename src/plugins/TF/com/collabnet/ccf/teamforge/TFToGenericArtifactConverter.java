@@ -265,7 +265,7 @@ public class TFToGenericArtifactConverter {
 	 * @param includeFieldMetaData
 	 * @return - Returns the newly created GenericArtifactField object
 	 */
-	private static GenericArtifactField createGenericArtifactField(
+	public static GenericArtifactField createGenericArtifactField(
 			TFArtifactMetaData.TFFields sfField, Object value,
 			GenericArtifact genericArtifact,
 			HashMap<String, List<TrackerFieldDO>> fieldsMap,

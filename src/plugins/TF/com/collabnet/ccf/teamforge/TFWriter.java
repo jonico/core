@@ -51,6 +51,7 @@ import com.collabnet.teamforge.api.Connection;
 import com.collabnet.teamforge.api.PlanningFolderRuleViolationException;
 import com.collabnet.teamforge.api.planning.PlanningFolderDO;
 import com.collabnet.teamforge.api.tracker.ArtifactDO;
+import com.collabnet.teamforge.api.tracker.ArtifactDependencyRow;
 
 /**
  * This component is responsible for writing TF tracker items encoded in the
@@ -978,6 +979,65 @@ public class TFWriter extends AbstractWriter<Connection> implements
 		String[] comments = this.getComments(ga);
 		ArtifactDO result = null;
 		try {
+			// now we have to deal with the parent dependencies
+			String newParentId = ga.getDepParentTargetArtifactId();
+			boolean associateWithParent = false;
+			boolean deleteOldParentAssociation = false;
+			String currentParentId = null;
+			
+			if (newParentId != null && !newParentId.equals(GenericArtifact.VALUE_UNKNOWN)) {
+				// now find out current parent id
+				ArtifactDependencyRow[] parents = trackerHandler.getArtifactParentDependencies(connection, id);
+				if (parents.length != 0) {
+					// only take first entry of this record
+					ArtifactDependencyRow parent = parents[0];
+					currentParentId = parent.getOriginId();
+				}
+				
+				if (newParentId.equals(GenericArtifact.VALUE_NONE)) {
+					// we have to set the planning folder to null
+					planningFolder = TFToGenericArtifactConverter.createGenericArtifactField(
+							TFArtifactMetaData.TFFields.planningFolder,
+							null, ga, null,
+							false);
+					
+					// we have to deassociate the old parent
+					if (currentParentId != null) {
+						deleteOldParentAssociation = true;
+					}
+				}
+				
+				else if (newParentId.startsWith("plan")) {
+					// we have to set the planning folder to the new parent
+					planningFolder = TFToGenericArtifactConverter.createGenericArtifactField(
+							TFArtifactMetaData.TFFields.planningFolder,
+							newParentId, ga, null,
+							false);
+					
+					// we have to deassociate the old parent
+					if (currentParentId != null) {
+						deleteOldParentAssociation = true;
+					}
+				}
+				
+				else if (!newParentId.equals(currentParentId)) {
+					// new parent is a tracker item
+					// we have to deassociate the old parent
+					if (currentParentId != null) {
+						deleteOldParentAssociation = true;
+					}
+					associateWithParent = true;
+					// we have to change the planning folder if there was no special value requested for this
+					if (connection.supports53() && (planningFolder == null || !planningFolder.getFieldValueHasChanged())) {
+						ArtifactDO parentArtifact = trackerHandler.getTrackerItem(connection, newParentId);
+						planningFolder = TFToGenericArtifactConverter.createGenericArtifactField(
+								TFArtifactMetaData.TFFields.planningFolder,
+								parentArtifact.getPlanningFolderId(), ga, null,
+								false);
+					}
+				}
+			}
+			
 			result = trackerHandler.updateArtifact(ga, connection, folderId,
 					description, category, group, status, statusClass,
 					customer, priority, estimatedEffort, actualEffort,
@@ -985,7 +1045,8 @@ public class TFWriter extends AbstractWriter<Connection> implements
 					resolvedReleaseId, flexFieldNames, flexFieldValues,
 					flexFieldTypes, overriddenFlexFields, title, id, comments,
 					translateTechnicalReleaseIds, remainingEffort, autosumming,
-					planningFolder);
+					planningFolder, deleteOldParentAssociation, currentParentId, associateWithParent, newParentId);
+			
 			if (result != null) {
 				log.info("Artifact " + id + " is updated successfully");
 			}
