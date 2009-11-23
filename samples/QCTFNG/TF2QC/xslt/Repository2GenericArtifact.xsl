@@ -50,10 +50,10 @@
 					</xsl:otherwise>
 				</xsl:choose>
 				<xsl:choose>
-					<xsl:when test="@fieldValueType='HTMLString' and @fieldName != 'BG_DEV_COMMENTS'">
+					<xsl:when test="@fieldValueType='HTMLString' and @fieldName != 'BG_DEV_COMMENTS' and @fieldName != 'RQ_DEV_COMMENTS'">
 						<xsl:text>&lt;html&gt;&lt;body&gt;</xsl:text><xslo:value-of select="stringutil:encodeHTMLToEntityReferences(string(.))"/><xsl:text>&lt;/body&gt;&lt;/html&gt;</xsl:text>
 					</xsl:when>
-					<xsl:when test="@fieldValueType='HTMLString' and @fieldName = 'BG_DEV_COMMENTS'">
+					<xsl:when test="@fieldValueType='HTMLString' and (@fieldName = 'BG_DEV_COMMENTS' or @fieldName = 'RQ_DEV_COMMENTS')">
 						<xslo:value-of select="stringutil:encodeHTMLToEntityReferences(string(.))"/>
 					</xsl:when>
 					<xsl:otherwise>
