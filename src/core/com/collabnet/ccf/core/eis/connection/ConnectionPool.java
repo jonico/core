@@ -228,6 +228,8 @@ public class ConnectionPool<T> {
 							connection = retrievedConnection;
 							break;
 						}
+					} else {
+						log.warn("Connection is not free, this is an indication for unclean resource management.");
 					}
 				}
 			}
@@ -251,6 +253,9 @@ public class ConnectionPool<T> {
 			synchronized(connectionInfos){
 				info.returnedToPool();
 			}
+		} else {
+			// this should never happen
+			log.warn("Returned connection that has not been listed in pool!");
 		}
 	}
 

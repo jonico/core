@@ -112,7 +112,8 @@ public class TFConnectionFactory implements ConnectionFactory<Connection> {
 		Connection connection = null;
 		
 		try {
-			connection =  Connection.getConnection(connectionInfo, username, password, null, null, null, false);
+			String key = systemId + systemKind + repositoryId + repositoryKind + connectionInfo + credentialInfo;
+			connection =  Connection.getConnection(connectionInfo, username, password, null, key, null, false);
 			connection.login();
 		} catch (RemoteException e) {
 			String cause = "While trying to login into TF "+ connectionInfo 
