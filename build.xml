@@ -54,6 +54,8 @@
 		<pathelement location="src/core/lib/openadaptor-3.4/3rdparty/wsdl4j_1.6.2.jar" />
 		<pathelement location="src/core/lib/openadaptor-3.4/3rdparty/xercesImpl_2.9.0.jar" />
 		<pathelement location="src/plugins/SFEE/v44/lib/sf_soap44_sdk.jar" />
+		<pathelement location="src/plugins/TF/lib/sf_soap50_sdk.jar" />
+		<pathelement location="src/plugins/TF/lib/tfapi.jar" />
 		<pathelement location="src/plugins/CEE/ProjectTracker/v50/lib/cee-5.0.jar" />
 		<pathelement location="src/plugins/CEE/ProjectTracker/v50/lib/wss4j-1.5.1.jar" />
 		<pathelement location="src/plugins/CEE/ProjectTracker/v50/lib/xmlsec-1.4.0.jar" />
@@ -72,8 +74,8 @@
 		<mkdir dir="build/classes" />
 	</target>
 	<target depends="clean" name="cleanall" />
-	<target depends="init, create.manifest, build.core, build.sfee.plugin, build.cee.plugin, build.qc.plugin, build.sample, package" name="build" />
-	<target depends="init, create.manifestHudson, build.core, build.sfee.plugin, build.cee.plugin, build.qc.plugin, build.sample, package" name="buildHudson" />
+	<target depends="init, create.manifest, build.core, build.sfee.plugin, build.cee.plugin, build.qc.plugin, build.tf.plugin, build.sample, package" name="build" />
+	<target depends="init, create.manifestHudson, build.core, build.sfee.plugin, build.cee.plugin, build.qc.plugin, build.tf.plugin, build.sample, package" name="buildHudson" />
 	<target name="create.manifest">
 		<property file="default.properties"/>
 		<manifest file="build/MANIFEST.MF">
@@ -91,7 +93,7 @@
 			<manifest file="build/MANIFEST.MF">
 			    <section name="CCF">
 			      <attribute name="Implementation-Title" value="CollabNet Connector Framework"/>
-			      <attribute name="Implementation-Version" value="1.2.2-${env.BUILD_NUMBER}"/>
+			      <attribute name="Implementation-Version" value="1.3.0-${env.BUILD_NUMBER}"/>
 			      <attribute name="Build-Date" value="${now}"/>
 			      <attribute name="SVN-Revision" value="${env.SVN_REVISION}"/>	
 			      <attribute name="Implementation-Vendor" value="CollabNet"/>
@@ -132,6 +134,26 @@
 			</fileset>
 		</jar>
 	</target>
+	
+	<target name="build.tf.plugin">
+			<antcall target="clean">
+			</antcall>
+			<javac debug="true" debuglevel="${debuglevel}" destdir="build/classes" source="${source}" target="${target}">
+				<src path="src/plugins/TF/" />
+				<classpath refid="CCFJ.classpath" />
+				<classpath>
+					<fileset dir="build/jars">
+						<include name="CCFCoreV10.jar" />
+					</fileset>
+				</classpath>
+
+			</javac>
+			<jar destfile="build/jars/CCFTFPlugin.jar"  manifest="build/MANIFEST.MF">
+				<fileset dir="build/classes">
+					<include name="**/*.class" />
+				</fileset>
+			</jar>
+		</target>
 	
 	<target name="build.qc.plugin">
 		<antcall target="clean">
@@ -263,6 +285,9 @@
 			<fileset dir="src/plugins/SFEE/v44/lib">
 				<include name="*.jar" />
 			</fileset>
+			<fileset dir="src/plugins/TF/lib">
+				<include name="*.jar" />
+			</fileset>
 			<fileset dir="src/plugins/CEE/ProjectTracker/v50/lib">
 			    <include name="*.jar" />
 			</fileset>
@@ -277,6 +302,7 @@
 				<include name="centralCCFDatabase/**/*"/>
 				<include name="QCTF/**/*"/>
 				<include name="QCPT/**/*"/>
+				<include name="QCTFNG/**/*"/>
 				<include name="HospitalReplay/**/*"/>
 			</fileset>
 		</copy>
@@ -307,7 +333,7 @@
 	<target name="deployHudson" depends="cleanup,buildHudson">
 		<property environment="env"/>
 	      <mkdir dir="deploy"/>
-	      <zip destfile="deploy/CollabNet Connector Framework-1.2.2-${env.BUILD_NUMBER}.zip"
+	      <zip destfile="deploy/CollabNet Connector Framework-1.3.0-${env.BUILD_NUMBER}.zip"
 		       basedir="build/package"/>
 	          <delete dir="build/package"/>
 	</target>
@@ -317,6 +343,6 @@
          <exec executable="${env.NSIS_PATH}\makensis.exe">
              <arg value="installer\CollabNet Connector Framework.nsi"/>
          </exec>
-         <move file="installer\CollabNet Connector Framework-1.2.2-win32.exe" tofile="production_installer\Collabnet Connector Framework-1.0-win32.exe"/>
+         <move file="installer\CollabNet Connector Framework-1.3.0-win32.exe" tofile="production_installer\Collabnet Connector Framework-1.0-win32.exe"/>
     </target>
 </project>
