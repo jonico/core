@@ -17,7 +17,6 @@
 
 package com.collabnet.ccf.pi.qc.v90.api;
 
-import java.io.File;
 
 public interface IRequirementsActions extends IRequirement {
 	/*boolean hasChange();

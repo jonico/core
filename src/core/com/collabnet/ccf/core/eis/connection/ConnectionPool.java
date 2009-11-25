@@ -254,7 +254,6 @@ public class ConnectionPool<T> {
 				info.returnedToPool();
 			}
 		} else {
-			// this should never happen
 			log.warn("Returned connection that has not been listed in pool!");
 		}
 	}

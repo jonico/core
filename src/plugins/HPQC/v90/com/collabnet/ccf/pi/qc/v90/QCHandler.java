@@ -46,6 +46,7 @@ import com.collabnet.ccf.pi.qc.v90.api.IFilter;
 import com.collabnet.ccf.pi.qc.v90.api.IRecordSet;
 import com.collabnet.ccf.pi.qc.v90.api.IRequirement;
 import com.collabnet.ccf.pi.qc.v90.api.IRequirementsFactory;
+import com.collabnet.ccf.pi.qc.v90.api.IVersionControl;
 import com.collabnet.ccf.pi.qc.v90.api.dcom.Bug;
 import com.collabnet.ccf.pi.qc.v90.api.dcom.Requirement;
 import com.jacob.com.ComFailException;
@@ -156,10 +157,18 @@ public class QCHandler {
 
 		IRequirementsFactory reqFactory = null;
 		IRequirement req = null;
+		IVersionControl versionControl = null;
+		boolean versionControlSupported = false;
 		try {
 			reqFactory = qcc.getRequirementsFactory();
 			req = reqFactory.getItem(requirementId);
 			req.lockObject();
+			versionControl = req.getVersionControlObject();
+			if (versionControl != null) {
+				versionControlSupported = versionControl.checkOut("CCF Checkout");
+			}
+				
+			
 			List<String> allFieldNames = new ArrayList<String>();
 			String fieldValue = null;
 			for (int cnt = 0; cnt < allFields.size(); cnt++) {
@@ -255,6 +264,7 @@ public class QCHandler {
 			throw new CCFRuntimeException(message, e);
 		} catch (ComFailException e) {
 			req.undo();
+			
 			String message = "ComFailException while updating the requirement with id "
 					+ requirementId;
 			log.error(message, e);
@@ -266,6 +276,13 @@ public class QCHandler {
 			log.error(message, e);
 			throw new CCFRuntimeException(message + ": " + e.getMessage(), e);
 		} finally {
+			if (versionControlSupported) {
+				try {
+					versionControl.checkIn("CCF CheckIn");
+				} catch (Exception e) {
+					log.error("Failed to checkin requirement again",e);
+				}
+			}
 			if (req != null) {
 				req.unlockObject();
 			}
@@ -1255,6 +1272,8 @@ public class QCHandler {
 			String parentArtifactId) {
 		IRequirementsFactory reqFactory = null;
 		IRequirement req = null;
+		IVersionControl versionControl = null;
+		boolean versionControlSupported = false;
 		try {
 			reqFactory = qcc.getRequirementsFactory();
 			if (parentArtifactId != null
@@ -1265,6 +1284,10 @@ public class QCHandler {
 				req = reqFactory.addItem("-1");
 			}
 			req.lockObject();
+			versionControl = req.getVersionControlObject();
+			if (versionControl != null) {
+				versionControlSupported = versionControl.checkOut("CCF Checkout");
+			}
 			req.setTypeId(informalRequirementsType);
 			List<String> allFieldNames = new ArrayList<String>();
 			String fieldValue = null;
@@ -1329,6 +1352,13 @@ public class QCHandler {
 			log.error(message, e);
 			throw new CCFRuntimeException(message + ": " + e.getMessage(), e);
 		} finally {
+			if (versionControlSupported) {
+				try {
+					versionControl.checkIn("CCF CheckIn");
+				} catch (Exception e) {
+					log.error("Failed to checkin requirement again",e);
+				}
+			}
 			if (req != null) {
 				req.unlockObject();
 			}

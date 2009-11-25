@@ -31,6 +31,7 @@ import com.collabnet.ccf.pi.qc.v90.api.IAttachment;
 import com.collabnet.ccf.pi.qc.v90.api.IAttachmentFactory;
 import com.collabnet.ccf.pi.qc.v90.api.IFactoryList;
 import com.collabnet.ccf.pi.qc.v90.api.IRequirementsActions;
+import com.collabnet.ccf.pi.qc.v90.api.IVersionControl;
 import com.jacob.activeX.ActiveXComponent;
 import com.jacob.com.DateUtilities;
 import com.jacob.com.Dispatch;
@@ -283,6 +284,8 @@ public class Requirement extends ActiveXComponent implements
 				getPropertyAsComponent("Attachments"));
 		return attachmentFactory;
 	}
+	
+	
 
 	public boolean hasAttachments() {
 		return getPropertyAsBoolean("HasAttachment");
@@ -387,6 +390,21 @@ public class Requirement extends ActiveXComponent implements
 		// Dispatch.invoke(this, "Move", 4, new Object[] { newParentId, position
 		// }, new int[2]);
 		Dispatch.call(this, "Move", newParentId, position);
+	}
+
+	public IVersionControl getVersionControlObject() {
+		Variant result = null;
+		try {
+			result = getProperty("VC");
+		} catch (Exception e) {
+			; // do nothing
+		}
+		if (result == null || result.getvt() != 9) {
+			return null;
+		} else {
+			Dispatch dispatch = result.getDispatch();
+			return new VersionControl(dispatch);
+		}
 	}
 
 }

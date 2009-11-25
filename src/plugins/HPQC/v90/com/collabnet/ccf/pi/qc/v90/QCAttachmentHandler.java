@@ -46,6 +46,7 @@ import com.collabnet.ccf.pi.qc.v90.api.IConnection;
 import com.collabnet.ccf.pi.qc.v90.api.IBugFactory;
 import com.collabnet.ccf.pi.qc.v90.api.IRequirement;
 import com.collabnet.ccf.pi.qc.v90.api.IRequirementsFactory;
+import com.collabnet.ccf.pi.qc.v90.api.IVersionControl;
 
 /**
  * The attachment handler class provides support for listing and/or create
@@ -158,9 +159,15 @@ public class QCAttachmentHandler {
 			String attachmentSourceUrl, String description){
 		IRequirementsFactory reqFactory = null;
 		IRequirement req = null;
+		IVersionControl versionControl = null;
+		boolean versionControlSupported = false;
 		try {
 			reqFactory = qcc.getRequirementsFactory();
 			req = reqFactory.getItem(entityId);
+			versionControl = req.getVersionControlObject();
+			if (versionControl != null) {
+				versionControlSupported = versionControl.checkOut("CCF Checkout");
+			}
 			int type = 0;
 			if (contentTypeValue.equals(AttachmentMetaData.AttachmentType.DATA
 					.toString())) {
@@ -189,6 +196,13 @@ public class QCAttachmentHandler {
 			}
 		}
 		finally {
+			if (versionControlSupported) {
+				try {
+					versionControl.checkIn("CCF CheckIn");
+				} catch (Exception e) {
+					log.error("Failed to checkin requirement again",e);
+				}
+			}
 			if (reqFactory != null) {
 				reqFactory.safeRelease();
 				reqFactory = null;
@@ -760,13 +774,27 @@ public class QCAttachmentHandler {
 		IRequirementsFactory reqFactory = null;
 		IRequirement req = null;
 		IAttachmentFactory attachmentFactory = null;
+		IVersionControl versionControl = null;
+		boolean versionControlSupported = false;
 		try {
 			reqFactory = qcc.getRequirementsFactory();
 			req = reqFactory.getItem(bugId);
+			
+			versionControl = req.getVersionControlObject();
+			if (versionControl != null) {
+				versionControlSupported = versionControl.checkOut("CCF Checkout");
+			}
 			attachmentFactory = req.getAttachmentFactory();
 			attachmentFactory.removeItem(attachmentId);
 		}
 		finally {
+			if (versionControlSupported) {
+				try {
+					versionControl.checkIn("CCF CheckIn");
+				} catch (Exception e) {
+					log.error("Failed to checkin requirement again",e);
+				}
+			}
 			if (reqFactory != null) {
 				reqFactory.safeRelease();
 				reqFactory = null;

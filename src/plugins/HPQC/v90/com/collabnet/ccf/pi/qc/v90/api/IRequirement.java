@@ -19,7 +19,6 @@ package com.collabnet.ccf.pi.qc.v90.api;
 
 import java.io.File;
 import java.util.Date;
-import java.util.List;
 
 public interface IRequirement extends ILifeCycle {	
 	public void post();
@@ -68,4 +67,6 @@ public interface IRequirement extends ILifeCycle {
 	String getId();
 	boolean isLocked();
 	boolean isModified();
+	
+	IVersionControl getVersionControlObject();
 }

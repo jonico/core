@@ -255,82 +255,6 @@ public class QCRequirement extends Requirement implements IQCRequirement {
 
 	}
 
-	/*
-	 * public boolean isMultiSelectField(String fieldName, IConnection qcc) {
-	 * 
-	 * String sql =
-	 * "SELECT * FROM SYSTEM_FIELD WHERE SF_TABLE_NAME='BUG' AND SF_COLUMN_NAME='"
-	 * +fieldName+"'"; int rsCount = 0; IRecordSet rs = null; try { rs =
-	 * QCDefectHandler.executeSQL(qcc, sql); if(rs!=null) rsCount =
-	 * rs.getRecordCount(); if(rsCount > 0) { String columnType =
-	 * rs.getFieldValueAsString(sfColumnType); String editStyle =
-	 * rs.getFieldValueAsString(sfEditStyle); String isMultiValue =
-	 * rs.getFieldValueAsString(sfIsMultiValue);
-	 * 
-	 * if(columnType.equals("char") && editStyle!=null && isMultiValue!=null &&
-	 * !StringUtils.isEmpty(isMultiValue) && isMultiValue.equals("Y")){
-	 * if(editStyle.equals("ListCombo") || editStyle.equals("TreeCombo")) {
-	 * return true; } } } } finally { if(rs != null) { rs.safeRelease(); } }
-	 * 
-	 * return false; }
-	 */
-
-	/**
-	 * DEPRECATED: As the function is done by the QCAttachmentHandler class,
-	 * this method is not used right now.
-	 * 
-	 * Constructs the GenericArtifact Java object for the attachment after
-	 * getting the schema from getSchemaAttachment method of the QCConfigHelper.
-	 * It also populates all the values into the attachment artifact.
-	 * 
-	 * @param qcc
-	 * @param actionId
-	 * @param entityId
-	 * @param attachmentNames
-	 * @return GenericArtifact Containing all the field values.
-	 */
-	/*
-	 * public GenericArtifact getGenericArtifactObjectWithOnlyAttachments(
-	 * IConnection qcc, String actionId, String entityId, List<String>
-	 * attachmentNames) {
-	 * 
-	 * if (attachmentNames != null) genericArtifact =
-	 * QCConfigHelper.getCompleteSchemaAttachments(qcc, actionId, entityId,
-	 * attachmentNames);
-	 * 
-	 * List<GenericArtifactAttachment> allAttachments = genericArtifact
-	 * .getAllGenericArtifactAttachments(); int noOfAttachments = 0; if
-	 * (allAttachments != null) noOfAttachments = allAttachments.size(); for
-	 * (int cnt = 0; cnt < noOfAttachments; cnt++) {
-	 * 
-	 * // if (attachOperation != null) { // filling the values for attachment
-	 * IFactory bugFactory = qcc.getBugFactory(); IBug bug =
-	 * bugFactory.getItem(entityId);
-	 * 
-	 * GenericArtifactAttachment thisAttachment = allAttachments.get(cnt);
-	 * MimetypesFileTypeMap mimeType = new MimetypesFileTypeMap(); String
-	 * thisMimeType = mimeType.getContentType(thisAttachment
-	 * .getAttachmentName()); thisAttachment.setMimeType(thisMimeType);
-	 * 
-	 * if (thisAttachment.getAttachmentContentType().equals(
-	 * GenericArtifactAttachment.AttachmentContentTypeValue.DATA)) { byte data[]
-	 * = null; try { data =
-	 * bug.retrieveAttachmentData(attachmentNames.get(cnt)); } catch (Exception
-	 * e) { log.error(
-	 * "An Exception!!!!! occured in QCDefect while trying to do retrieveAttachmentData of an INVALID Filename"
-	 * + e); return genericArtifact; }
-	 * log.info("************************************************"); long
-	 * attachmentSize = (long) data.length;
-	 * thisAttachment.setAttachmentSize(attachmentSize);
-	 * thisAttachment.setRawAttachmentData(data);
-	 * thisAttachment.setAttachmentSourceUrl("VALUE_UNKNOWN"); } else {
-	 * thisAttachment.setAttachmentSourceUrl(attachmentNames.get(cnt));
-	 * thisAttachment.setAttachmentSize(0); } } if (allAttachments != null) {
-	 * Boolean attachmentSizeChecker = checkForAttachmentSize(allAttachments);
-	 * if (attachmentSizeChecker == false) return null; }
-	 * 
-	 * return genericArtifact; }
-	 */
 
 	public List<String> getFieldValues(String fieldValue) {
 
@@ -342,16 +266,5 @@ public class QCRequirement extends Requirement implements IQCRequirement {
 		}
 		return fieldValues;
 	}
-
-	/*
-	 * public boolean checkForAttachmentSize( List<GenericArtifactAttachment>
-	 * allAttachments) {
-	 * 
-	 * for (int cnt = 0; cnt < allAttachments.size(); cnt++) { long
-	 * thisAttachmentSize = allAttachments.get(cnt) .getAttachmentSize();
-	 * cumulativeAttachmentSize += thisAttachmentSize; } if
-	 * (cumulativeAttachmentSize < maxAttachmentSizePerCycle) return true; else
-	 * return false; }
-	 */
 
 }
