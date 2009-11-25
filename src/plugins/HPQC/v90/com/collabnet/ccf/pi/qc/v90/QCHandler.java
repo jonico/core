@@ -1288,7 +1288,7 @@ public class QCHandler {
 			if (versionControl != null) {
 				versionControlSupported = versionControl.checkOut("CCF Checkout");
 			}
-			req.setTypeId(informalRequirementsType);
+			
 			List<String> allFieldNames = new ArrayList<String>();
 			String fieldValue = null;
 			for (int cnt = 0; cnt < allFields.size(); cnt++) {
@@ -1340,6 +1340,7 @@ public class QCHandler {
 				if (!fieldName.equals(QC_RQ_DEV_COMMENTS))
 					allFieldNames.add(fieldName);
 			}
+			req.setTypeId(informalRequirementsType);
 			req.post();
 		} catch (Exception e) {
 			String reqId = null;
