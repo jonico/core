@@ -280,6 +280,9 @@ public class QCConfigHelper {
 				else if (columnName.equals("RQ_REQ_TIME")) {
 					field.setFieldValueType(FieldValueTypeValue.STRING);
 				}
+				else if (columnName.equals("RQ_VC_CHECKOUT_TIME")) {
+					field.setFieldValueType(FieldValueTypeValue.STRING);
+				}
 			}
 		} finally {
 			if (rs != null) {
@@ -340,6 +343,11 @@ public class QCConfigHelper {
 				field.setMaxOccursValue(isMultiSelectField?GenericArtifactField.UNBOUNDED:"1");
 
 				field.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
+				
+				if (columnName.equals("BG_VC_CHECKOUT_TIME")) {
+					field.setFieldValueType(FieldValueTypeValue.STRING);
+				}
+				
 			}
 		}
 		finally {
