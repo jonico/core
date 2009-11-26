@@ -384,40 +384,48 @@ public class QCReader extends AbstractReader<IConnection> {
 						&& isIgnoreConnectorUserUpdates()) {
 					isResync = true;
 				}
-				QCDefect latestDefect = qcGAHelper.getDefectWithId(connection,
-						Integer.parseInt(artifactId));
-				latestArtifact = latestDefect.getGenericArtifactObject(
-						connection, lastTransactionId, artifactId, this
-								.getCommentDescriber(), this
-								.getCommentQualifier(), null,
-						syncInfoTransactionId,
-						isIgnoreConnectorUserUpdates() ? getUserName() : "",
-						defectHandler, sourceSystemTimezone, isResync);
-				// if (latestDefectArtifact == null)
-				// return null;
-				latestArtifact = defectHandler.getArtifactActionForDefects(
-						latestArtifact, connection, syncInfoTransactionId,
-						lastTransactionId, Integer.parseInt(artifactId),
-						fromTimestamp);
-				latestArtifact
-						.setArtifactMode(GenericArtifact.ArtifactModeValue.COMPLETE);
-				latestArtifact
-						.setArtifactType(GenericArtifact.ArtifactTypeValue.PLAINARTIFACT);
-				latestArtifact.setErrorCode("ok");
-				latestArtifact
-						.setIncludesFieldMetaData(GenericArtifact.IncludesFieldMetaDataValue.FALSE);
-
-				sourceArtifactId = defectHandler
-						.getIntegerValueFromGenericArtifactInDefectHandler(
-								latestArtifact, "BG_BUG_ID");
-				latestArtifact = defectHandler.assignValues(latestArtifact,
-						sourceArtifactId, sourceRepositoryId,
-						sourceRepositoryKind, sourceSystemId, sourceSystemKind,
-						targetRepositoryId, targetRepositoryKind,
-						targetSystemId, targetSystemKind, lastTransactionId);
-				if (isResync) {
+				QCDefect latestDefect = null;
+				try {
+					latestDefect = qcGAHelper.getDefectWithId(connection,
+							Integer.parseInt(artifactId));
+					latestArtifact = latestDefect.getGenericArtifactObject(
+							connection, lastTransactionId, artifactId, this
+									.getCommentDescriber(), this
+									.getCommentQualifier(), null,
+							syncInfoTransactionId,
+							isIgnoreConnectorUserUpdates() ? getUserName() : "",
+							defectHandler, sourceSystemTimezone, isResync);
+					// if (latestDefectArtifact == null)
+					// return null;
+					latestArtifact = defectHandler.getArtifactActionForDefects(
+							latestArtifact, connection, syncInfoTransactionId,
+							lastTransactionId, Integer.parseInt(artifactId),
+							fromTimestamp);
 					latestArtifact
-							.setArtifactAction(GenericArtifact.ArtifactActionValue.RESYNC);
+							.setArtifactMode(GenericArtifact.ArtifactModeValue.COMPLETE);
+					latestArtifact
+							.setArtifactType(GenericArtifact.ArtifactTypeValue.PLAINARTIFACT);
+					latestArtifact.setErrorCode("ok");
+					latestArtifact
+							.setIncludesFieldMetaData(GenericArtifact.IncludesFieldMetaDataValue.FALSE);
+	
+					sourceArtifactId = defectHandler
+							.getIntegerValueFromGenericArtifactInDefectHandler(
+									latestArtifact, "BG_BUG_ID");
+					latestArtifact = defectHandler.assignValues(latestArtifact,
+							sourceArtifactId, sourceRepositoryId,
+							sourceRepositoryKind, sourceSystemId, sourceSystemKind,
+							targetRepositoryId, targetRepositoryKind,
+							targetSystemId, targetSystemKind, lastTransactionId);
+					if (isResync) {
+						latestArtifact
+								.setArtifactAction(GenericArtifact.ArtifactActionValue.RESYNC);
+					}
+				} finally {
+					if (latestDefect != null) {
+						latestDefect.safeRelease();
+						latestDefect = null;
+					}
 				}
 			} catch (Exception e1) {
 				String cause = "Error in fetching the defects from QC";

@@ -197,7 +197,7 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 
 		// FIXME This is not atomic
 		defectHandler.updateDefect(connection, targetArtifactId, allFields,
-				this.getUserName(), targetSystemTimezone);
+				this.getUserName(), targetSystemTimezone).safeRelease();
 		log.info("QC Defect " + targetArtifactId + " on "
 				+ genericArtifact.getTargetRepositoryId()
 				+ " is updated successfully with the changes from "
@@ -714,29 +714,37 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 		try {
 			connection = this.connect(genericArtifact);
 			if (QCConnectionFactory.isDefectRepository(targetRepositoryId)) {
-				IQCDefect createdArtifact = defectHandler.createDefect(connection,
-						allFields, this.getUserName(), targetSystemTimezone);
-				if (createdArtifact != null) {
-					targetArtifactIdAfterCreation = createdArtifact.getId();
-					log.info("Defect " + targetArtifactIdAfterCreation
-							+ " is created on "
-							+ genericArtifact.getSourceRepositoryId()
-							+ " with the artifact details "
-							+ genericArtifact.getSourceArtifactId() + " on "
-							+ genericArtifact.getTargetRepositoryId());
-					genericArtifact
-							.setTargetArtifactId(targetArtifactIdAfterCreation);
-					// send this artifact to RCDU (Read Connector Database Updater)
-					// indicating a success in creating the artifact
-	
-					List<String> targetAutimeAndTxnId = getAutimeAndTxnIdForDefect(
-							connection, targetArtifactIdAfterCreation, null,
-							ARTIFACT_TYPE_PLAINARTIFACT);
-					genericArtifact.setTargetArtifactVersion(targetAutimeAndTxnId
-							.get(0));
-					genericArtifact.setTargetArtifactLastModifiedDate(DateUtil
-							.format(DateUtil.parseQCDate(targetAutimeAndTxnId
-									.get(1))));
+				IQCDefect createdArtifact = null;
+				try {
+					createdArtifact = defectHandler.createDefect(connection,
+							allFields, this.getUserName(), targetSystemTimezone);
+					if (createdArtifact != null) {
+						targetArtifactIdAfterCreation = createdArtifact.getId();
+						log.info("Defect " + targetArtifactIdAfterCreation
+								+ " is created on "
+								+ genericArtifact.getSourceRepositoryId()
+								+ " with the artifact details "
+								+ genericArtifact.getSourceArtifactId() + " on "
+								+ genericArtifact.getTargetRepositoryId());
+						genericArtifact
+								.setTargetArtifactId(targetArtifactIdAfterCreation);
+						// send this artifact to RCDU (Read Connector Database Updater)
+						// indicating a success in creating the artifact
+		
+						List<String> targetAutimeAndTxnId = getAutimeAndTxnIdForDefect(
+								connection, targetArtifactIdAfterCreation, null,
+								ARTIFACT_TYPE_PLAINARTIFACT);
+						genericArtifact.setTargetArtifactVersion(targetAutimeAndTxnId
+								.get(0));
+						genericArtifact.setTargetArtifactLastModifiedDate(DateUtil
+								.format(DateUtil.parseQCDate(targetAutimeAndTxnId
+										.get(1))));
+					}
+				} finally {
+					if (createdArtifact != null) {
+						createdArtifact.safeRelease();
+						createdArtifact = null;
+					}
 				}
 			}
 			else {

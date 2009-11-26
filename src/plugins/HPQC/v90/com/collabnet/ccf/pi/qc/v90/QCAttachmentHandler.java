@@ -121,7 +121,6 @@ public class QCAttachmentHandler {
 			}
 		}
 		finally {
-			bugFactory = null;
 			if(bug != null){
 				bug.safeRelease();
 				bug = null;
@@ -204,10 +203,7 @@ public class QCAttachmentHandler {
 					log.error("Failed to checkin requirement again",e);
 				}
 			}
-			if (reqFactory != null) {
-				reqFactory.safeRelease();
-				reqFactory = null;
-			}
+			
 			if(req != null){
 				req.safeRelease();
 				req = null;
@@ -754,14 +750,19 @@ public class QCAttachmentHandler {
 		// The QC API does not indicate whether it deleted the attachment or not.
 		IBugFactory bugFactory = null;
 		IBug bug = null;
+		IAttachmentFactory attachmentFactory = null;
 		try {
 			bugFactory = qcc.getBugFactory();
 			bug = bugFactory.getItem(bugId);
-			IAttachmentFactory attachmentFactory = bug.getAttachmentFactory();
+			attachmentFactory = bug.getAttachmentFactory();
 			attachmentFactory.removeItem(attachmentId);
 		}
-		finally {
-			bugFactory = null;
+		finally {		
+			if (attachmentFactory != null) {
+				attachmentFactory.safeRelease();
+				attachmentFactory = null;
+			}
+			
 			if(bug != null){
 				bug.safeRelease();
 				bug = null;
@@ -797,10 +798,7 @@ public class QCAttachmentHandler {
 					log.error("Failed to checkin requirement again",e);
 				}
 			}
-			if (reqFactory != null) {
-				reqFactory.safeRelease();
-				reqFactory = null;
-			}
+			
 			if (attachmentFactory != null) {
 				attachmentFactory.safeRelease();
 				attachmentFactory = null;

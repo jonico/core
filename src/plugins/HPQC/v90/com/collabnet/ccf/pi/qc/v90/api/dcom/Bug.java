@@ -314,16 +314,28 @@ public class Bug extends ActiveXComponent implements IBugActions {
 	}
 
 	public void createNewAttachment(String fileName, String description, int type) {
-		IAttachmentFactory attachmentFactory = new AttachmentFactory(getPropertyAsComponent("Attachments"));
-		IAttachment attachment = attachmentFactory.addItem();
-
-		attachment.putFileName(fileName);
-		attachment.putType(type);
-		if(description != null) {
-			attachment.putDescription(description);
+		IAttachmentFactory attachmentFactory = null;
+		IAttachment attachment = null;
+		try {
+			attachmentFactory = new AttachmentFactory(getPropertyAsComponent("Attachments"));
+			attachment = attachmentFactory.addItem();
+	
+			attachment.putFileName(fileName);
+			attachment.putType(type);
+			if(description != null) {
+				attachment.putDescription(description);
+			}
+			attachment.post();
+		} finally {
+			if (attachment != null) {
+				attachment.safeRelease();
+				attachment = null;
+			}
+			if (attachmentFactory != null) {
+				attachmentFactory.safeRelease();
+				attachmentFactory = null;
+			}
 		}
-		attachment.post();
-
 		return;
 	}
 
