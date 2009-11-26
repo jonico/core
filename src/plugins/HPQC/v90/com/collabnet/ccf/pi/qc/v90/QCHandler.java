@@ -279,6 +279,7 @@ public class QCHandler {
 			if (versionControlSupported) {
 				try {
 					versionControl.checkIn("CCF CheckIn");
+					versionControl.safeRelease();
 				} catch (Exception e) {
 					log.error("Failed to checkin requirement again",e);
 				}
@@ -1356,6 +1357,7 @@ public class QCHandler {
 			if (versionControlSupported) {
 				try {
 					versionControl.checkIn("CCF CheckIn");
+					versionControl.safeRelease();
 				} catch (Exception e) {
 					log.error("Failed to checkin requirement again",e);
 				}
