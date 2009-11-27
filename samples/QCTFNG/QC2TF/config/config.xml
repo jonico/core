@@ -276,11 +276,11 @@
 			It assigns and manages one pool per repository.
 		</description>
 		<!-- Please set the number of connections to the number of project mappings you have -->
-		<property name="maxConnectionsPerPool" value="10"></property>
+		<property name="maxConnectionsPerPool" value="3"></property>
 		<property name="maxIdleTimeForConnection" value="600000" />
 		<property name="scavengerInterval" value="120000"></property>
 		<property name="connectionFactory" ref="TFConnectionFactory"></property>
-		<property name="useStandardTimeoutHandlingCode" value="false" />
+		<property name="useStandardTimeoutHandlingCode" value="true" />
 		<property name="enableReloginAfterSessionTimeout" value="true" />
 		<property name="enableRetryAfterNetworkTimeout" value="true" />
 	</bean>
