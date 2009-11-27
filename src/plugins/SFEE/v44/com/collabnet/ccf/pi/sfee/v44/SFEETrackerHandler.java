@@ -658,11 +658,10 @@ public class SFEETrackerHandler {
 			}
 		}
 
-		// we have to increase the version after the update
-		// TODO Find out whether this really works if last modified date differs
-		// from actual last modified date
+		// since TF 5.3, we cannot be sure that the version number has increased automatically
 		if (comments.length == 0) {
-			artifactData.setVersion(artifactData.getVersion() + 1);
+			// artifactData.setVersion(artifactData.getVersion() + 1);
+			artifactData = mTrackerApp.getArtifactData(sessionId, Id);
 		}
 		log.info("Artifact updated id: " + artifactData.getId()
 				+ " in tracker " + artifactData.getFolderId());
