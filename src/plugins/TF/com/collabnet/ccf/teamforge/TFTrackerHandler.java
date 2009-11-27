@@ -669,11 +669,13 @@ public class TFTrackerHandler {
 			}
 		}
 
-		// we have to increase the version after the update
-		// TODO Find out whether this really works if last modified date differs
-		// from actual last modified date
+		
+		// it looks as if since TF 5.3, not every update call automatically increases the version number
+		// hence we retrieve the artifact version here again
 		if (comments.length == 0) {
-			artifactData.setVersion(artifactData.getVersion() + 1);
+			// artifactData.setVersion(artifactData.getVersion() + 1);
+			artifactData = connection.getTrackerClient()
+				.getArtifactData(Id);
 		}
 		
 		if (associateWithParent) {
