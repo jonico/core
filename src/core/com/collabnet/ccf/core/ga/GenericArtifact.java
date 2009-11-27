@@ -469,6 +469,8 @@ public class GenericArtifact {
 	
 	public final static String ERROR_OBJECT_LOCKED = "objectLocked";
 	
+	public final static String ERROR_OBJECT_CHECKED_OUT = "objectCheckedOutError";
+	
 	public final static String ERROR_REPLAYED_WITHOUT_TRANSFORMATION = "replayedWithoutTransformation";
 	
 	public final static String ERROR_REPLAYED_WITH_TRANSFORMATION = "replayedWithTransformation";

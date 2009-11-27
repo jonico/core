@@ -33,4 +33,5 @@ public interface IConnection extends ILifeCycle {
     public ICommand getCommand();
     public IHistory getHistory();
 	void disconnect();
+	public String getUsername();
 }

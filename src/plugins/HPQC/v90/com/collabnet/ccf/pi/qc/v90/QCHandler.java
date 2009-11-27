@@ -165,7 +165,20 @@ public class QCHandler {
 			req.lockObject();
 			versionControl = req.getVersionControlObject();
 			if (versionControl != null) {
-				versionControlSupported = versionControl.checkOut("CCF Checkout");
+				try {
+					versionControlSupported = versionControl.checkOut("CCF Checkout");
+				} catch (ComFailException e) {
+					// check whether we have already checked out this requirement
+					if (qcc.getUsername().equals(req.getFieldAsString("RQ_VC_CHECKOUT_USER_NAME"))) {
+						log.warn("Requirement "+req.getId()+" has been already checked out by connector user "+ qcc.getUsername()+ " so we still proceed ...");
+					} else {
+						String message = "Requirement "+req.getId()+ " has been checked out by "+req.getFieldAsString("RQ_VC_CHECKOUT_USER_NAME") +
+						" on " + req.getFieldAsDate("RQ_VC_CHECKOUT_DATE") +
+						" at "+ req.getFieldAsString("RQ_VC_CHECKOUT_TIME") + " with version number " + req.getFieldAsInt("RQ_VC_VERSION_NUMBER"); 
+						log.error(message, e);
+						throw new CCFRuntimeException(message, e);
+					}
+				}
 			}
 				
 			
@@ -281,7 +294,10 @@ public class QCHandler {
 					versionControl.checkIn("CCF CheckIn");
 					versionControl.safeRelease();
 				} catch (Exception e) {
-					log.error("Failed to checkin requirement again",e);
+					String message = "Failed to checkin requirement " + req.getId() + " again";
+					log.error(message, e);
+					req.unlockObject();
+					throw new CCFRuntimeException(message , e);
 				}
 			}
 			if (req != null) {
@@ -1226,7 +1242,7 @@ public class QCHandler {
 				+ technicalRequirementsId
 				+ "'"
 				+ " AND AL.AU_ENTITY_ID = REQ.RQ_REQ_ID"
-				+ " ORDER BY AU_ACTION_ID";
+				+ " ORDER BY AL.AU_ACTION_ID";
 
 		log.debug(sql);
 		ArrayList<ArtifactState> changedRequirements = new ArrayList<ArtifactState>();
@@ -1287,7 +1303,20 @@ public class QCHandler {
 			req.lockObject();
 			versionControl = req.getVersionControlObject();
 			if (versionControl != null) {
-				versionControlSupported = versionControl.checkOut("CCF Checkout");
+				try {
+					versionControlSupported = versionControl.checkOut("CCF Checkout");
+				} catch (ComFailException e) {
+					// check whether we have already checked out this requirement
+					if (qcc.getUsername().equals(req.getFieldAsString("RQ_VC_CHECKOUT_USER_NAME"))) {
+						log.warn("Requirement "+req.getId()+" has been already checked out by connector user "+ qcc.getUsername()+ " so we still proceed ...");
+					} else {
+						String message = "Requirement "+req.getId()+ " has been checked out by "+req.getFieldAsString("RQ_VC_CHECKOUT_USER_NAME") +
+						" on " + req.getFieldAsDate("RQ_VC_CHECKOUT_DATE") +
+						" at "+ req.getFieldAsString("RQ_VC_CHECKOUT_TIME") + " with version number " + req.getFieldAsInt("RQ_VC_VERSION_NUMBER"); 
+						log.error(message, e);
+						throw new CCFRuntimeException(message, e);
+					}
+				}
 			}
 			
 			List<String> allFieldNames = new ArrayList<String>();
@@ -1359,7 +1388,10 @@ public class QCHandler {
 					versionControl.checkIn("CCF CheckIn");
 					versionControl.safeRelease();
 				} catch (Exception e) {
-					log.error("Failed to checkin requirement again",e);
+					String message = "Failed to checkin requirement " + req.getId() + " again";
+					log.error(message, e);
+					req.unlockObject();
+					throw new CCFRuntimeException(message , e);
 				}
 			}
 			if (req != null) {

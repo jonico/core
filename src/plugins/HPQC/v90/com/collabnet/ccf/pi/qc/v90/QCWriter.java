@@ -1236,6 +1236,11 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 			} else if (message.contains("Project is not connected")) {
 				connectionErrorOccured = true;
 				this.reInitCOM();
+			} else if (message.contains("Failed to Check Out")) {
+				// set new error code
+				ga.getRootElement().addAttribute(
+						GenericArtifactHelper.ERROR_CODE,
+						GenericArtifact.ERROR_OBJECT_CHECKED_OUT);
 			} else if (message.contains("Failed to Connect Project")) {
 				log
 						.warn("The QC Project might have been de-activated. Please activate this project");

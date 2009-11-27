@@ -47,6 +47,7 @@ import com.collabnet.ccf.pi.qc.v90.api.IBugFactory;
 import com.collabnet.ccf.pi.qc.v90.api.IRequirement;
 import com.collabnet.ccf.pi.qc.v90.api.IRequirementsFactory;
 import com.collabnet.ccf.pi.qc.v90.api.IVersionControl;
+import com.jacob.com.ComFailException;
 
 /**
  * The attachment handler class provides support for listing and/or create
@@ -165,7 +166,20 @@ public class QCAttachmentHandler {
 			req = reqFactory.getItem(entityId);
 			versionControl = req.getVersionControlObject();
 			if (versionControl != null) {
-				versionControlSupported = versionControl.checkOut("CCF Checkout");
+				try {
+					versionControlSupported = versionControl.checkOut("CCF Checkout");
+				} catch (ComFailException e) {
+					// check whether we have already checked out this requirement
+					if (qcc.getUsername().equals(req.getFieldAsString("RQ_VC_CHECKOUT_USER_NAME"))) {
+						log.warn("Requirement "+req.getId()+" has been already checked out by connector user "+ qcc.getUsername()+ " so we still proceed ...");
+					} else {
+						String message = "Requirement "+req.getId()+ " has been checked out by "+req.getFieldAsString("RQ_VC_CHECKOUT_USER_NAME") +
+						" on " + req.getFieldAsDate("RQ_VC_CHECKOUT_DATE") +
+						" at "+ req.getFieldAsString("RQ_VC_CHECKOUT_TIME") + " with version number " + req.getFieldAsInt("RQ_VC_VERSION_NUMBER"); 
+						log.error(message, e);
+						throw new CCFRuntimeException(message, e);
+					}
+				}
 			}
 			int type = 0;
 			if (contentTypeValue.equals(AttachmentMetaData.AttachmentType.DATA
@@ -200,7 +214,9 @@ public class QCAttachmentHandler {
 					versionControl.checkIn("CCF CheckIn");
 					versionControl.safeRelease();
 				} catch (Exception e) {
-					log.error("Failed to checkin requirement again",e);
+					String message = "Failed to checkin requirement " + req.getId() + " again";
+					log.error(message, e);
+					throw new CCFRuntimeException(message , e);
 				}
 			}
 			
@@ -784,7 +800,20 @@ public class QCAttachmentHandler {
 			
 			versionControl = req.getVersionControlObject();
 			if (versionControl != null) {
-				versionControlSupported = versionControl.checkOut("CCF Checkout");
+				try {
+					versionControlSupported = versionControl.checkOut("CCF Checkout");
+				} catch (ComFailException e) {
+					// check whether we have already checked out this requirement
+					if (qcc.getUsername().equals(req.getFieldAsString("RQ_VC_CHECKOUT_USER_NAME"))) {
+						log.warn("Requirement "+req.getId()+" has been already checked out by connector user "+ qcc.getUsername()+ " so we still proceed ...");
+					} else {
+						String message = "Requirement "+req.getId()+ " has been checked out by "+req.getFieldAsString("RQ_VC_CHECKOUT_USER_NAME") +
+						" on " + req.getFieldAsDate("RQ_VC_CHECKOUT_DATE") +
+						" at "+ req.getFieldAsString("RQ_VC_CHECKOUT_TIME") + " with version number " + req.getFieldAsInt("RQ_VC_VERSION_NUMBER"); 
+						log.error(message, e);
+						throw new CCFRuntimeException(message, e);
+					}
+				}
 			}
 			attachmentFactory = req.getAttachmentFactory();
 			attachmentFactory.removeItem(attachmentId);
@@ -795,7 +824,9 @@ public class QCAttachmentHandler {
 					versionControl.checkIn("CCF CheckIn");
 					versionControl.safeRelease();
 				} catch (Exception e) {
-					log.error("Failed to checkin requirement again",e);
+					String message = "Failed to checkin requirement " + req.getId() + " again";
+					log.error(message, e);
+					throw new CCFRuntimeException(message , e);
 				}
 			}
 			

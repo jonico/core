@@ -18,9 +18,9 @@
 package com.collabnet.ccf.pi.qc.v90.api.dcom;
 
 
+import com.collabnet.ccf.pi.qc.v90.api.IBugFactory;
 import com.collabnet.ccf.pi.qc.v90.api.ICommand;
 import com.collabnet.ccf.pi.qc.v90.api.IConnection;
-import com.collabnet.ccf.pi.qc.v90.api.IBugFactory;
 import com.collabnet.ccf.pi.qc.v90.api.IHistory;
 import com.collabnet.ccf.pi.qc.v90.api.IRequirementsFactory;
 import com.jacob.activeX.ActiveXComponent;
@@ -31,6 +31,8 @@ public class Connection extends ActiveXComponent implements IConnection
 	private IBugFactory bugFactory = null;
 	private IRequirementsFactory requirementsFactory = null;
 	private ICommand command = null;
+	private String userName = null;
+	
     /**
 	 *
 	 */
@@ -47,6 +49,7 @@ public class Connection extends ActiveXComponent implements IConnection
     {
         Dispatch.call(this, "Login", user, pass);
         loggedIn = true;
+        userName = user;
     }
 
     public void logout()
@@ -140,4 +143,12 @@ public class Connection extends ActiveXComponent implements IConnection
         Dispatch.call(this, "DisconnectProject");
         Dispatch.call(this, "ReleaseConnection");
     }
+
+	public String getUsername() {
+		if (!loggedIn) {
+			return null;
+		} else {
+			return userName;
+		}
+	}
 }

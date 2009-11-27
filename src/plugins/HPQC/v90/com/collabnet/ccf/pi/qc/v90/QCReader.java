@@ -547,7 +547,7 @@ public class QCReader extends AbstractReader<IConnection> {
 					}
 				}
 			} catch (Exception e1) {
-				String cause = "Error in fetching the defects from QC";
+				String cause = "Error in fetching the artifacts from QC";
 				log.error(cause, e1);
 				throw new CCFRuntimeException(cause, e1);
 			} finally {
