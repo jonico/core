@@ -448,6 +448,9 @@ public class QCGAHelper {
 		}
 		Map<String, Map<String, String>> addedAttachmentNames = new TreeMap<String, Map<String, String>>();
 		Map<String, Map<String, String>> deletedAttachmentNames = new TreeMap<String, Map<String, String>>();
+		// this property decides whether artifact can already be returned or whether attachment transactions are still not completed due to missing check in
+		boolean shipArtifact = false;
+		
 		String sql = "select AU_TIME, AU_ACTION_ID, AU_DESCRIPTION, AU_USER from audit_log where au_entity_id = '"
 				+ requirementId
 				//Removed and au_father_id='-1'
@@ -460,7 +463,7 @@ public class QCGAHelper {
 			log.debug("In QCHandler.getTxnIdAndAuDescriptionForRequirement, sql=" + sql);
 			if(newRc>0) {
 				for (int newCnt = 0; newCnt < newRc; newCnt++, newRs.next()) {
-					if (newCnt == 0){
+					if (!shipArtifact){
 						transactionId = newRs.getFieldValueAsString("AU_ACTION_ID");
 						modifiedBy = newRs.getFieldValueAsString("AU_USER");
 					}
@@ -469,22 +472,41 @@ public class QCGAHelper {
 					if (attachDescription != null && attachDescription.size() > 0) {
 						if (attachDescription.get(1) != null){
 							if(attachDescription.get(1).equals("added")) {
-								String addTransactionId = newRs.getFieldValueAsString("AU_ACTION_ID");
-								String addTime = newRs.getFieldValueAsString("AU_TIME");
-								Map<String, String> values = new TreeMap<String, String>();
-								values.put("AU_ACTION_ID", addTransactionId);
-								values.put("AU_TIME", addTime);
-								addedAttachmentNames.put(attachDescription.get(2), values);
+								String attachmentName = attachDescription.get(2);
+								// here we have to check whether attachment already exists
+								if (getFromTable(qcc, requirementId, attachmentName) != null) {
+									String addTransactionId = newRs.getFieldValueAsString("AU_ACTION_ID");
+									String addTime = newRs.getFieldValueAsString("AU_TIME");
+									Map<String, String> values = new TreeMap<String, String>();
+									values.put("AU_ACTION_ID", addTransactionId);
+									values.put("AU_TIME", addTime);
+									addedAttachmentNames.put(attachmentName, values);
+									shipArtifact = true;
+								} else {
+									log.debug("Looks as if attachment transaction has not yet completed.");
+								}
 							}
 							else if(attachDescription.get(1).equals("deleted")){
-								String deleteTransactionId = newRs.getFieldValueAsString("AU_ACTION_ID");
-								String deleteTime = newRs.getFieldValueAsString("AU_TIME");
-								Map<String, String> values = new TreeMap<String, String>();
-								values.put("AU_ACTION_ID", deleteTransactionId);
-								values.put("AU_TIME", deleteTime);
-								deletedAttachmentNames.put(attachDescription.get(2), values);
+								String attachmentName = attachDescription.get(2);
+								// here we have to check whether attachment already exists
+								if (getFromTable(qcc, requirementId, attachmentName) != null) {
+									String deleteTransactionId = newRs.getFieldValueAsString("AU_ACTION_ID");
+									String deleteTime = newRs.getFieldValueAsString("AU_TIME");
+									Map<String, String> values = new TreeMap<String, String>();
+									values.put("AU_ACTION_ID", deleteTransactionId);
+									values.put("AU_TIME", deleteTime);
+									deletedAttachmentNames.put(attachDescription.get(2), values);
+									shipArtifact = true;
+								} else {
+									log.debug("Looks as if attachment transaction has not yet completed.");
+								}
+							}
+							else {
+								shipArtifact = true;
 							}
 						}
+					} else {
+						shipArtifact = true;
 					}
 				}
 			}
@@ -495,11 +517,15 @@ public class QCGAHelper {
 				newRs = null;
 			}
 		}
-		txnIdAndAuDescription.add((Object) transactionId);
-		txnIdAndAuDescription.add((Object) addedAttachmentNames);
-		txnIdAndAuDescription.add((Object) deletedAttachmentNames);
-		txnIdAndAuDescription.add((Object) modifiedBy);
-		return txnIdAndAuDescription;
+		if (shipArtifact) {
+			txnIdAndAuDescription.add((Object) transactionId);
+			txnIdAndAuDescription.add((Object) addedAttachmentNames);
+			txnIdAndAuDescription.add((Object) deletedAttachmentNames);
+			txnIdAndAuDescription.add((Object) modifiedBy);
+			return txnIdAndAuDescription;
+		} else {
+			return null;
+		}
 	}
 	
 	
