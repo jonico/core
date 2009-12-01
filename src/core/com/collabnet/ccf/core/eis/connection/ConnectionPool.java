@@ -229,7 +229,7 @@ public class ConnectionPool<T> {
 							break;
 						}
 					} else {
-						log.warn("Connection is not free, this is an indication for unclean resource management.");
+						log.debug("Connection is not free, this is an indication for unclean resource management.");
 					}
 				}
 			}
