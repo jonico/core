@@ -369,9 +369,9 @@ public abstract class AbstractReader<T> extends Component implements
 				currentRecord.readyForNewSynchInfo();
 				if (!currentRecord.isNewSyncInfoReceived()) {
 					log
-							.debug("Cannot retrieve new records for "
+							.debug("Have to wait until sync info for "
 									+ currentRecord.getRepositoryId()
-									+ " because new sync info has not yet been received.");
+									+ " is up to date again ...");
 					return new Object[] {};
 				}
 				log
@@ -621,6 +621,12 @@ public abstract class AbstractReader<T> extends Component implements
 				artifactsToBeShippedList.addAll(sortedGAs);
 				if (artifactsToBeShippedList.isEmpty())
 					return new Object[] {};
+				
+				/* we ship artifacts, so the retrieved synch info for this project mapping
+				 * may not be up to date until the artifacts to be read buffer has been completely emptied
+				 */
+				currentRecord.notReadyForNewSynchInfo();
+				
 				GenericArtifact genericArtifact = artifactsToBeShippedList
 						.remove(0);
 				try {
@@ -639,10 +645,6 @@ public abstract class AbstractReader<T> extends Component implements
 					Document returnDoc = GenericArtifactHelper
 							.createGenericArtifactXMLDocument(genericArtifact);
 					Object[] returnObjects = new Object[] { returnDoc };
-					/* we ship artifacts, so the retrieved synch info for this project mapping
-					 * may not be up to date until the artifacts to be read buffer has been completely emptied
-					 */
-					currentRecord.notReadyForNewSynchInfo();
 					return returnObjects;
 				} catch (GenericArtifactParsingException e) {
 					String cause = "Could not parse the artifact for "
