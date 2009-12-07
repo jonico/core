@@ -70,11 +70,29 @@ public class RepositoryRecord {
 	 *            the newSyncInfo to set
 	 */
 	public void setNewSyncInfo(Document newSyncInfo) {
-		this.newSyncInfo = newSyncInfo;
-		newSyncInfoReceived = true;
+		if (readyForNewSynchInfo) {
+			this.newSyncInfo = newSyncInfo;
+			newSyncInfoReceived = true;
+		}
 	}
 	
 	private boolean newSyncInfoReceived = true;
+	
+	private boolean readyForNewSynchInfo = true;
+	
+	/**
+	 * Called by streaming algorithm to tell that it is ready for new synch info
+	 */
+	public void readyForNewSynchInfo() {
+		readyForNewSynchInfo = true;
+	}
+	
+	/**
+	 * Called by streaming algorithm to tell that it is not ready for new synch info
+	 */
+	public void notReadyForNewSynchInfo() {
+		readyForNewSynchInfo = false;
+	}
 	
 	/**
 	 * @return the newSyncInfo
