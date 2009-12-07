@@ -468,7 +468,13 @@ public abstract class AbstractReader<T> extends Component implements
 					}
 					++numberOfTries;
 				} while (retry);
-				artifactsToBeReadList.addAll(artifactsToBeRead);
+				if (!artifactsToBeRead.isEmpty()) {
+					artifactsToBeReadList.addAll(artifactsToBeRead);
+					/* we ship artifacts, so the retrieved synch info for this project mapping
+					 * may not be up to date until the artifacts to be read buffer has been completely emptied
+					 */
+					currentRecord.notReadyForNewSynchInfo();
+				}
 			}
 			if (!artifactsToBeReadList.isEmpty() && !isRestartConnector()
 					&& !isShutDownConnector()) {
@@ -621,11 +627,6 @@ public abstract class AbstractReader<T> extends Component implements
 				artifactsToBeShippedList.addAll(sortedGAs);
 				if (artifactsToBeShippedList.isEmpty())
 					return new Object[] {};
-				
-				/* we ship artifacts, so the retrieved synch info for this project mapping
-				 * may not be up to date until the artifacts to be read buffer has been completely emptied
-				 */
-				currentRecord.notReadyForNewSynchInfo();
 				
 				GenericArtifact genericArtifact = artifactsToBeShippedList
 						.remove(0);
