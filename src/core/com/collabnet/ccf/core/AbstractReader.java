@@ -365,6 +365,8 @@ public abstract class AbstractReader<T> extends Component implements
 					&& !isRestartConnector()
 					&& !isShutDownConnector()
 					&& !(isShutdownCCFAfterInitialSync() && connectorHasReadAllInitialSynchronizationStatusRecords)) {
+				// our buffer is empty, so we can ask for new synch info again
+				currentRecord.readyForNewSynchInfo();
 				if (!currentRecord.isNewSyncInfoReceived()) {
 					log
 							.debug("Cannot retrieve new records for "
@@ -637,6 +639,10 @@ public abstract class AbstractReader<T> extends Component implements
 					Document returnDoc = GenericArtifactHelper
 							.createGenericArtifactXMLDocument(genericArtifact);
 					Object[] returnObjects = new Object[] { returnDoc };
+					/* we ship artifacts, so the retrieved synch info for this project mapping
+					 * may not be up to date until the artifacts to be read buffer has been completely emptied
+					 */
+					currentRecord.notReadyForNewSynchInfo();
 					return returnObjects;
 				} catch (GenericArtifactParsingException e) {
 					String cause = "Could not parse the artifact for "
