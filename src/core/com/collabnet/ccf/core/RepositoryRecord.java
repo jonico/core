@@ -71,14 +71,20 @@ public class RepositoryRecord {
 	 */
 	public void setNewSyncInfo(Document newSyncInfo) {
 		if (readyForNewSynchInfo) {
-			this.newSyncInfo = newSyncInfo;
-			newSyncInfoReceived = true;
+			if (staleRecordUpdateAlreadyReceived) {
+				this.newSyncInfo = newSyncInfo;
+				newSyncInfoReceived = true;
+			} else {
+				staleRecordUpdateAlreadyReceived = true;
+			}
 		}
 	}
 	
 	private boolean newSyncInfoReceived = true;
 	
 	private boolean readyForNewSynchInfo = true;
+	
+	private boolean staleRecordUpdateAlreadyReceived = true;
 	
 	/**
 	 * Called by streaming algorithm to tell that it is ready for new synch info
@@ -92,6 +98,7 @@ public class RepositoryRecord {
 	 */
 	public void notReadyForNewSynchInfo() {
 		readyForNewSynchInfo = false;
+		staleRecordUpdateAlreadyReceived = false;
 	}
 	
 	/**
