@@ -66,6 +66,7 @@
   <patternset id="example.xml.config.files">
     <include name="IntegrationScenarios/**/*.xml" />
     <include name="QCTF/**/*.xml" />
+  	<include name="QCTFNG/**/*.xml" />
     <include name="QCPT/**/*.xml" />
     <exclude name="**/input/*.xml" />
     <exclude name="**/output/*.xml" />
@@ -265,6 +266,7 @@
 		<fileset dir="../">		
     		<include name="IntegrationScenarios/**/*.xml" />
     		<include name="QCTF/**/*.xml" />
+			<include name="QCTFNG/**/*.xml" />
     		<include name="QCPT/**/*.xml" />
     		<exclude name="**/input/*.xml" />
     		<exclude name="**/output/*.xml" />

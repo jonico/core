@@ -112,6 +112,12 @@ public abstract class AbstractReader<T> extends Component implements
 	 * cause service wrapper to restart the connector.
 	 */
 	private static boolean restartConnector = false;
+	
+	/**
+	 * If this property is set to something else but null, artifacts quarantined by a component with this name (typically the entity service)
+	 * will get special treatment during artifact replay: The XSLTProcessor will transform the payload again.
+	 */
+	private String nameOfEntityService = null; 
 
 	/**
 	 * If the shutDownConnector variable is set, this will cause service wrapper
@@ -496,7 +502,7 @@ public abstract class AbstractReader<T> extends Component implements
 								.debug("Successfully parsed quarantined artifact with transaction id "
 										+ artifactState.getTransactionId());
 						// reset error code and transaction id
-						replayedArtifact.setErrorCode(GenericArtifact.ERROR_OK);
+						replayedArtifact.setErrorCode(artifactState.getErrorCode());
 						replayedArtifact.setTransactionId(artifactState
 								.getTransactionId());
 						sortedGAs.add(replayedArtifact);
@@ -734,6 +740,17 @@ public abstract class AbstractReader<T> extends Component implements
 				ArtifactState artifactState = new ArtifactState();
 				artifactState.setTransactionId(result.get(0).toString());
 				artifactState.setReplayedArtifactData(result.get(1).toString());
+				if (getNameOfEntityService() != null) {
+					Object originatingComponent = result.get(2);
+					if (originatingComponent == null || !originatingComponent.equals(getNameOfEntityService())) {
+						log.debug("Do not trigger a further transformation of quarantined artifact's payload.");
+						artifactState.setErrorCode(GenericArtifact.ERROR_REPLAYED_WITHOUT_TRANSFORMATION);
+					} else {
+						// quarantined artifact should be transformed again
+						log.debug("Trigger a further transformation of quarantined artifact's payload.");
+						artifactState.setErrorCode(GenericArtifact.ERROR_REPLAYED_WITH_TRANSFORMATION);
+					}
+				}
 				artifactState.setReplayedArtifact(true);
 				quarantinedArtifact.add(artifactState);
 			}
@@ -894,6 +911,11 @@ public abstract class AbstractReader<T> extends Component implements
 		if (getHospitalDatabaseReader() == null) {
 			log
 					.warn("Reader will not poll hospital for quarantined entries since hospitalDatabaseReader property has not been set.");
+		}
+		
+		if (getNameOfEntityService() == null) {
+			log
+					.warn("Retransformation of replayed artifacts is not configured since nameOfEntityService property has not been set.");
 		}
 	}
 
@@ -1372,5 +1394,25 @@ public abstract class AbstractReader<T> extends Component implements
 	 */
 	public boolean isBulkImport() {
 		return isBulkImport;
+	}
+
+	/**
+	 * Sets the name of the component that should be recognized to be the entity service during artifact replay
+	 * Only if the originating component of a quarantined artifact record matches this name, the payload will be
+	 * transformed again 
+	 * @param nameOfEntityService name of the component that should be treated as the entity service component (null by default)
+	 */
+	public void setNameOfEntityService(String nameOfEntityService) {
+		this.nameOfEntityService = nameOfEntityService;
+	}
+
+	/**
+	 * Returns the name of the component that should be recognized to be the entity service during artifact replay
+	 * Only if the originating component of a quarantined artifact record matches this name, the payload will be
+	 * transformed again 
+	 * @return name of the component that should be treated as the entity service component (null by default)
+	 */
+	public String getNameOfEntityService() {
+		return nameOfEntityService;
 	}
 }

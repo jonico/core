@@ -20,21 +20,21 @@ package com.collabnet.ccf.pi.qc.v90.api.dcom;
 import java.util.List;
 
 import com.collabnet.ccf.pi.qc.v90.api.IBug;
-import com.collabnet.ccf.pi.qc.v90.api.IFactory;
+import com.collabnet.ccf.pi.qc.v90.api.IBugFactory;
 import com.collabnet.ccf.pi.qc.v90.api.IField;
 import com.collabnet.ccf.pi.qc.v90.api.IFilter;
 import com.jacob.activeX.ActiveXComponent;
 import com.jacob.com.Dispatch;
 import com.jacob.com.Variant;
 
-public class Factory extends ActiveXComponent implements IFactory
+public class BugFactory extends ActiveXComponent implements IBugFactory
 {
     /**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
 
-	public Factory(Dispatch arg0){
+	public BugFactory(Dispatch arg0){
         super(arg0);
     }
 

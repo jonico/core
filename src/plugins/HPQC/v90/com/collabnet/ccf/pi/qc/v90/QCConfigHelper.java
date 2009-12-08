@@ -21,12 +21,14 @@
 package com.collabnet.ccf.pi.qc.v90;
 
 
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
+import com.collabnet.ccf.core.ga.GenericArtifactField.FieldValueTypeValue;
 import com.collabnet.ccf.pi.qc.v90.api.IConnection;
 import com.collabnet.ccf.pi.qc.v90.api.IRecordSet;
 
@@ -58,6 +60,7 @@ public class QCConfigHelper {
 	static final String dateDataType = "DATE";
 
 	static final String bgBugIdFieldName = "BG_BUG_ID";
+	static final String rqReqIdFieldName = "RQ_REQ_ID";
 	static final String auActionIdFieldName = "AU_ACTION_ID";
 	static final String apFieldNameFieldName = "AP_FIELD_NAME";
 
@@ -89,11 +92,21 @@ public class QCConfigHelper {
 			//if(isMultiValue.equals("Y")) // MULTI_SELECT_LIST
 			//	return GenericArtifactField.FieldValueTypeValue.STRING;
 		}
+		if(dataType.equals("char") && ( editStyle!=null && editStyle.equals("ReqTreeCombo")) ) {
+			//if(isMultiValue.equals("N"))
+				return GenericArtifactField.FieldValueTypeValue.STRING;
+			//if(isMultiValue.equals("Y")) // MULTI_SELECT_LIST
+			//	return GenericArtifactField.FieldValueTypeValue.STRING;
+		}
 
 		if(dataType.equals("number"))
 			return GenericArtifactField.FieldValueTypeValue.INTEGER;
 		if(dataType.equals("DATE") && (editStyle!=null && editStyle.equals("DateCombo")) )
 			return GenericArtifactField.FieldValueTypeValue.DATE;
+		if(dataType.equals("DATE") && editStyle==null)
+			return GenericArtifactField.FieldValueTypeValue.DATE;
+		if(dataType.equals("time"))
+			return GenericArtifactField.FieldValueTypeValue.DATETIME;
 
 		log.debug("Unknown QC data type "+dataType + " of field "+columnName+" defaulting to STRING");
 		return GenericArtifactField.FieldValueTypeValue.STRING;
@@ -195,7 +208,93 @@ public class QCConfigHelper {
 //		return genericArtifact;
 //	}
 
-	public static GenericArtifact getSchemaFields(IConnection qcc, boolean isResync) {
+	public static GenericArtifact getSchemaFieldsForRequirement(IConnection qcc,
+			String technicalReleaseTypeId, boolean isResync) {
+
+		// Get all the fields in the project represented
+		// by qcc
+		String sql = "SELECT * FROM REQ_TYPE_FIELD rf, system_field sf where rf.rtf_type_id = '"
+				+ technicalReleaseTypeId
+				+ "' and rf.rtf_sf_column_name = sf.sf_column_name";
+		GenericArtifact genericArtifact = null;
+		IRecordSet rs = null;
+		try {
+			rs = QCHandler.executeSQL(qcc, sql);
+			int rc = rs.getRecordCount();
+			genericArtifact = new GenericArtifact();
+			for (int cnt = 0; cnt < rc; cnt++, rs.next()) {
+				String columnName = rs.getFieldValueAsString(sfColumnName);
+				if (isResync && columnName.equals("RQ_DEV_COMMENTS")) {
+					continue;
+				}
+				String columnType = rs.getFieldValueAsString(sfColumnType);
+
+				// we only transport fields that have been configured by the
+				// user
+				String fieldDisplayName = rs.getFieldValueAsString(sfUserLabel);
+				if (fieldDisplayName == null) {
+					continue;
+				}
+
+				String editStyle = rs.getFieldValueAsString(sfEditStyle);
+				// String isMultiValue =
+				// rs.getFieldValueAsString(sfIsMultiValue);
+				GenericArtifactField field;
+
+				// obtain the GenericArtifactField datatype from the columnType
+				// and editStyle
+				GenericArtifactField.FieldValueTypeValue fieldValueType = convertQCDataTypeToGADatatype(
+						columnType, editStyle, columnName);
+
+				boolean isMultiSelectField = false;
+				if (fieldValueType
+						.equals(GenericArtifactField.FieldValueTypeValue.STRING)) {
+					String isMultiValue = rs
+							.getFieldValueAsString(sfIsMultiValue);
+
+					if (columnType.equals("char") && editStyle != null
+							&& isMultiValue != null
+							&& !StringUtils.isEmpty(isMultiValue)
+							&& isMultiValue.equals("Y")) {
+						if (editStyle.equals("ListCombo")
+								|| editStyle.equals("TreeCombo")) {
+							isMultiSelectField = true;
+						}
+					}
+				}
+
+				field = genericArtifact.addNewField(columnName,
+						GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
+				field.setFieldValueType(fieldValueType);
+				field
+						.setMaxOccursValue(isMultiSelectField ? GenericArtifactField.UNBOUNDED
+								: "1");
+
+				field
+						.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
+				
+				// special treatment for some fields (have to find out whether this is only due to the agile accelarator)
+				if (columnName.equals("RQ_TYPE_ID")) {
+					field.setFieldValueType(FieldValueTypeValue.STRING);
+				}
+				else if (columnName.equals("RQ_REQ_TIME")) {
+					field.setFieldValueType(FieldValueTypeValue.STRING);
+				}
+				else if (columnName.equals("RQ_VC_CHECKOUT_TIME")) {
+					field.setFieldValueType(FieldValueTypeValue.STRING);
+				}
+			}
+		} finally {
+			if (rs != null) {
+				rs.safeRelease();
+				rs = null;
+			}
+		}
+
+		return genericArtifact;
+	}	
+	
+	public static GenericArtifact getSchemaFieldsForDefect(IConnection qcc, boolean isResync) {
 
 		// Get all the fields in the project represented
 		// by qcc
@@ -203,7 +302,7 @@ public class QCConfigHelper {
 		GenericArtifact genericArtifact = null;
 		IRecordSet rs = null;
 		try {
-			rs = QCDefectHandler.executeSQL(qcc, sql);
+			rs = QCHandler.executeSQL(qcc, sql);
 			int rc = rs.getRecordCount();
 			genericArtifact = new GenericArtifact();
 			for(int cnt = 0 ; cnt < rc ; cnt++, rs.next())
@@ -244,6 +343,11 @@ public class QCConfigHelper {
 				field.setMaxOccursValue(isMultiSelectField?GenericArtifactField.UNBOUNDED:"1");
 
 				field.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
+				
+				if (columnName.equals("BG_VC_CHECKOUT_TIME")) {
+					field.setFieldValueType(FieldValueTypeValue.STRING);
+				}
+				
 			}
 		}
 		finally {

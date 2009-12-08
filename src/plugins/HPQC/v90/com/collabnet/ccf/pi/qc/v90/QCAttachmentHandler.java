@@ -38,11 +38,16 @@ import com.collabnet.ccf.core.CCFRuntimeException;
 import com.collabnet.ccf.core.ga.AttachmentMetaData;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
+import com.collabnet.ccf.core.ga.GenericArtifactField.FieldActionValue;
 import com.collabnet.ccf.core.utils.DateUtil;
 import com.collabnet.ccf.pi.qc.v90.api.IAttachmentFactory;
 import com.collabnet.ccf.pi.qc.v90.api.IBug;
 import com.collabnet.ccf.pi.qc.v90.api.IConnection;
-import com.collabnet.ccf.pi.qc.v90.api.IFactory;
+import com.collabnet.ccf.pi.qc.v90.api.IBugFactory;
+import com.collabnet.ccf.pi.qc.v90.api.IRequirement;
+import com.collabnet.ccf.pi.qc.v90.api.IRequirementsFactory;
+import com.collabnet.ccf.pi.qc.v90.api.IVersionControl;
+import com.jacob.com.ComFailException;
 
 /**
  * The attachment handler class provides support for listing and/or create
@@ -81,10 +86,10 @@ public class QCAttachmentHandler {
 	 *
 	 *
 	 */
-	public void createAttachment(IConnection qcc, String entityId,
+	public void createAttachmentForDefect(IConnection qcc, String entityId,
 			String attachmentName, String contentTypeValue, File attachmentFile,
 			String attachmentSourceUrl, String description){
-		IFactory bugFactory = null;
+		IBugFactory bugFactory = null;
 		IBug bug = null;
 		try {
 			bugFactory = qcc.getBugFactory();
@@ -117,9 +122,107 @@ public class QCAttachmentHandler {
 			}
 		}
 		finally {
-			bugFactory = null;
 			if(bug != null){
 				bug.safeRelease();
+				bug = null;
+			}
+		}
+
+		return;
+	}
+	
+	
+	/**
+	 * Create the attachment for the requirement identified by the incoming requirement id in
+	 * QC
+	 *
+	 * @param qcc
+	 *            The Connection object
+	 * @param entityId
+	 *            The ID of the requirement to which the attachment need to be
+	 *            created
+	 * @param attachmentName
+	 *            The name of the file as attachment found in the source
+	 *            system's defect.
+	 * @param contentTypeValue
+	 *            Indicates if this is a DATA or LINK
+	 * @param data
+	 *            The byte[] of data
+	 * @param attachmentSourceUrl
+	 *            Link as attachment containing the exact link found in the
+	 *            source system's defect
+	 *
+	 *
+	 */
+	public void createAttachmentForRequirement(IConnection qcc, String entityId,
+			String attachmentName, String contentTypeValue, File attachmentFile,
+			String attachmentSourceUrl, String description){
+		IRequirementsFactory reqFactory = null;
+		IRequirement req = null;
+		IVersionControl versionControl = null;
+		boolean versionControlSupported = false;
+		try {
+			reqFactory = qcc.getRequirementsFactory();
+			req = reqFactory.getItem(entityId);
+			versionControl = req.getVersionControlObject();
+			if (versionControl != null) {
+				try {
+					versionControlSupported = versionControl.checkOut("CCF Checkout");
+				} catch (ComFailException e) {
+					// check whether we have already checked out this requirement
+					if (qcc.getUsername().equals(req.getFieldAsString("RQ_VC_CHECKOUT_USER_NAME"))) {
+						log.warn("Requirement "+req.getId()+" has been already checked out by connector user "+ qcc.getUsername()+ " so we still proceed ...");
+					} else {
+						String message = "Requirement "+req.getId()+ " has been checked out by "+req.getFieldAsString("RQ_VC_CHECKOUT_USER_NAME") +
+						" on " + req.getFieldAsDate("RQ_VC_CHECKOUT_DATE") +
+						" at "+ req.getFieldAsString("RQ_VC_CHECKOUT_TIME") + " with version number " + req.getFieldAsInt("RQ_VC_VERSION_NUMBER"); 
+						log.error(message, e);
+						throw new CCFRuntimeException(message, e);
+					}
+				}
+			}
+			int type = 0;
+			if (contentTypeValue.equals(AttachmentMetaData.AttachmentType.DATA
+					.toString())) {
+				type = 1;
+				try {
+					if(StringUtils.isEmpty(description)) {
+						req.createNewAttachment(attachmentFile.getAbsolutePath(), type);
+					}
+					else {
+						req.createNewAttachment(attachmentFile.getAbsolutePath(), description, type);
+					}
+				} catch (Exception e) {
+					String message = "Exception while attaching the file "+
+							attachmentFile.getAbsolutePath() +" to requirement "+entityId;
+					log.error(message, e);
+					throw new CCFRuntimeException(message, e);
+				}
+			} else {
+				type = 2;
+				if(StringUtils.isEmpty(description)) {
+					req.createNewAttachment(attachmentSourceUrl, type);
+				}
+				else {
+					req.createNewAttachment(attachmentSourceUrl, description, type);
+				}
+			}
+		}
+		finally {
+			if (versionControlSupported) {
+				try {
+					versionControl.checkIn("CCF CheckIn");
+					versionControl.safeRelease();
+				} catch (Exception e) {
+					String message = "Failed to checkin requirement " + req.getId() + " again";
+					log.error(message, e);
+					throw new CCFRuntimeException(message , e);
+				}
+			}
+			
+			if(req != null){
+				req.safeRelease();
+				req = null;
 			}
 		}
 
@@ -191,6 +294,7 @@ public class QCAttachmentHandler {
 	 * @param targetSystemId
 	 * @param targetSystemKind
 	 * @param shouldShipAttachmentsWithArtifact
+	 * @param isDefectRepository 
 	 * @return
 	 * @throws RemoteException
 	 */
@@ -203,13 +307,18 @@ public class QCAttachmentHandler {
 			String sourceSystemKind, String targetRepositoryId,
 			String targetRepositoryKind, String targetSystemId,
 			String targetSystemKind, long maxAttachmentSizePerArtifact,
-			boolean shouldShipAttachmentsWithArtifact)
+			boolean shouldShipAttachmentsWithArtifact, boolean isDefectRepository)
 			throws Exception {
 
-		String bugId = sourceArtifactId;
-//		int entityId = Integer.parseInt(bugId);
-		List<Object> transactionIdAndAttachOperation = qcGAHelper.getTxnIdAndAuDescription(
-				bugId, transactionId, qcc, connectorUser, resyncUser == null?"":resyncUser);
+		String artifactId = sourceArtifactId;
+		List<Object> transactionIdAndAttachOperation = null;
+		if (isDefectRepository) {
+			transactionIdAndAttachOperation = qcGAHelper.getTxnIdAndAuDescriptionForDefect(
+					artifactId, transactionId, qcc, connectorUser, resyncUser == null?"":resyncUser);
+		} else {
+			transactionIdAndAttachOperation = qcGAHelper.getTxnIdAndAuDescriptionForRequirement(
+					artifactId, transactionId, qcc, connectorUser, resyncUser == null?"":resyncUser);
+		}
 		if (transactionIdAndAttachOperation == null)
 			return modifiedAttachmentArtifacts;
 		String thisTransactionId = (String) transactionIdAndAttachOperation
@@ -225,9 +334,9 @@ public class QCAttachmentHandler {
 			for (Entry<String, Map<String, String>> entry:attachmentNames.entrySet()) {
 				String attachmentName = entry.getKey();
 				GenericArtifact latestAttachmentArtifact = getGenericArtifactObjectOfAttachment(
-						qcc, bugId, attachmentName,
+						qcc, artifactId, attachmentName,
 						maxAttachmentSizePerArtifact, false, null,
-						shouldShipAttachmentsWithArtifact);
+						shouldShipAttachmentsWithArtifact, isDefectRepository);
 				if (latestAttachmentArtifact == null)
 					continue;
 				Map<String, String> versionDetails = entry.getValue();
@@ -246,6 +355,7 @@ public class QCAttachmentHandler {
 				latestAttachmentArtifact.setErrorCode("ok");
 				latestAttachmentArtifact
 						.setIncludesFieldMetaData(GenericArtifact.IncludesFieldMetaDataValue.FALSE);
+				latestAttachmentArtifact.setArtifactAction(GenericArtifact.ArtifactActionValue.CREATE);
 
 				latestAttachmentArtifact = assignValues(
 						latestAttachmentArtifact, sourceArtifactId,
@@ -265,8 +375,8 @@ public class QCAttachmentHandler {
 
 
 				GenericArtifact latestAttachmentArtifact = getGenericArtifactObjectOfAttachment(
-						qcc, bugId, deleteAttachmentName,
-						maxAttachmentSizePerArtifact, true, attTransactionId, false);
+						qcc, artifactId, deleteAttachmentName,
+						maxAttachmentSizePerArtifact, true, attTransactionId, false, isDefectRepository);
 				if (latestAttachmentArtifact == null)
 					continue;
 //				latestAttachmentArtifact = getArtifactAction(
@@ -354,12 +464,13 @@ public class QCAttachmentHandler {
 	 * @param deletedAttachments
 	 * @param deleteTransactionId
 	 * @param shouldShipAttachmentsWithArtifact
+	 * @param isDefectRepository 
 	 * @return GenericArtifact Containing all the field values.
 	 */
 	public GenericArtifact getGenericArtifactObjectOfAttachment(
 			IConnection qcc, String entityId, String attachmentName,
 			long maxAttachmentSizePerArtifact, boolean deletedAttachments, String deleteTransactionId,
-			boolean shouldShipAttachmentsWithArtifact) {
+			boolean shouldShipAttachmentsWithArtifact, boolean isDefectRepository) {
 		long attachmentSize = 0;
 		String thisMimeType = null;
 		if (attachmentName != null) {
@@ -393,23 +504,45 @@ public class QCAttachmentHandler {
 						thisField
 								.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
 						if(!deletedAttachments) {
-							IFactory bugFactory = null;
-							IBug bug = null;
-							try {
-								bugFactory = qcc.getBugFactory();
-								bug = bugFactory.getItem(entityId);
-								qcAttachmentFile = bug.retrieveAttachmentData(attachmentName);
-							} catch (Exception e) {
-								String message = "An Exception occured in QCAttachmentHandler.getGenericArtifactObjectOfAttachment"
-									+ " while trying to do retrieveAttachmentData on Filename "+attachmentName;
-								log
-										.error(message, e);
-								throw new CCFRuntimeException(message, e);
-							}
-							finally {
-								bugFactory = null;
-								if(bug != null){
-									bug.safeRelease();
+							if (isDefectRepository) {
+								IBugFactory bugFactory = null;
+								IBug bug = null;
+								try {
+									bugFactory = qcc.getBugFactory();
+									bug = bugFactory.getItem(entityId);
+									qcAttachmentFile = bug.retrieveAttachmentData(attachmentName);
+								} catch (Exception e) {
+									String message = "An Exception occured in QCAttachmentHandler.getGenericArtifactObjectOfAttachment"
+										+ " while trying to do retrieveAttachmentData on Filename "+attachmentName;
+									log
+											.error(message, e);
+									throw new CCFRuntimeException(message, e);
+								}
+								finally {
+									bugFactory = null;
+									if(bug != null){
+										bug.safeRelease();
+									}
+								}
+							} else {
+								IRequirementsFactory reqFactory = null;
+								IRequirement req = null;
+								try {
+									reqFactory = qcc.getRequirementsFactory();
+									req = reqFactory.getItem(entityId);
+									qcAttachmentFile = req.retrieveAttachmentData(attachmentName);
+								} catch (Exception e) {
+									String message = "An Exception occured in QCAttachmentHandler.getGenericArtifactObjectOfAttachment"
+										+ " while trying to do retrieveAttachmentData on Filename "+attachmentName;
+									log
+											.error(message, e);
+									throw new CCFRuntimeException(message, e);
+								}
+								finally {
+									reqFactory = null;
+									if(req != null){
+										req.safeRelease();
+									}
 								}
 							}
 							if(qcAttachmentFile == null) {
@@ -441,6 +574,7 @@ public class QCAttachmentHandler {
 												GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
 										attachmentDataFileField.setFieldValueType(
 												GenericArtifactField.FieldValueTypeValue.STRING);
+										attachmentDataFileField.setFieldAction(FieldActionValue.REPLACE);
 										attachmentDataFileField.setFieldValue(attachmentDataFileName);
 										log.debug("Shipping the reference of the attachment "+attachmentDataFileName);
 										if(tempFile.length() == 0){
@@ -490,7 +624,7 @@ public class QCAttachmentHandler {
 				if (thisField.getFieldName().equals(
 						AttachmentMetaData.getAttachmentName())) {
 					if (contentType.equals("DATA")) {
-						String prefix = "BUG_"+entityId+"_";
+						String prefix = (isDefectRepository ? "BUG_":"REQ_")+entityId+"_";
 						String tmpAttachmentName =
 							attachmentName.substring(attachmentName.indexOf(prefix)+prefix.length());
 						thisField.setFieldValue(tmpAttachmentName);
@@ -627,21 +761,82 @@ public class QCAttachmentHandler {
 
 	}
 
-	public void deleteAttachment(IConnection qcc, String bugId, String attachmentId) {
+	public void deleteAttachmentForDefect(IConnection qcc, String bugId, String attachmentId) {
 		// TODO Validate if the attachment exists before deleting
 		// The QC API does not indicate whether it deleted the attachment or not.
-		IFactory bugFactory = null;
+		IBugFactory bugFactory = null;
 		IBug bug = null;
+		IAttachmentFactory attachmentFactory = null;
 		try {
 			bugFactory = qcc.getBugFactory();
 			bug = bugFactory.getItem(bugId);
-			IAttachmentFactory attachmentFactory = bug.getAttachmentFactory();
+			attachmentFactory = bug.getAttachmentFactory();
+			attachmentFactory.removeItem(attachmentId);
+		}
+		finally {		
+			if (attachmentFactory != null) {
+				attachmentFactory.safeRelease();
+				attachmentFactory = null;
+			}
+			
+			if(bug != null){
+				bug.safeRelease();
+				bug = null;
+			}
+		}
+	}
+	
+	public void deleteAttachmentForRequirement(IConnection qcc, String bugId, String attachmentId) {
+		// TODO Validate if the attachment exists before deleting
+		// The QC API does not indicate whether it deleted the attachment or not.
+		IRequirementsFactory reqFactory = null;
+		IRequirement req = null;
+		IAttachmentFactory attachmentFactory = null;
+		IVersionControl versionControl = null;
+		boolean versionControlSupported = false;
+		try {
+			reqFactory = qcc.getRequirementsFactory();
+			req = reqFactory.getItem(bugId);
+			
+			versionControl = req.getVersionControlObject();
+			if (versionControl != null) {
+				try {
+					versionControlSupported = versionControl.checkOut("CCF Checkout");
+				} catch (ComFailException e) {
+					// check whether we have already checked out this requirement
+					if (qcc.getUsername().equals(req.getFieldAsString("RQ_VC_CHECKOUT_USER_NAME"))) {
+						log.warn("Requirement "+req.getId()+" has been already checked out by connector user "+ qcc.getUsername()+ " so we still proceed ...");
+					} else {
+						String message = "Requirement "+req.getId()+ " has been checked out by "+req.getFieldAsString("RQ_VC_CHECKOUT_USER_NAME") +
+						" on " + req.getFieldAsDate("RQ_VC_CHECKOUT_DATE") +
+						" at "+ req.getFieldAsString("RQ_VC_CHECKOUT_TIME") + " with version number " + req.getFieldAsInt("RQ_VC_VERSION_NUMBER"); 
+						log.error(message, e);
+						throw new CCFRuntimeException(message, e);
+					}
+				}
+			}
+			attachmentFactory = req.getAttachmentFactory();
 			attachmentFactory.removeItem(attachmentId);
 		}
 		finally {
-			bugFactory = null;
-			if(bug != null){
-				bug.safeRelease();
+			if (versionControlSupported) {
+				try {
+					versionControl.checkIn("CCF CheckIn");
+					versionControl.safeRelease();
+				} catch (Exception e) {
+					String message = "Failed to checkin requirement " + req.getId() + " again";
+					log.error(message, e);
+					throw new CCFRuntimeException(message , e);
+				}
+			}
+			
+			if (attachmentFactory != null) {
+				attachmentFactory.safeRelease();
+				attachmentFactory = null;
+			}
+			if(req != null){
+				req.safeRelease();
+				req = null;
 			}
 		}
 	}

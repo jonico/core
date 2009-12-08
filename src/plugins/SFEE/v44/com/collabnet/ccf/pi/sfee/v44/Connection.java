@@ -18,6 +18,7 @@
 package com.collabnet.ccf.pi.sfee.v44;
 
 import java.rmi.RemoteException;
+import java.util.Date;
 
 import com.vasoftware.sf.soap44.webservices.sfmain.ISourceForgeSoap;
 
@@ -40,6 +41,21 @@ public class Connection {
 	private String mSessionId;
 	private String userName;
 	private String password;
+	
+	@Override
+	public int hashCode() {
+		return mSessionId.hashCode();
+	}
+	
+	@Override
+	public boolean equals(Object comparator) {
+		if (! (comparator instanceof Connection)) {
+			return false;
+		} else {
+			Connection otherConnection = (Connection) comparator;
+			return otherConnection.mSessionId.equals(mSessionId);
+		}
+	}
 	
 	/**
 	 * Constructs a holder object for the 

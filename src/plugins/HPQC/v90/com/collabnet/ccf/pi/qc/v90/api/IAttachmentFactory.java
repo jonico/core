@@ -21,4 +21,5 @@ public interface IAttachmentFactory extends ILifeCycle {
     public IAttachment getItem(String key);
     public IAttachment addItem();
     public void removeItem(String key);
+    public IFilter getFilter();
 }

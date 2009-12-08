@@ -64,6 +64,8 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 
 	private JDBCReadConnector hospitalDatabaseReader = null;
 
+	private JDBCReadConnector parentIdentityMappingDatabaseReader = null;
+
 	private boolean skipNewerVersionsOfQuarantinedAttachments;
 
 	private long identityMapEventWaitTime = 500L;
@@ -71,10 +73,10 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 	private int identityMapEventWaitCount = 4;
 
 	/**
-	 * If this property is set to true (false by default),
-	 * resynched artifacts are even transported if a newer version has already been synchronized
+	 * If this property is set to true (false by default), resynched artifacts
+	 * are even transported if a newer version has already been synchronized
 	 */
-	private boolean alwaysPassResynchedArtifacts=false;
+	private boolean alwaysPassResynchedArtifacts = false;
 
 	/**
 	 * openAdaptor Method to process all input and puts out the results This
@@ -171,10 +173,12 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 
 			// find out whether to skip the artifact because it has been
 			// quarantined
-			if (!replayedArtifact && skipQuarantinedArtifact(element, sourceArtifactId,
-					sourceSystemId, sourceRepositoryId, targetSystemId,
-					targetRepositoryId, artifactType,
-					sourceArtifactLastModifiedDate, sourceArtifactVersionLong)) {
+			if (!replayedArtifact
+					&& skipQuarantinedArtifact(element, sourceArtifactId,
+							sourceSystemId, sourceRepositoryId, targetSystemId,
+							targetRepositoryId, artifactType,
+							sourceArtifactLastModifiedDate,
+							sourceArtifactVersionLong)) {
 				XPathUtils.addAttribute(element,
 						GenericArtifactHelper.ARTIFACT_ACTION,
 						GenericArtifactHelper.ARTIFACT_ACTION_IGNORE);
@@ -195,9 +199,10 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 				}
 				long sourceArtifactVersionLongFromTable = Long
 						.parseLong(sourceArtifactVersionFromTable);
-				//if (sourceArtifactLastModifiedDateFromTable
-						//.after(sourceArtifactLastModifiedDate)
-						//|| sourceArtifactVersionLongFromTable >= sourceArtifactVersionLong) {
+				// if (sourceArtifactLastModifiedDateFromTable
+				// .after(sourceArtifactLastModifiedDate)
+				// || sourceArtifactVersionLongFromTable >=
+				// sourceArtifactVersionLong) {
 				if (sourceArtifactVersionLongFromTable >= sourceArtifactVersionLong) {
 					if (sourceArtifactVersionLong == -1
 							&& sourceArtifactVersionLongFromTable == -1) {
@@ -255,6 +260,7 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 				}
 				targetArtifactVersion = results[3].toString();
 			}
+			
 			if (artifactType
 					.equals(GenericArtifactHelper.ARTIFACT_TYPE_ATTACHMENT)) {
 				String sourceParentArtifactId = XPathUtils.getAttributeValue(
@@ -282,14 +288,14 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 							+ sourceArtifactId
 							+ " is not created on the target system for combination "
 							+ sourceArtifactId + "-" + sourceRepositoryId + "-"
-							+ sourceSystemId + targetRepositoryId + "-"
+							+ sourceSystemId + "-" + targetRepositoryId + "-"
 							+ targetSystemId;
 					log.error(cause);
 					XPathUtils
 							.addAttribute(
 									element,
 									GenericArtifactHelper.ERROR_CODE,
-									GenericArtifact.ERROR_INTERNAL_DATABASE_TABLE_CORRUPT);
+									GenericArtifact.ERROR_PARENT_ARTIFACT_NOT_PRESENT);
 					throw new CCFRuntimeException(cause);
 				} else {
 					XPathUtils
@@ -297,6 +303,89 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 									element,
 									GenericArtifactHelper.DEP_PARENT_TARGET_ARTIFACT_ID,
 									targetParentArtifactId);
+				}
+			} else if (artifactType
+					.equals(GenericArtifactHelper.ARTIFACT_TYPE_PLAIN_ARTIFACT)) {
+				// now realize parent artifact lookup for ordinary artifacts
+				String sourceParentArtifactId = XPathUtils.getAttributeValue(
+						element,
+						GenericArtifactHelper.DEP_PARENT_SOURCE_ARTIFACT_ID);
+				if (sourceParentArtifactId != null
+						&& !sourceParentArtifactId
+								.equals(GenericArtifact.VALUE_UNKNOWN)) {
+					// looks as if dependency lookup has been required
+					if (sourceParentArtifactId
+							.equals(GenericArtifact.VALUE_NONE)) {
+						// none is always mapped to none
+						XPathUtils
+								.addAttribute(
+										element,
+										GenericArtifactHelper.DEP_PARENT_TARGET_ARTIFACT_ID,
+										GenericArtifact.VALUE_NONE);
+					} else if (getParentIdentityMappingDatabaseReader() == null) {
+						log
+								.warn("Seems the artifact required advanced dependency lookup but this feature has not been configured. "
+										+ "Skipped parent lookup for artifact with source artifact id "
+										+ sourceArtifactId
+										+ " and version "
+										+ sourceArtifactVersion
+										+ " for combination "
+										+ sourceArtifactId
+										+ "-"
+										+ sourceRepositoryId
+										+ "-"
+										+ sourceSystemId
+										+ "-"
+										+ targetRepositoryId
+										+ "-" + targetSystemId);
+					} else {
+						// do the actual parent id lookup
+						String sourceParentRepositoryId = XPathUtils
+								.getAttributeValue(
+										element,
+										GenericArtifactHelper.DEP_PARENT_SOURCE_REPOSITORY_ID);
+						Object[] resultsDep = lookupParentTargetArtifact(element,
+								sourceParentArtifactId, sourceSystemId,
+								sourceParentRepositoryId, targetSystemId,
+								GenericArtifactHelper.ARTIFACT_TYPE_PLAIN_ARTIFACT);
+						String targetParentArtifactId = null;
+						String targetParentRepositoryId = null;
+						if (resultsDep != null && resultsDep[0] != null) {
+							targetParentArtifactId = resultsDep[0].toString();
+						}
+						if (resultsDep != null && resultsDep[4] != null) {
+							targetParentRepositoryId = resultsDep[4].toString();
+						}
+						if (StringUtils.isEmpty(targetParentArtifactId) || StringUtils.isEmpty(targetParentRepositoryId)) {
+							String cause = "Parent artifact "
+									+ sourceParentArtifactId
+									+ " for artifact "
+									+ sourceArtifactId
+									+ " is not yet created on the target system for combination "
+									+ sourceArtifactId + "-" + sourceRepositoryId + "-"
+									+ sourceSystemId + "-" + targetRepositoryId + "-"
+									+ targetSystemId;
+							log.warn(cause);
+							XPathUtils
+									.addAttribute(
+											element,
+											GenericArtifactHelper.ERROR_CODE,
+											GenericArtifact.ERROR_PARENT_ARTIFACT_NOT_PRESENT);
+							throw new CCFRuntimeException(cause);
+						} else {
+							XPathUtils
+									.addAttribute(
+											element,
+											GenericArtifactHelper.DEP_PARENT_TARGET_ARTIFACT_ID,
+											targetParentArtifactId);
+							XPathUtils
+								.addAttribute(
+									element,
+									GenericArtifactHelper.DEP_PARENT_TARGET_REPOSITORY_ID,
+									targetParentRepositoryId);
+						}
+						
+					}
 				}
 			}
 
@@ -444,7 +533,7 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 		}
 		boolean waitForIdentityMappedEvent = false;
 		int waitCount = 0;
-		//identityMappingDatabaseReader.disconnect();
+		// identityMappingDatabaseReader.disconnect();
 		Object[] resultSet = null;
 		do {
 			identityMappingDatabaseReader.connect();
@@ -464,6 +553,7 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 											+ sourceRepositoryId
 											+ "-"
 											+ sourceSystemId
+											+ "-"
 											+ targetRepositoryId
 											+ "-"
 											+ targetSystemId
@@ -483,6 +573,7 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 										+ sourceRepositoryId
 										+ "-"
 										+ sourceSystemId
+										+ "-"
 										+ targetRepositoryId
 										+ "-"
 										+ targetSystemId
@@ -500,7 +591,7 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 		Object[] results = null;
 		if (resultSet == null || resultSet.length == 0) {
 			log.debug(sourceArtifactId + "-" + sourceRepositoryId + "-"
-					+ sourceSystemId + targetRepositoryId + "-"
+					+ sourceSystemId + "-" + targetRepositoryId + "-"
 					+ targetSystemId + " are not mapped.");
 		} else if (resultSet.length == 1) {
 			if (resultSet[0] instanceof OrderedHashMap) {
@@ -545,7 +636,117 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 					+ sourceRepositoryId
 					+ "-"
 					+ sourceSystemId
+					+ "-"
 					+ targetRepositoryId
+					+ "-"
+					+ targetSystemId + " in the identity mapping table.";
+			XPathUtils.addAttribute(element, GenericArtifactHelper.ERROR_CODE,
+					GenericArtifact.ERROR_INTERNAL_DATABASE_TABLE_CORRUPT);
+			log.error(cause);
+			throw new CCFRuntimeException(cause);
+		}
+		return results;
+	}
+	
+	/**
+	 * For a given source artifact id, source repository and the target
+	 * repository details, this method finds out the target artifact id mapped
+	 * to the source artifact id by looking up the identity mapping table.
+	 * 
+	 * If the source artifact id had ever passed through the wiring the identity
+	 * mapping will contain the corresponding target artifact id. This method
+	 * fetches the target artifact id and returns. If there is no target
+	 * artifact id mapped to this source artifact id this method return a null.
+	 * 
+	 * The difference to the ordinary target lookup method is that this one does
+	 * not require the target repository id. This one is found out automatically
+	 * by querying the synchronization status table as well.
+	 * 
+	 * @param sourceArtifactId
+	 *            - The source artifact id that should be looked up for a target
+	 *            artifact id
+	 * @param sourceSystemId
+	 *            - The system id of the source repository
+	 * @param sourceRepositoryId
+	 *            - The repository id of the source artifact
+	 * @param targetSystemId
+	 *            - The system id of the target repository
+	 * @param artifactType
+	 *            - The artifact type
+	 * 
+	 * @return array with target artifactId, sourceArtifactLastModifiedDate,
+	 *         sourceArtifactVersion, targetArtifactVersion (in this order)
+	 */
+	private Object[] lookupParentTargetArtifact(Element element,
+			String sourceArtifactId, String sourceSystemId,
+			String sourceRepositoryId, String targetSystemId, String artifactType) {
+		IOrderedMap inputParameters = new OrderedHashMap();
+
+		inputParameters.add(sourceSystemId);
+		inputParameters.add(sourceRepositoryId);
+		inputParameters.add(targetSystemId);
+		inputParameters.add(sourceArtifactId);
+		inputParameters.add(artifactType);
+		inputParameters.add(sourceSystemId);
+		inputParameters.add(targetSystemId);
+		inputParameters.add(sourceRepositoryId);
+		
+		Object[] resultSet = null;
+		parentIdentityMappingDatabaseReader.connect();
+		resultSet = parentIdentityMappingDatabaseReader.next(inputParameters,
+					1000);
+		
+		Object[] results = null;
+		if (resultSet == null || resultSet.length == 0) {
+			log.debug(sourceArtifactId + "-" + sourceRepositoryId + "-"
+					+ sourceSystemId + "-" + "???" + "-"
+					+ targetSystemId + " are not mapped.");
+		} else if (resultSet.length == 1) {
+			if (resultSet[0] instanceof OrderedHashMap) {
+				OrderedHashMap result = (OrderedHashMap) resultSet[0];
+				if (result.size() == 5) {
+					results = new Object[5];
+					results[0] = result.get(0);
+					Timestamp timeStamp = (Timestamp) result.get(1);
+					Date date;
+					if (timeStamp == null) {
+						// use earliest date possible
+						date = new Date(0);
+					} else {
+						date = new Date(timeStamp.getTime());
+					}
+
+					results[1] = date;
+					results[2] = result.get(2);
+					results[3] = result.get(3);
+					results[4] = result.get(4);
+				} else {
+					String cause = "Seems as if the SQL statement for parentIdentityMappingDatabase reader does not return 5 values.";
+					XPathUtils
+							.addAttribute(
+									element,
+									GenericArtifactHelper.ERROR_CODE,
+									GenericArtifact.ERROR_INTERNAL_DATABASE_TABLE_CORRUPT);
+					log.error(cause);
+					throw new CCFRuntimeException(cause);
+				}
+			} else {
+				String cause = "SQL query on identity mapping table did not return data in correct format!";
+				XPathUtils.addAttribute(element,
+						GenericArtifactHelper.ERROR_CODE,
+						GenericArtifact.ERROR_INTERNAL_DATABASE_TABLE_CORRUPT);
+				log.error(cause);
+				throw new CCFRuntimeException(cause);
+			}
+		} else {
+			String cause = "There is more than one mapping for the combination "
+					+ sourceArtifactId
+					+ "-"
+					+ sourceRepositoryId
+					+ "-"
+					+ sourceSystemId
+					+ "-"
+					+ "???"
 					+ "-"
 					+ targetSystemId + " in the identity mapping table.";
 			XPathUtils.addAttribute(element, GenericArtifactHelper.ERROR_CODE,
@@ -601,7 +802,7 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 		inputParameters.add(targetRepositoryId);
 		inputParameters.add(sourceArtifactId);
 		inputParameters.add(artifactType);
-		//hospitalDatabaseReader.disconnect();
+		// hospitalDatabaseReader.disconnect();
 		hospitalDatabaseReader.connect();
 		// TODO Find out whether 10000 is enough in hard cases
 		Object[] resultSet = hospitalDatabaseReader
@@ -703,7 +904,7 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 		}
 		log.info("Only older non-reprocessed versions of artifact combination "
 				+ sourceArtifactId + "-" + sourceRepositoryId + "-"
-				+ sourceSystemId + targetRepositoryId + "-" + targetSystemId
+				+ sourceSystemId + "-" + targetRepositoryId + "-" + targetSystemId
 				+ " are in the hospital, so pass artifact ...");
 		return false;
 	}
@@ -729,6 +930,10 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 			log
 					.warn("Entity service does not check whether artifacts are quarantined since hospitalDatabaseReader property has not been set.");
 		}
+		if (getParentIdentityMappingDatabaseReader() == null) {
+			log
+					.warn("Entity service will not support advanced dependency features since parentIdentityMappingDatabaseReader property has not been set.");
+		}
 	}
 
 	/**
@@ -739,10 +944,33 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 	 * version the duplicate shipment detection algorithm will skip the
 	 * artifact.
 	 * 
-	 * @param identityMappingDatabaseReader
 	 */
 	public JDBCReadConnector getIdentityMappingDatabaseReader() {
 		return identityMappingDatabaseReader;
+	}
+
+	/**
+	 * Sets the (optional) data base reader that is used to retrieve the parent
+	 * target artifact id from the the identity mapping table. This reader is
+	 * only necessary if you like to use CCF advanced dependency features. This
+	 * is not necessary for artifact attachments.
+	 * 
+	 * @param parentIdentityMappingDatabaseReader
+	 */
+	public void setParentIdentityMappingDatabaseReader(
+			JDBCReadConnector parentIdentityMappingDatabaseReader) {
+		this.parentIdentityMappingDatabaseReader = parentIdentityMappingDatabaseReader;
+	}
+
+	/**
+	 * Gets the (optional) data base reader that is used to retrieve the parent
+	 * target artifact id from the the identity mapping table. This reader is
+	 * only necessary if you like to use CCF advanced dependency features. This
+	 * is not necessary for artifact attachments.
+	 * 
+	 */
+	public JDBCReadConnector getParentIdentityMappingDatabaseReader() {
+		return parentIdentityMappingDatabaseReader;
 	}
 
 	/**
@@ -835,17 +1063,19 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 	}
 
 	/**
-	 * If this property is set to true (false by default),
-	 * resynched artifacts are even transported if a newer version has already been synchronized
+	 * If this property is set to true (false by default), resynched artifacts
+	 * are even transported if a newer version has already been synchronized
+	 * 
 	 * @param alwaysPassResynchedArtifacts
 	 */
-	public void setAlwaysPassResynchedArtifacts(boolean alwaysPassResynchedArtifacts) {
+	public void setAlwaysPassResynchedArtifacts(
+			boolean alwaysPassResynchedArtifacts) {
 		this.alwaysPassResynchedArtifacts = alwaysPassResynchedArtifacts;
 	}
 
 	/**
-	 * If this property is set to true (false by default),
-	 * resynched artifacts are even transported if a newer version has already been synchronized
+	 * If this property is set to true (false by default), resynched artifacts
+	 * are even transported if a newer version has already been synchronized
 	 */
 	public boolean isAlwaysPassResynchedArtifacts() {
 		return alwaysPassResynchedArtifacts;

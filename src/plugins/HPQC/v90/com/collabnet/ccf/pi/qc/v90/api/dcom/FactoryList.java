@@ -47,4 +47,8 @@ public class FactoryList extends ActiveXComponent implements IFactoryList {
     public Bug getBug(int i) {
         return new Bug(getItem(i));
     }
+    
+    public Requirement getRequirement(int i) {
+        return new Requirement(getItem(i));
+    }
 }

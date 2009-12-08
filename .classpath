@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry excluding="lib/**" kind="src" path="src/plugins/SFEE/v44"/>
+	<classpathentry kind="src" path="src/plugins/TF"/>
 	<classpathentry kind="src" path="src/plugins/HPQC/v90"/>
 	<classpathentry excluding="Test/|lib/**" kind="src" path="src/plugins/CEE/ProjectTracker/v50"/>
 	<classpathentry kind="src" path="samples/IntegrationScenarios/customReader/src"/>
@@ -40,5 +41,7 @@
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/jdom.jar"/>
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/jmxtools.jar"/>
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/commons-vfs-1.0.jar"/>
+	<classpathentry kind="lib" path="src/plugins/TF/lib/sf_soap50_sdk.jar"/>
+	<classpathentry kind="lib" path="src/plugins/TF/lib/tfapi.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

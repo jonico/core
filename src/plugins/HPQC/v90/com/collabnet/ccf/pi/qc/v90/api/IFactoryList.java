@@ -24,4 +24,5 @@ public interface IFactoryList extends ILifeCycle {
 	String getItemString(int i);
 	int getCount();
 	IBug getBug(int i);
+	IRequirement getRequirement(int i);
 }

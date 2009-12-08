@@ -432,6 +432,11 @@ public class GenericArtifact {
 	 * (yet) known or the whole functionality is not supported
 	 */
 	public static final String VALUE_UNKNOWN = "unknown";
+	
+	/**
+	 * This is the constant attribute values should set to if there is definitely not such a thing (e. g. parentArtifactId)
+	 */
+	public static final String VALUE_NONE = "none";
 
 	/**
 	 * Constant value for conflict resolution priority "alwaysIgnore"
@@ -455,12 +460,20 @@ public class GenericArtifact {
 	public final static String ERROR_OK = "ok";
 
 	public final static String ERROR_INTERNAL_DATABASE_TABLE_CORRUPT = "internalDatabaseTableCorruptionError";
+	
+	public final static String ERROR_PARENT_ARTIFACT_NOT_PRESENT = "parentArtifactNotPresentError";
 
 	public final static String ERROR_INCORRECT_SQL_STATEMENT = "incorrectSQLStatementError";
 
 	public final static String ERROR_CONFLICT_DETECTED = "conflictDetectedError";
 	
 	public final static String ERROR_OBJECT_LOCKED = "objectLocked";
+	
+	public final static String ERROR_OBJECT_CHECKED_OUT = "objectCheckedOutError";
+	
+	public final static String ERROR_REPLAYED_WITHOUT_TRANSFORMATION = "replayedWithoutTransformation";
+	
+	public final static String ERROR_REPLAYED_WITH_TRANSFORMATION = "replayedWithTransformation";
 
 	/**
 	 * Create a new empty generic artifact All attributes will be set to

@@ -109,7 +109,7 @@ public class QCMigrator extends QCWriter {
 				.info("QC Defect " + targetArtifactId + " is migrated successfully with the changes from "+genericArtifact.getSourceArtifactId());
 		genericArtifact.setTargetArtifactId(targetArtifactId);
 		// FIXME This is not atomic
-		List<String> targetAutimeAndTxnId = getAutimeAndTxnId(
+		List<String> targetAutimeAndTxnId = getAutimeAndTxnIdForDefect(
 				connection, targetArtifactId, null, ARTIFACT_TYPE_PLAINARTIFACT);
 		genericArtifact.setTargetArtifactVersion(targetAutimeAndTxnId.get(0));
 		genericArtifact.setTargetArtifactLastModifiedDate(DateUtil.format(DateUtil.parseQCDate(targetAutimeAndTxnId.get(1))));
@@ -134,7 +134,7 @@ public class QCMigrator extends QCWriter {
 			}
 		}
 		IConnection connection = this.connect(genericArtifact);
-		QCDefectHandler defectHandler = this.getDefectHandler();
+		QCHandler defectHandler = this.getDefectHandler();
 		List<Integer> ids = new ArrayList<Integer>();
 		ids.add(qcDefectId);
 		List<IQCDefect> defects = defectHandler.getDefectsWithIds(connection, ids);
