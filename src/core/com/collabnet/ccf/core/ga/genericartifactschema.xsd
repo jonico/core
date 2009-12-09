@@ -216,17 +216,17 @@ artifact was lastly updated in the target system.  There is one reserved value "
 			</xs:attribute>
 			<xs:attribute name="depParentSourceRepositoryKind" type="xs:string" use="optional">
 				<xs:annotation>
-					<xs:documentation>This attribute is only used if the artifact type is "dependency" or "attachment". In this case, it contains the nature of the source repository of the parent artifact that takes part in this association/dependency respectively the nature of the source repository of the parent of this attachment.</xs:documentation>
+					<xs:documentation>This attribute contains the nature of the source repository of the parent artifact that takes part in this association/dependency respectively the nature of the source repository of the parent of this attachment respectively the nature of the parent artifact of the plain artifact.</xs:documentation>
 				</xs:annotation>
 			</xs:attribute>
 			<xs:attribute name="depParentSourceRepositoryId" type="xs:string" use="optional">
 				<xs:annotation>
-					<xs:documentation>This attribute is only used if the artifact type is "dependency" or "attachment". In this case, it contains the id of the source repository where the parent artifact that takes part in this association/dependency respectively the parent artifact of this attachment comes from.</xs:documentation>
+					<xs:documentation>This attribute contains the id of the source repository where the parent artifact that takes part in this association/dependency respectively the parent artifact of this attachment respectively the parent of this plain artifact comes from.</xs:documentation>
 				</xs:annotation>
 			</xs:attribute>
 			<xs:attribute name="depParentSourceArtifactId" type="xs:string" use="optional">
 				<xs:annotation>
-					<xs:documentation>This attribute is only used if the artifact type is "dependency" or "attachment". In this case, this attribute contains the id of the parent artifact that takes part in the defined association/dependency , respectively the id of the parent of this attachment in the source system.</xs:documentation>
+					<xs:documentation>This attribute contains the id of the parent artifact that takes part in the defined association/dependency , respectively the id of the parent of this attachment in the source system respectively the id of the parent of this plain artifact in the source system. If this is a plain artifact and the value of this attribute is "none", the artifact does not have any parent. If the attribute is not set or set to "unkown", you cannot assume that the plain artifact does not have a parent.</xs:documentation>
 				</xs:annotation>
 			</xs:attribute>
 			<xs:attribute name="depChildSourceRepositoryKind" type="xs:string" use="optional">
@@ -246,17 +246,17 @@ artifact was lastly updated in the target system.  There is one reserved value "
 			</xs:attribute>
 			<xs:attribute name="depParentTargetRepositoryKind" type="xs:string" use="optional">
 				<xs:annotation>
-					<xs:documentation>This attribute is only used if the artifact type is "dependency" or "attachment". In this case, it contains the nature of the target repository of the parent artifact that takes part in this association/dependency respectively the nature of the target repository of the parent artifact of this attachment. Typically, the value will be "unknown" until this artifact passes the entity service.</xs:documentation>
+					<xs:documentation>This attribute contains the nature of the target repository of the parent artifact that takes part in this association/dependency respectively the nature of the target repository of the parent artifact of this attachment respectively the nature of the target repository of the parent artifact of this plain artifact. Typically, the value will be "unknown" until this artifact passes the entity service.</xs:documentation>
 				</xs:annotation>
 			</xs:attribute>
 			<xs:attribute name="depParentTargetRepositoryId" type="xs:string" use="optional">
 				<xs:annotation>
-					<xs:documentation>This attribute is only used if the artifact type is "dependency" or "attachment". In this case, it contains the id of the target repository where the parent artifact that takes part in this association/dependency respectively the parent artifact of this attachment should go. This id, together with the target system id, should be sufficient to determine the target repository. Typically, the value will be "unknown" until this artifact passes the entity service.</xs:documentation>
+					<xs:documentation>This attribute contains the id of the target repository where the parent artifact that takes part in this association/dependency respectively the parent artifact of this attachment respectively the parent artifact of this plain artifact should go. This id, together with the target system id, should be sufficient to determine the target repository. Typically, the value will be "unknown" until this artifact passes the entity service.</xs:documentation>
 				</xs:annotation>
 			</xs:attribute>
 			<xs:attribute name="depParentTargetArtifactId" type="xs:string" use="optional">
 				<xs:annotation>
-					<xs:documentation>This attribute is only used if the artifact type is "dependency" or "attachment". In this case, this attribute contains the id of the parent artifact that takes part in the defined association/dependency respectively the id of the parent artifact of this attachment in the target system. Typically, the value will be "unknown" until this artifact passes the entity service.</xs:documentation>
+					<xs:documentation>This attribute contains the id of the parent artifact that takes part in the defined association/dependency respectively the id of the parent artifact of this attachment respectively the id of the parent artifact of this plain artifact in the target system. Typically, the value will be "unknown" until this artifact passes the entity service.</xs:documentation>
 				</xs:annotation>
 			</xs:attribute>
 			<xs:attribute name="depChildTargetRepositoryKind" type="xs:string" use="optional">
