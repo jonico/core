@@ -39,8 +39,8 @@ attachments), and when that happens, the source system should set this mode valu
 									</xs:annotation>
 									<xs:simpleType>
 										<xs:restriction base="xs:string">
-											<xs:enumeration value="changedFieldsOnly" />
-											<xs:enumeration value="complete" />
+											<xs:enumeration value="changedFieldsOnly"/>
+											<xs:enumeration value="complete"/>
 										</xs:restriction>
 									</xs:simpleType>
 								</xs:attribute>
@@ -50,44 +50,39 @@ attachments), and when that happens, the source system should set this mode valu
 									</xs:annotation>
 									<xs:simpleType>
 										<xs:restriction base="xs:string">
-											<xs:enumeration value="delete" />
-											<xs:enumeration value="update" />
-											<xs:enumeration value="create" />
-											<xs:enumeration value="resync" />
-											<xs:enumeration value="ignore" />
-											<xs:enumeration value="resync" />
+											<xs:enumeration value="delete"/>
+											<xs:enumeration value="update"/>
+											<xs:enumeration value="create"/>
+											<xs:enumeration value="resync"/>
+											<xs:enumeration value="ignore"/>
+											<xs:enumeration value="resync"/>
 										</xs:restriction>
 									</xs:simpleType>
 								</xs:attribute>
-								<xs:attribute name="sourceArtifactVersion" type="xs:string"
-									use="required">
+								<xs:attribute name="sourceArtifactVersion" type="xs:string" use="required">
 									<xs:annotation>
 										<xs:documentation>This attribute contains the version of the artifact in the source system. There is one reserved value "unknown" that is used if the source system does not support version control.</xs:documentation>
 									</xs:annotation>
 								</xs:attribute>
-								<xs:attribute name="targetArtifactVersion" type="xs:string"
-									use="required">
+								<xs:attribute name="targetArtifactVersion" type="xs:string" use="required">
 									<xs:annotation>
 										<xs:documentation>This attribute contains the version of the artifact in the target system. There is one
-	reserved value "unknown" that is used if the version in the target system is not yet known (i. e. the artifact has not yet been written into the target system in this synchronization cycle).</xs:documentation>
+					reserved value "unknown" that is used if the version in the target system is not yet known (i. e. the artifact has not yet been written into the target system in this synchronization cycle).</xs:documentation>
 									</xs:annotation>
 								</xs:attribute>
-								<xs:attribute name="sourceArtifactLastModifiedDate"
-									type="xs:string" use="required">
+								<xs:attribute name="sourceArtifactLastModifiedDate" type="xs:string" use="required">
 									<xs:annotation>
 										<xs:documentation>This attribute contains the date when this
-	artifact was lastly updated in the source system.</xs:documentation>
+					artifact was lastly updated in the source system.</xs:documentation>
 									</xs:annotation>
 								</xs:attribute>
-								<xs:attribute name="targetArtifactLastModifiedDate"
-									type="xs:string" use="required">
+								<xs:attribute name="targetArtifactLastModifiedDate" type="xs:string" use="required">
 									<xs:annotation>
 										<xs:documentation>This attribute contains the date when this
-	artifact was lastly updated in the target system.  There is one reserved value "unknown" that is used if the last modification date in the target system is not yet known (i. e. the artifact has not yet been written into the target system in this synchronization cycle).</xs:documentation>
+					artifact was lastly updated in the target system.  There is one reserved value "unknown" that is used if the last modification date in the target system is not yet known (i. e. the artifact has not yet been written into the target system in this synchronization cycle).</xs:documentation>
 									</xs:annotation>
 								</xs:attribute>
-								<xs:attribute name="conflictResolutionPriority"
-									type="xs:string" use="required">
+								<xs:attribute name="conflictResolutionPriority" type="xs:string" use="required">
 									<xs:annotation>
 										<xs:documentation>If a conflict is detected in the target system, the value of this attribute will be used to determine, whether the target artifact should be overriden or not. Reserved values are "quarantineArtifact", "alwaysIgnore" and "alwaysOverride".</xs:documentation>
 									</xs:annotation>
@@ -98,152 +93,128 @@ attachments), and when that happens, the source system should set this mode valu
 									</xs:annotation>
 									<xs:simpleType>
 										<xs:restriction base="xs:string">
-											<xs:enumeration value="plainArtifact" />
-											<xs:enumeration value="dependency" />
-											<xs:enumeration value="attachment" />
+											<xs:enumeration value="plainArtifact"/>
+											<xs:enumeration value="dependency"/>
+											<xs:enumeration value="attachment"/>
 										</xs:restriction>
 									</xs:simpleType>
 								</xs:attribute>
-								<xs:attribute name="sourceSystemKind" type="xs:string"
-									use="required">
+								<xs:attribute name="sourceSystemKind" type="xs:string" use="required">
 									<xs:annotation>
 										<xs:documentation>This attribute contains the nature of the source system of the artifact, e. g. SourceForge EnterpriseEdition 4.4, CollabNet Enterprise Edition 5.1, HP Quality Center 9.1, Conigma CCM.</xs:documentation>
 									</xs:annotation>
 								</xs:attribute>
-								<xs:attribute name="sourceSystemId" type="xs:string"
-									use="required">
+								<xs:attribute name="sourceSystemId" type="xs:string" use="required">
 									<xs:annotation>
 										<xs:documentation>This attribute contains the id of the source system. This id (typically an URL), together with the source system kind, should be unique in the whole system landscape.</xs:documentation>
 									</xs:annotation>
 								</xs:attribute>
-								<xs:attribute name="sourceRepositoryKind" type="xs:string"
-									use="required">
+								<xs:attribute name="sourceRepositoryKind" type="xs:string" use="required">
 									<xs:annotation>
 										<xs:documentation>This attribute contains the nature of the source repository of the artifact, e. g. SourceForge EnterpriseEdition 4.4 Tracker, SourceForge EnterpriseEdition 4.4 Tracker Dependency, HP Quality Center 9.1 Defect, Conigma CCM SWFM_CR.</xs:documentation>
 									</xs:annotation>
 								</xs:attribute>
-								<xs:attribute name="sourceRepositoryId" type="xs:string"
-									use="required">
+								<xs:attribute name="sourceRepositoryId" type="xs:string" use="required">
 									<xs:annotation>
 										<xs:documentation>This attribute contains the id of the source repository where this artifact is coming from. This id, together with the source system id, the source system kind and the source repository kind should be sufficient to determine the source repository. There is one reserved value "unknown" that is used if the artifact cannot be directly associated to a source repository (this might be the case for dependencies, associations and attachments).</xs:documentation>
 									</xs:annotation>
 								</xs:attribute>
-								<xs:attribute name="sourceArtifactId" type="xs:string"
-									use="required">
+								<xs:attribute name="sourceArtifactId" type="xs:string" use="required">
 									<xs:annotation>
 										<xs:documentation>This attribute contains the id of the artifact in the source system. This id, together with the source system id, the source system kind, the source repository kind and the source repository id should be sufficient to indentify the artifact in the whole system landscape.There is one reserved value named "unknown" that should be used, if the artifact has no direct id in the source system (this might be the case for dependencies, associations and attachments).</xs:documentation>
 									</xs:annotation>
 								</xs:attribute>
-								<xs:attribute name="targetSystemKind" type="xs:string"
-									use="required">
+								<xs:attribute name="targetSystemKind" type="xs:string" use="required">
 									<xs:annotation>
 										<xs:documentation>This attribute contains the nature of the target system of the artifact, e. g. SourceForge EnterpriseEdition 4.4, CollabNet Enterprise Edition 5.1, HP Quality Center 9.1, Conigma CCM.</xs:documentation>
 									</xs:annotation>
 								</xs:attribute>
-								<xs:attribute name="targetSystemId" type="xs:string"
-									use="required">
+								<xs:attribute name="targetSystemId" type="xs:string" use="required">
 									<xs:annotation>
 										<xs:documentation>This attribute contains the id of the target system. This id (typically an URL), together with the target system kind, should be unique in the whole system landscape.</xs:documentation>
 									</xs:annotation>
 								</xs:attribute>
-								<xs:attribute name="targetRepositoryKind" type="xs:string"
-									use="required">
+								<xs:attribute name="targetRepositoryKind" type="xs:string" use="required">
 									<xs:annotation>
 										<xs:documentation>This attribute contains the nature of the target repository of the artifact, e. g. SourceForge EnterpriseEdition 4.4 Tracker, SourceForge EnterpriseEdition 4.4 Task Dependency, HP Quality Center 9.1 Defect Attachment, Conigma CCM SWFM_CR.</xs:documentation>
 									</xs:annotation>
 								</xs:attribute>
-								<xs:attribute name="targetRepositoryId" type="xs:string"
-									use="required">
+								<xs:attribute name="targetRepositoryId" type="xs:string" use="required">
 									<xs:annotation>
 										<xs:documentation>This attribute contains the id of the target repository where this artifact  should go. This id, together with the target system id, the target system kind and the target repository kind should be sufficient to determine the target repository. There is one reserved value "unknown" that should be used if the artifact cannot be directly associated to a target repository this might be the case for dependencies , associations or attachments).</xs:documentation>
 									</xs:annotation>
 								</xs:attribute>
-								<xs:attribute name="targetArtifactId" type="xs:string"
-									use="required">
+								<xs:attribute name="targetArtifactId" type="xs:string" use="required">
 									<xs:annotation>
 										<xs:documentation>This attribute contains the id of the artifact in the target system. This id, together with the target system id, the target system kind, the target repository kind and the target repository id should be sufficient to indentify the artifact in the whole system landscape. There is one reserved value "unknown" that should be used if the artifact cannot be associated to a target id (this might be the case for dependencies, associations and attachments), the target artifact id is unknown at this stage and/or it has not been created yet in the target repository. Typically, the value will be "unknown"until this artifact passed the entity service.</xs:documentation>
 									</xs:annotation>
 								</xs:attribute>
-								<xs:attribute name="depParentSourceRepositoryKind"
-									type="xs:string" use="optional">
+								<xs:attribute name="depParentSourceRepositoryKind" type="xs:string" use="optional">
 									<xs:annotation>
-										<xs:documentation>This attribute is only used if the artifact type is "dependency" or "attachment". In this case, it contains the nature of the source repository of the parent artifact that takes part in this association/dependency respectively the nature of the source repository of the parent of this attachment.</xs:documentation>
+										<xs:documentation>This attribute contains the nature of the source repository of the parent artifact that takes part in this association/dependency respectively the nature of the source repository of the parent of this attachment respectively the nature of the parent artifact of the plain artifact.</xs:documentation>
 									</xs:annotation>
 								</xs:attribute>
-								<xs:attribute name="depParentSourceRepositoryId"
-									type="xs:string" use="optional">
+								<xs:attribute name="depParentSourceRepositoryId" type="xs:string" use="optional">
 									<xs:annotation>
-										<xs:documentation>This attribute is only used if the artifact type is "dependency" or "attachment". In this case, it contains the id of the source repository where the parent artifact that takes part in this association/dependency respectively the parent artifact of this attachment comes from.</xs:documentation>
+										<xs:documentation>This attribute contains the id of the source repository where the parent artifact that takes part in this association/dependency respectively the parent artifact of this attachment respectively the parent of this plain artifact comes from.</xs:documentation>
 									</xs:annotation>
 								</xs:attribute>
-								<xs:attribute name="depParentSourceArtifactId"
-									type="xs:string" use="optional">
+								<xs:attribute name="depParentSourceArtifactId" type="xs:string" use="optional">
 									<xs:annotation>
-										<xs:documentation>This attribute is only used if the artifact type is "dependency" or "attachment". In this case, this attribute contains the id of the parent artifact that takes part in the defined association/dependency , respectively the id of the parent of this attachment in the source system.</xs:documentation>
+										<xs:documentation>This attribute contains the id of the parent artifact that takes part in the defined association/dependency , respectively the id of the parent of this attachment in the source system respectively the id of the parent of this plain artifact in the source system. If this is a plain artifact and the value of this attribute is "none", the artifact does not have any parent. If the attribute is not set or set to "unkown", you cannot assume that the plain artifact does not have a parent.</xs:documentation>
 									</xs:annotation>
 								</xs:attribute>
-								<xs:attribute name="depChildSourceRepositoryKind"
-									type="xs:string" use="optional">
+								<xs:attribute name="depChildSourceRepositoryKind" type="xs:string" use="optional">
 									<xs:annotation>
 										<xs:documentation>This attribute is only used if the artifact type is "dependency", therefore defines a dependency or association. In this case, it contains the nature of the source repository of the child artifact that takes part in this association or dependency.</xs:documentation>
 									</xs:annotation>
 								</xs:attribute>
-								<xs:attribute name="depChildSourceRepositoryId"
-									type="xs:string" use="optional">
+								<xs:attribute name="depChildSourceRepositoryId" type="xs:string" use="optional">
 									<xs:annotation>
 										<xs:documentation>This attribute is only used if the artifact type is "dependency", therefore defines a dependency or association. In this case, it contains the id of the source repository where the child artifact that takes part in this association or dependency is coming from.</xs:documentation>
 									</xs:annotation>
 								</xs:attribute>
-								<xs:attribute name="depChildSourceArtifactId" type="xs:string"
-									use="optional">
+								<xs:attribute name="depChildSourceArtifactId" type="xs:string" use="optional">
 									<xs:annotation>
 										<xs:documentation>This attribute is only used if the artifact type is "dependency", therefore defines a dependency or association. In this case, this attribute contains the id of the child artifact that takes part in the defined association or dependency in the source system.</xs:documentation>
 									</xs:annotation>
 								</xs:attribute>
-								<xs:attribute name="depParentTargetRepositoryKind"
-									type="xs:string" use="optional">
+								<xs:attribute name="depParentTargetRepositoryKind" type="xs:string" use="optional">
 									<xs:annotation>
-										<xs:documentation>This attribute is only used if the artifact type is "dependency" or "attachment". In this case, it contains the nature of the target repository of the parent artifact that takes part in this association/dependency respectively the nature of the target repository of the parent artifact of this attachment. Typically, the value will be "unknown" until this artifact passes the entity service.</xs:documentation>
+										<xs:documentation>This attribute contains the nature of the target repository of the parent artifact that takes part in this association/dependency respectively the nature of the target repository of the parent artifact of this attachment respectively the nature of the target repository of the parent artifact of this plain artifact. Typically, the value will be "unknown" until this artifact passes the entity service.</xs:documentation>
 									</xs:annotation>
 								</xs:attribute>
-								<xs:attribute name="depParentTargetRepositoryId"
-									type="xs:string" use="optional">
+								<xs:attribute name="depParentTargetRepositoryId" type="xs:string" use="optional">
 									<xs:annotation>
-										<xs:documentation>This attribute is only used if the artifact type is "dependency" or "attachment". In this case, it contains the id of the target repository where the parent artifact that takes part in this association/dependency respectively the parent artifact of this attachment should go. This id, together with the target system id, should be sufficient to determine the target repository. Typically, the value will be "unknown" until this artifact passes the entity service.</xs:documentation>
+										<xs:documentation>This attribute contains the id of the target repository where the parent artifact that takes part in this association/dependency respectively the parent artifact of this attachment respectively the parent artifact of this plain artifact should go. This id, together with the target system id, should be sufficient to determine the target repository. Typically, the value will be "unknown" until this artifact passes the entity service.</xs:documentation>
 									</xs:annotation>
 								</xs:attribute>
-								<xs:attribute name="depParentTargetArtifactId"
-									type="xs:string" use="optional">
+								<xs:attribute name="depParentTargetArtifactId" type="xs:string" use="optional">
 									<xs:annotation>
-										<xs:documentation>This attribute is only used if the artifact type is "dependency" or "attachment". In this case, this attribute contains the id of the parent artifact that takes part in the defined association/dependency respectively the id of the parent artifact of this attachment in the target system. Typically, the value will be "unknown" until this artifact passes the entity service.</xs:documentation>
+										<xs:documentation>This attribute contains the id of the parent artifact that takes part in the defined association/dependency respectively the id of the parent artifact of this attachment respectively the id of the parent artifact of this plain artifact in the target system. Typically, the value will be "unknown" until this artifact passes the entity service.</xs:documentation>
 									</xs:annotation>
 								</xs:attribute>
-								<xs:attribute name="depChildTargetRepositoryKind"
-									type="xs:string" use="optional">
+								<xs:attribute name="depChildTargetRepositoryKind" type="xs:string" use="optional">
 									<xs:annotation>
 										<xs:documentation>This attribute is only used if the artifact type is "dependency", therefore defines a dependency or association. In this case, it contains the nature of the target repository of the child artifact that takes part in this association or dependency. Typically, the value will be "unknown" until this artifact passes the entity service.</xs:documentation>
 									</xs:annotation>
 								</xs:attribute>
-								<xs:attribute name="depChildTargetRepositoryId"
-									type="xs:string" use="optional">
+								<xs:attribute name="depChildTargetRepositoryId" type="xs:string" use="optional">
 									<xs:annotation>
 										<xs:documentation>This attribute is only used if the artifact type is "dependency", therefore defines a dependency or association. In this case, it contains the id of the target repository where the child artifact that takes part in this association or dependency should go. Typically, the value will be "unknown" until this artifact passes the entity service.</xs:documentation>
 									</xs:annotation>
 								</xs:attribute>
-								<xs:attribute name="depChildTargetArtifactId" type="xs:string"
-									use="optional">
+								<xs:attribute name="depChildTargetArtifactId" type="xs:string" use="optional">
 									<xs:annotation>
 										<xs:documentation>This attribute is only used if the artifact type is "dependency", therefore defines a dependency or association. In this case, this attribute contains the id of the child artifact that takes part in the defined association or dependency in the target system. Typically, the value will be "unknown" until this artifact passes the entity service.</xs:documentation>
 									</xs:annotation>
 								</xs:attribute>
-								<xs:attribute name="errorCode" type="xs:string"
-									use="required">
+								<xs:attribute name="errorCode" type="xs:string" use="required">
 									<xs:annotation>
 										<xs:documentation>This attribute indicates whether an error occured during processing. The default value for this field is "ok". If this field is set to another value but "ok", components not specialized in handling errors should just ignore the artifact, so the artifactAction attribute should be set to "ignore".</xs:documentation>
 									</xs:annotation>
 								</xs:attribute>
-								<xs:attribute name="transactionId" type="xs:string"
-									use="required">
+								<xs:attribute name="transactionId" type="xs:string" use="required">
 									<xs:annotation>
 										<xs:documentation>This attribute will contain the hospital id if the artifact has been quarantined and is getting replayed. The default value of this attribute is "unknown".</xs:documentation>
 									</xs:annotation>
@@ -254,19 +225,17 @@ attachments), and when that happens, the source system should set this mode valu
 									</xs:annotation>
 									<xs:simpleType>
 										<xs:restriction base="xs:string">
-											<xs:enumeration value="true" />
-											<xs:enumeration value="false" />
+											<xs:enumeration value="true"/>
+											<xs:enumeration value="false"/>
 										</xs:restriction>
 									</xs:simpleType>
 								</xs:attribute>
-								<xs:attribute name="sourceSystemTimezone" type="xs:string"
-									use="optional">
+								<xs:attribute name="sourceSystemTimezone" type="xs:string" use="optional">
 									<xs:annotation>
 										<xs:documentation>This attribute is used to indicate the time zone of the source system. If this time zone is unknown, use "unkown" as value.</xs:documentation>
 									</xs:annotation>
 								</xs:attribute>
-								<xs:attribute name="targetSystemTimezone" type="xs:string"
-									use="optional">
+								<xs:attribute name="targetSystemTimezone" type="xs:string" use="optional">
 									<xs:annotation>
 										<xs:documentation>This attribute is used to indicate the time zone of the target system. If this time zone is unknown, use "unkown" as value.</xs:documentation>
 									</xs:annotation>
