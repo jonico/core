@@ -65,6 +65,7 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 	private JDBCReadConnector hospitalDatabaseReader = null;
 
 	private JDBCReadConnector parentIdentityMappingDatabaseReader = null;
+	private JDBCReadConnector projectMappingDatabaseReader = null;
 
 	private boolean skipNewerVersionsOfQuarantinedAttachments;
 
@@ -260,7 +261,7 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 				}
 				targetArtifactVersion = results[3].toString();
 			}
-			
+
 			if (artifactType
 					.equals(GenericArtifactHelper.ARTIFACT_TYPE_ATTACHMENT)) {
 				String sourceParentArtifactId = XPathUtils.getAttributeValue(
@@ -291,11 +292,9 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 							+ sourceSystemId + "-" + targetRepositoryId + "-"
 							+ targetSystemId;
 					log.error(cause);
-					XPathUtils
-							.addAttribute(
-									element,
-									GenericArtifactHelper.ERROR_CODE,
-									GenericArtifact.ERROR_PARENT_ARTIFACT_NOT_PRESENT);
+					XPathUtils.addAttribute(element,
+							GenericArtifactHelper.ERROR_CODE,
+							GenericArtifact.ERROR_PARENT_ARTIFACT_NOT_PRESENT);
 					throw new CCFRuntimeException(cause);
 				} else {
 					XPathUtils
@@ -337,16 +336,20 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 										+ sourceSystemId
 										+ "-"
 										+ targetRepositoryId
-										+ "-" + targetSystemId);
+										+ "-"
+										+ targetSystemId);
 					} else {
 						// do the actual parent id lookup
 						String sourceParentRepositoryId = XPathUtils
 								.getAttributeValue(
 										element,
 										GenericArtifactHelper.DEP_PARENT_SOURCE_REPOSITORY_ID);
-						Object[] resultsDep = lookupParentTargetArtifact(element,
-								sourceParentArtifactId, sourceSystemId,
-								sourceParentRepositoryId, targetSystemId,
+						Object[] resultsDep = lookupParentTargetArtifact(
+								element,
+								sourceParentArtifactId,
+								sourceSystemId,
+								sourceParentRepositoryId,
+								targetSystemId,
 								GenericArtifactHelper.ARTIFACT_TYPE_PLAIN_ARTIFACT);
 						String targetParentArtifactId = null;
 						String targetParentRepositoryId = null;
@@ -356,22 +359,88 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 						if (resultsDep != null && resultsDep[4] != null) {
 							targetParentRepositoryId = resultsDep[4].toString();
 						}
-						if (StringUtils.isEmpty(targetParentArtifactId) || StringUtils.isEmpty(targetParentRepositoryId)) {
-							String cause = "Parent artifact "
-									+ sourceParentArtifactId
-									+ " for artifact "
-									+ sourceArtifactId
-									+ " is not yet created on the target system for combination "
-									+ sourceArtifactId + "-" + sourceRepositoryId + "-"
-									+ sourceSystemId + "-" + targetRepositoryId + "-"
-									+ targetSystemId;
-							log.warn(cause);
-							XPathUtils
-									.addAttribute(
-											element,
-											GenericArtifactHelper.ERROR_CODE,
-											GenericArtifact.ERROR_PARENT_ARTIFACT_NOT_PRESENT);
-							throw new CCFRuntimeException(cause);
+						if (StringUtils.isEmpty(targetParentArtifactId)
+								|| StringUtils
+										.isEmpty(targetParentRepositoryId)) {
+							if (getProjectMappingDatabaseReader() != null) {
+								// if it turns out that the repository the
+								// parent artifact belongs to is not mapped at
+								// all,
+								// we will proceed with a warning
+								if (!projectMappingExists(sourceSystemId,
+										targetSystemId,
+										sourceParentRepositoryId)) {
+									String cause = "Parent artifact "
+										+ sourceParentArtifactId
+										+ " for artifact "
+										+ sourceArtifactId
+										+ " is not yet created on the target system for combination "
+										+ sourceArtifactId
+										+ "-"
+										+ sourceRepositoryId
+										+ "-"
+										+ sourceSystemId
+										+ "-"
+										+ targetRepositoryId
+										+ "-"
+										+ targetSystemId
+										+ ". Since no project mapping exists for "
+										+ sourceParentRepositoryId
+										+ " CCF does not bail out but ignores parent dependency.";
+									log.warn(cause);
+								} else {
+									String cause = "Parent artifact "
+											+ sourceParentArtifactId
+											+ " for artifact "
+											+ sourceArtifactId
+											+ " is not yet created on the target system for combination "
+											+ sourceArtifactId
+											+ "-"
+											+ sourceRepositoryId
+											+ "-"
+											+ sourceSystemId
+											+ "-"
+											+ targetRepositoryId
+											+ "-"
+											+ targetSystemId
+											+ ". Since a project mapping exists for "
+											+ sourceParentRepositoryId
+											+ " CCF bails out now.";
+									log.warn(cause);
+									XPathUtils
+											.addAttribute(
+													element,
+													GenericArtifactHelper.ERROR_CODE,
+													GenericArtifact.ERROR_PARENT_ARTIFACT_NOT_PRESENT);
+									throw new CCFRuntimeException(cause);
+								}
+							} else {
+								String cause = "Parent artifact "
+										+ sourceParentArtifactId
+										+ " for artifact "
+										+ sourceArtifactId
+										+ " is not yet created on the target system for combination "
+										+ sourceArtifactId
+										+ "-"
+										+ sourceRepositoryId
+										+ "-"
+										+ sourceSystemId
+										+ "-"
+										+ targetRepositoryId
+										+ "-"
+										+ targetSystemId
+										+ ". Since projectMappingDatabaseReader property has not been set"
+										+ "CCF does not know whether a project mapping for "
+										+ sourceParentRepositoryId
+										+ "exists and bails out.";
+								log.warn(cause);
+								XPathUtils
+										.addAttribute(
+												element,
+												GenericArtifactHelper.ERROR_CODE,
+												GenericArtifact.ERROR_PARENT_ARTIFACT_NOT_PRESENT);
+								throw new CCFRuntimeException(cause);
+							}
 						} else {
 							XPathUtils
 									.addAttribute(
@@ -379,12 +448,12 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 											GenericArtifactHelper.DEP_PARENT_TARGET_ARTIFACT_ID,
 											targetParentArtifactId);
 							XPathUtils
-								.addAttribute(
-									element,
-									GenericArtifactHelper.DEP_PARENT_TARGET_REPOSITORY_ID,
-									targetParentRepositoryId);
+									.addAttribute(
+											element,
+											GenericArtifactHelper.DEP_PARENT_TARGET_REPOSITORY_ID,
+											targetParentRepositoryId);
 						}
-						
+
 					}
 				}
 			}
@@ -479,6 +548,32 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 
 		Object[] result = { data };
 		return result;
+	}
+
+	/**
+	 * Returns whether a project mapping exists in the target system for the repository id of the parent artifact
+	 * This information is used to determine whether to bail out if no equivalent to the parent artifact can be found
+	 * in the target system.
+	 * @param sourceSystemId
+	 * @param targetSystemId
+	 * @param sourceParentRepositoryId
+	 * @return tre if project mapping exists, false if not
+	 */
+	private boolean projectMappingExists(String sourceSystemId,
+			String targetSystemId, String sourceParentRepositoryId) {
+		IOrderedMap inputParameters = new OrderedHashMap();
+		inputParameters.add(sourceSystemId);
+		inputParameters.add(targetSystemId);
+		inputParameters.add(sourceParentRepositoryId);
+
+		Object[] resultSet = null;
+		projectMappingDatabaseReader.connect();
+		resultSet = projectMappingDatabaseReader.next(inputParameters,
+				1);
+		if (resultSet == null || resultSet.length == 0) {
+			return false;
+		}
+		return true;
 	}
 
 	/**
@@ -647,7 +742,7 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 		}
 		return results;
 	}
-	
+
 	/**
 	 * For a given source artifact id, source repository and the target
 	 * repository details, this method finds out the target artifact id mapped
@@ -679,7 +774,8 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 	 */
 	private Object[] lookupParentTargetArtifact(Element element,
 			String sourceArtifactId, String sourceSystemId,
-			String sourceRepositoryId, String targetSystemId, String artifactType) {
+			String sourceRepositoryId, String targetSystemId,
+			String artifactType) {
 		IOrderedMap inputParameters = new OrderedHashMap();
 
 		inputParameters.add(sourceSystemId);
@@ -690,17 +786,17 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 		inputParameters.add(sourceSystemId);
 		inputParameters.add(targetSystemId);
 		inputParameters.add(sourceRepositoryId);
-		
+
 		Object[] resultSet = null;
 		parentIdentityMappingDatabaseReader.connect();
 		resultSet = parentIdentityMappingDatabaseReader.next(inputParameters,
-					1000);
-		
+				1000);
+
 		Object[] results = null;
 		if (resultSet == null || resultSet.length == 0) {
 			log.debug(sourceArtifactId + "-" + sourceRepositoryId + "-"
-					+ sourceSystemId + "-" + "???" + "-"
-					+ targetSystemId + " are not mapped.");
+					+ sourceSystemId + "-" + "???" + "-" + targetSystemId
+					+ " are not mapped.");
 		} else if (resultSet.length == 1) {
 			if (resultSet[0] instanceof OrderedHashMap) {
 				OrderedHashMap result = (OrderedHashMap) resultSet[0];
@@ -748,7 +844,8 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 					+ "-"
 					+ "???"
 					+ "-"
-					+ targetSystemId + " in the identity mapping table.";
+					+ targetSystemId
+					+ " in the identity mapping table.";
 			XPathUtils.addAttribute(element, GenericArtifactHelper.ERROR_CODE,
 					GenericArtifact.ERROR_INTERNAL_DATABASE_TABLE_CORRUPT);
 			log.error(cause);
@@ -902,10 +999,18 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 				throw new CCFRuntimeException(cause);
 			}
 		}
-		log.info("Only older non-reprocessed versions of artifact combination "
-				+ sourceArtifactId + "-" + sourceRepositoryId + "-"
-				+ sourceSystemId + "-" + targetRepositoryId + "-" + targetSystemId
-				+ " are in the hospital, so pass artifact ...");
+		log
+				.info("Only older non-reprocessed versions of artifact combination "
+						+ sourceArtifactId
+						+ "-"
+						+ sourceRepositoryId
+						+ "-"
+						+ sourceSystemId
+						+ "-"
+						+ targetRepositoryId
+						+ "-"
+						+ targetSystemId
+						+ " are in the hospital, so pass artifact ...");
 		return false;
 	}
 
@@ -971,6 +1076,29 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 	 */
 	public JDBCReadConnector getParentIdentityMappingDatabaseReader() {
 		return parentIdentityMappingDatabaseReader;
+	}
+
+	/**
+	 * Sets the (optional) data base reader that is used to retrieve the project
+	 * mappings for the repository the parent artifact belongs to. This reader
+	 * is only necessary if you like to use CCF advanced dependency features.
+	 * This is not necessary for artifact attachments.
+	 * 
+	 */
+	public void setProjectMappingDatabaseReader(
+			JDBCReadConnector projectMappingDatabaseReader) {
+		this.projectMappingDatabaseReader = projectMappingDatabaseReader;
+	}
+
+	/**
+	 * Gets the (optional) data base reader that is used to retrieve the project
+	 * mappings for the repository the parent artifact belongs to. This reader
+	 * is only necessary if you like to use CCF advanced dependency features.
+	 * This is not necessary for artifact attachments.
+	 * 
+	 */
+	public JDBCReadConnector getProjectMappingDatabaseReader() {
+		return projectMappingDatabaseReader;
 	}
 
 	/**
