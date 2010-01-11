@@ -89,10 +89,10 @@ public class TFToGenericArtifactConverter {
 						includeFieldMetaData);
 			} else {
 				createGenericArtifactField(
-						TFArtifactMetaData.TFFields.actualEffort, actualEffort,
+						TFArtifactMetaData.TFFields.actualHours, actualEffort,
 						genericArtifact, fieldsMap, includeFieldMetaData);
 				createGenericArtifactField(
-						TFArtifactMetaData.TFFields.estimatedEffort,
+						TFArtifactMetaData.TFFields.estimatedHours,
 						estimatedEffort, genericArtifact, fieldsMap,
 						includeFieldMetaData);
 

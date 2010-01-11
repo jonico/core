@@ -731,11 +731,11 @@ public class TFWriter extends AbstractWriter<Connection> implements
 					TFArtifactMetaData.TFFields.actualHours.getFieldName(), ga);
 		} else {
 			estimatedEffort = GenericArtifactHelper.getIntMandatoryGAField(
-					TFArtifactMetaData.TFFields.estimatedEffort.getFieldName(),
+					TFArtifactMetaData.TFFields.estimatedHours.getFieldName(),
 					ga);
 			actualEffort = GenericArtifactHelper
 					.getIntMandatoryGAField(
-							TFArtifactMetaData.TFFields.actualEffort
+							TFArtifactMetaData.TFFields.actualHours
 									.getFieldName(), ga);
 
 			remainingEffort = GenericArtifactHelper.getIntMandatoryGAField(
@@ -942,11 +942,11 @@ public class TFWriter extends AbstractWriter<Connection> implements
 
 		} else {
 			estimatedEffort = GenericArtifactHelper.getMandatoryGAField(
-					TFArtifactMetaData.TFFields.estimatedEffort.getFieldName(),
+					TFArtifactMetaData.TFFields.estimatedHours.getFieldName(),
 					ga);
 			actualEffort = GenericArtifactHelper
 					.getMandatoryGAField(
-							TFArtifactMetaData.TFFields.actualEffort
+							TFArtifactMetaData.TFFields.actualHours
 									.getFieldName(), ga);
 			remainingEffort = GenericArtifactHelper.getMandatoryGAField(
 					TFArtifactMetaData.TFFields.remainingEffort.getFieldName(),

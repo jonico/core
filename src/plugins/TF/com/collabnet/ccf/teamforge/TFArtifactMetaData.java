@@ -76,8 +76,6 @@ public class TFArtifactMetaData {
 	public enum TFFields {
 		id("id", "ID", FIELD_TYPE.SYSTEM_DEFINED, GenericArtifactField.FieldValueTypeValue.STRING, true,""),
 		actualHours("actualHours", "Actual hours", FIELD_TYPE.CONFIGURABLE,GenericArtifactField.FieldValueTypeValue.INTEGER, false,""),
-		actualEffort("actualEffort", "Actual Effort", FIELD_TYPE.CONFIGURABLE,GenericArtifactField.FieldValueTypeValue.INTEGER, false,""),
-		estimatedEffort("estimatedEffort", "Estimated Effort", FIELD_TYPE.CONFIGURABLE,GenericArtifactField.FieldValueTypeValue.INTEGER, false,""),
 		remainingEffort("remainingEffort", "Remaining Effort", FIELD_TYPE.CONFIGURABLE,GenericArtifactField.FieldValueTypeValue.INTEGER, false,""),
 		autosumming("autosumming", "Calculate Effort", FIELD_TYPE.CONFIGURABLE,GenericArtifactField.FieldValueTypeValue.BOOLEAN, false,""),
 		planningFolder("planningFolder", "Planning Folder", FIELD_TYPE.CONFIGURABLE,GenericArtifactField.FieldValueTypeValue.STRING, false,""),
