@@ -267,12 +267,15 @@ public class TFTrackerHandler {
 				status, // status
 				customer, // customer
 				priority, // priority
-				estimatedEfforts, // estimatedHours
-				remainingEfforts, autosumming,
+				autosumming?0:estimatedEfforts, // estimated efforts
+				autosumming?0:remainingEfforts, // remaining efforts 
+				autosumming,
 				assignedTo, // assigned user name
 				reportedReleaseId, planningFolderId, flexFields, null, null,
 				null);
-		artifactData.setActualEffort(actualEfforts);
+		if (!autosumming) {
+			artifactData.setActualEffort(actualEfforts);
+		}
 		artifactData.setStatusClass(statusClass);
 		artifactData.setCloseDate(closeDate);
 		artifactData.setResolvedReleaseId(resolvedReleaseId);
@@ -451,6 +454,28 @@ public class TFTrackerHandler {
 				flexFields.setNames(finalFlexFieldNames.toArray(new String[0]));
 				flexFields.setValues(finalFlexFieldValues.toArray());
 				flexFields.setTypes(finalFlexFieldTypes.toArray(new String[0]));
+				
+				// we need this property to determine whether we may update the efforts fields
+				boolean autoSummingTurnedOn = artifactData.getAutosumming();
+				
+				if (autosumming != null
+						&& autosumming.getFieldValueHasChanged()) {
+					Object fieldValueObj = autosumming.getFieldValue();
+					Boolean fieldValue = false;
+					if (fieldValueObj instanceof String) {
+						String fieldValueString = (String) fieldValueObj;
+						fieldValue = Boolean.parseBoolean(fieldValueString);
+					} else if (fieldValueObj instanceof Boolean) {
+						fieldValue = (Boolean) fieldValueObj;
+					}
+					autoSummingTurnedOn = fieldValue;
+					artifactData.setAutosumming(fieldValue);
+				}
+				
+				// check if we do not support the autosumming flag at all
+				if (!connection.supports53()) {
+					autoSummingTurnedOn = false;
+				}
 
 				String folderIdString = artifactData.getFolderId();
 				if (trackerId != null && trackerId.getFieldValueHasChanged()) {
@@ -502,7 +527,7 @@ public class TFTrackerHandler {
 					artifactData.setPriority(fieldValue);
 				}
 
-				if (estimatedEfforts != null
+				if (!autoSummingTurnedOn && estimatedEfforts != null
 						&& estimatedEfforts.getFieldValueHasChanged()) {
 					Object fieldValueObj = estimatedEfforts.getFieldValue();
 					int fieldValue = 0;
@@ -521,7 +546,7 @@ public class TFTrackerHandler {
 					artifactData.setEstimatedEffort(fieldValue);
 				}
 
-				if (actualEfforts != null
+				if (!autoSummingTurnedOn && actualEfforts != null
 						&& actualEfforts.getFieldValueHasChanged()) {
 					Object fieldValueObj = actualEfforts.getFieldValue();
 					int fieldValue = 0;
@@ -540,7 +565,7 @@ public class TFTrackerHandler {
 					artifactData.setActualEffort(fieldValue);
 				}
 
-				if (remainingEfforts != null
+				if (!autoSummingTurnedOn && remainingEfforts != null
 						&& remainingEfforts.getFieldValueHasChanged()) {
 					Object fieldValueObj = remainingEfforts.getFieldValue();
 					int fieldValue = 0;
@@ -568,19 +593,6 @@ public class TFTrackerHandler {
 						&& planningFolderId.getFieldValueHasChanged()) {
 					artifactData.setPlanningFolderId((String) planningFolderId
 							.getFieldValue());
-				}
-
-				if (autosumming != null
-						&& autosumming.getFieldValueHasChanged()) {
-					Object fieldValueObj = autosumming.getFieldValue();
-					Boolean fieldValue = false;
-					if (fieldValueObj instanceof String) {
-						String fieldValueString = (String) fieldValueObj;
-						fieldValue = Boolean.parseBoolean(fieldValueString);
-					} else if (fieldValueObj instanceof Boolean) {
-						fieldValue = (Boolean) fieldValueObj;
-					}
-					artifactData.setAutosumming(fieldValue);
 				}
 
 				if (statusClass != null

@@ -31,6 +31,8 @@ import java.util.Map;
 
 import javax.xml.datatype.XMLGregorianCalendar;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.dom4j.Document;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
@@ -58,6 +60,9 @@ import com.collabnet.ccf.core.utils.DateUtil;
  * 
  */
 public class GenericArtifactHelper {
+
+	private static final Log log = LogFactory
+			.getLog(GenericArtifactHelper.class);
 
 	private static final String SCHEMA_LOCATION_ATTRIBUTE = "schemaLocation";
 	public static final DateFormat df = new SimpleDateFormat(
@@ -335,7 +340,8 @@ public class GenericArtifactHelper {
 				.setTransactionId(getAttributeValue(root, TRANSACTION_ID));
 		// only read optional attributes if necessary
 		if (artifactType == ArtifactTypeValue.DEPENDENCY
-				|| artifactType == ArtifactTypeValue.ATTACHMENT || artifactType == ArtifactTypeValue.PLAINARTIFACT) {
+				|| artifactType == ArtifactTypeValue.ATTACHMENT
+				|| artifactType == ArtifactTypeValue.PLAINARTIFACT) {
 			genericArtifact.setDepParentSourceArtifactId(getAttributeValue(
 					root, DEP_PARENT_SOURCE_ARTIFACT_ID));
 			genericArtifact.setDepParentSourceRepositoryId(getAttributeValue(
@@ -762,7 +768,8 @@ public class GenericArtifactHelper {
 
 		// only create optional attributes if necessary
 		if (artifactType == ArtifactTypeValue.DEPENDENCY
-				|| artifactType == ArtifactTypeValue.ATTACHMENT || artifactType == ArtifactTypeValue.PLAINARTIFACT) {
+				|| artifactType == ArtifactTypeValue.ATTACHMENT
+				|| artifactType == ArtifactTypeValue.PLAINARTIFACT) {
 			addAttribute(root, DEP_PARENT_SOURCE_ARTIFACT_ID, genericArtifact
 					.getDepParentSourceArtifactId());
 			addAttribute(root, DEP_PARENT_SOURCE_REPOSITORY_ID, genericArtifact
@@ -778,7 +785,7 @@ public class GenericArtifactHelper {
 		}
 
 		// dependencies have even more optional attributes
-		if (artifactType == ArtifactTypeValue.DEPENDENCY ) {
+		if (artifactType == ArtifactTypeValue.DEPENDENCY) {
 			addAttribute(root, DEP_CHILD_SOURCE_ARTIFACT_ID, genericArtifact
 					.getDepChildSourceArtifactId());
 			addAttribute(root, DEP_CHILD_SOURCE_REPOSITORY_ID, genericArtifact
@@ -915,27 +922,25 @@ public class GenericArtifactHelper {
 	private static String getValue(Element element) {
 		return removeInvalidXmlCharacters(element.getText());
 	}
-	
+
 	private static final String removeInvalidXmlCharacters(String input) {
-        if (input == null) {
-                return input;
-        }
-        char character;
-        StringBuffer sb = new StringBuffer();
-        for (int i =0; i<input.length(); i++) {
-                character = input.charAt(i);
-                //see http://www.w3.org/TR/2000/REC-xml-20001006#NT-Char for valid XML character list.
-                if ((character == 0x9)
-                                || (character == 0xA)
-                                || (character == 0xD)
-                                || ((character >= 0x20) && (character <= 0xD7FF))
-                                || ((character >= 0xE000) && (character <= 0xFFFD))
-                                || ((character >= 0x10000) && (character <= 0x10FFFF))
-                                ) {
-                sb.append(character);
-                }
-        }
-        return sb.toString();
+		if (input == null) {
+			return input;
+		}
+		char character;
+		StringBuffer sb = new StringBuffer();
+		for (int i = 0; i < input.length(); i++) {
+			character = input.charAt(i);
+			// see http://www.w3.org/TR/2000/REC-xml-20001006#NT-Char for valid
+			// XML character list.
+			if ((character == 0x9) || (character == 0xA) || (character == 0xD)
+					|| ((character >= 0x20) && (character <= 0xD7FF))
+					|| ((character >= 0xE000) && (character <= 0xFFFD))
+					|| ((character >= 0x10000) && (character <= 0x10FFFF))) {
+				sb.append(character);
+			}
+		}
+		return sb.toString();
 	}
 
 	/**
@@ -1130,7 +1135,7 @@ public class GenericArtifactHelper {
 		}
 		return fieldValue;
 	}
-	
+
 	public static Boolean getBooleanMandatoryGAField(String fieldName,
 			GenericArtifact ga) {
 		Boolean fieldValue = false;
@@ -1173,9 +1178,12 @@ public class GenericArtifactHelper {
 			}
 			return fieldValue;
 		} catch (NumberFormatException e) {
-			throw new CCFRuntimeException(
-					"Number format exception for mandatory field " + fieldName
-							+ ": " + e.getMessage(), e);
+			// throw new CCFRuntimeException(
+			// "Number format exception for mandatory field " + fieldName
+			// + ": " + e.getMessage(), e);
+			log.warn("No meaningful value set for mandatory field " + fieldName
+					+ " assuming default value 0: " + e.getMessage());
+			return 0;
 		}
 	}
 
@@ -1189,8 +1197,9 @@ public class GenericArtifactHelper {
 				String fieldValueString = (String) fieldValueObj;
 				fieldValue = DateUtil.parse(fieldValueString);
 				if (fieldValue == null) {
-					throw new CCFRuntimeException("Date parsing error occured for mandatory field "
-							+ fieldName);
+					throw new CCFRuntimeException(
+							"Date parsing error occured for mandatory field "
+									+ fieldName);
 				}
 			} else if (fieldValueObj instanceof Date) {
 				fieldValue = (Date) fieldValueObj;
