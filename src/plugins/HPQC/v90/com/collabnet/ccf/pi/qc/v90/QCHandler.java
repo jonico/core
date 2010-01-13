@@ -166,22 +166,37 @@ public class QCHandler {
 			versionControl = req.getVersionControlObject();
 			if (versionControl != null) {
 				try {
-					versionControlSupported = versionControl.checkOut("CCF Checkout");
+					versionControlSupported = versionControl
+							.checkOut("CCF Checkout");
 				} catch (ComFailException e) {
-					// check whether we have already checked out this requirement
-					if (qcc.getUsername().equals(req.getFieldAsString("RQ_VC_CHECKOUT_USER_NAME"))) {
-						log.warn("Requirement "+req.getId()+" has been already checked out by connector user "+ qcc.getUsername()+ " so we still proceed ...");
+					// check whether we have already checked out this
+					// requirement
+					if (qcc.getUsername().equals(
+							req.getFieldAsString("RQ_VC_CHECKOUT_USER_NAME"))) {
+						log
+								.warn("Requirement "
+										+ req.getId()
+										+ " has been already checked out by connector user "
+										+ qcc.getUsername()
+										+ " so we still proceed ...");
 					} else {
-						String message = "Requirement "+req.getId()+ " has been checked out by "+req.getFieldAsString("RQ_VC_CHECKOUT_USER_NAME") +
-						" on " + req.getFieldAsDate("RQ_VC_CHECKOUT_DATE") +
-						" at "+ req.getFieldAsString("RQ_VC_CHECKOUT_TIME") + " with version number " + req.getFieldAsInt("RQ_VC_VERSION_NUMBER"); 
+						String message = "Requirement "
+								+ req.getId()
+								+ " has been checked out by "
+								+ req
+										.getFieldAsString("RQ_VC_CHECKOUT_USER_NAME")
+								+ " on "
+								+ req.getFieldAsDate("RQ_VC_CHECKOUT_DATE")
+								+ " at "
+								+ req.getFieldAsString("RQ_VC_CHECKOUT_TIME")
+								+ " with version number "
+								+ req.getFieldAsInt("RQ_VC_VERSION_NUMBER");
 						log.error(message, e);
 						throw new CCFRuntimeException(message, e);
 					}
 				}
 			}
-				
-			
+
 			List<String> allFieldNames = new ArrayList<String>();
 			String fieldValue = null;
 			for (int cnt = 0; cnt < allFields.size(); cnt++) {
@@ -230,20 +245,23 @@ public class QCHandler {
 				if (!fieldName.equals(QC_RQ_DEV_COMMENTS))
 					allFieldNames.add(fieldName);
 			}
-			
+
 			req.post();
+			String parentId = req.getParentId();
 			// move to other parent if necessary
 			if (targetParentArtifactId != null
 					&& !targetParentArtifactId
 							.equals(GenericArtifact.VALUE_UNKNOWN)
-					&& !targetParentArtifactId.equals(req.getParentId())) {
-				if (targetParentArtifactId.equals(GenericArtifact.VALUE_NONE)) {
-					req.move(-1, 1);
+					&& !targetParentArtifactId.equals(parentId)) {
+				if (targetParentArtifactId.equals(GenericArtifact.VALUE_NONE)
+						&& !"-1".equals(parentId) && !"0".equals(parentId)) {
+					// we assume that requirement 0 is the top level requirement
+					req.move(0, 1);
 				} else {
 					req.move(Integer.parseInt(targetParentArtifactId), 1);
 				}
 			}
-			
+
 		} catch (DefectAlreadyLockedException e) {
 			String message = "Attempt to lock the requirement with id "
 					+ requirementId + " failed.";
@@ -277,7 +295,7 @@ public class QCHandler {
 			throw new CCFRuntimeException(message, e);
 		} catch (ComFailException e) {
 			req.undo();
-			
+
 			String message = "ComFailException while updating the requirement with id "
 					+ requirementId;
 			log.error(message, e);
@@ -294,10 +312,11 @@ public class QCHandler {
 					versionControl.checkIn("CCF CheckIn");
 					versionControl.safeRelease();
 				} catch (Exception e) {
-					String message = "Failed to checkin requirement " + req.getId() + " again";
+					String message = "Failed to checkin requirement "
+							+ req.getId() + " again";
 					log.error(message, e);
 					req.unlockObject();
-					throw new CCFRuntimeException(message , e);
+					throw new CCFRuntimeException(message, e);
 				}
 			}
 			if (req != null) {
@@ -1294,8 +1313,8 @@ public class QCHandler {
 		try {
 			reqFactory = qcc.getRequirementsFactory();
 			if (parentArtifactId != null
-					&& !parentArtifactId.equals(GenericArtifact.VALUE_UNKNOWN) && 
-					!parentArtifactId.equals(GenericArtifact.VALUE_NONE)) {
+					&& !parentArtifactId.equals(GenericArtifact.VALUE_UNKNOWN)
+					&& !parentArtifactId.equals(GenericArtifact.VALUE_NONE)) {
 				req = reqFactory.addItem(parentArtifactId);
 			} else {
 				req = reqFactory.addItem("-1");
@@ -1304,21 +1323,37 @@ public class QCHandler {
 			versionControl = req.getVersionControlObject();
 			if (versionControl != null) {
 				try {
-					versionControlSupported = versionControl.checkOut("CCF Checkout");
+					versionControlSupported = versionControl
+							.checkOut("CCF Checkout");
 				} catch (ComFailException e) {
-					// check whether we have already checked out this requirement
-					if (qcc.getUsername().equals(req.getFieldAsString("RQ_VC_CHECKOUT_USER_NAME"))) {
-						log.warn("Requirement "+req.getId()+" has been already checked out by connector user "+ qcc.getUsername()+ " so we still proceed ...");
+					// check whether we have already checked out this
+					// requirement
+					if (qcc.getUsername().equals(
+							req.getFieldAsString("RQ_VC_CHECKOUT_USER_NAME"))) {
+						log
+								.warn("Requirement "
+										+ req.getId()
+										+ " has been already checked out by connector user "
+										+ qcc.getUsername()
+										+ " so we still proceed ...");
 					} else {
-						String message = "Requirement "+req.getId()+ " has been checked out by "+req.getFieldAsString("RQ_VC_CHECKOUT_USER_NAME") +
-						" on " + req.getFieldAsDate("RQ_VC_CHECKOUT_DATE") +
-						" at "+ req.getFieldAsString("RQ_VC_CHECKOUT_TIME") + " with version number " + req.getFieldAsInt("RQ_VC_VERSION_NUMBER"); 
+						String message = "Requirement "
+								+ req.getId()
+								+ " has been checked out by "
+								+ req
+										.getFieldAsString("RQ_VC_CHECKOUT_USER_NAME")
+								+ " on "
+								+ req.getFieldAsDate("RQ_VC_CHECKOUT_DATE")
+								+ " at "
+								+ req.getFieldAsString("RQ_VC_CHECKOUT_TIME")
+								+ " with version number "
+								+ req.getFieldAsInt("RQ_VC_VERSION_NUMBER");
 						log.error(message, e);
 						throw new CCFRuntimeException(message, e);
 					}
 				}
 			}
-			
+
 			List<String> allFieldNames = new ArrayList<String>();
 			String fieldValue = null;
 			for (int cnt = 0; cnt < allFields.size(); cnt++) {
@@ -1388,10 +1423,11 @@ public class QCHandler {
 					versionControl.checkIn("CCF CheckIn");
 					versionControl.safeRelease();
 				} catch (Exception e) {
-					String message = "Failed to checkin requirement " + req.getId() + " again";
+					String message = "Failed to checkin requirement "
+							+ req.getId() + " again";
 					log.error(message, e);
 					req.unlockObject();
-					throw new CCFRuntimeException(message , e);
+					throw new CCFRuntimeException(message, e);
 				}
 			}
 			if (req != null) {
