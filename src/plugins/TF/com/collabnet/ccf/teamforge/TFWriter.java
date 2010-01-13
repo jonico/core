@@ -532,7 +532,7 @@ public class TFWriter extends AbstractWriter<Connection> implements
 			}
 		}
 
-		planningFolder.setVersion(planningFolder.getVersion() + 1);
+		planningFolder = connection.getPlanningClient().getPlanningFolderData(id);
 
 		// now we have to cope with moving planning folders around
 		String parentArtifactId = ga.getDepParentTargetArtifactId();
@@ -547,7 +547,7 @@ public class TFWriter extends AbstractWriter<Connection> implements
 					// move to top
 					connection.getPlanningClient().movePlanningFolder(id,
 							project);
-					planningFolder.setVersion(planningFolder.getVersion() + 1);
+					planningFolder = connection.getPlanningClient().getPlanningFolderData(id);
 				}
 			} else {
 				// check whether correct parent is already assigned
@@ -555,7 +555,7 @@ public class TFWriter extends AbstractWriter<Connection> implements
 						.equals(planningFolder.getParentFolderId())) {
 					connection.getPlanningClient().movePlanningFolder(id,
 							parentArtifactId);
-					planningFolder.setVersion(planningFolder.getVersion() + 1);
+					planningFolder = connection.getPlanningClient().getPlanningFolderData(id);
 				}
 			}
 		}
