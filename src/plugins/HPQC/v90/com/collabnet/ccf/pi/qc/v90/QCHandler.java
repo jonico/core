@@ -1319,7 +1319,8 @@ public class QCHandler {
 					&& !parentArtifactId.equals(GenericArtifact.VALUE_NONE)) {
 				req = reqFactory.addItem(parentArtifactId);
 			} else {
-				req = reqFactory.addItem("-1");
+				// we will create every requirement under the requirement root
+				req = reqFactory.addItem("0");
 			}
 			req.lockObject();
 			versionControl = req.getVersionControlObject();
