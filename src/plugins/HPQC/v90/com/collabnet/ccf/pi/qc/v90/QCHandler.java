@@ -253,10 +253,12 @@ public class QCHandler {
 					&& !targetParentArtifactId
 							.equals(GenericArtifact.VALUE_UNKNOWN)
 					&& !targetParentArtifactId.equals(parentId)) {
-				if (targetParentArtifactId.equals(GenericArtifact.VALUE_NONE)
-						&& !"-1".equals(parentId) && !"0".equals(parentId)) {
-					// we assume that requirement 0 is the top level requirement
-					req.move(0, 1);
+				if (targetParentArtifactId.equals(GenericArtifact.VALUE_NONE)) {
+					if (!"-1".equals(parentId) && !"0".equals(parentId)) {
+						// we assume that requirement 0 is the top level
+						// requirement
+						req.move(0, 1);
+					}
 				} else {
 					req.move(Integer.parseInt(targetParentArtifactId), 1);
 				}
