@@ -18,6 +18,7 @@
 package com.collabnet.ccf.core.eis.connection;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -47,9 +48,8 @@ import org.apache.commons.logging.LogFactory;
 public class ConnectionPool<T> {
 	private static final Log log = LogFactory.getLog(ConnectionPool.class);
 	private ConnectionFactory<T> factory = null;
-	private HashMap<String, ArrayList<ConnectionInfo>> connectionPool
-					= new HashMap<String, ArrayList<ConnectionInfo>>();
-	private HashMap<T, ConnectionInfo> reversePoolMap = new HashMap<T, ConnectionInfo>();
+	private Map<String, ArrayList<ConnectionInfo>> connectionPool = Collections.synchronizedMap(new HashMap<String, ArrayList<ConnectionInfo>>());
+	private Map<T, ConnectionInfo> reversePoolMap = Collections.synchronizedMap(new HashMap<T, ConnectionInfo>());
 	private static final String KEY_DELIMITER = ":";
 	private long maxIdleTime = 2*60*1000;
 	public long scavengerInterval = 2*60*1000;
