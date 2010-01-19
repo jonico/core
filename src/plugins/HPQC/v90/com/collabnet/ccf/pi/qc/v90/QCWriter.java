@@ -245,13 +245,17 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 		// .getUserName(), targetSystemTimezone);
 
 		// FIXME This is not atomic
-		defectHandler.updateRequirement(connection, targetArtifactId, allFields,
-				this.getUserName(), targetSystemTimezone, targetParentArtifactId).safeRelease();
-		log.info("QC Requirement " + targetArtifactId + " on "
-				+ genericArtifact.getTargetRepositoryId()
-				+ " is updated successfully with the changes from "
-				+ genericArtifact.getSourceArtifactId() + " on "
-				+ genericArtifact.getSourceRepositoryId());
+		if (targetArtifactId.equals("0")) {
+			log.warn("It is not possible to modify the root level requirement folder, so ignoring the update ...");
+		} else {
+			defectHandler.updateRequirement(connection, targetArtifactId, allFields,
+					this.getUserName(), targetSystemTimezone, targetParentArtifactId).safeRelease();
+			log.info("QC Requirement " + targetArtifactId + " on "
+					+ genericArtifact.getTargetRepositoryId()
+					+ " is updated successfully with the changes from "
+					+ genericArtifact.getSourceArtifactId() + " on "
+					+ genericArtifact.getSourceRepositoryId());
+		}
 		genericArtifact.setTargetArtifactId(targetArtifactId);
 		// FIXME This is not atomic
 		List<String> targetAutimeAndTxnId = getAutimeAndTxnIdForRequirement(connection,
