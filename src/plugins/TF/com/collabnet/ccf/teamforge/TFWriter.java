@@ -513,7 +513,7 @@ public class TFWriter extends AbstractWriter<Connection> implements
 				}
 				if (endDateField != null
 						&& endDateField.getFieldValueHasChanged()) {
-					planningFolder.setStartDate((Date) endDateField
+					planningFolder.setEndDate((Date) endDateField
 							.getFieldValue());
 				}
 
