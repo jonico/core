@@ -25,6 +25,19 @@ package com.collabnet.ccf.core.utils;
  *
  */
 public class GATransformerUtil {
+	static FormatterProxy proxy = null;
+	
+	static {
+		try {
+			Class.forName("net.htmlparser.jericho.Source");
+		} catch (ClassNotFoundException e) {
+			proxy = new StringUtils();
+		}
+		if (proxy == null) {
+			proxy = new JerichoUtils();
+		}
+	}
+	
 	/**
 	 * This method strips all the HTML tags present int the original
 	 * String that is passed.
@@ -34,7 +47,7 @@ public class GATransformerUtil {
 	 * @return the original String with all the HTML tags stripped off.
 	 */
 	public static String stripHTML(String original){
-		return StringUtils.stripHTML(original);
+		return proxy.convertHtmlToText(original);
 	}
 	
 	/**
@@ -45,9 +58,10 @@ public class GATransformerUtil {
 	 * @return the trimmed String.
 	 */
 	public static String trim(String stringToTrim){
-		return stringToTrim.trim();
+		return proxy.trimString(stringToTrim);
 	}
+	
 	public static String encodeHTMLToEntityReferences(String html){
-    	return StringUtils.encodeHTMLToEntityReferences(html);
+    	return proxy.convertTextToHtml(html);
     }
 }

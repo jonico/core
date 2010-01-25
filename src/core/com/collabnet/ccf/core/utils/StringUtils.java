@@ -59,7 +59,7 @@ import javax.mail.internet.InternetAddress;
  * 
  * @author <a href="mailto:smachhau@users.sourceforge.net">Sebastian Machhausen</a>
  */
-public class StringUtils {
+public class StringUtils implements FormatterProxy{
 
 	
 	/**
@@ -916,6 +916,21 @@ public class StringUtils {
          (!StringUtils.isEmpty( tokens[0] )) && 
          (!StringUtils.isEmpty( tokens[1] )) ;
       }
+
+
+	public String convertHtmlToText(String original) {
+		return stripHTML(original);
+	}
+
+
+	public String convertTextToHtml(String html) {
+		return encodeHTMLToEntityReferences(html);
+	}
+
+
+	public String trimString(String stringToTrim) {
+		return stringToTrim.trim();
+	}
 
  
     

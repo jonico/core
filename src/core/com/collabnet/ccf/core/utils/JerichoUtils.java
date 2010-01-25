@@ -6,7 +6,7 @@ import net.htmlparser.jericho.Source;
  * @author jnicolai
  *
  */
-public class HtmlUtils {
+public class JerichoUtils implements FormatterProxy {
 	/**
 	 * Converts html into formatted plain text
 	 * @param html html content
@@ -15,5 +15,17 @@ public class HtmlUtils {
 	public static String htmlToText(String html) {
 		Source source=new Source(html);
 		return source.getRenderer().toString();
+	}
+
+	public String convertHtmlToText(String original) {
+		return htmlToText(original);
+	}
+
+	public String convertTextToHtml(String html) {
+		return StringUtils.encodeHTMLToEntityReferences(html);
+	}
+
+	public String trimString(String stringToTrim) {
+		return stringToTrim.trim();
 	}
 }
