@@ -488,8 +488,8 @@ public class QCGAHelper {
 							}
 							else if(attachDescription.get(1).equals("deleted")){
 								String attachmentName = attachDescription.get(2);
-								// here we have to check whether attachment already exists
-								if (getFromTable(qcc, requirementId, attachmentName) != null) {
+								// here we have to check whether attachment still exists
+								if (getFromTable(qcc, requirementId, attachmentName) == null) {
 									String deleteTransactionId = newRs.getFieldValueAsString("AU_ACTION_ID");
 									String deleteTime = newRs.getFieldValueAsString("AU_TIME");
 									Map<String, String> values = new TreeMap<String, String>();

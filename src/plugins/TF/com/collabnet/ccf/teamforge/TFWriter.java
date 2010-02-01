@@ -1268,7 +1268,7 @@ public class TFWriter extends AbstractWriter<Connection> implements
 			connection = connect(ga);
 			attachmentHandler.deleteAttachment(connection, targetArtifactId,
 					artifactId, ga);
-			log.info("Attachment " + targetArtifactId + "is deleted");
+			log.info("Attachment " + targetArtifactId + " is deleted");
 			ArtifactDO artifact = trackerHandler.getTrackerItem(connection,
 					artifactId);
 			parentArtifact = new GenericArtifact();

@@ -275,7 +275,7 @@ public class QCAttachmentHandler {
 	/**
 	 * Used by the QCReader's getArtifactAttachments which is an implementation
 	 * of the AbstractReader method. This method gets the attachment data as
-	 * c(s) for a given defectId after a particular transaction.
+	 * c(s) for a given artifact id after a particular transaction.
 	 *
 	 * @param modifiedAttachmentArtifacts
 	 *            This list of GenericArtifacts is used to store the obtained
@@ -786,7 +786,7 @@ public class QCAttachmentHandler {
 		}
 	}
 	
-	public void deleteAttachmentForRequirement(IConnection qcc, String bugId, String attachmentId) {
+	public void deleteAttachmentForRequirement(IConnection qcc, String defectId, String attachmentId) {
 		// TODO Validate if the attachment exists before deleting
 		// The QC API does not indicate whether it deleted the attachment or not.
 		IRequirementsFactory reqFactory = null;
@@ -796,7 +796,7 @@ public class QCAttachmentHandler {
 		boolean versionControlSupported = false;
 		try {
 			reqFactory = qcc.getRequirementsFactory();
-			req = reqFactory.getItem(bugId);
+			req = reqFactory.getItem(defectId);
 			
 			versionControl = req.getVersionControlObject();
 			if (versionControl != null) {
