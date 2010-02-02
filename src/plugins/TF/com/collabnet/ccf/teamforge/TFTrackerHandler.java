@@ -119,11 +119,6 @@ public class TFTrackerHandler {
 			throws RemoteException {
 		log.debug("Getting the changed artifacts from " + lastModifiedDate);
 		// only select ID of row because we have to get the details in any case
-		// FIXME get rid of this once we have fixed the problem in ctf5latest
-		String[] selectedColumns53 = { ArtifactSoapDO.COLUMN_ID,
-				ArtifactSoapDO.COLUMN_LAST_MODIFIED_DATE,
-				ArtifactSoapDO.COLUMN_VERSION,
-				Artifact2SoapDO.COLUMN_AUTOSUMMING };
 		String[] selectedColumns = { ArtifactSoapDO.COLUMN_ID,
 				ArtifactSoapDO.COLUMN_LAST_MODIFIED_DATE,
 				ArtifactSoapDO.COLUMN_VERSION };
@@ -133,15 +128,10 @@ public class TFTrackerHandler {
 		Filter[] filter = { new Filter("modifiedAfter", Filter.DATE_FORMAT
 				.format(lastModifiedDate)) };
 		ArtifactDetailRow[] rows = null;
-		if (!connection.supports53()) {
-			rows = connection.getTrackerClient().getArtifactDetailList(
+		rows = connection.getTrackerClient().getArtifactDetailList(
 					trackerId, selectedColumns, filter, sortKeys, 0, -1, false,
 					true).getDataRows();
-		} else {
-			rows = connection.getTrackerClient().getArtifactDetailList(
-					trackerId, selectedColumns53, filter, sortKeys, 0, -1,
-					false, true).getDataRows();
-		}
+			
 		if (rows != null) {
 			log.debug("There were " + rows.length + " artifacts changed");
 		}
