@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beansProjectDescription>
 	<version>1</version>
-	<pluginVersion><![CDATA[2.0.4.v200803111444]]></pluginVersion>
+	<pluginVersion><![CDATA[2.3.0.200912170948-RELEASE]]></pluginVersion>
 	<configSuffixes>
 		<configSuffix><![CDATA[xml]]></configSuffix>
 	</configSuffixes>
@@ -23,8 +23,6 @@
 		<config>samples/QC2QC/config/config.xml</config>
 		<config>samples/QCPT/PT2QC/config/config.xml</config>
 		<config>samples/QCPT/QC2PT/config/config.xml</config>
-		<config>samples/QCTF/QC2TF/config/config.xml</config>
-		<config>samples/QCTF/TF2QC/config/config.xml</config>
 		<config>samples/IntegrationScenarios/genericArtifactImport/config/config.xml</config>
 	</configs>
 	<configSets>
