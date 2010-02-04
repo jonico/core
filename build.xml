@@ -303,8 +303,6 @@
 				<include name="centralCCFDatabase/**/*"/>
 				<include name="QCTF/**/*"/>
 				<include name="QCPT/**/*"/>
-				<include name="QCTFNG/**/*"/>
-				<include name="HospitalReplay/**/*"/>
 			</fileset>
 		</copy>
 		<copy todir="build/package">
