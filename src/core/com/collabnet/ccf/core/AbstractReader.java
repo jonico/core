@@ -740,6 +740,8 @@ public abstract class AbstractReader<T> extends Component implements
 				ArtifactState artifactState = new ArtifactState();
 				artifactState.setTransactionId(result.get(0).toString());
 				artifactState.setReplayedArtifactData(result.get(1).toString());
+				// if we know the name of the entity service, we can decide whether the artifact should be transformed
+				// again. Otherwise, we will not change the default error code (ok) and no transformation will take place
 				if (getNameOfEntityService() != null) {
 					Object originatingComponent = result.get(2);
 					if (originatingComponent == null || !originatingComponent.equals(getNameOfEntityService())) {
