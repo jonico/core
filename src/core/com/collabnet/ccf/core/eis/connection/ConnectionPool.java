@@ -54,9 +54,11 @@ public class ConnectionPool<T> {
 	private long maxIdleTime = 2*60*1000;
 	public long scavengerInterval = 2*60*1000;
 	private int maxConnectionsPerPool = 5;
+	private long scavengerLastRun = 0;
 
 	public ConnectionPool(){
-		new Scavenger().start();
+		// we currently do not use the scavenger thread due to its inefficient synchronization model
+		//new Scavenger().start();
 	}
 	/**
 	 * Gets a free connection from the pool for the system, repository combination.
@@ -94,6 +96,8 @@ public class ConnectionPool<T> {
 		if(factory == null){
 			throw new IllegalArgumentException("Connection Factory is not set");
 		}
+		// always clean up connection pool before we request free connections
+		runScavengerCodeInLocalThread();
 		log.debug("Requesting a free connection");
 		T connection = getFreeConnectionForKey(systemId, systemKind, repositoryId,
 				repositoryKind, connectionInfo, credentialInfo);
@@ -324,6 +328,34 @@ public class ConnectionPool<T> {
 		this.factory = factory;
 	}
 
+	private synchronized void runScavengerCodeInLocalThread () {
+		// first find out whether we have to run this code at this time again
+		long currentTime = System.currentTimeMillis();
+		if (currentTime - scavengerLastRun > scavengerInterval) {
+			scavengerLastRun = currentTime;
+			Set<String> keys = connectionPool.keySet();
+			for(String key:keys){
+				ArrayList<ConnectionInfo> connectionInfos = connectionPool.get(key);
+				synchronized(connectionInfos){
+					Iterator<ConnectionInfo> it = connectionInfos.iterator();
+					while(it.hasNext()){
+						ConnectionInfo info = it.next();
+						if(info.isFreeFor(maxIdleTime) ||
+								(!factory.isAlive(info.getConnection()))){
+							try {
+								factory.closeConnection(info.getConnection());
+							} catch (ConnectionException e) {
+								log.warn("Could not close one of the pooled connections for "+key,e);
+							}
+							it.remove();
+							reversePoolMap.remove(info.getConnection());
+						}
+					}
+				}
+			}
+		}
+	}
+	
 	/**
 	 * The scavenger thread which is responsible to close and remove the connection
 	 * objects that are
@@ -333,7 +365,7 @@ public class ConnectionPool<T> {
 	 * @author madhusuthanan
 	 *
 	 */
-	private class Scavenger extends Thread {
+	/*private class Scavenger extends Thread {
 		public void run(){
 			while(true){
 				Set<String> keys = connectionPool.keySet();
@@ -364,7 +396,7 @@ public class ConnectionPool<T> {
 				}
 			}
 		}
-	}
+	}*/
 
 	/**
 	 * This class's objects represent a connection in the pool.
