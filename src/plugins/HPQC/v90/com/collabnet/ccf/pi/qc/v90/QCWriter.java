@@ -1240,6 +1240,9 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 			} else if (message.contains("Project is not connected")) {
 				connectionErrorOccured = true;
 				this.reInitCOM();
+			}  else if (message.contains("You do not have the required permissions to execute this action.")) {
+				connectionErrorOccured = true;
+				this.reInitCOM();
 			} else if (message.contains("Failed to Check Out")) {
 				// set new error code
 				ga.getRootElement().addAttribute(
