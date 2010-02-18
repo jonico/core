@@ -332,26 +332,30 @@ public class ConnectionPool<T> {
 		// first find out whether we have to run this code at this time again
 		long currentTime = System.currentTimeMillis();
 		if (currentTime - scavengerLastRun > scavengerInterval) {
-			scavengerLastRun = currentTime;
-			Set<String> keys = connectionPool.keySet();
-			for(String key:keys){
-				ArrayList<ConnectionInfo> connectionInfos = connectionPool.get(key);
-				synchronized(connectionInfos){
-					Iterator<ConnectionInfo> it = connectionInfos.iterator();
-					while(it.hasNext()){
-						ConnectionInfo info = it.next();
-						if(info.isFreeFor(maxIdleTime) ||
-								(!factory.isAlive(info.getConnection()))){
-							try {
-								factory.closeConnection(info.getConnection());
-							} catch (ConnectionException e) {
-								log.warn("Could not close one of the pooled connections for "+key,e);
+			try {
+				scavengerLastRun = currentTime;
+				Set<String> keys = connectionPool.keySet();
+				for(String key:keys){
+					ArrayList<ConnectionInfo> connectionInfos = connectionPool.get(key);
+					synchronized(connectionInfos){
+						Iterator<ConnectionInfo> it = connectionInfos.iterator();
+						while(it.hasNext()){
+							ConnectionInfo info = it.next();
+							if(info.isFreeFor(maxIdleTime) ||
+									(!factory.isAlive(info.getConnection()))){
+								try {
+									factory.closeConnection(info.getConnection());
+								} catch (ConnectionException e) {
+									log.warn("Could not close one of the pooled connections for "+key,e);
+								}
+								it.remove();
+								reversePoolMap.remove(info.getConnection());
 							}
-							it.remove();
-							reversePoolMap.remove(info.getConnection());
 						}
 					}
 				}
+			} catch (Exception e) {
+				log.error("An unexpected exception occured while cleaning up the connection pool.",e);
 			}
 		}
 	}
