@@ -946,6 +946,8 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 			}
 			
 			parentArtifact = new GenericArtifact();
+			// make sure that we do not update the synchronization status record for replayed attachments
+			parentArtifact.setTransactionId(genericArtifact.getTransactionId());
 			parentArtifact
 					.setArtifactType(GenericArtifact.ArtifactTypeValue.PLAINARTIFACT);
 			parentArtifact
@@ -1061,6 +1063,8 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 
 			
 			parentArtifact = new GenericArtifact();
+			// make sure that we do not update the synchronization status record for replayed attachments
+			parentArtifact.setTransactionId(genericArtifact.getTransactionId());
 			parentArtifact
 					.setArtifactType(GenericArtifact.ArtifactTypeValue.PLAINARTIFACT);
 			parentArtifact

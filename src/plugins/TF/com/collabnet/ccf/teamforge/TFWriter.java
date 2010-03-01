@@ -593,6 +593,8 @@ public class TFWriter extends AbstractWriter<Connection> implements
 			ArtifactDO artifact = trackerHandler.getTrackerItem(connection,
 					targetParentArtifactId);
 			parentArtifact = new GenericArtifact();
+			// make sure that we do not update the synchronization status record for replayed attachments
+			parentArtifact.setTransactionId(ga.getTransactionId());
 			parentArtifact
 					.setArtifactType(GenericArtifact.ArtifactTypeValue.PLAINARTIFACT);
 			parentArtifact
@@ -1272,6 +1274,8 @@ public class TFWriter extends AbstractWriter<Connection> implements
 			ArtifactDO artifact = trackerHandler.getTrackerItem(connection,
 					artifactId);
 			parentArtifact = new GenericArtifact();
+			// make sure that we do not update the synchronization status record for replayed attachments
+			parentArtifact.setTransactionId(ga.getTransactionId());
 			parentArtifact
 					.setArtifactType(GenericArtifact.ArtifactTypeValue.PLAINARTIFACT);
 			parentArtifact

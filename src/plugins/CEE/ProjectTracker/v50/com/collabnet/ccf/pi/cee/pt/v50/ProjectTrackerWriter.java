@@ -233,6 +233,8 @@ public class ProjectTrackerWriter extends
 					+ " with the attachment " + sourceAttachmentId
 					+ " from artifact " + parentSourceArtifactId);
 			parentArtifact = new GenericArtifact();
+			// make sure that we do not update the synchronization status record for replayed attachments
+			parentArtifact.setTransactionId(ga.getTransactionId());
 			parentArtifact
 					.setArtifactType(GenericArtifact.ArtifactTypeValue.PLAINARTIFACT);
 			parentArtifact
@@ -1157,6 +1159,8 @@ public class ProjectTrackerWriter extends
 			ga.setTargetArtifactVersion(Long.toString(modifiedOnMilliSeconds));
 
 			parentArtifact = new GenericArtifact();
+			// make sure that we do not update the synchronization status record for replayed attachments
+			parentArtifact.setTransactionId(ga.getTransactionId());
 			parentArtifact
 					.setArtifactType(GenericArtifact.ArtifactTypeValue.PLAINARTIFACT);
 			parentArtifact
