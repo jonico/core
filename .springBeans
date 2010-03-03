@@ -26,6 +26,8 @@
 		<config>samples/IntegrationScenarios/genericArtifactImport/config/config.xml</config>
 		<config>samples/QCTF/QC2TF/config/config.xml</config>
 		<config>samples/QCTF/TF2QC/config/config.xml</config>
+		<config>samples/TFSWP/SWP2TF/config/config.xml</config>
+		<config>samples/TFSWP/TF2SWP/config/config.xml</config>
 	</configs>
 	<configSets>
 	</configSets>
