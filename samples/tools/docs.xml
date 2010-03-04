@@ -56,8 +56,8 @@
   <property name="build.examples.docs.dir" value="../../../www/exampleScenarioDocs/" />
   <property name="build.examples.images.dir" value="${build.examples.docs.dir}" />
 
-  <property name="filecomment.path.pattern1" value="$HeadURL: http://ccf.open.collab.net/svn/ccf/trunk/core/samples/"/>
-  <property name="filecomment.path.pattern2" value="\$HeadURL\: http\:\/\/ccf\.open\.collab\.net\/svn\/ccf\/trunk\/core\/samples\/"/>
+  <property name="filecomment.path.pattern1" value="$HeadURL: http://ccf.open.collab.net/svn/ccf/branches/TF-SWP/core/samples/"/>
+  <property name="filecomment.path.pattern2" value="\$HeadURL\: http\:\/\/ccf\.open\.collab\.net\/svn\/ccf\/branches\/TF-SWP\/core\/samples\/"/>
   <property name="filecomment.path.pattern3" value="this pattern will not be found"/>
   <property name="filecomment.path.pattern4" value="this pattern will not be found"/>
 
@@ -68,6 +68,7 @@
     <include name="QCTF/**/*.xml" />
   	<include name="QCTFOLD/**/*.xml" />
     <include name="QCPT/**/*.xml" />
+  	<include name="TFSWP/**/*.xml" />
     <exclude name="**/input/*.xml" />
     <exclude name="**/output/*.xml" />
     <exclude name="**/xslt/*.xml" />
@@ -268,6 +269,7 @@
     		<include name="QCTF/**/*.xml" />
 			<include name="QCTFOLD/**/*.xml" />
     		<include name="QCPT/**/*.xml" />
+      		<include name="SWPTF/**/*.xml" />
     		<exclude name="**/input/*.xml" />
     		<exclude name="**/output/*.xml" />
     		<exclude name="**/xslt/*.xml" />
