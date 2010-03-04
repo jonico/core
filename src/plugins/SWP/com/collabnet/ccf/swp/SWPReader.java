@@ -20,6 +20,7 @@ import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifact.ArtifactModeValue;
 import com.collabnet.ccf.core.ga.GenericArtifact.ArtifactTypeValue;
+import com.collabnet.ccf.core.ga.GenericArtifactField.FieldActionValue;
 import com.collabnet.ccf.core.ga.GenericArtifactField.FieldValueTypeValue;
 import com.danube.scrumworks.api.client.types.BacklogItemWSO;
 import com.danube.scrumworks.api.client.types.ProductWSO;
@@ -81,11 +82,13 @@ public class SWPReader extends AbstractReader<Connection> {
 			GenericArtifactField descriptionField = genericArtifact
 					.addNewField("description", "mandatoryField");
 			descriptionField.setFieldValueType(FieldValueTypeValue.STRING);
+			descriptionField.setFieldAction(FieldActionValue.REPLACE);
 			descriptionField.setFieldValue(pbi.getDescription());
 			GenericArtifactField titleField = genericArtifact.addNewField(
 					"title", "mandatoryField");
 			titleField.setFieldValueType(FieldValueTypeValue.STRING);
 			titleField.setFieldValue(pbi.getTitle());
+			titleField.setFieldAction(FieldActionValue.REPLACE);
 		} catch (ServerException e) {
 			// TODO Auto-generated catch block
 			String cause = "During the artifact retrieval process from SWP, an error occured";
