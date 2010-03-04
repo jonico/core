@@ -1,10 +1,14 @@
 package com.collabnet.ccf.swp;
 
+import javax.xml.rpc.ServiceException;
+
 import com.collabnet.ccf.core.eis.connection.ConnectionException;
 import com.collabnet.ccf.core.eis.connection.ConnectionFactory;
 import com.collabnet.ccf.core.eis.connection.ConnectionManager;
 
 public class SWPConnectionFactory implements ConnectionFactory<Connection> {
+	
+	public static final String PARAM_DELIMITER = ":";
 
 	public void closeConnection(Connection connection)
 			throws ConnectionException {
@@ -17,13 +21,18 @@ public class SWPConnectionFactory implements ConnectionFactory<Connection> {
 			String credentialInfo,
 			ConnectionManager<Connection> connectionManager)
 			throws ConnectionException {
-		// TODO Auto-generated method stub
-		return null;
+		// TODO implement me
+		
+		try {
+			return new Connection(repositoryId, repositoryKind, connectionInfo, credentialInfo, connectionManager);
+		} catch (ServiceException e) {
+			throw new ConnectionException("Could not connect to SWP" , e);
+		}
 	}
 
 	public boolean isAlive(Connection connection) {
 		// TODO Auto-generated method stub
-		return false;
+		return true;
 	}
 
 }
