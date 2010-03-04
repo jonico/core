@@ -253,6 +253,10 @@
 		<!-- This plugs in the polling hospital -->
 		<property name="hospitalDatabaseReader" ref="HospitalDatabaseExtractor" />
 		<property name="nameOfEntityService" value="TFEntityService" />
+		
+		<!-- Just temporary added config values due to missing polling capabilities -->
+		<property name="bulkImport" value="true" />
+		<property name="shutdownCCFAfterInitialSync" value="true"/>
 	</bean>
 	<bean id="SWPConnectionManager" class="com.collabnet.ccf.core.eis.connection.ConnectionManager">
 		<!-- Please set the number of connections to the number of project mappings you have -->
