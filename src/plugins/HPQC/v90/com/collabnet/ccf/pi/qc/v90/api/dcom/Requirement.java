@@ -189,61 +189,32 @@ public class Requirement extends ActiveXComponent implements
 	}
 
 	public File retrieveAttachmentData(String attachmentName) {
-		int size = 0;
-		int maxAttachmentUploadWaitCount = 10;
-		int waitCount = 0;
-		do {
-			IFactoryList attachments = new AttachmentFactory(
-					getPropertyAsComponent("Attachments")).getFilter()
-					.getNewList();
-			for (int n = 1; n <= attachments.getCount(); ++n) {
-				Dispatch item = attachments.getItem(n);
-				String fileName = Dispatch.get(item, "FileName").toString();
-				if (!fileName.endsWith(attachmentName))
-					continue;
-				Dispatch.call(item,"Load",true,"");
-				//Dispatch.get(item, "Data");
-				size = Dispatch.get(item, "FileSize").getInt();
-				if (size == 0) {
-					if (++waitCount > maxAttachmentUploadWaitCount) {
-						String message = "The QC attachment reader has waited enough. "
-								+ "But the attachment upload is still going on. "
-								+ "Probably the user is attaching a huge file. "
-								+ "So skipping this attachment.";
-						logger.warn(message);
-						return null;
-					} else {
-						logger
-								.info("Attachment "
-										+ attachmentName
-										+ " is still being uploaded. Wait cycle number "
-										+ waitCount);
-						try {
-							Thread.sleep(1000);
-						} catch (InterruptedException e) {
-							logger
-									.warn(
-											"Thread interrupted while reading the attachment",
-											e);
-						}
-						break;
-					}
-				} else {
-					logger.debug("Attachment " + attachmentName
-							+ " has been read.");
-					File attachmentFile = new File(fileName);
-					if (!attachmentFile.exists()) {
-						String message = "The attachment File " + fileName
-								+ " does not exist";
-						logger.error(message);
-						throw new CCFRuntimeException(message);
-					}
-					return attachmentFile;
-				}
+		//int size = 0;
+		//int maxAttachmentUploadWaitCount = 10;
+		//int waitCount = 0;
+		IFactoryList attachments = new AttachmentFactory(
+				getPropertyAsComponent("Attachments")).getFilter().getNewList();
+		for (int n = 1; n <= attachments.getCount(); ++n) {
+			Dispatch item = attachments.getItem(n);
+			String fileName = Dispatch.get(item, "FileName").toString();
+			if (!fileName.endsWith(attachmentName))
+				continue;
+			logger.debug("Going to load attachment " + attachmentName + " ...");
+			Dispatch.call(item, "Load", true, "");
+			// Dispatch.get(item, "Data");
+			// size = Dispatch.get(item, "FileSize").getInt();
+			logger.debug("Attachment " + attachmentName + " has been read.");
+			File attachmentFile = new File(fileName);
+			if (!attachmentFile.exists()) {
+				String message = "The attachment File " + fileName
+						+ " does not exist";
+				logger.error(message);
+				throw new CCFRuntimeException(message);
 			}
-		} while (size == 0);
+			return attachmentFile;
+		}
 
-		throw new IllegalArgumentException("no data found");
+		throw new IllegalArgumentException("No attachment with matching file name found: "+attachmentName);
 	}
 
 	public void createNewAttachment(String fileName, String description,
@@ -285,8 +256,6 @@ public class Requirement extends ActiveXComponent implements
 				getPropertyAsComponent("Attachments"));
 		return attachmentFactory;
 	}
-	
-	
 
 	public boolean hasAttachments() {
 		return getPropertyAsBoolean("HasAttachment");
