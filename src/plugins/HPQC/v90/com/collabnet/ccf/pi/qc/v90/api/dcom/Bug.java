@@ -276,7 +276,8 @@ public class Bug extends ActiveXComponent implements IBugActions {
 				Dispatch item = attachments.getItem(n);
 				String fileName = Dispatch.get(item, "FileName").toString();
 				if( !fileName.endsWith(attachmentName) ) continue;
-				Dispatch.get(item, "Data");
+				//Dispatch.get(item, "Data");
+				Dispatch.call(item,"Load",true,"");
 				size = Dispatch.get(item, "FileSize").getInt();
 				if(size == 0) {
 					if(++waitCount > maxAttachmentUploadWaitCount){
@@ -321,6 +322,8 @@ public class Bug extends ActiveXComponent implements IBugActions {
 			attachment = attachmentFactory.addItem();
 	
 			attachment.putFileName(fileName);
+			File file = new File(fileName);
+			
 			attachment.putType(type);
 			if(description != null) {
 				attachment.putDescription(description);
