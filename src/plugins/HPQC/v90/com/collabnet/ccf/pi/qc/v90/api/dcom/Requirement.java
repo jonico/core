@@ -189,7 +189,6 @@ public class Requirement extends ActiveXComponent implements
 	}
 
 	public File retrieveAttachmentData(String attachmentName) {
-		//int size = 0;
 		//int maxAttachmentUploadWaitCount = 10;
 		//int waitCount = 0;
 		IFactoryList attachments = new AttachmentFactory(
@@ -202,15 +201,24 @@ public class Requirement extends ActiveXComponent implements
 			logger.debug("Going to load attachment " + attachmentName + " ...");
 			Dispatch.call(item, "Load", true, "");
 			// Dispatch.get(item, "Data");
-			// size = Dispatch.get(item, "FileSize").getInt();
 			logger.debug("Attachment " + attachmentName + " has been read.");
 			File attachmentFile = new File(fileName);
+			
 			if (!attachmentFile.exists()) {
 				String message = "The attachment File " + fileName
 						+ " does not exist";
 				logger.error(message);
 				throw new CCFRuntimeException(message);
 			}
+			
+			int size = Dispatch.get(item, "FileSize").getInt();
+			if (size != attachmentFile.length()) {
+				logger.warn("Downloaded file size (" + attachmentFile.length()
+						+ ") and expected file size (" + size
+						+ ") do not match for attachment "
+						+ attachmentFile.getAbsolutePath());
+			}
+			
 			return attachmentFile;
 		}
 

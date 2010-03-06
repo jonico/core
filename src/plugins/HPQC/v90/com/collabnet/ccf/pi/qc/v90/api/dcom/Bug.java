@@ -254,9 +254,8 @@ public class Bug extends ActiveXComponent implements IBugActions {
 	}
 
 	public File retrieveAttachmentData(String attachmentName) {
-		//int size = 0;
-		//int maxAttachmentUploadWaitCount = 10;
-		//int waitCount = 0;
+		// int maxAttachmentUploadWaitCount = 10;
+		// int waitCount = 0;
 		IFactoryList attachments = new BugFactory(
 				getPropertyAsComponent("Attachments")).getFilter().getNewList();
 		for (int n = 1; n <= attachments.getCount(); ++n) {
@@ -267,7 +266,6 @@ public class Bug extends ActiveXComponent implements IBugActions {
 			// Dispatch.get(item, "Data");
 			logger.debug("Going to load attachment " + attachmentName + " ...");
 			Dispatch.call(item, "Load", true, "");
-			//size = Dispatch.get(item, "FileSize").getInt();
 
 			logger.debug("Attachment " + attachmentName + " has been read.");
 			File attachmentFile = new File(fileName);
@@ -277,10 +275,21 @@ public class Bug extends ActiveXComponent implements IBugActions {
 				logger.error(message);
 				throw new CCFRuntimeException(message);
 			}
+
+			int size = Dispatch.get(item, "FileSize").getInt();
+			if (size != attachmentFile.length()) {
+				logger.warn("Downloaded file size (" + attachmentFile.length()
+						+ ") and expected file size (" + size
+						+ ") do not match for attachment "
+						+ attachmentFile.getAbsolutePath());
+			}
+
 			return attachmentFile;
 		}
 
-		throw new IllegalArgumentException("No attachment with matching file name found: "+attachmentName);
+		throw new IllegalArgumentException(
+				"No attachment with matching file name found: "
+						+ attachmentName);
 	}
 
 	public void createNewAttachment(String fileName, String description,
