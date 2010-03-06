@@ -18,7 +18,10 @@
 package com.collabnet.ccf.pi.qc.v90;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -158,6 +161,35 @@ public class QCGAHelper {
 		}
 
 		return attachmentFile;
+	}
+	
+	/**
+	 * Copy a file from origin to target
+	 * @param origin origin file
+	 * @param target target file
+	 */
+	public static void copyFile(File origin, File target) {
+		try {
+			FileInputStream fis = new FileInputStream(origin);
+			FileOutputStream fos = new FileOutputStream(target);
+			int readCount = 0;
+			byte[] tmpData = new byte[1024*4];
+			while((readCount = fis.read(tmpData)) != -1){
+				fos.write(tmpData, 0, readCount);
+			}
+			fis.close();
+			fos.close();
+		} catch (FileNotFoundException e) {
+			String message = "Could not read attachment content."
+				+" File not found "+origin.getAbsolutePath();
+			log.error(message, e);
+			throw new CCFRuntimeException(message, e);
+		} catch (IOException e) {
+			String message = "Could not read attachment content."
+				+" IOException while reading "+origin.getAbsolutePath();
+			log.error(message, e);
+			throw new CCFRuntimeException(message, e);
+		}
 	}
 
 	/**

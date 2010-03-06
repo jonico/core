@@ -322,7 +322,6 @@ public class Bug extends ActiveXComponent implements IBugActions {
 			attachment = attachmentFactory.addItem();
 	
 			attachment.putFileName(fileName);
-			File file = new File(fileName);
 			
 			attachment.putType(type);
 			if(description != null) {

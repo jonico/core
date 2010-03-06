@@ -827,6 +827,9 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 				attachmentFile = qcGAHelper.writeDataIntoFile(attachmentData,
 						attachmentName);
 			} else {
+				// we have to cope the file containing the attachment data to a file with the intended file name
+				// we have to do the copy operation instead of renaming if the server throws
+				// an exception and we have to repeat the procedure again
 				File attachmentDataFile = new File(attachmentDataFileName);
 				String tempDir = System.getProperty("java.io.tmpdir");
 				attachmentFile = new File(tempDir, attachmentName);
@@ -852,15 +855,7 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 								+ attachmentDataFile.getAbsolutePath()
 								+ " can be moved to that name.");
 					}
-					boolean renamingSuccess = attachmentDataFile
-							.renameTo(attachmentFile);
-					if (!renamingSuccess) {
-						String message = "Count not move file "
-								+ attachmentDataFile.getAbsolutePath() + " to "
-								+ attachmentFile.getAbsolutePath();
-						log.error(message);
-						throw new CCFRuntimeException(message);
-					}
+					QCGAHelper.copyFile(attachmentDataFile, attachmentFile);
 				} else {
 					String message = "The attachment data file "
 							+ attachmentDataFile.getAbsolutePath()
@@ -876,7 +871,7 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 				String message = "The attachment data file "
 						+ attachmentFile.getAbsolutePath()
 						+ " does not exist. So the attachment "
-						+ attachmentName + " can not be uploaded to the bug "
+						+ attachmentName + " can not be uploaded to the artifact "
 						+ parentArtifactId;
 				log.error(message);
 				throw new CCFRuntimeException(message);

@@ -201,8 +201,8 @@ public class Requirement extends ActiveXComponent implements
 				String fileName = Dispatch.get(item, "FileName").toString();
 				if (!fileName.endsWith(attachmentName))
 					continue;
-				//Dispatch.get(item, "Data");
 				Dispatch.call(item,"Load",true,"");
+				//Dispatch.get(item, "Data");
 				size = Dispatch.get(item, "FileSize").getInt();
 				if (size == 0) {
 					if (++waitCount > maxAttachmentUploadWaitCount) {
