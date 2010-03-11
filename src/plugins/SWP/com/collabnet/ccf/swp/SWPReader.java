@@ -22,9 +22,11 @@ import com.collabnet.ccf.core.ga.GenericArtifact.ArtifactModeValue;
 import com.collabnet.ccf.core.ga.GenericArtifact.ArtifactTypeValue;
 import com.collabnet.ccf.core.ga.GenericArtifactField.FieldActionValue;
 import com.collabnet.ccf.core.ga.GenericArtifactField.FieldValueTypeValue;
+import com.danube.scrumworks.api.client.ScrumWorksEndpoint;
 import com.danube.scrumworks.api.client.types.BacklogItemWSO;
 import com.danube.scrumworks.api.client.types.ProductWSO;
 import com.danube.scrumworks.api.client.types.ServerException;
+import com.danube.scrumworks.api.client.types.TaskWSO;
 
 /**
  * SWP Reader component
@@ -77,18 +79,44 @@ public class SWPReader extends AbstractReader<Connection> {
 		genericArtifact.setSourceArtifactId(artifactId);
 
 		try {
-			BacklogItemWSO pbi = connection.getEndpoint().getBacklogItemByKey(
-					artifactId);
-			GenericArtifactField descriptionField = genericArtifact
+			ScrumWorksEndpoint endpoint = connection.getEndpoint();
+			if (sourceRepositoryId.endsWith("-Tasks")) {
+				final String productName = getProductNameFromTaskString(sourceRepositoryId);
+				final TaskWSO task = endpoint.getTaskById(Long.valueOf(artifactId));
+				final BacklogItemWSO backlogItem = endpoint.getBacklogItem(task.getBacklogItemId());
+				
+				GenericArtifactField descriptionField = genericArtifact
 					.addNewField("description", "mandatoryField");
-			descriptionField.setFieldValueType(FieldValueTypeValue.STRING);
-			descriptionField.setFieldAction(FieldActionValue.REPLACE);
-			descriptionField.setFieldValue(pbi.getDescription());
-			GenericArtifactField titleField = genericArtifact.addNewField(
-					"title", "mandatoryField");
-			titleField.setFieldValueType(FieldValueTypeValue.STRING);
-			titleField.setFieldValue(pbi.getTitle());
-			titleField.setFieldAction(FieldActionValue.REPLACE);
+				descriptionField.setFieldValueType(FieldValueTypeValue.STRING);
+				descriptionField.setFieldAction(FieldActionValue.REPLACE);
+				descriptionField.setFieldValue(task.getDescription());
+				GenericArtifactField titleField = genericArtifact.addNewField(
+						"title", "mandatoryField");
+				titleField.setFieldValueType(FieldValueTypeValue.STRING);
+				titleField.setFieldValue(task.getTitle());
+				titleField.setFieldAction(FieldActionValue.REPLACE);
+				GenericArtifactField estimateField = genericArtifact.addNewField(
+						"estimate", "mandatoryField");
+				estimateField.setFieldValueType(FieldValueTypeValue.INTEGER);
+				estimateField.setFieldValue(task.getEstimatedHours());
+				estimateField.setFieldAction(FieldActionValue.REPLACE);
+				
+				genericArtifact.setDepParentSourceArtifactId(backlogItem.getKey());
+				genericArtifact.setDepParentSourceRepositoryId(productName);
+			} else {
+				BacklogItemWSO pbi = endpoint.getBacklogItemByKey(
+						artifactId);
+				GenericArtifactField descriptionField = genericArtifact
+						.addNewField("description", "mandatoryField");
+				descriptionField.setFieldValueType(FieldValueTypeValue.STRING);
+				descriptionField.setFieldAction(FieldActionValue.REPLACE);
+				descriptionField.setFieldValue(pbi.getDescription());
+				GenericArtifactField titleField = genericArtifact.addNewField(
+						"title", "mandatoryField");
+				titleField.setFieldValueType(FieldValueTypeValue.STRING);
+				titleField.setFieldValue(pbi.getTitle());
+				titleField.setFieldAction(FieldActionValue.REPLACE);
+			}
 		} catch (ServerException e) {
 			// TODO Auto-generated catch block
 			String cause = "During the artifact retrieval process from SWP, an error occured";
@@ -191,14 +219,33 @@ public class SWPReader extends AbstractReader<Connection> {
 
 		ArrayList<ArtifactState> artifactStates = new ArrayList<ArtifactState>();
 		try {
-			ProductWSO product = connection.getEndpoint().getProductByName(sourceRepositoryId);
-			BacklogItemWSO[] pbis = connection.getEndpoint().getActiveBacklogItems(product);
-			for (BacklogItemWSO pbi : pbis) {
-				ArtifactState artifactState = new ArtifactState();
-				artifactState.setArtifactId(pbi.getKey());
-				artifactState.setArtifactLastModifiedDate(new Date(0));
-				artifactState.setArtifactVersion(-1);
-				artifactStates.add(artifactState);
+			ScrumWorksEndpoint endpoint = connection.getEndpoint();
+			if (sourceRepositoryId.endsWith("-Tasks")) {
+				String productName = getProductNameFromTaskString(sourceRepositoryId);
+				ProductWSO product = endpoint.getProductByName(productName);
+				BacklogItemWSO[] pbis = endpoint.getActiveBacklogItems(product);
+				for (BacklogItemWSO pbi : pbis) {
+					TaskWSO[] tasks = endpoint.getTasks(pbi);
+					if (tasks != null) {
+						for (TaskWSO task : tasks) {
+							ArtifactState artifactState = new ArtifactState();
+							artifactState.setArtifactId(task.getId().toString());
+							artifactState.setArtifactLastModifiedDate(new Date(0));
+							artifactState.setArtifactVersion(-1);
+							artifactStates.add(artifactState);
+						}
+					}
+				}
+			} else {
+				ProductWSO product = endpoint.getProductByName(sourceRepositoryId);
+				BacklogItemWSO[] pbis = endpoint.getActiveBacklogItems(product);
+				for (BacklogItemWSO pbi : pbis) {
+					ArtifactState artifactState = new ArtifactState();
+					artifactState.setArtifactId(pbi.getKey());
+					artifactState.setArtifactLastModifiedDate(new Date(0));
+					artifactState.setArtifactVersion(-1);
+					artifactStates.add(artifactState);
+				}
 			}
 		} catch (ServerException e) {
 			// TODO Auto-generated catch block
@@ -214,6 +261,11 @@ public class SWPReader extends AbstractReader<Connection> {
 			disconnect(connection);
 		}
 		return artifactStates;
+	}
+
+	private String getProductNameFromTaskString(String sourceRepositoryId) {
+		String productName = sourceRepositoryId.substring(0, sourceRepositoryId.length() - "-Tasks".length());
+		return productName;
 	}
 
 	public void setUserName(String userName) {
