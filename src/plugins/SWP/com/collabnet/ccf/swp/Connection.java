@@ -19,12 +19,29 @@ public class Connection {
 	private String password;
 	private ScrumWorksEndpoint	endpoint;
 	
+	/**
+	 * Returns the SWP endpoint object
+	 * @return SWP endpoint object
+	 */
 	ScrumWorksEndpoint getEndpoint() {
 		return endpoint;
 	}
 	
+	/**
+	 * Delimiter used to split the credentials
+	 * The connector user password may not contain this delimiter
+	 */
 	public static final String PARAM_DELIMITER = ":";
 
+	/**
+	 * Creates a new SWP connection
+	 * @param repositoryId
+	 * @param repositoryKind
+	 * @param connectionInfo
+	 * @param credentialInfo
+	 * @param connectionManager
+	 * @throws ServiceException
+	 */
 	public Connection(String repositoryId, String repositoryKind,
 			String connectionInfo, String credentialInfo,
 			ConnectionManager<Connection> connectionManager) throws ServiceException {
