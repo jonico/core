@@ -87,7 +87,7 @@ public class SWPMetaData {
 	 * @return name of the product or null if product name could not be
 	 *         extracted
 	 */
-	public final String retrieveProductFromRepositoryId(String repositoryId) {
+	public final static String retrieveProductFromRepositoryId(String repositoryId) {
 		int index = repositoryId.lastIndexOf(REPOSITORY_ID_SEPARATOR);
 		if (index == -1) {
 			return null;
@@ -101,18 +101,18 @@ public class SWPMetaData {
 		// TODO Include themes
 		// TODO lookup release/sprint name and include it in artifact
 		// TODO Include comments
-		id("id", GenericArtifactField.FieldValueTypeValue.INTEGER),
+		id("id", GenericArtifactField.FieldValueTypeValue.STRING),
 		benefit("benefit", GenericArtifactField.FieldValueTypeValue.INTEGER),
 		penalty("penalty", GenericArtifactField.FieldValueTypeValue.INTEGER),
-		completedDate("benefit", GenericArtifactField.FieldValueTypeValue.DATETIME),
+		completedDate("completedDate", GenericArtifactField.FieldValueTypeValue.DATETIME),
 		description("description", GenericArtifactField.FieldValueTypeValue.STRING),
 		estimate("estimate", GenericArtifactField.FieldValueTypeValue.INTEGER),
-		groupId("groupId", GenericArtifactField.FieldValueTypeValue.INTEGER),
+		//groupId("groupId", GenericArtifactField.FieldValueTypeValue.INTEGER),
 		key("key", GenericArtifactField.FieldValueTypeValue.STRING),
-		productId("productId", GenericArtifactField.FieldValueTypeValue.INTEGER),
+		productId("productId", GenericArtifactField.FieldValueTypeValue.STRING),
 		rank("rank", GenericArtifactField.FieldValueTypeValue.DOUBLE),
-		releaseId("releaseId", GenericArtifactField.FieldValueTypeValue.INTEGER),
-		sprintId("sprintId", GenericArtifactField.FieldValueTypeValue.INTEGER),
+		releaseId("releaseId", GenericArtifactField.FieldValueTypeValue.STRING),
+		sprintId("sprintId", GenericArtifactField.FieldValueTypeValue.STRING),
 		title("title", GenericArtifactField.FieldValueTypeValue.STRING),
 		active("active", GenericArtifactField.FieldValueTypeValue.BOOLEAN);
 		
@@ -136,13 +136,13 @@ public class SWPMetaData {
 	public enum TaskFields {
 		// TODO Include comments
 		// TODO includes hours spent on this task?
-		id("id", GenericArtifactField.FieldValueTypeValue.INTEGER),
-		backlogItemId("backLogItemId", GenericArtifactField.FieldValueTypeValue.INTEGER),
+		id("id", GenericArtifactField.FieldValueTypeValue.STRING),
+		backlogItemId("backLogItemId", GenericArtifactField.FieldValueTypeValue.STRING),
 		description("description", GenericArtifactField.FieldValueTypeValue.STRING),
 		estimatedHours("estimatedHours", GenericArtifactField.FieldValueTypeValue.INTEGER),
 		rank("rank", GenericArtifactField.FieldValueTypeValue.DOUBLE),
 		status("status", GenericArtifactField.FieldValueTypeValue.STRING),
-		pointPerson("pointPerson", GenericArtifactField.FieldValueTypeValue.INTEGER),
+		pointPerson("pointPerson", GenericArtifactField.FieldValueTypeValue.STRING),
 		taskBoardStatusRank("rank", GenericArtifactField.FieldValueTypeValue.DOUBLE),
 		title("title", GenericArtifactField.FieldValueTypeValue.STRING);
 		

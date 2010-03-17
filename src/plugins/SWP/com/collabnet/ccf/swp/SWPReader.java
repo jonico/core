@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dom4j.Document;
@@ -16,17 +15,11 @@ import com.collabnet.ccf.core.CCFRuntimeException;
 import com.collabnet.ccf.core.eis.connection.ConnectionException;
 import com.collabnet.ccf.core.eis.connection.MaxConnectionsReachedException;
 import com.collabnet.ccf.core.ga.GenericArtifact;
-import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifact.ArtifactModeValue;
 import com.collabnet.ccf.core.ga.GenericArtifact.ArtifactTypeValue;
-import com.collabnet.ccf.core.ga.GenericArtifactField.FieldActionValue;
-import com.collabnet.ccf.core.ga.GenericArtifactField.FieldValueTypeValue;
-import com.danube.scrumworks.api.client.ScrumWorksEndpoint;
-import com.danube.scrumworks.api.client.types.BacklogItemWSO;
-import com.danube.scrumworks.api.client.types.ProductWSO;
+import com.collabnet.ccf.swp.SWPMetaData.SWPType;
 import com.danube.scrumworks.api.client.types.ServerException;
-import com.danube.scrumworks.api.client.types.TaskWSO;
 
 /**
  * SWP Reader component
@@ -38,13 +31,14 @@ public class SWPReader extends AbstractReader<Connection> {
 	private String username;
 	private String password;
 	private String serverUrl;
+	private String resyncUserName;
 
 	private static final Log log = LogFactory.getLog(SWPReader.class);
 
 	@Override
 	public List<GenericArtifact> getArtifactAttachments(Document syncInfo,
 			GenericArtifact artifactData) {
-		// TODO Auto-generated method stub
+		// TODO return attachments
 		return new ArrayList<GenericArtifact>();
 	}
 
@@ -54,6 +48,16 @@ public class SWPReader extends AbstractReader<Connection> {
 		String sourceSystemKind = this.getSourceSystemKind(syncInfo);
 		String sourceRepositoryId = this.getSourceRepositoryId(syncInfo);
 		String sourceRepositoryKind = this.getSourceRepositoryKind(syncInfo);
+		
+		// find out what to extract
+		SWPType swpType = SWPMetaData.retrieveSWPTypeFromRepositoryId(sourceRepositoryId);
+		String swpProductName = SWPMetaData.retrieveProductFromRepositoryId(sourceRepositoryId);
+		if (swpType.equals(SWPMetaData.SWPType.UNKNOWN) || swpProductName == null) {
+			String cause = "Invalid repository format: " + sourceRepositoryId;
+			log.error(cause);
+			throw new CCFRuntimeException(cause);
+		}
+		
 		Connection connection;
 		try {
 			connection = connect(sourceSystemId, sourceSystemKind,
@@ -71,59 +75,35 @@ public class SWPReader extends AbstractReader<Connection> {
 			log.error(cause, e);
 			throw new CCFRuntimeException(cause, e);
 		}
+		
+		
+		SWPHandler swpHandler = new SWPHandler(connection);
+		/**
+		 * Create a new generic artifact data structure
+		 */
 		GenericArtifact genericArtifact = new GenericArtifact();
 		genericArtifact.setSourceArtifactVersion("-1");
 		genericArtifact.setSourceArtifactLastModifiedDate(GenericArtifactHelper.df.format(new Date(0)));
 		genericArtifact.setArtifactMode(ArtifactModeValue.COMPLETE);
 		genericArtifact.setArtifactType(ArtifactTypeValue.PLAINARTIFACT);
 		genericArtifact.setSourceArtifactId(artifactId);
-
+		
+		
 		try {
-			ScrumWorksEndpoint endpoint = connection.getEndpoint();
-			if (sourceRepositoryId.endsWith("-Tasks")) {
-				final String productName = getProductNameFromTaskString(sourceRepositoryId);
-				final TaskWSO task = endpoint.getTaskById(Long.valueOf(artifactId));
-				final BacklogItemWSO backlogItem = endpoint.getBacklogItem(task.getBacklogItemId());
-				
-				GenericArtifactField descriptionField = genericArtifact
-					.addNewField("description", "mandatoryField");
-				descriptionField.setFieldValueType(FieldValueTypeValue.STRING);
-				descriptionField.setFieldAction(FieldActionValue.REPLACE);
-				descriptionField.setFieldValue(task.getDescription());
-				GenericArtifactField titleField = genericArtifact.addNewField(
-						"title", "mandatoryField");
-				titleField.setFieldValueType(FieldValueTypeValue.STRING);
-				titleField.setFieldValue(task.getTitle());
-				titleField.setFieldAction(FieldActionValue.REPLACE);
-				GenericArtifactField estimateField = genericArtifact.addNewField(
-						"estimate", "mandatoryField");
-				estimateField.setFieldValueType(FieldValueTypeValue.INTEGER);
-				estimateField.setFieldValue(task.getEstimatedHours());
-				estimateField.setFieldAction(FieldActionValue.REPLACE);
-				
-				genericArtifact.setDepParentSourceArtifactId(backlogItem.getKey());
-				genericArtifact.setDepParentSourceRepositoryId(productName);
+			if (swpType.equals(SWPMetaData.SWPType.TASK)) {
+				swpHandler.retrieveTask(artifactId, swpProductName, genericArtifact);
+			} else if (swpType.equals(SWPMetaData.SWPType.PBI)) {
+				swpHandler.retrievePBI(artifactId, swpProductName, genericArtifact);
 			} else {
-				BacklogItemWSO pbi = endpoint.getBacklogItemByKey(
-						artifactId);
-				GenericArtifactField descriptionField = genericArtifact
-						.addNewField("description", "mandatoryField");
-				descriptionField.setFieldValueType(FieldValueTypeValue.STRING);
-				descriptionField.setFieldAction(FieldActionValue.REPLACE);
-				descriptionField.setFieldValue(pbi.getDescription());
-				GenericArtifactField titleField = genericArtifact.addNewField(
-						"title", "mandatoryField");
-				titleField.setFieldValueType(FieldValueTypeValue.STRING);
-				titleField.setFieldValue(pbi.getTitle());
-				titleField.setFieldAction(FieldActionValue.REPLACE);
+				String cause = "Unsupported repository format: " + sourceRepositoryId;
+				log.error(cause);
+				throw new CCFRuntimeException(cause);
 			}
 		} catch (ServerException e) {
-			// TODO Auto-generated catch block
 			String cause = "During the artifact retrieval process from SWP, an error occured";
 			log.error(cause, e);
 			throw new CCFRuntimeException(cause, e);
 		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
 			String cause = "During the artifact retrieval process from SWP, an error occured";
 			log.error(cause, e);
 			throw new CCFRuntimeException(cause, e);
@@ -165,14 +145,7 @@ public class SWPReader extends AbstractReader<Connection> {
 		String targetRepositoryKind = this.getTargetRepositoryKind(syncInfo);
 		String targetSystemId = this.getTargetSystemId(syncInfo);
 		String targetSystemKind = this.getTargetSystemKind(syncInfo);
-
-		if (StringUtils.isEmpty(sourceArtifactId)) {
-			List<GenericArtifactField> fields = ga
-					.getAllGenericArtifactFieldsWithSameFieldName("Id");
-			for (GenericArtifactField field : fields) {
-				sourceArtifactId = field.getFieldValue().toString();
-			}
-		}
+		
 		ga.setSourceArtifactId(sourceArtifactId);
 		ga.setSourceRepositoryId(sourceRepositoryId);
 		ga.setSourceRepositoryKind(sourceRepositoryKind);
@@ -189,7 +162,7 @@ public class SWPReader extends AbstractReader<Connection> {
 	@Override
 	public List<GenericArtifact> getArtifactDependencies(Document syncInfo,
 			String artifactId) {
-		// TODO Auto-generated method stub
+		// SWP does not support dependencies at the moment
 		return new ArrayList<GenericArtifact>();
 	}
 
@@ -199,6 +172,16 @@ public class SWPReader extends AbstractReader<Connection> {
 		String sourceSystemKind = this.getSourceSystemKind(syncInfo);
 		String sourceRepositoryId = this.getSourceRepositoryId(syncInfo);
 		String sourceRepositoryKind = this.getSourceRepositoryKind(syncInfo);
+		
+		// find out what to extract
+		SWPType swpType = SWPMetaData.retrieveSWPTypeFromRepositoryId(sourceRepositoryId);
+		String swpProductName = SWPMetaData.retrieveProductFromRepositoryId(sourceRepositoryId);
+		if (swpType.equals(SWPMetaData.SWPType.UNKNOWN) || swpProductName == null) {
+			String cause = "Invalid repository format: " + sourceRepositoryId;
+			log.error(cause);
+			throw new CCFRuntimeException(cause);
+		}
+		
 		Connection connection;
 		try {
 			connection = connect(sourceSystemId, sourceSystemKind,
@@ -216,44 +199,24 @@ public class SWPReader extends AbstractReader<Connection> {
 			log.error(cause, e);
 			throw new CCFRuntimeException(cause, e);
 		}
+		SWPHandler swpHandler = new SWPHandler(connection);
 
 		ArrayList<ArtifactState> artifactStates = new ArrayList<ArtifactState>();
 		try {
-			ScrumWorksEndpoint endpoint = connection.getEndpoint();
-			if (sourceRepositoryId.endsWith("-Tasks")) {
-				String productName = getProductNameFromTaskString(sourceRepositoryId);
-				ProductWSO product = endpoint.getProductByName(productName);
-				BacklogItemWSO[] pbis = endpoint.getActiveBacklogItems(product);
-				for (BacklogItemWSO pbi : pbis) {
-					TaskWSO[] tasks = endpoint.getTasks(pbi);
-					if (tasks != null) {
-						for (TaskWSO task : tasks) {
-							ArtifactState artifactState = new ArtifactState();
-							artifactState.setArtifactId(task.getId().toString());
-							artifactState.setArtifactLastModifiedDate(new Date(0));
-							artifactState.setArtifactVersion(-1);
-							artifactStates.add(artifactState);
-						}
-					}
-				}
+			if (swpType.equals(SWPType.TASK)) {
+				swpHandler.getChangedTasks(swpProductName, artifactStates);
+			} else if (swpType.equals(SWPType.PBI)) {
+				swpHandler.getChangedPBIs(swpProductName, artifactStates);
 			} else {
-				ProductWSO product = endpoint.getProductByName(sourceRepositoryId);
-				BacklogItemWSO[] pbis = endpoint.getActiveBacklogItems(product);
-				for (BacklogItemWSO pbi : pbis) {
-					ArtifactState artifactState = new ArtifactState();
-					artifactState.setArtifactId(pbi.getKey());
-					artifactState.setArtifactLastModifiedDate(new Date(0));
-					artifactState.setArtifactVersion(-1);
-					artifactStates.add(artifactState);
-				}
+				String cause = "Unsupported repository format: " + sourceRepositoryId;
+				log.error(cause);
+				throw new CCFRuntimeException(cause);
 			}
 		} catch (ServerException e) {
-			// TODO Auto-generated catch block
 			String cause = "During the artifact retrieval process from SWP, an error occured";
 			log.error(cause, e);
 			throw new CCFRuntimeException(cause, e);
 		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
 			String cause = "During the artifact retrieval process from SWP, an error occured";
 			log.error(cause, e);
 			throw new CCFRuntimeException(cause, e);
@@ -263,39 +226,61 @@ public class SWPReader extends AbstractReader<Connection> {
 		return artifactStates;
 	}
 
-	private String getProductNameFromTaskString(String sourceRepositoryId) {
-		String productName = sourceRepositoryId.substring(0, sourceRepositoryId.length() - "-Tasks".length());
-		return productName;
-	}
 
+	/**
+	 * Sets user name for SWP connector user
+	 * @param userName
+	 */
 	public void setUserName(String userName) {
 		this.username = userName;
 	}
 
+	/**
+	 * Sets password for SWP connector user
+	 * @param password
+	 */
 	public void setPassword(String password) {
-		// TODO implement me
 		this.password = password;
 	}
 
+	/**
+	 * Returns user name for SWP connector user
+	 * @return
+	 */
 	public String getUsername() {
 		return username;
 	}
 
+	/**
+	 * Returns password for SWP connector user
+	 * @return
+	 */
 	public String getPassword() {
 		return password;
 	}
 
+	/**
+	 * Sets URL for SWP server
+	 * @param serverUrl
+	 */
 	public void setServerUrl(String serverUrl) {
-		// TODO implement me
 		this.serverUrl = serverUrl;
 	}
 
+	/**
+	 * Returns URL for SWP server
+	 * @return
+	 */
 	public String getServerUrl() {
 		return serverUrl;
 	}
 
+	/**
+	 * Sets user name of SWP resync user
+	 * @param resyncUserName
+	 */
 	public void setResyncUserName(String resyncUserName) {
-		// TODO implement me
+		this.resyncUserName = resyncUserName;
 	}
 
 	/**

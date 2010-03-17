@@ -195,7 +195,8 @@
 			</value>
 			<value>
 			var artifactType = oa_data.selectSingleNode("@artifactType").getText();
-			if (artifactType != "plainArtifact") {
+			var sourceRepositoryKind = oa_data.selectSingleNode("@sourceRepositoryKind").getText();
+			if (artifactType != "plainArtifact" || sourceRepositoryKind.startsWith("Template")) {
 				oa_data=null;
 			}
 			else {
@@ -214,7 +215,8 @@
 			</value>
 			<value>
 			var artifactType = oa_data.selectSingleNode("@artifactType").getText();
-			if (artifactType != "plainArtifact") {
+			var sourceRepositoryKind = oa_data.selectSingleNode("@sourceRepositoryKind").getText();
+			if (artifactType != "plainArtifact" || sourceRepositoryKind.startsWith("Template")) {
 				oa_data=null;
 			}
 			else {

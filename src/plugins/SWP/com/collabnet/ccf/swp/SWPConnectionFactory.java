@@ -12,8 +12,6 @@ public class SWPConnectionFactory implements ConnectionFactory<Connection> {
 
 	public static final String PARAM_DELIMITER = ":";
 
-	
-
 	/**
 	 * Closes SWP connection
 	 */
