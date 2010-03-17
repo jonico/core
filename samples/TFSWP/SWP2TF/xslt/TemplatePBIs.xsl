@@ -39,7 +39,14 @@
 			<xsl:copy-of select="@*" />
 			<xsl:attribute name="fieldName">description</xsl:attribute>
 			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
-			<xsl:value-of select="." />
+			<xsl:choose>
+				<xsl:when test="string(.)=''">
+					<xsl:value-of select="'Default description'" />
+				</xsl:when>
+				<xsl:otherwise>
+					<xsl:value-of select="." />
+				</xsl:otherwise>
+			</xsl:choose>
 		</field>
 	</xsl:template>
 	
