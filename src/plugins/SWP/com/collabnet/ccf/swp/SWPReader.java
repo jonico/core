@@ -5,9 +5,11 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dom4j.Document;
+import org.openadaptor.core.exception.ValidationException;
 
 import com.collabnet.ccf.core.AbstractReader;
 import com.collabnet.ccf.core.ArtifactState;
@@ -282,6 +284,14 @@ public class SWPReader extends AbstractReader<Connection> {
 	public void setResyncUserName(String resyncUserName) {
 		this.resyncUserName = resyncUserName;
 	}
+	
+	/**
+	 * Gets the user name of the SWP resync user
+	 * @return
+	 */
+	public String getResyncUserName() {
+		return resyncUserName;
+	}
 
 	/**
 	 * Connects to the source SWP system using the connectionInfo and
@@ -317,5 +327,29 @@ public class SWPReader extends AbstractReader<Connection> {
 						repositoryId, repositoryKind, connectionInfo,
 						credentialInfo);
 		return connection;
+	}
+	
+	@SuppressWarnings("unchecked")
+	@Override
+	public void validate(List exceptions) {
+		super.validate(exceptions);
+
+		if (getResyncUserName() == null) {
+			log
+					.warn("resyncUserName-property has not been set, so that initial resyncs after artifact creation are not possible.");
+		}
+
+		if (StringUtils.isEmpty(getServerUrl())) {
+			exceptions.add(new ValidationException(
+					"serverUrl-property not set", this));
+		}
+		if (StringUtils.isEmpty(getUsername())) {
+			exceptions.add(new ValidationException("username-property not set",
+					this));
+		}
+		if (getPassword() == null) {
+			exceptions.add(new ValidationException("password-property not set",
+					this));
+		}
 	}
 }
