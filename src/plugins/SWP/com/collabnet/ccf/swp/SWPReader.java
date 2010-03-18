@@ -15,6 +15,7 @@ import com.collabnet.ccf.core.AbstractReader;
 import com.collabnet.ccf.core.ArtifactState;
 import com.collabnet.ccf.core.CCFRuntimeException;
 import com.collabnet.ccf.core.eis.connection.ConnectionException;
+import com.collabnet.ccf.core.eis.connection.ConnectionManager;
 import com.collabnet.ccf.core.eis.connection.MaxConnectionsReachedException;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
@@ -283,6 +284,27 @@ public class SWPReader extends AbstractReader<Connection> {
 	 */
 	public void setResyncUserName(String resyncUserName) {
 		this.resyncUserName = resyncUserName;
+	}
+	
+	@Override
+	public boolean handleException(Throwable cause,
+			ConnectionManager<Connection> connectionManager) {
+		if (cause == null)
+			return false;
+		if ((cause instanceof java.net.SocketException || cause instanceof java.net.UnknownHostException)
+				&& connectionManager.isEnableRetryAfterNetworkTimeout()) {
+			return true;
+		} else if (cause instanceof ConnectionException
+				&& connectionManager.isEnableRetryAfterNetworkTimeout()) {
+			return true;
+		} else if (cause instanceof RemoteException) {
+			Throwable innerCause = cause.getCause();
+			return handleException(innerCause, connectionManager);
+		} else if (cause instanceof CCFRuntimeException) {
+			Throwable innerCause = cause.getCause();
+			return handleException(innerCause, connectionManager);
+		}
+		return false;
 	}
 	
 	/**
