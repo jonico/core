@@ -86,7 +86,7 @@ public abstract class AbstractWriter<T> extends Component implements
 						gaDocument = this.createDependency(gaDocument);
 					} else if (artifactType
 							.equals(GenericArtifactHelper.ARTIFACT_TYPE_UNKNOWN)) {
-						String message = "Incoming artifact's type is Unknown. Ignoring it";
+						String message = "Incoming artifact's type is Unknown. Quarantining it";
 						log.error(message);
 						throw new CCFRuntimeException(message);
 					}
