@@ -104,7 +104,7 @@ public class SWPMetaData {
 		id("id", GenericArtifactField.FieldValueTypeValue.STRING),
 		benefit("benefit", GenericArtifactField.FieldValueTypeValue.INTEGER),
 		penalty("penalty", GenericArtifactField.FieldValueTypeValue.INTEGER),
-		completedDate("completedDate", GenericArtifactField.FieldValueTypeValue.DATETIME),
+		completedDate("completedDate", GenericArtifactField.FieldValueTypeValue.DATE),
 		description("description", GenericArtifactField.FieldValueTypeValue.STRING),
 		estimate("estimate", GenericArtifactField.FieldValueTypeValue.INTEGER),
 		//groupId("groupId", GenericArtifactField.FieldValueTypeValue.INTEGER),

@@ -61,6 +61,7 @@ public class SWPReader extends AbstractReader<Connection> {
 			throw new CCFRuntimeException(cause);
 		}
 		
+		GenericArtifact genericArtifact = new GenericArtifact();
 		Connection connection;
 		try {
 			connection = connect(sourceSystemId, sourceSystemKind,
@@ -79,20 +80,17 @@ public class SWPReader extends AbstractReader<Connection> {
 			throw new CCFRuntimeException(cause, e);
 		}
 		
-		
-		SWPHandler swpHandler = new SWPHandler(connection);
-		/**
-		 * Create a new generic artifact data structure
-		 */
-		GenericArtifact genericArtifact = new GenericArtifact();
-		genericArtifact.setSourceArtifactVersion("-1");
-		genericArtifact.setSourceArtifactLastModifiedDate(GenericArtifactHelper.df.format(new Date(0)));
-		genericArtifact.setArtifactMode(ArtifactModeValue.COMPLETE);
-		genericArtifact.setArtifactType(ArtifactTypeValue.PLAINARTIFACT);
-		genericArtifact.setSourceArtifactId(artifactId);
-		
-		
 		try {
+			SWPHandler swpHandler = new SWPHandler(connection);
+			/**
+			 * Create a new generic artifact data structure
+			 */
+			genericArtifact.setSourceArtifactVersion("-1");
+			genericArtifact.setSourceArtifactLastModifiedDate(GenericArtifactHelper.df.format(new Date(0)));
+			genericArtifact.setArtifactMode(ArtifactModeValue.COMPLETE);
+			genericArtifact.setArtifactType(ArtifactTypeValue.PLAINARTIFACT);
+			genericArtifact.setSourceArtifactId(artifactId);
+			
 			if (swpType.equals(SWPMetaData.SWPType.TASK)) {
 				swpHandler.retrieveTask(artifactId, swpProductName, genericArtifact);
 			} else if (swpType.equals(SWPMetaData.SWPType.PBI)) {

@@ -2,19 +2,26 @@ package com.collabnet.ccf.swp;
 
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.collabnet.ccf.core.ArtifactState;
+import com.collabnet.ccf.core.CCFRuntimeException;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactField.FieldActionValue;
 import com.collabnet.ccf.swp.SWPMetaData.PBIFields;
+import com.collabnet.ccf.swp.SWPMetaData.SWPType;
 import com.collabnet.ccf.swp.SWPMetaData.TaskFields;
 import com.danube.scrumworks.api.client.ScrumWorksEndpoint;
 import com.danube.scrumworks.api.client.types.BacklogItemWSO;
 import com.danube.scrumworks.api.client.types.BusinessWeightWSO;
 import com.danube.scrumworks.api.client.types.ProductWSO;
+import com.danube.scrumworks.api.client.types.ReleaseWSO;
 import com.danube.scrumworks.api.client.types.ServerException;
 import com.danube.scrumworks.api.client.types.TaskWSO;
 
@@ -25,6 +32,8 @@ import com.danube.scrumworks.api.client.types.TaskWSO;
  * 
  */
 public class SWPHandler {
+
+	private static final Log log = LogFactory.getLog(SWPHandler.class);
 	private ScrumWorksEndpoint endpoint;
 
 	/**
@@ -56,6 +65,7 @@ public class SWPHandler {
 		BusinessWeightWSO bw = pbi.getBusinessWeight();
 		addPBIField(ga, PBIFields.benefit, bw.getBenefit());
 		addPBIField(ga, PBIFields.penalty, bw.getPenalty());
+		// TODO time zone conversion necessary?
 		addPBIField(ga, PBIFields.completedDate, pbi.getCompletedDate());
 		addPBIField(ga, PBIFields.description, pbi.getDescription());
 		addPBIField(ga, PBIFields.estimate, pbi.getEstimate());
@@ -207,4 +217,282 @@ public class SWPHandler {
 			}
 		}
 	}
+
+	/**
+	 * Updates SWP PBI
+	 * 
+	 * @param active
+	 * @param benefit
+	 * @param completedDate
+	 * @param description
+	 * @param estimate
+	 * @param penalty
+	 * @param title
+	 * @param ga
+	 * @return updated PBI
+	 * @throws RemoteException
+	 * @throws NumberFormatException
+	 * @throws ServerException
+	 */
+	public BacklogItemWSO updatePBI(GenericArtifactField active,
+			GenericArtifactField benefit, GenericArtifactField completedDate,
+			GenericArtifactField description, GenericArtifactField estimate,
+			GenericArtifactField penalty, GenericArtifactField title,
+			GenericArtifact ga) throws ServerException, NumberFormatException,
+			RemoteException {
+		BacklogItemWSO pbi = endpoint.getBacklogItem(new Long(ga
+				.getTargetArtifactId()));
+		// TODO Do conflict resolution
+		if (active != null && active.getFieldValueHasChanged()) {
+			pbi.setActive((Boolean) active.getFieldValue());
+		}
+
+		if (completedDate != null && completedDate.getFieldValueHasChanged()) {
+			pbi.setCompletedDate((Calendar) completedDate.getFieldValue());
+		}
+
+		if (description != null && description.getFieldValueHasChanged()) {
+			pbi.setDescription((String) description.getFieldValue());
+		}
+
+		if (estimate != null && estimate.getFieldValueHasChanged()) {
+			pbi.setEstimate((Integer) estimate.getFieldValue());
+		}
+
+		if (title != null && title.getFieldValueHasChanged()) {
+			pbi.setTitle((String) title.getFieldValue());
+		}
+
+		boolean penaltyHasChanged = (penalty != null && penalty
+				.getFieldValueHasChanged());
+		boolean benefitHasChanged = (benefit != null && benefit
+				.getFieldValueHasChanged());
+
+		// only if at least one of penalty or benefit has changed, we have to
+		// do the update
+		if (penaltyHasChanged || benefitHasChanged) {
+			BusinessWeightWSO bw = pbi.getBusinessWeight();
+			if (penaltyHasChanged) {
+				bw.setPenalty(new Long((Integer) penalty.getFieldValue()));
+			}
+			if (benefitHasChanged) {
+				bw.setBenefit(new Long((Integer) benefit.getFieldValue()));
+			}
+
+			pbi.setBusinessWeight(bw);
+		}
+
+		return endpoint.updateBacklogItem(pbi);
+	}
+
+	/**
+	 * Updates SWP task
+	 * 
+	 * @param description
+	 * @param estimatedHours
+	 * @param pointPerson
+	 * @param status
+	 * @param taskBoardStatusRank
+	 * @param title
+	 * @param ga
+	 * @return
+	 * @throws RemoteException
+	 * @throws NumberFormatException
+	 * @throws ServerException
+	 */
+	public TaskWSO updateTask(GenericArtifactField description,
+			GenericArtifactField estimatedHours,
+			GenericArtifactField pointPerson, GenericArtifactField status,
+			GenericArtifactField title, GenericArtifact ga)
+			throws ServerException, NumberFormatException, RemoteException {
+		TaskWSO task = endpoint.getTaskById(new Long(ga.getTargetArtifactId()));
+		// TODO Do conflict resolution
+		if (description != null && description.getFieldValueHasChanged()) {
+			task.setDescription((String) description.getFieldValue());
+		}
+
+		if (estimatedHours != null && estimatedHours.getFieldValueHasChanged()) {
+			task.setEstimatedHours((Integer) estimatedHours.getFieldValue());
+		}
+
+		if (pointPerson != null && pointPerson.getFieldValueHasChanged()) {
+			task.setPointPerson((String) pointPerson.getFieldValue());
+		}
+
+		if (status != null && status.getFieldValueHasChanged()) {
+			task.setStatus((String) status.getFieldValue());
+		}
+
+		if (title != null && title.getFieldValueHasChanged()) {
+			task.setTitle((String) title.getFieldValue());
+		}
+
+		// decide whether we have to move the task to another PBI
+		String parent = ga.getDepParentTargetArtifactId();
+		String parentRepository = ga.getDepParentTargetRepositoryId();
+		if (parent == null
+				|| parentRepository == null
+				|| parent.equals(GenericArtifact.VALUE_NONE)
+				|| !SWPMetaData.retrieveSWPTypeFromRepositoryId(
+						parentRepository).equals(SWPType.PBI)) {
+			// do nothing
+			log
+					.warn("It looks as if somebody has deleted the parent child relationship between task "
+							+ task.getId()
+							+ " and PBI "
+							+ task.getBacklogItemId()
+							+ " in the source system and replaced it with a reference to unsupported parent artifact "
+							+ parent
+							+ " in repository "
+							+ parentRepository
+							+ ". Ignoring the change ...");
+		} else {
+			// compare current and anticipated parent id to decide whether to
+			// move or not
+			Long parentId = new Long(parent);
+			if (!task.getBacklogItemId().equals(parentId)) {
+				// TODO Check whether we have to use the move method here
+				task.setBacklogItemId(parentId);
+			}
+		}
+
+		return endpoint.updateTask(task);
+	}
+
+	/**
+	 * Creates an SWP PBI
+	 * @param active
+	 * @param benefit
+	 * @param completedDate
+	 * @param description
+	 * @param estimate
+	 * @param penalty
+	 * @param title
+	 * @param ga
+	 * @return newly created PBI
+	 * @throws RemoteException 
+	 * @throws ServerException 
+	 */
+	public BacklogItemWSO createPBI(GenericArtifactField active,
+			GenericArtifactField benefit, GenericArtifactField completedDate,
+			GenericArtifactField description, GenericArtifactField estimate,
+			GenericArtifactField penalty, GenericArtifactField title, String swpProductName,
+			GenericArtifact ga) throws ServerException, RemoteException {
+		BacklogItemWSO pbi = new BacklogItemWSO();
+		if (active != null && active.getFieldValueHasChanged()) {
+			pbi.setActive((Boolean) active.getFieldValue());
+		}
+
+		if (completedDate != null && completedDate.getFieldValueHasChanged()) {
+			pbi.setCompletedDate((Calendar) completedDate.getFieldValue());
+		}
+
+		if (description != null && description.getFieldValueHasChanged()) {
+			pbi.setDescription((String) description.getFieldValue());
+		}
+
+		if (estimate != null && estimate.getFieldValueHasChanged()) {
+			pbi.setEstimate((Integer) estimate.getFieldValue());
+		}
+
+		if (title != null && title.getFieldValueHasChanged()) {
+			pbi.setTitle((String) title.getFieldValue());
+		}
+
+		boolean penaltyHasChanged = (penalty != null && penalty
+				.getFieldValueHasChanged());
+		boolean benefitHasChanged = (benefit != null && benefit
+				.getFieldValueHasChanged());
+
+		// only if at least one of penalty or benefit has changed, we have to
+		// do the update
+		if (penaltyHasChanged || benefitHasChanged) {
+			BusinessWeightWSO bw = pbi.getBusinessWeight();
+			if (penaltyHasChanged) {
+				bw.setPenalty(new Long((Integer) penalty.getFieldValue()));
+			}
+			if (benefitHasChanged) {
+				bw.setBenefit(new Long((Integer) benefit.getFieldValue()));
+			}
+
+			pbi.setBusinessWeight(bw);
+		}
+		
+		// now set the product 
+		// TODO Do not use the symbolic product name but its id
+		pbi.setProductId(endpoint.getProductByName(swpProductName).getId());
+		
+		if (pbi.getReleaseId() == null) {
+			// we have to set a valid release for our testing purposes
+			ReleaseWSO release = endpoint.getReleasesForProduct(endpoint.getProductByName(swpProductName))[0];
+			log.info("No release specified, so assigning to first release in list: " + release.getTitle());
+			pbi.setReleaseId(release.getId());
+		}
+		
+		return endpoint.createBacklogItem(pbi);
+	}
+
+	/**
+	 * Creates an SWP task
+	 * @param description
+	 * @param estimatedHours
+	 * @param pointPerson
+	 * @param status
+	 * @param title
+	 * @param swpProductName
+	 * @param ga
+	 * @return newly created task
+	 * @throws RemoteException 
+	 * @throws ServerException 
+	 */
+	public TaskWSO createTask(GenericArtifactField description,
+			GenericArtifactField estimatedHours,
+			GenericArtifactField pointPerson, GenericArtifactField status,
+			GenericArtifactField title, String swpProductName,
+			GenericArtifact ga) throws ServerException, RemoteException {
+		TaskWSO task = new TaskWSO();
+		if (description != null && description.getFieldValueHasChanged()) {
+			task.setDescription((String) description.getFieldValue());
+		}
+
+		if (estimatedHours != null && estimatedHours.getFieldValueHasChanged()) {
+			task.setEstimatedHours((Integer) estimatedHours.getFieldValue());
+		}
+
+		if (pointPerson != null && pointPerson.getFieldValueHasChanged()) {
+			task.setPointPerson((String) pointPerson.getFieldValue());
+		}
+
+		if (status != null && status.getFieldValueHasChanged()) {
+			task.setStatus((String) status.getFieldValue());
+		}
+
+		if (title != null && title.getFieldValueHasChanged()) {
+			task.setTitle((String) title.getFieldValue());
+		}
+		
+		// now set the parent PBI
+		String parent = ga.getDepParentTargetArtifactId();
+		String parentRepository = ga.getDepParentTargetRepositoryId();
+		if (parent == null
+				|| parentRepository == null
+				|| parent.equals(GenericArtifact.VALUE_NONE)
+				|| !SWPMetaData.retrieveSWPTypeFromRepositoryId(
+						parentRepository).equals(SWPType.PBI)) {
+			String error = "It looks as if somebody created a task without a valid parent"
+				+ " in the source system (unsupported parent artifact: "
+				+ parent
+				+ " in repository "
+				+ parentRepository
+				+ "). Bailing out ..."; 
+			log.error(error);
+			ga.setErrorCode(GenericArtifact.ERROR_PARENT_ARTIFACT_NOT_PRESENT);
+			throw new CCFRuntimeException(error);
+		} else {
+			task.setBacklogItemId(new Long(parent));
+		}
+		
+		return endpoint.createTask(task);
+	}
+
 }
