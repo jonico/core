@@ -256,7 +256,25 @@ public class SWPHandler {
 		}
 
 		if (estimate != null && estimate.getFieldValueHasChanged()) {
-			pbi.setEstimate((Integer) estimate.getFieldValue());
+			Object fieldValueObj = estimate.getFieldValue();
+			if (fieldValueObj == null || fieldValueObj.toString().length() == 0) {
+				pbi.setEstimate(null);
+			} else {
+				int fieldValue = 0;
+				if (fieldValueObj instanceof String) {
+					String fieldValueString = (String) fieldValueObj;
+					try {
+						fieldValue = Integer.parseInt(fieldValueString);
+					} catch (NumberFormatException e) {
+						throw new CCFRuntimeException(
+								"Could not parse value of field estimate: "
+										+ e.getMessage(), e);
+					}
+				} else if (fieldValueObj instanceof Integer) {
+					fieldValue = ((Integer) fieldValueObj).intValue();
+				}
+				pbi.setEstimate(fieldValue);
+			}
 		}
 
 		if (title != null && title.getFieldValueHasChanged()) {
@@ -273,12 +291,47 @@ public class SWPHandler {
 		if (penaltyHasChanged || benefitHasChanged) {
 			BusinessWeightWSO bw = pbi.getBusinessWeight();
 			if (penaltyHasChanged) {
-				bw.setPenalty(new Long((Integer) penalty.getFieldValue()));
+				Object fieldValueObj = penalty.getFieldValue();
+				if (fieldValueObj == null || fieldValueObj.toString().length() == 0) {
+					bw.setPenalty(null);
+				} else {
+					int fieldValue = 0;
+					if (fieldValueObj instanceof String) {
+						String fieldValueString = (String) fieldValueObj;
+						try {
+							fieldValue = Integer.parseInt(fieldValueString);
+						} catch (NumberFormatException e) {
+							throw new CCFRuntimeException(
+									"Could not parse value of field penalty: "
+											+ e.getMessage(), e);
+						}
+					} else if (fieldValueObj instanceof Integer) {
+						fieldValue = ((Integer) fieldValueObj).intValue();
+					}
+					bw.setPenalty(new Long(fieldValue));
+				}
 			}
 			if (benefitHasChanged) {
-				bw.setBenefit(new Long((Integer) benefit.getFieldValue()));
+				Object fieldValueObj = benefit.getFieldValue();
+				if (fieldValueObj == null || fieldValueObj.toString().length() == 0) {
+					bw.setBenefit(null);
+				} else {
+					int fieldValue = 0;
+					if (fieldValueObj instanceof String) {
+						String fieldValueString = (String) fieldValueObj;
+						try {
+							fieldValue = Integer.parseInt(fieldValueString);
+						} catch (NumberFormatException e) {
+							throw new CCFRuntimeException(
+									"Could not parse value of field benefit: "
+											+ e.getMessage(), e);
+						}
+					} else if (fieldValueObj instanceof Integer) {
+						fieldValue = ((Integer) fieldValueObj).intValue();
+					}
+					bw.setBenefit(new Long(fieldValue));
+				}
 			}
-
 			pbi.setBusinessWeight(bw);
 		}
 
@@ -312,7 +365,25 @@ public class SWPHandler {
 		}
 
 		if (estimatedHours != null && estimatedHours.getFieldValueHasChanged()) {
-			task.setEstimatedHours((Integer) estimatedHours.getFieldValue());
+			Object fieldValueObj = estimatedHours.getFieldValue();
+			if (fieldValueObj == null || fieldValueObj.toString().length() == 0) {
+				task.setEstimatedHours(null);
+			} else {
+				int fieldValue = 0;
+				if (fieldValueObj instanceof String) {
+					String fieldValueString = (String) fieldValueObj;
+					try {
+						fieldValue = Integer.parseInt(fieldValueString);
+					} catch (NumberFormatException e) {
+						throw new CCFRuntimeException(
+								"Could not parse value of field estimatedHours: "
+										+ e.getMessage(), e);
+					}
+				} else if (fieldValueObj instanceof Integer) {
+					fieldValue = ((Integer) fieldValueObj).intValue();
+				}
+				task.setEstimatedHours(fieldValue);
+			}
 		}
 
 		if (pointPerson != null && pointPerson.getFieldValueHasChanged()) {
@@ -409,13 +480,47 @@ public class SWPHandler {
 		if (penaltyHasChanged || benefitHasChanged) {
 			BusinessWeightWSO bw = pbi.getBusinessWeight();
 			if (penaltyHasChanged) {
-				bw.setPenalty(new Long((Integer) penalty.getFieldValue()));
+				Object fieldValueObj = penalty.getFieldValue();
+				if (fieldValueObj == null || fieldValueObj.toString().length() == 0) {
+					bw.setPenalty(null);
+				} else {
+					int fieldValue = 0;
+					if (fieldValueObj instanceof String) {
+						String fieldValueString = (String) fieldValueObj;
+						try {
+							fieldValue = Integer.parseInt(fieldValueString);
+						} catch (NumberFormatException e) {
+							throw new CCFRuntimeException(
+									"Could not parse value of field penalty: "
+											+ e.getMessage(), e);
+						}
+					} else if (fieldValueObj instanceof Integer) {
+						fieldValue = ((Integer) fieldValueObj).intValue();
+					}
+					bw.setPenalty(new Long(fieldValue));
+				}
 			}
 			if (benefitHasChanged) {
-				bw.setBenefit(new Long((Integer) benefit.getFieldValue()));
+				Object fieldValueObj = benefit.getFieldValue();
+				if (fieldValueObj == null || fieldValueObj.toString().length() == 0) {
+					bw.setBenefit(null);
+				} else {
+					int fieldValue = 0;
+					if (fieldValueObj instanceof String) {
+						String fieldValueString = (String) fieldValueObj;
+						try {
+							fieldValue = Integer.parseInt(fieldValueString);
+						} catch (NumberFormatException e) {
+							throw new CCFRuntimeException(
+									"Could not parse value of field benefit: "
+											+ e.getMessage(), e);
+						}
+					} else if (fieldValueObj instanceof Integer) {
+						fieldValue = ((Integer) fieldValueObj).intValue();
+					}
+					bw.setBenefit(new Long(fieldValue));
+				}
 			}
-
-			pbi.setBusinessWeight(bw);
 		}
 		
 		// now set the product 
@@ -456,7 +561,25 @@ public class SWPHandler {
 		}
 
 		if (estimatedHours != null && estimatedHours.getFieldValueHasChanged()) {
-			task.setEstimatedHours((Integer) estimatedHours.getFieldValue());
+			Object fieldValueObj = estimatedHours.getFieldValue();
+			if (fieldValueObj == null || fieldValueObj.toString().length() == 0) {
+				task.setEstimatedHours(null);
+			} else {
+				int fieldValue = 0;
+				if (fieldValueObj instanceof String) {
+					String fieldValueString = (String) fieldValueObj;
+					try {
+						fieldValue = Integer.parseInt(fieldValueString);
+					} catch (NumberFormatException e) {
+						throw new CCFRuntimeException(
+								"Could not parse value of field estimatedHours: "
+										+ e.getMessage(), e);
+					}
+				} else if (fieldValueObj instanceof Integer) {
+					fieldValue = ((Integer) fieldValueObj).intValue();
+				}
+				task.setEstimatedHours(fieldValue);
+			}
 		}
 
 		if (pointPerson != null && pointPerson.getFieldValueHasChanged()) {
