@@ -25,14 +25,14 @@ public class SWPMetaData {
 	public final static String TEAM = "Team";
 	public final static String PRODUCT_RELEASE = "ProductRelease";
 	public final static String PROGRAM_RELEASE = "ProgramRelease";
-	public final static String PRODUCT = "ProgramRelease";
+	public final static String PRODUCT = "Product";
 	public final static String PRODUCT_EPIC = "ProductEpic";
 	public final static String PROGRAM = "Program";
 	public final static String PROGRAM_EPIC = "ProgramEpic";
 	public final static String PRODUCT_THEME = "ProductTheme";
 	public final static String PROGRAM_THEME = "ProgramTheme";
 	public final static String IMPEDIMENT = "Impediment";
-	public final static String USER = "USER";
+	public final static String USER = "User";
 	public final static String UNKNOWN = "UNKNOWN";
 
 	/**
@@ -150,6 +150,31 @@ public class SWPMetaData {
 		private String fieldName;
 		
 		private TaskFields(String fieldName, GenericArtifactField.FieldValueTypeValue valueType) {
+			this.fieldName = fieldName;
+			this.valueType = valueType;
+		}
+		
+		public String getFieldName() {
+			return fieldName;
+		}
+		
+		public GenericArtifactField.FieldValueTypeValue getValueType() {
+			return valueType;
+		}
+	}
+	
+	public enum ProductFields {
+		id("id", GenericArtifactField.FieldValueTypeValue.STRING),
+		businessWeightUnits("businessWeightUnits", GenericArtifactField.FieldValueTypeValue.STRING),
+		effortUnits("effortUnits", GenericArtifactField.FieldValueTypeValue.STRING),
+		name("name", GenericArtifactField.FieldValueTypeValue.STRING),
+		trackTimeSpent("trackTimeSpent", GenericArtifactField.FieldValueTypeValue.BOOLEAN),
+		keyPrefix("keyPrefix", GenericArtifactField.FieldValueTypeValue.STRING);
+		
+		private GenericArtifactField.FieldValueTypeValue valueType;
+		private String fieldName;
+		
+		private ProductFields(String fieldName, GenericArtifactField.FieldValueTypeValue valueType) {
 			this.fieldName = fieldName;
 			this.valueType = valueType;
 		}

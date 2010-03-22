@@ -15,6 +15,7 @@ import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactField.FieldActionValue;
 import com.collabnet.ccf.swp.SWPMetaData.PBIFields;
+import com.collabnet.ccf.swp.SWPMetaData.ProductFields;
 import com.collabnet.ccf.swp.SWPMetaData.SWPType;
 import com.collabnet.ccf.swp.SWPMetaData.TaskFields;
 import com.danube.scrumworks.api.client.ScrumWorksEndpoint;
@@ -75,6 +76,11 @@ public class SWPHandler {
 		addPBIField(ga, PBIFields.releaseId, pbi.getReleaseId());
 		addPBIField(ga, PBIFields.sprintId, pbi.getSprintId());
 		addPBIField(ga, PBIFields.title, pbi.getTitle());
+		
+		// set parent artifact (Product)
+		ga.setDepParentSourceArtifactId(pbi.getProductId().toString());
+		ga.setDepParentSourceRepositoryId(product
+				+ SWPMetaData.REPOSITORY_ID_SEPARATOR + SWPMetaData.PRODUCT);
 	}
 
 	/**
@@ -94,8 +100,6 @@ public class SWPHandler {
 			NumberFormatException, RemoteException {
 		long taskId = Long.valueOf(id);
 		final TaskWSO task = endpoint.getTaskById(taskId);
-		final BacklogItemWSO backlogItem = endpoint.getBacklogItem(task
-				.getBacklogItemId());
 
 		addTaskField(genericArtifact, TaskFields.id, taskId);
 		addTaskField(genericArtifact, TaskFields.description, task
@@ -113,7 +117,7 @@ public class SWPHandler {
 		addTaskField(genericArtifact, TaskFields.title, task.getTitle());
 
 		// set parent artifact (PBI)
-		genericArtifact.setDepParentSourceArtifactId(backlogItem
+		genericArtifact.setDepParentSourceArtifactId(task
 				.getBacklogItemId().toString());
 		genericArtifact.setDepParentSourceRepositoryId(product
 				+ SWPMetaData.REPOSITORY_ID_SEPARATOR + SWPMetaData.PBI);
@@ -130,6 +134,26 @@ public class SWPHandler {
 	 */
 	private void addTaskField(GenericArtifact genericArtifact,
 			TaskFields field, Object value) {
+		// all fields are from field type "mandatoryField" since SWP has a
+		// static field model
+		GenericArtifactField gaField = genericArtifact.addNewField(field
+				.getFieldName(), "mandatoryField");
+		gaField.setFieldValueType(field.getValueType());
+		gaField.setFieldAction(FieldActionValue.REPLACE);
+		gaField.setFieldValue(value);
+	}
+	
+	/**
+	 * Adds a product field to a generic artifact
+	 * 
+	 * @param genericArtifact
+	 * @param field
+	 *            task field
+	 * @param value
+	 *            value of the product field
+	 */
+	private void addProductField(GenericArtifact genericArtifact,
+			ProductFields field, Object value) {
 		// all fields are from field type "mandatoryField" since SWP has a
 		// static field model
 		GenericArtifactField gaField = genericArtifact.addNewField(field
@@ -616,6 +640,43 @@ public class SWPHandler {
 		}
 		
 		return endpoint.createTask(task);
+	}
+
+	/**
+	 * Returns the product whenever its properties change
+	 * @param swpProductName
+	 * @param artifactStates
+	 * @throws RemoteException 
+	 * @throws ServerException 
+	 */
+	public void getChangedProducts(String swpProductName,
+			ArrayList<ArtifactState> artifactStates) throws ServerException, RemoteException {
+		// TODO Implement polling
+		ProductWSO product = endpoint.getProductByName(swpProductName);
+		ArtifactState artifactState = new ArtifactState();
+		artifactState.setArtifactId(product.getId().toString());
+		artifactState.setArtifactLastModifiedDate(new Date(0));
+		artifactState.setArtifactVersion(-1);
+		artifactStates.add(artifactState);	
+	}
+
+	/**
+	 * Retrieves the properties of an SWP product and stores them into the passed generic artifact
+	 * @param artifactId
+	 * @param swpProductName
+	 * @param genericArtifact
+	 * @throws RemoteException 
+	 * @throws ServerException 
+	 */
+	public void retrieveProduct(String artifactId, String swpProductName,
+			GenericArtifact genericArtifact) throws ServerException, RemoteException {
+		ProductWSO product = endpoint.getProductByName(swpProductName);
+		addProductField(genericArtifact, ProductFields.id, product.getId());
+		addProductField(genericArtifact, ProductFields.effortUnits, product.getEffortUnits());
+		addProductField(genericArtifact, ProductFields.businessWeightUnits, product.getBusinessWeightUnits());
+		addProductField(genericArtifact, ProductFields.keyPrefix, product.getKeyPrefix());
+		addProductField(genericArtifact, ProductFields.name, product.getName());
+		addProductField(genericArtifact, ProductFields.trackTimeSpent, product.isTrackTimeSpent());
 	}
 
 }
