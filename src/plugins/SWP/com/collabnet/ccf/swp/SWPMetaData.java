@@ -143,7 +143,7 @@ public class SWPMetaData {
 		rank("rank", GenericArtifactField.FieldValueTypeValue.DOUBLE),
 		status("status", GenericArtifactField.FieldValueTypeValue.STRING),
 		pointPerson("pointPerson", GenericArtifactField.FieldValueTypeValue.STRING),
-		taskBoardStatusRank("rank", GenericArtifactField.FieldValueTypeValue.DOUBLE),
+		taskBoardStatusRank("taskBoardStatusRank", GenericArtifactField.FieldValueTypeValue.DOUBLE),
 		title("title", GenericArtifactField.FieldValueTypeValue.STRING);
 		
 		private GenericArtifactField.FieldValueTypeValue valueType;
