@@ -41,5 +41,31 @@
 			<xsl:value-of select="." />
 		</field>
 	</xsl:template>
+	<xsl:template match='ccf:field[@fieldName="Benefit"]'>
+		<field>
+			<xsl:copy-of select="@*" />
+			<xsl:attribute name="fieldName">benefit</xsl:attribute>
+			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
+			<xsl:value-of select="." />
+		</field>
+	</xsl:template>
+	<xsl:template match='ccf:field[@fieldName="Penalty"]'>
+		<field>
+			<xsl:copy-of select="@*" />
+			<xsl:attribute name="fieldName">penalty</xsl:attribute>
+			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
+			<xsl:value-of select="." />
+		</field>
+	</xsl:template>
+	<xsl:template match='ccf:field[@fieldName="Estimate"]'>
+		<field>
+			<xsl:copy-of select="@*" />
+			<xsl:attribute name="fieldName">estimate</xsl:attribute>
+			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
+			<xsl:attribute name="fieldValueType">Integer</xsl:attribute>
+			<xsl:value-of select="." />
+		</field>
+	</xsl:template>
+	
 	<xsl:template match="text()" />
 </xsl:stylesheet>

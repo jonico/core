@@ -49,5 +49,16 @@
 			<xsl:value-of select="." />
 		</field>
 	</xsl:template>
+	<!-- Currently, we do not map estimated hours since this value cannot be null in TF
+	<xsl:template match='ccf:field[@fieldName="estimatedHours"]'>
+		<field>
+			<xsl:copy-of select="@*" />
+			<xsl:attribute name="fieldName">estimatedHours</xsl:attribute>
+			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
+			<xsl:attribute name="fieldValueType">Integer</xsl:attribute>
+			<xsl:value-of select="." />
+		</field>
+	</xsl:template>
+	-->
 	<xsl:template match="text()" />
 </xsl:stylesheet>

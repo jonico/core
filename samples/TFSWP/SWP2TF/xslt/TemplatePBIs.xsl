@@ -49,6 +49,41 @@
 			</xsl:choose>
 		</field>
 	</xsl:template>
-	
+	<xsl:template match='ccf:field[@fieldName="benefit"]'>
+		<field>
+			<xsl:copy-of select="@*" />
+			<xsl:attribute name="fieldName">Benefit</xsl:attribute>
+			<xsl:attribute name="fieldType">flexField</xsl:attribute>
+			<xsl:attribute name="fieldValueType">String</xsl:attribute>
+			<xsl:value-of select="." />
+		</field>
+	</xsl:template>
+	<xsl:template match='ccf:field[@fieldName="penalty"]'>
+		<field>
+			<xsl:copy-of select="@*" />
+			<xsl:attribute name="fieldName">Penalty</xsl:attribute>
+			<xsl:attribute name="fieldType">flexField</xsl:attribute>
+			<xsl:attribute name="fieldValueType">String</xsl:attribute>
+			<xsl:value-of select="." />
+		</field>
+	</xsl:template>
+	<xsl:template match='ccf:field[@fieldName="key"]'>
+		<field>
+			<xsl:copy-of select="@*" />
+			<xsl:attribute name="fieldName">SWP-Key</xsl:attribute>
+			<xsl:attribute name="fieldType">flexField</xsl:attribute>
+			<xsl:attribute name="fieldValueType">String</xsl:attribute>
+			<xsl:value-of select="." />
+		</field>
+	</xsl:template>
+	<xsl:template match='ccf:field[@fieldName="estimate"]'>
+		<field>
+			<xsl:copy-of select="@*" />
+			<xsl:attribute name="fieldName">Estimate</xsl:attribute>
+			<xsl:attribute name="fieldType">flexField</xsl:attribute>
+			<xsl:attribute name="fieldValueType">String</xsl:attribute>
+			<xsl:value-of select="." />
+		</field>
+	</xsl:template>
 	<xsl:template match="text()" />
 </xsl:stylesheet>
