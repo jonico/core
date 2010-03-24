@@ -38,7 +38,14 @@
 			<xsl:copy-of select="@*" />
 			<xsl:attribute name="fieldName">description</xsl:attribute>
 			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
-			<xsl:value-of select="." />
+			<xsl:choose>
+				<xsl:when test="string(.)='Empty Description'">
+					<xsl:value-of select="''" />
+				</xsl:when>
+				<xsl:otherwise>
+					<xsl:value-of select="." />
+				</xsl:otherwise>
+			</xsl:choose>
 		</field>
 	</xsl:template>
 	<xsl:template match='ccf:field[@fieldName="status"]'>
@@ -53,7 +60,7 @@
 	<xsl:template match='ccf:field[@fieldName="estimatedHours"]'>
 		<field>
 			<xsl:copy-of select="@*" />
-			<xsl:attribute name="fieldName">estimatedHours</xsl:attribute>
+			<xsl:attribute name="fieldName">remainingEffort</xsl:attribute>
 			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
 			<xsl:attribute name="fieldValueType">Integer</xsl:attribute>
 			<xsl:value-of select="." />

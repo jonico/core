@@ -18,7 +18,7 @@
 	<xsl:template match='/ccf:artifact[@artifactType = "plainArtifact"]'>
 		<artifact xmlns="http://ccf.open.collab.net/GenericArtifactV1.0">
 			<xsl:copy-of select="@*" />
-			<field><xsl:attribute name="fieldName">priority</xsl:attribute><xsl:attribute name="fieldAction">replace</xsl:attribute><xsl:attribute name="fieldType">mandatoryField</xsl:attribute><xsl:attribute name="fieldValueHasChanged">true</xsl:attribute><xsl:attribute name="fieldValueType">Integer</xsl:attribute><xsl:attribute name="fieldValueIsNull">false</xsl:attribute>2</field>
+			<field><xsl:attribute name="fieldName">priority</xsl:attribute><xsl:attribute name="fieldAction">replace</xsl:attribute><xsl:attribute name="fieldType">mandatoryField</xsl:attribute><xsl:attribute name="fieldValueHasChanged">true</xsl:attribute><xsl:attribute name="fieldValueType">Integer</xsl:attribute><xsl:attribute name="fieldValueIsNull">false</xsl:attribute>0</field>
 			<xsl:apply-templates />
 		</artifact>
 	</xsl:template>
@@ -51,7 +51,7 @@
 	<xsl:template match='ccf:field[@fieldName="estimatedHours"]'>
 		<field>
 			<xsl:copy-of select="@*" />
-			<xsl:attribute name="fieldName">estimatedHours</xsl:attribute>
+			<xsl:attribute name="fieldName">remainingEffort</xsl:attribute>
 			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
 			<xsl:choose>
 				<xsl:when test="string(.)=''">

@@ -18,8 +18,7 @@
 	<xsl:template match='/ccf:artifact[@artifactType = "plainArtifact"]'>
 		<artifact xmlns="http://ccf.open.collab.net/GenericArtifactV1.0">
 			<xsl:copy-of select="@*" />
-			<field><xsl:attribute name="fieldName">status</xsl:attribute><xsl:attribute name="fieldAction">replace</xsl:attribute><xsl:attribute name="fieldType">mandatoryField</xsl:attribute><xsl:attribute name="fieldValueHasChanged">true</xsl:attribute><xsl:attribute name="fieldValueType">String</xsl:attribute><xsl:attribute name="fieldValueIsNull">false</xsl:attribute>Open</field>
-			<field><xsl:attribute name="fieldName">priority</xsl:attribute><xsl:attribute name="fieldAction">replace</xsl:attribute><xsl:attribute name="fieldType">mandatoryField</xsl:attribute><xsl:attribute name="fieldValueHasChanged">true</xsl:attribute><xsl:attribute name="fieldValueType">Integer</xsl:attribute><xsl:attribute name="fieldValueIsNull">false</xsl:attribute>2</field>
+			<field><xsl:attribute name="fieldName">priority</xsl:attribute><xsl:attribute name="fieldAction">replace</xsl:attribute><xsl:attribute name="fieldType">mandatoryField</xsl:attribute><xsl:attribute name="fieldValueHasChanged">true</xsl:attribute><xsl:attribute name="fieldValueType">Integer</xsl:attribute><xsl:attribute name="fieldValueIsNull">false</xsl:attribute>0</field>
 			<xsl:apply-templates />
 		</artifact>
 	</xsl:template>
@@ -41,7 +40,7 @@
 			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
 			<xsl:choose>
 				<xsl:when test="string(.)=''">
-					<xsl:value-of select="'Default description'" />
+					<xsl:value-of select="'Empty description'" />
 				</xsl:when>
 				<xsl:otherwise>
 					<xsl:value-of select="." />
@@ -84,6 +83,16 @@
 			<xsl:attribute name="fieldValueType">String</xsl:attribute>
 			<xsl:value-of select="." />
 		</field>
+	</xsl:template>
+	<xsl:template match='ccf:field[@fieldName="completedDate"]'>
+		<xsl:choose>
+				<xsl:when test="string(.)=''">
+					<field><xsl:attribute name="fieldName">status</xsl:attribute><xsl:attribute name="fieldAction">replace</xsl:attribute><xsl:attribute name="fieldType">mandatoryField</xsl:attribute><xsl:attribute name="fieldValueHasChanged">true</xsl:attribute><xsl:attribute name="fieldValueType">String</xsl:attribute><xsl:attribute name="fieldValueIsNull">false</xsl:attribute>Open</field>
+				</xsl:when>
+				<xsl:otherwise>
+					<field><xsl:attribute name="fieldName">status</xsl:attribute><xsl:attribute name="fieldAction">replace</xsl:attribute><xsl:attribute name="fieldType">mandatoryField</xsl:attribute><xsl:attribute name="fieldValueHasChanged">true</xsl:attribute><xsl:attribute name="fieldValueType">String</xsl:attribute><xsl:attribute name="fieldValueIsNull">false</xsl:attribute>Done</field>
+				</xsl:otherwise>
+		</xsl:choose>
 	</xsl:template>
 	<xsl:template match="text()" />
 </xsl:stylesheet>

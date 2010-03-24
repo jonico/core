@@ -38,7 +38,14 @@
 			<xsl:copy-of select="@*" />
 			<xsl:attribute name="fieldName">description</xsl:attribute>
 			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
-			<xsl:value-of select="." />
+			<xsl:choose>
+				<xsl:when test="string(.)='Empty Description'">
+					<xsl:value-of select="''" />
+				</xsl:when>
+				<xsl:otherwise>
+					<xsl:value-of select="." />
+				</xsl:otherwise>
+			</xsl:choose>
 		</field>
 	</xsl:template>
 	<xsl:template match='ccf:field[@fieldName="Benefit"]'>
@@ -64,6 +71,22 @@
 			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
 			<xsl:attribute name="fieldValueType">Integer</xsl:attribute>
 			<xsl:value-of select="." />
+		</field>
+	</xsl:template>
+	
+	<xsl:template match='ccf:field[@fieldName="closeDate"]'>
+		<field>
+			<xsl:copy-of select="@*" />
+			<xsl:attribute name="fieldValueType">Date</xsl:attribute>
+			<xsl:attribute name="fieldName">completedDate</xsl:attribute>
+			<xsl:choose>
+				<xsl:when test="string(.)=''">
+					<xsl:attribute name="fieldValueIsNull">true</xsl:attribute>
+				</xsl:when>
+				<xsl:otherwise>
+					<xsl:value-of select="." />
+				</xsl:otherwise>
+			</xsl:choose>	
 		</field>
 	</xsl:template>
 	
