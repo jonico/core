@@ -40,7 +40,7 @@
 			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
 			<xsl:choose>
 				<xsl:when test="string(.)=''">
-					<xsl:value-of select="'Default description'" />
+					<xsl:value-of select="'&lt;blank&gt;'" />
 				</xsl:when>
 				<xsl:otherwise>
 					<xsl:value-of select="." />
