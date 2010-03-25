@@ -487,7 +487,25 @@ public class SWPHandler {
 		}
 
 		if (estimate != null && estimate.getFieldValueHasChanged()) {
-			pbi.setEstimate((Integer) estimate.getFieldValue());
+			Object fieldValueObj = estimate.getFieldValue();
+			if (fieldValueObj == null || fieldValueObj.toString().length() == 0) {
+				pbi.setEstimate(null);
+			} else {
+				int fieldValue = 0;
+				if (fieldValueObj instanceof String) {
+					String fieldValueString = (String) fieldValueObj;
+					try {
+						fieldValue = Integer.parseInt(fieldValueString);
+					} catch (NumberFormatException e) {
+						throw new CCFRuntimeException(
+								"Could not parse value of field estimate: "
+										+ e.getMessage(), e);
+					}
+				} else if (fieldValueObj instanceof Integer) {
+					fieldValue = ((Integer) fieldValueObj).intValue();
+				}
+				pbi.setEstimate(fieldValue);
+			}
 		}
 
 		if (title != null && title.getFieldValueHasChanged()) {
@@ -503,6 +521,10 @@ public class SWPHandler {
 		// do the update
 		if (penaltyHasChanged || benefitHasChanged) {
 			BusinessWeightWSO bw = pbi.getBusinessWeight();
+			if (bw == null) {
+				bw = new BusinessWeightWSO();
+				pbi.setBusinessWeight(bw);
+			}
 			if (penaltyHasChanged) {
 				Object fieldValueObj = penalty.getFieldValue();
 				if (fieldValueObj == null || fieldValueObj.toString().length() == 0) {
