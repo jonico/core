@@ -67,5 +67,23 @@ public class Connection {
 		((ScrumWorksEndpointBindingStub) endpoint).setUsername(username);
 		((ScrumWorksEndpointBindingStub) endpoint).setPassword(password);
 	}
+	
+	/**
+	 * Alternative constructor for test classes 
+	 * @param serverUrl
+	 * @param userName
+	 * @param password
+	 * @throws ServiceException 
+	 */
+	public Connection (String serverUrl, String userName, String password) throws ServiceException {
+		this.username = userName;
+		this.password = password;
+		ScrumWorksServiceLocator locator = new ScrumWorksServiceLocator();
+		locator
+				.setScrumWorksEndpointPortEndpointAddress(serverUrl);
+		endpoint = locator.getScrumWorksEndpointPort();
+		((ScrumWorksEndpointBindingStub) endpoint).setUsername(username);
+		((ScrumWorksEndpointBindingStub) endpoint).setPassword(password);
+	}
 
 }
