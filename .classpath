@@ -46,5 +46,6 @@
 	<classpathentry kind="lib" path="src/plugins/TF/lib/tfapi.jar" sourcepath="C:/Documents and Settings/jnicolai/workspace/com.collabnet.teamforge.api/src"/>
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/jericho-html-3.1.jar"/>
 	<classpathentry kind="lib" path="src/plugins/SWP/lib/ScrumWorks-soap.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
