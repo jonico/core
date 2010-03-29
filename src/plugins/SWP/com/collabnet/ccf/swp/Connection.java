@@ -23,7 +23,7 @@ public class Connection {
 	 * Returns the SWP endpoint object
 	 * @return SWP endpoint object
 	 */
-	ScrumWorksEndpoint getEndpoint() {
+	public ScrumWorksEndpoint getEndpoint() {
 		return endpoint;
 	}
 	
