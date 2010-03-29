@@ -100,7 +100,8 @@ public class TFSWPIntegrationTest {
 		setSwpServerUrl(prop.getProperty(SWP_SERVER_URL));
 		setSwpProduct(prop.getProperty(SWP_PRODUCT));
 		
-		tfConnection = Connection.getConnection(getTfServerUrl(), getTfUserName(), getTfPassword(), null, null, null, false);
+		// we pass the current system millis to work around a caching problem
+		tfConnection = Connection.getConnection(getTfServerUrl(), getTfUserName(), getTfPassword(), null, Long.toString(System.currentTimeMillis()), null, false);
 		swpConnection = new com.collabnet.ccf.swp.Connection(getSwpServerUrl(), getSwpUserName(), getSwpPassword()); 
 	}
 
