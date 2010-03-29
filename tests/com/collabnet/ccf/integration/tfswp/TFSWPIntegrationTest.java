@@ -14,7 +14,12 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.collabnet.teamforge.api.Connection;
+import com.collabnet.teamforge.api.tracker.ArtifactRow;
 import com.danube.scrumworks.api.client.ScrumWorksEndpoint;
+import com.danube.scrumworks.api.client.types.BacklogItemWSO;
+import com.danube.scrumworks.api.client.types.ProductWSO;
+import com.danube.scrumworks.api.client.types.ServerException;
+import com.danube.scrumworks.api.client.types.TaskWSO;
 
 /**
  * This is the base class for all TeamForge/ScrumWorks Pro
@@ -212,4 +217,68 @@ public class TFSWPIntegrationTest {
 	public void testConnectivity() throws RemoteException {
 		assertEquals("Brilliant!", getSWPEndpoint().getTest());
 	}
+	
+	/**
+	 * Delete all PBIs in the TF project
+	 * @throws RemoteException 
+	 */
+	public void deleteAllPBIsInTF() throws RemoteException {
+		ArtifactRow[] tfRows = tfConnection.getTrackerClient().getArtifactList(getTfPBITracker(), null).getDataRows();
+		for (ArtifactRow artifactRow : tfRows) {
+			tfConnection.getTrackerClient().deleteArtifact(artifactRow.getId());
+		}
+	}
+	
+	/**
+	 * Delete all PBIs in the TF project
+	 * @throws RemoteException 
+	 */
+	public void deleteAllTasksInTF() throws RemoteException {
+		ArtifactRow[] tfRows = tfConnection.getTrackerClient().getArtifactList(getTfTaskTracker(), null).getDataRows();
+		for (ArtifactRow artifactRow : tfRows) {
+			tfConnection.getTrackerClient().deleteArtifact(artifactRow.getId());
+		}
+	}
+	
+	/**
+	 * Delete all PBIs within the SWP product
+	 * @throws ServerException
+	 * @throws RemoteException
+	 */
+	public void deleteAllPBIsInSWP() throws ServerException, RemoteException {
+		ProductWSO product = getSWPEndpoint().getProductByName(getSwpProduct());
+		BacklogItemWSO[] pbis = getSWPEndpoint().getActiveBacklogItems(product);
+		if (pbis != null) {
+			for (BacklogItemWSO backlogItemWSO : pbis) {
+				getSWPEndpoint().deleteBacklogItem(backlogItemWSO);
+			}
+		}
+	}
+	
+	/**
+	 * Delete all tasks within the SWP product
+	 * @throws RemoteException 
+	 * @throws ServerException 
+	 */
+	public void deleteAllTasksInSWP() throws ServerException, RemoteException {
+		ProductWSO product = getSWPEndpoint().getProductByName(getSwpProduct());
+		TaskWSO[] tasks = getSWPEndpoint().getTasksForProduct(product);
+		if (tasks != null) {
+			for (TaskWSO task : tasks) {
+				getSWPEndpoint().deleteTask(task);
+			}
+		}
+	}
+	
+	/**
+	 * Delete all artifacts within the TF and PBI project/product
+	 * @throws RemoteException 
+	 */
+	public void cleanUpArtifacts() throws RemoteException {
+		deleteAllTasksInTF();
+		deleteAllTasksInSWP();
+		deleteAllPBIsInTF();
+		deleteAllPBIsInSWP();
+	}
+	
 }
