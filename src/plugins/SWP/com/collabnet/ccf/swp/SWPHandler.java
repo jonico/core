@@ -197,19 +197,14 @@ public class SWPHandler {
 			List<ArtifactState> artifactStates) throws ServerException,
 			RemoteException {
 		ProductWSO product = endpoint.getProductByName(swpProductName);
-		BacklogItemWSO[] pbis = endpoint.getActiveBacklogItems(product);
-		if (pbis != null) {
-			for (BacklogItemWSO pbi : pbis) {
-				TaskWSO[] tasks = endpoint.getTasks(pbi);
-				if (tasks != null) {
-					for (TaskWSO task : tasks) {
-						ArtifactState artifactState = new ArtifactState();
-						artifactState.setArtifactId(task.getId().toString());
-						artifactState.setArtifactLastModifiedDate(new Date(0));
-						artifactState.setArtifactVersion(-1);
-						artifactStates.add(artifactState);
-					}
-				}
+		TaskWSO[] tasks = endpoint.getTasksForProduct(product);
+		if (tasks != null) {
+			for (TaskWSO task : tasks) {
+				ArtifactState artifactState = new ArtifactState();
+				artifactState.setArtifactId(task.getId().toString());
+				artifactState.setArtifactLastModifiedDate(new Date(0));
+				artifactState.setArtifactVersion(-1);
+				artifactStates.add(artifactState);
 			}
 		}
 	}
