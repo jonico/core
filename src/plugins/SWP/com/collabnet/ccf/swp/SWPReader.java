@@ -97,6 +97,8 @@ public class SWPReader extends AbstractReader<Connection> {
 				swpHandler.retrievePBI(artifactId, swpProductName, genericArtifact);
 			} else if (swpType.equals(SWPMetaData.SWPType.PRODUCT)) {
 				swpHandler.retrieveProduct(artifactId, swpProductName, genericArtifact);
+			} else if (swpType.equals(SWPMetaData.SWPType.PRODUCT_RELEASE)) {
+				swpHandler.retrieveProductRelease(artifactId, swpProductName, genericArtifact);
 			} else {
 				String cause = "Unsupported repository format: " + sourceRepositoryId;
 				log.error(cause);
@@ -212,6 +214,8 @@ public class SWPReader extends AbstractReader<Connection> {
 				swpHandler.getChangedPBIs(swpProductName, artifactStates);
 			} else if (swpType.equals(SWPType.PRODUCT)) {
 				swpHandler.getChangedProducts(swpProductName, artifactStates);
+			} else if (swpType.equals(SWPType.PRODUCT_RELEASE)) {
+				swpHandler.getChangedProductReleases(swpProductName, artifactStates);
 			} else {
 				String cause = "Unsupported repository format: " + sourceRepositoryId;
 				log.error(cause);

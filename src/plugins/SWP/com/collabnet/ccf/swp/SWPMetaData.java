@@ -188,6 +188,33 @@ public class SWPMetaData {
 		}
 	}
 	
+	public enum ProductReleaseFields {
+		id("id", GenericArtifactField.FieldValueTypeValue.STRING),
+		title("title", GenericArtifactField.FieldValueTypeValue.STRING),
+		startDate("startDate", GenericArtifactField.FieldValueTypeValue.DATE),
+		releaseDate("releaseDate", GenericArtifactField.FieldValueTypeValue.DATE),
+		description("description", GenericArtifactField.FieldValueTypeValue.STRING),
+		archived("archived", GenericArtifactField.FieldValueTypeValue.BOOLEAN),
+		productId("productId", GenericArtifactField.FieldValueTypeValue.STRING),
+		programId("programId", GenericArtifactField.FieldValueTypeValue.STRING);
+		
+		private GenericArtifactField.FieldValueTypeValue valueType;
+		private String fieldName;
+		
+		private ProductReleaseFields(String fieldName, GenericArtifactField.FieldValueTypeValue valueType) {
+			this.fieldName = fieldName;
+			this.valueType = valueType;
+		}
+		
+		public String getFieldName() {
+			return fieldName;
+		}
+		
+		public GenericArtifactField.FieldValueTypeValue getValueType() {
+			return valueType;
+		}
+	}
+	
 	// TODO Include meta info for the other SWP types
 }
 

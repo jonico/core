@@ -16,6 +16,7 @@ import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactField.FieldActionValue;
 import com.collabnet.ccf.swp.SWPMetaData.PBIFields;
 import com.collabnet.ccf.swp.SWPMetaData.ProductFields;
+import com.collabnet.ccf.swp.SWPMetaData.ProductReleaseFields;
 import com.collabnet.ccf.swp.SWPMetaData.SWPType;
 import com.collabnet.ccf.swp.SWPMetaData.TaskFields;
 import com.danube.scrumworks.api.client.ScrumWorksEndpoint;
@@ -76,11 +77,12 @@ public class SWPHandler {
 		addPBIField(ga, PBIFields.releaseId, pbi.getReleaseId());
 		addPBIField(ga, PBIFields.sprintId, pbi.getSprintId());
 		addPBIField(ga, PBIFields.title, pbi.getTitle());
-		
-		// set parent artifact (Product)
-		ga.setDepParentSourceArtifactId(pbi.getProductId().toString());
+
+		// set parent artifact (Product release)
+		ga.setDepParentSourceArtifactId(pbi.getReleaseId().toString());
 		ga.setDepParentSourceRepositoryId(product
-				+ SWPMetaData.REPOSITORY_ID_SEPARATOR + SWPMetaData.PRODUCT);
+				+ SWPMetaData.REPOSITORY_ID_SEPARATOR
+				+ SWPMetaData.PRODUCT_RELEASE);
 	}
 
 	/**
@@ -117,8 +119,8 @@ public class SWPHandler {
 		addTaskField(genericArtifact, TaskFields.title, task.getTitle());
 
 		// set parent artifact (PBI)
-		genericArtifact.setDepParentSourceArtifactId(task
-				.getBacklogItemId().toString());
+		genericArtifact.setDepParentSourceArtifactId(task.getBacklogItemId()
+				.toString());
 		genericArtifact.setDepParentSourceRepositoryId(product
 				+ SWPMetaData.REPOSITORY_ID_SEPARATOR + SWPMetaData.PBI);
 	}
@@ -142,7 +144,7 @@ public class SWPHandler {
 		gaField.setFieldAction(FieldActionValue.REPLACE);
 		gaField.setFieldValue(value);
 	}
-	
+
 	/**
 	 * Adds a product field to a generic artifact
 	 * 
@@ -174,6 +176,26 @@ public class SWPHandler {
 	 */
 	private void addPBIField(GenericArtifact genericArtifact, PBIFields field,
 			Object value) {
+		// all fields are from field type "mandatoryField" since SWP has a
+		// static field model
+		GenericArtifactField gaField = genericArtifact.addNewField(field
+				.getFieldName(), "mandatoryField");
+		gaField.setFieldValueType(field.getValueType());
+		gaField.setFieldAction(FieldActionValue.REPLACE);
+		gaField.setFieldValue(value);
+	}
+
+	/**
+	 * Adds a product release field to a generic artifact
+	 * 
+	 * @param genericArtifact
+	 * @param field
+	 *            product release field
+	 * @param value
+	 *            value of the product release field
+	 */
+	private void addProductReleaseField(GenericArtifact genericArtifact,
+			ProductReleaseFields field, Object value) {
 		// all fields are from field type "mandatoryField" since SWP has a
 		// static field model
 		GenericArtifactField gaField = genericArtifact.addNewField(field
@@ -311,7 +333,8 @@ public class SWPHandler {
 			BusinessWeightWSO bw = pbi.getBusinessWeight();
 			if (penaltyHasChanged) {
 				Object fieldValueObj = penalty.getFieldValue();
-				if (fieldValueObj == null || fieldValueObj.toString().length() == 0) {
+				if (fieldValueObj == null
+						|| fieldValueObj.toString().length() == 0) {
 					bw.setPenalty(null);
 				} else {
 					int fieldValue = 0;
@@ -332,7 +355,8 @@ public class SWPHandler {
 			}
 			if (benefitHasChanged) {
 				Object fieldValueObj = benefit.getFieldValue();
-				if (fieldValueObj == null || fieldValueObj.toString().length() == 0) {
+				if (fieldValueObj == null
+						|| fieldValueObj.toString().length() == 0) {
 					bw.setBenefit(null);
 				} else {
 					int fieldValue = 0;
@@ -352,6 +376,22 @@ public class SWPHandler {
 				}
 			}
 			pbi.setBusinessWeight(bw);
+		}
+		
+		// now determine the release (parent artifact)
+		String parentArtifact = ga.getDepParentTargetArtifactId();
+		if (parentArtifact == null
+				|| parentArtifact.equals(GenericArtifact.VALUE_UNKNOWN)
+				|| parentArtifact.equals(GenericArtifact.VALUE_NONE)
+				|| !SWPMetaData.retrieveSWPTypeFromRepositoryId(
+						ga.getDepParentTargetRepositoryId()).equals(
+						SWPMetaData.SWPType.PRODUCT_RELEASE)) {
+			log
+					.warn(parentArtifact
+							+ " of repository "
+							+ " is no valid release, so we do not change the associated release.");
+		} else {
+			pbi.setReleaseId(new Long(parentArtifact));
 		}
 
 		return endpoint.updateBacklogItem(pbi);
@@ -451,6 +491,7 @@ public class SWPHandler {
 
 	/**
 	 * Creates an SWP PBI
+	 * 
 	 * @param active
 	 * @param benefit
 	 * @param completedDate
@@ -460,14 +501,15 @@ public class SWPHandler {
 	 * @param title
 	 * @param ga
 	 * @return newly created PBI
-	 * @throws RemoteException 
-	 * @throws ServerException 
+	 * @throws RemoteException
+	 * @throws ServerException
 	 */
 	public BacklogItemWSO createPBI(GenericArtifactField active,
 			GenericArtifactField benefit, GenericArtifactField completedDate,
 			GenericArtifactField description, GenericArtifactField estimate,
-			GenericArtifactField penalty, GenericArtifactField title, String swpProductName,
-			GenericArtifact ga) throws ServerException, RemoteException {
+			GenericArtifactField penalty, GenericArtifactField title,
+			String swpProductName, GenericArtifact ga) throws ServerException,
+			RemoteException {
 		BacklogItemWSO pbi = new BacklogItemWSO();
 		if (active != null && active.getFieldValueHasChanged()) {
 			pbi.setActive((Boolean) active.getFieldValue());
@@ -522,7 +564,8 @@ public class SWPHandler {
 			}
 			if (penaltyHasChanged) {
 				Object fieldValueObj = penalty.getFieldValue();
-				if (fieldValueObj == null || fieldValueObj.toString().length() == 0) {
+				if (fieldValueObj == null
+						|| fieldValueObj.toString().length() == 0) {
 					bw.setPenalty(null);
 				} else {
 					int fieldValue = 0;
@@ -543,7 +586,8 @@ public class SWPHandler {
 			}
 			if (benefitHasChanged) {
 				Object fieldValueObj = benefit.getFieldValue();
-				if (fieldValueObj == null || fieldValueObj.toString().length() == 0) {
+				if (fieldValueObj == null
+						|| fieldValueObj.toString().length() == 0) {
 					bw.setBenefit(null);
 				} else {
 					int fieldValue = 0;
@@ -563,23 +607,38 @@ public class SWPHandler {
 				}
 			}
 		}
-		
-		// now set the product 
+
+		// now set the product
 		// TODO Do not use the symbolic product name but its id
 		pbi.setProductId(endpoint.getProductByName(swpProductName).getId());
-		
-		if (pbi.getReleaseId() == null) {
-			// we have to set a valid release for our testing purposes
-			ReleaseWSO release = endpoint.getReleasesForProduct(endpoint.getProductByName(swpProductName))[0];
-			log.info("No release specified, so assigning to first release in list: " + release.getTitle());
+
+		// now determine the release (parent artifact)
+		String parentArtifact = ga.getDepParentTargetArtifactId();
+		if (parentArtifact == null
+				|| parentArtifact.equals(GenericArtifact.VALUE_UNKNOWN)
+				|| parentArtifact.equals(GenericArtifact.VALUE_NONE)
+				|| !SWPMetaData.retrieveSWPTypeFromRepositoryId(
+						ga.getDepParentTargetRepositoryId()).equals(
+						SWPMetaData.SWPType.PRODUCT_RELEASE)) {
+			// parent id is no release, we assign the first release in the list
+			ReleaseWSO release = endpoint.getReleasesForProduct(endpoint
+					.getProductByName(swpProductName))[0];
+			log
+					.warn(parentArtifact
+							+ " of repository "
+							+ " is no valid release ,so assigning newly created PBI to first release in list: "
+							+ release.getTitle());
 			pbi.setReleaseId(release.getId());
+		} else {
+			pbi.setReleaseId(new Long(parentArtifact));
 		}
-		
+
 		return endpoint.createBacklogItem(pbi);
 	}
 
 	/**
 	 * Creates an SWP task
+	 * 
 	 * @param description
 	 * @param estimatedHours
 	 * @param pointPerson
@@ -588,8 +647,8 @@ public class SWPHandler {
 	 * @param swpProductName
 	 * @param ga
 	 * @return newly created task
-	 * @throws RemoteException 
-	 * @throws ServerException 
+	 * @throws RemoteException
+	 * @throws ServerException
 	 */
 	public TaskWSO createTask(GenericArtifactField description,
 			GenericArtifactField estimatedHours,
@@ -634,7 +693,7 @@ public class SWPHandler {
 		if (title != null && title.getFieldValueHasChanged()) {
 			task.setTitle((String) title.getFieldValue());
 		}
-		
+
 		// now set the parent PBI
 		String parent = ga.getDepParentTargetArtifactId();
 		String parentRepository = ga.getDepParentTargetRepositoryId();
@@ -644,56 +703,148 @@ public class SWPHandler {
 				|| !SWPMetaData.retrieveSWPTypeFromRepositoryId(
 						parentRepository).equals(SWPType.PBI)) {
 			String error = "It looks as if somebody created a task without a valid parent"
-				+ " in the source system (unsupported parent artifact: "
-				+ parent
-				+ " in repository "
-				+ parentRepository
-				+ "). Bailing out ..."; 
+					+ " in the source system (unsupported parent artifact: "
+					+ parent
+					+ " in repository "
+					+ parentRepository
+					+ "). Bailing out ...";
 			log.error(error);
 			ga.setErrorCode(GenericArtifact.ERROR_PARENT_ARTIFACT_NOT_PRESENT);
 			throw new CCFRuntimeException(error);
 		} else {
 			task.setBacklogItemId(new Long(parent));
 		}
-		
+
 		return endpoint.createTask(task);
 	}
 
 	/**
 	 * Returns the product whenever its properties change
+	 * 
 	 * @param swpProductName
 	 * @param artifactStates
-	 * @throws RemoteException 
-	 * @throws ServerException 
+	 * @throws RemoteException
+	 * @throws ServerException
 	 */
 	public void getChangedProducts(String swpProductName,
-			ArrayList<ArtifactState> artifactStates) throws ServerException, RemoteException {
+			ArrayList<ArtifactState> artifactStates) throws ServerException,
+			RemoteException {
 		// TODO Implement polling
 		ProductWSO product = endpoint.getProductByName(swpProductName);
 		ArtifactState artifactState = new ArtifactState();
 		artifactState.setArtifactId(product.getId().toString());
 		artifactState.setArtifactLastModifiedDate(new Date(0));
 		artifactState.setArtifactVersion(-1);
-		artifactStates.add(artifactState);	
+		artifactStates.add(artifactState);
 	}
 
 	/**
-	 * Retrieves the properties of an SWP product and stores them into the passed generic artifact
+	 * Returns the product releases whenever their properties change
+	 * 
+	 * @param swpProductName
+	 * @param artifactStates
+	 * @throws RemoteException
+	 * @throws ServerException
+	 */
+	public void getChangedProductReleases(String swpProductName,
+			ArrayList<ArtifactState> artifactStates) throws ServerException,
+			RemoteException {
+		// TODO Implement polling
+		ProductWSO product = endpoint.getProductByName(swpProductName);
+		ReleaseWSO[] releases = endpoint.getReleasesForProduct(product);
+		if (releases != null) {
+			for (ReleaseWSO releaseWSO : releases) {
+				// currently, we treat program releases like product releases
+				// since we have to duplicate them anyway
+				ArtifactState artifactState = new ArtifactState();
+				artifactState.setArtifactId(releaseWSO.getId().toString());
+				artifactState.setArtifactLastModifiedDate(new Date(0));
+				artifactState.setArtifactVersion(-1);
+				artifactStates.add(artifactState);
+			}
+		}
+	}
+
+	/**
+	 * Retrieves the properties of an SWP product and stores them into the
+	 * passed generic artifact
+	 * 
 	 * @param artifactId
 	 * @param swpProductName
 	 * @param genericArtifact
-	 * @throws RemoteException 
-	 * @throws ServerException 
+	 * @throws RemoteException
+	 * @throws ServerException
 	 */
 	public void retrieveProduct(String artifactId, String swpProductName,
-			GenericArtifact genericArtifact) throws ServerException, RemoteException {
+			GenericArtifact genericArtifact) throws ServerException,
+			RemoteException {
 		ProductWSO product = endpoint.getProductByName(swpProductName);
 		addProductField(genericArtifact, ProductFields.id, product.getId());
-		addProductField(genericArtifact, ProductFields.effortUnits, product.getEffortUnits());
-		addProductField(genericArtifact, ProductFields.businessWeightUnits, product.getBusinessWeightUnits());
-		addProductField(genericArtifact, ProductFields.keyPrefix, product.getKeyPrefix());
+		addProductField(genericArtifact, ProductFields.effortUnits, product
+				.getEffortUnits());
+		addProductField(genericArtifact, ProductFields.businessWeightUnits,
+				product.getBusinessWeightUnits());
+		addProductField(genericArtifact, ProductFields.keyPrefix, product
+				.getKeyPrefix());
 		addProductField(genericArtifact, ProductFields.name, product.getName());
-		addProductField(genericArtifact, ProductFields.trackTimeSpent, product.isTrackTimeSpent());
+		addProductField(genericArtifact, ProductFields.trackTimeSpent, product
+				.isTrackTimeSpent());
+	}
+
+	/**
+	 * Populates the generic artifact data structure with the properties of the
+	 * requested product release
+	 * 
+	 * @param id
+	 *            id of the PBI
+	 * @param product
+	 *            SWP product name
+	 * @throws RemoteException
+	 * @throws ServerException
+	 */
+	public void retrieveProductRelease(String id, String product,
+			GenericArtifact ga) throws ServerException, NumberFormatException,
+			RemoteException {
+		/**
+		 * Currently, we treat program releases like product releases since we
+		 * duplicate them anyways
+		 */
+		// TODO This is very inefficient code, we need better API calls here
+		ProductWSO productWSO = endpoint.getProductByName(product);
+		ReleaseWSO[] releases = endpoint.getReleasesForProduct(productWSO);
+		if (releases != null) {
+			for (ReleaseWSO releaseWSO : releases) {
+				if (releaseWSO.getId().toString().equals(id)) {
+					addProductReleaseField(ga, ProductReleaseFields.id,
+							releaseWSO.getId());
+					addProductReleaseField(ga, ProductReleaseFields.archived,
+							releaseWSO.isArchived());
+					addProductReleaseField(ga,
+							ProductReleaseFields.description, releaseWSO
+									.getDescription());
+					addProductReleaseField(ga, ProductReleaseFields.productId,
+							releaseWSO.getProductId());
+					addProductReleaseField(ga, ProductReleaseFields.programId,
+							releaseWSO.getProgramId());
+					addProductReleaseField(ga,
+							ProductReleaseFields.releaseDate, releaseWSO
+									.getReleaseDate());
+					addProductReleaseField(ga, ProductReleaseFields.startDate,
+							releaseWSO.getStartDate());
+					addProductReleaseField(ga, ProductReleaseFields.title,
+							releaseWSO.getTitle());
+
+					// set parent artifact (Product)
+					ga.setDepParentSourceArtifactId(productWSO.getId()
+							.toString());
+					ga.setDepParentSourceRepositoryId(product
+							+ SWPMetaData.REPOSITORY_ID_SEPARATOR
+							+ SWPMetaData.PRODUCT);
+					return;
+				}
+			}
+		}
+		throw new CCFRuntimeException("Could not find release with id: " + id);
 	}
 
 }
