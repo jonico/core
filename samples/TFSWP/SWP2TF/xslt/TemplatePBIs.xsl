@@ -75,6 +75,42 @@
 			<xsl:value-of select="." />
 		</field>
 	</xsl:template>
+	<xsl:template match='ccf:field[@fieldName="sprint"]'>
+		<field>
+			<xsl:copy-of select="@*" />
+			<xsl:attribute name="fieldName">Sprint</xsl:attribute>
+			<xsl:attribute name="fieldType">flexField</xsl:attribute>
+			<xsl:attribute name="fieldValueType">String</xsl:attribute>
+			<xsl:value-of select="." />
+		</field>
+	</xsl:template>
+	<xsl:template match='ccf:field[@fieldName="team"]'>
+		<field>
+			<xsl:copy-of select="@*" />
+			<xsl:attribute name="fieldName">Team</xsl:attribute>
+			<xsl:attribute name="fieldType">flexField</xsl:attribute>
+			<xsl:attribute name="fieldValueType">String</xsl:attribute>
+			<xsl:value-of select="." />
+		</field>
+	</xsl:template>
+	<xsl:template match='ccf:field[@fieldName="sprintStart"]'>
+		<field>
+			<xsl:copy-of select="@*" />
+			<xsl:attribute name="fieldName">Sprint Start</xsl:attribute>
+			<xsl:attribute name="fieldType">flexField</xsl:attribute>
+			<xsl:attribute name="fieldValueType">Date</xsl:attribute>
+			<xsl:value-of select="." />
+		</field>
+	</xsl:template>
+	<xsl:template match='ccf:field[@fieldName="sprintEnd"]'>
+		<field>
+			<xsl:copy-of select="@*" />
+			<xsl:attribute name="fieldName">Sprint End</xsl:attribute>
+			<xsl:attribute name="fieldType">flexField</xsl:attribute>
+			<xsl:attribute name="fieldValueType">Date</xsl:attribute>
+			<xsl:value-of select="." />
+		</field>
+	</xsl:template>
 	<xsl:template match='ccf:field[@fieldName="estimate"]'>
 		<field>
 			<xsl:copy-of select="@*" />
