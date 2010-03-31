@@ -25,7 +25,9 @@ import com.danube.scrumworks.api.client.types.BusinessWeightWSO;
 import com.danube.scrumworks.api.client.types.ProductWSO;
 import com.danube.scrumworks.api.client.types.ReleaseWSO;
 import com.danube.scrumworks.api.client.types.ServerException;
+import com.danube.scrumworks.api.client.types.SprintWSO;
 import com.danube.scrumworks.api.client.types.TaskWSO;
+import com.danube.scrumworks.api.client.types.TeamWSO;
 
 /**
  * This class encapsulates all calls to the SWP backend
@@ -75,7 +77,6 @@ public class SWPHandler {
 		addPBIField(ga, PBIFields.productId, pbi.getProductId());
 		addPBIField(ga, PBIFields.rank, pbi.getRank());
 		addPBIField(ga, PBIFields.releaseId, pbi.getReleaseId());
-		addPBIField(ga, PBIFields.sprintId, pbi.getSprintId());
 		addPBIField(ga, PBIFields.title, pbi.getTitle());
 
 		// set parent artifact (Product release)
@@ -83,6 +84,36 @@ public class SWPHandler {
 		ga.setDepParentSourceRepositoryId(product
 				+ SWPMetaData.REPOSITORY_ID_SEPARATOR
 				+ SWPMetaData.PRODUCT_RELEASE);
+		
+		Long sprintId = pbi.getSprintId();
+		if (sprintId == null) {
+			addPBIField(ga, PBIFields.sprintId, null);
+			addPBIField(ga, PBIFields.team, "");
+			addPBIField(ga, PBIFields.sprint, "");
+			addPBIField(ga, PBIFields.sprintStart, null);
+			addPBIField(ga, PBIFields.sprintEnd, null);
+		}
+		else {
+			addPBIField(ga, PBIFields.sprintId, sprintId);
+			SprintWSO [] sprints = endpoint.getSprints(endpoint.getProductByName(product));
+			if (sprints == null) {
+				throw new CCFRuntimeException("Could not find sprints for product "+ product);
+			} else {
+				for (SprintWSO sprintWSO : sprints) {
+					if (sprintWSO.getId().equals(sprintId)) {
+						addPBIField(ga, PBIFields.sprint, sprintWSO.getName());
+						addPBIField(ga, PBIFields.sprintStart, sprintWSO.getStartDate());
+						addPBIField(ga, PBIFields.sprintEnd, sprintWSO.getEndDate());
+						// retrieve team name
+						TeamWSO team = endpoint.getTeam(sprintWSO);
+						addPBIField(ga, PBIFields.team, team.getName());
+						return;
+					}
+				}
+				throw new CCFRuntimeException("Could not find sprint " + sprintId + " for product "+ product);
+			}
+			
+		}
 	}
 
 	/**

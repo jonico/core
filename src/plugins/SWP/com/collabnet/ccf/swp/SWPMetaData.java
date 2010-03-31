@@ -105,6 +105,8 @@ public class SWPMetaData {
 		benefit("benefit", GenericArtifactField.FieldValueTypeValue.INTEGER),
 		penalty("penalty", GenericArtifactField.FieldValueTypeValue.INTEGER),
 		completedDate("completedDate", GenericArtifactField.FieldValueTypeValue.DATE),
+		sprintStart("sprintStart", GenericArtifactField.FieldValueTypeValue.DATE),
+		sprintEnd("sprintEnd", GenericArtifactField.FieldValueTypeValue.DATE),
 		description("description", GenericArtifactField.FieldValueTypeValue.STRING),
 		estimate("estimate", GenericArtifactField.FieldValueTypeValue.INTEGER),
 		//groupId("groupId", GenericArtifactField.FieldValueTypeValue.INTEGER),
@@ -112,7 +114,9 @@ public class SWPMetaData {
 		productId("productId", GenericArtifactField.FieldValueTypeValue.STRING),
 		rank("rank", GenericArtifactField.FieldValueTypeValue.DOUBLE),
 		releaseId("releaseId", GenericArtifactField.FieldValueTypeValue.STRING),
+		sprint("sprint", GenericArtifactField.FieldValueTypeValue.STRING),
 		sprintId("sprintId", GenericArtifactField.FieldValueTypeValue.STRING),
+		team("team", GenericArtifactField.FieldValueTypeValue.STRING),
 		title("title", GenericArtifactField.FieldValueTypeValue.STRING),
 		active("active", GenericArtifactField.FieldValueTypeValue.BOOLEAN);
 		
