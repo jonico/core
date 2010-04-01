@@ -4,7 +4,9 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -79,9 +81,9 @@ public class SWPHandler {
 		addPBIField(ga, PBIFields.rank, pbi.getRank());
 		addPBIField(ga, PBIFields.releaseId, pbi.getReleaseId());
 		addPBIField(ga, PBIFields.title, pbi.getTitle());
-		
+
 		// retrieve themes
-		ThemeWSO [] themes = pbi.getThemes();
+		ThemeWSO[] themes = pbi.getThemes();
 		if (themes == null || themes.length == 0) {
 			addPBIField(ga, PBIFields.theme, null);
 		} else {
@@ -95,7 +97,7 @@ public class SWPHandler {
 		ga.setDepParentSourceRepositoryId(product
 				+ SWPMetaData.REPOSITORY_ID_SEPARATOR
 				+ SWPMetaData.PRODUCT_RELEASE);
-		
+
 		Long sprintId = pbi.getSprintId();
 		if (sprintId == null) {
 			addPBIField(ga, PBIFields.sprintId, null);
@@ -103,27 +105,31 @@ public class SWPHandler {
 			addPBIField(ga, PBIFields.sprint, "");
 			addPBIField(ga, PBIFields.sprintStart, null);
 			addPBIField(ga, PBIFields.sprintEnd, null);
-		}
-		else {
+		} else {
 			addPBIField(ga, PBIFields.sprintId, sprintId);
-			SprintWSO [] sprints = endpoint.getSprints(endpoint.getProductByName(product));
+			SprintWSO[] sprints = endpoint.getSprints(endpoint
+					.getProductByName(product));
 			if (sprints == null) {
-				throw new CCFRuntimeException("Could not find sprints for product "+ product);
+				throw new CCFRuntimeException(
+						"Could not find sprints for product " + product);
 			} else {
 				for (SprintWSO sprintWSO : sprints) {
 					if (sprintWSO.getId().equals(sprintId)) {
 						addPBIField(ga, PBIFields.sprint, sprintWSO.getName());
-						addPBIField(ga, PBIFields.sprintStart, sprintWSO.getStartDate());
-						addPBIField(ga, PBIFields.sprintEnd, sprintWSO.getEndDate());
+						addPBIField(ga, PBIFields.sprintStart, sprintWSO
+								.getStartDate());
+						addPBIField(ga, PBIFields.sprintEnd, sprintWSO
+								.getEndDate());
 						// retrieve team name
 						TeamWSO team = endpoint.getTeam(sprintWSO);
 						addPBIField(ga, PBIFields.team, team.getName());
 						return;
 					}
 				}
-				throw new CCFRuntimeException("Could not find sprint " + sprintId + " for product "+ product);
+				throw new CCFRuntimeException("Could not find sprint "
+						+ sprintId + " for product " + product);
 			}
-			
+
 		}
 	}
 
@@ -311,6 +317,7 @@ public class SWPHandler {
 	 * @param estimate
 	 * @param penalty
 	 * @param title
+	 * @param themes
 	 * @param ga
 	 * @return updated PBI
 	 * @throws RemoteException
@@ -321,8 +328,8 @@ public class SWPHandler {
 			GenericArtifactField benefit, GenericArtifactField completedDate,
 			GenericArtifactField description, GenericArtifactField estimate,
 			GenericArtifactField penalty, GenericArtifactField title,
-			GenericArtifact ga) throws ServerException, NumberFormatException,
-			RemoteException {
+			List<GenericArtifactField> themes, String swpProductName, GenericArtifact ga)
+			throws ServerException, NumberFormatException, RemoteException {
 		BacklogItemWSO pbi = endpoint.getBacklogItem(new Long(ga
 				.getTargetArtifactId()));
 		// TODO Do conflict resolution
@@ -420,6 +427,54 @@ public class SWPHandler {
 			pbi.setBusinessWeight(bw);
 		}
 		
+		ProductWSO product = endpoint.getProductByName(swpProductName);
+		
+		// now updates the themes
+		if (themes != null && !themes.isEmpty()) {
+			Set<String> themeSet = new HashSet<String>();
+			boolean nullValueSet = false;
+			for (GenericArtifactField field : themes) {
+				if (field.getFieldValueHasChanged()) {
+					if (field.getFieldValue() != null) {
+						themeSet.add(field.getFieldValue().toString());
+					} else {
+						nullValueSet = true;
+					}
+				}
+			}
+			if (!themeSet.isEmpty()) {
+				// retrieve all themes of the product
+				ThemeWSO[] swpThemes = endpoint.getThemesForProduct(product);
+				if (swpThemes == null || swpThemes.length == 0) {
+					log.warn("Attempt to set themes not present in SWP.");
+					for (String theme : themeSet) {
+						log.warn("Missing theme: " + theme);
+					}
+				} else {
+					List<ThemeWSO> swpThemeWSOs = new ArrayList<ThemeWSO>();
+					for (ThemeWSO themeWSO : swpThemes) {
+						if (themeSet.contains(themeWSO.getName())) {
+							themeSet.remove(themeWSO.getName());
+							swpThemeWSOs.add(themeWSO);
+						}
+					}
+					pbi.setThemes(swpThemeWSOs.toArray(new ThemeWSO[]{}));
+					if (!themeSet.isEmpty()) {
+						log.warn("Attempt to set themes not present in SWP.");
+						for (String theme : themeSet) {
+							log.warn("Missing theme: " + theme);
+						}
+					}
+				}
+			} else if (nullValueSet) {
+				// if the null value was set specifically, we have to wipe all assigned themes
+				// otherwise this just does mean that no theme value has been changed since the last update
+				pbi.setThemes(null);
+			}
+		} else {
+			pbi.setThemes(null);
+		}
+
 		// now determine the release (parent artifact)
 		String parentArtifact = ga.getDepParentTargetArtifactId();
 		if (parentArtifact == null
@@ -541,6 +596,7 @@ public class SWPHandler {
 	 * @param estimate
 	 * @param penalty
 	 * @param title
+	 * @param themes
 	 * @param ga
 	 * @return newly created PBI
 	 * @throws RemoteException
@@ -550,22 +606,22 @@ public class SWPHandler {
 			GenericArtifactField benefit, GenericArtifactField completedDate,
 			GenericArtifactField description, GenericArtifactField estimate,
 			GenericArtifactField penalty, GenericArtifactField title,
-			String swpProductName, GenericArtifact ga) throws ServerException,
-			RemoteException {
+			List<GenericArtifactField> themes, String swpProductName,
+			GenericArtifact ga) throws ServerException, RemoteException {
 		BacklogItemWSO pbi = new BacklogItemWSO();
-		if (active != null && active.getFieldValueHasChanged()) {
+		if (active != null) {
 			pbi.setActive((Boolean) active.getFieldValue());
 		}
 
-		if (completedDate != null && completedDate.getFieldValueHasChanged()) {
+		if (completedDate != null) {
 			pbi.setCompletedDate((Calendar) completedDate.getFieldValue());
 		}
 
-		if (description != null && description.getFieldValueHasChanged()) {
+		if (description != null) {
 			pbi.setDescription((String) description.getFieldValue());
 		}
 
-		if (estimate != null && estimate.getFieldValueHasChanged()) {
+		if (estimate != null) {
 			Object fieldValueObj = estimate.getFieldValue();
 			if (fieldValueObj == null || fieldValueObj.toString().length() == 0) {
 				pbi.setEstimate(null);
@@ -587,14 +643,12 @@ public class SWPHandler {
 			}
 		}
 
-		if (title != null && title.getFieldValueHasChanged()) {
+		if (title != null) {
 			pbi.setTitle((String) title.getFieldValue());
 		}
 
-		boolean penaltyHasChanged = (penalty != null && penalty
-				.getFieldValueHasChanged());
-		boolean benefitHasChanged = (benefit != null && benefit
-				.getFieldValueHasChanged());
+		boolean penaltyHasChanged = (penalty != null);
+		boolean benefitHasChanged = (benefit != null);
 
 		// only if at least one of penalty or benefit has changed, we have to
 		// do the update
@@ -650,9 +704,46 @@ public class SWPHandler {
 			}
 		}
 
+		ProductWSO product = endpoint.getProductByName(swpProductName);
+
+		// now set the themes
+		if (themes != null && !themes.isEmpty()) {
+			Set<String> themeSet = new HashSet<String>();
+			for (GenericArtifactField field : themes) {
+				if (field.getFieldValue() != null) {
+					themeSet.add(field.getFieldValue().toString());
+				}
+			}
+			if (!themeSet.isEmpty()) {
+				// retrieve all themes of the product
+				ThemeWSO[] swpThemes = endpoint.getThemesForProduct(product);
+				if (swpThemes == null || swpThemes.length == 0) {
+					log.warn("Attempt to set themes not present in SWP.");
+					for (String theme : themeSet) {
+						log.warn("Missing theme: " + theme);
+					}
+				} else {
+					List<ThemeWSO> swpThemeWSOs = new ArrayList<ThemeWSO>();
+					for (ThemeWSO themeWSO : swpThemes) {
+						if (themeSet.contains(themeWSO.getName())) {
+							themeSet.remove(themeWSO.getName());
+							swpThemeWSOs.add(themeWSO);
+						}
+					}
+					pbi.setThemes(swpThemeWSOs.toArray(new ThemeWSO[]{}));
+					if (!themeSet.isEmpty()) {
+						log.warn("Attempt to set themes not present in SWP.");
+						for (String theme : themeSet) {
+							log.warn("Missing theme: " + theme);
+						}
+					}
+				}
+			}
+		}
+
 		// now set the product
 		// TODO Do not use the symbolic product name but its id
-		pbi.setProductId(endpoint.getProductByName(swpProductName).getId());
+		pbi.setProductId(product.getId());
 
 		// now determine the release (parent artifact)
 		String parentArtifact = ga.getDepParentTargetArtifactId();
@@ -698,11 +789,11 @@ public class SWPHandler {
 			GenericArtifactField title, String swpProductName,
 			GenericArtifact ga) throws ServerException, RemoteException {
 		TaskWSO task = new TaskWSO();
-		if (description != null && description.getFieldValueHasChanged()) {
+		if (description != null) {
 			task.setDescription((String) description.getFieldValue());
 		}
 
-		if (estimatedHours != null && estimatedHours.getFieldValueHasChanged()) {
+		if (estimatedHours != null) {
 			Object fieldValueObj = estimatedHours.getFieldValue();
 			if (fieldValueObj == null || fieldValueObj.toString().length() == 0) {
 				task.setEstimatedHours(null);
@@ -724,15 +815,15 @@ public class SWPHandler {
 			}
 		}
 
-		if (pointPerson != null && pointPerson.getFieldValueHasChanged()) {
+		if (pointPerson != null) {
 			task.setPointPerson((String) pointPerson.getFieldValue());
 		}
 
-		if (status != null && status.getFieldValueHasChanged()) {
+		if (status != null) {
 			task.setStatus((String) status.getFieldValue());
 		}
 
-		if (title != null && title.getFieldValueHasChanged()) {
+		if (title != null) {
 			task.setTitle((String) title.getFieldValue());
 		}
 

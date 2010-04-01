@@ -143,8 +143,10 @@ public class SWPWriter extends AbstractWriter<Connection> implements
 				.getMandatoryGAField(PBIFields.penalty.getFieldName(), ga);
 		GenericArtifactField title = GenericArtifactHelper.getMandatoryGAField(
 				PBIFields.title.getFieldName(), ga);
+		List<GenericArtifactField> themes = ga.getAllGenericArtifactFieldsWithSameFieldName(PBIFields.theme.getFieldName());
+		
 		return swpHandler.createPBI(active, benefit, completedDate,
-				description, estimate, penalty, title, swpProductName, ga);
+				description, estimate, penalty, title, themes, swpProductName, ga);
 	}
 
 	/**
@@ -336,8 +338,11 @@ public class SWPWriter extends AbstractWriter<Connection> implements
 				.getMandatoryGAField(PBIFields.penalty.getFieldName(), ga);
 		GenericArtifactField title = GenericArtifactHelper.getMandatoryGAField(
 				PBIFields.title.getFieldName(), ga);
+		
+		List<GenericArtifactField> themes = ga.getAllGenericArtifactFieldsWithSameFieldName(PBIFields.theme.getFieldName());
+		
 		return swpHandler.updatePBI(active, benefit, completedDate,
-				description, estimate, penalty, title, ga);
+				description, estimate, penalty, title, themes, swpProductName, ga);
 	}
 
 	/**
