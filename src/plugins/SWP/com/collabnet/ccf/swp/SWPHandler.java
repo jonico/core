@@ -28,6 +28,7 @@ import com.danube.scrumworks.api.client.types.ServerException;
 import com.danube.scrumworks.api.client.types.SprintWSO;
 import com.danube.scrumworks.api.client.types.TaskWSO;
 import com.danube.scrumworks.api.client.types.TeamWSO;
+import com.danube.scrumworks.api.client.types.ThemeWSO;
 
 /**
  * This class encapsulates all calls to the SWP backend
@@ -78,6 +79,16 @@ public class SWPHandler {
 		addPBIField(ga, PBIFields.rank, pbi.getRank());
 		addPBIField(ga, PBIFields.releaseId, pbi.getReleaseId());
 		addPBIField(ga, PBIFields.title, pbi.getTitle());
+		
+		// retrieve themes
+		ThemeWSO [] themes = pbi.getThemes();
+		if (themes == null || themes.length == 0) {
+			addPBIField(ga, PBIFields.theme, null);
+		} else {
+			for (ThemeWSO themeWSO : themes) {
+				addPBIField(ga, PBIFields.theme, themeWSO.getName());
+			}
+		}
 
 		// set parent artifact (Product release)
 		ga.setDepParentSourceArtifactId(pbi.getReleaseId().toString());

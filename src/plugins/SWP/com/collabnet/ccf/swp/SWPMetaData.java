@@ -118,6 +118,7 @@ public class SWPMetaData {
 		sprintId("sprintId", GenericArtifactField.FieldValueTypeValue.STRING),
 		team("team", GenericArtifactField.FieldValueTypeValue.STRING),
 		title("title", GenericArtifactField.FieldValueTypeValue.STRING),
+		theme("theme", GenericArtifactField.FieldValueTypeValue.STRING),
 		active("active", GenericArtifactField.FieldValueTypeValue.BOOLEAN);
 		
 		private GenericArtifactField.FieldValueTypeValue valueType;
