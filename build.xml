@@ -295,6 +295,7 @@
 			<fileset dir="src/core/lib/servicewrapper">
 				<include name="*.jar" />
 				<include name="*.dll" />
+				<include name="*.so" />
 			</fileset>
 			<fileset dir="src/core/lib/openadaptor-3.4/3rdparty">
 				<include name="*.jar" />
