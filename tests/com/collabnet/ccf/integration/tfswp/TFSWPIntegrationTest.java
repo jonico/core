@@ -50,6 +50,10 @@ public class TFSWPIntegrationTest {
 	private static final String TF_PASSWORD = "TFPassword";
 
 	private static final String TF_USER_NAME = "TFUserName";
+	
+	private static final String CCF_MAX_WAIT_TIME = "CCFMaxWaitTime";
+	
+	private static final String CCF_RETRY_INTERVAL = "CCFRetryInterval";
 
 	// SWP connection
 	private com.collabnet.ccf.swp.Connection swpConnection;
@@ -77,7 +81,11 @@ public class TFSWPIntegrationTest {
 
 	private String swpServerUrl;
 
-	private String swpProduct; 
+	private String swpProduct;
+
+	private int ccfMaxWaitTime;
+
+	private int ccfRetryInterval; 
 
 	/**
 	 * Logs into TF and SWP
@@ -99,6 +107,9 @@ public class TFSWPIntegrationTest {
 		setSwpPassword(prop.getProperty(SWP_PASSWORD));
 		setSwpServerUrl(prop.getProperty(SWP_SERVER_URL));
 		setSwpProduct(prop.getProperty(SWP_PRODUCT));
+		
+		setCcfMaxWaitTime(Integer.parseInt(prop.getProperty(CCF_MAX_WAIT_TIME)));
+		setCcfRetryInterval(Integer.parseInt(prop.getProperty(CCF_RETRY_INTERVAL)));
 		
 		// we pass the current system millis to work around a caching problem
 		tfConnection = Connection.getConnection(getTfServerUrl(), getTfUserName(), getTfPassword(), null, Long.toString(System.currentTimeMillis()), null, false);
@@ -280,6 +291,22 @@ public class TFSWPIntegrationTest {
 		deleteAllTasksInSWP();
 		deleteAllPBIsInTF();
 		deleteAllPBIsInSWP();
+	}
+
+	public void setCcfMaxWaitTime(int ccfMaxWaitTime) {
+		this.ccfMaxWaitTime = ccfMaxWaitTime;
+	}
+
+	public int getCcfMaxWaitTime() {
+		return ccfMaxWaitTime;
+	}
+
+	public void setCcfRetryInterval(int ccfRetryInterval) {
+		this.ccfRetryInterval = ccfRetryInterval;
+	}
+
+	public int getCcfRetryInterval() {
+		return ccfRetryInterval;
 	}
 	
 }
