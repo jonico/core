@@ -23,7 +23,7 @@
 	<property name="target" value="1.5" />
 	<property name="source" value="1.5" />
 	<tstamp>
-		<format property="now" pattern="yyyy.MM.dd G 'at' HH:mm:ss z" locale="en,US"/>
+		<format property="now" pattern="yyyy.MM.dd G 'at' HH:mm:ss z" locale="en,US" />
 	</tstamp>
 	<path id="CCFJ.classpath">
 		<pathelement location="build/classes" />
@@ -61,8 +61,9 @@
 		<pathelement location="src/plugins/CEE/ProjectTracker/v50/lib/wss4j-1.5.1.jar" />
 		<pathelement location="src/plugins/CEE/ProjectTracker/v50/lib/xmlsec-1.4.0.jar" />
 		<pathelement location="src/plugins/HPQC/lib/jacob/jacob.jar" />
+		<pathelement location="src/plugins/SWP/lib/ScrumWorks-soap.jar" />
 	</path>
-	
+
 	<target name="init">
 		<delete dir="build/jars" />
 		<delete dir="build" />
@@ -75,33 +76,33 @@
 		<mkdir dir="build/classes" />
 	</target>
 	<target depends="clean" name="cleanall" />
-	<target depends="init, create.manifest, build.core, build.sfee.plugin, build.cee.plugin, build.qc.plugin, build.tf.plugin, build.sample, package" name="build" />
-	<target depends="init, create.manifestHudson, build.core, build.sfee.plugin, build.cee.plugin, build.qc.plugin, build.tf.plugin, build.sample, package" name="buildHudson" />
+	<target depends="init, create.manifest, build.core, build.sfee.plugin, build.cee.plugin, build.qc.plugin, build.tf.plugin, build.swp.plugin, build.sample, package" name="build" />
+	<target depends="init, create.manifestHudson, build.core, build.sfee.plugin, build.cee.plugin, build.qc.plugin, build.tf.plugin, build.swp.plugin, build.sample, package" name="buildHudson" />
 	<target name="create.manifest">
-		<property file="default.properties"/>
+		<property file="default.properties" />
 		<manifest file="build/MANIFEST.MF">
-		    <section name="CCF">
-		      <attribute name="Implementation-Title" value="${tool.name}"/>
-		      <attribute name="Implementation-Version" value="${tool.version}.${tool.buildnumber}"/>
-		      <attribute name="Build-Date" value="${now}"/>
-		      <attribute name="Implementation-Vendor" value="CollabNet"/>
-		    </section>
+			<section name="CCF">
+				<attribute name="Implementation-Title" value="${tool.name}" />
+				<attribute name="Implementation-Version" value="${tool.version}.${tool.buildnumber}" />
+				<attribute name="Build-Date" value="${now}" />
+				<attribute name="Implementation-Vendor" value="CollabNet" />
+			</section>
 		</manifest>
 	</target>
-	
+
 	<target name="create.manifestHudson">
-			<property file="env"/>
-			<manifest file="build/MANIFEST.MF">
-			    <section name="CCF">
-			      <attribute name="Implementation-Title" value="CollabNet Connector Framework"/>
-			      <attribute name="Implementation-Version" value="1.3.0-${env.BUILD_NUMBER}"/>
-			      <attribute name="Build-Date" value="${now}"/>
-			      <attribute name="SVN-Revision" value="${env.SVN_REVISION}"/>	
-			      <attribute name="Implementation-Vendor" value="CollabNet"/>
-			    </section>
-			</manifest>
-		</target>
-	
+		<property file="env" />
+		<manifest file="build/MANIFEST.MF">
+			<section name="CCF">
+				<attribute name="Implementation-Title" value="CollabNet Connector Framework" />
+				<attribute name="Implementation-Version" value="1.4.0-${env.BUILD_NUMBER}" />
+				<attribute name="Build-Date" value="${now}" />
+				<attribute name="SVN-Revision" value="${env.SVN_REVISION}" />
+				<attribute name="Implementation-Vendor" value="CollabNet" />
+			</section>
+		</manifest>
+	</target>
+
 	<target name="build.core">
 		<antcall target="clean">
 		</antcall>
@@ -129,18 +130,38 @@
 			</classpath>
 
 		</javac>
-		<jar destfile="build/jars/CCFSFEEPluginV44.jar"  manifest="build/MANIFEST.MF">
+		<jar destfile="build/jars/CCFSFEEPluginV44.jar" manifest="build/MANIFEST.MF">
+			<fileset dir="build/classes">
+				<include name="**/*.class" />
+			</fileset>
+		</jar>
+	</target>
+
+	<target name="build.tf.plugin">
+		<antcall target="clean">
+		</antcall>
+		<javac debug="true" debuglevel="${debuglevel}" destdir="build/classes" source="${source}" target="${target}">
+			<src path="src/plugins/TF/" />
+			<classpath refid="CCFJ.classpath" />
+			<classpath>
+				<fileset dir="build/jars">
+					<include name="CCFCoreV10.jar" />
+				</fileset>
+			</classpath>
+
+		</javac>
+		<jar destfile="build/jars/CCFTFPlugin.jar" manifest="build/MANIFEST.MF">
 			<fileset dir="build/classes">
 				<include name="**/*.class" />
 			</fileset>
 		</jar>
 	</target>
 	
-	<target name="build.tf.plugin">
+	<target name="build.swp.plugin">
 			<antcall target="clean">
 			</antcall>
 			<javac debug="true" debuglevel="${debuglevel}" destdir="build/classes" source="${source}" target="${target}">
-				<src path="src/plugins/TF/" />
+				<src path="src/plugins/SWP/" />
 				<classpath refid="CCFJ.classpath" />
 				<classpath>
 					<fileset dir="build/jars">
@@ -149,13 +170,13 @@
 				</classpath>
 
 			</javac>
-			<jar destfile="build/jars/CCFTFPlugin.jar"  manifest="build/MANIFEST.MF">
+			<jar destfile="build/jars/CCFSWPPlugin.jar" manifest="build/MANIFEST.MF">
 				<fileset dir="build/classes">
 					<include name="**/*.class" />
 				</fileset>
 			</jar>
-		</target>
-	
+	</target>
+
 	<target name="build.qc.plugin">
 		<antcall target="clean">
 		</antcall>
@@ -177,55 +198,49 @@
 			</fileset>
 		</jar>
 	</target>
-	
-	
+
+
 	<target name="build.cee.plugin">
-	        <antcall target="clean">
-	        </antcall>
-	        <javac debug="true" debuglevel="${debuglevel}" destdir="build/classes" source="${source}" target="${target}">
-	            <src path="src/plugins/CEE/ProjectTracker/v50" />
-	            <classpath refid="CCFJ.classpath" />
-	            <classpath>
-	                <fileset dir="build/jars">
-	                    <include name="CCFCoreV10.jar" />
-	                	<include name="CCFSFEEPluginV44.jar" />
-	                </fileset>
-	            </classpath>
+		<antcall target="clean">
+		</antcall>
+		<javac debug="true" debuglevel="${debuglevel}" destdir="build/classes" source="${source}" target="${target}">
+			<src path="src/plugins/CEE/ProjectTracker/v50" />
+			<classpath refid="CCFJ.classpath" />
+			<classpath>
+				<fileset dir="build/jars">
+					<include name="CCFCoreV10.jar" />
+					<include name="CCFSFEEPluginV44.jar" />
+				</fileset>
+			</classpath>
 
-	        </javac>
-	        <jar destfile="build/jars/CCFCEEPluginV50.jar"  manifest="build/MANIFEST.MF">
-	            <fileset dir="build/classes">
-	                <include name="**/*.class" />
-	            </fileset>
-	        </jar>
-	    </target>
-	
+		</javac>
+		<jar destfile="build/jars/CCFCEEPluginV50.jar" manifest="build/MANIFEST.MF">
+			<fileset dir="build/classes">
+				<include name="**/*.class" />
+			</fileset>
+		</jar>
+	</target>
+
 	<target name="build.sample">
-			<mkdir dir="samples/IntegrationScenarios/customReader/bin" />
-			<antcall target="clean">
-			</antcall>
-			<javac debug="true" debuglevel="${debuglevel}"
-				destdir="samples/IntegrationScenarios/customReader/bin"
-				source="${source}" target="${target}">
-				<src path="samples/IntegrationScenarios/customReader/src" />
-				<classpath refid="CCFJ.classpath" />
-				<classpath>
-					<fileset dir="build/jars">
-						<include name="CCFCoreV10.jar" />
-					</fileset>
-				</classpath>
+		<mkdir dir="samples/IntegrationScenarios/customReader/bin" />
+		<antcall target="clean">
+		</antcall>
+		<javac debug="true" debuglevel="${debuglevel}" destdir="samples/IntegrationScenarios/customReader/bin" source="${source}" target="${target}">
+			<src path="samples/IntegrationScenarios/customReader/src" />
+			<classpath refid="CCFJ.classpath" />
+			<classpath>
+				<fileset dir="build/jars">
+					<include name="CCFCoreV10.jar" />
+				</fileset>
+			</classpath>
 
-			</javac>
-		</target>
-	
+		</javac>
+	</target>
+
 	<target name="build.junit.tests">
 		<antcall target="clean">
 		</antcall>
-		<javac debug="true" debuglevel="${debuglevel}"
-			destdir="build/classes"
-			source="${source}" target="${target}"
-			srcdir="tests"
-			excludes="**/QCReader*.java">
+		<javac debug="true" debuglevel="${debuglevel}" destdir="build/classes" source="${source}" target="${target}" srcdir="tests" excludes="**/QCReader*.java">
 			<classpath refid="CCFJ.classpath" />
 			<classpath>
 				<fileset dir="build/jars">
@@ -239,7 +254,7 @@
 			</fileset>
 		</jar>
 	</target>
-	
+
 	<target name="junit">
 		<delete dir="junit-reports" />
 		<mkdir dir="junit-reports" />
@@ -258,20 +273,21 @@
 			</batchtest>
 		</junit>
 	</target>
-	
+
 	<target name="package">
-		<delete dir="build/package"></delete>
-		<mkdir dir="build/package/lib"/>
+		<delete dir="build/package">
+		</delete>
+		<mkdir dir="build/package/lib" />
 		<copy todir="build/package/lib">
 			<fileset dir="build/jars">
 				<include name="*.jar" />
-				<exclude name="*JUnit*.jar"/>
+				<exclude name="*JUnit*.jar" />
 			</fileset>
 			<fileset dir="config">
 				<include name="log4j.*" />
 			</fileset>
 		</copy>
-		<mkdir dir="build/package/lib/extlib"/>
+		<mkdir dir="build/package/lib/extlib" />
 		<copy todir="build/package/lib/extlib">
 			<fileset dir="src/core/lib/openadaptor-3.4">
 				<include name="*.jar" />
@@ -290,58 +306,60 @@
 				<include name="*.jar" />
 			</fileset>
 			<fileset dir="src/plugins/CEE/ProjectTracker/v50/lib">
-			    <include name="*.jar" />
+				<include name="*.jar" />
 			</fileset>
 			<fileset dir="src/plugins/HPQC/lib/jacob">
-				<include name="*.*"/>
+				<include name="*.*" />
+			</fileset>
+			<fileset dir="src/plugins/SWP/lib">
+				<include name="*.jar" />
 			</fileset>
 		</copy>
-		<mkdir dir="build/package/samples"/>
+		<mkdir dir="build/package/samples" />
 		<copy todir="build/package/samples">
 			<fileset dir="samples">
-				<include name="IntegrationScenarios/**/*"/>
-				<include name="centralCCFDatabase/**/*"/>
-				<include name="QCTF/**/*"/>
-				<include name="QCPT/**/*"/>
+				<include name="IntegrationScenarios/**/*" />
+				<include name="centralCCFDatabase/**/*" />
+				<include name="QCTF/**/*" />
+				<include name="QCPT/**/*" />
+				<include name="TFSWP/**/*" />
 			</fileset>
 		</copy>
 		<copy todir="build/package">
-            <fileset dir=".">
-                <include name="README-PT-PLUGIN.txt"/>
-                <include name="README.txt"/>
-                <include name="LICENSE"/>
-                <include name="NOTICE"/>
-            </fileset>
-        </copy>
+			<fileset dir=".">
+				<include name="README-PT-PLUGIN.txt" />
+				<include name="README.txt" />
+				<include name="LICENSE" />
+				<include name="NOTICE" />
+			</fileset>
+		</copy>
 	</target>
 
-    <target name="cleanup" description="Cleans all generated files">
-          <delete dir="deploy"/>
-          <delete dir="production_installer"/>
-    </target>
+	<target name="cleanup" description="Cleans all generated files">
+		<delete dir="deploy" />
+		<delete dir="production_installer" />
+	</target>
 
-    <target name="deploy" depends="cleanup,build">
-          <property file="default.properties"/>
+	<target name="deploy" depends="cleanup,build">
+		<property file="default.properties" />
 
-      <mkdir dir="deploy"/>
-      <zip destfile="deploy/${tool.name}-${tool.version}.${tool.buildnumber}.zip"
-	       basedir="build/package"/>
-          <delete dir="build/package"/>
-    </target>
-	
+		<mkdir dir="deploy" />
+		<zip destfile="deploy/${tool.name}-${tool.version}.${tool.buildnumber}.zip" basedir="build/package" />
+		<delete dir="build/package" />
+	</target>
+
 	<target name="deployHudson" depends="cleanup,buildHudson">
-		<property environment="env"/>
-	      <mkdir dir="deploy"/>
-	      <zip destfile="deploy/CollabNet Connector Framework-1.3.0-${env.BUILD_NUMBER}.zip"
-		       basedir="build/package"/>
-	          <delete dir="build/package"/>
+		<property environment="env" />
+		<mkdir dir="deploy" />
+		<zip destfile="deploy/CollabNet Connector Framework-1.4.0-${env.BUILD_NUMBER}.zip" basedir="build/package" />
+		<delete dir="build/package" />
 	</target>
 
-    <target name="create_installer">
-         <mkdir dir="production_installer" />
-         <exec executable="${env.NSIS_PATH}\makensis.exe">
-             <arg value="installer\CollabNet Connector Framework.nsi"/>
-         </exec>
-         <move file="installer\CollabNet Connector Framework-1.3.0-win32.exe" tofile="production_installer\Collabnet Connector Framework-1.0-win32.exe"/>
-    </target>
+	<target name="create_installer">
+		<mkdir dir="production_installer" />
+		<exec executable="${env.NSIS_PATH}\makensis.exe">
+			<arg value="installer\CollabNet Connector Framework.nsi" />
+		</exec>
+		<move file="installer\CollabNet Connector Framework-1.4.0-win32.exe" tofile="production_installer\Collabnet Connector Framework-1.0-win32.exe" />
+	</target>
 </project>
