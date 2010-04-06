@@ -758,8 +758,8 @@ public class SWPHandler {
 					.getProductByName(swpProductName))[0];
 			log
 					.warn(parentArtifact
-							+ " of repository "
-							+ " is no valid release ,so assigning newly created PBI to first release in list: "
+							+ " of parent repository " + ga.getDepParentTargetRepositoryId()
+							+ " is no valid release, so assigning newly created PBI to first release in list: "
 							+ release.getTitle());
 			pbi.setReleaseId(release.getId());
 		} else {
