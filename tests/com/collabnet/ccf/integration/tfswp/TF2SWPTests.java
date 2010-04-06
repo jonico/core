@@ -48,7 +48,7 @@ public class TF2SWPTests extends TFSWPIntegrationTest {
 		getTFConnection().getTrackerClient().createArtifact(getTfPBITracker(),
 				"TFPBI", "TFPBIDescription", null, null, "Open", null, 0, 0,
 				42, false, null, null, null, flexFields, null, null, null);
-		Thread.sleep(1000);
+		Thread.sleep(2000);
 		ProductWSO product = getSWPEndpoint().getProductByName(getSwpProduct());
 		BacklogItemWSO[] pbis = getSWPEndpoint().getActiveBacklogItems(product);
 		assertEquals(1, pbis.length);
