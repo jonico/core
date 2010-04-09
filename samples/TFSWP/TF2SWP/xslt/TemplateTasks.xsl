@@ -15,6 +15,7 @@
 	xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:stringutil="xalan://com.collabnet.ccf.core.utils.GATransformerUtil"
 	exclude-result-prefixes="xsl xs ccf stringutil" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://www.w3.org/1999/XSL/Transform http://www.w3.org/2007/schema-for-xslt20.xsd">
+	<xsl:variable name="artifactAction" select="/ccf:artifact/@artifactAction"/>
 	<xsl:template match='/ccf:artifact[@artifactType = "plainArtifact"]'>
 		<artifact xmlns="http://ccf.open.collab.net/GenericArtifactV1.0">
 			<xsl:copy-of select="@*" />
@@ -62,7 +63,14 @@
 			<xsl:attribute name="fieldName">estimatedHours</xsl:attribute>
 			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
 			<xsl:attribute name="fieldValueType">Integer</xsl:attribute>
-			<xsl:value-of select="." />
+			<xsl:choose>
+				<xsl:when test="string(.)='0' and $artifactAction = 'create' ">
+					<xsl:attribute name="fieldValueIsNull">true</xsl:attribute>
+				</xsl:when>
+				<xsl:otherwise>
+					<xsl:value-of select="." />
+				</xsl:otherwise>
+			</xsl:choose>
 		</field>
 	</xsl:template>
 	<xsl:template match="text()" />
