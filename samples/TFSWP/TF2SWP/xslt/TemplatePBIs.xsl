@@ -64,7 +64,7 @@
 			<xsl:value-of select="." />
 		</field>
 	</xsl:template>
-	<xsl:template match='ccf:field[@fieldName="Estimate"]'>
+	<xsl:template match='ccf:field[@fieldName="Backlog Effort"]'>
 		<field>
 			<xsl:copy-of select="@*" />
 			<xsl:attribute name="fieldName">estimate</xsl:attribute>

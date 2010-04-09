@@ -71,7 +71,7 @@
 			<xsl:value-of select="." />
 		</field>
 	</xsl:template>
-	<xsl:template match='ccf:field[@fieldName="pointPerson"]'>
+	<!--<xsl:template match='ccf:field[@fieldName="pointPerson"]'>
 		<field>
 			<xsl:copy-of select="@*" />
 			<xsl:attribute name="fieldName">Point Person</xsl:attribute>
@@ -79,5 +79,6 @@
 			<xsl:value-of select="." />
 		</field>
 	</xsl:template>
+	-->
 	<xsl:template match="text()" />
 </xsl:stylesheet>

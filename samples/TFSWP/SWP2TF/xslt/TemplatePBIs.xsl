@@ -19,6 +19,7 @@
 		<artifact xmlns="http://ccf.open.collab.net/GenericArtifactV1.0">
 			<xsl:copy-of select="@*" />
 			<field><xsl:attribute name="fieldName">priority</xsl:attribute><xsl:attribute name="fieldAction">replace</xsl:attribute><xsl:attribute name="fieldType">mandatoryField</xsl:attribute><xsl:attribute name="fieldValueHasChanged">true</xsl:attribute><xsl:attribute name="fieldValueType">Integer</xsl:attribute><xsl:attribute name="fieldValueIsNull">false</xsl:attribute>0</field>
+			<field><xsl:attribute name="fieldName">autosumming</xsl:attribute><xsl:attribute name="fieldAction">replace</xsl:attribute><xsl:attribute name="fieldType">mandatoryField</xsl:attribute><xsl:attribute name="fieldValueHasChanged">true</xsl:attribute><xsl:attribute name="fieldValueType">Boolean</xsl:attribute><xsl:attribute name="fieldValueIsNull">false</xsl:attribute>true</field>
 			<xsl:apply-templates />
 		</artifact>
 	</xsl:template>
@@ -123,7 +124,7 @@
 	<xsl:template match='ccf:field[@fieldName="estimate"]'>
 		<field>
 			<xsl:copy-of select="@*" />
-			<xsl:attribute name="fieldName">Estimate</xsl:attribute>
+			<xsl:attribute name="fieldName">Backlog Effort</xsl:attribute>
 			<xsl:attribute name="fieldType">flexField</xsl:attribute>
 			<xsl:attribute name="fieldValueType">String</xsl:attribute>
 			<xsl:value-of select="." />
