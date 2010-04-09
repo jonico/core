@@ -538,7 +538,10 @@ public class SWPHandler {
 				} else if (fieldValueObj instanceof Integer) {
 					fieldValue = ((Integer) fieldValueObj).intValue();
 				}
-				task.setEstimatedHours(fieldValue);
+				// we only set the estimated hours to zero if the previous value was not null
+				if (task.getEstimatedHours() != null || fieldValue != 0) {
+					task.setEstimatedHours(fieldValue);
+				}
 			}
 		}
 
