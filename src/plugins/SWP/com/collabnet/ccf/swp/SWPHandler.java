@@ -18,7 +18,7 @@ import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactField.FieldActionValue;
 import com.collabnet.ccf.swp.SWPMetaData.PBIFields;
 import com.collabnet.ccf.swp.SWPMetaData.ProductFields;
-import com.collabnet.ccf.swp.SWPMetaData.ProductReleaseFields;
+import com.collabnet.ccf.swp.SWPMetaData.ReleaseFields;
 import com.collabnet.ccf.swp.SWPMetaData.SWPType;
 import com.collabnet.ccf.swp.SWPMetaData.TaskFields;
 import com.danube.scrumworks.api.client.ScrumWorksEndpoint;
@@ -96,7 +96,7 @@ public class SWPHandler {
 		ga.setDepParentSourceArtifactId(pbi.getReleaseId().toString());
 		ga.setDepParentSourceRepositoryId(product
 				+ SWPMetaData.REPOSITORY_ID_SEPARATOR
-				+ SWPMetaData.PRODUCT_RELEASE);
+				+ SWPMetaData.RELEASE);
 
 		Long sprintId = pbi.getSprintId();
 		if (sprintId == null) {
@@ -243,7 +243,7 @@ public class SWPHandler {
 	 *            value of the product release field
 	 */
 	private void addProductReleaseField(GenericArtifact genericArtifact,
-			ProductReleaseFields field, Object value) {
+			ReleaseFields field, Object value) {
 		// all fields are from field type "mandatoryField" since SWP has a
 		// static field model
 		GenericArtifactField gaField = genericArtifact.addNewField(field
@@ -482,7 +482,7 @@ public class SWPHandler {
 				|| parentArtifact.equals(GenericArtifact.VALUE_NONE)
 				|| !SWPMetaData.retrieveSWPTypeFromRepositoryId(
 						ga.getDepParentTargetRepositoryId()).equals(
-						SWPMetaData.SWPType.PRODUCT_RELEASE)) {
+						SWPMetaData.SWPType.RELEASE)) {
 			log
 					.warn(parentArtifact
 							+ " of repository "
@@ -755,7 +755,7 @@ public class SWPHandler {
 				|| parentArtifact.equals(GenericArtifact.VALUE_NONE)
 				|| !SWPMetaData.retrieveSWPTypeFromRepositoryId(
 						ga.getDepParentTargetRepositoryId()).equals(
-						SWPMetaData.SWPType.PRODUCT_RELEASE)) {
+						SWPMetaData.SWPType.RELEASE)) {
 			// parent id is no release, we assign the first release in the list
 			ReleaseWSO release = endpoint.getReleasesForProduct(endpoint
 					.getProductByName(swpProductName))[0];
@@ -951,23 +951,23 @@ public class SWPHandler {
 		if (releases != null) {
 			for (ReleaseWSO releaseWSO : releases) {
 				if (releaseWSO.getId().toString().equals(id)) {
-					addProductReleaseField(ga, ProductReleaseFields.id,
+					addProductReleaseField(ga, ReleaseFields.id,
 							releaseWSO.getId());
-					addProductReleaseField(ga, ProductReleaseFields.archived,
+					addProductReleaseField(ga, ReleaseFields.archived,
 							releaseWSO.isArchived());
 					addProductReleaseField(ga,
-							ProductReleaseFields.description, releaseWSO
+							ReleaseFields.description, releaseWSO
 									.getDescription());
-					addProductReleaseField(ga, ProductReleaseFields.productId,
+					addProductReleaseField(ga, ReleaseFields.productId,
 							releaseWSO.getProductId());
-					addProductReleaseField(ga, ProductReleaseFields.programId,
+					addProductReleaseField(ga, ReleaseFields.programId,
 							releaseWSO.getProgramId());
 					addProductReleaseField(ga,
-							ProductReleaseFields.releaseDate, releaseWSO
+							ReleaseFields.releaseDate, releaseWSO
 									.getReleaseDate());
-					addProductReleaseField(ga, ProductReleaseFields.startDate,
+					addProductReleaseField(ga, ReleaseFields.startDate,
 							releaseWSO.getStartDate());
-					addProductReleaseField(ga, ProductReleaseFields.title,
+					addProductReleaseField(ga, ReleaseFields.title,
 							releaseWSO.getTitle());
 
 					// set parent artifact (Product)

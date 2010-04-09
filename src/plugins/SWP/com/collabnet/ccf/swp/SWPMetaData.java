@@ -16,21 +16,21 @@ public class SWPMetaData {
 	 * 
 	 */
 	public enum SWPType {
-		PBI, TASK, SPRINT, TEAM, PRODUCT_RELEASE, PROGRAM_RELEASE, PRODUCT, PRODUCT_EPIC, PROGRAM, PROGRAM_EPIC, PRODUCT_THEME, PROGRAM_THEME, IMPEDIMENT, USER, UNKNOWN
+		PBI, TASK, SPRINT, TEAM, RELEASE, /* PROGRAM_RELEASE, */ PRODUCT, EPIC, /* PROGRAM, */ /* PROGRAM_EPIC ,*/ THEME, /*PROGRAM_THEME, */ IMPEDIMENT, USER, UNKNOWN
 	}
 
 	public final static String PBI = "PBI";
 	public final static String TASK = "Task";
 	public final static String SPRINT = "Sprint";
 	public final static String TEAM = "Team";
-	public final static String PRODUCT_RELEASE = "ProductRelease";
-	public final static String PROGRAM_RELEASE = "ProgramRelease";
+	public final static String RELEASE = "Release";
+	//public final static String PROGRAM_RELEASE = "ProgramRelease";
 	public final static String PRODUCT = "Product";
-	public final static String PRODUCT_EPIC = "ProductEpic";
-	public final static String PROGRAM = "Program";
-	public final static String PROGRAM_EPIC = "ProgramEpic";
-	public final static String PRODUCT_THEME = "ProductTheme";
-	public final static String PROGRAM_THEME = "ProgramTheme";
+	public final static String EPIC = "Epic";
+	//public final static String PROGRAM = "Program";
+	//public final static String PROGRAM_EPIC = "ProgramEpic";
+	public final static String THEME = "Theme";
+	//public final static String PROGRAM_THEME = "ProgramTheme";
 	public final static String IMPEDIMENT = "Impediment";
 	public final static String USER = "User";
 	public final static String UNKNOWN = "UNKNOWN";
@@ -59,24 +59,24 @@ public class SWPMetaData {
 			return SWPType.TEAM;
 		if (repositoryId.endsWith(IMPEDIMENT))
 			return SWPType.IMPEDIMENT;
-		if (repositoryId.endsWith(PROGRAM_RELEASE))
-			return SWPType.PROGRAM_RELEASE;
-		if (repositoryId.endsWith(PRODUCT_RELEASE))
-			return SWPType.PRODUCT_RELEASE;
+		//if (repositoryId.endsWith(PROGRAM_RELEASE))
+		//	return SWPType.PROGRAM_RELEASE;
+		if (repositoryId.endsWith(RELEASE))
+			return SWPType.RELEASE;
 		if (repositoryId.endsWith(USER))
 			return SWPType.USER;
 		if (repositoryId.endsWith(PRODUCT))
 			return SWPType.PRODUCT;
-		if (repositoryId.endsWith(PROGRAM))
-			return SWPType.PROGRAM;
-		if (repositoryId.endsWith(PROGRAM_THEME))
-			return SWPType.PROGRAM_THEME;
-		if (repositoryId.endsWith(PRODUCT_THEME))
-			return SWPType.PRODUCT_THEME;
-		if (repositoryId.endsWith(PRODUCT_EPIC))
-			return SWPType.PRODUCT_EPIC;
-		if (repositoryId.endsWith(PROGRAM_EPIC))
-			return SWPType.PROGRAM_EPIC;
+		//if (repositoryId.endsWith(PROGRAM))
+		//	return SWPType.PROGRAM;
+		//if (repositoryId.endsWith(PROGRAM_THEME))
+		//	return SWPType.PROGRAM_THEME;
+		if (repositoryId.endsWith(THEME))
+			return SWPType.THEME;
+		if (repositoryId.endsWith(EPIC))
+			return SWPType.EPIC;
+		//if (repositoryId.endsWith(PROGRAM_EPIC))
+		//	return SWPType.PROGRAM_EPIC;
 		return SWPType.UNKNOWN;
 	}
 
@@ -193,7 +193,7 @@ public class SWPMetaData {
 		}
 	}
 	
-	public enum ProductReleaseFields {
+	public enum ReleaseFields {
 		id("id", GenericArtifactField.FieldValueTypeValue.STRING),
 		title("title", GenericArtifactField.FieldValueTypeValue.STRING),
 		startDate("startDate", GenericArtifactField.FieldValueTypeValue.DATE),
@@ -206,7 +206,7 @@ public class SWPMetaData {
 		private GenericArtifactField.FieldValueTypeValue valueType;
 		private String fieldName;
 		
-		private ProductReleaseFields(String fieldName, GenericArtifactField.FieldValueTypeValue valueType) {
+		private ReleaseFields(String fieldName, GenericArtifactField.FieldValueTypeValue valueType) {
 			this.fieldName = fieldName;
 			this.valueType = valueType;
 		}
