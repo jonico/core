@@ -353,6 +353,7 @@
 		<property environment="env" />
 		<mkdir dir="deploy" />
 		<zip destfile="deploy/CollabNet Connector Framework-1.4.0-${env.BUILD_NUMBER}.zip" basedir="build/package" />
+		<tar destfile="deploy/CollabNet Connector Framework-1.4.0-${env.BUILD_NUMBER}.tar.gz" basedir="build/package" compression="gzip" />
 		<delete dir="build/package" />
 	</target>
 
