@@ -114,9 +114,8 @@ public class TFConnectionFactory implements ConnectionFactory<Connection> {
 		
 		try {
 			String key = systemId + systemKind + repositoryId + repositoryKind + connectionInfo + credentialInfo;
-			Date currentDate = new Date();
 			// we want to make sure that we always get a new connection here since we do connection management on our own
-			connection =  Connection.getConnection(connectionInfo, username, password, null, key, currentDate.toString(), false);
+			connection =  Connection.getConnection(connectionInfo, username, password, null, key, Long.toString(System.currentTimeMillis()), false);
 			connection.login();
 		} catch (RemoteException e) {
 			String cause = "While trying to login into TF "+ connectionInfo 
