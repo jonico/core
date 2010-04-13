@@ -57,6 +57,14 @@
 			<xsl:value-of select="." />
 		</field>
 	</xsl:template>
+	<xsl:template match='ccf:field[@fieldName="assignedTo"]'>
+		<field>
+			<xsl:copy-of select="@*" />
+			<xsl:attribute name="fieldName">pointPerson</xsl:attribute>
+			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
+			<xsl:value-of select="concat(.,' (',.,')')"/>
+		</field>
+	</xsl:template>
 	<xsl:template match='ccf:field[@fieldName="remainingEffort"]'>
 		<field>
 			<xsl:copy-of select="@*" />
