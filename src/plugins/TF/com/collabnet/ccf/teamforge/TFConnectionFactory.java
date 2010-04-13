@@ -18,7 +18,6 @@
 package com.collabnet.ccf.teamforge;
 
 import java.rmi.RemoteException;
-import java.util.Date;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
