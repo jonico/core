@@ -17,6 +17,8 @@ import org.junit.Test;
 
 import com.collabnet.ce.soap50.webservices.cemain.TrackerFieldSoapDO;
 import com.collabnet.teamforge.api.FieldValues;
+import com.collabnet.teamforge.api.planning.PlanningFolderList;
+import com.collabnet.teamforge.api.planning.PlanningFolderRow;
 import com.danube.scrumworks.api.client.types.BacklogItemWSO;
 import com.danube.scrumworks.api.client.types.ProductWSO;
 import com.danube.scrumworks.api.client.types.ReleaseWSO;
@@ -27,7 +29,7 @@ import com.danube.scrumworks.api.client.types.ThemeWSO;
  * 
  * @author jnicolai
  */
-public class TeamForgeCreateBacklogItemInScrumWorks extends TFSWPIntegrationTest {
+public class TestTeamForgeCreateBacklogItemInScrumWorks extends TFSWPIntegrationTest {
 
 	/**
 	 * Do the session clean up
@@ -62,7 +64,7 @@ public class TeamForgeCreateBacklogItemInScrumWorks extends TFSWPIntegrationTest
 
 		// execute
 		final Map<String, String> releaseToPlanningFolder = new HashMap<String, String>(); 
-		releaseToPlanningFolder.put(release, "plan1164"); 
+		releaseToPlanningFolder.put(release, getPlanningFolderId(release));
 		
 		final FieldValues flexFields = new FieldValues();
 		flexFields.setNames(new String[] {"Benefit", "Penalty", "Backlog Effort", "Themes", "Themes"}); 
@@ -75,8 +77,8 @@ public class TeamForgeCreateBacklogItemInScrumWorks extends TFSWPIntegrationTest
 		flexFields.setTypes(flexFieldTypes); 
 		
 		getTFConnection().getTrackerClient().createArtifact(getTfPBITracker(),
-				title, description, null, null, "Open", null, 0, 0,
-				42, false, null, null, releaseToPlanningFolder.get(release), flexFields, null, null, null);
+				title, description, null, null, TeamForgeConstants.STATUS_OPEN, null, 0, 0,
+				0, false, null, null, releaseToPlanningFolder.get(release), flexFields, null, null, null);
 		
 		// verify
 		final ProductWSO product = getSWPEndpoint().getProductByName(getSwpProduct());
@@ -98,21 +100,58 @@ public class TeamForgeCreateBacklogItemInScrumWorks extends TFSWPIntegrationTest
 		assertEquals(benefit, pbi.getBusinessWeight().getBenefit().toString()); 
 		assertEquals(penalty, pbi.getBusinessWeight().getPenalty().toString());
 		assertEquals(effort, pbi.getEstimate().toString());
+		final List<String> themeNames = getThemeNames(pbi.getThemes()); 
+		assertEquals(2, themeNames.size()); 
+		assertTrue(themeNames.contains(theme1)); 
+		assertTrue(themeNames.contains(theme2)); 
+		assertEquals(release, getReleaseForBacklogItem(releases, pbi.getReleaseId())); 
+	}
+
+	/**
+	 * Returns a list of the theme names. 
+	 * 
+	 * @param themes the theme web service objects
+	 * @return the theme names
+	 */
+	private List<String> getThemeNames(final ThemeWSO[] themes) {
 		final List<String> themeNames = new ArrayList<String>(); 
-		final ThemeWSO[] themes = pbi.getThemes();
-		assertEquals(2, themes.length);
 		for (int i = 0; i < themes.length; i++) {
 			themeNames.add(themes[i].getName()); 
 		}
-		assertTrue(themeNames.contains(theme1)); 
-		assertTrue(themeNames.contains(theme2)); 
+		return themeNames; 
+	}
 
-		String releaseName = null; 
+	/**
+	 * Returns the name of the release for the given backlog item. 
+	 * 
+	 * @param releases the releases 
+	 * @param pbi the backlog item
+	 * @return the name of the release if found, otherwise null
+	 */
+	private String getReleaseForBacklogItem(ReleaseWSO[] releases, Long releaseId) {
 		for (int i = 0; i < releases.length; i++) {
-			if (releases[i].getId().equals(pbi.getReleaseId())) {
-				releaseName = releases[i].getTitle(); 
+			if (releases[i].getId().equals(releaseId)) {
+				return releases[i].getTitle(); 
 			}
 		}
-		assertEquals(release, releaseName); 
+		return null;
+	}
+
+	/**
+	 * Returns the planning folder id by the given name. 
+	 * 
+	 * @param release the name of the release mapped to the planning folder
+	 * @return the planning folder id if found, otherwise null
+	 * @throws RemoteException if the test can not connect to the TeamForge API
+	 */
+	private String getPlanningFolderId(final String release) throws RemoteException {
+		PlanningFolderList planningFolderList = getTFConnection().getPlanningClient().getPlanningFolderList(getTfProject(), true); 
+		PlanningFolderRow[] planningFolderDataRows = planningFolderList.getDataRows();
+		for (int i = 0; i < planningFolderDataRows.length; i++) {
+			if (planningFolderDataRows[i].getTitle().equals(release)) {
+				return planningFolderDataRows[i].getId(); 
+			}
+		}
+		return null;
 	}
 }
