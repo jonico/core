@@ -52,7 +52,6 @@ public class TestTeamForgeCreateBacklogItemInScrumWorks extends TFSWPIntegration
 	 */
 	@Test
 	public void testPBICreation() throws RemoteException, InterruptedException {
-		cleanUpArtifacts();
 		final String title = "TFPBI";
 		final String description = "TFPBIDescription";
 		final String release = "Release 1.0";
