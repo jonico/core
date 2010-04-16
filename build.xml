@@ -261,7 +261,7 @@
 		<delete dir="junit-reports" />
 		<mkdir dir="junit-reports" />
 		<junit showoutput="on" printsummary="on" filtertrace="off">
-			<formatter type="plain" />
+			<formatter type="xml" />
 			<classpath refid="CCFJ.classpath" />
 			<classpath>
 				<fileset dir="build/jars">
