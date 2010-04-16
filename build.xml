@@ -209,7 +209,6 @@
 			<classpath>
 				<fileset dir="build/jars">
 					<include name="CCFCoreV10.jar" />
-					<include name="CCFSFEEPluginV44.jar" />
 				</fileset>
 			</classpath>
 
@@ -236,6 +235,9 @@
 
 		</javac>
 	</target>
+	
+	<target name="testHudson" depends="buildHudson,build.junit.tests, junitHudson">
+	</target>
 
 	<target name="build.junit.tests">
 		<antcall target="clean">
@@ -255,7 +257,7 @@
 		</jar>
 	</target>
 
-	<target name="junit">
+	<target name="junitHudson">
 		<delete dir="junit-reports" />
 		<mkdir dir="junit-reports" />
 		<junit showoutput="on" printsummary="on" filtertrace="off">
@@ -267,8 +269,8 @@
 				</fileset>
 			</classpath>
 			<batchtest todir="${junit.output.dir}">
-				<fileset dir="tests">
-					<include name="**/*Test*.java" />
+				<fileset dir="tests/">
+					<include name="com/collabnet/ccf/integration/**/*.java" />
 				</fileset>
 			</batchtest>
 		</junit>
