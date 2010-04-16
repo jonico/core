@@ -30,7 +30,10 @@ import com.danube.scrumworks.api.client.types.TaskWSO;
  *
  */
 public class TFSWPIntegrationTest {
-
+	
+	/** Property file name. */
+	public static final String PROPERTY_FILE = "tfswp.properties";
+	
 	private static final String SWP_PRODUCT = "SWPProduct";
 
 	private static final String SWP_SERVER_URL = "SWPServerUrl";
@@ -39,42 +42,15 @@ public class TFSWPIntegrationTest {
 
 	private static final String SWP_USER_NAME = "SWPUserName";
 
-	private static final String TF_TASK_TRACKER = "TFTaskTracker";
-
-	private static final String TFPBI_TRACKER = "TFPBITracker";
-
-	private static final String TF_PROJECT = "TFProject";
-
-	private static final String TF_SERVER_URL = "TFServerUrl";
-
-	private static final String TF_PASSWORD = "TFPassword";
-
-	private static final String TF_USER_NAME = "TFUserName";
-	
 	private static final String CCF_MAX_WAIT_TIME = "CCFMaxWaitTime";
 	
 	private static final String CCF_RETRY_INTERVAL = "CCFRetryInterval";
 
+	private TeamForgeTester teamForgeTester; 
+	
 	// SWP connection
 	private com.collabnet.ccf.swp.Connection swpConnection;
 	
-	// TF connection
-	private Connection tfConnection;
-	
-	public static final String PROPERTY_FILE = "tfswp.properties";
-
-	private String tfUserName;
-
-	private String tfPassword;
-
-	private String tfServerUrl;
-
-	private String tfProject;
-
-	private String tfPBITracker;
-
-	private String tfTaskTracker;
-
 	private String swpUserName;
 
 	private String swpPassword;
@@ -96,12 +72,6 @@ public class TFSWPIntegrationTest {
 	public void setUp() throws Exception {
 		Properties prop = new Properties();
 		prop.load(new FileInputStream(PROPERTY_FILE));
-		setTfUserName(prop.getProperty(TF_USER_NAME));
-		setTfPassword(prop.getProperty(TF_PASSWORD));
-		setTfServerUrl(prop.getProperty(TF_SERVER_URL));
-		setTfProject(prop.getProperty(TF_PROJECT));
-		setTfPBITracker(prop.getProperty(TFPBI_TRACKER));
-		setTfTaskTracker(prop.getProperty(TF_TASK_TRACKER));
 		
 		setSwpUserName(prop.getProperty(SWP_USER_NAME));
 		setSwpPassword(prop.getProperty(SWP_PASSWORD));
@@ -111,22 +81,24 @@ public class TFSWPIntegrationTest {
 		setCcfMaxWaitTime(Integer.parseInt(prop.getProperty(CCF_MAX_WAIT_TIME)));
 		setCcfRetryInterval(Integer.parseInt(prop.getProperty(CCF_RETRY_INTERVAL)));
 		
-		// we pass the current system millis to work around a caching problem
-		tfConnection = Connection.getConnection(getTfServerUrl(), getTfUserName(), getTfPassword(), null, Long.toString(System.currentTimeMillis()), null, false);
 		swpConnection = new com.collabnet.ccf.swp.Connection(getSwpServerUrl(), getSwpUserName(), getSwpPassword()); 
+		
+		teamForgeTester = new TeamForgeTester(); 
 	}
 
 	/**
-	 * Do the session clean up
-	 * @throws java.lang.Exception
+	 * Delete all artifacts within the TeamForge and ScrumWorks project/product, and cleans up the session.
+	 *  
+	 * @throws RemoteException if the TeamForge or ScrumWorks API can not be accessed 
 	 */
 	@After
-	public void tearDown() throws Exception {
-		if (tfConnection.supports50()) {
-			tfConnection.getTeamForgeClient().logoff50(tfConnection.getUserId());
-		} else {
-			tfConnection.getTeamForgeClient().logoff44(tfConnection.getUserId());
-		}
+	public void tearDown() throws RemoteException  {
+		teamForgeTester.deleteAllTasksInTF();
+		deleteAllTasksInSWP();
+		teamForgeTester.deleteAllPBIsInTF();
+		deleteAllPBIsInSWP();
+		
+		teamForgeTester.logOff(); 
 	}
 	
 	/**
@@ -137,62 +109,6 @@ public class TFSWPIntegrationTest {
 		return swpConnection.getEndpoint();
 	}
 	
-	/**
-	 * Returns TF connection object
-	 * @return
-	 */
-	public Connection getTFConnection() {
-		return tfConnection;
-	}
-
-	public void setTfUserName(String tfUserName) {
-		this.tfUserName = tfUserName;
-	}
-
-	public String getTfUserName() {
-		return tfUserName;
-	}
-
-	public void setTfPassword(String tfPassword) {
-		this.tfPassword = tfPassword;
-	}
-
-	public String getTfPassword() {
-		return tfPassword;
-	}
-
-	public void setTfServerUrl(String tfServerUrl) {
-		this.tfServerUrl = tfServerUrl;
-	}
-
-	public String getTfServerUrl() {
-		return tfServerUrl;
-	}
-
-	public void setTfProject(String tfProject) {
-		this.tfProject = tfProject;
-	}
-
-	public String getTfProject() {
-		return tfProject;
-	}
-
-	public void setTfPBITracker(String tfPBITracker) {
-		this.tfPBITracker = tfPBITracker;
-	}
-
-	public String getTfPBITracker() {
-		return tfPBITracker;
-	}
-
-	public void setTfTaskTracker(String tfTaskTracker) {
-		this.tfTaskTracker = tfTaskTracker;
-	}
-
-	public String getTfTaskTracker() {
-		return tfTaskTracker;
-	}
-
 	public void setSwpUserName(String swpUserName) {
 		this.swpUserName = swpUserName;
 	}
@@ -231,28 +147,6 @@ public class TFSWPIntegrationTest {
 	}
 	
 	/**
-	 * Delete all PBIs in the TF project
-	 * @throws RemoteException 
-	 */
-	public void deleteAllPBIsInTF() throws RemoteException {
-		ArtifactRow[] tfRows = tfConnection.getTrackerClient().getArtifactList(getTfPBITracker(), null).getDataRows();
-		for (ArtifactRow artifactRow : tfRows) {
-			tfConnection.getTrackerClient().deleteArtifact(artifactRow.getId());
-		}
-	}
-	
-	/**
-	 * Delete all PBIs in the TF project
-	 * @throws RemoteException 
-	 */
-	public void deleteAllTasksInTF() throws RemoteException {
-		ArtifactRow[] tfRows = tfConnection.getTrackerClient().getArtifactList(getTfTaskTracker(), null).getDataRows();
-		for (ArtifactRow artifactRow : tfRows) {
-			tfConnection.getTrackerClient().deleteArtifact(artifactRow.getId());
-		}
-	}
-	
-	/**
 	 * Delete all PBIs within the SWP product
 	 * @throws ServerException
 	 * @throws RemoteException
@@ -282,17 +176,6 @@ public class TFSWPIntegrationTest {
 		}
 	}
 	
-	/**
-	 * Delete all artifacts within the TF and PBI project/product
-	 * @throws RemoteException 
-	 */
-	public void cleanUpArtifacts() throws RemoteException {
-		deleteAllTasksInTF();
-		deleteAllTasksInSWP();
-		deleteAllPBIsInTF();
-		deleteAllPBIsInSWP();
-	}
-
 	public void setCcfMaxWaitTime(int ccfMaxWaitTime) {
 		this.ccfMaxWaitTime = ccfMaxWaitTime;
 	}
@@ -307,6 +190,10 @@ public class TFSWPIntegrationTest {
 
 	public int getCcfRetryInterval() {
 		return ccfRetryInterval;
+	}
+
+	public TeamForgeTester getTeamForgeTester() {
+		return teamForgeTester;
 	}
 	
 }
