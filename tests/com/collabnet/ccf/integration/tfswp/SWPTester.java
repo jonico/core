@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.Properties;
 
+import javax.xml.rpc.ServiceException;
+
 import com.danube.scrumworks.api.client.ScrumWorksEndpoint;
 import com.danube.scrumworks.api.client.types.BacklogItemWSO;
 import com.danube.scrumworks.api.client.types.ProductWSO;
@@ -46,8 +48,9 @@ public class SWPTester {
 	 * 
 	 * @throws IOException if the property file can not be accessed
 	 * @throws FileNotFoundException if the property file can not be found 
+	 * @throws ServiceException 
 	 */
-	public SWPTester() throws FileNotFoundException, IOException {
+	public SWPTester() throws FileNotFoundException, IOException, ServiceException {
 		Properties prop = new Properties();
 		prop.load(new FileInputStream(PROPERTY_FILE));
 		
@@ -55,7 +58,8 @@ public class SWPTester {
 		setSwpPassword(prop.getProperty(SWP_PASSWORD));
 		setSwpServerUrl(prop.getProperty(SWP_SERVER_URL));
 		setSwpProduct(prop.getProperty(SWP_PRODUCT));
-
+		
+		swpConnection = new com.collabnet.ccf.swp.Connection(getSwpServerUrl(), getSwpUserName(), getSwpPassword()); 
 	}
 		
 	/**
