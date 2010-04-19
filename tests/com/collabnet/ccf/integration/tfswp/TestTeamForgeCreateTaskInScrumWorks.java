@@ -55,6 +55,10 @@ public class TestTeamForgeCreateTaskInScrumWorks extends TFSWPIntegrationTest {
 
 		assertEquals(1, pbis.length);
 		BacklogItemWSO pbi = pbis[0];
+		
+		// now that we can be sure that PBI has been created, update task again to trigger resynch
+		getTeamForgeTester().updateTask(taskId, title, description,
+				status, assignedToUser, remainingEffort);
 
 		TaskWSO[] tasks = null;
 		for (int i = 0; i < getCcfMaxWaitTime(); i += getCcfRetryInterval()) {
