@@ -48,6 +48,11 @@ public class TFSWPIntegrationTest {
 		swpTester = new SWPTester(); 
 		
 		teamForgeTester = new TeamForgeTester(); 
+		
+		teamForgeTester.deleteAllTasksInTF();
+		swpTester.deleteAllTasksInSWP();
+		teamForgeTester.deleteAllPBIsInTF();
+		swpTester.deleteAllPBIsInSWP();
 	}
 
 	/**
@@ -57,10 +62,6 @@ public class TFSWPIntegrationTest {
 	 */
 	@After
 	public void tearDown() throws RemoteException  {
-		teamForgeTester.deleteAllTasksInTF();
-		swpTester.deleteAllTasksInSWP();
-		teamForgeTester.deleteAllPBIsInTF();
-		swpTester.deleteAllPBIsInSWP();
 		teamForgeTester.logOff(); 
 	}
 	
