@@ -270,7 +270,7 @@
 			</classpath>
 			<batchtest todir="${junit.output.dir}">
 				<fileset dir="tests/">
-					<include name="com/collabnet/ccf/integration/**/*.java" />
+					<include name="com/collabnet/ccf/integration/**/Test*.java" />
 				</fileset>
 			</batchtest>
 		</junit>
