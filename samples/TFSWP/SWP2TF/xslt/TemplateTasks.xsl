@@ -63,6 +63,21 @@
 			</xsl:choose>
 		</field>
 	</xsl:template>
+	<xsl:template match='ccf:field[@fieldName="originalEstimate"]'>
+		<field>
+			<xsl:copy-of select="@*" />
+			<xsl:attribute name="fieldName">estimatedHours</xsl:attribute>
+			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
+			<xsl:choose>
+				<xsl:when test="string(.)=''">
+					<xsl:value-of select="0" />
+				</xsl:when>
+				<xsl:otherwise>
+					<xsl:value-of select="." />
+				</xsl:otherwise>
+			</xsl:choose>
+		</field>
+	</xsl:template>
 	<xsl:template match='ccf:field[@fieldName="status"]'>
 		<field>
 			<xsl:copy-of select="@*" />

@@ -166,6 +166,9 @@ public class SWPWriter extends AbstractWriter<Connection> implements
 		GenericArtifactField estimatedHours = GenericArtifactHelper
 				.getMandatoryGAField(TaskFields.estimatedHours.getFieldName(),
 						ga);
+		GenericArtifactField originalEstimate = GenericArtifactHelper
+		.getMandatoryGAField(TaskFields.originalEstimate.getFieldName(),
+				ga);
 		GenericArtifactField pointPerson = GenericArtifactHelper
 				.getMandatoryGAField(TaskFields.pointPerson.getFieldName(), ga);
 		GenericArtifactField status = GenericArtifactHelper
@@ -175,7 +178,7 @@ public class SWPWriter extends AbstractWriter<Connection> implements
 		// ga);
 		GenericArtifactField title = GenericArtifactHelper.getMandatoryGAField(
 				TaskFields.title.getFieldName(), ga);
-		return swpHandler.createTask(description, estimatedHours, pointPerson,
+		return swpHandler.createTask(description, estimatedHours, originalEstimate, pointPerson,
 				status, title, swpProductName, ga);
 	}
 
@@ -364,6 +367,9 @@ public class SWPWriter extends AbstractWriter<Connection> implements
 		GenericArtifactField estimatedHours = GenericArtifactHelper
 				.getMandatoryGAField(TaskFields.estimatedHours.getFieldName(),
 						ga);
+		GenericArtifactField originalEstimate = GenericArtifactHelper
+		.getMandatoryGAField(TaskFields.originalEstimate.getFieldName(),
+				ga);
 		GenericArtifactField pointPerson = GenericArtifactHelper
 				.getMandatoryGAField(TaskFields.pointPerson.getFieldName(), ga);
 		GenericArtifactField status = GenericArtifactHelper
@@ -373,7 +379,7 @@ public class SWPWriter extends AbstractWriter<Connection> implements
 		// ga);
 		GenericArtifactField title = GenericArtifactHelper.getMandatoryGAField(
 				TaskFields.title.getFieldName(), ga);
-		return swpHandler.updateTask(description, estimatedHours, pointPerson,
+		return swpHandler.updateTask(description, estimatedHours, originalEstimate, pointPerson,
 				status, title, ga);
 	}
 

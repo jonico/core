@@ -156,6 +156,8 @@ public class SWPHandler {
 				.getDescription());
 		addTaskField(genericArtifact, TaskFields.estimatedHours, task
 				.getEstimatedHours());
+		addTaskField(genericArtifact, TaskFields.originalEstimate, task
+				.getOriginalEstimate());
 		addTaskField(genericArtifact, TaskFields.backlogItemId, task
 				.getBacklogItemId());
 		addTaskField(genericArtifact, TaskFields.pointPerson, task
@@ -503,6 +505,7 @@ public class SWPHandler {
 	 * @param status
 	 * @param taskBoardStatusRank
 	 * @param title
+	 * @param title2 
 	 * @param ga
 	 * @return
 	 * @throws RemoteException
@@ -510,7 +513,7 @@ public class SWPHandler {
 	 * @throws ServerException
 	 */
 	public TaskWSO updateTask(GenericArtifactField description,
-			GenericArtifactField estimatedHours,
+			GenericArtifactField estimatedHours, GenericArtifactField originalEstimate,
 			GenericArtifactField pointPerson, GenericArtifactField status,
 			GenericArtifactField title, GenericArtifact ga)
 			throws ServerException, NumberFormatException, RemoteException {
@@ -541,6 +544,31 @@ public class SWPHandler {
 				// we only set the estimated hours to zero if the previous value was not null
 				if (task.getEstimatedHours() != null || fieldValue != 0) {
 					task.setEstimatedHours(fieldValue);
+				}
+			}
+		}
+		
+		if (originalEstimate != null && originalEstimate.getFieldValueHasChanged()) {
+			Object fieldValueObj = originalEstimate.getFieldValue();
+			if (fieldValueObj == null || fieldValueObj.toString().length() == 0) {
+				task.setOriginalEstimate(null);
+			} else {
+				int fieldValue = 0;
+				if (fieldValueObj instanceof String) {
+					String fieldValueString = (String) fieldValueObj;
+					try {
+						fieldValue = Integer.parseInt(fieldValueString);
+					} catch (NumberFormatException e) {
+						throw new CCFRuntimeException(
+								"Could not parse value of field originalEstimate: "
+										+ e.getMessage(), e);
+					}
+				} else if (fieldValueObj instanceof Integer) {
+					fieldValue = ((Integer) fieldValueObj).intValue();
+				}
+				// we only set the original estimate to zero if the previous value was not null
+				if (task.getOriginalEstimate() != null || fieldValue != 0) {
+					task.setOriginalEstimate(fieldValue);
 				}
 			}
 		}
@@ -787,7 +815,7 @@ public class SWPHandler {
 	 * @throws ServerException
 	 */
 	public TaskWSO createTask(GenericArtifactField description,
-			GenericArtifactField estimatedHours,
+			GenericArtifactField estimatedHours, GenericArtifactField originalEstimate,
 			GenericArtifactField pointPerson, GenericArtifactField status,
 			GenericArtifactField title, String swpProductName,
 			GenericArtifact ga) throws ServerException, RemoteException {
@@ -815,6 +843,28 @@ public class SWPHandler {
 					fieldValue = ((Integer) fieldValueObj).intValue();
 				}
 				task.setEstimatedHours(fieldValue);
+			}
+		}
+		
+		if (originalEstimate != null) {
+			Object fieldValueObj = originalEstimate.getFieldValue();
+			if (fieldValueObj == null || fieldValueObj.toString().length() == 0) {
+				task.setOriginalEstimate(null);
+			} else {
+				int fieldValue = 0;
+				if (fieldValueObj instanceof String) {
+					String fieldValueString = (String) fieldValueObj;
+					try {
+						fieldValue = Integer.parseInt(fieldValueString);
+					} catch (NumberFormatException e) {
+						throw new CCFRuntimeException(
+								"Could not parse value of field originalEstimate: "
+										+ e.getMessage(), e);
+					}
+				} else if (fieldValueObj instanceof Integer) {
+					fieldValue = ((Integer) fieldValueObj).intValue();
+				}
+				task.setOriginalEstimate(fieldValue);
 			}
 		}
 

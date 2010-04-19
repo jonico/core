@@ -89,5 +89,21 @@
 			</xsl:choose>
 		</field>
 	</xsl:template>
+	<xsl:template match='ccf:field[@fieldName="estimatedHours"]'>
+		<field>
+			<xsl:copy-of select="@*" />
+			<xsl:attribute name="fieldName">originalEstimate</xsl:attribute>
+			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
+			<xsl:attribute name="fieldValueType">Integer</xsl:attribute>
+			<xsl:choose>
+				<xsl:when test="string(.)='0' and $artifactAction = 'create' ">
+					<xsl:attribute name="fieldValueIsNull">true</xsl:attribute>
+				</xsl:when>
+				<xsl:otherwise>
+					<xsl:value-of select="." />
+				</xsl:otherwise>
+			</xsl:choose>
+		</field>
+	</xsl:template>
 	<xsl:template match="text()" />
 </xsl:stylesheet>
