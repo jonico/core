@@ -23,6 +23,10 @@ public class SWPTester {
 	/** Property file name. */
 	public static final String PROPERTY_FILE = "tfswp.properties";
 	
+	private static final String CCF_MAX_WAIT_TIME = "CCFMaxWaitTime";
+	
+	private static final String CCF_RETRY_INTERVAL = "CCFRetryInterval";
+
 	private static final String SWP_PRODUCT = "SWPProduct";
 
 	private static final String SWP_SERVER_URL = "SWPServerUrl";
@@ -41,6 +45,10 @@ public class SWPTester {
 	private String swpServerUrl;
 
 	private String swpProduct;
+	
+	private int ccfMaxWaitTime;
+
+	private int ccfRetryInterval;
 
 	
 	/**
@@ -58,6 +66,9 @@ public class SWPTester {
 		setSwpPassword(prop.getProperty(SWP_PASSWORD));
 		setSwpServerUrl(prop.getProperty(SWP_SERVER_URL));
 		setSwpProduct(prop.getProperty(SWP_PRODUCT));
+		
+		ccfMaxWaitTime = Integer.parseInt(prop.getProperty(CCF_MAX_WAIT_TIME)); 
+		ccfRetryInterval = Integer.parseInt(prop.getProperty(CCF_RETRY_INTERVAL)); 
 		
 		swpConnection = new com.collabnet.ccf.swp.Connection(getSwpServerUrl(), getSwpUserName(), getSwpPassword()); 
 	}
@@ -130,6 +141,30 @@ public class SWPTester {
 				getSWPEndpoint().deleteTask(task);
 			}
 		}
+	}
+	
+	/**
+	 * Returns the backlog items after the backlog items appear in a ScrumWorks Pro product. 
+	 * Assumes that there are no backlog items before beginning to wait.
+	 * 
+	 * @param product the product 
+	 * @throws RemoteException if the ScrumWorks API can not be reached
+	 * @throws ServerException if an error occurs in ScrumWorks
+	 * @throws InterruptedException if the thread can not sleep
+	 * 
+	 */
+	public BacklogItemWSO[] waitForBacklogItemToAppear(ProductWSO product) throws ServerException, RemoteException, InterruptedException {
+		BacklogItemWSO[] pbis = null;
+		for (int i = 0; i < ccfMaxWaitTime; i += ccfRetryInterval) {
+			pbis = getSWPEndpoint().getActiveBacklogItems(
+					product);
+			if (pbis == null) {
+				Thread.sleep(ccfRetryInterval);
+			} else {
+				return pbis; 
+			}
+		}
+		throw new RemoteException("No backlog items were found within the given time: " + ccfMaxWaitTime); 
 	}
 
 }
