@@ -60,11 +60,11 @@ public class TestTeamForgeCreateBacklogItemInScrumWorks extends TFSWPIntegration
 		getTeamForgeTester().createBacklogItem(title, description, release, flexFields);
 		
 		// verify
-		final ProductWSO product = getSWPEndpoint().getProductByName(getSwpProduct());
-		ReleaseWSO[] releases = getSWPEndpoint().getReleases(product); 
+		final ProductWSO product = getSWPTester().getSWPEndpoint().getProductByName(getSWPTester().getSwpProduct());
+		ReleaseWSO[] releases = getSWPTester().getSWPEndpoint().getReleases(product); 
 		BacklogItemWSO[] pbis = null;
 		for (int i = 0; i < getCcfMaxWaitTime(); i+=getCcfRetryInterval() ) {
-			pbis = getSWPEndpoint().getActiveBacklogItems(product);
+			pbis = getSWPTester().getSWPEndpoint().getActiveBacklogItems(product);
 			if (pbis == null) {
 				Thread.sleep(getCcfRetryInterval());
 			} else {
