@@ -62,7 +62,15 @@
 			<xsl:copy-of select="@*" />
 			<xsl:attribute name="fieldName">pointPerson</xsl:attribute>
 			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
-			<xsl:value-of select="concat(.,' (',.,')')"/>
+			<xsl:choose>
+				<xsl:when test="string(.)='nobody'">
+					<xsl:attribute name="fieldValueIsNull">true</xsl:attribute>
+					<xsl:value-of select="''" />
+				</xsl:when>
+				<xsl:otherwise>
+					<xsl:value-of select="concat(.,' (',.,')')"/>
+				</xsl:otherwise>
+			</xsl:choose>
 		</field>
 	</xsl:template>
 	<xsl:template match='ccf:field[@fieldName="remainingEffort"]'>
