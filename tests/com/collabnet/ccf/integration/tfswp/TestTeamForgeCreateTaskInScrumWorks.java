@@ -40,9 +40,7 @@ public class TestTeamForgeCreateTaskInScrumWorks extends TFSWPIntegrationTest {
 				status, assignedToUser, remainingEffort).getId();
 
 		// verify
-		final ProductWSO product = getSWPTester().getSWPEndpoint()
-				.getProductByName(getSWPTester().getSwpProduct());
-		BacklogItemWSO[] pbis = getSWPTester().waitForBacklogItemToAppear(product); 
+		BacklogItemWSO[] pbis = getSWPTester().waitForBacklogItemToAppear(); 
 
 		assertEquals(1, pbis.length);
 		BacklogItemWSO pbi = pbis[0];
