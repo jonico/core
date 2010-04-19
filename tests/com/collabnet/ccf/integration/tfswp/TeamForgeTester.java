@@ -145,34 +145,47 @@ public class TeamForgeTester {
 	 * @throws RemoteException
 	 *             if the TeamForge API can not be accessed
 	 */
-	public String createBacklogItem(final String title,
+	public ArtifactDO createBacklogItem(final String title,
 			final String description, final String release,
 			final FieldValues flexFields) throws RemoteException {
 		return connection.getTrackerClient().createArtifact(pbiTracker, title,
 				description, null, null, STATUS_OPEN, null, 0, 0, 0, false,
 				null, null, getPlanningFolderId(release), flexFields, null,
-				null, null).getId();
+				null, null);
 	}
 
-	public String createTask(String title, String description, String status,
+	public ArtifactDO createTask(String title, String description, String status,
 			String assignedUsername, int remainingEffort)
 			throws RemoteException, PlanningFolderRuleViolationException {
 		FieldValues flexFields = new FieldValues();
 		flexFields.setNames(new String[] {});
 		flexFields.setTypes(new String[] {});
 		flexFields.setValues(new String[] {});
-		String pbi = createBacklogItem("TestTitle", "TestDescription", null,
+		ArtifactDO pbi = createBacklogItem("TestTitle", "TestDescription", null,
 				flexFields);
 		ArtifactDO task = connection.getTrackerClient().createArtifact(
 				taskTracker, title, description, null, null, status, null, 0,
-				0, remainingEffort, true, assignedUsername, null, null, flexFields,
+				0, remainingEffort, false, assignedUsername, null, null, flexFields,
 				null, null, null);
-		connection.getTrackerClient().createArtifactDependency(pbi,
+		connection.getTrackerClient().createArtifactDependency(pbi.getId(),
 				task.getId(), "Parent-child relationship created by unit test");
 		// update task artifact to trigger synchronization again
 		connection.getTrackerClient().setArtifactData(task,
 				"Trigger synchronization again", null, null, null);
-		return task.getId();
+		return task;
+	}
+	
+	public ArtifactDO updateTask(String taskId, String title, String description, String status,
+			String assignedUsername, int remainingEffort)
+			throws RemoteException, PlanningFolderRuleViolationException {
+		ArtifactDO task = connection.getTrackerClient().getArtifactData(taskId);
+		task.setTitle(title);
+		task.setDescription(description);
+		task.setStatus(status);
+		task.setAssignedTo(assignedUsername);
+		task.setRemainingEffort(remainingEffort);
+		connection.getTrackerClient().setArtifactData(task, "updating task ...", null, null, null);
+		return connection.getTrackerClient().getArtifactData(taskId);
 	}
 
 	/**
