@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.Properties;
 
+import com.collabnet.ce.soap50.webservices.cemain.TrackerFieldSoapDO;
 import com.collabnet.teamforge.api.Connection;
 import com.collabnet.teamforge.api.FieldValues;
 import com.collabnet.teamforge.api.PlanningFolderRuleViolationException;
@@ -22,6 +23,18 @@ import com.collabnet.teamforge.api.tracker.ArtifactRow;
 public class TeamForgeTester {
 	/** Status for open backlog items. */
 	public static final String STATUS_OPEN = "Open";
+	
+	/** Variable name for the backlog item's benefit field. */ 
+	public static final String FIELD_BENEFIT = "Benefit"; 
+
+	/** Variable name for the backlog item's penalty field. */ 
+	public static final String FIELD_PENALTY = "Penalty"; 
+	
+	/** Variable name for the backlog item's effort field. */ 
+	public static final String FIELD_EFFORT = "Backlog Effort"; 
+	
+	/** Variable name for the backlog item's theme field. */ 
+	public static final String FIELD_THEME = "Themes"; 
 
 	/** Property file name. */
 	public static final String PROPERTY_FILE = "tfswp.properties";
@@ -175,17 +188,63 @@ public class TeamForgeTester {
 		return task;
 	}
 	
+	/**
+	 * Updates and returns the updated backlog item. 
+	 * 
+	 * @param backlogItemId
+	 * @return
+	 * @throws RemoteException if TeamForge can not be accessed if TeamForge can not be accessed
+	 * @throws PlanningFolderRuleViolationException if there is an error with the planning folder
+	 */
+	public ArtifactDO updateBacklogItem(final String backlogItemId, final String title, final String description, 
+			final String release, final FieldValues flexFields) throws RemoteException, PlanningFolderRuleViolationException {
+		ArtifactDO pbi = retrieveAndUpdateArtifactTitleAndDescription(backlogItemId, title, description); 
+		pbi.setPlanningFolderId(getPlanningFolderId(release)); 
+		pbi.setFlexFields(flexFields); 
+		return updateArtifact(pbi, "updating pbi ..."); 
+	}
+	
 	public ArtifactDO updateTask(String taskId, String title, String description, String status,
 			String assignedUsername, int remainingEffort)
 			throws RemoteException, PlanningFolderRuleViolationException {
-		ArtifactDO task = connection.getTrackerClient().getArtifactData(taskId);
-		task.setTitle(title);
-		task.setDescription(description);
+		ArtifactDO task = retrieveAndUpdateArtifactTitleAndDescription(taskId, title,
+				description);
 		task.setStatus(status);
 		task.setAssignedTo(assignedUsername);
 		task.setRemainingEffort(remainingEffort);
-		connection.getTrackerClient().setArtifactData(task, "updating task ...", null, null, null);
-		return connection.getTrackerClient().getArtifactData(taskId);
+		return updateArtifact(task, "updating task ...");
+	}
+
+	/**
+	 * Updates and returns the artifact in TeamForge.  
+	 * 
+	 * @param artifact the artifact
+	 * @param updateString
+	 * @return the updated artifact
+	 * @throws RemoteException if TeamForge can not be accessed
+	 * @throws PlanningFolderRuleViolationException if there is an error with the planning folder
+	 */
+	private ArtifactDO updateArtifact(final ArtifactDO artifact,
+			final String updateString) throws RemoteException, PlanningFolderRuleViolationException {
+		connection.getTrackerClient().setArtifactData(artifact, updateString, null, null, null);
+		return connection.getTrackerClient().getArtifactData(artifact.getId());
+	}
+
+	/**
+	 * Updates the title and description of the artifact retrieved from TeamForge based on the artifact's id.   
+	 * 
+	 * @param artifactId the artifact id
+	 * @param title the revised title
+	 * @param description the revised description
+	 * @return the artifact with the updated title and description
+	 * @throws RemoteException if TeamForge can not be accessed
+	 */
+	private ArtifactDO retrieveAndUpdateArtifactTitleAndDescription(final String artifactId,
+			final String title, final String description) throws RemoteException {
+		ArtifactDO task = connection.getTrackerClient().getArtifactData(artifactId);
+		task.setTitle(title);
+		task.setDescription(description);
+		return task;
 	}
 
 	/**
@@ -212,6 +271,22 @@ public class TeamForgeTester {
 			}
 		}
 		return null;
+	}
+	
+	/**
+	 * Returns a FieldValues based on the given String arrays.  
+	 */
+	public FieldValues convertToFlexField(final String[] names, final String[] values) {
+		final FieldValues flexFields = new FieldValues();
+		flexFields.setNames(names); 
+		flexFields.setValues(values);
+		final int flexFieldsLength = flexFields.getNames().length;
+		final String[] flexFieldTypes = new String[flexFieldsLength];
+		for (int i = 0; i < flexFieldsLength; i++) {
+			flexFieldTypes[i] = TrackerFieldSoapDO.FIELD_VALUE_TYPE_STRING; 
+		}
+		flexFields.setTypes(flexFieldTypes); 
+		return flexFields; 
 	}
 
 	public void setUserName(String userName) {

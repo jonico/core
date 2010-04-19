@@ -4,6 +4,8 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
 
 import javax.xml.rpc.ServiceException;
@@ -11,8 +13,10 @@ import javax.xml.rpc.ServiceException;
 import com.danube.scrumworks.api.client.ScrumWorksEndpoint;
 import com.danube.scrumworks.api.client.types.BacklogItemWSO;
 import com.danube.scrumworks.api.client.types.ProductWSO;
+import com.danube.scrumworks.api.client.types.ReleaseWSO;
 import com.danube.scrumworks.api.client.types.ServerException;
 import com.danube.scrumworks.api.client.types.TaskWSO;
+import com.danube.scrumworks.api.client.types.ThemeWSO;
 
 /**
  * Helper methods for accessing the SWP API. 
@@ -178,7 +182,7 @@ public class SWPTester {
 	 * @throws InterruptedException if the thread can not sleep
 	 */
 	public BacklogItemWSO[] waitForBacklogItemToAppear() throws ServerException, RemoteException, InterruptedException {
-		ProductWSO product = getProduct(getSwpProduct()); 
+		ProductWSO product = getProduct(); 
 		return waitForBacklogItemToAppear(product); 
 	}
 
@@ -188,8 +192,41 @@ public class SWPTester {
 	 * @throws RemoteException if the ScrumWorks API can not be accessed 
 	 * @throws ServerException if an error occurs in ScrumWorks 
 	 */
-	public ProductWSO getProduct(final String productName) throws ServerException, RemoteException {
-		return getSWPEndpoint().getProductByName(productName);
+	public ProductWSO getProduct() throws ServerException, RemoteException {
+		return getSWPEndpoint().getProductByName(getSwpProduct());
+	}
+	
+	/**
+	 * Returns a list of the theme names. 
+	 * 
+	 * @param themes the theme web service objects
+	 * @return the theme names
+	 */
+	public List<String> getThemeNames(final ThemeWSO[] themes) {
+		final List<String> themeNames = new ArrayList<String>(); 
+		for (int i = 0; i < themes.length; i++) {
+			themeNames.add(themes[i].getName()); 
+		}
+		return themeNames; 
+	}
+
+	/**
+	 * Returns the name of the release for the given backlog item in the ScrumWorks integration product. 
+	 * @param pbi the backlog item
+	 * 
+	 * @return the name of the release if found, otherwise null
+	 * @throws RemoteException if ScrumWorks can not be accessed
+	 * @throws ServerException if there is an error from ScrumWorks
+	 */
+	public String getReleaseForBacklogItem(Long releaseId) throws ServerException, RemoteException {
+		ReleaseWSO[] releases = getSWPEndpoint().getReleases(getProduct()); 
+		
+		for (int i = 0; i < releases.length; i++) {
+			if (releases[i].getId().equals(releaseId)) {
+				return releases[i].getTitle(); 
+			}
+		}
+		return null;
 	}
 	
 }

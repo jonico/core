@@ -6,17 +6,14 @@ package com.collabnet.ccf.integration.tfswp;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.Test;
 
-import com.collabnet.ce.soap50.webservices.cemain.TrackerFieldSoapDO;
 import com.collabnet.teamforge.api.FieldValues;
 import com.danube.scrumworks.api.client.types.BacklogItemWSO;
 import com.danube.scrumworks.api.client.types.ProductWSO;
 import com.danube.scrumworks.api.client.types.ReleaseWSO;
-import com.danube.scrumworks.api.client.types.ThemeWSO;
 
 /**
  * Creates a backlog item in TeamForge and verifies the backlog item in ScrumWorks after the synchronization. 
@@ -43,25 +40,14 @@ public class TestTeamForgeCreateBacklogItemInScrumWorks extends TFSWPIntegration
 		final String theme2 = "GUI";
 
 		// execute
-		final String[][] test = new String[2][4]; 
-		test[0] = new String[] {"Benefit", "Penalty", "Backlog Effort", "Themes", "Themes"}; 
-		test[1] = new String[] {benefit, penalty, effort, theme1, theme2}; 
-		
-		final FieldValues flexFields = new FieldValues();
-		flexFields.setNames(test[0]); 
-		flexFields.setValues(test[1]);
-		final int flexFieldsLength = flexFields.getNames().length;
-		final String[] flexFieldTypes = new String[flexFieldsLength];
-		for (int i = 0; i < flexFieldsLength; i++) {
-			flexFieldTypes[i] = TrackerFieldSoapDO.FIELD_VALUE_TYPE_STRING; 
-		}
-		flexFields.setTypes(flexFieldTypes); 
+		final FieldValues flexFields = getTeamForgeTester().convertToFlexField(
+				new String[] {TeamForgeTester.FIELD_BENEFIT, TeamForgeTester.FIELD_PENALTY, TeamForgeTester.FIELD_EFFORT, TeamForgeTester.FIELD_THEME, TeamForgeTester.FIELD_THEME}, 
+				new String[] {benefit, penalty, effort, theme1, theme2}); 
 		
 		getTeamForgeTester().createBacklogItem(title, description, release, flexFields);
 		
 		// verify
-		final ProductWSO product = getSWPTester().getProduct(getSWPTester().getSwpProduct());
-		ReleaseWSO[] releases = getSWPTester().getSWPEndpoint().getReleases(product); 
+		final ProductWSO product = getSWPTester().getProduct();
 		BacklogItemWSO[] pbis = getSWPTester().waitForBacklogItemToAppear(product); 
 		
 		assertEquals(1, pbis.length);
@@ -71,42 +57,10 @@ public class TestTeamForgeCreateBacklogItemInScrumWorks extends TFSWPIntegration
 		assertEquals(benefit, pbi.getBusinessWeight().getBenefit().toString()); 
 		assertEquals(penalty, pbi.getBusinessWeight().getPenalty().toString());
 		assertEquals(effort, pbi.getEstimate().toString());
-		final List<String> themeNames = getThemeNames(pbi.getThemes()); 
+		final List<String> themeNames = getSWPTester().getThemeNames(pbi.getThemes()); 
 		assertEquals(2, themeNames.size()); 
 		assertTrue(themeNames.contains(theme1)); 
 		assertTrue(themeNames.contains(theme2)); 
-		assertEquals(release, getReleaseForBacklogItem(releases, pbi.getReleaseId())); 
+		assertEquals(release, getSWPTester().getReleaseForBacklogItem(pbi.getReleaseId())); 
 	}
-
-	/**
-	 * Returns a list of the theme names. 
-	 * 
-	 * @param themes the theme web service objects
-	 * @return the theme names
-	 */
-	private List<String> getThemeNames(final ThemeWSO[] themes) {
-		final List<String> themeNames = new ArrayList<String>(); 
-		for (int i = 0; i < themes.length; i++) {
-			themeNames.add(themes[i].getName()); 
-		}
-		return themeNames; 
-	}
-
-	/**
-	 * Returns the name of the release for the given backlog item. 
-	 * 
-	 * @param releases the releases 
-	 * @param pbi the backlog item
-	 * @return the name of the release if found, otherwise null
-	 */
-	private String getReleaseForBacklogItem(ReleaseWSO[] releases, Long releaseId) {
-		for (int i = 0; i < releases.length; i++) {
-			if (releases[i].getId().equals(releaseId)) {
-				return releases[i].getTitle(); 
-			}
-		}
-		return null;
-	}
-
-
 }
