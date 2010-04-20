@@ -4,17 +4,22 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
+
+import junit.framework.TestCase;
 
 import com.collabnet.ce.soap50.webservices.cemain.TrackerFieldSoapDO;
 import com.collabnet.teamforge.api.Connection;
 import com.collabnet.teamforge.api.FieldValues;
+import com.collabnet.teamforge.api.Filter;
 import com.collabnet.teamforge.api.PlanningFolderRuleViolationException;
 import com.collabnet.teamforge.api.planning.PlanningFolderList;
 import com.collabnet.teamforge.api.planning.PlanningFolderRow;
 import com.collabnet.teamforge.api.tracker.ArtifactDO;
-import com.collabnet.teamforge.api.tracker.ArtifactDependencyList;
 import com.collabnet.teamforge.api.tracker.ArtifactDependencyRow;
+import com.collabnet.teamforge.api.tracker.ArtifactList;
 import com.collabnet.teamforge.api.tracker.ArtifactRow;
 
 /**
@@ -25,6 +30,9 @@ import com.collabnet.teamforge.api.tracker.ArtifactRow;
 public class TeamForgeTester {
 	/** Status for open backlog items. */
 	public static final String STATUS_OPEN = "Open";
+
+	/** User for None */ 
+	public static final String NONE = "No user";
 	
 	/** Variable name for the backlog item's benefit field. */ 
 	public static final String FIELD_BENEFIT = "Benefit"; 
@@ -37,10 +45,31 @@ public class TeamForgeTester {
 	
 	/** Variable name for the backlog item's theme field. */ 
 	public static final String FIELD_THEME = "Themes"; 
-
+	
+	/** Variable name for the backlog item's key. */ 
+	public static final String FIELD_KEY = "SWP-Key"; 
+	
+	/** Variable name for the backlog item's team. */ 
+	public static final String FIELD_TEAM = "Team"; 
+	
+	/** Variable name for the backlog item's sprint's name. */ 
+	public static final String FIELD_SPRINT_NAME = "Sprint"; 
+	
+	/** Variable name for the backlog item's sprint's start date. */ 
+	public static final String FIELD_SPRINT_START = "Sprint Start"; 
+	
+	/** Variable name for the backlog item's sprint's end date. */ 
+	public static final String FIELD_SPRINT_END = "Sprint End"; 
+	
 	/** Property file name. */
 	public static final String PROPERTY_FILE = "tfswp.properties";
 
+	/** Property for the maximum wait time. */ 
+	private static final String CCF_MAX_WAIT_TIME = "CCFMaxWaitTime";
+	
+	/** Property for the interval retry time. */ 
+	private static final String CCF_RETRY_INTERVAL = "CCFRetryInterval";
+	
 	/** Property name for the server url. */
 	private static final String SERVER_URL_PROPERTY = "TFServerUrl";
 
@@ -79,6 +108,12 @@ public class TeamForgeTester {
 
 	/** Connect to TeamForge. */
 	private Connection connection;
+	
+	/** Maximum wait time. */ 
+	private int ccfMaxWaitTime;
+
+	/** Time to retry. */ 
+	private int ccfRetryInterval;
 
 	/**
 	 * Constructor.
@@ -97,6 +132,9 @@ public class TeamForgeTester {
 		project = prop.getProperty(PROJECT_PROPERTY);
 		pbiTracker = prop.getProperty(PBI_TRACKER_PROPERTY);
 		taskTracker = prop.getProperty(TASK_TRACKER_PROPERTY);
+		
+		ccfMaxWaitTime = Integer.parseInt(prop.getProperty(CCF_MAX_WAIT_TIME)); 
+		ccfRetryInterval = Integer.parseInt(prop.getProperty(CCF_RETRY_INTERVAL)); 
 
 		// we pass the current system millis to work around a caching problem
 		connection = Connection.getConnection(serverUrl, getUserName(),
@@ -256,7 +294,7 @@ public class TeamForgeTester {
 	 * @throws RemoteException
 	 *             if the test can not connect to the TeamForge API
 	 */
-	private String getPlanningFolderId(final String release)
+	public String getPlanningFolderId(final String release)
 			throws RemoteException {
 		if (release == null) {
 			return null;
@@ -275,6 +313,11 @@ public class TeamForgeTester {
 	
 	/**
 	 * Returns a FieldValues based on the given String arrays.  
+	 * The number of elements in the two arrays must match. 
+	 * 
+	 * @param names the names of the flex fields
+	 * @param values the values for the flex fields
+	 * @return the FieldValues 
 	 */
 	public FieldValues convertToFlexField(final String[] names, final String[] values) {
 		final FieldValues flexFields = new FieldValues();
@@ -301,5 +344,75 @@ public class TeamForgeTester {
 		ArtifactDependencyRow rel = connection.getTrackerClient().getParentDependencyList(taskId).getDataRows()[0];
 		connection.getTrackerClient().removeArtifactDependency(rel.getOriginId(), rel.getTargetId());
 		connection.getTrackerClient().createArtifactDependency(newParentId, taskId, "reparenting ...");
+	}
+	
+	
+	
+	/**
+	 * Returns the backlog items after the backlog items appear in the planning folder mapped to ScrumWorks Pro. 
+	 * Waits until the requested number of backlog items appear.
+	 * 
+	 * @return the {@link ArtifactRow} 
+	 * @throws RemoteException if the TeamForge API can not be accessed
+	 * @throws InterruptedException if the thread can not sleep
+	 */
+	public ArtifactRow[] waitForBacklogItemsToAppear(final int numberOfPbis) throws RemoteException, InterruptedException {
+		ArtifactList artifactList; 
+		ArtifactRow[] artifactRows; 
+		for (int i = 0; i < ccfMaxWaitTime; i += ccfRetryInterval) {
+			artifactList = connection.getTrackerClient().getArtifactList(pbiTracker, new Filter[] {});
+			artifactRows = artifactList.getDataRows(); 
+			if (artifactRows.length < numberOfPbis) {
+				Thread.sleep(ccfRetryInterval); 
+			} else {
+				return artifactRows; 
+			}
+		}
+		throw new RemoteException(numberOfPbis + " backlog item(s) were not found within the given time: " + ccfMaxWaitTime); 
+	}
+	
+	/**
+	 * Returns the FieldValues for the given artifact. 
+	 * 
+	 * @param artifactId the id for the artifact
+	 * @return the {@link FieldValues} for the artifact
+	 * @throws RemoteException if the TeamForge API can not be accessed
+	 */
+	private FieldValues getFlexFields(final String artifactId) throws RemoteException {
+		return connection.getTrackerClient().getArtifactData(artifactId).getFlexFields();
+	}
+	
+	/**
+	 * Returns the values for the given flex field names. 
+	 * 
+	 * @param artifactId the id for the artifact
+	 * @param fieldNames the flex field names
+	 * @return the list of values matching the name, if multiple values match the same name, the values are returned in alphabetical order
+	 * @throws RemoteException if the TeamForge API can not be accessed
+	 */
+	public List<String> getFieldValues(final String artifactId, final String... fieldNames) throws RemoteException {
+		final FieldValues flexFields = getFlexFields(artifactId);
+		final String[] names = flexFields.getNames(); 
+		final Object[] values = flexFields.getValues();
+		final List<String> matchingValues = new ArrayList<String>();
+		for (int i = 0; i < fieldNames.length; i++) {
+			// add all themes
+			if (fieldNames[i].equals(FIELD_THEME)) {
+				for (int j = 0; j < names.length; j++) {
+					if (names[j].equals(FIELD_THEME)) {
+						matchingValues.add((String) values[j]);
+					}
+				}
+			} else { 
+				// add matching field names
+				for (int j = 0; j < names.length; j++) {
+					if (names[j].equals(fieldNames[i])) {
+						matchingValues.add((String) values[j]);
+						break; 
+					}
+				}
+			}
+		}
+		return matchingValues; 
 	}
 }

@@ -16,6 +16,7 @@ import com.danube.scrumworks.api.client.types.BusinessWeightWSO;
 import com.danube.scrumworks.api.client.types.ProductWSO;
 import com.danube.scrumworks.api.client.types.ReleaseWSO;
 import com.danube.scrumworks.api.client.types.ServerException;
+import com.danube.scrumworks.api.client.types.SprintWSO;
 import com.danube.scrumworks.api.client.types.TaskWSO;
 import com.danube.scrumworks.api.client.types.ThemeWSO;
 
@@ -26,7 +27,7 @@ import com.danube.scrumworks.api.client.types.ThemeWSO;
  */
 public class SWPTester {
 	/** Property file name. */
-	public static final String PROPERTY_FILE = "tfswp.properties";
+	private static final String PROPERTY_FILE = "tfswp.properties";
 	
 	private static final String CCF_MAX_WAIT_TIME = "CCFMaxWaitTime";
 	
@@ -273,17 +274,17 @@ public class SWPTester {
 	 * @param title the backlog item name
 	 * @param description the description 
 	 * @param estimate the estimate
-	 * @param businessWeight the business weight
-	 * @param release the release name
-	 * @param sprint the sprint id
+	 * @param releaseName the name of the release containing this backlog item 
+	 * @param sprint the sprint containing this backlog item
 	 * @param themes the themes
+	 * @param businessWeight the business weight
 	 * @param product the product id
 	 * @return the created backlog item in ScrumWorks
 	 * @throws RemoteException if ScrumWorks can not be accessed 
 	 * @throws ServerException if there is an error from ScrumWorks
 	 */
 	public BacklogItemWSO createBacklogItem(final String title, final String description, final String estimate, final String benefit, final String penalty, 
-			final String release, final String... themes) throws ServerException, RemoteException {
+			final String releaseName, Sprint sprint, final String... themes) throws ServerException, RemoteException {
 		BusinessWeightWSO businessWeight = new BusinessWeightWSO(Long.parseLong(benefit), Long.parseLong(penalty)); 
 		ThemeWSO[] allThemes = getSWPEndpoint().getThemes(getProduct()); 
 		ThemeWSO[] pbiThemes = new ThemeWSO[themes.length]; 
@@ -294,7 +295,25 @@ public class SWPTester {
 				}
 			}
 		}
-		return getSWPEndpoint().createBacklogItem(new BacklogItemWSO(true, null, businessWeight, null, description, Integer.parseInt(estimate), null, getProduct().getId(), 0, getReleaseId(release), -737035264780005900L, null, title)); 
+		return getSWPEndpoint().createBacklogItem(new BacklogItemWSO(true, null, businessWeight, null, description, Integer.parseInt(estimate), null, getProduct().getId(), 0, getReleaseId(releaseName), getSprintId(sprint.getName()), null, title)); 
+//		return getSWPEndpoint().createBacklogItem(new BacklogItemWSO(true, null, businessWeight, null, description, Integer.parseInt(estimate), null, getProduct().getId(), 0, getReleaseId(release), -737035264780005900L, themes, title)); // TODO:  
 	}
 	
+	/**
+	 * Returns the sprint id matching the given sprint name. 
+	 * 
+	 * @param startName the sprint's name
+	 * @return the sprint id, null if a match is not found
+	 * @throws RemoteException if ScrumWorks can not be accessed
+	 * @throws ServerException if there is an error from ScrumWorks 
+	 */
+	public Long getSprintId(final String sprintName) throws ServerException, RemoteException {
+		final SprintWSO[] sprints = getSWPEndpoint().getSprints(getProduct()); 
+		for (int i = 0; i < sprints.length; i++) {
+			if (sprints[i].getName().equals(sprintName)) {
+				return sprints[i].getId(); 
+			}
+		}
+		return null; 
+	}
 }
