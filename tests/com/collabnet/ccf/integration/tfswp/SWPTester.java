@@ -176,7 +176,7 @@ public class SWPTester {
 	
 	/**
 	 * Returns the backlog items after the backlog items appear in a ScrumWorks Pro product. 
-	 * Assumes that there are no backlog items before beginning to wait. 
+	 * Waits until the requested number of backlog items appear. 
 	 * 
 	 * @param numberOfPBIs number of PBIs to wait for
 	 * @return the backlog items in the product
