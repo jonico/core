@@ -3,15 +3,12 @@ package com.collabnet.ccf.integration.tfswp;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.rmi.RemoteException;
 import java.util.List;
 
-import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import com.collabnet.teamforge.api.FieldValues;
-import com.collabnet.teamforge.api.PlanningFolderRuleViolationException;
 import com.collabnet.teamforge.api.tracker.ArtifactDO;
 import com.danube.scrumworks.api.client.types.BacklogItemWSO;
 

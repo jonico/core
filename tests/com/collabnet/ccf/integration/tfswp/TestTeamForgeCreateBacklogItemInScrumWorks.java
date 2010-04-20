@@ -13,7 +13,6 @@ import org.junit.Test;
 import com.collabnet.teamforge.api.FieldValues;
 import com.danube.scrumworks.api.client.types.BacklogItemWSO;
 import com.danube.scrumworks.api.client.types.ProductWSO;
-import com.danube.scrumworks.api.client.types.ReleaseWSO;
 
 /**
  * Creates a backlog item in TeamForge and verifies the backlog item in ScrumWorks after the synchronization. 

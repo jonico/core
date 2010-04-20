@@ -168,7 +168,7 @@ public class TeamForgeTester {
 	}
 
 	public ArtifactDO createTask(String title, String description, String status,
-			String assignedUsername, int remainingEffort)
+			String assignedUsername, int remainingEffort, int originalEstimate)
 			throws RemoteException, PlanningFolderRuleViolationException {
 		FieldValues flexFields = new FieldValues();
 		flexFields.setNames(new String[] {});
@@ -178,13 +178,10 @@ public class TeamForgeTester {
 				flexFields);
 		ArtifactDO task = connection.getTrackerClient().createArtifact(
 				taskTracker, title, description, null, null, status, null, 0,
-				0, remainingEffort, false, assignedUsername, null, null, flexFields,
+				originalEstimate, remainingEffort, false, assignedUsername, null, null, flexFields,
 				null, null, null);
 		connection.getTrackerClient().createArtifactDependency(pbi.getId(),
 				task.getId(), "Parent-child relationship created by unit test");
-		// update task artifact to trigger synchronization again
-		connection.getTrackerClient().setArtifactData(task,
-				"Trigger synchronization again", null, null, null);
 		return task;
 	}
 	
@@ -205,13 +202,14 @@ public class TeamForgeTester {
 	}
 	
 	public ArtifactDO updateTask(String taskId, String title, String description, String status,
-			String assignedUsername, int remainingEffort)
+			String assignedUsername, int remainingEffort, int originalEstimate)
 			throws RemoteException, PlanningFolderRuleViolationException {
 		ArtifactDO task = retrieveAndUpdateArtifactTitleAndDescription(taskId, title,
 				description);
 		task.setStatus(status);
 		task.setAssignedTo(assignedUsername);
 		task.setRemainingEffort(remainingEffort);
+		task.setEstimatedEffort(originalEstimate);
 		return updateArtifact(task, "updating task ...");
 	}
 

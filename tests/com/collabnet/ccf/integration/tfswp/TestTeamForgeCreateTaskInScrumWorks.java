@@ -3,12 +3,12 @@
  */
 package com.collabnet.ccf.integration.tfswp;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 
 import org.junit.Test;
 
 import com.danube.scrumworks.api.client.types.BacklogItemWSO;
-import com.danube.scrumworks.api.client.types.ProductWSO;
 import com.danube.scrumworks.api.client.types.TaskWSO;
 
 /**
@@ -34,10 +34,11 @@ public class TestTeamForgeCreateTaskInScrumWorks extends TFSWPIntegrationTest {
 		String description = "TFTaskDescription";
 		String status = "Not Started";
 		int remainingEffort = 0;
+		int originalEstimate = 0;
 		String assignedToUser = getTeamForgeTester().getUserName();
 
 		String taskId = getTeamForgeTester().createTask(title, description,
-				status, assignedToUser, remainingEffort).getId();
+				status, assignedToUser, remainingEffort, originalEstimate).getId();
 
 		// verify
 		BacklogItemWSO[] pbis = getSWPTester().waitForBacklogItemToAppear(); 
@@ -47,7 +48,7 @@ public class TestTeamForgeCreateTaskInScrumWorks extends TFSWPIntegrationTest {
 		
 		// now that we can be sure that PBI has been created, update task again to trigger resynch
 		getTeamForgeTester().updateTask(taskId, title, description,
-				status, assignedToUser, remainingEffort);
+				status, assignedToUser, remainingEffort, originalEstimate);
 
 		TaskWSO[] tasks = null;
 		for (int i = 0; i < getCcfMaxWaitTime(); i += getCcfRetryInterval()) {
@@ -65,19 +66,20 @@ public class TestTeamForgeCreateTaskInScrumWorks extends TFSWPIntegrationTest {
 		assertEquals(description, task.getDescription());
 		assertEquals(status, task.getStatus());
 		assertNull(task.getEstimatedHours());
+		assertNull(task.getOriginalEstimate());
 		assertEquals(assignedToUser + " (" + assignedToUser + ")", task
 				.getPointPerson());
 
 		// now we update the task
-		// first we have to create a PBI
 		String newTitle = "ChangedTFTask";
 		String newDescription = "ChangedTFTaskDescription";
 		String newStatus = "In Progress";
 		int newRemainingEffort = 42;
+		int newOriginalEstimate = 42;
 		String newAssignedToUser = null;
 
 		getTeamForgeTester().updateTask(taskId, newTitle, newDescription,
-				newStatus, newAssignedToUser, newRemainingEffort);
+				newStatus, newAssignedToUser, newRemainingEffort, newOriginalEstimate);
 
 		// now we have to wait for the update to come through
 		for (int i = 0; i < getCcfMaxWaitTime(); i += getCcfRetryInterval()) {
@@ -95,6 +97,7 @@ public class TestTeamForgeCreateTaskInScrumWorks extends TFSWPIntegrationTest {
 		assertEquals(newDescription, task.getDescription());
 		assertEquals(newStatus, task.getStatus());
 		assertEquals(newRemainingEffort, task.getEstimatedHours().intValue());
+		assertEquals(newOriginalEstimate, task.getOriginalEstimate().intValue());
 		assertNull(task.getPointPerson());
 
 		
@@ -108,7 +111,7 @@ public class TestTeamForgeCreateTaskInScrumWorks extends TFSWPIntegrationTest {
 		String yetAnotherDescription = "yetAnotherDescription";
 		
 		getTeamForgeTester().updateTask(taskId, yetAnotherTitle, yetAnotherDescription,
-				yetAnotherStatus, yetAnotherUser, zeroEffort);
+				yetAnotherStatus, yetAnotherUser, zeroEffort, newOriginalEstimate);
 		
 		// now we have to wait for the update to come through
 		for (int i = 0; i < getCcfMaxWaitTime(); i += getCcfRetryInterval()) {
@@ -126,6 +129,7 @@ public class TestTeamForgeCreateTaskInScrumWorks extends TFSWPIntegrationTest {
 		assertEquals(yetAnotherDescription, task.getDescription());
 		assertEquals(yetAnotherStatus, task.getStatus());
 		assertEquals(zeroEffort, task.getEstimatedHours().intValue());
+		assertEquals(newOriginalEstimate, task.getOriginalEstimate().intValue());
 		assertEquals(assignedToUser + " (" + assignedToUser + ")", task
 				.getPointPerson());
 		
