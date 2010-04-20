@@ -171,7 +171,7 @@ public class SWPTester {
 				return pbis; 
 			}
 		}
-		throw new RemoteException("Backlog items were found within the given time: " + ccfMaxWaitTime); 
+		throw new RemoteException("Backlog items were not found within the given time: " + ccfMaxWaitTime); 
 	}
 	
 	/**
