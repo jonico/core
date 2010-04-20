@@ -12,6 +12,7 @@ import javax.xml.rpc.ServiceException;
 
 import com.danube.scrumworks.api.client.ScrumWorksEndpoint;
 import com.danube.scrumworks.api.client.types.BacklogItemWSO;
+import com.danube.scrumworks.api.client.types.BusinessWeightWSO;
 import com.danube.scrumworks.api.client.types.ProductWSO;
 import com.danube.scrumworks.api.client.types.ReleaseWSO;
 import com.danube.scrumworks.api.client.types.ServerException;
@@ -220,15 +221,80 @@ public class SWPTester {
 	 * @throws RemoteException if ScrumWorks can not be accessed
 	 * @throws ServerException if there is an error from ScrumWorks
 	 */
-	public String getReleaseForBacklogItem(Long releaseId) throws ServerException, RemoteException {
-		ReleaseWSO[] releases = getSWPEndpoint().getReleases(getProduct()); 
+	public String getReleaseName(final Long releaseId) throws ServerException, RemoteException {
+		ReleaseWSO[] allReleases = getReleasesInScrumWorks(); 
+		ReleaseWSO release; 
 		
-		for (int i = 0; i < releases.length; i++) {
-			if (releases[i].getId().equals(releaseId)) {
-				return releases[i].getTitle(); 
+		for (int i = 0; i < allReleases.length; i++) {
+			release = allReleases[i];
+			if (release.getId().equals(releaseId)) {
+				return release.getTitle(); 
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Returns all of the releases in the ScrumWorks product. 
+	 * 
+	 * @return the id of the release if found, otherwise null
+	 * @throws RemoteException if ScrumWorks can not be accessed
+	 * @throws ServerException if there is an error from ScrumWorks
+	 */
+	private ReleaseWSO[] getReleasesInScrumWorks() throws RemoteException,
+			ServerException {
+		return getSWPEndpoint().getReleases(getProduct());
+	}
+	
+	/**
+	 * Returns the id for the release matching the given name. 
+	 * 
+	 * @throws RemoteException if ScrumWorks can not be accessed 
+	 * @throws ServerException if there is an error from ScrumWorks
+	 * 
+	 */
+	public Long getReleaseId(final String releaseName) throws ServerException, RemoteException {
+		ReleaseWSO[] allReleases = getReleasesInScrumWorks();
+		ReleaseWSO release; 
+		
+		for (int i = 0; i < allReleases.length; i++) {
+			release = allReleases[i];
+			if (release.getTitle().equals(releaseName)) {
+				return release.getId(); 
+			}
+		}
+		return null; 
+	}
+	
+	/**
+	 * Creates a backlog item in the ScrumWorks test product and returns the created backlog item. 
+	 * Unable to assign themes to a themeless PBI in the 4.3 API. 
+	 * 
+	 * @param title the backlog item name
+	 * @param description the description 
+	 * @param estimate the estimate
+	 * @param businessWeight the business weight
+	 * @param release the release name
+	 * @param sprint the sprint id
+	 * @param themes the themes
+	 * @param product the product id
+	 * @return the created backlog item in ScrumWorks
+	 * @throws RemoteException if ScrumWorks can not be accessed 
+	 * @throws ServerException if there is an error from ScrumWorks
+	 */
+	public BacklogItemWSO createBacklogItem(final String title, final String description, final String estimate, final String benefit, final String penalty, 
+			final String release, final String... themes) throws ServerException, RemoteException {
+		BusinessWeightWSO businessWeight = new BusinessWeightWSO(Long.parseLong(benefit), Long.parseLong(penalty)); 
+		ThemeWSO[] allThemes = getSWPEndpoint().getThemes(getProduct()); 
+		ThemeWSO[] pbiThemes = new ThemeWSO[themes.length]; 
+		for (int i= 0; i < themes.length; i++) {
+			for (int j = 0; j < allThemes.length; j++) {
+				if (themes.equals(allThemes[j])) {
+					pbiThemes[i] = allThemes[j]; 
+				}
+			}
+		}
+		return getSWPEndpoint().createBacklogItem(new BacklogItemWSO(true, null, businessWeight, null, description, Integer.parseInt(estimate), null, getProduct().getId(), 0, getReleaseId(release), -737035264780005900L, null, title)); 
 	}
 	
 }

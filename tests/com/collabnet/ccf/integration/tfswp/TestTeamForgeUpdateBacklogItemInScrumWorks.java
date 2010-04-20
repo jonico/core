@@ -97,6 +97,6 @@ public class TestTeamForgeUpdateBacklogItemInScrumWorks extends TFSWPIntegration
 		assertEquals(2, themeNames.size()); 
 		assertTrue(themeNames.contains(theme1)); 
 		assertTrue(themeNames.contains(theme2)); 
-		assertEquals(release, getSWPTester().getReleaseForBacklogItem(updatedPbi.getReleaseId())); 
+		assertEquals(release, getSWPTester().getReleaseName(updatedPbi.getReleaseId())); 
 	}
 }
