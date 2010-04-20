@@ -110,6 +110,11 @@ public class TestTeamForgeMoveTaskInScrumWorks extends TFSWPIntegrationTest {
 		// first SWP PBI should not have any children any more
 		tasksSWP = getSWPTester().getSWPEndpoint().getTasks(firstSWPPBI);
 		assertNull(tasksSWP);
+		
+		// second SWP PBI should have one child now
+		tasksSWP = getSWPTester().getSWPEndpoint().getTasks(secondSWPPBI);
+		assertEquals(1, tasksSWP.length);
+		assertEquals(taskSWP.getId(), tasksSWP[0].getId());
 	}
 
 }
