@@ -47,7 +47,7 @@ public class TestTeamForgeCreateBacklogItemInScrumWorks extends TFSWPIntegration
 		
 		// verify
 		final ProductWSO product = getSWPTester().getProduct();
-		BacklogItemWSO[] pbis = getSWPTester().waitForBacklogItemToAppear(product); 
+		BacklogItemWSO[] pbis = getSWPTester().waitForBacklogItemsToAppear(1); 
 		
 		assertEquals(1, pbis.length);
 		BacklogItemWSO pbi = pbis[0];

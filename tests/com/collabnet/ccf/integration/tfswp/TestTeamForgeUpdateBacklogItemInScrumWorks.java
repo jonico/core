@@ -75,7 +75,7 @@ public class TestTeamForgeUpdateBacklogItemInScrumWorks extends TFSWPIntegration
 		// verify 
 		BacklogItemWSO[] allPbis = null;
 		BacklogItemWSO updatedPbi = null; 
-		getSWPTester().waitForBacklogItemToAppear(); 
+		getSWPTester().waitForBacklogItemsToAppear(1); 
 		for (int i = 0; i < getCcfMaxWaitTime(); i += getCcfRetryInterval()) {
 			allPbis = getSWPTester().getSWPEndpoint().getActiveBacklogItems(getSWPTester().getProduct()); 
 			updatedPbi = allPbis[0];

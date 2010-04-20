@@ -41,7 +41,7 @@ public class TestTeamForgeCreateTaskInScrumWorks extends TFSWPIntegrationTest {
 				status, assignedToUser, remainingEffort, originalEstimate).getId();
 
 		// verify
-		BacklogItemWSO[] pbis = getSWPTester().waitForBacklogItemToAppear(); 
+		BacklogItemWSO[] pbis = getSWPTester().waitForBacklogItemsToAppear(1); 
 
 		assertEquals(1, pbis.length);
 		BacklogItemWSO pbi = pbis[0];

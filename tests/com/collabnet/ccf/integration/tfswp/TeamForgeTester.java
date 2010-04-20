@@ -13,6 +13,8 @@ import com.collabnet.teamforge.api.PlanningFolderRuleViolationException;
 import com.collabnet.teamforge.api.planning.PlanningFolderList;
 import com.collabnet.teamforge.api.planning.PlanningFolderRow;
 import com.collabnet.teamforge.api.tracker.ArtifactDO;
+import com.collabnet.teamforge.api.tracker.ArtifactDependencyList;
+import com.collabnet.teamforge.api.tracker.ArtifactDependencyRow;
 import com.collabnet.teamforge.api.tracker.ArtifactRow;
 
 /**
@@ -293,5 +295,11 @@ public class TeamForgeTester {
 
 	public String getUserName() {
 		return userName;
+	}
+
+	public void reparentTask(String taskId, String newParentId) throws RemoteException, PlanningFolderRuleViolationException {
+		ArtifactDependencyRow rel = connection.getTrackerClient().getParentDependencyList(taskId).getDataRows()[0];
+		connection.getTrackerClient().removeArtifactDependency(rel.getOriginId(), rel.getTargetId());
+		connection.getTrackerClient().createArtifactDependency(newParentId, taskId, "reparenting ...");
 	}
 }

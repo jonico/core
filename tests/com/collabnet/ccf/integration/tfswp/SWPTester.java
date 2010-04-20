@@ -151,39 +151,41 @@ public class SWPTester {
 	 * Returns the backlog items after the backlog items appear in a ScrumWorks Pro product. 
 	 * Assumes that there are no backlog items before beginning to wait.
 	 * 
-	 * @param product the product 
+	 * @param product the product
+	 * @param numberOfPBIs number of PBIs to wait for
 	 * @return the backlog items in the product
 	 * @throws RemoteException if the ScrumWorks API can not be accessed
 	 * @throws ServerException if an error occurs in ScrumWorks
 	 * @throws InterruptedException if the thread can not sleep
 	 * 
 	 */
-	public BacklogItemWSO[] waitForBacklogItemToAppear(final ProductWSO product) throws ServerException, RemoteException, InterruptedException {
+	public BacklogItemWSO[] waitForBacklogItemToAppear(final ProductWSO product, int numberOfPBIs) throws ServerException, RemoteException, InterruptedException {
 		BacklogItemWSO[] pbis = null;
 		for (int i = 0; i < ccfMaxWaitTime; i += ccfRetryInterval) {
 			pbis = getSWPEndpoint().getActiveBacklogItems(
 					product);
-			if (pbis == null) {
+			if (pbis == null || pbis.length < numberOfPBIs) {
 				Thread.sleep(ccfRetryInterval);
 			} else {
 				return pbis; 
 			}
 		}
-		throw new RemoteException("No backlog items were found within the given time: " + ccfMaxWaitTime); 
+		throw new RemoteException("Backlog items were found within the given time: " + ccfMaxWaitTime); 
 	}
 	
 	/**
 	 * Returns the backlog items after the backlog items appear in a ScrumWorks Pro product. 
 	 * Assumes that there are no backlog items before beginning to wait. 
 	 * 
+	 * @param numberOfPBIs number of PBIs to wait for
 	 * @return the backlog items in the product
 	 * @throws RemoteException if the ScrumWorks API can not be accessed
 	 * @throws ServerException if an error occurs in ScrumWorks 
 	 * @throws InterruptedException if the thread can not sleep
 	 */
-	public BacklogItemWSO[] waitForBacklogItemToAppear() throws ServerException, RemoteException, InterruptedException {
+	public BacklogItemWSO[] waitForBacklogItemsToAppear(int numberOfPBIs) throws ServerException, RemoteException, InterruptedException {
 		ProductWSO product = getProduct(); 
-		return waitForBacklogItemToAppear(product); 
+		return waitForBacklogItemToAppear(product, numberOfPBIs); 
 	}
 
 	/**
