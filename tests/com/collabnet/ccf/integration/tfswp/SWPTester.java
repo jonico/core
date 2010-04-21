@@ -296,36 +296,28 @@ public class SWPTester {
 	/**
 	 * Updates a backlog item in the ScrumWorks test product and returns the updated backlog item. 
 	 * 
-	 * @param title the backlog item title
-	 * @param description the description
-	 * @param estimate the estimate
-	 * @param benefit the benefit 
-	 * @param penalty the penalty 
-	 * @param releaseName the name of the release containing this backlog item 
-	 * @param sprint the sprint containing this backlog item 
-	 * @param themes the themes
-	 * @return the updated backlog item in ScrumWorks 
+	 * @param backlogItemToBeUpdated the backlog item to be updated
 	 * @throws RemoteException if ScrumWorks can not be accessed
 	 * @throws ServerException if there is an error from ScrumWorks 
 	 */
-	public BacklogItemWSO updateBacklogItem(final String title, final String description, final String estimate, final String benefit, final String penalty, 
-			final String releaseName, Sprint sprint, final String... themes) throws ServerException, RemoteException {
-		BusinessWeightWSO businessWeight = transformToBusinessWeightWSO(benefit, penalty); 
-		ThemeWSO[] themeWSO = transformToThemeWSO(themes);
-		
-		return null; //TODO: finish this method  
+	public BacklogItemWSO updateBacklogItem(final BacklogItemWSO backlogItemToBeUpdated) throws ServerException, RemoteException {
+		return getSWPEndpoint().updateBacklogItem(backlogItemToBeUpdated); 
 	}
 
 	/**
 	 * Transform theme name into ThemeWSO.  
 	 * 
 	 * @param themes the themes 
-	 * @return the {@link ThemeWSO}
+	 * @return the {@link ThemeWSO}, null if themes is null
 	 * @throws RemoteException if the ScrumWorks API can not be accessed
 	 * @throws ServerException if there is an error from ScrumWorks
 	 */
-	private ThemeWSO[] transformToThemeWSO(final String... themes)
+	public ThemeWSO[] transformToThemeWSO(final String... themes)
 			throws RemoteException, ServerException {
+		if (themes == null) {
+			return null; 
+		}
+		
 		ThemeWSO[] allThemes = getSWPEndpoint().getThemes(getProduct()); 
 		ThemeWSO[] pbiThemes = new ThemeWSO[themes.length]; 
 		for (int i= 0; i < themes.length; i++) {
@@ -345,7 +337,7 @@ public class SWPTester {
 	 * @param penalty the penalty value 
 	 * @return the {@link BusinessWeightWSO}
 	 */
-	private BusinessWeightWSO transformToBusinessWeightWSO(final String benefit, final String penalty) {
+	public BusinessWeightWSO transformToBusinessWeightWSO(final String benefit, final String penalty) {
 		BusinessWeightWSO businessWeight = new BusinessWeightWSO(Long.parseLong(benefit), Long.parseLong(penalty));
 		return businessWeight;
 	}

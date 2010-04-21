@@ -9,8 +9,12 @@ public enum Sprint {
 	/**
 	 * Second sprint for the automated test team.  
 	 */
-	SPRINT_2_AUTOMATED_TEAM("Second test sprint", "4/15/2010", "6/18/2010", "AutomatedTestTeam"); 
+	SPRINT_2_AUTOMATED_TEAM("Second test sprint", "4/15/2010", "6/18/2010", "AutomatedTestTeam"),  
 	
+	/**
+	 * First sprint for the one team. 
+	 */
+	SPRINT_1_ONE_TEAM ("Initial sprint for OneTeam", "4/14/2010", "6/11/2010", "OneTeam"); 
 	
 	/** The team associated to the sprint. */ 
 	private String team; 
