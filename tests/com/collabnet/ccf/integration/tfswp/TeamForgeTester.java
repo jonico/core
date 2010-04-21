@@ -340,6 +340,13 @@ public class TeamForgeTester {
 		return userName;
 	}
 
+	/**
+	 * Moves a task from its existing parent to a new parent
+	 * @param taskId
+	 * @param newParentId
+	 * @throws RemoteException
+	 * @throws PlanningFolderRuleViolationException
+	 */
 	public void reparentTask(String taskId, String newParentId) throws RemoteException, PlanningFolderRuleViolationException {
 		ArtifactDependencyRow rel = connection.getTrackerClient().getParentDependencyList(taskId).getDataRows()[0];
 		connection.getTrackerClient().removeArtifactDependency(rel.getOriginId(), rel.getTargetId());
@@ -369,6 +376,28 @@ public class TeamForgeTester {
 			}
 		}
 		throw new RemoteException(numberOfPbis + " backlog item(s) were not found within the given time: " + ccfMaxWaitTime); 
+	}
+	
+	/**
+	 * Waits until parent has at least numberOfPFs child planning folders
+	 * @param parent id of parent folder 
+	 * @param numberOfPFs number of PFs to wait for
+	 * @param recursive determines whether a recursive search should be done or not 
+	 * @return
+	 * @throws RemoteException 
+	 * @throws InterruptedException 
+	 */
+	public PlanningFolderRow[] waitForPlanningFoldersToAppear (String parent, int numberOfPFs, boolean recursive) throws RemoteException, InterruptedException {
+		PlanningFolderRow[] pfRows;
+		for (int i = 0; i < ccfMaxWaitTime; i += ccfRetryInterval) {
+			pfRows = connection.getPlanningClient().getPlanningFolderList(parent, recursive).getDataRows();
+			if (pfRows.length < numberOfPFs) {
+				Thread.sleep(ccfRetryInterval); 
+			} else {
+				return pfRows; 
+			}
+		}
+		throw new RemoteException(numberOfPFs + " planning folder(s) were not found within the given time: " + ccfMaxWaitTime);
 	}
 	
 	/**
@@ -414,5 +443,13 @@ public class TeamForgeTester {
 			}
 		}
 		return matchingValues; 
+	}
+	
+	/**
+	 * Returns the TF connection object
+	 * @return
+	 */
+	Connection getConnection () {
+		return connection;
 	}
 }
