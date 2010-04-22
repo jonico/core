@@ -53,14 +53,7 @@ public class TestTeamForgeMoveTaskInScrumWorks extends TFSWPIntegrationTest {
 				status, assignedToUser, remainingEffort, originalEstimate);
 
 		TaskWSO[] tasksSWP = null;
-		for (int i = 0; i < getCcfMaxWaitTime(); i += getCcfRetryInterval()) {
-			tasksSWP = getSWPTester().getSWPEndpoint().getTasks(firstSWPPBI);
-			if (tasksSWP == null) {
-				Thread.sleep(getCcfRetryInterval());
-			} else {
-				break;
-			}
-		}
+		tasksSWP = getSWPTester().waitForTaskToAppear(firstSWPPBI, title, 1); 
 
 		assertEquals(1, tasksSWP.length);
 		TaskWSO taskSWP = tasksSWP[0];
@@ -94,14 +87,7 @@ public class TestTeamForgeMoveTaskInScrumWorks extends TFSWPIntegrationTest {
 		
 		
 		// wait for title change to show up
-		for (int i = 0; i < getCcfMaxWaitTime(); i += getCcfRetryInterval()) {
-			taskSWP = getSWPTester().getSWPEndpoint().getTaskById(taskSWP.getId());
-			if (taskSWP.getTitle().equals(title)) {
-				Thread.sleep(getCcfRetryInterval());
-			} else {
-				break;
-			}
-		}
+		taskSWP = getSWPTester().waitForTaskToAppear(secondSWPPBI, newTitle, 1)[0]; 
 		assertEquals(newTitle, taskSWP.getTitle());
 		
 		// check whether move operation took place

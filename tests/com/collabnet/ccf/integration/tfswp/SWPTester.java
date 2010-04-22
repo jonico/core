@@ -1,5 +1,7 @@
 package com.collabnet.ccf.integration.tfswp;
 
+import static org.junit.Assert.assertEquals;
+
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -174,7 +176,32 @@ public class SWPTester {
 				return pbis; 
 			}
 		}
-		throw new RemoteException("Backlog items were not found within the given time: " + ccfMaxWaitTime); 
+		throw new RuntimeException("Backlog items were not found within the given time: " + ccfMaxWaitTime); 
+	}
+	
+	/**
+	 * Returns the tasks for the given backlog item after the tasks are created in ScrumWorks.
+	 *  
+	 * @param backlogItemWSO the backlog item 
+	 * @param expectedTaskTitle the expected task title for the first task 
+	 * @param numberOfTasks the expected number of tasks for the backlog item 
+	 * @return the tasks for the backlog item 
+	 * @throws RemoteException if the ScrumWorks API can not be accessed 
+	 * @throws ServerException if an error occurs in ScrumWorks
+	 * @throws InterruptedException if the thread can not sleep
+	 */
+	public TaskWSO[] waitForTaskToAppear(final BacklogItemWSO backlogItemWSO, final String expectedTaskTitle, final int numberOfTasks) throws ServerException, RemoteException, InterruptedException {
+		TaskWSO[] tasks = null; 
+		for (int i = 0; i < ccfMaxWaitTime; i += ccfRetryInterval) {
+			tasks = getSWPEndpoint().getTasks(backlogItemWSO);
+			if (tasks == null || tasks.length < numberOfTasks || !tasks[0].getTitle().equals(expectedTaskTitle)) {
+				Thread.sleep(ccfRetryInterval);
+			} else {
+				assertEquals(numberOfTasks, tasks.length);
+				return tasks;
+			}
+		}
+		throw new RuntimeException("Tasks were not found within the given time: " + ccfMaxWaitTime + tasks); 
 	}
 	
 	/**
@@ -291,6 +318,35 @@ public class SWPTester {
 		ThemeWSO[] themeWSO = transformToThemeWSO(themes);
 		return getSWPEndpoint().createBacklogItem(new BacklogItemWSO(true, null, businessWeight, null, description, Integer.parseInt(estimate), null, getProduct().getId(), 0, getReleaseId(releaseName), getSprintId(sprint.getName()), null, title)); 
 //		return getSWPEndpoint().createBacklogItem(new BacklogItemWSO(true, null, businessWeight, null, description, Integer.parseInt(estimate), null, getProduct().getId(), 0, getReleaseId(release), -737035264780005900L, themeWSO, title)); // TODO:  
+	}
+	
+	/**
+	 * Creates an unestimated backlog item.  
+	 * 
+	 * @throws RemoteException if the ScrumWorks API can not be accessed
+	 * @throws ServerException if there is an error from ScrumWorks  
+	 */
+	public BacklogItemWSO createBacklogItem(final String title) throws ServerException, RemoteException {
+		return createBacklogItem(title, null, null, null, null, null, null, new String[] {}); 
+	}
+	
+	/**
+	 * Creates a task in the ScrumWorks test product and returns the created task.  
+	 * 
+	 * @param title the title
+	 * @param description the description
+	 * @param pointPerson the person who volunteered for the task 
+	 * @param status the status 
+	 * @param currentEstimate the current estimate
+	 * @param originalEstimate the first, original estimate 
+	 * @param backlogItemId the backlog item id this task is a child of 
+	 * @throws RemoteException if the ScrumWorks API can not be accessed 
+	 * @throws NumberFormatException if the currentEstimate or originalEstimate is not a valid string representation for a number
+	 * @throws ServerException if there is an error from ScrumWorks 
+	 */
+	public TaskWSO createTask(final String title, final String description, final String pointPerson, final TaskStatus status, 
+			final String currentEstimate, final String originalEstimate, final Long backlogItemId) throws ServerException, NumberFormatException, RemoteException {
+		return getSWPEndpoint().createTask(new TaskWSO(backlogItemId, description, Integer.parseInt(currentEstimate), null, Integer.parseInt(originalEstimate), pointPerson, 0, status.getStatus(), 0, title)); 
 	}
 	
 	/**

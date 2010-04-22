@@ -50,18 +50,10 @@ public class TestTeamForgeCreateAndUpdateTaskInScrumWorks extends TFSWPIntegrati
 		getTeamForgeTester().updateTask(taskId, title, description,
 				status, assignedToUser, remainingEffort, originalEstimate);
 
-		TaskWSO[] tasks = null;
-		for (int i = 0; i < getCcfMaxWaitTime(); i += getCcfRetryInterval()) {
-			tasks = getSWPTester().getSWPEndpoint().getTasks(pbi);
-			if (tasks == null) {
-				Thread.sleep(getCcfRetryInterval());
-			} else {
-				break;
-			}
-		}
+		TaskWSO[] tasks = getSWPTester().waitForTaskToAppear(pbi, title, 1);
+		TaskWSO task = tasks[0];
 
 		assertEquals(1, tasks.length);
-		TaskWSO task = tasks[0];
 		assertEquals(title, task.getTitle());
 		assertEquals(description, task.getDescription());
 		assertEquals(status, task.getStatus());
@@ -82,16 +74,8 @@ public class TestTeamForgeCreateAndUpdateTaskInScrumWorks extends TFSWPIntegrati
 				newStatus, newAssignedToUser, newRemainingEffort, newOriginalEstimate);
 
 		// now we have to wait for the update to come through
-		for (int i = 0; i < getCcfMaxWaitTime(); i += getCcfRetryInterval()) {
-			tasks = getSWPTester().getSWPEndpoint().getTasks(pbi);
-			assertEquals(1, tasks.length);
-			task = tasks[0];
-			if (task.getTitle().equals(title)) {
-				Thread.sleep(getCcfRetryInterval());
-			} else {
-				break;
-			}
-		}
+		TaskWSO[] tasksFromScrumWorks = getSWPTester().waitForTaskToAppear(pbi, newTitle, 1);
+		task = tasksFromScrumWorks[0]; 
 
 		assertEquals(newTitle, task.getTitle());
 		assertEquals(newDescription, task.getDescription());
@@ -114,16 +98,8 @@ public class TestTeamForgeCreateAndUpdateTaskInScrumWorks extends TFSWPIntegrati
 				yetAnotherStatus, yetAnotherUser, zeroEffort, newOriginalEstimate);
 		
 		// now we have to wait for the update to come through
-		for (int i = 0; i < getCcfMaxWaitTime(); i += getCcfRetryInterval()) {
-			tasks = getSWPTester().getSWPEndpoint().getTasks(pbi);
-			assertEquals(1, tasks.length);
-			task = tasks[0];
-			if (task.getTitle().equals(newTitle)) {
-				Thread.sleep(getCcfRetryInterval());
-			} else {
-				break;
-			}
-		}
+		tasksFromScrumWorks = getSWPTester().waitForTaskToAppear(pbi, yetAnotherTitle, 1);
+		task = tasksFromScrumWorks[0]; 
 
 		assertEquals(yetAnotherTitle, task.getTitle());
 		assertEquals(yetAnotherDescription, task.getDescription());
