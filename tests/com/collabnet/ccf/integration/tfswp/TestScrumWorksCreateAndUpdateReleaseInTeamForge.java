@@ -4,6 +4,7 @@ import static org.junit.Assert.*;
 
 import java.rmi.RemoteException;
 import java.util.Calendar;
+import java.util.GregorianCalendar;
 import java.util.List;
 
 import org.junit.After;
@@ -26,7 +27,7 @@ import com.danube.scrumworks.api.client.types.ServerException;
  * @author Kelley
  *
  */
-public class TestScrumWorksCreateReleaseInTeamForge extends TFSWPIntegrationTest {
+public class TestScrumWorksCreateAndUpdateReleaseInTeamForge extends TFSWPIntegrationTest {
 	private ReleaseWSO swpRelease = null;
 	PlanningFolderRow tfRelease = null;
 
@@ -91,7 +92,23 @@ public class TestScrumWorksCreateReleaseInTeamForge extends TFSWPIntegrationTest
 		// now we will update the release
 		String newReleaseTitle = "RenamedRelease" + System.currentTimeMillis();
 		String newReleaseDescription = "Renamed Release automatically created by a unit test";
-		Calendar newReleaseDate = null;
-		Calendar newStartDate = null;
+		Calendar today = new GregorianCalendar();
+		Calendar newStartDate = new GregorianCalendar(today.get(Calendar.YEAR), today.get(Calendar.MONTH) ,today.get(Calendar.DAY_OF_MONTH));
+		Calendar newReleaseDate = (Calendar) newStartDate.clone(); 
+		newReleaseDate.add(Calendar.DAY_OF_MONTH, 1);
+		
+		swpRelease.setTitle(newReleaseTitle);
+		swpRelease.setDescription(newReleaseDescription);
+		swpRelease.setStartDate(newStartDate);
+		swpRelease.setReleaseDate(newReleaseDate);
+		swpRelease = getSWPTester().getSWPEndpoint().updateRelease(swpRelease);
+		
+		// now we have to wait until the change went through
+		PlanningFolderDO updatedTFRelease = getTeamForgeTester().waitForPFTitleToChange(tfRelease);
+		
+		assertEquals(newReleaseTitle, updatedTFRelease.getTitle());
+		assertEquals(newReleaseDescription, updatedTFRelease.getDescription());
+		assertEquals(newStartDate.getTime(), updatedTFRelease.getStartDate());
+		assertEquals(newReleaseDate.getTime(), updatedTFRelease.getEndDate());
 	}
 }

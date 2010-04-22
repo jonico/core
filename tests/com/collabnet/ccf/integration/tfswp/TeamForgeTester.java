@@ -8,13 +8,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
-import junit.framework.TestCase;
-
 import com.collabnet.ce.soap50.webservices.cemain.TrackerFieldSoapDO;
 import com.collabnet.teamforge.api.Connection;
 import com.collabnet.teamforge.api.FieldValues;
 import com.collabnet.teamforge.api.Filter;
 import com.collabnet.teamforge.api.PlanningFolderRuleViolationException;
+import com.collabnet.teamforge.api.planning.PlanningFolderDO;
 import com.collabnet.teamforge.api.planning.PlanningFolderList;
 import com.collabnet.teamforge.api.planning.PlanningFolderRow;
 import com.collabnet.teamforge.api.tracker.ArtifactDO;
@@ -451,5 +450,26 @@ public class TeamForgeTester {
 	 */
 	Connection getConnection () {
 		return connection;
+	}
+
+	/**
+	 * Waits until the title of the passed planning folder changes
+	 * Throws an exception if the maximum timeout is exceeded
+	 * @param planningFolder
+	 * @return
+	 * @throws RemoteException 
+	 * @throws InterruptedException 
+	 */
+	public PlanningFolderDO waitForPFTitleToChange(PlanningFolderRow planningFolder) throws RemoteException, InterruptedException {
+		PlanningFolderDO pf = null;
+		for (int i = 0; i < ccfMaxWaitTime; i += ccfRetryInterval) {
+			pf = connection.getPlanningClient().getPlanningFolderData(planningFolder.getId());
+			if (planningFolder.getTitle().equals(pf.getTitle())) {
+				Thread.sleep(ccfRetryInterval); 
+			} else {
+				return pf; 
+			}
+		}
+		throw new RemoteException("Planning folder title did not change within the given time: " + ccfMaxWaitTime);
 	}
 }

@@ -17,7 +17,7 @@ import com.danube.scrumworks.api.client.types.TaskWSO;
  * 
  * @author jnicolai
  */
-public class TestTeamForgeCreateTaskInScrumWorks extends TFSWPIntegrationTest {
+public class TestTeamForgeCreateAndUpdateTaskInScrumWorks extends TFSWPIntegrationTest {
 
 	/**
 	 * Creates a task item in TeamForge and verifies the task item in ScrumWorks
