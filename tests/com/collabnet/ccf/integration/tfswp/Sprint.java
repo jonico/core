@@ -1,7 +1,7 @@
 package com.collabnet.ccf.integration.tfswp;
 
 /**
- * Sprints used for testing purposes. 
+ * Sprints in ScrumWorks used for testing purposes. 
  * 
  * @author Kelley
  *
