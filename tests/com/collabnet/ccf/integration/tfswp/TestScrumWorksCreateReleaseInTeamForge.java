@@ -28,6 +28,7 @@ import com.danube.scrumworks.api.client.types.ServerException;
  */
 public class TestScrumWorksCreateReleaseInTeamForge extends TFSWPIntegrationTest {
 	private ReleaseWSO swpRelease = null;
+	PlanningFolderRow tfRelease = null;
 
 	/**
 	 * Creates a backlog item. 
@@ -41,6 +42,9 @@ public class TestScrumWorksCreateReleaseInTeamForge extends TFSWPIntegrationTest
 	public void tearDown() throws ServerException, RemoteException {
 		if (swpRelease != null) {
 			getSWPTester().getSWPEndpoint().deleteEmptyRelease(swpRelease);
+		}
+		if (tfRelease != null) {
+			getTeamForgeTester().getConnection().getPlanningClient().deletePlanningFolder(tfRelease.getId());
 		}
 		super.tearDown();
 	}
@@ -61,7 +65,7 @@ public class TestScrumWorksCreateReleaseInTeamForge extends TFSWPIntegrationTest
 		
 		// now create new SWP release
 		// use random title with system millis inside to identify
-		String releaseTitle = "NewRelease" + System.currentTimeMillis();
+		String releaseTitle = "Release" + System.currentTimeMillis();
 		String releaseDescription = "Release automatically created by a unit test";
 		Calendar releaseDate = null;
 		Calendar startDate = null;
@@ -72,16 +76,22 @@ public class TestScrumWorksCreateReleaseInTeamForge extends TFSWPIntegrationTest
 		pfRows = getTeamForgeTester().waitForPlanningFoldersToAppear(productPFId, alreadyExistingReleasesInTF + 1, false);
 		assertEquals(alreadyExistingReleasesInTF + 1, pfRows.length);
 		
-		PlanningFolderRow newRelease = null;
 		// now we have to identify the newly created PF
 		for (int i = 0; i < pfRows.length; i++) {
 			if (pfRows[i].getTitle().equals(releaseTitle)) {
-				newRelease = pfRows[i];
+				tfRelease = pfRows[i];
 				break;
 			}
 		}
-		assertNotNull(newRelease);
-		assertNull(newRelease.getStartDate());
-		assertNull(newRelease.getEndDate());
+		assertNotNull(tfRelease);
+		assertNull(tfRelease.getStartDate());
+		assertNull(tfRelease.getEndDate());
+		assertEquals(releaseDescription, tfRelease.getDescription());
+		
+		// now we will update the release
+		String newReleaseTitle = "RenamedRelease" + System.currentTimeMillis();
+		String newReleaseDescription = "Renamed Release automatically created by a unit test";
+		Calendar newReleaseDate = null;
+		Calendar newStartDate = null;
 	}
 }

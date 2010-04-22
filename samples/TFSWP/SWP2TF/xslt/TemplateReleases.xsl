@@ -32,6 +32,14 @@
 			<xsl:value-of select="." />
 		</field>
 	</xsl:template>
+	<xsl:template match='ccf:field[@fieldName="description"]'>
+		<field>
+			<xsl:copy-of select="@*" />
+			<xsl:attribute name="fieldName">description</xsl:attribute>
+			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
+			<xsl:value-of select="." />
+		</field>
+	</xsl:template>
 	<xsl:template match='ccf:field[@fieldName="startDate"]'>
 		<field>
 			<xsl:copy-of select="@*" />
