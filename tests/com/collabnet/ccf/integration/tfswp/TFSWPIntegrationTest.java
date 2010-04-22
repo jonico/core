@@ -35,6 +35,9 @@ public class TFSWPIntegrationTest {
 	/**
 	 * Logs into TF and SWP
 	 * The needed properties are taken from tfswp.properties
+	 * Creates the TeamForge and ScrumWorks tester. 
+	 * Clears backlog items and tasks within TeamForge and ScrumWorks.  
+	 *
 	 * @throws java.lang.Exception
 	 */
 	@Before
