@@ -3,9 +3,9 @@
  */
 package com.collabnet.ccf.integration.tfswp;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
+import java.util.Date;
 import java.util.List;
 
 import org.junit.Test;
@@ -37,11 +37,15 @@ public class TestTeamForgeCreateBacklogItemInScrumWorks extends TFSWPIntegration
 		final String effort = "30";
 		final String theme1 = "Core";
 		final String theme2 = "GUI";
+		// and now some bogus values that should be ignored
+		String bogusKey = "bogusKey";
+		String bogusSprint = "bogusSprint";
+		String bogusTeam = "bogusTeam";
 
 		// execute
 		final FieldValues flexFields = getTeamForgeTester().convertToFlexField(
-				new String[] {TeamForgeTester.FIELD_BENEFIT, TeamForgeTester.FIELD_PENALTY, TeamForgeTester.FIELD_EFFORT, TeamForgeTester.FIELD_THEME, TeamForgeTester.FIELD_THEME}, 
-				new String[] {benefit, penalty, effort, theme1, theme2}); 
+				new String[] {TeamForgeTester.FIELD_BENEFIT, TeamForgeTester.FIELD_PENALTY, TeamForgeTester.FIELD_EFFORT, TeamForgeTester.FIELD_THEME, TeamForgeTester.FIELD_THEME, TeamForgeTester.FIELD_KEY, TeamForgeTester.FIELD_TEAM, TeamForgeTester.FIELD_SPRINT_NAME}, 
+				new String[] {benefit, penalty, effort, theme1, theme2, bogusKey, bogusTeam, bogusSprint}); 
 		
 		getTeamForgeTester().createBacklogItem(title, description, release, flexFields);
 		
@@ -56,6 +60,11 @@ public class TestTeamForgeCreateBacklogItemInScrumWorks extends TFSWPIntegration
 		assertEquals(benefit, pbi.getBusinessWeight().getBenefit().toString()); 
 		assertEquals(penalty, pbi.getBusinessWeight().getPenalty().toString());
 		assertEquals(effort, pbi.getEstimate().toString());
+		
+		// check whether bogus values have been transported  
+		assertNotSame(bogusKey, pbi.getKey());
+		assertNull(pbi.getSprintId());
+		
 		final List<String> themeNames = getSWPTester().getThemeNames(pbi.getThemes()); 
 		assertEquals(2, themeNames.size()); 
 		assertTrue(themeNames.contains(theme1)); 
