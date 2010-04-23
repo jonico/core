@@ -620,7 +620,7 @@
 		<!-- batch size of one means process one row per message and so on -->
 		<property name="batchSize" value="0" />
 		<property name="sql">
-			<value>SELECT ID, GENERIC_ARTIFACT, ORIGINATING_COMPONENT FROM HOSPITAL WHERE REPROCESSED = FALSE AND ERROR_CODE = 'replay' AND SOURCE_SYSTEM_ID = '?' and SOURCE_REPOSITORY_ID = '?' AND TARGET_SYSTEM_ID = '?' and TARGET_REPOSITORY_ID = '?' ORDER BY ID ASC LIMIT 1</value>
+			<value>SELECT ID, GENERIC_ARTIFACT, ORIGINATING_COMPONENT FROM HOSPITAL WHERE REPROCESSED = FALSE AND (ERROR_CODE = 'replay' OR (ERROR_CODE = 'parentArtifactNotPresentError' AND DATEDIFF('mi', CONVERT(SUBSTRING(TIMESTAMP, 1, 19), TIMESTAMP), NOW) > 2)) AND SOURCE_SYSTEM_ID = '?' and SOURCE_REPOSITORY_ID = '?' AND TARGET_SYSTEM_ID = '?' and TARGET_REPOSITORY_ID = '?' ORDER BY ID ASC LIMIT 1</value>
 		</property>
 	</bean>
 	
