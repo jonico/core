@@ -1,6 +1,8 @@
 package com.collabnet.ccf.integration.tfswp;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.List;
@@ -23,7 +25,10 @@ public class TestTeamForgeUpdateBacklogItemInScrumWorks extends TFSWPIntegration
 		TeamForgeTester.FIELD_PENALTY, 
 		TeamForgeTester.FIELD_EFFORT, 
 		TeamForgeTester.FIELD_THEME, 
-		TeamForgeTester.FIELD_THEME};
+		TeamForgeTester.FIELD_THEME,
+		TeamForgeTester.FIELD_KEY,
+		TeamForgeTester.FIELD_TEAM,
+		TeamForgeTester.FIELD_SPRINT_NAME};
 
 	private ArtifactDO backlogItemDO; 
 
@@ -40,12 +45,12 @@ public class TestTeamForgeUpdateBacklogItemInScrumWorks extends TFSWPIntegration
 		final String effort = "30";
 		final String theme1 = "Core";
 		final String theme2 = "GUI";
-
+		
 		super.setUp();
 
-		// execute
+		// execute, do not set bogus values here
 		final FieldValues flexFields = getTeamForgeTester().convertToFlexField(names, 
-				new String[] {benefit, penalty, effort, theme1, theme2}); 
+				new String[] {benefit, penalty, effort, theme1, theme2, null, null, null}); 
 		
 		backlogItemDO = getTeamForgeTester().createBacklogItem(title, description, release, flexFields); 
 	}
@@ -67,8 +72,13 @@ public class TestTeamForgeUpdateBacklogItemInScrumWorks extends TFSWPIntegration
 		final String effort = "300";
 		final String theme1 = "DB";
 		final String theme2 = "Documentation";
+		// and now some bogus values that should be ignored
+		String bogusKey = "bogusKey";
+		String bogusSprint = "bogusSprint";
+		String bogusTeam = "bogusTeam";
+		
 		final FieldValues flexFields = getTeamForgeTester().convertToFlexField(names, 
-				new String[] {benefit, penalty, effort, theme1, theme2});
+				new String[] {benefit, penalty, effort, theme1, theme2, bogusKey, bogusTeam, bogusSprint});
 		
 		getTeamForgeTester().updateBacklogItem(backlogItemDO.getId(), title, description, release, flexFields); 
 		
@@ -97,6 +107,10 @@ public class TestTeamForgeUpdateBacklogItemInScrumWorks extends TFSWPIntegration
 		assertEquals(2, themeNames.size()); 
 		assertTrue(themeNames.contains(theme1)); 
 		assertTrue(themeNames.contains(theme2)); 
-		assertEquals(release, getSWPTester().getReleaseName(updatedPbi.getReleaseId())); 
+		assertEquals(release, getSWPTester().getReleaseName(updatedPbi.getReleaseId()));
+		
+		// check whether bogus values have been transported
+		assertNotSame(bogusKey, updatedPbi.getKey());
+		assertNull(updatedPbi.getSprintId());
 	}
 }
