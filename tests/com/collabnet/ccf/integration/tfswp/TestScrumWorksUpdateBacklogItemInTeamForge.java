@@ -50,8 +50,8 @@ public class TestScrumWorksUpdateBacklogItemInTeamForge extends TFSWPIntegration
 		final String benefit = "100";
 		final String penalty = "200";
 		final String effort = "300";
-		final String theme1 = "DB";
-		final String theme2 = "Documentation";
+		final String theme1 = SWPTester.THEME_DB;
+		final String theme2 = SWPTester.THEME_DOCUMENTATION;
 		final Sprint sprint = Sprint.SPRINT_1_ONE_TEAM; 
 		
 		// execute

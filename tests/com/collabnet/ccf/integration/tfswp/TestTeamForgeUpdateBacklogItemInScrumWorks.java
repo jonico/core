@@ -43,8 +43,8 @@ public class TestTeamForgeUpdateBacklogItemInScrumWorks extends TFSWPIntegration
 		final String benefit = "10";
 		final String penalty = "20";
 		final String effort = "30";
-		final String theme1 = "Core";
-		final String theme2 = "GUI";
+		final String theme1 = SWPTester.THEME_CORE;
+		final String theme2 = SWPTester.THEME_GUI;
 		
 		super.setUp();
 
@@ -70,8 +70,8 @@ public class TestTeamForgeUpdateBacklogItemInScrumWorks extends TFSWPIntegration
 		final String benefit = "100";
 		final String penalty = "200";
 		final String effort = "300";
-		final String theme1 = "DB";
-		final String theme2 = "Documentation";
+		final String theme1 = SWPTester.THEME_DB;
+		final String theme2 = SWPTester.THEME_DOCUMENTATION;
 		// and now some bogus values that should be ignored
 		String bogusKey = "bogusKey";
 		String bogusSprint = "bogusSprint";

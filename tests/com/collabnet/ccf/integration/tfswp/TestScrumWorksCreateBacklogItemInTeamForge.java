@@ -37,8 +37,8 @@ public class TestScrumWorksCreateBacklogItemInTeamForge extends TFSWPIntegration
 		final String benefit = "10";
 		final String penalty = "20";
 		final String effort = "30";
-		final String theme1 = "Core";
-		final String theme2 = "GUI";
+		final String theme1 = SWPTester.THEME_CORE;
+		final String theme2 = SWPTester.THEME_GUI;
 		
 		BacklogItemWSO pbiInScrumWorks = getSWPTester().createBacklogItem(title, description, effort, benefit, penalty, release, Sprint.SPRINT_1_AUTOMATED_TEAM, theme1, theme2);  
 		

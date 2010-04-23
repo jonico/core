@@ -36,6 +36,18 @@ public class SWPTester {
 	/** 2nd release. */ 
 	public static final String RELEASE_2 = "Release 2.0"; 
 	
+	/** Core product theme. */
+	public static final String THEME_CORE = "Core"; 
+	
+	/** DB product theme. */ 
+	public static final String THEME_DB = "DB"; 
+	
+	/** GUI product theme. */ 
+	public static final String THEME_GUI = "GUI"; 
+	
+	/** Documentation product theme. */ 
+	public static final String THEME_DOCUMENTATION = "Documentation"; 
+	
 	/** Property file name. */
 	private static final String PROPERTY_FILE = "tfswp.properties";
 	

@@ -39,8 +39,8 @@ public class TestTeamForgeCreateBacklogItemInScrumWorks extends
 		final String benefit = "10";
 		final String penalty = "20";
 		final String effort = "30";
-		final String theme1 = "Core";
-		final String theme2 = "GUI";
+		final String theme1 = SWPTester.THEME_CORE;
+		final String theme2 = SWPTester.THEME_GUI;
 		// and now some bogus values that should be ignored
 		String bogusKey = "bogusKey";
 		String bogusSprint = "bogusSprint";
