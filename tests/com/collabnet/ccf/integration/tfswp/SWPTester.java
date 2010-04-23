@@ -12,7 +12,7 @@ import java.util.Properties;
 
 import javax.xml.rpc.ServiceException;
 
-import org.springframework.transaction.TransactionTimedOutException;
+import org.apache.commons.lang.Validate;
 
 import com.danube.scrumworks.api.client.ScrumWorksEndpoint;
 import com.danube.scrumworks.api.client.types.BacklogItemWSO;
@@ -284,6 +284,8 @@ public class SWPTester {
 	 * 
 	 */
 	public Long getReleaseId(final String releaseName) throws ServerException, RemoteException {
+		Validate.notNull(releaseName, "null release name");		
+		
 		ReleaseWSO[] allReleases = getReleasesInScrumWorks();
 		ReleaseWSO release; 
 		
@@ -311,42 +313,59 @@ public class SWPTester {
 	 * @return the created backlog item in ScrumWorks
 	 * @throws RemoteException if ScrumWorks can not be accessed 
 	 * @throws ServerException if there is an error from ScrumWorks
+	 * @throws IllegalArgumentException if title, or release argument is <code>null</code>
 	 */
 	public BacklogItemWSO createBacklogItem(final String title, final String description, final String estimate, final String benefit, final String penalty, 
 			final String releaseName, Sprint sprint, final String... themes) throws ServerException, RemoteException {
-		BusinessWeightWSO businessWeight = transformToBusinessWeightWSO(benefit, penalty); 
-		ThemeWSO[] themeWSO = transformToThemeWSO(themes);
-		return getSWPEndpoint().createBacklogItem(new BacklogItemWSO(true, null, businessWeight, null, description, Integer.parseInt(estimate), null, getProduct().getId(), 0, getReleaseId(releaseName), getSprintId(sprint.getName()), null, title)); 
+		Validate.notNull(title, "null title");
+		Validate.notNull(releaseName, "null release name");
+		
+		final BusinessWeightWSO businessWeight = transformToBusinessWeightWSO(benefit, penalty); 
+		final ThemeWSO[] themeWSO = transformToThemeWSO(themes);
+		final int pbiEstimate = estimate == null ? 0 : Integer.parseInt(estimate);  
+		final Long sprintId = sprint != null ? getSprintId(sprint.getName()) : null; 
+
+		return getSWPEndpoint().createBacklogItem(new BacklogItemWSO(true, null, businessWeight, null, description, pbiEstimate, null, getProduct().getId(), 0, getReleaseId(releaseName), sprintId, null, title)); 
 //		return getSWPEndpoint().createBacklogItem(new BacklogItemWSO(true, null, businessWeight, null, description, Integer.parseInt(estimate), null, getProduct().getId(), 0, getReleaseId(release), -737035264780005900L, themeWSO, title)); // TODO:  
 	}
 	
 	/**
-	 * Creates an unestimated backlog item.  
+	 * Creates a backlog item in the Release 1.0 release with an estimate of 0.    
 	 * 
+	 * @param title the backlog item's title
 	 * @throws RemoteException if the ScrumWorks API can not be accessed
-	 * @throws ServerException if there is an error from ScrumWorks  
+	 * @throws ServerException if there is an error from ScrumWorks
+	 * @throws IllegalArgumentException if any argument is <code>null</code>  
 	 */
-	public BacklogItemWSO createBacklogItem(final String title) throws ServerException, RemoteException {
-		return createBacklogItem(title, null, null, null, null, null, null, new String[] {}); 
+	public BacklogItemWSO createBacklogItem(final String title, final String release) throws ServerException, RemoteException {
+		Validate.notNull(title, "null title");
+		Validate.notNull(release, "null release");
+		
+		return createBacklogItem(title, null, null, null, null, release, null, new String[] {}); 
 	}
 	
 	/**
 	 * Creates a task in the ScrumWorks test product and returns the created task.  
 	 * 
 	 * @param title the title
-	 * @param description the description
-	 * @param pointPerson the person who volunteered for the task 
+	 * @param description the description, null for empty description
+	 * @param pointPerson the person who volunteered for the task, null for (unspecified)
 	 * @param status the status 
-	 * @param currentEstimate the current estimate
-	 * @param originalEstimate the first, original estimate 
+	 * @param currentEstimate the current estimate, null for 0
 	 * @param backlogItemId the backlog item id this task is a child of 
 	 * @throws RemoteException if the ScrumWorks API can not be accessed 
 	 * @throws NumberFormatException if the currentEstimate or originalEstimate is not a valid string representation for a number
-	 * @throws ServerException if there is an error from ScrumWorks 
+	 * @throws ServerException if there is an error from ScrumWorks
+	 * @throws IllegalArgumentException if title, status, or backlogItemId argument is <code>null</code> 
 	 */
 	public TaskWSO createTask(final String title, final String description, final String pointPerson, final TaskStatus status, 
-			final String currentEstimate, final String originalEstimate, final Long backlogItemId) throws ServerException, NumberFormatException, RemoteException {
-		return getSWPEndpoint().createTask(new TaskWSO(backlogItemId, description, Integer.parseInt(currentEstimate), null, Integer.parseInt(originalEstimate), pointPerson, 0, status.getStatus(), 0, title)); 
+			final String currentEstimate, final Long backlogItemId) throws ServerException, NumberFormatException, RemoteException {
+		Validate.notNull(title, "null title");
+		Validate.notNull(status, "null status");
+		Validate.notNull(backlogItemId, "null backlog item id");
+		
+		final Integer taskEstimate = currentEstimate == null ? 0 : Integer.parseInt(currentEstimate);  
+		return getSWPEndpoint().createTask(new TaskWSO(backlogItemId, description, taskEstimate, null, null, pointPerson, 0, status.getStatus(), 0, title)); 
 	}
 	
 	/**
@@ -387,14 +406,20 @@ public class SWPTester {
 	}
 
 	/**
-	 * Transform a benefit and penalty value into a BusinessWeightWSO. 
+	 * Transform a benefit and penalty value into a BusinessWeightWSO.  Requires both benefit and penalty values to be set.  
 	 * 
 	 * @param benefit the benefit value
 	 * @param penalty the penalty value 
 	 * @return the {@link BusinessWeightWSO}
 	 */
 	public BusinessWeightWSO transformToBusinessWeightWSO(final String benefit, final String penalty) {
-		BusinessWeightWSO businessWeight = new BusinessWeightWSO(Long.parseLong(benefit), Long.parseLong(penalty));
+		if (benefit == null & penalty == null) {
+			return null; 
+		}
+		Long businessWeightBenefit = benefit == null ? 0 : Long.parseLong(benefit); 
+		Long businessWeightPenalty = penalty == null ? 0 : Long.parseLong(penalty); 
+		
+		BusinessWeightWSO businessWeight = new BusinessWeightWSO(businessWeightBenefit, businessWeightPenalty);
 		return businessWeight;
 	}
 	

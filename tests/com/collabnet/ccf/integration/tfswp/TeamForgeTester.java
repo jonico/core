@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 
+import org.apache.commons.lang.Validate;
+
 import com.collabnet.ce.soap50.webservices.cemain.TrackerFieldSoapDO;
 import com.collabnet.teamforge.api.Connection;
 import com.collabnet.teamforge.api.FieldValues;
@@ -17,6 +19,7 @@ import com.collabnet.teamforge.api.planning.PlanningFolderDO;
 import com.collabnet.teamforge.api.planning.PlanningFolderList;
 import com.collabnet.teamforge.api.planning.PlanningFolderRow;
 import com.collabnet.teamforge.api.tracker.ArtifactDO;
+import com.collabnet.teamforge.api.tracker.ArtifactDependencyList;
 import com.collabnet.teamforge.api.tracker.ArtifactDependencyRow;
 import com.collabnet.teamforge.api.tracker.ArtifactList;
 import com.collabnet.teamforge.api.tracker.ArtifactRow;
@@ -358,23 +361,53 @@ public class TeamForgeTester {
 	 * Returns the backlog items after the backlog items appear in the planning folder mapped to ScrumWorks Pro. 
 	 * Waits until the requested number of backlog items appear.
 	 * 
-	 * @return the {@link ArtifactRow} 
+	 * @return the {@link ArtifactRow} for backlog items
 	 * @throws RemoteException if the TeamForge API can not be accessed
 	 * @throws InterruptedException if the thread can not sleep
 	 */
 	public ArtifactRow[] waitForBacklogItemsToAppear(final int numberOfPbis) throws RemoteException, InterruptedException {
+		return waitForArtifactToAppear(numberOfPbis, pbiTracker, "backlog item"); 
+	}
+	
+	/**
+	 * Returns the tasks after the tasks appear in the parent backlog item. 
+	 * Waits until the requested number of tasks appear.
+	 * 
+	 * @return the {@link ArtifactRow} for tasks
+	 * @throws InterruptedException 
+	 * @throws RemoteException 
+	 */
+	public ArtifactRow[] waitForTasksToAppear(final int numberOfTasks) throws RemoteException, InterruptedException {
+		return waitForArtifactToAppear(numberOfTasks, taskTracker, "task"); 
+	}
+
+	/**
+	 * Waits for the requested number of requested artifacts to appear. 
+	 * 
+	 * @param numberOfArtifacts the number of artifacts to wait to appear
+	 * @param artifactTypeId the artifact's type id
+	 * @param entityType the text describing the type of artifact
+	 * @throws RemoteException if the TeamForge API can not be accessed
+	 * @throws InterruptedException if the thread can not sleep
+	 */
+	private ArtifactRow[] waitForArtifactToAppear(final int numberOfArtifacts,
+			String artifactTypeId, String entityType) throws RemoteException,
+			InterruptedException {
+		assert artifactTypeId != null : "null artifact type"; 
+		assert entityType != null : "null entity type"; 
+		
 		ArtifactList artifactList; 
 		ArtifactRow[] artifactRows; 
 		for (int i = 0; i < ccfMaxWaitTime; i += ccfRetryInterval) {
-			artifactList = connection.getTrackerClient().getArtifactList(pbiTracker, new Filter[] {});
+			artifactList = connection.getTrackerClient().getArtifactList(artifactTypeId, new Filter[] {});
 			artifactRows = artifactList.getDataRows(); 
-			if (artifactRows.length < numberOfPbis) {
+			if (artifactRows.length < numberOfArtifacts) {
 				Thread.sleep(ccfRetryInterval); 
 			} else {
 				return artifactRows; 
 			}
 		}
-		throw new RemoteException(numberOfPbis + " backlog item(s) were not found within the given time: " + ccfMaxWaitTime); 
+		throw new RemoteException(numberOfArtifacts + " " + entityType + "(s) were not found within the given time: " + ccfMaxWaitTime);
 	}
 	
 	/**
@@ -405,20 +438,27 @@ public class TeamForgeTester {
 	 * @param artifactId the id for the artifact
 	 * @return the {@link FieldValues} for the artifact
 	 * @throws RemoteException if the TeamForge API can not be accessed
+	 * @throws IllegalArgumentException if an argument is <code>null</code>
 	 */
 	private FieldValues getFlexFields(final String artifactId) throws RemoteException {
+		Validate.notNull(artifactId, "null artifact id"); 
+		
 		return connection.getTrackerClient().getArtifactData(artifactId).getFlexFields();
 	}
 	
 	/**
 	 * Returns the values for the given flex field names. 
 	 * 
-	 * @param artifactId the id for the artifact
+	 * @param artifactId the id for the artifact, can not be null
 	 * @param fieldNames the flex field names
 	 * @return the list of values matching the name, if multiple values match the same name, the values are returned in alphabetical order
 	 * @throws RemoteException if the TeamForge API can not be accessed
+	 * @throws IllegalArgumentException if any argument is <code>null</code>
 	 */
 	public List<String> getFieldValues(final String artifactId, final String... fieldNames) throws RemoteException {
+		Validate.notNull(artifactId, "null artifact id"); 
+		Validate.notNull(fieldNames, "null field names"); 
+		
 		final FieldValues flexFields = getFlexFields(artifactId);
 		final String[] names = flexFields.getNames(); 
 		final Object[] values = flexFields.getValues();
@@ -471,5 +511,21 @@ public class TeamForgeTester {
 			}
 		}
 		throw new RemoteException("Planning folder title did not change within the given time: " + ccfMaxWaitTime);
+	}
+
+	/**
+	 * Return the id of the parent for the given artifact. 
+	 * 
+	 * @param artifactId the id of the artifact
+	 * @return the parent id
+	 * @throws RemoteException if the TeamForge API can not be accessed
+	 * @throws IllegalArgumentException if any argument is <code>null</code>
+	 */
+	public String getParentId(final String artifactId) throws RemoteException {
+		Validate.notNull(artifactId, "null artificat id");
+		
+		ArtifactDependencyList parentDependencyList = connection.getTrackerClient().getParentDependencyList(artifactId); 
+		ArtifactDependencyRow[] dataRows = parentDependencyList.getDataRows();
+		return dataRows[0].getOriginId();  
 	}
 }
