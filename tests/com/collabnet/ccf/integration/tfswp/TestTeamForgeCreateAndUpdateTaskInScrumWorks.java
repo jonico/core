@@ -32,7 +32,7 @@ public class TestTeamForgeCreateAndUpdateTaskInScrumWorks extends TFSWPIntegrati
 		// first we have to create a PBI
 		String title = "TFTask";
 		String description = "TFTaskDescription";
-		String status = "Not Started";
+		String status = TaskStatus.NOT_STARTED.getStatus();
 		int remainingEffort = 0;
 		int originalEstimate = 0;
 		String assignedToUser = getTeamForgeTester().getUserName();
@@ -65,7 +65,7 @@ public class TestTeamForgeCreateAndUpdateTaskInScrumWorks extends TFSWPIntegrati
 		// now we update the task
 		String newTitle = "ChangedTFTask";
 		String newDescription = "ChangedTFTaskDescription";
-		String newStatus = "In Progress";
+		String newStatus = TaskStatus.IN_PROGRESS.getStatus();
 		int newRemainingEffort = 42;
 		int newOriginalEstimate = 42;
 		String newAssignedToUser = null;
@@ -90,7 +90,7 @@ public class TestTeamForgeCreateAndUpdateTaskInScrumWorks extends TFSWPIntegrati
 		// null)
 		int zeroEffort = 0;
 		String yetAnotherTitle = "Yet another title";
-		String yetAnotherStatus = "Done";
+		String yetAnotherStatus = TaskStatus.DONE.getStatus();
 		String yetAnotherUser = getTeamForgeTester().getUserName();
 		String yetAnotherDescription = "yetAnotherDescription";
 		

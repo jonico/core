@@ -34,7 +34,7 @@ public class TestTeamForgeMoveTaskInScrumWorks extends TFSWPIntegrationTest {
 		// first we have to create a task in its first parent
 		String title = "TFTask";
 		String description = "TFTaskDescription";
-		String status = "Not Started";
+		String status = TaskStatus.NOT_STARTED.getStatus();
 		int remainingEffort = 0;
 		int originalEstimate = 0;
 		String assignedToUser = getTeamForgeTester().getUserName();
