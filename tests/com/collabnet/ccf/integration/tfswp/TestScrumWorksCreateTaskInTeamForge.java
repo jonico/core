@@ -16,7 +16,7 @@ import com.danube.scrumworks.api.client.types.BacklogItemWSO;
  */
 public class TestScrumWorksCreateTaskInTeamForge extends TFSWPIntegrationTest {
 	private BacklogItemWSO scrumWorksBacklogItem;
-	private final String release = "Release 1.0";
+	private final String release = SWPTester.RELEASE_1;
 	
 	@Override
 	@Before

@@ -35,7 +35,7 @@ public class TestTeamForgeCreateBacklogItemInScrumWorks extends
 	public void testPBICreation() throws Exception {
 		final String title = "TFPBI";
 		final String description = "TFPBIDescription";
-		final String release = "Release 1.0";
+		final String release = SWPTester.RELEASE_1;
 		final String benefit = "10";
 		final String penalty = "20";
 		final String effort = "30";

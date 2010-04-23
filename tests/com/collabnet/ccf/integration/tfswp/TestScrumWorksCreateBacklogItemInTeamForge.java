@@ -5,6 +5,7 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
 
+import org.hsqldb.scriptio.ScriptWriterText;
 import org.junit.Test;
 
 import com.collabnet.teamforge.api.tracker.ArtifactRow;
@@ -32,7 +33,7 @@ public class TestScrumWorksCreateBacklogItemInTeamForge extends TFSWPIntegration
 		// execute
 		final String title = "ScrumWorks Backlog Item";
 		final String description = "ScrumWorks Backlog Item Description";
-		final String release = "Release 1.0";
+		final String release = SWPTester.RELEASE_1; 
 		final String benefit = "10";
 		final String penalty = "20";
 		final String effort = "30";

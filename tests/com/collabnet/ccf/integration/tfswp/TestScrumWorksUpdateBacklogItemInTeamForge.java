@@ -28,7 +28,7 @@ public class TestScrumWorksUpdateBacklogItemInTeamForge extends TFSWPIntegration
 		final String effort = "10";
 		final String benefit = "20";
 		final String penalty = "30";
-		final String release = "Release 1.0";
+		final String release = SWPTester.RELEASE_1;
 
 		super.setUp();
 		
@@ -46,7 +46,7 @@ public class TestScrumWorksUpdateBacklogItemInTeamForge extends TFSWPIntegration
 	public void updateBacklogItemInScrumWorks() throws Exception {
 		final String title = "updated TFPBI";
 		final String description = "updated TFPBIDescription";
-		final String release = "Release 2.0";
+		final String release = SWPTester.RELEASE_2;
 		final String benefit = "100";
 		final String penalty = "200";
 		final String effort = "300";

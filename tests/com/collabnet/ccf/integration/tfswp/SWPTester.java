@@ -33,6 +33,9 @@ public class SWPTester {
 	/** Default release created with new products. */ 
 	public static final String RELEASE_1 = "Release 1.0"; 
 	
+	/** 2nd release. */ 
+	public static final String RELEASE_2 = "Release 2.0"; 
+	
 	/** Property file name. */
 	private static final String PROPERTY_FILE = "tfswp.properties";
 	
