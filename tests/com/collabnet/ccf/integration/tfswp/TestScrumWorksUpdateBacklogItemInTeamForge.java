@@ -3,6 +3,7 @@ package com.collabnet.ccf.integration.tfswp;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.rmi.RemoteException;
 import java.util.Arrays;
 
 import org.junit.Before;
@@ -70,20 +71,9 @@ public class TestScrumWorksUpdateBacklogItemInTeamForge extends TFSWPIntegration
 		final BacklogItemWSO scrumWorksPbiFromUpdate = getSWPTester().updateBacklogItem(backlogItemToBeUpdated); 
 
 		// verify
-		ArtifactRow[] artifacts = getTeamForgeTester().waitForBacklogItemsToAppear(1);;
-		ArtifactRow teamForgePbi = artifacts[0]; 
-		for (int i = 0; i < getCcfMaxWaitTime(); i += getCcfRetryInterval()) {
-			if (!teamForgePbi.getTitle().equals(title)) {
-				artifacts = getTeamForgeTester().waitForBacklogItemsToAppear(1);
-				teamForgePbi = artifacts[0]; 
-				Thread.sleep(getCcfRetryInterval()); 
-			} else {
-				break; 
-			}
-		}
+		ArtifactRow teamForgePbi = waitForBacklogItemToUpdate(title);
 		 
 		assertEquals(title, teamForgePbi.getTitle()); 
-		assertEquals(1, artifacts.length);
 		assertEquals(description, teamForgePbi.getDescription());
 		assertEquals(getTeamForgeTester().getPlanningFolderId(release), teamForgePbi.getPlanningFolderId()); 
 		
@@ -115,5 +105,28 @@ public class TestScrumWorksUpdateBacklogItemInTeamForge extends TFSWPIntegration
 //						TeamForgeTester.FIELD_SPRINT_END, 
 						TeamForgeTester.FIELD_THEME));
 		
+	}
+
+	/**
+	 * Returns the updated backlog item from TeamForge after the backlog item has been updated. 
+	 * 
+	 * @param title the updated title
+	 * @return the updated backlog item
+	 * @throws Exception if an error occurs 
+	 */
+	private ArtifactRow waitForBacklogItemToUpdate(final String title) throws Exception {
+		ArtifactRow teamForgePbi = null; 
+		for (int i = 0; i < getCcfMaxWaitTime(); i += getCcfRetryInterval()) {
+			ArtifactRow[] artifacts = getTeamForgeTester().waitForBacklogItemsToAppear(1);
+			teamForgePbi = artifacts[0]; 
+			if (!teamForgePbi.getTitle().equals(title)) {
+				artifacts = getTeamForgeTester().waitForBacklogItemsToAppear(1);
+				teamForgePbi = artifacts[0]; 
+				Thread.sleep(getCcfRetryInterval()); 
+			} else {
+				return teamForgePbi; 
+			}
+		}
+		throw new RuntimeException("Backlog item was not updated in the time: " + getCcfMaxWaitTime()); 
 	}
 }
