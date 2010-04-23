@@ -30,6 +30,9 @@ import com.danube.scrumworks.api.client.types.ThemeWSO;
  * @author jnicolai
  */
 public class SWPTester {
+	/** Default release created with new products. */ 
+	public static final String RELEASE_1 = "Release 1.0"; 
+	
 	/** Property file name. */
 	private static final String PROPERTY_FILE = "tfswp.properties";
 	
@@ -377,6 +380,21 @@ public class SWPTester {
 		
 		final Integer taskEstimate = currentEstimate == null ? 0 : Integer.parseInt(currentEstimate);  
 		return getSWPEndpoint().createTask(new TaskWSO(backlogItemId, description, taskEstimate, null, null, pointPerson, 0, status.getStatus(), 0, title)); 
+	}
+	
+	/**
+	 * Updates a task. 
+	 * 
+	 * @param taskToBeUpdated the task to be updated
+	 * @return the updated task from ScrumWorks
+	 * @throws ServerException if there is an error from ScrumWorks
+	 * @throws RemoteException if ScrumWorks can not be accessed
+	 * @throws IllegalArgumentException if any argument is <code>null</code>
+	 */
+	public TaskWSO updateTask(final TaskWSO taskToBeUpdated) throws ServerException, RemoteException {
+		Validate.notNull(taskToBeUpdated, "null taskToBeUpdated");
+		
+		return getSWPEndpoint().updateTask(taskToBeUpdated); 
 	}
 	
 	/**
