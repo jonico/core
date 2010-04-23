@@ -199,14 +199,27 @@ public class TeamForgeTester {
 	 *            the custom fields
 	 * @throws RemoteException
 	 *             if the TeamForge API can not be accessed
+	 * @throws IllegalArgumentException if title or flexFields argument is <code>null</code>            
 	 */
 	public ArtifactDO createBacklogItem(final String title,
 			final String description, final String release,
 			final FieldValues flexFields) throws RemoteException {
+		Validate.notNull(title, "null title");
+		Validate.notNull(flexFields, "null flex fields");
+
 		return connection.getTrackerClient().createArtifact(pbiTracker, title,
-				description, null, null, STATUS_OPEN, null, 0, 0, 0, false,
+				formatDescription(description), null, null, STATUS_OPEN, null, 0, 0, 0, false,
 				null, null, getPlanningFolderId(release), flexFields, null,
 				null, null);
+	}
+
+	/**
+	 * @param description
+	 * @return
+	 */
+	private String formatDescription(final String description) {
+		final String backlogItemDescription = description == null ? "<blank>" : description;
+		return backlogItemDescription;
 	}
 
 	public ArtifactDO createTask(String title, String description, String status,
@@ -278,12 +291,16 @@ public class TeamForgeTester {
 	 * @param description the revised description
 	 * @return the artifact with the updated title and description
 	 * @throws RemoteException if TeamForge can not be accessed
+	 * @throws IllegalArgumentException if artifactId or title argument is <code>null</code>
 	 */
 	private ArtifactDO retrieveAndUpdateArtifactTitleAndDescription(final String artifactId,
 			final String title, final String description) throws RemoteException {
+		Validate.notNull(artifactId, "null artifact id");
+		Validate.notNull(title, "null title");
+		
 		ArtifactDO task = connection.getTrackerClient().getArtifactData(artifactId);
 		task.setTitle(title);
-		task.setDescription(description);
+		task.setDescription(formatDescription(description));
 		return task;
 	}
 
@@ -319,9 +336,13 @@ public class TeamForgeTester {
 	 * 
 	 * @param names the names of the flex fields
 	 * @param values the values for the flex fields
-	 * @return the FieldValues 
+	 * @return the FieldValues
+	 * @throws IllegalArgumentException if any argument is <code>null</code> 
 	 */
 	public FieldValues convertToFlexField(final String[] names, final String[] values) {
+		Validate.noNullElements(names, "null name"); 
+		Validate.noNullElements(values, "null value"); 
+		
 		final FieldValues flexFields = new FieldValues();
 		flexFields.setNames(names); 
 		flexFields.setValues(values);
@@ -335,6 +356,8 @@ public class TeamForgeTester {
 	}
 
 	public void setUserName(String userName) {
+		Validate.notNull(userName, "null username");
+		
 		this.userName = userName;
 	}
 
@@ -522,7 +545,7 @@ public class TeamForgeTester {
 	 * @throws IllegalArgumentException if any argument is <code>null</code>
 	 */
 	public String getParentId(final String artifactId) throws RemoteException {
-		Validate.notNull(artifactId, "null artificat id");
+		Validate.notNull(artifactId, "null artifactId");
 		
 		ArtifactDependencyList parentDependencyList = connection.getTrackerClient().getParentDependencyList(artifactId); 
 		ArtifactDependencyRow[] dataRows = parentDependencyList.getDataRows();

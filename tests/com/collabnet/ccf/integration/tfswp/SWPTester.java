@@ -163,9 +163,11 @@ public class SWPTester {
 	 * @throws RemoteException if the ScrumWorks API can not be accessed
 	 * @throws ServerException if an error occurs in ScrumWorks
 	 * @throws InterruptedException if the thread can not sleep
-	 * 
+	 * @throws IllegalArgumentException if product argument is <code>null</code>
 	 */
 	public BacklogItemWSO[] waitForBacklogItemToAppear(final ProductWSO product, int numberOfPBIs) throws ServerException, RemoteException, InterruptedException {
+		Validate.notNull(product, "null product");
+		
 		BacklogItemWSO[] pbis = null;
 		for (int i = 0; i < ccfMaxWaitTime; i += ccfRetryInterval) {
 			pbis = getSWPEndpoint().getActiveBacklogItems(
@@ -189,8 +191,11 @@ public class SWPTester {
 	 * @throws RemoteException if the ScrumWorks API can not be accessed 
 	 * @throws ServerException if an error occurs in ScrumWorks
 	 * @throws InterruptedException if the thread can not sleep
+	 * @throws IllegalArgumentException if backlogItemWSO argument is <code>null</code>
 	 */
 	public TaskWSO[] waitForTaskToAppear(final BacklogItemWSO backlogItemWSO, final String expectedTaskTitle, final int numberOfTasks) throws ServerException, RemoteException, InterruptedException {
+		Validate.notNull(backlogItemWSO, "null backlog item");
+		
 		TaskWSO[] tasks = null; 
 		for (int i = 0; i < ccfMaxWaitTime; i += ccfRetryInterval) {
 			tasks = getSWPEndpoint().getTasks(backlogItemWSO);
@@ -234,8 +239,11 @@ public class SWPTester {
 	 * 
 	 * @param themes the theme web service objects
 	 * @return the theme names
+	 * @throws IllegalArgumentException if any argument is <code>null</code>
 	 */
 	public List<String> getThemeNames(final ThemeWSO[] themes) {
+		Validate.noNullElements(themes, "null theme"); 
+		
 		final List<String> themeNames = new ArrayList<String>(); 
 		for (int i = 0; i < themes.length; i++) {
 			themeNames.add(themes[i].getName()); 
@@ -250,8 +258,11 @@ public class SWPTester {
 	 * @return the name of the release if found, otherwise null
 	 * @throws RemoteException if ScrumWorks can not be accessed
 	 * @throws ServerException if there is an error from ScrumWorks
+	 * @throws IllegalArgumentException if any argument is <code>null</code>
 	 */
 	public String getReleaseName(final Long releaseId) throws ServerException, RemoteException {
+		Validate.notNull(releaseId, "null release id");
+		
 		ReleaseWSO[] allReleases = getReleasesInScrumWorks(); 
 		ReleaseWSO release; 
 		
@@ -323,7 +334,7 @@ public class SWPTester {
 		final BusinessWeightWSO businessWeight = transformToBusinessWeightWSO(benefit, penalty); 
 		final ThemeWSO[] themeWSO = transformToThemeWSO(themes);
 		final int pbiEstimate = estimate == null ? 0 : Integer.parseInt(estimate);  
-		final Long sprintId = sprint != null ? getSprintId(sprint.getName()) : null; 
+		final Long sprintId = sprint == null ? null : getSprintId(sprint.getName()); 
 
 		return getSWPEndpoint().createBacklogItem(new BacklogItemWSO(true, null, businessWeight, null, description, pbiEstimate, null, getProduct().getId(), 0, getReleaseId(releaseName), sprintId, null, title)); 
 //		return getSWPEndpoint().createBacklogItem(new BacklogItemWSO(true, null, businessWeight, null, description, Integer.parseInt(estimate), null, getProduct().getId(), 0, getReleaseId(release), -737035264780005900L, themeWSO, title)); // TODO:  
@@ -373,9 +384,12 @@ public class SWPTester {
 	 * 
 	 * @param backlogItemToBeUpdated the backlog item to be updated
 	 * @throws RemoteException if ScrumWorks can not be accessed
-	 * @throws ServerException if there is an error from ScrumWorks 
+	 * @throws ServerException if there is an error from ScrumWorks
+	 * @throws IllegalArgumentException if any argument is <code>null</code> 
 	 */
 	public BacklogItemWSO updateBacklogItem(final BacklogItemWSO backlogItemToBeUpdated) throws ServerException, RemoteException {
+		Validate.notNull(backlogItemToBeUpdated, "null backlog item");
+		
 		return getSWPEndpoint().updateBacklogItem(backlogItemToBeUpdated); 
 	}
 
