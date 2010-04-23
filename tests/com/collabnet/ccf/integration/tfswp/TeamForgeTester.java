@@ -199,7 +199,7 @@ public class TeamForgeTester {
 	 *            the custom fields
 	 * @throws RemoteException
 	 *             if the TeamForge API can not be accessed
-	 * @throws IllegalArgumentException if title or flexFields argument is <code>null</code>            
+	 * @throws IllegalArgumentException if title argument is <code>null</code>            
 	 */
 	public ArtifactDO createBacklogItem(final String title,
 			final String description, final String release,
@@ -341,7 +341,6 @@ public class TeamForgeTester {
 	 */
 	public FieldValues convertToFlexField(final String[] names, final String[] values) {
 		Validate.noNullElements(names, "null name"); 
-		Validate.noNullElements(values, "null value"); 
 		
 		final FieldValues flexFields = new FieldValues();
 		flexFields.setNames(names); 
