@@ -27,7 +27,7 @@
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/jmock-core-1.2.0.jar"/>
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/xercesImpl_2.9.0.jar"/>
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/commons-lang_2.0.jar"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/J2SE-1.5"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
 	<classpathentry kind="lib" path="config"/>
 	<classpathentry kind="lib" path="src/plugins/CEE/ProjectTracker/v50/lib/cee-5.0.jar"/>
 	<classpathentry kind="lib" path="src/plugins/CEE/ProjectTracker/v50/lib/wss4j-1.5.1.jar"/>
