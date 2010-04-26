@@ -11,6 +11,7 @@ import org.junit.Test;
 
 import com.collabnet.teamforge.api.tracker.ArtifactRow;
 import com.danube.scrumworks.api.client.types.BacklogItemWSO;
+import com.danube.scrumworks.api2.client.BacklogItem;
 
 /**
  * Tests that a backlog item updated in ScrumWorks is correctly synched in TeamForge.
@@ -18,7 +19,7 @@ import com.danube.scrumworks.api.client.types.BacklogItemWSO;
  * @author Kelley
  */
 public class TestScrumWorksUpdateBacklogItemInTeamForge extends TFSWPIntegrationTest {
-	private BacklogItemWSO scrumWorksBacklogItem; 
+	private BacklogItem scrumWorksBacklogItem; 
 
 	@Override
 	@Before
@@ -55,20 +56,32 @@ public class TestScrumWorksUpdateBacklogItemInTeamForge extends TFSWPIntegration
 		final Sprint sprint = Sprint.SPRINT_1_ONE_TEAM; 
 		
 		// execute
-		BacklogItemWSO backlogItemToBeUpdated = new BacklogItemWSO(true, 
-				scrumWorksBacklogItem.getBacklogItemId(), 
-				getSWPTester().transformToBusinessWeightWSO(benefit, penalty), 
-				null, 
-				description, 
-				Integer.parseInt(effort), 
-				scrumWorksBacklogItem.getKey(), 
-				scrumWorksBacklogItem.getProductId(), 
-				scrumWorksBacklogItem.getRank(), 
-				getSWPTester().getReleaseId(release), 
-				getSWPTester().getSprintId(sprint.getName()), 
-				null, 
-				title);  
-		final BacklogItemWSO scrumWorksPbiFromUpdate = getSWPTester().updateBacklogItem(backlogItemToBeUpdated); 
+		BacklogItem backlogItem = new BacklogItem(); 
+		backlogItem.setActive(true); 
+		backlogItem.setId(scrumWorksBacklogItem.getId()); 
+		backlogItem.setBusinessWeight(getSWPTester().transformToBusinessWeightWSO(benefit, penalty)); 
+		backlogItem.setDescription(description); 
+		backlogItem.setEstimate(Integer.parseInt(effort)); 
+		backlogItem.setKey(scrumWorksBacklogItem.getKey()); 
+		backlogItem.setProductId(scrumWorksBacklogItem.getProductId()); 
+		backlogItem.setRank(scrumWorksBacklogItem.getRank()); 
+		backlogItem.setReleaseId(getSWPTester().getReleaseId(release));
+		backlogItem.setSprintId(getSWPTester().getSprintId(sprint.getName())); 
+		backlogItem.setName(title); 
+//		BacklogItemWSO backlogItemToBeUpdated = new BacklogItemWSO(true, 
+//				scrumWorksBacklogItem.getId(), 
+//				getSWPTester().transformToBusinessWeightWSO(benefit, penalty), 
+//				null, 
+//				description, 
+//				Integer.parseInt(effort), 
+//				scrumWorksBacklogItem.getKey(), 
+//				scrumWorksBacklogItem.getProductId(), 
+//				scrumWorksBacklogItem.getRank(), 
+//				getSWPTester().getReleaseId(release), 
+//				getSWPTester().getSprintId(sprint.getName()), 
+//				null, 
+//				title);  
+		final BacklogItem scrumWorksPbiFromUpdate = getSWPTester().updateBacklogItem(backlogItem); 
 
 		// verify
 		ArtifactRow teamForgePbi = waitForBacklogItemToUpdate(title);

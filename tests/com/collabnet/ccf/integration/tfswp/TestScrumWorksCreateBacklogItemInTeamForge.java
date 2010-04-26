@@ -10,6 +10,7 @@ import org.junit.Test;
 
 import com.collabnet.teamforge.api.tracker.ArtifactRow;
 import com.danube.scrumworks.api.client.types.BacklogItemWSO;
+import com.danube.scrumworks.api2.client.BacklogItem;
 
 import com.collabnet.ccf.integration.tfswp.Sprint;
 
@@ -40,7 +41,7 @@ public class TestScrumWorksCreateBacklogItemInTeamForge extends TFSWPIntegration
 		final String theme1 = SWPTester.THEME_CORE;
 		final String theme2 = SWPTester.THEME_GUI;
 		
-		BacklogItemWSO pbiInScrumWorks = getSWPTester().createBacklogItem(title, description, effort, benefit, penalty, release, Sprint.SPRINT_1_AUTOMATED_TEAM, theme1, theme2);  
+		BacklogItem pbiInScrumWorks = getSWPTester().createBacklogItem(title, description, effort, benefit, penalty, release, Sprint.SPRINT_1_AUTOMATED_TEAM, theme1, theme2);  
 		
 		// verify
 		final ArtifactRow[] artifacts = getTeamForgeTester().waitForBacklogItemsToAppear(1);

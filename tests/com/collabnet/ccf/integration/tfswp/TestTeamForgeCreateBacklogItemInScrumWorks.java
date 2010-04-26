@@ -13,6 +13,8 @@ import org.junit.Test;
 import com.collabnet.teamforge.api.FieldValues;
 import com.danube.scrumworks.api.client.types.BacklogItemWSO;
 import com.danube.scrumworks.api.client.types.ProductWSO;
+import com.danube.scrumworks.api2.client.BacklogItem;
+import com.danube.scrumworks.api2.client.Product;
 
 /**
  * Creates a backlog item in TeamForge and verifies the backlog item in
@@ -62,12 +64,12 @@ public class TestTeamForgeCreateBacklogItemInScrumWorks extends
 				flexFields);
 
 		// verify
-		final ProductWSO product = getSWPTester().getProduct();
-		BacklogItemWSO[] pbis = getSWPTester().waitForBacklogItemsToAppear(1);
+		final Product product = getSWPTester().getProduct();
+		List<BacklogItem> pbis = getSWPTester().waitForBacklogItemsToAppear(1);
 
-		assertEquals(1, pbis.length);
-		BacklogItemWSO pbi = pbis[0];
-		assertEquals(title, pbi.getTitle());
+		assertEquals(1, pbis.size());
+		BacklogItem pbi = pbis.get(0);
+		assertEquals(title, pbi.getName());
 		assertEquals(description, pbi.getDescription());
 		assertEquals(benefit, pbi.getBusinessWeight().getBenefit().toString());
 		assertEquals(penalty, pbi.getBusinessWeight().getPenalty().toString());

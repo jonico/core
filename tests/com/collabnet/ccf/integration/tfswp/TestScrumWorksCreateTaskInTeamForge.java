@@ -7,6 +7,7 @@ import org.junit.Test;
 
 import com.collabnet.teamforge.api.tracker.ArtifactRow;
 import com.danube.scrumworks.api.client.types.BacklogItemWSO;
+import com.danube.scrumworks.api2.client.BacklogItem;
 
 /**
  * Tests that a task created in ScrumWorks is correctly synchronized in TeamForge. 
@@ -15,7 +16,7 @@ import com.danube.scrumworks.api.client.types.BacklogItemWSO;
  *
  */
 public class TestScrumWorksCreateTaskInTeamForge extends TFSWPIntegrationTest {
-	private BacklogItemWSO scrumWorksBacklogItem;
+	private BacklogItem scrumWorksBacklogItem;
 	private final String release = SWPTester.RELEASE_1;
 	
 	@Override
@@ -43,7 +44,7 @@ public class TestScrumWorksCreateTaskInTeamForge extends TFSWPIntegrationTest {
 		final TaskStatus status = TaskStatus.IN_PROGRESS;
 
 		// execute
-		getSWPTester().createTask(taskTitle, description, pointPerson, status, currentEstimate, scrumWorksBacklogItem.getBacklogItemId());
+		getSWPTester().createTask(taskTitle, description, pointPerson, status, currentEstimate, scrumWorksBacklogItem.getId()); 
 	
 		// verify 
 		final ArtifactRow[] allTasks = getTeamForgeTester().waitForTasksToAppear(1);

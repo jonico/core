@@ -8,6 +8,8 @@ import org.junit.Test;
 import com.collabnet.teamforge.api.tracker.ArtifactRow;
 import com.danube.scrumworks.api.client.types.BacklogItemWSO;
 import com.danube.scrumworks.api.client.types.TaskWSO;
+import com.danube.scrumworks.api2.client.BacklogItem;
+import com.danube.scrumworks.api2.client.Task;
 
 /**
  * Tests updating an existing task in ScrumWorks and verifying that the task is updated in TeamForge. 
@@ -16,7 +18,7 @@ import com.danube.scrumworks.api.client.types.TaskWSO;
  */
 public class TestScrumWorksUpdateTaskInTeamForge extends TFSWPIntegrationTest {
 	private String release = SWPTester.RELEASE_1;
-	private TaskWSO task; 
+	private Task task; 
 	private ArtifactRow teamForgeBacklogItem; 
 	
 	/**
@@ -28,8 +30,8 @@ public class TestScrumWorksUpdateTaskInTeamForge extends TFSWPIntegrationTest {
 		
 		super.setUp();
 		
-		BacklogItemWSO backlogItem = getSWPTester().createBacklogItem(pbiTitle, release); 
-		task = getSWPTester().createTask("taskTitle", null, null, TaskStatus.NOT_STARTED, null, backlogItem.getBacklogItemId()); 
+		BacklogItem backlogItem = getSWPTester().createBacklogItem(pbiTitle, release); 
+		task = getSWPTester().createTask("taskTitle", null, null, TaskStatus.NOT_STARTED, null, backlogItem.getId()); 
 		
 		teamForgeBacklogItem = getTeamForgeTester().waitForBacklogItemsToAppear(1)[0]; 
 	}
@@ -49,16 +51,26 @@ public class TestScrumWorksUpdateTaskInTeamForge extends TFSWPIntegrationTest {
 		final TaskStatus status = TaskStatus.IN_PROGRESS;
 		
 		// execute
-		TaskWSO taskToBeUpdated = new TaskWSO(task.getBacklogItemId(), 
-				description, 
-				Integer.parseInt(currentEstimate), 
-				task.getId(), 
-				Integer.parseInt(originalEstimate), 
-				pointPerson, 
-				task.getRank(), 
-				status.getStatus(), 
-				task.getTaskBoardStatusRank(), 
-				taskTitle); 
+//		TaskWSO taskToBeUpdated = new TaskWSO(task.getBacklogItemId(), 
+//				description, 
+//				Integer.parseInt(currentEstimate), 
+//				task.getId(), 
+//				Integer.parseInt(originalEstimate), 
+//				pointPerson, 
+//				task.getRank(), 
+//				status.getStatus(), 
+//				task.getTaskBoardStatusRank(), 
+//				taskTitle); 
+		Task taskToBeUpdated = new Task(); 
+		taskToBeUpdated.setBacklogItemId(task.getBacklogItemId()); 
+		taskToBeUpdated.setDescription(description); 
+		taskToBeUpdated.setCurrentEstimate(Integer.parseInt(currentEstimate)); 
+		taskToBeUpdated.setOriginalEstimate(Integer.parseInt(originalEstimate)); 
+		taskToBeUpdated.setId(task.getId()); 
+		taskToBeUpdated.setPointPerson(pointPerson); 
+		taskToBeUpdated.setStatus(status.getStatus()); 
+		taskToBeUpdated.setName(taskTitle); 
+		taskToBeUpdated.setRank(task.getRank()); 
 		getSWPTester().updateTask(taskToBeUpdated); 
 		
 		// verify 

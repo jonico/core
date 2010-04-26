@@ -9,6 +9,8 @@ import java.util.Properties;
 import org.junit.After;
 import org.junit.Before;
 
+import com.danube.scrumworks.api2.client.ScrumWorksException;
+
 /**
  * This is the base class for all TeamForge/ScrumWorks Pro
  * Integration tests. It will provide the basic functionality to login
@@ -61,10 +63,11 @@ public class TFSWPIntegrationTest {
 	/**
 	 * Delete all artifacts within the TeamForge and ScrumWorks project/product, and cleans up the session.
 	 *  
-	 * @throws RemoteException if the TeamForge or ScrumWorks API can not be accessed 
+	 * @throws ScrumWorksException if there is an error from ScrumWorks 
+	 * @throws RemoteException 
 	 */
 	@After
-	public void tearDown() throws RemoteException  {
+	public void tearDown() throws ScrumWorksException, RemoteException  {
 		teamForgeTester.deleteAllTasksInTF();
 		swpTester.deleteAllTasksInSWP();
 		teamForgeTester.deleteAllPBIsInTF();

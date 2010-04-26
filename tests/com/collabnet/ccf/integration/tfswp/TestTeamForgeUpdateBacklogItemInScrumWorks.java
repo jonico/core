@@ -13,6 +13,7 @@ import org.junit.Test;
 import com.collabnet.teamforge.api.FieldValues;
 import com.collabnet.teamforge.api.tracker.ArtifactDO;
 import com.danube.scrumworks.api.client.types.BacklogItemWSO;
+import com.danube.scrumworks.api2.client.BacklogItem;
 
 /**
  * Tests updating backlog item fields in TeamForge and verifying the synchronization in ScrumWorks.   
@@ -83,22 +84,22 @@ public class TestTeamForgeUpdateBacklogItemInScrumWorks extends TFSWPIntegration
 		getTeamForgeTester().updateBacklogItem(backlogItemDO.getId(), title, description, release, flexFields); 
 		
 		// verify 
-		BacklogItemWSO[] allPbis = null;
-		BacklogItemWSO updatedPbi = null; 
+		List<BacklogItem> allPbis = null;
+		BacklogItem updatedPbi = null; 
 		getSWPTester().waitForBacklogItemsToAppear(1); 
 		for (int i = 0; i < getCcfMaxWaitTime(); i += getCcfRetryInterval()) {
-			allPbis = getSWPTester().getSWPEndpoint().getActiveBacklogItems(getSWPTester().getProduct()); 
-			updatedPbi = allPbis[0];
-			if (!updatedPbi.getTitle().equals(title)) {
+			allPbis = getSWPTester().getSWPEndpoint().getBacklogItemsInProduct(getSWPTester().getProduct().getId(), false); 
+			updatedPbi = allPbis.get(0);
+			if (!updatedPbi.getName().equals(title)) {
 				Thread.sleep(getCcfRetryInterval());
 			} else {
 				break;
 			}
 		}
 		
-		assertEquals(title, updatedPbi.getTitle()); 
-		assertEquals(1, allPbis.length);
-		assertEquals(title, updatedPbi.getTitle());
+		assertEquals(title, updatedPbi.getName()); 
+		assertEquals(1, allPbis.size());
+		assertEquals(title, updatedPbi.getName());
 		assertEquals(description, updatedPbi.getDescription());
 		assertEquals(benefit, updatedPbi.getBusinessWeight().getBenefit().toString()); 
 		assertEquals(penalty, updatedPbi.getBusinessWeight().getPenalty().toString());

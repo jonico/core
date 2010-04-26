@@ -6,10 +6,14 @@ package com.collabnet.ccf.integration.tfswp;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
+import java.util.List;
+
 import org.junit.Test;
 
 import com.danube.scrumworks.api.client.types.BacklogItemWSO;
 import com.danube.scrumworks.api.client.types.TaskWSO;
+import com.danube.scrumworks.api2.client.BacklogItem;
+import com.danube.scrumworks.api2.client.Task;
 
 /**
  * Creates a task item in TeamForge and verifies the task item in ScrumWorks
@@ -41,23 +45,23 @@ public class TestTeamForgeCreateAndUpdateTaskInScrumWorks extends TFSWPIntegrati
 				status, assignedToUser, remainingEffort, originalEstimate).getId();
 
 		// verify
-		BacklogItemWSO[] pbis = getSWPTester().waitForBacklogItemsToAppear(1); 
+		List<BacklogItem> pbis = getSWPTester().waitForBacklogItemsToAppear(1); 
 
-		assertEquals(1, pbis.length);
-		BacklogItemWSO pbi = pbis[0];
+		assertEquals(1, pbis.size());
+		BacklogItem pbi = pbis.get(0);
 		
 		// now that we can be sure that PBI has been created, update task again to trigger resynch
 		getTeamForgeTester().updateTask(taskId, title, description,
 				status, assignedToUser, remainingEffort, originalEstimate);
 
-		TaskWSO[] tasks = getSWPTester().waitForTaskToAppear(pbi, title, 1);
-		TaskWSO task = tasks[0];
+		List<Task> tasks = getSWPTester().waitForTaskToAppear(pbi, title, 1);
+		Task task = tasks.get(0);
 
-		assertEquals(1, tasks.length);
-		assertEquals(title, task.getTitle());
+		assertEquals(1, tasks.size());
+		assertEquals(title, task.getName());
 		assertEquals(description, task.getDescription());
 		assertEquals(status, task.getStatus());
-		assertNull(task.getEstimatedHours());
+		assertNull(task.getCurrentEstimate());
 		assertNull(task.getOriginalEstimate());
 		assertEquals(assignedToUser + " (" + assignedToUser + ")", task
 				.getPointPerson());
@@ -74,13 +78,13 @@ public class TestTeamForgeCreateAndUpdateTaskInScrumWorks extends TFSWPIntegrati
 				newStatus, newAssignedToUser, newRemainingEffort, newOriginalEstimate);
 
 		// now we have to wait for the update to come through
-		TaskWSO[] tasksFromScrumWorks = getSWPTester().waitForTaskToAppear(pbi, newTitle, 1);
-		task = tasksFromScrumWorks[0]; 
+		List<Task> tasksFromScrumWorks = getSWPTester().waitForTaskToAppear(pbi, newTitle, 1);
+		task = tasksFromScrumWorks.get(0); 
 
-		assertEquals(newTitle, task.getTitle());
+		assertEquals(newTitle, task.getName());
 		assertEquals(newDescription, task.getDescription());
 		assertEquals(newStatus, task.getStatus());
-		assertEquals(newRemainingEffort, task.getEstimatedHours().intValue());
+		assertEquals(newRemainingEffort, task.getCurrentEstimate().intValue());
 		assertEquals(newOriginalEstimate, task.getOriginalEstimate().intValue());
 		assertNull(task.getPointPerson());
 
@@ -99,12 +103,12 @@ public class TestTeamForgeCreateAndUpdateTaskInScrumWorks extends TFSWPIntegrati
 		
 		// now we have to wait for the update to come through
 		tasksFromScrumWorks = getSWPTester().waitForTaskToAppear(pbi, yetAnotherTitle, 1);
-		task = tasksFromScrumWorks[0]; 
+		task = tasksFromScrumWorks.get(0); 
 
-		assertEquals(yetAnotherTitle, task.getTitle());
+		assertEquals(yetAnotherTitle, task.getName());
 		assertEquals(yetAnotherDescription, task.getDescription());
 		assertEquals(yetAnotherStatus, task.getStatus());
-		assertEquals(zeroEffort, task.getEstimatedHours().intValue());
+		assertEquals(zeroEffort, task.getCurrentEstimate().intValue());
 		assertEquals(newOriginalEstimate, task.getOriginalEstimate().intValue());
 		assertEquals(assignedToUser + " (" + assignedToUser + ")", task
 				.getPointPerson());

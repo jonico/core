@@ -6,12 +6,16 @@ package com.collabnet.ccf.integration.tfswp;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
+import java.util.List;
+
 import org.junit.Test;
 
 import com.collabnet.teamforge.api.FieldValues;
 import com.collabnet.teamforge.api.tracker.ArtifactDO;
 import com.danube.scrumworks.api.client.types.BacklogItemWSO;
 import com.danube.scrumworks.api.client.types.TaskWSO;
+import com.danube.scrumworks.api2.client.BacklogItem;
+import com.danube.scrumworks.api2.client.Task;
 
 /**
  * Creates a task item in TeamForge and moves it between PBIs (parent artifacts)
@@ -43,20 +47,20 @@ public class TestTeamForgeMoveTaskInScrumWorks extends TFSWPIntegrationTest {
 				status, assignedToUser, remainingEffort, originalEstimate);
 
 		// verify
-		BacklogItemWSO[] pbisSWP = getSWPTester().waitForBacklogItemsToAppear(1); 
+		List<BacklogItem> pbisSWP = getSWPTester().waitForBacklogItemsToAppear(1); 
 
-		assertEquals(1, pbisSWP.length);
-		BacklogItemWSO firstSWPPBI = pbisSWP[0];
+		assertEquals(1, pbisSWP.size());
+		BacklogItem firstSWPPBI = pbisSWP.get(0);
 		
 		// now that we can be sure that PBI has been created, update task again to trigger resynch
 		getTeamForgeTester().updateTask(taskTF.getId(), title, description,
 				status, assignedToUser, remainingEffort, originalEstimate);
 
-		TaskWSO[] tasksSWP = null;
+		List<Task> tasksSWP = null;
 		tasksSWP = getSWPTester().waitForTaskToAppear(firstSWPPBI, title, 1); 
 
-		assertEquals(1, tasksSWP.length);
-		TaskWSO taskSWP = tasksSWP[0];
+		assertEquals(1, tasksSWP.size());
+		Task taskSWP = tasksSWP.get(0);
 		
 		// now we create a second PBI without any tasks
 		FieldValues flexFields = new FieldValues();
@@ -68,15 +72,15 @@ public class TestTeamForgeMoveTaskInScrumWorks extends TFSWPIntegrationTest {
 		
 		// wait until second pbi got created
 		pbisSWP = getSWPTester().waitForBacklogItemsToAppear(2);
-		assertEquals(2, pbisSWP.length);
+		assertEquals(2, pbisSWP.size());
 		
-		BacklogItemWSO secondSWPPBI = pbisSWP[1];
+		BacklogItem secondSWPPBI = pbisSWP.get(1);
 		
 		// figure out the second SWP PBI
-		if (!pbisSWP[0].getBacklogItemId().equals(firstSWPPBI.getBacklogItemId())) {
-			secondSWPPBI = pbisSWP[0];
+		if (!pbisSWP.get(0).getId().equals(firstSWPPBI.getId())) {
+			secondSWPPBI = pbisSWP.get(0);
 		}
-		assertEquals("SecondPBI", secondSWPPBI.getTitle()); 
+		assertEquals("SecondPBI", secondSWPPBI.getName()); 
 		
 		// now we move the task to the second PBI
 		getTeamForgeTester().reparentTask(taskTF.getId(), secondTFPBI.getId());
@@ -87,20 +91,20 @@ public class TestTeamForgeMoveTaskInScrumWorks extends TFSWPIntegrationTest {
 		
 		
 		// wait for title change to show up
-		taskSWP = getSWPTester().waitForTaskToAppear(secondSWPPBI, newTitle, 1)[0]; 
-		assertEquals(newTitle, taskSWP.getTitle());
+		taskSWP = getSWPTester().waitForTaskToAppear(secondSWPPBI, newTitle, 1).get(0); 
+		assertEquals(newTitle, taskSWP.getName());
 		
 		// check whether move operation took place
-		assertEquals(secondSWPPBI.getBacklogItemId(), taskSWP.getBacklogItemId());
+		assertEquals(secondSWPPBI.getId(), taskSWP.getBacklogItemId());
 		
 		// first SWP PBI should not have any children any more
-		tasksSWP = getSWPTester().getSWPEndpoint().getTasks(firstSWPPBI);
+		tasksSWP = getSWPTester().getSWPEndpoint().getTasks(firstSWPPBI.getId());
 		assertNull(tasksSWP);
 		
 		// second SWP PBI should have one child now
-		tasksSWP = getSWPTester().getSWPEndpoint().getTasks(secondSWPPBI);
-		assertEquals(1, tasksSWP.length);
-		assertEquals(taskSWP.getId(), tasksSWP[0].getId());
+		tasksSWP = getSWPTester().getSWPEndpoint().getTasks(secondSWPPBI.getId());
+		assertEquals(1, tasksSWP.size());
+		assertEquals(taskSWP.getId(), tasksSWP.get(0).getId());
 	}
 
 }
