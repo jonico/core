@@ -1,9 +1,5 @@
 package com.collabnet.ccf.swp;
 
-import java.rmi.RemoteException;
-
-import javax.xml.rpc.ServiceException;
-
 import com.collabnet.ccf.core.eis.connection.ConnectionException;
 import com.collabnet.ccf.core.eis.connection.ConnectionFactory;
 import com.collabnet.ccf.core.eis.connection.ConnectionManager;
@@ -32,7 +28,7 @@ public class SWPConnectionFactory implements ConnectionFactory<Connection> {
 		try {
 			return new Connection(repositoryId, repositoryKind, connectionInfo,
 					credentialInfo, connectionManager);
-		} catch (ServiceException e) {
+		} catch (Exception e) {
 			throw new ConnectionException("Could not connect to SWP", e);
 		}
 	}
@@ -41,14 +37,7 @@ public class SWPConnectionFactory implements ConnectionFactory<Connection> {
 	 * Call method to check whether SWP connection still works
 	 */
 	public boolean isAlive(Connection connection) {
-		try {
-			connection.getEndpoint().getTest();
-		} catch (RemoteException e) {
-			// we return false because we received an exception indicating
-			// that this connection object no longer works
-			return false;
-		}
-		// we return true because the connection object still works
+		// we return true because ScrumWorks does not have any sessions
 		return true;
 	}
 

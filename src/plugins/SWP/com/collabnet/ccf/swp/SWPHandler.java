@@ -2,11 +2,14 @@ package com.collabnet.ccf.swp;
 
 import java.rmi.RemoteException;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import javax.xml.datatype.DatatypeConfigurationException;
+import javax.xml.datatype.DatatypeFactory;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -21,16 +24,16 @@ import com.collabnet.ccf.swp.SWPMetaData.ProductFields;
 import com.collabnet.ccf.swp.SWPMetaData.ReleaseFields;
 import com.collabnet.ccf.swp.SWPMetaData.SWPType;
 import com.collabnet.ccf.swp.SWPMetaData.TaskFields;
-import com.danube.scrumworks.api.client.ScrumWorksEndpoint;
-import com.danube.scrumworks.api.client.types.BacklogItemWSO;
-import com.danube.scrumworks.api.client.types.BusinessWeightWSO;
-import com.danube.scrumworks.api.client.types.ProductWSO;
-import com.danube.scrumworks.api.client.types.ReleaseWSO;
-import com.danube.scrumworks.api.client.types.ServerException;
-import com.danube.scrumworks.api.client.types.SprintWSO;
-import com.danube.scrumworks.api.client.types.TaskWSO;
-import com.danube.scrumworks.api.client.types.TeamWSO;
-import com.danube.scrumworks.api.client.types.ThemeWSO;
+import com.danube.scrumworks.api2.client.BacklogItem;
+import com.danube.scrumworks.api2.client.BusinessWeight;
+import com.danube.scrumworks.api2.client.Product;
+import com.danube.scrumworks.api2.client.Release;
+import com.danube.scrumworks.api2.client.ScrumWorksAPIService;
+import com.danube.scrumworks.api2.client.ScrumWorksException;
+import com.danube.scrumworks.api2.client.Sprint;
+import com.danube.scrumworks.api2.client.Task;
+import com.danube.scrumworks.api2.client.Team;
+import com.danube.scrumworks.api2.client.Theme;
 
 /**
  * This class encapsulates all calls to the SWP backend
@@ -41,15 +44,18 @@ import com.danube.scrumworks.api.client.types.ThemeWSO;
 public class SWPHandler {
 
 	private static final Log log = LogFactory.getLog(SWPHandler.class);
-	private ScrumWorksEndpoint endpoint;
+	private ScrumWorksAPIService endpoint;
+	private DatatypeFactory calendarConverter;
 
 	/**
 	 * Constructor, receives a valid SWP connection
 	 * 
 	 * @param connection
 	 *            SWP connection object
+	 * @throws DatatypeConfigurationException 
 	 */
-	public SWPHandler(Connection connection) {
+	public SWPHandler(Connection connection) throws DatatypeConfigurationException {
+		calendarConverter = DatatypeFactory.newInstance();
 		this.endpoint = connection.getEndpoint();
 	}
 
@@ -62,14 +68,14 @@ public class SWPHandler {
 	 * @param product
 	 *            SWP product name
 	 * @throws RemoteException
-	 * @throws ServerException
+	 * @throws ScrumWorksException 
 	 */
 	public void retrievePBI(String id, String product, GenericArtifact ga)
-			throws ServerException, NumberFormatException, RemoteException {
-		BacklogItemWSO pbi = endpoint.getBacklogItem(Long.valueOf(id));
-		addPBIField(ga, PBIFields.id, pbi.getBacklogItemId());
+			throws NumberFormatException, RemoteException, ScrumWorksException {
+		BacklogItem pbi = endpoint.getBacklogItemById(Long.valueOf(id));
+		addPBIField(ga, PBIFields.id, pbi.getId());
 		addPBIField(ga, PBIFields.active, pbi.isActive());
-		BusinessWeightWSO bw = pbi.getBusinessWeight();
+		BusinessWeight bw = pbi.getBusinessWeight();
 		addPBIField(ga, PBIFields.benefit, bw.getBenefit());
 		addPBIField(ga, PBIFields.penalty, bw.getPenalty());
 		// TODO time zone conversion necessary?
@@ -80,14 +86,14 @@ public class SWPHandler {
 		addPBIField(ga, PBIFields.productId, pbi.getProductId());
 		addPBIField(ga, PBIFields.rank, pbi.getRank());
 		addPBIField(ga, PBIFields.releaseId, pbi.getReleaseId());
-		addPBIField(ga, PBIFields.title, pbi.getTitle());
+		addPBIField(ga, PBIFields.title, pbi.getName());
 
 		// retrieve themes
-		ThemeWSO[] themes = pbi.getThemes();
-		if (themes == null || themes.length == 0) {
+		List<Theme> themes = pbi.getThemes();
+		if (themes == null || themes.size() == 0) {
 			addPBIField(ga, PBIFields.theme, null);
 		} else {
-			for (ThemeWSO themeWSO : themes) {
+			for (Theme themeWSO : themes) {
 				addPBIField(ga, PBIFields.theme, themeWSO.getName());
 			}
 		}
@@ -107,29 +113,15 @@ public class SWPHandler {
 			addPBIField(ga, PBIFields.sprintEnd, null);
 		} else {
 			addPBIField(ga, PBIFields.sprintId, sprintId);
-			SprintWSO[] sprints = endpoint.getSprints(endpoint
-					.getProductByName(product));
-			if (sprints == null) {
-				throw new CCFRuntimeException(
-						"Could not find sprints for product " + product);
-			} else {
-				for (SprintWSO sprintWSO : sprints) {
-					if (sprintWSO.getId().equals(sprintId)) {
-						addPBIField(ga, PBIFields.sprint, sprintWSO.getName());
-						addPBIField(ga, PBIFields.sprintStart, sprintWSO
-								.getStartDate());
-						addPBIField(ga, PBIFields.sprintEnd, sprintWSO
-								.getEndDate());
-						// retrieve team name
-						TeamWSO team = endpoint.getTeam(sprintWSO);
-						addPBIField(ga, PBIFields.team, team.getName());
-						return;
-					}
-				}
-				throw new CCFRuntimeException("Could not find sprint "
-						+ sprintId + " for product " + product);
-			}
-
+			Sprint sprintWSO = endpoint.getSprintById(sprintId);
+			addPBIField(ga, PBIFields.sprint, sprintWSO.getName());
+			addPBIField(ga, PBIFields.sprintStart, sprintWSO
+					.getStartDate());
+			addPBIField(ga, PBIFields.sprintEnd, sprintWSO
+					.getEndDate());
+			// retrieve team name
+			Team team = endpoint.getTeamById(sprintWSO.getTeamId());
+			addPBIField(ga, PBIFields.team, team.getName());
 		}
 	}
 
@@ -143,19 +135,19 @@ public class SWPHandler {
 	 *            SWP product name
 	 * @throws RemoteException
 	 * @throws NumberFormatException
-	 * @throws ServerException
+	 * @throws ScrumWorksException 
 	 */
 	public void retrieveTask(String id, String product,
-			GenericArtifact genericArtifact) throws ServerException,
-			NumberFormatException, RemoteException {
+			GenericArtifact genericArtifact) throws
+			NumberFormatException, RemoteException, ScrumWorksException {
 		long taskId = Long.valueOf(id);
-		final TaskWSO task = endpoint.getTaskById(taskId);
+		final Task task = endpoint.getTaskById(taskId);
 
 		addTaskField(genericArtifact, TaskFields.id, taskId);
 		addTaskField(genericArtifact, TaskFields.description, task
 				.getDescription());
 		addTaskField(genericArtifact, TaskFields.estimatedHours, task
-				.getEstimatedHours());
+				.getCurrentEstimate());
 		addTaskField(genericArtifact, TaskFields.originalEstimate, task
 				.getOriginalEstimate());
 		addTaskField(genericArtifact, TaskFields.backlogItemId, task
@@ -164,9 +156,9 @@ public class SWPHandler {
 				.getPointPerson());
 		addTaskField(genericArtifact, TaskFields.rank, task.getRank());
 		addTaskField(genericArtifact, TaskFields.status, task.getStatus());
-		addTaskField(genericArtifact, TaskFields.taskBoardStatusRank, task
-				.getTaskBoardStatusRank());
-		addTaskField(genericArtifact, TaskFields.title, task.getTitle());
+		//addTaskField(genericArtifact, TaskFields.taskBoardStatusRank, task
+		//		.get);
+		addTaskField(genericArtifact, TaskFields.title, task.getName());
 
 		// set parent artifact (PBI)
 		genericArtifact.setDepParentSourceArtifactId(task.getBacklogItemId()
@@ -263,15 +255,15 @@ public class SWPHandler {
 	 * @param artifactStates
 	 *            list that will be populated with changed tasks
 	 * @throws RemoteException
-	 * @throws ServerException
+	 * @throws ScrumWorksException 
 	 */
 	public void getChangedTasks(String swpProductName,
-			List<ArtifactState> artifactStates) throws ServerException,
-			RemoteException {
-		ProductWSO product = endpoint.getProductByName(swpProductName);
-		TaskWSO[] tasks = endpoint.getTasksForProduct(product);
+			List<ArtifactState> artifactStates) throws
+			RemoteException, ScrumWorksException {
+		Product product = endpoint.getProductByName(swpProductName);
+		List<Task> tasks = endpoint.getTasksForProduct(product.getId());
 		if (tasks != null) {
-			for (TaskWSO task : tasks) {
+			for (Task task : tasks) {
 				ArtifactState artifactState = new ArtifactState();
 				artifactState.setArtifactId(task.getId().toString());
 				artifactState.setArtifactLastModifiedDate(new Date(0));
@@ -289,19 +281,18 @@ public class SWPHandler {
 	 * @param artifactStates
 	 *            list that will be populated with changed PBIs
 	 * @throws RemoteException
-	 * @throws ServerException
 	 * @throws RemoteException
-	 * @throws ServerException
+	 * @throws ScrumWorksException 
 	 */
 	public void getChangedPBIs(String swpProductName,
-			ArrayList<ArtifactState> artifactStates) throws ServerException,
-			RemoteException {
-		ProductWSO product = endpoint.getProductByName(swpProductName);
-		BacklogItemWSO[] pbis = endpoint.getActiveBacklogItems(product);
+			ArrayList<ArtifactState> artifactStates) throws
+			RemoteException, ScrumWorksException {
+		Product product = endpoint.getProductByName(swpProductName);
+		List<BacklogItem> pbis = endpoint.getBacklogItemsInProduct(product.getId(), false);
 		if (pbis != null) {
-			for (BacklogItemWSO pbi : pbis) {
+			for (BacklogItem pbi : pbis) {
 				ArtifactState artifactState = new ArtifactState();
-				artifactState.setArtifactId(pbi.getBacklogItemId().toString());
+				artifactState.setArtifactId(pbi.getId().toString());
 				artifactState.setArtifactLastModifiedDate(new Date(0));
 				artifactState.setArtifactVersion(-1);
 				artifactStates.add(artifactState);
@@ -324,15 +315,15 @@ public class SWPHandler {
 	 * @return updated PBI
 	 * @throws RemoteException
 	 * @throws NumberFormatException
-	 * @throws ServerException
+	 * @throws ScrumWorksException 
 	 */
-	public BacklogItemWSO updatePBI(GenericArtifactField active,
+	public BacklogItem updatePBI(GenericArtifactField active,
 			GenericArtifactField benefit, GenericArtifactField completedDate,
 			GenericArtifactField description, GenericArtifactField estimate,
 			GenericArtifactField penalty, GenericArtifactField title,
 			List<GenericArtifactField> themes, String swpProductName, GenericArtifact ga)
-			throws ServerException, NumberFormatException, RemoteException {
-		BacklogItemWSO pbi = endpoint.getBacklogItem(new Long(ga
+			throws NumberFormatException, RemoteException, ScrumWorksException {
+		BacklogItem pbi = endpoint.getBacklogItemById(new Long(ga
 				.getTargetArtifactId()));
 		// TODO Do conflict resolution
 		if (active != null && active.getFieldValueHasChanged()) {
@@ -340,7 +331,7 @@ public class SWPHandler {
 		}
 
 		if (completedDate != null && completedDate.getFieldValueHasChanged()) {
-			pbi.setCompletedDate((Calendar) completedDate.getFieldValue());
+			pbi.setCompletedDate(calendarConverter.newXMLGregorianCalendar((GregorianCalendar)completedDate.getFieldValue()));
 		}
 
 		if (description != null && description.getFieldValueHasChanged()) {
@@ -370,7 +361,7 @@ public class SWPHandler {
 		}
 
 		if (title != null && title.getFieldValueHasChanged()) {
-			pbi.setTitle((String) title.getFieldValue());
+			pbi.setName((String) title.getFieldValue());
 		}
 
 		boolean penaltyHasChanged = (penalty != null && penalty
@@ -381,7 +372,7 @@ public class SWPHandler {
 		// only if at least one of penalty or benefit has changed, we have to
 		// do the update
 		if (penaltyHasChanged || benefitHasChanged) {
-			BusinessWeightWSO bw = pbi.getBusinessWeight();
+			BusinessWeight bw = pbi.getBusinessWeight();
 			if (penaltyHasChanged) {
 				Object fieldValueObj = penalty.getFieldValue();
 				if (fieldValueObj == null
@@ -429,8 +420,9 @@ public class SWPHandler {
 			pbi.setBusinessWeight(bw);
 		}
 		
-		ProductWSO product = endpoint.getProductByName(swpProductName);
+		Product product = endpoint.getProductByName(swpProductName);
 		
+		List<Theme> currentlySetThemes = pbi.getThemes();
 		// now updates the themes
 		if (themes != null && !themes.isEmpty()) {
 			Set<String> themeSet = new HashSet<String>();
@@ -446,21 +438,22 @@ public class SWPHandler {
 			}
 			if (!themeSet.isEmpty()) {
 				// retrieve all themes of the product
-				ThemeWSO[] swpThemes = endpoint.getThemesForProduct(product);
-				if (swpThemes == null || swpThemes.length == 0) {
+				List<Theme> swpThemes = endpoint.getThemesForProduct(product.getId());
+				if (swpThemes == null || swpThemes.size() == 0) {
 					log.warn("Attempt to set themes not present in SWP.");
 					for (String theme : themeSet) {
 						log.warn("Missing theme: " + theme);
 					}
 				} else {
-					List<ThemeWSO> swpThemeWSOs = new ArrayList<ThemeWSO>();
-					for (ThemeWSO themeWSO : swpThemes) {
+					List<Theme> swpThemeWSOs = new ArrayList<Theme>();
+					for (Theme themeWSO : swpThemes) {
 						if (themeSet.contains(themeWSO.getName())) {
 							themeSet.remove(themeWSO.getName());
 							swpThemeWSOs.add(themeWSO);
 						}
 					}
-					pbi.setThemes(swpThemeWSOs.toArray(new ThemeWSO[]{}));
+					currentlySetThemes.clear();
+					currentlySetThemes.addAll(swpThemeWSOs);
 					if (!themeSet.isEmpty()) {
 						log.warn("Attempt to set themes not present in SWP.");
 						for (String theme : themeSet) {
@@ -471,10 +464,10 @@ public class SWPHandler {
 			} else if (nullValueSet) {
 				// if the null value was set specifically, we have to wipe all assigned themes
 				// otherwise this just does mean that no theme value has been changed since the last update
-				pbi.setThemes(null);
+				currentlySetThemes.clear();
 			}
 		} else {
-			pbi.setThemes(null);
+			currentlySetThemes.clear();
 		}
 
 		// now determine the release (parent artifact)
@@ -510,14 +503,14 @@ public class SWPHandler {
 	 * @return
 	 * @throws RemoteException
 	 * @throws NumberFormatException
-	 * @throws ServerException
+	 * @throws ScrumWorksException 
 	 */
-	public TaskWSO updateTask(GenericArtifactField description,
+	public Task updateTask(GenericArtifactField description,
 			GenericArtifactField estimatedHours, GenericArtifactField originalEstimate,
 			GenericArtifactField pointPerson, GenericArtifactField status,
 			GenericArtifactField title, GenericArtifact ga)
-			throws ServerException, NumberFormatException, RemoteException {
-		TaskWSO task = endpoint.getTaskById(new Long(ga.getTargetArtifactId()));
+			throws NumberFormatException, RemoteException, ScrumWorksException {
+		Task task = endpoint.getTaskById(new Long(ga.getTargetArtifactId()));
 		// TODO Do conflict resolution
 		if (description != null && description.getFieldValueHasChanged()) {
 			task.setDescription((String) description.getFieldValue());
@@ -526,7 +519,7 @@ public class SWPHandler {
 		if (estimatedHours != null && estimatedHours.getFieldValueHasChanged()) {
 			Object fieldValueObj = estimatedHours.getFieldValue();
 			if (fieldValueObj == null || fieldValueObj.toString().length() == 0) {
-				task.setEstimatedHours(null);
+				task.setCurrentEstimate(null);
 			} else {
 				int fieldValue = 0;
 				if (fieldValueObj instanceof String) {
@@ -542,8 +535,8 @@ public class SWPHandler {
 					fieldValue = ((Integer) fieldValueObj).intValue();
 				}
 				// we only set the estimated hours to zero if the previous value was not null
-				if (task.getEstimatedHours() != null || fieldValue != 0) {
-					task.setEstimatedHours(fieldValue);
+				if (task.getCurrentEstimate() != null || fieldValue != 0) {
+					task.setCurrentEstimate(fieldValue);
 				}
 			}
 		}
@@ -582,7 +575,7 @@ public class SWPHandler {
 		}
 
 		if (title != null && title.getFieldValueHasChanged()) {
-			task.setTitle((String) title.getFieldValue());
+			task.setName((String) title.getFieldValue());
 		}
 
 		// decide whether we have to move the task to another PBI
@@ -631,21 +624,21 @@ public class SWPHandler {
 	 * @param ga
 	 * @return newly created PBI
 	 * @throws RemoteException
-	 * @throws ServerException
+	 * @throws ScrumWorksException 
 	 */
-	public BacklogItemWSO createPBI(GenericArtifactField active,
+	public BacklogItem createPBI(GenericArtifactField active,
 			GenericArtifactField benefit, GenericArtifactField completedDate,
 			GenericArtifactField description, GenericArtifactField estimate,
 			GenericArtifactField penalty, GenericArtifactField title,
 			List<GenericArtifactField> themes, String swpProductName,
-			GenericArtifact ga) throws ServerException, RemoteException {
-		BacklogItemWSO pbi = new BacklogItemWSO();
+			GenericArtifact ga) throws RemoteException, ScrumWorksException {
+		BacklogItem pbi = new BacklogItem();
 		if (active != null) {
 			pbi.setActive((Boolean) active.getFieldValue());
 		}
 
 		if (completedDate != null) {
-			pbi.setCompletedDate((Calendar) completedDate.getFieldValue());
+			pbi.setCompletedDate(calendarConverter.newXMLGregorianCalendar((GregorianCalendar) completedDate.getFieldValue()));
 		}
 
 		if (description != null) {
@@ -675,7 +668,7 @@ public class SWPHandler {
 		}
 
 		if (title != null) {
-			pbi.setTitle((String) title.getFieldValue());
+			pbi.setName((String) title.getFieldValue());
 		}
 
 		boolean penaltyHasChanged = (penalty != null);
@@ -684,9 +677,9 @@ public class SWPHandler {
 		// only if at least one of penalty or benefit has changed, we have to
 		// do the update
 		if (penaltyHasChanged || benefitHasChanged) {
-			BusinessWeightWSO bw = pbi.getBusinessWeight();
+			BusinessWeight bw = pbi.getBusinessWeight();
 			if (bw == null) {
-				bw = new BusinessWeightWSO();
+				bw = new BusinessWeight();
 				pbi.setBusinessWeight(bw);
 			}
 			if (penaltyHasChanged) {
@@ -735,7 +728,7 @@ public class SWPHandler {
 			}
 		}
 
-		ProductWSO product = endpoint.getProductByName(swpProductName);
+		Product product = endpoint.getProductByName(swpProductName);
 
 		// now set the themes
 		if (themes != null && !themes.isEmpty()) {
@@ -746,22 +739,24 @@ public class SWPHandler {
 				}
 			}
 			if (!themeSet.isEmpty()) {
+				List<Theme> currentlySetThemes = pbi.getThemes();
 				// retrieve all themes of the product
-				ThemeWSO[] swpThemes = endpoint.getThemesForProduct(product);
-				if (swpThemes == null || swpThemes.length == 0) {
+				List<Theme> swpThemes = endpoint.getThemesForProduct(product.getId());
+				if (swpThemes == null || swpThemes.size() == 0) {
 					log.warn("Attempt to set themes not present in SWP.");
 					for (String theme : themeSet) {
 						log.warn("Missing theme: " + theme);
 					}
 				} else {
-					List<ThemeWSO> swpThemeWSOs = new ArrayList<ThemeWSO>();
-					for (ThemeWSO themeWSO : swpThemes) {
+					List<Theme> swpThemeWSOs = new ArrayList<Theme>();
+					for (Theme themeWSO : swpThemes) {
 						if (themeSet.contains(themeWSO.getName())) {
 							themeSet.remove(themeWSO.getName());
 							swpThemeWSOs.add(themeWSO);
 						}
 					}
-					pbi.setThemes(swpThemeWSOs.toArray(new ThemeWSO[]{}));
+					currentlySetThemes.clear();
+					currentlySetThemes.addAll(swpThemeWSOs);
 					if (!themeSet.isEmpty()) {
 						log.warn("Attempt to set themes not present in SWP.");
 						for (String theme : themeSet) {
@@ -785,13 +780,13 @@ public class SWPHandler {
 						ga.getDepParentTargetRepositoryId()).equals(
 						SWPMetaData.SWPType.RELEASE)) {
 			// parent id is no release, we assign the first release in the list
-			ReleaseWSO release = endpoint.getReleasesForProduct(endpoint
-					.getProductByName(swpProductName))[0];
+			Release release = endpoint.getReleasesForProduct(endpoint
+					.getProductByName(swpProductName).getId()).get(0);
 			log
 					.warn(parentArtifact
 							+ " of parent repository " + ga.getDepParentTargetRepositoryId()
 							+ " is no valid release, so assigning newly created PBI to first release in list: "
-							+ release.getTitle());
+							+ release.getName());
 			pbi.setReleaseId(release.getId());
 		} else {
 			pbi.setReleaseId(new Long(parentArtifact));
@@ -812,14 +807,14 @@ public class SWPHandler {
 	 * @param ga
 	 * @return newly created task
 	 * @throws RemoteException
-	 * @throws ServerException
+	 * @throws ScrumWorksException 
 	 */
-	public TaskWSO createTask(GenericArtifactField description,
+	public Task createTask(GenericArtifactField description,
 			GenericArtifactField estimatedHours, GenericArtifactField originalEstimate,
 			GenericArtifactField pointPerson, GenericArtifactField status,
 			GenericArtifactField title, String swpProductName,
-			GenericArtifact ga) throws ServerException, RemoteException {
-		TaskWSO task = new TaskWSO();
+			GenericArtifact ga) throws RemoteException, ScrumWorksException {
+		Task task = new Task();
 		if (description != null) {
 			task.setDescription((String) description.getFieldValue());
 		}
@@ -827,7 +822,7 @@ public class SWPHandler {
 		if (estimatedHours != null) {
 			Object fieldValueObj = estimatedHours.getFieldValue();
 			if (fieldValueObj == null || fieldValueObj.toString().length() == 0) {
-				task.setEstimatedHours(null);
+				task.setCurrentEstimate(null);
 			} else {
 				int fieldValue = 0;
 				if (fieldValueObj instanceof String) {
@@ -842,7 +837,7 @@ public class SWPHandler {
 				} else if (fieldValueObj instanceof Integer) {
 					fieldValue = ((Integer) fieldValueObj).intValue();
 				}
-				task.setEstimatedHours(fieldValue);
+				task.setCurrentEstimate(fieldValue);
 			}
 		}
 		
@@ -877,7 +872,7 @@ public class SWPHandler {
 		}
 
 		if (title != null) {
-			task.setTitle((String) title.getFieldValue());
+			task.setName((String) title.getFieldValue());
 		}
 
 		// now set the parent PBI
@@ -910,13 +905,13 @@ public class SWPHandler {
 	 * @param swpProductName
 	 * @param artifactStates
 	 * @throws RemoteException
-	 * @throws ServerException
+	 * @throws ScrumWorksException 
 	 */
 	public void getChangedProducts(String swpProductName,
-			ArrayList<ArtifactState> artifactStates) throws ServerException,
-			RemoteException {
+			ArrayList<ArtifactState> artifactStates) throws
+			RemoteException, ScrumWorksException {
 		// TODO Implement polling
-		ProductWSO product = endpoint.getProductByName(swpProductName);
+		Product product = endpoint.getProductByName(swpProductName);
 		ArtifactState artifactState = new ArtifactState();
 		artifactState.setArtifactId(product.getId().toString());
 		artifactState.setArtifactLastModifiedDate(new Date(0));
@@ -930,16 +925,16 @@ public class SWPHandler {
 	 * @param swpProductName
 	 * @param artifactStates
 	 * @throws RemoteException
-	 * @throws ServerException
+	 * @throws ScrumWorksException 
 	 */
 	public void getChangedProductReleases(String swpProductName,
-			ArrayList<ArtifactState> artifactStates) throws ServerException,
-			RemoteException {
+			ArrayList<ArtifactState> artifactStates) throws
+			RemoteException, ScrumWorksException {
 		// TODO Implement polling
-		ProductWSO product = endpoint.getProductByName(swpProductName);
-		ReleaseWSO[] releases = endpoint.getReleasesForProduct(product);
+		Product product = endpoint.getProductByName(swpProductName);
+		List<Release> releases = endpoint.getReleasesForProduct(product.getId());
 		if (releases != null) {
-			for (ReleaseWSO releaseWSO : releases) {
+			for (Release releaseWSO : releases) {
 				// currently, we treat program releases like product releases
 				// since we have to duplicate them anyway
 				ArtifactState artifactState = new ArtifactState();
@@ -959,12 +954,12 @@ public class SWPHandler {
 	 * @param swpProductName
 	 * @param genericArtifact
 	 * @throws RemoteException
-	 * @throws ServerException
+	 * @throws ScrumWorksException 
 	 */
 	public void retrieveProduct(String artifactId, String swpProductName,
-			GenericArtifact genericArtifact) throws ServerException,
-			RemoteException {
-		ProductWSO product = endpoint.getProductByName(swpProductName);
+			GenericArtifact genericArtifact) throws
+			RemoteException, ScrumWorksException {
+		Product product = endpoint.getProductByName(swpProductName);
 		addProductField(genericArtifact, ProductFields.id, product.getId());
 		addProductField(genericArtifact, ProductFields.effortUnits, product
 				.getEffortUnits());
@@ -986,20 +981,20 @@ public class SWPHandler {
 	 * @param product
 	 *            SWP product name
 	 * @throws RemoteException
-	 * @throws ServerException
+	 * @throws ScrumWorksException 
 	 */
 	public void retrieveProductRelease(String id, String product,
-			GenericArtifact ga) throws ServerException, NumberFormatException,
-			RemoteException {
+			GenericArtifact ga) throws NumberFormatException,
+			RemoteException, ScrumWorksException {
 		/**
 		 * Currently, we treat program releases like product releases since we
 		 * duplicate them anyways
 		 */
 		// TODO This is very inefficient code, we need better API calls here
-		ProductWSO productWSO = endpoint.getProductByName(product);
-		ReleaseWSO[] releases = endpoint.getReleasesForProduct(productWSO);
+		Product productWSO = endpoint.getProductByName(product);
+		List<Release> releases = endpoint.getReleasesForProduct(productWSO.getId());
 		if (releases != null) {
-			for (ReleaseWSO releaseWSO : releases) {
+			for (Release releaseWSO : releases) {
 				if (releaseWSO.getId().toString().equals(id)) {
 					addProductReleaseField(ga, ReleaseFields.id,
 							releaseWSO.getId());
@@ -1014,11 +1009,11 @@ public class SWPHandler {
 							releaseWSO.getProgramId());
 					addProductReleaseField(ga,
 							ReleaseFields.releaseDate, releaseWSO
-									.getReleaseDate());
+									.getEndDate());
 					addProductReleaseField(ga, ReleaseFields.startDate,
 							releaseWSO.getStartDate());
 					addProductReleaseField(ga, ReleaseFields.title,
-							releaseWSO.getTitle());
+							releaseWSO.getName());
 
 					// set parent artifact (Product)
 					ga.setDepParentSourceArtifactId(productWSO.getId()

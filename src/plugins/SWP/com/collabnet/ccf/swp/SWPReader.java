@@ -22,7 +22,6 @@ import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifact.ArtifactModeValue;
 import com.collabnet.ccf.core.ga.GenericArtifact.ArtifactTypeValue;
 import com.collabnet.ccf.swp.SWPMetaData.SWPType;
-import com.danube.scrumworks.api.client.types.ServerException;
 
 /**
  * SWP Reader component
@@ -104,11 +103,7 @@ public class SWPReader extends AbstractReader<Connection> {
 				log.error(cause);
 				throw new CCFRuntimeException(cause);
 			}
-		} catch (ServerException e) {
-			String cause = "During the artifact retrieval process from SWP, an error occured";
-			log.error(cause, e);
-			throw new CCFRuntimeException(cause, e);
-		} catch (RemoteException e) {
+		} catch (Exception e) {
 			String cause = "During the artifact retrieval process from SWP, an error occured";
 			log.error(cause, e);
 			throw new CCFRuntimeException(cause, e);
@@ -204,10 +199,11 @@ public class SWPReader extends AbstractReader<Connection> {
 			log.error(cause, e);
 			throw new CCFRuntimeException(cause, e);
 		}
-		SWPHandler swpHandler = new SWPHandler(connection);
+		
 
 		ArrayList<ArtifactState> artifactStates = new ArrayList<ArtifactState>();
 		try {
+			SWPHandler swpHandler = new SWPHandler(connection);
 			if (swpType.equals(SWPType.TASK)) {
 				swpHandler.getChangedTasks(swpProductName, artifactStates);
 			} else if (swpType.equals(SWPType.PBI)) {
@@ -221,11 +217,7 @@ public class SWPReader extends AbstractReader<Connection> {
 				log.error(cause);
 				throw new CCFRuntimeException(cause);
 			}
-		} catch (ServerException e) {
-			String cause = "During the artifact retrieval process from SWP, an error occured";
-			log.error(cause, e);
-			throw new CCFRuntimeException(cause, e);
-		} catch (RemoteException e) {
+		} catch (Exception e) {
 			String cause = "During the artifact retrieval process from SWP, an error occured";
 			log.error(cause, e);
 			throw new CCFRuntimeException(cause, e);

@@ -23,9 +23,9 @@ import com.collabnet.ccf.core.utils.XPathUtils;
 import com.collabnet.ccf.swp.SWPMetaData.PBIFields;
 import com.collabnet.ccf.swp.SWPMetaData.SWPType;
 import com.collabnet.ccf.swp.SWPMetaData.TaskFields;
-import com.danube.scrumworks.api.client.types.BacklogItemWSO;
-import com.danube.scrumworks.api.client.types.ServerException;
-import com.danube.scrumworks.api.client.types.TaskWSO;
+import com.danube.scrumworks.api2.client.BacklogItem;
+import com.danube.scrumworks.api2.client.ScrumWorksException;
+import com.danube.scrumworks.api2.client.Task;
 
 /**
  * SWP Writer component
@@ -79,16 +79,16 @@ public class SWPWriter extends AbstractWriter<Connection> implements
 		try {
 			SWPHandler swpHandler = new SWPHandler(connection);
 			if (swpType.equals(SWPType.TASK)) {
-				TaskWSO result = createTask(ga, swpProductName, swpHandler);
+				Task result = createTask(ga, swpProductName, swpHandler);
 				ga.setTargetArtifactId(result.getId().toString());
 				ga.setTargetArtifactVersion("-1");
 				ga.setTargetArtifactLastModifiedDate(GenericArtifactHelper.df
 						.format(new Date(0)));
 				log.info("Created task " + result.getId() + " of PBI "+ result.getBacklogItemId() + " with data from " + ga.getSourceArtifactId());
 			} else if (swpType.equals(SWPType.PBI)) {
-				BacklogItemWSO result = createPBI(ga, swpProductName,
+				BacklogItem result = createPBI(ga, swpProductName,
 						swpHandler);
-				ga.setTargetArtifactId(result.getBacklogItemId().toString());
+				ga.setTargetArtifactId(result.getId().toString());
 				ga.setTargetArtifactVersion("-1");
 				ga.setTargetArtifactLastModifiedDate(GenericArtifactHelper.df
 						.format(new Date(0)));
@@ -99,12 +99,7 @@ public class SWPWriter extends AbstractWriter<Connection> implements
 				log.error(cause);
 				throw new CCFRuntimeException(cause);
 			}
-		} catch (ServerException e) {
-			String cause = "During the artifact update process in SWP, an error occured";
-			log.error(cause, e);
-			throw new CCFRuntimeException(cause, e);
-		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
+		} catch (Exception e) {
 			String cause = "During the artifact update process in SWP, an error occured";
 			log.error(cause, e);
 			throw new CCFRuntimeException(cause, e);
@@ -123,10 +118,10 @@ public class SWPWriter extends AbstractWriter<Connection> implements
 	 * @param swpHandler
 	 * @return newly created PBI
 	 * @throws RemoteException
-	 * @throws ServerException
+	 * @throws ScrumWorksException 
 	 */
-	private BacklogItemWSO createPBI(GenericArtifact ga, String swpProductName,
-			SWPHandler swpHandler) throws ServerException, RemoteException {
+	private BacklogItem createPBI(GenericArtifact ga, String swpProductName,
+			SWPHandler swpHandler) throws RemoteException, ScrumWorksException {
 		// TODO should we allow to set the active property?
 		GenericArtifactField active = GenericArtifactHelper
 				.getMandatoryGAField(PBIFields.active.getFieldName(), ga);
@@ -157,10 +152,10 @@ public class SWPWriter extends AbstractWriter<Connection> implements
 	 * @param swpHandler
 	 * @return newly created task
 	 * @throws RemoteException 
-	 * @throws ServerException 
+	 * @throws ScrumWorksException 
 	 */
-	private TaskWSO createTask(GenericArtifact ga, String swpProductName,
-			SWPHandler swpHandler) throws ServerException, RemoteException {
+	private Task createTask(GenericArtifact ga, String swpProductName,
+			SWPHandler swpHandler) throws RemoteException, ScrumWorksException {
 		GenericArtifactField description = GenericArtifactHelper
 				.getMandatoryGAField(TaskFields.description.getFieldName(), ga);
 		GenericArtifactField estimatedHours = GenericArtifactHelper
@@ -270,7 +265,7 @@ public class SWPWriter extends AbstractWriter<Connection> implements
 		try {
 			SWPHandler swpHandler = new SWPHandler(connection);
 			if (swpType.equals(SWPType.TASK)) {
-				TaskWSO result = updateTask(ga, swpProductName, swpHandler);
+				Task result = updateTask(ga, swpProductName, swpHandler);
 				// TODO Use result to update ga once we have global revision
 				// numbers
 				ga.setTargetArtifactVersion("-1");
@@ -278,7 +273,7 @@ public class SWPWriter extends AbstractWriter<Connection> implements
 						.format(new Date(0)));
 				log.info("Updated task " + result.getId() + " of PBI "+ result.getBacklogItemId() + " with data from " + ga.getSourceArtifactId());
 			} else if (swpType.equals(SWPType.PBI)) {
-				BacklogItemWSO result = updatePBI(ga, swpProductName,
+				BacklogItem result = updatePBI(ga, swpProductName,
 						swpHandler);
 				ga.setTargetArtifactVersion("-1");
 				ga.setTargetArtifactLastModifiedDate(GenericArtifactHelper.df
@@ -292,12 +287,7 @@ public class SWPWriter extends AbstractWriter<Connection> implements
 				log.error(cause);
 				throw new CCFRuntimeException(cause);
 			}
-		} catch (ServerException e) {
-			String cause = "During the artifact update process in SWP, an error occured";
-			log.error(cause, e);
-			throw new CCFRuntimeException(cause, e);
-		} catch (RemoteException e) {
-			// TODO Auto-generated catch block
+		} catch (Exception e) {
 			String cause = "During the artifact update process in SWP, an error occured";
 			log.error(cause, e);
 			throw new CCFRuntimeException(cause, e);
@@ -320,11 +310,11 @@ public class SWPWriter extends AbstractWriter<Connection> implements
 	 * @return
 	 * @throws RemoteException
 	 * @throws NumberFormatException
-	 * @throws ServerException
+	 * @throws ScrumWorksException 
 	 */
-	private BacklogItemWSO updatePBI(GenericArtifact ga, String swpProductName,
-			SWPHandler swpHandler) throws ServerException,
-			NumberFormatException, RemoteException {
+	private BacklogItem updatePBI(GenericArtifact ga, String swpProductName,
+			SWPHandler swpHandler) throws
+			NumberFormatException, RemoteException, ScrumWorksException {
 		// TODO should we allow to set the active property?
 		GenericArtifactField active = GenericArtifactHelper
 				.getMandatoryGAField(PBIFields.active.getFieldName(), ga);
@@ -357,11 +347,11 @@ public class SWPWriter extends AbstractWriter<Connection> implements
 	 * @return updated task object
 	 * @throws RemoteException
 	 * @throws NumberFormatException
-	 * @throws ServerException
+	 * @throws ScrumWorksException 
 	 */
-	private TaskWSO updateTask(GenericArtifact ga, String swpProductName,
-			SWPHandler swpHandler) throws ServerException,
-			NumberFormatException, RemoteException {
+	private Task updateTask(GenericArtifact ga, String swpProductName,
+			SWPHandler swpHandler) throws
+			NumberFormatException, RemoteException, ScrumWorksException {
 		GenericArtifactField description = GenericArtifactHelper
 				.getMandatoryGAField(TaskFields.description.getFieldName(), ga);
 		GenericArtifactField estimatedHours = GenericArtifactHelper
