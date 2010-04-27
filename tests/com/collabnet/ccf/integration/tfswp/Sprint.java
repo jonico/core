@@ -21,7 +21,7 @@ public enum Sprint {
 	/**
 	 * First sprint for the one team. 
 	 */
-	SPRINT_1_ONE_TEAM ("Initial sprint for OneTeam", "4/14/2010", "6/11/2010", "OneTeam"); 
+	SPRINT_1_ONE_TEAM ("Initial sprint for OneTeam", "4/15/2010", "6/11/2010", "OneTeam"); 
 	
 	/** The team associated to the sprint. */ 
 	private String team; 

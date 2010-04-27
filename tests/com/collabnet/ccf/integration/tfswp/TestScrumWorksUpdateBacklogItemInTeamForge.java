@@ -3,15 +3,15 @@ package com.collabnet.ccf.integration.tfswp;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import java.rmi.RemoteException;
 import java.util.Arrays;
+import java.util.List;
 
 import org.junit.Before;
 import org.junit.Test;
 
 import com.collabnet.teamforge.api.tracker.ArtifactRow;
-import com.danube.scrumworks.api.client.types.BacklogItemWSO;
 import com.danube.scrumworks.api2.client.BacklogItem;
+import com.danube.scrumworks.api2.client.Theme;
 
 /**
  * Tests that a backlog item updated in ScrumWorks is correctly synched in TeamForge.
@@ -30,10 +30,11 @@ public class TestScrumWorksUpdateBacklogItemInTeamForge extends TFSWPIntegration
 		final String benefit = "20";
 		final String penalty = "30";
 		final String release = SWPTester.RELEASE_1;
+		final String theme = SWPTester.THEME_GUI; 
 
 		super.setUp();
 		
-		scrumWorksBacklogItem = getSWPTester().createBacklogItem(name, description, effort, benefit, penalty, release, Sprint.SPRINT_1_AUTOMATED_TEAM, null);
+		scrumWorksBacklogItem = getSWPTester().createBacklogItem(name, description, effort, benefit, penalty, release, Sprint.SPRINT_1_AUTOMATED_TEAM, theme);
 		getSWPTester().waitForBacklogItemsToAppear(1); 
 	}
 	
@@ -51,8 +52,8 @@ public class TestScrumWorksUpdateBacklogItemInTeamForge extends TFSWPIntegration
 		final String benefit = "100";
 		final String penalty = "200";
 		final String effort = "300";
-		final String theme1 = SWPTester.THEME_DB;
-		final String theme2 = SWPTester.THEME_DOCUMENTATION;
+		final String theme1 = SWPTester.THEME_DOCUMENTATION;
+		final String theme2 = SWPTester.THEME_DB;
 		final Sprint sprint = Sprint.SPRINT_1_ONE_TEAM; 
 		
 		// execute
@@ -68,19 +69,9 @@ public class TestScrumWorksUpdateBacklogItemInTeamForge extends TFSWPIntegration
 		backlogItem.setReleaseId(getSWPTester().getReleaseId(release));
 		backlogItem.setSprintId(getSWPTester().getSprintId(sprint.getName())); 
 		backlogItem.setName(title); 
-//		BacklogItemWSO backlogItemToBeUpdated = new BacklogItemWSO(true, 
-//				scrumWorksBacklogItem.getId(), 
-//				getSWPTester().transformToBusinessWeightWSO(benefit, penalty), 
-//				null, 
-//				description, 
-//				Integer.parseInt(effort), 
-//				scrumWorksBacklogItem.getKey(), 
-//				scrumWorksBacklogItem.getProductId(), 
-//				scrumWorksBacklogItem.getRank(), 
-//				getSWPTester().getReleaseId(release), 
-//				getSWPTester().getSprintId(sprint.getName()), 
-//				null, 
-//				title);  
+		List<Theme> themes = backlogItem.getThemes(); 
+		backlogItem.getThemes().remove(themes); 
+		backlogItem.getThemes().addAll(getSWPTester().transformToThemeWSO(theme1, theme2)); 
 		final BacklogItem scrumWorksPbiFromUpdate = getSWPTester().updateBacklogItem(backlogItem); 
 
 		// verify
@@ -104,9 +95,10 @@ public class TestScrumWorksUpdateBacklogItemInTeamForge extends TFSWPIntegration
 				scrumWorksPbiFromUpdate.getKey(),
 				sprint.getTeam(),
 				sprint.getName(),
-//				Sprint.SPRINT_1_AUTOMATED_TEAM.getStartDate(), 
-//				Sprint.SPRINT_1_AUTOMATED_TEAM.getEndDate(),
-				null), 
+				sprint.getStartDate(), 
+				sprint.getEndDate(),
+				theme1,
+				theme2), 
 				getTeamForgeTester().getFieldValues(artifactId, 
 						TeamForgeTester.FIELD_BENEFIT, 
 						TeamForgeTester.FIELD_PENALTY, 
@@ -114,8 +106,9 @@ public class TestScrumWorksUpdateBacklogItemInTeamForge extends TFSWPIntegration
 						TeamForgeTester.FIELD_KEY, 
 						TeamForgeTester.FIELD_TEAM,
 						TeamForgeTester.FIELD_SPRINT_NAME,
-//						TeamForgeTester.FIELD_SPRINT_START, 
-//						TeamForgeTester.FIELD_SPRINT_END, 
+						TeamForgeTester.FIELD_SPRINT_START, 
+						TeamForgeTester.FIELD_SPRINT_END, 
+						TeamForgeTester.FIELD_THEME,
 						TeamForgeTester.FIELD_THEME));
 		
 	}
