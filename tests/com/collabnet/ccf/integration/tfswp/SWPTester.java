@@ -1,6 +1,6 @@
 package com.collabnet.ccf.integration.tfswp;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -448,6 +448,7 @@ public class SWPTester {
 		backlogItem.setReleaseId(getReleaseId(releaseName));
 		backlogItem.setSprintId(sprintId);
 		backlogItem.setName(title);
+		backlogItem.getThemes().addAll(themeForBacklogItem); 
 		return getSWPEndpoint().createBacklogItem(backlogItem);
 		// return getSWPEndpoint().createBacklogItem(new BacklogItemWSO(true,
 		// null, businessWeight, null, description, Integer.parseInt(estimate),
@@ -580,7 +581,7 @@ public class SWPTester {
 		List<Theme> pbiThemes = new ArrayList<Theme>();
 		for (int i = 0; i < themes.length; i++) {
 			for (Theme theme : allThemes) {
-				if (themes.equals(theme)) {
+				if (themes[i].equals(theme.getName())) {
 					pbiThemes.add(theme);
 				}
 			}

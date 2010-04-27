@@ -472,7 +472,8 @@ public class TeamForgeTester {
 	}
 	
 	/**
-	 * Returns the values for the given flex field names. 
+	 * Returns the values for the given flex field names.  Themes must be grouped together and in the order of the theme 
+	 * selector in TeamForge. 
 	 * 
 	 * @param artifactId the id for the artifact, can not be null
 	 * @param fieldNames the flex field names
@@ -488,13 +489,17 @@ public class TeamForgeTester {
 		final String[] names = flexFields.getNames(); 
 		final Object[] values = flexFields.getValues();
 		final List<String> matchingValues = new ArrayList<String>();
+		boolean includeThemes = false; 
 		for (int i = 0; i < fieldNames.length; i++) {
 			// add all themes
 			if (fieldNames[i].equals(FIELD_THEME)) {
-				for (int j = 0; j < names.length; j++) {
-					if (names[j].equals(FIELD_THEME)) {
-						matchingValues.add((String) values[j]);
+				if (!includeThemes) {
+					for (int j = 0; j < names.length; j++) {
+						if (names[j].equals(FIELD_THEME)) {
+							matchingValues.add((String) values[j]);
+						}
 					}
+					includeThemes = true; 
 				}
 			} else { 
 				// add matching field names

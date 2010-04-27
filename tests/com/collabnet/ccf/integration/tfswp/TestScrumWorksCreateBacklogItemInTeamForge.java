@@ -5,14 +5,10 @@ import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
 
-import org.hsqldb.scriptio.ScriptWriterText;
 import org.junit.Test;
 
 import com.collabnet.teamforge.api.tracker.ArtifactRow;
-import com.danube.scrumworks.api.client.types.BacklogItemWSO;
 import com.danube.scrumworks.api2.client.BacklogItem;
-
-import com.collabnet.ccf.integration.tfswp.Sprint;
 
 /**
  * Tests that a backlog item created in ScrumWorks is correctly synched in TeamForge. 
@@ -58,7 +54,8 @@ public class TestScrumWorksCreateBacklogItemInTeamForge extends TFSWPIntegration
 		assertEquals(0, pbiInTeamForge.getRemainingEffort());
 		
 		final String artifactId = pbiInTeamForge.getId();
-		assertEquals(Arrays.asList(benefit, 
+		assertEquals(Arrays.asList(
+				benefit, 
 				penalty, 
 				effort, 
 				pbiInScrumWorks.getKey(),
@@ -66,7 +63,8 @@ public class TestScrumWorksCreateBacklogItemInTeamForge extends TFSWPIntegration
 				Sprint.SPRINT_1_AUTOMATED_TEAM.getName(), 
 				Sprint.SPRINT_1_AUTOMATED_TEAM.getStartDate(), 
 				Sprint.SPRINT_1_AUTOMATED_TEAM.getEndDate(),
-				null), 
+				theme2,
+				theme1), 
 				getTeamForgeTester().getFieldValues(artifactId, 
 						TeamForgeTester.FIELD_BENEFIT, 
 						TeamForgeTester.FIELD_PENALTY, 
@@ -76,15 +74,8 @@ public class TestScrumWorksCreateBacklogItemInTeamForge extends TFSWPIntegration
 						TeamForgeTester.FIELD_SPRINT_NAME, 
 						TeamForgeTester.FIELD_SPRINT_START, 
 						TeamForgeTester.FIELD_SPRINT_END, 
+						TeamForgeTester.FIELD_THEME, 
 						TeamForgeTester.FIELD_THEME));
-		
-//		assertEquals(Arrays.asList(benefit, penalty, effort, pbiInScrumWorks.getKey(), theme1, theme2), 
-//				getTeamForgeTester().getFieldValues(artifactId, 
-//						TeamForgeTester.FIELD_BENEFIT, 
-//						TeamForgeTester.FIELD_PENALTY, 
-//						TeamForgeTester.FIELD_EFFORT, 
-//						TeamForgeTester.FIELD_KEY, 
-//						TeamForgeTester.FIELD_THEME)); 
 		
 	}
 }
