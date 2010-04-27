@@ -36,8 +36,9 @@ public class TestScrumWorksCreateBacklogItemInTeamForge extends TFSWPIntegration
 		final String effort = "30";
 		final String theme1 = SWPTester.THEME_CORE;
 		final String theme2 = SWPTester.THEME_GUI;
+		final Sprint sprint = Sprint.SPRINT_1_AUTOMATED_TEAM;
 		
-		BacklogItem pbiInScrumWorks = getSWPTester().createBacklogItem(title, description, effort, benefit, penalty, release, Sprint.SPRINT_1_AUTOMATED_TEAM, theme1, theme2);  
+		BacklogItem pbiInScrumWorks = getSWPTester().createBacklogItem(title, description, effort, benefit, penalty, release, sprint, theme1, theme2);  
 		
 		// verify
 		final ArtifactRow[] artifacts = getTeamForgeTester().waitForBacklogItemsToAppear(1);
@@ -59,10 +60,10 @@ public class TestScrumWorksCreateBacklogItemInTeamForge extends TFSWPIntegration
 				penalty, 
 				effort, 
 				pbiInScrumWorks.getKey(),
-				Sprint.SPRINT_1_AUTOMATED_TEAM.getTeam(), 
-				Sprint.SPRINT_1_AUTOMATED_TEAM.getName(), 
-				Sprint.SPRINT_1_AUTOMATED_TEAM.getStartDate(), 
-				Sprint.SPRINT_1_AUTOMATED_TEAM.getEndDate(),
+				sprint.getTeam(), 
+				sprint.getName(), 
+				sprint.getStartDate(), 
+				sprint.getEndDate(),
 				theme2,
 				theme1), 
 				getTeamForgeTester().getFieldValues(artifactId, 
