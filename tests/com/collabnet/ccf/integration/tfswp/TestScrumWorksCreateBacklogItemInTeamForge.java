@@ -64,8 +64,8 @@ public class TestScrumWorksCreateBacklogItemInTeamForge extends TFSWPIntegration
 				pbiInScrumWorks.getKey(),
 				Sprint.SPRINT_1_AUTOMATED_TEAM.getTeam(), 
 				Sprint.SPRINT_1_AUTOMATED_TEAM.getName(), 
-//				Sprint.SPRINT_1_AUTOMATED_TEAM.getStartDate(), 
-//				Sprint.SPRINT_1_AUTOMATED_TEAM.getEndDate(),
+				Sprint.SPRINT_1_AUTOMATED_TEAM.getStartDate(), 
+				Sprint.SPRINT_1_AUTOMATED_TEAM.getEndDate(),
 				null), 
 				getTeamForgeTester().getFieldValues(artifactId, 
 						TeamForgeTester.FIELD_BENEFIT, 
@@ -74,8 +74,8 @@ public class TestScrumWorksCreateBacklogItemInTeamForge extends TFSWPIntegration
 						TeamForgeTester.FIELD_KEY, 
 						TeamForgeTester.FIELD_TEAM, 
 						TeamForgeTester.FIELD_SPRINT_NAME, 
-//						TeamForgeTester.FIELD_SPRINT_START, 
-//						TeamForgeTester.FIELD_SPRINT_END, 
+						TeamForgeTester.FIELD_SPRINT_START, 
+						TeamForgeTester.FIELD_SPRINT_END, 
 						TeamForgeTester.FIELD_THEME));
 		
 //		assertEquals(Arrays.asList(benefit, penalty, effort, pbiInScrumWorks.getKey(), theme1, theme2), 

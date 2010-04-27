@@ -4,7 +4,10 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.rmi.RemoteException;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Properties;
 
@@ -497,7 +500,13 @@ public class TeamForgeTester {
 				// add matching field names
 				for (int j = 0; j < names.length; j++) {
 					if (names[j].equals(fieldNames[i])) {
-						matchingValues.add((String) values[j]);
+						if (fieldNames[i].equals(TeamForgeTester.FIELD_SPRINT_START) || fieldNames[i].equals(TeamForgeTester.FIELD_SPRINT_END)) {
+							GregorianCalendar dateFromServer = (GregorianCalendar) values[j]; 
+							DateFormat dataFormatter = new SimpleDateFormat("M/dd/yyyy");
+							matchingValues.add(dataFormatter.format(dateFromServer.getTime())); 
+						} else {
+							matchingValues.add((String) values[j]);
+						}
 						break; 
 					}
 				}
