@@ -3,8 +3,7 @@
  */
 package com.collabnet.ccf.integration.tfswp;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.*;
 
 import java.util.List;
 
@@ -12,8 +11,6 @@ import org.junit.Test;
 
 import com.collabnet.teamforge.api.FieldValues;
 import com.collabnet.teamforge.api.tracker.ArtifactDO;
-import com.danube.scrumworks.api.client.types.BacklogItemWSO;
-import com.danube.scrumworks.api.client.types.TaskWSO;
 import com.danube.scrumworks.api2.client.BacklogItem;
 import com.danube.scrumworks.api2.client.Task;
 
@@ -99,7 +96,7 @@ public class TestTeamForgeMoveTaskInScrumWorks extends TFSWPIntegrationTest {
 		
 		// first SWP PBI should not have any children any more
 		tasksSWP = getSWPTester().getSWPEndpoint().getTasks(firstSWPPBI.getId());
-		assertNull(tasksSWP);
+		assertTrue(tasksSWP.isEmpty());
 		
 		// second SWP PBI should have one child now
 		tasksSWP = getSWPTester().getSWPEndpoint().getTasks(secondSWPPBI.getId());
