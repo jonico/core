@@ -222,7 +222,7 @@ public class TeamForgeTester {
 		return backlogItemDescription;
 	}
 
-	public ArtifactDO createTask(String title, String description, String status,
+	public ArtifactDO createTaskAndPBI(String title, String description, String status,
 			String assignedUsername, int remainingEffort, int originalEstimate)
 			throws RemoteException, PlanningFolderRuleViolationException {
 		FieldValues flexFields = new FieldValues();

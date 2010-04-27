@@ -40,7 +40,7 @@ public class TestTeamForgeMoveTaskInScrumWorks extends TFSWPIntegrationTest {
 		int originalEstimate = 0;
 		String assignedToUser = getTeamForgeTester().getUserName();
 
-		ArtifactDO taskTF = getTeamForgeTester().createTask(title, description,
+		ArtifactDO taskTF = getTeamForgeTester().createTaskAndPBI(title, description,
 				status, assignedToUser, remainingEffort, originalEstimate);
 
 		// verify
@@ -54,7 +54,7 @@ public class TestTeamForgeMoveTaskInScrumWorks extends TFSWPIntegrationTest {
 				status, assignedToUser, remainingEffort, originalEstimate);
 
 		List<Task> tasksSWP = null;
-		tasksSWP = getSWPTester().waitForTaskToAppear(firstSWPPBI, title, 1); 
+		tasksSWP = getSWPTester().waitForTaskToAppear(firstSWPPBI, title, 1, null); 
 
 		assertEquals(1, tasksSWP.size());
 		Task taskSWP = tasksSWP.get(0);
@@ -88,7 +88,7 @@ public class TestTeamForgeMoveTaskInScrumWorks extends TFSWPIntegrationTest {
 		
 		
 		// wait for title change to show up
-		taskSWP = getSWPTester().waitForTaskToAppear(secondSWPPBI, newTitle, 1).get(0); 
+		taskSWP = getSWPTester().waitForTaskToAppear(secondSWPPBI, newTitle, 1, null).get(0); 
 		assertEquals(newTitle, taskSWP.getName());
 		
 		// check whether move operation took place

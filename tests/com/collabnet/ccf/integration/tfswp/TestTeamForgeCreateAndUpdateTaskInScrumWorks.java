@@ -41,7 +41,7 @@ public class TestTeamForgeCreateAndUpdateTaskInScrumWorks extends TFSWPIntegrati
 		int originalEstimate = 0;
 		String assignedToUser = getTeamForgeTester().getUserName();
 
-		String taskId = getTeamForgeTester().createTask(title, description,
+		String taskId = getTeamForgeTester().createTaskAndPBI(title, description,
 				status, assignedToUser, remainingEffort, originalEstimate).getId();
 
 		// verify
@@ -54,7 +54,7 @@ public class TestTeamForgeCreateAndUpdateTaskInScrumWorks extends TFSWPIntegrati
 		getTeamForgeTester().updateTask(taskId, title, description,
 				status, assignedToUser, remainingEffort, originalEstimate);
 
-		List<Task> tasks = getSWPTester().waitForTaskToAppear(pbi, title, 1);
+		List<Task> tasks = getSWPTester().waitForTaskToAppear(pbi, title, 1, null);
 		Task task = tasks.get(0);
 
 		assertEquals(1, tasks.size());
@@ -78,7 +78,7 @@ public class TestTeamForgeCreateAndUpdateTaskInScrumWorks extends TFSWPIntegrati
 				newStatus, newAssignedToUser, newRemainingEffort, newOriginalEstimate);
 
 		// now we have to wait for the update to come through
-		List<Task> tasksFromScrumWorks = getSWPTester().waitForTaskToAppear(pbi, newTitle, 1);
+		List<Task> tasksFromScrumWorks = getSWPTester().waitForTaskToAppear(pbi, newTitle, 1, null);
 		task = tasksFromScrumWorks.get(0); 
 
 		assertEquals(newTitle, task.getName());
@@ -102,7 +102,7 @@ public class TestTeamForgeCreateAndUpdateTaskInScrumWorks extends TFSWPIntegrati
 				yetAnotherStatus, yetAnotherUser, zeroEffort, newOriginalEstimate);
 		
 		// now we have to wait for the update to come through
-		tasksFromScrumWorks = getSWPTester().waitForTaskToAppear(pbi, yetAnotherTitle, 1);
+		tasksFromScrumWorks = getSWPTester().waitForTaskToAppear(pbi, yetAnotherTitle, 1, null);
 		task = tasksFromScrumWorks.get(0); 
 
 		assertEquals(yetAnotherTitle, task.getName());
