@@ -6,7 +6,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.collabnet.teamforge.api.tracker.ArtifactRow;
-import com.danube.scrumworks.api.client.types.BacklogItemWSO;
 import com.danube.scrumworks.api2.client.BacklogItem;
 
 /**
