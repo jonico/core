@@ -331,7 +331,12 @@ public class SWPHandler {
 		}
 
 		if (completedDate != null && completedDate.getFieldValueHasChanged()) {
-			pbi.setCompletedDate(calendarConverter.newXMLGregorianCalendar((GregorianCalendar)completedDate.getFieldValue()));
+			GregorianCalendar completedDateFieldValue = (GregorianCalendar) completedDate.getFieldValue();
+			if (completedDateFieldValue == null) {
+				pbi.setCompletedDate(null);
+			} else {
+				pbi.setCompletedDate(calendarConverter.newXMLGregorianCalendar(completedDateFieldValue));
+			}
 		}
 
 		if (description != null && description.getFieldValueHasChanged()) {
@@ -638,7 +643,12 @@ public class SWPHandler {
 		}
 
 		if (completedDate != null) {
-			pbi.setCompletedDate(calendarConverter.newXMLGregorianCalendar((GregorianCalendar) completedDate.getFieldValue()));
+			GregorianCalendar completedDateFieldValue = (GregorianCalendar) completedDate.getFieldValue();
+			if (completedDateFieldValue == null) {
+				pbi.setCompletedDate(null);
+			} else {
+				pbi.setCompletedDate(calendarConverter.newXMLGregorianCalendar(completedDateFieldValue));
+			}
 		}
 
 		if (description != null) {
