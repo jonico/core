@@ -1,25 +1,22 @@
 package com.collabnet.ccf.integration.tfswp;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 
 import java.rmi.RemoteException;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
-import java.util.List;
+
+import javax.xml.datatype.DatatypeFactory;
+import javax.xml.datatype.XMLGregorianCalendar;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.collabnet.teamforge.api.FieldValues;
 import com.collabnet.teamforge.api.planning.PlanningFolderDO;
-import com.collabnet.teamforge.api.planning.PlanningFolderList;
 import com.collabnet.teamforge.api.planning.PlanningFolderRow;
-import com.collabnet.teamforge.api.tracker.ArtifactDO;
-import com.danube.scrumworks.api.client.types.BacklogItemWSO;
-import com.danube.scrumworks.api.client.types.ProductWSO;
-import com.danube.scrumworks.api.client.types.ReleaseWSO;
-import com.danube.scrumworks.api.client.types.ServerException;
 import com.danube.scrumworks.api2.client.Product;
 import com.danube.scrumworks.api2.client.Release;
 import com.danube.scrumworks.api2.client.ScrumWorksException;
@@ -71,13 +68,15 @@ public class TestScrumWorksCreateAndUpdateReleaseInTeamForge extends TFSWPIntegr
 		// use random title with system millis inside to identify
 		String releaseTitle = "Release" + System.currentTimeMillis();
 		String releaseDescription = "Release automatically created by a unit test";
-		Calendar releaseDate = null;
-		Calendar startDate = null;
-		swpRelease = new Release(); 
+		XMLGregorianCalendar releaseDate = null;
+		XMLGregorianCalendar startDate = null;
+		swpRelease = new Release();
 		swpRelease.setArchived(false); 
 		swpRelease.setName(releaseTitle); 
 		swpRelease.setDescription(releaseDescription);
-		swpRelease.setProductId(swpProduct.getId()); 
+		swpRelease.setProductId(swpProduct.getId());
+		swpRelease.setStartDate(startDate); 
+		swpRelease.setEndDate(releaseDate); 
 //		swpRelease = new Release(false, releaseDescription, null, swpProduct.getId(), null, releaseDate ,startDate, releaseTitle); //TODO fix after SWP API is updated
 		swpRelease = getSWPTester().getSWPEndpoint().createRelease(swpRelease);
 		
@@ -101,14 +100,16 @@ public class TestScrumWorksCreateAndUpdateReleaseInTeamForge extends TFSWPIntegr
 		String newReleaseTitle = "RenamedRelease" + System.currentTimeMillis();
 		String newReleaseDescription = "Renamed Release automatically created by a unit test";
 		Calendar today = new GregorianCalendar();
-		Calendar newStartDate = new GregorianCalendar(today.get(Calendar.YEAR), today.get(Calendar.MONTH) ,today.get(Calendar.DAY_OF_MONTH));
-		Calendar newReleaseDate = (Calendar) newStartDate.clone(); 
+		GregorianCalendar newStartDate = new GregorianCalendar(today.get(Calendar.YEAR), today.get(Calendar.MONTH) ,today.get(Calendar.DAY_OF_MONTH));
+		GregorianCalendar newReleaseDate = (GregorianCalendar) newStartDate.clone(); 
 		newReleaseDate.add(Calendar.DAY_OF_MONTH, 1);
+		XMLGregorianCalendar xmlNewStartDate = DatatypeFactory.newInstance().newXMLGregorianCalendar(newStartDate); 
+		XMLGregorianCalendar xmlNewReleaseDate = DatatypeFactory.newInstance().newXMLGregorianCalendar(newReleaseDate);  
 		
 		swpRelease.setName(newReleaseTitle);
 		swpRelease.setDescription(newReleaseDescription);
-//		swpRelease.setStartDate(newStartDate); // TODO: figure out later
-//		swpRelease.setReleaseDate(newReleaseDate);
+		swpRelease.setStartDate(xmlNewStartDate); 
+		swpRelease.setEndDate(xmlNewReleaseDate);
 		swpRelease = getSWPTester().getSWPEndpoint().updateRelease(swpRelease);
 		
 		// now we have to wait until the change went through
@@ -116,7 +117,7 @@ public class TestScrumWorksCreateAndUpdateReleaseInTeamForge extends TFSWPIntegr
 		
 		assertEquals(newReleaseTitle, updatedTFRelease.getTitle());
 		assertEquals(newReleaseDescription, updatedTFRelease.getDescription());
-//		assertEquals(newStartDate.getTime(), updatedTFRelease.getStartDate());
-//		assertEquals(newReleaseDate.getTime(), updatedTFRelease.getEndDate());
+		assertEquals(newStartDate.getTime(), updatedTFRelease.getStartDate());
+		assertEquals(newReleaseDate.getTime(), updatedTFRelease.getEndDate());
 	}
 }
