@@ -4,6 +4,8 @@ import java.rmi.RemoteException;
 import java.util.Date;
 import java.util.List;
 
+import javax.xml.datatype.DatatypeConfigurationException;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dom4j.Document;
@@ -46,6 +48,8 @@ public class SWPWriter extends AbstractWriter<Connection> implements
 	private String serverUrl;
 	private String resyncUserName;
 	private String resyncPassword;
+	
+	private SWPHandler swpHandler;
 
 	@Override
 	public Document createArtifact(Document gaDocument) {
@@ -77,9 +81,8 @@ public class SWPWriter extends AbstractWriter<Connection> implements
 
 		Connection connection = connect(ga);
 		try {
-			SWPHandler swpHandler = new SWPHandler(connection);
 			if (swpType.equals(SWPType.TASK)) {
-				Task result = createTask(ga, swpProductName, swpHandler);
+				Task result = createTask(ga, swpProductName, connection);
 				ga.setTargetArtifactId(result.getId().toString());
 				ga.setTargetArtifactVersion("-1");
 				ga.setTargetArtifactLastModifiedDate(GenericArtifactHelper.df
@@ -87,7 +90,7 @@ public class SWPWriter extends AbstractWriter<Connection> implements
 				log.info("Created task " + result.getId() + " of PBI "+ result.getBacklogItemId() + " with data from " + ga.getSourceArtifactId());
 			} else if (swpType.equals(SWPType.PBI)) {
 				BacklogItem result = createPBI(ga, swpProductName,
-						swpHandler);
+						connection);
 				ga.setTargetArtifactId(result.getId().toString());
 				ga.setTargetArtifactVersion("-1");
 				ga.setTargetArtifactLastModifiedDate(GenericArtifactHelper.df
@@ -121,7 +124,7 @@ public class SWPWriter extends AbstractWriter<Connection> implements
 	 * @throws ScrumWorksException 
 	 */
 	private BacklogItem createPBI(GenericArtifact ga, String swpProductName,
-			SWPHandler swpHandler) throws RemoteException, ScrumWorksException {
+			Connection connection) throws RemoteException, ScrumWorksException {
 		// TODO should we allow to set the active property?
 		GenericArtifactField active = GenericArtifactHelper
 				.getMandatoryGAField(PBIFields.active.getFieldName(), ga);
@@ -140,7 +143,7 @@ public class SWPWriter extends AbstractWriter<Connection> implements
 				PBIFields.title.getFieldName(), ga);
 		List<GenericArtifactField> themes = ga.getAllGenericArtifactFieldsWithSameFieldName(PBIFields.theme.getFieldName());
 		
-		return swpHandler.createPBI(active, benefit, completedDate,
+		return swpHandler.createPBI(connection.getEndpoint(), active, benefit, completedDate,
 				description, estimate, penalty, title, themes, swpProductName, ga);
 	}
 
@@ -155,7 +158,7 @@ public class SWPWriter extends AbstractWriter<Connection> implements
 	 * @throws ScrumWorksException 
 	 */
 	private Task createTask(GenericArtifact ga, String swpProductName,
-			SWPHandler swpHandler) throws RemoteException, ScrumWorksException {
+			Connection connection) throws RemoteException, ScrumWorksException {
 		GenericArtifactField description = GenericArtifactHelper
 				.getMandatoryGAField(TaskFields.description.getFieldName(), ga);
 		GenericArtifactField estimatedHours = GenericArtifactHelper
@@ -173,7 +176,7 @@ public class SWPWriter extends AbstractWriter<Connection> implements
 		// ga);
 		GenericArtifactField title = GenericArtifactHelper.getMandatoryGAField(
 				TaskFields.title.getFieldName(), ga);
-		return swpHandler.createTask(description, estimatedHours, originalEstimate, pointPerson,
+		return swpHandler.createTask(connection.getEndpoint(), description, estimatedHours, originalEstimate, pointPerson,
 				status, title, swpProductName, ga);
 	}
 
@@ -263,9 +266,8 @@ public class SWPWriter extends AbstractWriter<Connection> implements
 
 		Connection connection = connect(ga);
 		try {
-			SWPHandler swpHandler = new SWPHandler(connection);
 			if (swpType.equals(SWPType.TASK)) {
-				Task result = updateTask(ga, swpProductName, swpHandler);
+				Task result = updateTask(ga, swpProductName, connection);
 				// TODO Use result to update ga once we have global revision
 				// numbers
 				ga.setTargetArtifactVersion("-1");
@@ -274,7 +276,7 @@ public class SWPWriter extends AbstractWriter<Connection> implements
 				log.info("Updated task " + result.getId() + " of PBI "+ result.getBacklogItemId() + " with data from " + ga.getSourceArtifactId());
 			} else if (swpType.equals(SWPType.PBI)) {
 				BacklogItem result = updatePBI(ga, swpProductName,
-						swpHandler);
+						connection);
 				ga.setTargetArtifactVersion("-1");
 				ga.setTargetArtifactLastModifiedDate(GenericArtifactHelper.df
 						.format(new Date(0)));
@@ -313,7 +315,7 @@ public class SWPWriter extends AbstractWriter<Connection> implements
 	 * @throws ScrumWorksException 
 	 */
 	private BacklogItem updatePBI(GenericArtifact ga, String swpProductName,
-			SWPHandler swpHandler) throws
+			Connection connection) throws
 			NumberFormatException, RemoteException, ScrumWorksException {
 		// TODO should we allow to set the active property?
 		GenericArtifactField active = GenericArtifactHelper
@@ -334,7 +336,7 @@ public class SWPWriter extends AbstractWriter<Connection> implements
 		
 		List<GenericArtifactField> themes = ga.getAllGenericArtifactFieldsWithSameFieldName(PBIFields.theme.getFieldName());
 		
-		return swpHandler.updatePBI(active, benefit, completedDate,
+		return swpHandler.updatePBI(connection.getEndpoint(), active, benefit, completedDate,
 				description, estimate, penalty, title, themes, swpProductName, ga);
 	}
 
@@ -350,7 +352,7 @@ public class SWPWriter extends AbstractWriter<Connection> implements
 	 * @throws ScrumWorksException 
 	 */
 	private Task updateTask(GenericArtifact ga, String swpProductName,
-			SWPHandler swpHandler) throws
+			Connection connection) throws
 			NumberFormatException, RemoteException, ScrumWorksException {
 		GenericArtifactField description = GenericArtifactHelper
 				.getMandatoryGAField(TaskFields.description.getFieldName(), ga);
@@ -369,7 +371,7 @@ public class SWPWriter extends AbstractWriter<Connection> implements
 		// ga);
 		GenericArtifactField title = GenericArtifactHelper.getMandatoryGAField(
 				TaskFields.title.getFieldName(), ga);
-		return swpHandler.updateTask(description, estimatedHours, originalEstimate, pointPerson,
+		return swpHandler.updateTask(connection.getEndpoint(), description, estimatedHours, originalEstimate, pointPerson,
 				status, title, ga);
 	}
 
@@ -617,6 +619,14 @@ public class SWPWriter extends AbstractWriter<Connection> implements
 			log.error("serverUrl-property not set");
 			exceptions.add(new ValidationException(
 					"serverUrl-property not set", this));
+		}
+		
+		try {
+			swpHandler = new SWPHandler();
+		} catch (DatatypeConfigurationException e) {
+			log.error("Could not initialize SWPHandler");
+			exceptions.add(new ValidationException(
+					"Could not initialize SWPHandler", this));
 		}
 	}
 

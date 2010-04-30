@@ -5,6 +5,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import javax.xml.datatype.DatatypeConfigurationException;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -34,6 +36,7 @@ public class SWPReader extends AbstractReader<Connection> {
 	private String password;
 	private String serverUrl;
 	private String resyncUserName;
+	private SWPHandler swpHandler = null;
 
 	private static final Log log = LogFactory.getLog(SWPReader.class);
 
@@ -50,16 +53,19 @@ public class SWPReader extends AbstractReader<Connection> {
 		String sourceSystemKind = this.getSourceSystemKind(syncInfo);
 		String sourceRepositoryId = this.getSourceRepositoryId(syncInfo);
 		String sourceRepositoryKind = this.getSourceRepositoryKind(syncInfo);
-		
+
 		// find out what to extract
-		SWPType swpType = SWPMetaData.retrieveSWPTypeFromRepositoryId(sourceRepositoryId);
-		String swpProductName = SWPMetaData.retrieveProductFromRepositoryId(sourceRepositoryId);
-		if (swpType.equals(SWPMetaData.SWPType.UNKNOWN) || swpProductName == null) {
+		SWPType swpType = SWPMetaData
+				.retrieveSWPTypeFromRepositoryId(sourceRepositoryId);
+		String swpProductName = SWPMetaData
+				.retrieveProductFromRepositoryId(sourceRepositoryId);
+		if (swpType.equals(SWPMetaData.SWPType.UNKNOWN)
+				|| swpProductName == null) {
 			String cause = "Invalid repository format: " + sourceRepositoryId;
 			log.error(cause);
 			throw new CCFRuntimeException(cause);
 		}
-		
+
 		GenericArtifact genericArtifact = new GenericArtifact();
 		Connection connection;
 		try {
@@ -78,28 +84,34 @@ public class SWPReader extends AbstractReader<Connection> {
 			log.error(cause, e);
 			throw new CCFRuntimeException(cause, e);
 		}
-		
+
 		try {
-			SWPHandler swpHandler = new SWPHandler(connection);
 			/**
 			 * Create a new generic artifact data structure
 			 */
-			genericArtifact.setSourceArtifactVersion("-1");
-			genericArtifact.setSourceArtifactLastModifiedDate(GenericArtifactHelper.df.format(new Date(0)));
+			//genericArtifact.setSourceArtifactVersion("-1");
+			//genericArtifact
+			//		.setSourceArtifactLastModifiedDate(GenericArtifactHelper.df
+			//				.format(new Date(0)));
 			genericArtifact.setArtifactMode(ArtifactModeValue.COMPLETE);
 			genericArtifact.setArtifactType(ArtifactTypeValue.PLAINARTIFACT);
 			genericArtifact.setSourceArtifactId(artifactId);
-			
+
 			if (swpType.equals(SWPMetaData.SWPType.TASK)) {
-				swpHandler.retrieveTask(artifactId, swpProductName, genericArtifact);
+				swpHandler.retrieveTask(connection.getEndpoint(), artifactId, swpProductName,
+						genericArtifact);
 			} else if (swpType.equals(SWPMetaData.SWPType.PBI)) {
-				swpHandler.retrievePBI(artifactId, swpProductName, genericArtifact);
+				swpHandler.retrievePBI(connection.getEndpoint(), artifactId, swpProductName,
+						genericArtifact);
 			} else if (swpType.equals(SWPMetaData.SWPType.PRODUCT)) {
-				swpHandler.retrieveProduct(artifactId, swpProductName, genericArtifact);
+				swpHandler.retrieveProduct(connection.getEndpoint(), artifactId, swpProductName,
+						genericArtifact);
 			} else if (swpType.equals(SWPMetaData.SWPType.RELEASE)) {
-				swpHandler.retrieveProductRelease(artifactId, swpProductName, genericArtifact);
+				swpHandler.retrieveRelease(connection.getEndpoint(), artifactId, swpProductName,
+						genericArtifact);
 			} else {
-				String cause = "Unsupported repository format: " + sourceRepositoryId;
+				String cause = "Unsupported repository format: "
+						+ sourceRepositoryId;
 				log.error(cause);
 				throw new CCFRuntimeException(cause);
 			}
@@ -145,7 +157,7 @@ public class SWPReader extends AbstractReader<Connection> {
 		String targetRepositoryKind = this.getTargetRepositoryKind(syncInfo);
 		String targetSystemId = this.getTargetSystemId(syncInfo);
 		String targetSystemKind = this.getTargetSystemKind(syncInfo);
-		
+
 		ga.setSourceArtifactId(sourceArtifactId);
 		ga.setSourceRepositoryId(sourceRepositoryId);
 		ga.setSourceRepositoryKind(sourceRepositoryKind);
@@ -172,16 +184,36 @@ public class SWPReader extends AbstractReader<Connection> {
 		String sourceSystemKind = this.getSourceSystemKind(syncInfo);
 		String sourceRepositoryId = this.getSourceRepositoryId(syncInfo);
 		String sourceRepositoryKind = this.getSourceRepositoryKind(syncInfo);
-		
+		String lastSynchronizedVersion = this.getLastSourceVersion(syncInfo);
+		long majorVersion = 0;
+		long minorVersion = 0;
+		try {
+			majorVersion = Long.parseLong(lastSynchronizedVersion);
+			/* 
+			 * The minor version determines the last artifact that has been transported within a single SWP revision
+			 * The first artifact will have minor version 2, the second version 4, ... and the last one will have
+			 * (number of artifacts in revision) * 2 + 1 to indicate that this is the last one 
+			 */
+			minorVersion = majorVersion % SWPHandler.SWP_REVISION_FACTOR;
+			// normalize major revision number
+			majorVersion /= SWPHandler.SWP_REVISION_FACTOR;
+		} catch (NumberFormatException e) {
+			log.warn("Version string is not a number "
+					+ lastSynchronizedVersion, e);
+		}
+
 		// find out what to extract
-		SWPType swpType = SWPMetaData.retrieveSWPTypeFromRepositoryId(sourceRepositoryId);
-		String swpProductName = SWPMetaData.retrieveProductFromRepositoryId(sourceRepositoryId);
-		if (swpType.equals(SWPMetaData.SWPType.UNKNOWN) || swpProductName == null) {
+		SWPType swpType = SWPMetaData
+				.retrieveSWPTypeFromRepositoryId(sourceRepositoryId);
+		String swpProductName = SWPMetaData
+				.retrieveProductFromRepositoryId(sourceRepositoryId);
+		if (swpType.equals(SWPMetaData.SWPType.UNKNOWN)
+				|| swpProductName == null) {
 			String cause = "Invalid repository format: " + sourceRepositoryId;
 			log.error(cause);
 			throw new CCFRuntimeException(cause);
 		}
-		
+
 		Connection connection;
 		try {
 			connection = connect(sourceSystemId, sourceSystemKind,
@@ -199,21 +231,24 @@ public class SWPReader extends AbstractReader<Connection> {
 			log.error(cause, e);
 			throw new CCFRuntimeException(cause, e);
 		}
-		
 
 		ArrayList<ArtifactState> artifactStates = new ArrayList<ArtifactState>();
 		try {
-			SWPHandler swpHandler = new SWPHandler(connection);
 			if (swpType.equals(SWPType.TASK)) {
-				swpHandler.getChangedTasks(swpProductName, artifactStates);
+				swpHandler.getChangedTasks(connection.getEndpoint(), swpProductName, artifactStates,
+						majorVersion, minorVersion, getUsername());
 			} else if (swpType.equals(SWPType.PBI)) {
-				swpHandler.getChangedPBIs(swpProductName, artifactStates);
+				swpHandler.getChangedPBIs(connection.getEndpoint(), swpProductName, artifactStates,
+						majorVersion, minorVersion, getUsername());
 			} else if (swpType.equals(SWPType.PRODUCT)) {
-				swpHandler.getChangedProducts(swpProductName, artifactStates);
+				swpHandler.getChangedProducts(connection.getEndpoint(), swpProductName, artifactStates,
+						majorVersion, minorVersion, getUsername());
 			} else if (swpType.equals(SWPType.RELEASE)) {
-				swpHandler.getChangedProductReleases(swpProductName, artifactStates);
+				swpHandler.getChangedReleases(connection.getEndpoint(), swpProductName,
+						artifactStates, majorVersion, minorVersion, getUsername());
 			} else {
-				String cause = "Unsupported repository format: " + sourceRepositoryId;
+				String cause = "Unsupported repository format: "
+						+ sourceRepositoryId;
 				log.error(cause);
 				throw new CCFRuntimeException(cause);
 			}
@@ -227,9 +262,9 @@ public class SWPReader extends AbstractReader<Connection> {
 		return artifactStates;
 	}
 
-
 	/**
 	 * Sets user name for SWP connector user
+	 * 
 	 * @param userName
 	 */
 	public void setUserName(String userName) {
@@ -238,6 +273,7 @@ public class SWPReader extends AbstractReader<Connection> {
 
 	/**
 	 * Sets password for SWP connector user
+	 * 
 	 * @param password
 	 */
 	public void setPassword(String password) {
@@ -246,6 +282,7 @@ public class SWPReader extends AbstractReader<Connection> {
 
 	/**
 	 * Returns user name for SWP connector user
+	 * 
 	 * @return
 	 */
 	public String getUsername() {
@@ -254,6 +291,7 @@ public class SWPReader extends AbstractReader<Connection> {
 
 	/**
 	 * Returns password for SWP connector user
+	 * 
 	 * @return
 	 */
 	public String getPassword() {
@@ -262,6 +300,7 @@ public class SWPReader extends AbstractReader<Connection> {
 
 	/**
 	 * Sets URL for SWP server
+	 * 
 	 * @param serverUrl
 	 */
 	public void setServerUrl(String serverUrl) {
@@ -270,6 +309,7 @@ public class SWPReader extends AbstractReader<Connection> {
 
 	/**
 	 * Returns URL for SWP server
+	 * 
 	 * @return
 	 */
 	public String getServerUrl() {
@@ -278,12 +318,13 @@ public class SWPReader extends AbstractReader<Connection> {
 
 	/**
 	 * Sets user name of SWP resync user
+	 * 
 	 * @param resyncUserName
 	 */
 	public void setResyncUserName(String resyncUserName) {
 		this.resyncUserName = resyncUserName;
 	}
-	
+
 	@Override
 	public boolean handleException(Throwable cause,
 			ConnectionManager<Connection> connectionManager) {
@@ -304,9 +345,10 @@ public class SWPReader extends AbstractReader<Connection> {
 		}
 		return false;
 	}
-	
+
 	/**
 	 * Gets the user name of the SWP resync user
+	 * 
 	 * @return
 	 */
 	public String getResyncUserName() {
@@ -348,7 +390,7 @@ public class SWPReader extends AbstractReader<Connection> {
 						credentialInfo);
 		return connection;
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	@Override
 	public void validate(List exceptions) {
@@ -370,6 +412,13 @@ public class SWPReader extends AbstractReader<Connection> {
 		if (getPassword() == null) {
 			exceptions.add(new ValidationException("password-property not set",
 					this));
+		}
+		try {
+			swpHandler = new SWPHandler();
+		} catch (DatatypeConfigurationException e) {
+			log.error("Could not initialize SWPHandler");
+			exceptions.add(new ValidationException(
+					"Could not initialize SWPHandler", this));
 		}
 	}
 }
