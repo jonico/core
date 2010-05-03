@@ -1552,6 +1552,8 @@ public class SWPHandler {
 		}
 		genericArtifact.setSourceArtifactLastModifiedDate(GenericArtifactHelper.df
 				.format(artifactLastModifiedDate));
+		
+		genericArtifact.setDepParentSourceArtifactId(GenericArtifact.VALUE_NONE);
 	}
 
 	/**
@@ -1597,7 +1599,7 @@ public class SWPHandler {
 		// set parent artifact (Product)
 		Product product = endpoint.getProductByName(swpProductName);
 		ga.setDepParentSourceArtifactId(product.getId().toString());
-		ga.setDepParentSourceRepositoryId(product
+		ga.setDepParentSourceRepositoryId(swpProductName
 				+ SWPMetaData.REPOSITORY_ID_SEPARATOR + SWPMetaData.PRODUCT);
 		
 		ga.setSourceArtifactVersion(Long.toString(artificialVersionNumber));
