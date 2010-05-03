@@ -448,6 +448,7 @@ public class SWPHandler {
 					}
 				}
 				processedMinorVersion -= 2;
+				alreadyProcessedArtifacts.add(artifact.getId());
 			}
 		}
 	}
@@ -590,6 +591,7 @@ public class SWPHandler {
 					}
 				}
 				processedMinorVersion -= 2;
+				alreadyProcessedArtifacts.add(artifact.getId());
 			}
 		}
 	}
@@ -1359,6 +1361,7 @@ public class SWPHandler {
 					}
 				}
 				processedMinorVersion -= 2;
+				alreadyProcessedArtifacts.add(artifact.getId());
 			}
 		}
 	}
@@ -1500,6 +1503,7 @@ public class SWPHandler {
 					}
 				}
 				processedMinorVersion -= 2;
+				alreadyProcessedArtifacts.add(artifact.getId());
 			}
 		}
 	}
