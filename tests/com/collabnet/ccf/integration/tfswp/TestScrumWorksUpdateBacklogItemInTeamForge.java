@@ -4,7 +4,11 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 import java.util.List;
+
+import javax.xml.datatype.DatatypeFactory;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -68,7 +72,10 @@ public class TestScrumWorksUpdateBacklogItemInTeamForge extends TFSWPIntegration
 		backlogItem.setRank(scrumWorksBacklogItem.getRank()); 
 		backlogItem.setReleaseId(getSWPTester().getReleaseId(release));
 		backlogItem.setSprintId(getSWPTester().getSprintId(sprint.getName())); 
-		backlogItem.setName(title); 
+		backlogItem.setName(title);
+		Calendar today = new GregorianCalendar();
+		GregorianCalendar doneDate = new GregorianCalendar(today.get(Calendar.YEAR), today.get(Calendar.MONTH), today.get(Calendar.DAY_OF_MONTH)); 
+		backlogItem.setCompletedDate(DatatypeFactory.newInstance().newXMLGregorianCalendar(doneDate));
 		List<Theme> themes = backlogItem.getThemes(); 
 		backlogItem.getThemes().remove(themes); 
 		backlogItem.getThemes().addAll(getSWPTester().transformToThemeWSO(theme1, theme2)); 
@@ -81,7 +88,7 @@ public class TestScrumWorksUpdateBacklogItemInTeamForge extends TFSWPIntegration
 		assertEquals(description, teamForgePbi.getDescription());
 		assertEquals(getTeamForgeTester().getPlanningFolderId(release), teamForgePbi.getPlanningFolderId()); 
 		
-		assertEquals(TeamForgeTester.STATUS_OPEN, teamForgePbi.getStatus());
+		assertEquals(TeamForgeTester.STATUS_DONE, teamForgePbi.getStatus());
 		assertEquals("", teamForgePbi.getCategory()); 
 		assertEquals(0, teamForgePbi.getPriority()); 
 		assertEquals(TeamForgeTester.NONE, teamForgePbi.getAssignedToFullname()); 

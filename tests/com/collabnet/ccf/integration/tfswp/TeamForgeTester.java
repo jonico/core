@@ -36,6 +36,9 @@ public class TeamForgeTester {
 	/** Status for open backlog items. */
 	public static final String STATUS_OPEN = "Open";
 
+	/** Status for done backlog items. */ 
+	public static final String STATUS_DONE = "Done";
+
 	/** User for None */ 
 	public static final String NONE = "No user";
 	
