@@ -128,10 +128,10 @@ public class TFTrackerHandler {
 		Filter[] filter = { new Filter("modifiedAfter", Filter.DATE_FORMAT
 				.format(lastModifiedDate)) };
 		ArtifactDetailRow[] rows = null;
-		rows = connection.getTrackerClient().getArtifactDetailList(
-					trackerId, selectedColumns, filter, sortKeys, 0, -1, false,
-					true).getDataRows();
-			
+		rows = connection.getTrackerClient().getArtifactDetailList(trackerId,
+				selectedColumns, filter, sortKeys, 0, -1, false, true)
+				.getDataRows();
+
 		if (rows != null) {
 			log.debug("There were " + rows.length + " artifacts changed");
 		}
@@ -147,13 +147,27 @@ public class TFTrackerHandler {
 						&& lastArtifactVersion == rows[i].getVersion()) {
 					duplicateFound = true;
 				} else {
-					ArtifactDO artifactData = connection.getTrackerClient()
-							.getArtifactData(id);
-					if (!artifactData.getLastModifiedBy().equals(connectorUser)) {
-						if (duplicateFound) {
-							detailRowsNew.add(artifactData);
+					try {
+						ArtifactDO artifactData = connection.getTrackerClient()
+								.getArtifactData(id);
+						// if the version number has changed again in the mean time ignore the artifact
+						// since it will show up again in the next query
+						if (rows[i].getVersion() == artifactData.getVersion()
+								&& !artifactData.getLastModifiedBy().equals(
+										connectorUser)) {
+							if (duplicateFound) {
+								detailRowsNew.add(artifactData);
+							}
+							detailRowsFull.add(artifactData);
 						}
-						detailRowsFull.add(artifactData);
+					} catch (AxisFault e) {
+						javax.xml.namespace.QName faultCode = e.getFaultCode();
+						if (!faultCode.getLocalPart().equals(
+								"NoSuchObjectFault")) {
+							throw e;
+						}
+						log.info("Artifact + " + id
+								+ " has been deleted in the mean time ...:", e);
 					}
 				}
 			}
@@ -257,8 +271,8 @@ public class TFTrackerHandler {
 				status, // status
 				customer, // customer
 				priority, // priority
-				autosumming?0:estimatedEfforts, // estimated efforts
-				autosumming?0:remainingEfforts, // remaining efforts 
+				autosumming ? 0 : estimatedEfforts, // estimated efforts
+				autosumming ? 0 : remainingEfforts, // remaining efforts
 				autosumming,
 				assignedTo, // assigned user name
 				reportedReleaseId, planningFolderId, flexFields, null, null,
@@ -408,7 +422,7 @@ public class TFTrackerHandler {
 						ga)) {
 					return null;
 				}
-				
+
 				if (deleteOldParentAssociation && !oldParentRemoved) {
 					removeArtifactDependency(connection, currentParentId, Id);
 					oldParentRemoved = true;
@@ -444,10 +458,11 @@ public class TFTrackerHandler {
 				flexFields.setNames(finalFlexFieldNames.toArray(new String[0]));
 				flexFields.setValues(finalFlexFieldValues.toArray());
 				flexFields.setTypes(finalFlexFieldTypes.toArray(new String[0]));
-				
-				// we need this property to determine whether we may update the efforts fields
+
+				// we need this property to determine whether we may update the
+				// efforts fields
 				boolean autoSummingTurnedOn = artifactData.getAutosumming();
-				
+
 				if (autosumming != null
 						&& autosumming.getFieldValueHasChanged()) {
 					Object fieldValueObj = autosumming.getFieldValue();
@@ -461,7 +476,7 @@ public class TFTrackerHandler {
 					autoSummingTurnedOn = fieldValue;
 					artifactData.setAutosumming(fieldValue);
 				}
-				
+
 				// check if we do not support the autosumming flag at all
 				if (!connection.supports53()) {
 					autoSummingTurnedOn = false;
@@ -671,19 +686,19 @@ public class TFTrackerHandler {
 			}
 		}
 
-		
-		// it looks as if since TF 5.3, not every update call automatically increases the version number
+		// it looks as if since TF 5.3, not every update call automatically
+		// increases the version number
 		// hence we retrieve the artifact version here again
 		if (comments.length == 0) {
 			// artifactData.setVersion(artifactData.getVersion() + 1);
-			artifactData = connection.getTrackerClient()
-				.getArtifactData(Id);
+			artifactData = connection.getTrackerClient().getArtifactData(Id);
 		}
-		
+
 		if (associateWithParent) {
-			createArtifactDependency(connection, newParentId, Id, "CCF generated parent-child relationship");
+			createArtifactDependency(connection, newParentId, Id,
+					"CCF generated parent-child relationship");
 		}
-		
+
 		log.info("Artifact updated id: " + artifactData.getId()
 				+ " in tracker " + artifactData.getFolderId());
 		return artifactData;
