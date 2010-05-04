@@ -30,10 +30,10 @@ public class TestScrumWorksUpdateTaskInTeamForge extends TFSWPIntegrationTest {
 		
 		super.setUp();
 		
-		BacklogItem backlogItem = getSWPTester().createBacklogItem(pbiTitle, release); 
+		BacklogItem backlogItem = getSWPTester().createBacklogItem(pbiTitle, release);
+		teamForgeBacklogItem = getTeamForgeTester().waitForBacklogItemsToAppear(1)[0];
 		task = getSWPTester().createTask("taskTitle", null, null, TaskStatus.NOT_STARTED, null, backlogItem.getId()); 
-		
-		teamForgeBacklogItem = getTeamForgeTester().waitForBacklogItemsToAppear(1)[0]; 
+		getTeamForgeTester().waitForTasksToAppear(1); 
 	}
 	
 	/**
