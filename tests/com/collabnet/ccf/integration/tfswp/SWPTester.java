@@ -277,10 +277,6 @@ public class SWPTester {
 			tasks = getSWPEndpoint().getTasks(backlogItem.getId());
 			if (tasks == null || tasks.size() < numberOfTasks
 					|| !tasks.get(0).getName().equals(expectedTaskTitle)) {
-				if (!tasks.isEmpty()) {
-					System.out.println("*"+tasks.get(0).getName()+"*");
-					System.out.println("!"+expectedTaskTitle+"!");
-				}
 				Thread.sleep(ccfRetryInterval);
 			} else {
 				assertEquals(numberOfTasks, tasks.size());
