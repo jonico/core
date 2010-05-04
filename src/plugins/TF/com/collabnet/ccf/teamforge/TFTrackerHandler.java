@@ -166,7 +166,7 @@ public class TFTrackerHandler {
 								"NoSuchObjectFault")) {
 							throw e;
 						}
-						log.info("Artifact + " + id
+						log.info("Artifact " + id
 								+ " has been deleted in the mean time ...:", e);
 					}
 				}
