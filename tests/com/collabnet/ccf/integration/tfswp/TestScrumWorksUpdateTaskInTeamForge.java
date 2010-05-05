@@ -6,8 +6,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.collabnet.teamforge.api.tracker.ArtifactRow;
-import com.danube.scrumworks.api.client.types.BacklogItemWSO;
-import com.danube.scrumworks.api.client.types.TaskWSO;
 import com.danube.scrumworks.api2.client.BacklogItem;
 import com.danube.scrumworks.api2.client.Task;
 
@@ -20,6 +18,7 @@ public class TestScrumWorksUpdateTaskInTeamForge extends TFSWPIntegrationTest {
 	private String release = SWPTester.RELEASE_1;
 	private Task task; 
 	private ArtifactRow teamForgeBacklogItem; 
+	private BacklogItem newBacklogItemForTask; 
 	
 	/**
 	 * Creates a task in ScrumWorks.
@@ -31,9 +30,13 @@ public class TestScrumWorksUpdateTaskInTeamForge extends TFSWPIntegrationTest {
 		super.setUp();
 		
 		BacklogItem backlogItem = getSWPTester().createBacklogItem(pbiTitle, release);
-		teamForgeBacklogItem = getTeamForgeTester().waitForBacklogItemsToAppear(1)[0];
+		getTeamForgeTester().waitForBacklogItemsToAppear(1);
 		task = getSWPTester().createTask("taskTitle", null, null, TaskStatus.NOT_STARTED, null, backlogItem.getId()); 
 		getTeamForgeTester().waitForTasksToAppear(1); 
+		
+		newBacklogItemForTask = getSWPTester().createBacklogItem("newPbiForTask", release); 
+		ArtifactRow[] waitForBacklogItemsToAppear = getTeamForgeTester().waitForBacklogItemsToAppear(2);
+		teamForgeBacklogItem = waitForBacklogItemsToAppear[0]; 
 	}
 	
 	/**
@@ -62,7 +65,7 @@ public class TestScrumWorksUpdateTaskInTeamForge extends TFSWPIntegrationTest {
 //				task.getTaskBoardStatusRank(), 
 //				taskTitle); 
 		Task taskToBeUpdated = new Task(); 
-		taskToBeUpdated.setBacklogItemId(task.getBacklogItemId()); 
+		taskToBeUpdated.setBacklogItemId(newBacklogItemForTask.getId()); 
 		taskToBeUpdated.setDescription(description); 
 		taskToBeUpdated.setCurrentEstimate(Integer.parseInt(currentEstimate)); 
 		taskToBeUpdated.setOriginalEstimate(Integer.parseInt(originalEstimate)); 
@@ -98,7 +101,7 @@ public class TestScrumWorksUpdateTaskInTeamForge extends TFSWPIntegrationTest {
 	 */
 	private ArtifactRow waitForTaskToUpdate(final String taskTitle)throws Exception {
 		ArtifactRow teamForgeTask;
-		for (int i = 0; i < getCcfMaxWaitTime(); i+=getCcfRetryInterval()) {
+		for (int i = 0; i < getCcfMaxWaitTime(); i += getCcfRetryInterval()) {
 			ArtifactRow[] artifacts = getTeamForgeTester().waitForTasksToAppear(1); 
 			teamForgeTask = artifacts[0]; 
 			if (!teamForgeTask.getTitle().equals(taskTitle)) { 
