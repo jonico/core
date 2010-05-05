@@ -564,6 +564,10 @@ public class TeamForgeTester {
 		
 		ArtifactDependencyList parentDependencyList = connection.getTrackerClient().getParentDependencyList(artifactId); 
 		ArtifactDependencyRow[] dataRows = parentDependencyList.getDataRows();
-		return dataRows[0].getOriginId();  
+		if (dataRows.length > 0) {
+			return dataRows[0].getOriginId();  
+		} else {
+			return null; 
+		}
 	}
 }
