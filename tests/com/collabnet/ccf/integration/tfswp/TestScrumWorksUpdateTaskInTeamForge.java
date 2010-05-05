@@ -98,12 +98,10 @@ public class TestScrumWorksUpdateTaskInTeamForge extends TFSWPIntegrationTest {
 	 */
 	private ArtifactRow waitForTaskToUpdate(final String taskTitle)throws Exception {
 		ArtifactRow teamForgeTask;
-		for (int i = 0; i < getCcfMaxWaitTime(); i++) {
+		for (int i = 0; i < getCcfMaxWaitTime(); i+=getCcfRetryInterval()) {
 			ArtifactRow[] artifacts = getTeamForgeTester().waitForTasksToAppear(1); 
 			teamForgeTask = artifacts[0]; 
-			if (!teamForgeTask.getTitle().equals(taskTitle)) {
-				artifacts = getTeamForgeTester().waitForTasksToAppear(1); 
-				teamForgeTask = artifacts[0]; 
+			if (!teamForgeTask.getTitle().equals(taskTitle)) { 
 				Thread.sleep(getCcfRetryInterval()); 
 			} else {
 				return teamForgeTask;  

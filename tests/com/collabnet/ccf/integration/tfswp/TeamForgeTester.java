@@ -16,7 +16,6 @@ import org.apache.commons.lang.Validate;
 import com.collabnet.ce.soap50.webservices.cemain.TrackerFieldSoapDO;
 import com.collabnet.teamforge.api.Connection;
 import com.collabnet.teamforge.api.FieldValues;
-import com.collabnet.teamforge.api.Filter;
 import com.collabnet.teamforge.api.PlanningFolderRuleViolationException;
 import com.collabnet.teamforge.api.planning.PlanningFolderDO;
 import com.collabnet.teamforge.api.planning.PlanningFolderList;
@@ -427,7 +426,7 @@ public class TeamForgeTester {
 		ArtifactList artifactList; 
 		ArtifactRow[] artifactRows; 
 		for (int i = 0; i < ccfMaxWaitTime; i += ccfRetryInterval) {
-			artifactList = connection.getTrackerClient().getArtifactList(artifactTypeId, new Filter[] {});
+			artifactList = connection.getTrackerClient().getArtifactList(artifactTypeId, null);
 			artifactRows = artifactList.getDataRows(); 
 			if (artifactRows.length < numberOfArtifacts) {
 				Thread.sleep(ccfRetryInterval); 
