@@ -26,6 +26,7 @@ public class TestScrumWorksUpdateTaskInTeamForge extends TFSWPIntegrationTest {
 	@Before
 	public void setUp() throws Exception {
 		final String pbiTitle = "pbi";  
+		final String newBacklogItemForTaskTitle = "newPbiForTask";
 		
 		super.setUp();
 		
@@ -34,9 +35,13 @@ public class TestScrumWorksUpdateTaskInTeamForge extends TFSWPIntegrationTest {
 		task = getSWPTester().createTask("taskTitle", null, null, TaskStatus.NOT_STARTED, null, backlogItem.getId()); 
 		getTeamForgeTester().waitForTasksToAppear(1); 
 		
-		newBacklogItemForTask = getSWPTester().createBacklogItem("newPbiForTask", release); 
+		newBacklogItemForTask = getSWPTester().createBacklogItem(newBacklogItemForTaskTitle, release); 
 		ArtifactRow[] waitForBacklogItemsToAppear = getTeamForgeTester().waitForBacklogItemsToAppear(2);
-		teamForgeBacklogItem = waitForBacklogItemsToAppear[0]; 
+		for (int i = 0; i < waitForBacklogItemsToAppear.length; i++) {
+			if (waitForBacklogItemsToAppear[i].getTitle().equals(newBacklogItemForTaskTitle)) {
+				teamForgeBacklogItem = waitForBacklogItemsToAppear[i]; 
+			}
+		}
 	}
 	
 	/**
