@@ -45,7 +45,7 @@ public class TestScrumWorksUpdateTaskInTeamForge extends TFSWPIntegrationTest {
 	public void testUpdateTask() throws Exception {
 		final String taskTitle = "title updated";
 		final String description = "description";
-		final String pointPerson = "Kelley (Kelley)";
+		final String pointPerson = "a (a)";
 		final String currentEstimate = "50";
 		final String originalEstimate = "100";
 		final TaskStatus status = TaskStatus.IN_PROGRESS;
