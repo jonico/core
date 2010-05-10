@@ -568,7 +568,7 @@ public class TFReader extends AbstractReader<Connection> {
 					}
 				}
 			}
-			else {
+			else if (TFConnectionFactory.isPlanningFolderRepository(sourceRepositoryId)) {
 				// we retrieve planning folders
 				if (!connection.supports53()) {
 					log.warn("Planning folder extraction requested, but this version of TF does not support planning folders: "+ sourceRepositoryId);
@@ -596,6 +596,8 @@ public class TFReader extends AbstractReader<Connection> {
 						}
 					}
 				}
+			} else {
+				throw new CCFRuntimeException("Unknown repository id format: "+sourceRepositoryId);
 			}
 			return artifactStates;
 		}

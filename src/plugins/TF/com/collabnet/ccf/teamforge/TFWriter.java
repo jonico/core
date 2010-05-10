@@ -21,9 +21,13 @@ import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.GregorianCalendar;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
 import javax.xml.namespace.QName;
 
@@ -52,6 +56,7 @@ import com.collabnet.teamforge.api.PlanningFolderRuleViolationException;
 import com.collabnet.teamforge.api.planning.PlanningFolderDO;
 import com.collabnet.teamforge.api.tracker.ArtifactDO;
 import com.collabnet.teamforge.api.tracker.ArtifactDependencyRow;
+import com.collabnet.teamforge.api.tracker.TrackerDO;
 
 /**
  * This component is responsible for writing TF tracker items encoded in the
@@ -236,7 +241,7 @@ public class TFWriter extends AbstractWriter<Connection> implements
 							+ data.asXML(), e);
 					return null;
 				}
-			} else {
+			} else if (TFConnectionFactory.isPlanningFolderRepository(targetRepositoryId)) {
 				// we write planning folders, so first do a check whether we
 				// support this feature
 				if (!connection.supports53()) {
@@ -255,11 +260,52 @@ public class TFWriter extends AbstractWriter<Connection> implements
 						GenericArtifactField.FieldValueTypeValue.STRING);
 				populateTargetArtifactAttributesFromPlanningFolder(ga, result);
 				return returnDocument(ga);
+			} else if (TFConnectionFactory.isTrackerMetaDataRepository(targetRepositoryId)) {
+				TrackerDO result = null;
+				String trackerId = TFConnectionFactory.extractTrackerFromMetaDataRepositoryId(targetRepositoryId);
+				result = updateTrackerMetaData(ga, trackerId, connection); 
+				populateTargetArtifactAttributesFromTracker(ga, result);
+				return returnDocument(ga);
+			} else {
+				throw new CCFRuntimeException("Unknown repository id format: "+targetRepositoryId);
 			}
 		} finally {
 			disconnect(connection);
 		}
 
+	}
+
+	private TrackerDO updateTrackerMetaData(GenericArtifact ga,
+			String trackerId, Connection connection) {
+		Map<String, SortedSet<String>> fieldsToBeChanged = new HashMap<String, SortedSet<String>>();
+		// retrieve all fields that should be changed
+		List<GenericArtifactField> fields = ga.getAllGenericArtifactFields();
+		for (GenericArtifactField genericArtifactField : fields) {
+			String fieldName = genericArtifactField.getFieldName();
+			Object fieldValue = genericArtifactField.getFieldValue();
+			if (fieldValue != null) {
+				SortedSet<String> values = fieldsToBeChanged.get(fieldName);
+				if (values == null) {
+					values = new TreeSet<String>();
+					fieldsToBeChanged.put(fieldName, values);
+				}
+				values.add(fieldValue.toString());
+			}
+		}
+		TrackerDO result = null;
+		try {
+			result = trackerHandler.updateTrackerMetaData(ga, trackerId, fieldsToBeChanged, connection);
+		} catch (RemoteException e) {
+			String cause = "Could not update meta data of tracker " + trackerId
+					+ e.getMessage();
+			log.error(cause, e);
+			ga.setErrorCode(GenericArtifact.ERROR_META_DATA_WRITE);
+			throw new CCFRuntimeException(cause, e);
+		}
+		if (result != null) {
+			log.info("Successfully updated meta data of tracker "+ result.getId());
+		}
+		return result;
 	}
 
 	private PlanningFolderDO createPlanningFolder(GenericArtifact ga,
@@ -382,7 +428,7 @@ public class TFWriter extends AbstractWriter<Connection> implements
 					this.populateTargetArtifactAttributes(ga, result);
 				}
 				return this.returnDocument(ga);
-			} else {
+			} else if (TFConnectionFactory.isPlanningFolderRepository(targetRepositoryId)) {
 				// we write planning folders, so first do a check whether we
 				// support this feature
 				if (!connection.supports53()) {
@@ -425,6 +471,14 @@ public class TFWriter extends AbstractWriter<Connection> implements
 							result);
 				}
 				return returnDocument(ga);
+			} else if (TFConnectionFactory.isTrackerMetaDataRepository(targetRepositoryId)) {
+				TrackerDO result = null;
+				String trackerId = TFConnectionFactory.extractTrackerFromMetaDataRepositoryId(targetRepositoryId);
+				result = updateTrackerMetaData(ga, trackerId, connection); 
+				populateTargetArtifactAttributesFromTracker(ga, result);
+				return returnDocument(ga);
+			} else {
+				throw new CCFRuntimeException("Unknown repository id format: "+targetRepositoryId);
 			}
 		} finally {
 			disconnect(connection);
@@ -836,6 +890,16 @@ public class TFWriter extends AbstractWriter<Connection> implements
 
 	private void populateTargetArtifactAttributesFromPlanningFolder(
 			GenericArtifact ga, PlanningFolderDO result) {
+		ga.setTargetArtifactId(result.getId());
+		Date targetArtifactLastModifiedDate = result.getLastModifiedDate();
+		String targetArtifactLastModifiedDateStr = DateUtil
+				.format(targetArtifactLastModifiedDate);
+		ga.setTargetArtifactLastModifiedDate(targetArtifactLastModifiedDateStr);
+		ga.setTargetArtifactVersion(Integer.toString(result.getVersion()));
+	}
+	
+	private void populateTargetArtifactAttributesFromTracker(
+			GenericArtifact ga, TrackerDO result) {
 		ga.setTargetArtifactId(result.getId());
 		Date targetArtifactLastModifiedDate = result.getLastModifiedDate();
 		String targetArtifactLastModifiedDateStr = DateUtil
