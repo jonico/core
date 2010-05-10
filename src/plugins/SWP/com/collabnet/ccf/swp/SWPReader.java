@@ -107,6 +107,9 @@ public class SWPReader extends AbstractReader<Connection> {
 			} else if (swpType.equals(SWPMetaData.SWPType.RELEASE)) {
 				swpHandler.retrieveRelease(connection.getEndpoint(), artifactId, swpProductName,
 						genericArtifact);
+			} else if (swpType.equals(SWPMetaData.SWPType.THEME)) {
+				swpHandler.retrieveThemes(connection.getEndpoint(), artifactId, swpProductName,
+						genericArtifact);
 			} else {
 				String cause = "Unsupported repository format: "
 						+ sourceRepositoryId;
@@ -244,7 +247,10 @@ public class SWPReader extends AbstractReader<Connection> {
 			} else if (swpType.equals(SWPType.RELEASE)) {
 				swpHandler.getChangedReleases(connection.getEndpoint(), swpProductName,
 						artifactStates, majorVersion, minorVersion, getUsername());
-			} else {
+			} else if (swpType.equals(SWPType.THEME)) {
+				swpHandler.getChangedThemes(connection.getEndpoint(), swpProductName,
+						artifactStates, majorVersion, minorVersion, getUsername());
+			}else {
 				String cause = "Unsupported repository format: "
 						+ sourceRepositoryId;
 				log.error(cause);

@@ -32,6 +32,7 @@ import com.collabnet.ccf.swp.SWPMetaData.ProductFields;
 import com.collabnet.ccf.swp.SWPMetaData.ReleaseFields;
 import com.collabnet.ccf.swp.SWPMetaData.SWPType;
 import com.collabnet.ccf.swp.SWPMetaData.TaskFields;
+import com.collabnet.ccf.swp.SWPMetaData.ThemeFields;
 import com.danube.scrumworks.api2.client.AggregateVersionedData;
 import com.danube.scrumworks.api2.client.BacklogItem;
 import com.danube.scrumworks.api2.client.BacklogItemChanges;
@@ -48,6 +49,7 @@ import com.danube.scrumworks.api2.client.Task;
 import com.danube.scrumworks.api2.client.TaskChanges;
 import com.danube.scrumworks.api2.client.Team;
 import com.danube.scrumworks.api2.client.Theme;
+import com.danube.scrumworks.api2.client.ThemeChanges;
 
 /**
  * This class encapsulates all calls to the SWP backend
@@ -67,6 +69,8 @@ public class SWPHandler {
 	private Map<String, Map<Long, AbstractMap.SimpleEntry<AbstractMap.SimpleEntry<Long, RevisionInfo>, Product>>> productCache = new HashMap<String, Map<Long, AbstractMap.SimpleEntry<AbstractMap.SimpleEntry<Long, RevisionInfo>, Product>>>();
 	private Map<String, Map<Long, AbstractMap.SimpleEntry<AbstractMap.SimpleEntry<Long, RevisionInfo>, Release>>> releaseCache = new HashMap<String, Map<Long, AbstractMap.SimpleEntry<AbstractMap.SimpleEntry<Long, RevisionInfo>, Release>>>();
 	private Map<String, Map<Long, AbstractMap.SimpleEntry<AbstractMap.SimpleEntry<Long, RevisionInfo>, Task>>> taskCache = new HashMap<String, Map<Long, AbstractMap.SimpleEntry<AbstractMap.SimpleEntry<Long, RevisionInfo>, Task>>>();
+	private Map<String, AbstractMap.SimpleEntry<Long, RevisionInfo>> themeCache = new HashMap<String, AbstractMap.SimpleEntry<Long, RevisionInfo>>();
+
 	/**
 	 * This constant is used as a factor for SWP revission numbers The rationale
 	 * is to be able to differentiate between artifacts that have been changed
@@ -106,7 +110,7 @@ public class SWPHandler {
 				.get(product).get(Long.valueOf(id));
 		if (cachedPBI == null) {
 			throw new CCFRuntimeException("Could not retrieve PBI " + id
-					+ "from the cache.");
+					+ " from the cache.");
 		}
 		long artificialVersionNumber = cachedPBI.getKey().getKey();
 		RevisionInfo pbiRevision = cachedPBI.getKey().getValue();
@@ -191,7 +195,7 @@ public class SWPHandler {
 				.get(product).get(taskId);
 		if (cachedTask == null) {
 			throw new CCFRuntimeException("Could not retrieve task " + id
-					+ "from the cache.");
+					+ " from the cache.");
 		}
 		long artificialVersionNumber = cachedTask.getKey().getKey();
 		RevisionInfo taskRevision = cachedTask.getKey().getValue();
@@ -303,6 +307,26 @@ public class SWPHandler {
 	 */
 	private void addProductReleaseField(GenericArtifact genericArtifact,
 			ReleaseFields field, Object value) {
+		// all fields are from field type "mandatoryField" since SWP has a
+		// static field model
+		GenericArtifactField gaField = genericArtifact.addNewField(field
+				.getFieldName(), "mandatoryField");
+		gaField.setFieldValueType(field.getValueType());
+		gaField.setFieldAction(FieldActionValue.REPLACE);
+		gaField.setFieldValue(value);
+	}
+	
+	/**
+	 * Adds a theme field to a generic artifact
+	 * 
+	 * @param genericArtifact
+	 * @param field
+	 *            theme field
+	 * @param value
+	 *            value of the theme field
+	 */
+	private void addThemeField(GenericArtifact genericArtifact,
+			ThemeFields field, Object value) {
 		// all fields are from field type "mandatoryField" since SWP has a
 		// static field model
 		GenericArtifactField gaField = genericArtifact.addNewField(field
@@ -1236,8 +1260,9 @@ public class SWPHandler {
 			String swpProductName, ArrayList<ArtifactState> artifactStates,
 			long majorVersion, long minorVersion, String connectorUser)
 			throws RemoteException, ScrumWorksException {
-		// TODO Can we do some optimizations here since we should only get one product item back?
-		
+		// TODO Can we do some optimizations here since we should only get one
+		// product item back?
+
 		/*
 		 * find out whether we have to start querying at the next revision or
 		 * whether there are still some pending shipments of the current
@@ -1295,8 +1320,7 @@ public class SWPHandler {
 						new Comparator<Product>() {
 
 							@Override
-							public int compare(Product arg0,
-									Product arg1) {
+							public int compare(Product arg0, Product arg1) {
 								return arg0.getId().compareTo(arg1.getId());
 							}
 						});
@@ -1347,7 +1371,8 @@ public class SWPHandler {
 								.get(swpProductName);
 						if (productSpecificCache == null) {
 							productSpecificCache = new HashMap<Long, AbstractMap.SimpleEntry<AbstractMap.SimpleEntry<Long, RevisionInfo>, Product>>();
-							productCache.put(swpProductName, productSpecificCache);
+							productCache.put(swpProductName,
+									productSpecificCache);
 						}
 						productSpecificCache
 								.put(
@@ -1367,7 +1392,7 @@ public class SWPHandler {
 	}
 
 	/**
-	 * Returns the product releases whenever their properties change
+	 * Returns the releases whenever their properties change
 	 * 
 	 * @param swpProductName
 	 * @param artifactStates
@@ -1509,6 +1534,90 @@ public class SWPHandler {
 	}
 
 	/**
+	 * Returns the themes whenever their properties change In contrast to all
+	 * other methods of thi kind, this method will only return one single
+	 * artificial entry that indicates that any of the themes in question has
+	 * been deleted, created or changed
+	 * 
+	 * @param swpProductName
+	 * @param artifactStates
+	 * @param version
+	 * @throws RemoteException
+	 * @throws ScrumWorksException
+	 */
+	public void getChangedThemes(ScrumWorksAPIService endpoint,
+			String swpProductName, ArrayList<ArtifactState> artifactStates,
+			long majorVersion, long minorVersion, String connectorUser)
+			throws RemoteException, ScrumWorksException {
+		/*
+		 * find out whether we have to start querying at the next revision or
+		 * whether there are still some pending shipments of the current
+		 * revision
+		 */
+		if (minorVersion % 2 == 1) {
+			++majorVersion;
+			minorVersion = 0;
+		}
+
+		Product product = endpoint.getProductByName(swpProductName);
+
+		// now do the query, passed revision number is not included in the
+		// result set
+		int queryVersion = new Long(majorVersion == 0 ? 0 : majorVersion - 1)
+				.intValue();
+		AggregateVersionedData changesSinceCurrentRevision = endpoint
+				.getChangesSinceRevision(product.getId(), queryVersion);
+
+		// initialize some data structures to capture deleted and inserted
+		// artifacts
+		List<ThemeChanges> themeSpecificChanges = changesSinceCurrentRevision
+				.getThemeChanges();
+		ListIterator<ThemeChanges> it = themeSpecificChanges
+				.listIterator(themeSpecificChanges.size());
+		while (it.hasPrevious()) {
+			ThemeChanges themeSpecificChangesInRevision = it.previous();
+
+			RevisionInfo processedRevisionInfo = themeSpecificChangesInRevision
+					.getRevisionInfo();
+			int processedRevisionNumber = processedRevisionInfo
+					.getRevisionNumber();
+			List<Theme> changedOrAddedThemes = themeSpecificChangesInRevision
+					.getAddedOrChangedEntities();
+			List<Long> deletedArtifacts = themeSpecificChangesInRevision
+					.getDeletedIds();
+			if (changedOrAddedThemes.isEmpty() && deletedArtifacts.isEmpty()) {
+				continue;
+			} else {
+				// we only transport that something has changed but now what has
+				// changed
+				ArtifactState artifactState = new ArtifactState();
+				artifactState.setArtifactId("themesFor"+swpProductName);
+				XMLGregorianCalendar xmlTimestamp = processedRevisionInfo
+						.getTimeStamp();
+				Date artifactLastModifiedDate = new Date(0);
+				if (xmlTimestamp != null) {
+					artifactLastModifiedDate = xmlTimestamp
+							.toGregorianCalendar().getTime();
+				}
+				artifactState
+						.setArtifactLastModifiedDate(artifactLastModifiedDate);
+				long artificialRevisionNumber = processedRevisionNumber
+						* SWP_REVISION_FACTOR + 1;
+				artifactState.setArtifactVersion(artificialRevisionNumber);
+				artifactStates.add(artifactState);
+				// now update the cache
+				themeCache
+						.put(
+								swpProductName,
+								new AbstractMap.SimpleEntry<Long, RevisionInfo>(
+										artificialRevisionNumber,
+										processedRevisionInfo));
+				return;
+			}
+		}
+	}
+
+	/**
 	 * Retrieves the properties of an SWP product and stores them into the
 	 * passed generic artifact
 	 * 
@@ -1518,21 +1627,19 @@ public class SWPHandler {
 	 * @throws RemoteException
 	 * @throws ScrumWorksException
 	 */
-	public void retrieveProduct(ScrumWorksAPIService endpoint,
-			String id, String swpProductName,
-			GenericArtifact genericArtifact) throws RemoteException,
-			ScrumWorksException {
+	public void retrieveProduct(ScrumWorksAPIService endpoint, String id,
+			String swpProductName, GenericArtifact genericArtifact)
+			throws RemoteException, ScrumWorksException {
 		AbstractMap.SimpleEntry<AbstractMap.SimpleEntry<Long, RevisionInfo>, Product> cachedProduct = productCache
-		.get(swpProductName).get(Long.valueOf(id));
+				.get(swpProductName).get(Long.valueOf(id));
 		if (cachedProduct == null) {
 			throw new CCFRuntimeException("Could not retrieve product " + id
-					+ "from the cache.");
+					+ " from the cache.");
 		}
 		long artificialVersionNumber = cachedProduct.getKey().getKey();
 		RevisionInfo productRevision = cachedProduct.getKey().getValue();
 		Product product = cachedProduct.getValue();
-		
-		
+
 		addProductField(genericArtifact, ProductFields.id, product.getId());
 		addProductField(genericArtifact, ProductFields.effortUnits, product
 				.getEffortUnits());
@@ -1543,17 +1650,20 @@ public class SWPHandler {
 		addProductField(genericArtifact, ProductFields.name, product.getName());
 		addProductField(genericArtifact, ProductFields.trackTimeSpent, product
 				.isTrackTimeSpent());
-		
-		genericArtifact.setSourceArtifactVersion(Long.toString(artificialVersionNumber));
+
+		genericArtifact.setSourceArtifactVersion(Long
+				.toString(artificialVersionNumber));
 		Date artifactLastModifiedDate = new Date(0);
 		if (productRevision.getTimeStamp() != null) {
 			artifactLastModifiedDate = productRevision.getTimeStamp()
 					.toGregorianCalendar().getTime();
 		}
-		genericArtifact.setSourceArtifactLastModifiedDate(GenericArtifactHelper.df
-				.format(artifactLastModifiedDate));
-		
-		genericArtifact.setDepParentSourceArtifactId(GenericArtifact.VALUE_NONE);
+		genericArtifact
+				.setSourceArtifactLastModifiedDate(GenericArtifactHelper.df
+						.format(artifactLastModifiedDate));
+
+		genericArtifact
+				.setDepParentSourceArtifactId(GenericArtifact.VALUE_NONE);
 	}
 
 	/**
@@ -1568,22 +1678,21 @@ public class SWPHandler {
 	 * @throws ScrumWorksException
 	 */
 	public void retrieveRelease(ScrumWorksAPIService endpoint, String id,
-			String swpProductName, GenericArtifact ga) throws NumberFormatException,
-			RemoteException, ScrumWorksException {
-		
+			String swpProductName, GenericArtifact ga)
+			throws NumberFormatException, RemoteException, ScrumWorksException {
+
 		AbstractMap.SimpleEntry<AbstractMap.SimpleEntry<Long, RevisionInfo>, Release> cachedRelease = releaseCache
-		.get(swpProductName).get(Long.valueOf(id));
+				.get(swpProductName).get(Long.valueOf(id));
 		if (cachedRelease == null) {
 			throw new CCFRuntimeException("Could not retrieve release " + id
-					+ "from the cache.");
+					+ " from the cache.");
 		}
 		long artificialVersionNumber = cachedRelease.getKey().getKey();
 		RevisionInfo releaseRevision = cachedRelease.getKey().getValue();
 		Release release = cachedRelease.getValue();
 
 		addProductReleaseField(ga, ReleaseFields.id, release.getId());
-		addProductReleaseField(ga, ReleaseFields.archived, release
-				.isArchived());
+		addProductReleaseField(ga, ReleaseFields.archived, release.isArchived());
 		addProductReleaseField(ga, ReleaseFields.description, release
 				.getDescription());
 		addProductReleaseField(ga, ReleaseFields.productId, release
@@ -1601,7 +1710,46 @@ public class SWPHandler {
 		ga.setDepParentSourceArtifactId(product.getId().toString());
 		ga.setDepParentSourceRepositoryId(swpProductName
 				+ SWPMetaData.REPOSITORY_ID_SEPARATOR + SWPMetaData.PRODUCT);
+
+		ga.setSourceArtifactVersion(Long.toString(artificialVersionNumber));
+		Date artifactLastModifiedDate = new Date(0);
+		if (releaseRevision.getTimeStamp() != null) {
+			artifactLastModifiedDate = releaseRevision.getTimeStamp()
+					.toGregorianCalendar().getTime();
+		}
+		ga.setSourceArtifactLastModifiedDate(GenericArtifactHelper.df
+				.format(artifactLastModifiedDate));
+	}
+	
+	/**
+	 * Populates the generic artifact data structure with the names of all themes related to
+	 * the product
+	 * 
+	 * @param id
+	 *            id of the themes in question - ignored at the moment
+	 * @param product
+	 *            SWP product name
+	 * @throws RemoteException
+	 * @throws ScrumWorksException
+	 */
+	public void retrieveThemes(ScrumWorksAPIService endpoint, String id,
+			String swpProductName, GenericArtifact ga)
+			throws NumberFormatException, RemoteException, ScrumWorksException {
+
+		AbstractMap.SimpleEntry<Long, RevisionInfo> cachedTheme = themeCache
+				.get(swpProductName);
+		if (cachedTheme == null) {
+			throw new CCFRuntimeException("Could not retrieve  " + id
+					+ " from the cache.");
+		}
+		long artificialVersionNumber = cachedTheme.getKey();
+		RevisionInfo releaseRevision = cachedTheme.getValue();
 		
+		Product product = endpoint.getProductByName(swpProductName);
+		List<Theme> themes = endpoint.getThemesForProduct(product.getId());
+		for (Theme theme : themes) {
+			addThemeField(ga, ThemeFields.name, theme.getName());
+		}
 		ga.setSourceArtifactVersion(Long.toString(artificialVersionNumber));
 		Date artifactLastModifiedDate = new Date(0);
 		if (releaseRevision.getTimeStamp() != null) {

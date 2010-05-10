@@ -221,6 +221,26 @@ public class SWPMetaData {
 		}
 	}
 	
+	public enum ThemeFields {
+		name("name", GenericArtifactField.FieldValueTypeValue.STRING);
+		
+		private GenericArtifactField.FieldValueTypeValue valueType;
+		private String fieldName;
+		
+		private ThemeFields(String fieldName, GenericArtifactField.FieldValueTypeValue valueType) {
+			this.fieldName = fieldName;
+			this.valueType = valueType;
+		}
+		
+		public String getFieldName() {
+			return fieldName;
+		}
+		
+		public GenericArtifactField.FieldValueTypeValue getValueType() {
+			return valueType;
+		}
+	}
+	
 	// TODO Include meta info for the other SWP types
 }
 
