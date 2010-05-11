@@ -283,12 +283,12 @@ public class TFWriter extends AbstractWriter<Connection> implements
 		for (GenericArtifactField genericArtifactField : fields) {
 			String fieldName = genericArtifactField.getFieldName();
 			Object fieldValue = genericArtifactField.getFieldValue();
+			SortedSet<String> values = fieldsToBeChanged.get(fieldName);
+			if (values == null) {
+				values = new TreeSet<String>();
+				fieldsToBeChanged.put(fieldName, values);
+			}
 			if (fieldValue != null) {
-				SortedSet<String> values = fieldsToBeChanged.get(fieldName);
-				if (values == null) {
-					values = new TreeSet<String>();
-					fieldsToBeChanged.put(fieldName, values);
-				}
 				values.add(fieldValue.toString());
 			}
 		}

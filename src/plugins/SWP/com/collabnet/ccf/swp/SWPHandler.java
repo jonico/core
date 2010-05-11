@@ -1750,6 +1750,9 @@ public class SWPHandler {
 		for (Theme theme : themes) {
 			addThemeField(ga, ThemeFields.name, theme.getName());
 		}
+		if (themes.isEmpty()) {
+			addThemeField(ga, ThemeFields.name, null);
+		}
 		ga.setSourceArtifactVersion(Long.toString(artificialVersionNumber));
 		Date artifactLastModifiedDate = new Date(0);
 		if (releaseRevision.getTimeStamp() != null) {
