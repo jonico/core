@@ -25,6 +25,8 @@ import com.collabnet.teamforge.api.tracker.ArtifactDependencyList;
 import com.collabnet.teamforge.api.tracker.ArtifactDependencyRow;
 import com.collabnet.teamforge.api.tracker.ArtifactList;
 import com.collabnet.teamforge.api.tracker.ArtifactRow;
+import com.collabnet.teamforge.api.tracker.TrackerFieldDO;
+import com.collabnet.teamforge.api.tracker.TrackerFieldValueDO;
 
 /**
  * Helper methods for accessing the TeamForge API.
@@ -35,48 +37,48 @@ public class TeamForgeTester {
 	/** Status for open backlog items. */
 	public static final String STATUS_OPEN = "Open";
 
-	/** Status for done backlog items. */ 
+	/** Status for done backlog items. */
 	public static final String STATUS_DONE = "Done";
 
-	/** User for None */ 
+	/** User for None */
 	public static final String NONE = "No user";
-	
-	/** Variable name for the backlog item's benefit field. */ 
-	public static final String FIELD_BENEFIT = "Benefit"; 
 
-	/** Variable name for the backlog item's penalty field. */ 
-	public static final String FIELD_PENALTY = "Penalty"; 
-	
-	/** Variable name for the backlog item's effort field. */ 
-	public static final String FIELD_EFFORT = "Backlog Effort"; 
-	
-	/** Variable name for the backlog item's theme field. */ 
-	public static final String FIELD_THEME = "Themes"; 
-	
-	/** Variable name for the backlog item's key. */ 
-	public static final String FIELD_KEY = "SWP-Key"; 
-	
-	/** Variable name for the backlog item's team. */ 
-	public static final String FIELD_TEAM = "Team"; 
-	
-	/** Variable name for the backlog item's sprint's name. */ 
-	public static final String FIELD_SPRINT_NAME = "Sprint"; 
-	
-	/** Variable name for the backlog item's sprint's start date. */ 
-	public static final String FIELD_SPRINT_START = "Sprint Start"; 
-	
-	/** Variable name for the backlog item's sprint's end date. */ 
-	public static final String FIELD_SPRINT_END = "Sprint End"; 
-	
+	/** Variable name for the backlog item's benefit field. */
+	public static final String FIELD_BENEFIT = "Benefit";
+
+	/** Variable name for the backlog item's penalty field. */
+	public static final String FIELD_PENALTY = "Penalty";
+
+	/** Variable name for the backlog item's effort field. */
+	public static final String FIELD_EFFORT = "Backlog Effort";
+
+	/** Variable name for the backlog item's theme field. */
+	public static final String FIELD_THEME = "Themes";
+
+	/** Variable name for the backlog item's key. */
+	public static final String FIELD_KEY = "SWP-Key";
+
+	/** Variable name for the backlog item's team. */
+	public static final String FIELD_TEAM = "Team";
+
+	/** Variable name for the backlog item's sprint's name. */
+	public static final String FIELD_SPRINT_NAME = "Sprint";
+
+	/** Variable name for the backlog item's sprint's start date. */
+	public static final String FIELD_SPRINT_START = "Sprint Start";
+
+	/** Variable name for the backlog item's sprint's end date. */
+	public static final String FIELD_SPRINT_END = "Sprint End";
+
 	/** Property file name. */
 	public static final String PROPERTY_FILE = "tfswp.properties";
 
-	/** Property for the maximum wait time. */ 
+	/** Property for the maximum wait time. */
 	private static final String CCF_MAX_WAIT_TIME = "CCFMaxWaitTime";
-	
-	/** Property for the interval retry time. */ 
+
+	/** Property for the interval retry time. */
 	private static final String CCF_RETRY_INTERVAL = "CCFRetryInterval";
-	
+
 	/** Property name for the server url. */
 	private static final String SERVER_URL_PROPERTY = "TFServerUrl";
 
@@ -115,11 +117,11 @@ public class TeamForgeTester {
 
 	/** Connect to TeamForge. */
 	private Connection connection;
-	
-	/** Maximum wait time. */ 
+
+	/** Maximum wait time. */
 	private int ccfMaxWaitTime;
 
-	/** Time to retry. */ 
+	/** Time to retry. */
 	private int ccfRetryInterval;
 
 	/**
@@ -137,11 +139,12 @@ public class TeamForgeTester {
 		password = prop.getProperty(PASSWORD_PROPERTY);
 		serverUrl = prop.getProperty(SERVER_URL_PROPERTY);
 		project = prop.getProperty(PROJECT_PROPERTY);
-		pbiTracker = prop.getProperty(PBI_TRACKER_PROPERTY);
-		taskTracker = prop.getProperty(TASK_TRACKER_PROPERTY);
-		
-		ccfMaxWaitTime = Integer.parseInt(prop.getProperty(CCF_MAX_WAIT_TIME)); 
-		ccfRetryInterval = Integer.parseInt(prop.getProperty(CCF_RETRY_INTERVAL)); 
+		setPbiTracker(prop.getProperty(PBI_TRACKER_PROPERTY));
+		setTaskTracker(prop.getProperty(TASK_TRACKER_PROPERTY));
+
+		ccfMaxWaitTime = Integer.parseInt(prop.getProperty(CCF_MAX_WAIT_TIME));
+		ccfRetryInterval = Integer.parseInt(prop
+				.getProperty(CCF_RETRY_INTERVAL));
 
 		// we pass the current system millis to work around a caching problem
 		connection = Connection.getConnection(serverUrl, getUserName(),
@@ -171,7 +174,7 @@ public class TeamForgeTester {
 	 */
 	public void deleteAllPBIsInTF() throws RemoteException {
 		ArtifactRow[] tfRows = connection.getTrackerClient().getArtifactList(
-				pbiTracker, null).getDataRows();
+				getPbiTracker(), null).getDataRows();
 		for (ArtifactRow artifactRow : tfRows) {
 			connection.getTrackerClient().deleteArtifact(artifactRow.getId());
 		}
@@ -185,7 +188,7 @@ public class TeamForgeTester {
 	 */
 	public void deleteAllTasksInTF() throws RemoteException {
 		ArtifactRow[] tfRows = connection.getTrackerClient().getArtifactList(
-				taskTracker, null).getDataRows();
+				getTaskTracker(), null).getDataRows();
 		for (ArtifactRow artifactRow : tfRows) {
 			connection.getTrackerClient().deleteArtifact(artifactRow.getId());
 		}
@@ -204,7 +207,8 @@ public class TeamForgeTester {
 	 *            the custom fields
 	 * @throws RemoteException
 	 *             if the TeamForge API can not be accessed
-	 * @throws IllegalArgumentException if title argument is <code>null</code>            
+	 * @throws IllegalArgumentException
+	 *             if title argument is <code>null</code>
 	 */
 	public ArtifactDO createBacklogItem(final String title,
 			final String description, final String release,
@@ -212,10 +216,10 @@ public class TeamForgeTester {
 		Validate.notNull(title, "null title");
 		Validate.notNull(flexFields, "null flex fields");
 
-		return connection.getTrackerClient().createArtifact(pbiTracker, title,
-				formatDescription(description), null, null, STATUS_OPEN, null, 0, 0, 0, false,
-				null, null, getPlanningFolderId(release), flexFields, null,
-				null, null);
+		return connection.getTrackerClient().createArtifact(getPbiTracker(), title,
+				formatDescription(description), null, null, STATUS_OPEN, null,
+				0, 0, 0, false, null, null, getPlanningFolderId(release),
+				flexFields, null, null, null);
 	}
 
 	/**
@@ -223,49 +227,58 @@ public class TeamForgeTester {
 	 * @return
 	 */
 	private String formatDescription(final String description) {
-		final String backlogItemDescription = description == null ? "<blank>" : description;
+		final String backlogItemDescription = description == null ? "<blank>"
+				: description;
 		return backlogItemDescription;
 	}
 
-	public ArtifactDO createTaskAndPBI(String title, String description, String status,
-			String assignedUsername, int remainingEffort, int originalEstimate)
-			throws RemoteException, PlanningFolderRuleViolationException {
+	public ArtifactDO createTaskAndPBI(String title, String description,
+			String status, String assignedUsername, int remainingEffort,
+			int originalEstimate) throws RemoteException,
+			PlanningFolderRuleViolationException {
 		FieldValues flexFields = new FieldValues();
 		flexFields.setNames(new String[] {});
 		flexFields.setTypes(new String[] {});
 		flexFields.setValues(new String[] {});
-		ArtifactDO pbi = createBacklogItem("TestTitle", "TestDescription", null,
-				flexFields);
+		ArtifactDO pbi = createBacklogItem("TestTitle", "TestDescription",
+				null, flexFields);
 		ArtifactDO task = connection.getTrackerClient().createArtifact(
-				taskTracker, title, description, null, null, status, null, 0,
-				originalEstimate, remainingEffort, false, assignedUsername, null, null, flexFields,
-				null, null, null);
+				getTaskTracker(), title, description, null, null, status, null,
+				0, originalEstimate, remainingEffort, false, assignedUsername,
+				null, null, flexFields, null, null, null);
 		connection.getTrackerClient().createArtifactDependency(pbi.getId(),
 				task.getId(), "Parent-child relationship created by unit test");
 		return task;
 	}
-	
+
 	/**
-	 * Updates and returns the updated backlog item. 
+	 * Updates and returns the updated backlog item.
 	 * 
 	 * @param backlogItemId
 	 * @return
-	 * @throws RemoteException if TeamForge can not be accessed if TeamForge can not be accessed
-	 * @throws PlanningFolderRuleViolationException if there is an error with the planning folder
+	 * @throws RemoteException
+	 *             if TeamForge can not be accessed if TeamForge can not be
+	 *             accessed
+	 * @throws PlanningFolderRuleViolationException
+	 *             if there is an error with the planning folder
 	 */
-	public ArtifactDO updateBacklogItem(final String backlogItemId, final String title, final String description, 
-			final String release, final FieldValues flexFields) throws RemoteException, PlanningFolderRuleViolationException {
-		ArtifactDO pbi = retrieveAndUpdateArtifactTitleAndDescription(backlogItemId, title, description); 
-		pbi.setPlanningFolderId(getPlanningFolderId(release)); 
-		pbi.setFlexFields(flexFields); 
-		return updateArtifact(pbi, "updating pbi ..."); 
+	public ArtifactDO updateBacklogItem(final String backlogItemId,
+			final String title, final String description, final String release,
+			final FieldValues flexFields) throws RemoteException,
+			PlanningFolderRuleViolationException {
+		ArtifactDO pbi = retrieveAndUpdateArtifactTitleAndDescription(
+				backlogItemId, title, description);
+		pbi.setPlanningFolderId(getPlanningFolderId(release));
+		pbi.setFlexFields(flexFields);
+		return updateArtifact(pbi, "updating pbi ...");
 	}
-	
-	public ArtifactDO updateTask(String taskId, String title, String description, String status,
-			String assignedUsername, int remainingEffort, int originalEstimate)
-			throws RemoteException, PlanningFolderRuleViolationException {
-		ArtifactDO task = retrieveAndUpdateArtifactTitleAndDescription(taskId, title,
-				description);
+
+	public ArtifactDO updateTask(String taskId, String title,
+			String description, String status, String assignedUsername,
+			int remainingEffort, int originalEstimate) throws RemoteException,
+			PlanningFolderRuleViolationException {
+		ArtifactDO task = retrieveAndUpdateArtifactTitleAndDescription(taskId,
+				title, description);
 		task.setStatus(status);
 		task.setAssignedTo(assignedUsername);
 		task.setRemainingEffort(remainingEffort);
@@ -274,36 +287,49 @@ public class TeamForgeTester {
 	}
 
 	/**
-	 * Updates and returns the artifact in TeamForge.  
+	 * Updates and returns the artifact in TeamForge.
 	 * 
-	 * @param artifact the artifact
+	 * @param artifact
+	 *            the artifact
 	 * @param updateString
 	 * @return the updated artifact
-	 * @throws RemoteException if TeamForge can not be accessed
-	 * @throws PlanningFolderRuleViolationException if there is an error with the planning folder
+	 * @throws RemoteException
+	 *             if TeamForge can not be accessed
+	 * @throws PlanningFolderRuleViolationException
+	 *             if there is an error with the planning folder
 	 */
 	private ArtifactDO updateArtifact(final ArtifactDO artifact,
-			final String updateString) throws RemoteException, PlanningFolderRuleViolationException {
-		connection.getTrackerClient().setArtifactData(artifact, updateString, null, null, null);
+			final String updateString) throws RemoteException,
+			PlanningFolderRuleViolationException {
+		connection.getTrackerClient().setArtifactData(artifact, updateString,
+				null, null, null);
 		return connection.getTrackerClient().getArtifactData(artifact.getId());
 	}
 
 	/**
-	 * Updates the title and description of the artifact retrieved from TeamForge based on the artifact's id.   
+	 * Updates the title and description of the artifact retrieved from
+	 * TeamForge based on the artifact's id.
 	 * 
-	 * @param artifactId the artifact id
-	 * @param title the revised title
-	 * @param description the revised description
+	 * @param artifactId
+	 *            the artifact id
+	 * @param title
+	 *            the revised title
+	 * @param description
+	 *            the revised description
 	 * @return the artifact with the updated title and description
-	 * @throws RemoteException if TeamForge can not be accessed
-	 * @throws IllegalArgumentException if artifactId or title argument is <code>null</code>
+	 * @throws RemoteException
+	 *             if TeamForge can not be accessed
+	 * @throws IllegalArgumentException
+	 *             if artifactId or title argument is <code>null</code>
 	 */
-	private ArtifactDO retrieveAndUpdateArtifactTitleAndDescription(final String artifactId,
-			final String title, final String description) throws RemoteException {
+	private ArtifactDO retrieveAndUpdateArtifactTitleAndDescription(
+			final String artifactId, final String title,
+			final String description) throws RemoteException {
 		Validate.notNull(artifactId, "null artifact id");
 		Validate.notNull(title, "null title");
-		
-		ArtifactDO task = connection.getTrackerClient().getArtifactData(artifactId);
+
+		ArtifactDO task = connection.getTrackerClient().getArtifactData(
+				artifactId);
 		task.setTitle(title);
 		task.setDescription(formatDescription(description));
 		return task;
@@ -334,34 +360,38 @@ public class TeamForgeTester {
 		}
 		return null;
 	}
-	
+
 	/**
-	 * Returns a FieldValues based on the given String arrays.  
-	 * The number of elements in the two arrays must match. 
+	 * Returns a FieldValues based on the given String arrays. The number of
+	 * elements in the two arrays must match.
 	 * 
-	 * @param names the names of the flex fields
-	 * @param values the values for the flex fields
+	 * @param names
+	 *            the names of the flex fields
+	 * @param values
+	 *            the values for the flex fields
 	 * @return the FieldValues
-	 * @throws IllegalArgumentException if any argument is <code>null</code> 
+	 * @throws IllegalArgumentException
+	 *             if any argument is <code>null</code>
 	 */
-	public FieldValues convertToFlexField(final String[] names, final String[] values) {
-		Validate.noNullElements(names, "null name"); 
-		
+	public FieldValues convertToFlexField(final String[] names,
+			final String[] values) {
+		Validate.noNullElements(names, "null name");
+
 		final FieldValues flexFields = new FieldValues();
-		flexFields.setNames(names); 
+		flexFields.setNames(names);
 		flexFields.setValues(values);
 		final int flexFieldsLength = flexFields.getNames().length;
 		final String[] flexFieldTypes = new String[flexFieldsLength];
 		for (int i = 0; i < flexFieldsLength; i++) {
-			flexFieldTypes[i] = TrackerFieldSoapDO.FIELD_VALUE_TYPE_STRING; 
+			flexFieldTypes[i] = TrackerFieldSoapDO.FIELD_VALUE_TYPE_STRING;
 		}
-		flexFields.setTypes(flexFieldTypes); 
-		return flexFields; 
+		flexFields.setTypes(flexFieldTypes);
+		return flexFields;
 	}
 
 	public void setUserName(String userName) {
 		Validate.notNull(userName, "null username");
-		
+
 		this.userName = userName;
 	}
 
@@ -371,127 +401,162 @@ public class TeamForgeTester {
 
 	/**
 	 * Moves a task from its existing parent to a new parent
+	 * 
 	 * @param taskId
 	 * @param newParentId
 	 * @throws RemoteException
 	 * @throws PlanningFolderRuleViolationException
 	 */
-	public void reparentTask(String taskId, String newParentId) throws RemoteException, PlanningFolderRuleViolationException {
-		ArtifactDependencyRow rel = connection.getTrackerClient().getParentDependencyList(taskId).getDataRows()[0];
-		connection.getTrackerClient().removeArtifactDependency(rel.getOriginId(), rel.getTargetId());
-		connection.getTrackerClient().createArtifactDependency(newParentId, taskId, "reparenting ...");
-	}
-	
-	
-	
-	/**
-	 * Returns the backlog items after the backlog items appear in the planning folder mapped to ScrumWorks Pro. 
-	 * Waits until the requested number of backlog items appear.
-	 * 
-	 * @return the {@link ArtifactRow} for backlog items
-	 * @throws RemoteException if the TeamForge API can not be accessed
-	 * @throws InterruptedException if the thread can not sleep
-	 */
-	public ArtifactRow[] waitForBacklogItemsToAppear(final int numberOfPbis) throws RemoteException, InterruptedException {
-		return waitForArtifactToAppear(numberOfPbis, pbiTracker, "backlog item"); 
-	}
-	
-	/**
-	 * Returns the tasks after the tasks appear in the parent backlog item. 
-	 * Waits until the requested number of tasks appear.
-	 * 
-	 * @return the {@link ArtifactRow} for tasks
-	 * @throws InterruptedException 
-	 * @throws RemoteException 
-	 */
-	public ArtifactRow[] waitForTasksToAppear(final int numberOfTasks) throws RemoteException, InterruptedException {
-		return waitForArtifactToAppear(numberOfTasks, taskTracker, "task"); 
+	public void reparentTask(String taskId, String newParentId)
+			throws RemoteException, PlanningFolderRuleViolationException {
+		ArtifactDependencyRow rel = connection.getTrackerClient()
+				.getParentDependencyList(taskId).getDataRows()[0];
+		connection.getTrackerClient().removeArtifactDependency(
+				rel.getOriginId(), rel.getTargetId());
+		connection.getTrackerClient().createArtifactDependency(newParentId,
+				taskId, "reparenting ...");
 	}
 
 	/**
-	 * Waits for the requested number of requested artifacts to appear. 
+	 * Returns the backlog items after the backlog items appear in the planning
+	 * folder mapped to ScrumWorks Pro. Waits until the requested number of
+	 * backlog items appear.
 	 * 
-	 * @param numberOfArtifacts the number of artifacts to wait to appear
-	 * @param artifactTypeId the artifact's type id
-	 * @param entityType the text describing the type of artifact
-	 * @throws RemoteException if the TeamForge API can not be accessed
-	 * @throws InterruptedException if the thread can not sleep
+	 * @return the {@link ArtifactRow} for backlog items
+	 * @throws RemoteException
+	 *             if the TeamForge API can not be accessed
+	 * @throws InterruptedException
+	 *             if the thread can not sleep
+	 */
+	public ArtifactRow[] waitForBacklogItemsToAppear(final int numberOfPbis)
+			throws RemoteException, InterruptedException {
+		return waitForArtifactToAppear(numberOfPbis, getPbiTracker(), "backlog item");
+	}
+
+	/**
+	 * Returns the tasks after the tasks appear in the parent backlog item.
+	 * Waits until the requested number of tasks appear.
+	 * 
+	 * @return the {@link ArtifactRow} for tasks
+	 * @throws InterruptedException
+	 * @throws RemoteException
+	 */
+	public ArtifactRow[] waitForTasksToAppear(final int numberOfTasks)
+			throws RemoteException, InterruptedException {
+		return waitForArtifactToAppear(numberOfTasks, getTaskTracker(), "task");
+	}
+
+	/**
+	 * Waits for the requested number of requested artifacts to appear.
+	 * 
+	 * @param numberOfArtifacts
+	 *            the number of artifacts to wait to appear
+	 * @param artifactTypeId
+	 *            the artifact's type id
+	 * @param entityType
+	 *            the text describing the type of artifact
+	 * @throws RemoteException
+	 *             if the TeamForge API can not be accessed
+	 * @throws InterruptedException
+	 *             if the thread can not sleep
 	 */
 	private ArtifactRow[] waitForArtifactToAppear(final int numberOfArtifacts,
 			String artifactTypeId, String entityType) throws RemoteException,
 			InterruptedException {
-		assert artifactTypeId != null : "null artifact type"; 
-		assert entityType != null : "null entity type"; 
-		
-		ArtifactList artifactList; 
-		ArtifactRow[] artifactRows; 
+		assert artifactTypeId != null : "null artifact type";
+		assert entityType != null : "null entity type";
+
+		ArtifactList artifactList;
+		ArtifactRow[] artifactRows;
 		for (int i = 0; i < ccfMaxWaitTime; i += ccfRetryInterval) {
-			artifactList = connection.getTrackerClient().getArtifactList(artifactTypeId, null);
-			artifactRows = artifactList.getDataRows(); 
+			artifactList = connection.getTrackerClient().getArtifactList(
+					artifactTypeId, null);
+			artifactRows = artifactList.getDataRows();
 			if (artifactRows.length < numberOfArtifacts) {
-				Thread.sleep(ccfRetryInterval); 
+				Thread.sleep(ccfRetryInterval);
 			} else {
-				return artifactRows; 
+				return artifactRows;
 			}
 		}
-		throw new RemoteException(numberOfArtifacts + " " + entityType + "(s) were not found within the given time: " + ccfMaxWaitTime);
+		throw new RemoteException(numberOfArtifacts + " " + entityType
+				+ "(s) were not found within the given time: " + ccfMaxWaitTime);
 	}
-	
+
 	/**
 	 * Waits until parent has at least numberOfPFs child planning folders
-	 * @param parent id of parent folder 
-	 * @param numberOfPFs number of PFs to wait for
-	 * @param recursive determines whether a recursive search should be done or not 
+	 * 
+	 * @param parent
+	 *            id of parent folder
+	 * @param numberOfPFs
+	 *            number of PFs to wait for
+	 * @param recursive
+	 *            determines whether a recursive search should be done or not
 	 * @return
-	 * @throws RemoteException 
-	 * @throws InterruptedException 
+	 * @throws RemoteException
+	 * @throws InterruptedException
 	 */
-	public PlanningFolderRow[] waitForPlanningFoldersToAppear (String parent, int numberOfPFs, boolean recursive) throws RemoteException, InterruptedException {
+	public PlanningFolderRow[] waitForPlanningFoldersToAppear(String parent,
+			int numberOfPFs, boolean recursive) throws RemoteException,
+			InterruptedException {
 		PlanningFolderRow[] pfRows;
 		for (int i = 0; i < ccfMaxWaitTime; i += ccfRetryInterval) {
-			pfRows = connection.getPlanningClient().getPlanningFolderList(parent, recursive).getDataRows();
+			pfRows = connection.getPlanningClient().getPlanningFolderList(
+					parent, recursive).getDataRows();
 			if (pfRows.length < numberOfPFs) {
-				Thread.sleep(ccfRetryInterval); 
+				Thread.sleep(ccfRetryInterval);
 			} else {
-				return pfRows; 
+				return pfRows;
 			}
 		}
-		throw new RemoteException(numberOfPFs + " planning folder(s) were not found within the given time: " + ccfMaxWaitTime);
+		throw new RemoteException(numberOfPFs
+				+ " planning folder(s) were not found within the given time: "
+				+ ccfMaxWaitTime);
 	}
-	
+
 	/**
-	 * Returns the FieldValues for the given artifact. 
+	 * Returns the FieldValues for the given artifact.
 	 * 
-	 * @param artifactId the id for the artifact
+	 * @param artifactId
+	 *            the id for the artifact
 	 * @return the {@link FieldValues} for the artifact
-	 * @throws RemoteException if the TeamForge API can not be accessed
-	 * @throws IllegalArgumentException if an argument is <code>null</code>
+	 * @throws RemoteException
+	 *             if the TeamForge API can not be accessed
+	 * @throws IllegalArgumentException
+	 *             if an argument is <code>null</code>
 	 */
-	private FieldValues getFlexFields(final String artifactId) throws RemoteException {
-		Validate.notNull(artifactId, "null artifact id"); 
-		
-		return connection.getTrackerClient().getArtifactData(artifactId).getFlexFields();
+	private FieldValues getFlexFields(final String artifactId)
+			throws RemoteException {
+		Validate.notNull(artifactId, "null artifact id");
+
+		return connection.getTrackerClient().getArtifactData(artifactId)
+				.getFlexFields();
 	}
-	
+
 	/**
-	 * Returns the values for the given flex field names.  Themes must be grouped together and in the order of the theme 
-	 * selector in TeamForge. 
+	 * Returns the values for the given flex field names. Themes must be grouped
+	 * together and in the order of the theme selector in TeamForge.
 	 * 
-	 * @param artifactId the id for the artifact, can not be null
-	 * @param fieldNames the flex field names
-	 * @return the list of values matching the name, if multiple values match the same name, the values are returned in alphabetical order
-	 * @throws RemoteException if the TeamForge API can not be accessed
-	 * @throws IllegalArgumentException if any argument is <code>null</code>
+	 * @param artifactId
+	 *            the id for the artifact, can not be null
+	 * @param fieldNames
+	 *            the flex field names
+	 * @return the list of values matching the name, if multiple values match
+	 *         the same name, the values are returned in alphabetical order
+	 * @throws RemoteException
+	 *             if the TeamForge API can not be accessed
+	 * @throws IllegalArgumentException
+	 *             if any argument is <code>null</code>
 	 */
-	public List<String> getFieldValues(final String artifactId, final String... fieldNames) throws RemoteException {
-		Validate.notNull(artifactId, "null artifact id"); 
-		Validate.notNull(fieldNames, "null field names"); 
-		
+	public List<String> getFieldValues(final String artifactId,
+			final String... fieldNames) throws RemoteException {
+		Validate.notNull(artifactId, "null artifact id");
+		Validate.notNull(fieldNames, "null field names");
+
 		final FieldValues flexFields = getFlexFields(artifactId);
-		final String[] names = flexFields.getNames(); 
+		final String[] names = flexFields.getNames();
 		final Object[] values = flexFields.getValues();
 		final List<String> matchingValues = new ArrayList<String>();
-		boolean includeThemes = false; 
+		boolean includeThemes = false;
 		for (int i = 0; i < fieldNames.length; i++) {
 			// add all themes
 			if (fieldNames[i].equals(FIELD_THEME)) {
@@ -501,73 +566,185 @@ public class TeamForgeTester {
 							matchingValues.add((String) values[j]);
 						}
 					}
-					includeThemes = true; 
+					includeThemes = true;
 				}
-			} else { 
+			} else {
 				// add matching field names
 				for (int j = 0; j < names.length; j++) {
 					if (names[j].equals(fieldNames[i])) {
-						if (fieldNames[i].equals(TeamForgeTester.FIELD_SPRINT_START) || fieldNames[i].equals(TeamForgeTester.FIELD_SPRINT_END)) {
-							GregorianCalendar dateFromServer = (GregorianCalendar) values[j]; 
-							DateFormat dataFormatter = new SimpleDateFormat("M/dd/yyyy");
-							matchingValues.add(dataFormatter.format(dateFromServer.getTime())); 
+						if (fieldNames[i]
+								.equals(TeamForgeTester.FIELD_SPRINT_START)
+								|| fieldNames[i]
+										.equals(TeamForgeTester.FIELD_SPRINT_END)) {
+							GregorianCalendar dateFromServer = (GregorianCalendar) values[j];
+							DateFormat dataFormatter = new SimpleDateFormat(
+									"M/dd/yyyy");
+							matchingValues.add(dataFormatter
+									.format(dateFromServer.getTime()));
 						} else {
 							matchingValues.add((String) values[j]);
 						}
-						break; 
+						break;
 					}
 				}
 			}
 		}
-		return matchingValues; 
+		return matchingValues;
 	}
-	
+
 	/**
 	 * Returns the TF connection object
+	 * 
 	 * @return
 	 */
-	Connection getConnection () {
+	Connection getConnection() {
 		return connection;
 	}
 
 	/**
-	 * Waits until the title of the passed planning folder changes
-	 * Throws an exception if the maximum timeout is exceeded
+	 * Waits until the title of the passed planning folder changes Throws an
+	 * exception if the maximum timeout is exceeded
+	 * 
 	 * @param planningFolder
 	 * @return
-	 * @throws RemoteException 
-	 * @throws InterruptedException 
+	 * @throws RemoteException
+	 * @throws InterruptedException
 	 */
-	public PlanningFolderDO waitForPFTitleToChange(PlanningFolderRow planningFolder) throws RemoteException, InterruptedException {
+	public PlanningFolderDO waitForPFTitleToChange(
+			PlanningFolderRow planningFolder) throws RemoteException,
+			InterruptedException {
 		PlanningFolderDO pf = null;
 		for (int i = 0; i < ccfMaxWaitTime; i += ccfRetryInterval) {
-			pf = connection.getPlanningClient().getPlanningFolderData(planningFolder.getId());
+			pf = connection.getPlanningClient().getPlanningFolderData(
+					planningFolder.getId());
 			if (planningFolder.getTitle().equals(pf.getTitle())) {
-				Thread.sleep(ccfRetryInterval); 
+				Thread.sleep(ccfRetryInterval);
 			} else {
-				return pf; 
+				return pf;
 			}
 		}
-		throw new RemoteException("Planning folder title did not change within the given time: " + ccfMaxWaitTime);
+		throw new RemoteException(
+				"Planning folder title did not change within the given time: "
+						+ ccfMaxWaitTime);
 	}
 
 	/**
-	 * Return the id of the parent for the given artifact. 
+	 * Return the id of the parent for the given artifact.
 	 * 
-	 * @param artifactId the id of the artifact
+	 * @param artifactId
+	 *            the id of the artifact
 	 * @return the parent id
-	 * @throws RemoteException if the TeamForge API can not be accessed
-	 * @throws IllegalArgumentException if any argument is <code>null</code>
+	 * @throws RemoteException
+	 *             if the TeamForge API can not be accessed
+	 * @throws IllegalArgumentException
+	 *             if any argument is <code>null</code>
 	 */
 	public String getParentId(final String artifactId) throws RemoteException {
 		Validate.notNull(artifactId, "null artifactId");
-		
-		ArtifactDependencyList parentDependencyList = connection.getTrackerClient().getParentDependencyList(artifactId); 
+
+		ArtifactDependencyList parentDependencyList = connection
+				.getTrackerClient().getParentDependencyList(artifactId);
 		ArtifactDependencyRow[] dataRows = parentDependencyList.getDataRows();
 		if (dataRows.length > 0) {
-			return dataRows[0].getOriginId();  
+			return dataRows[0].getOriginId();
 		} else {
-			return null; 
+			return null;
 		}
+	}
+
+	public void setTaskTracker(String taskTracker) {
+		this.taskTracker = taskTracker;
+	}
+
+	public String getTaskTracker() {
+		return taskTracker;
+	}
+
+	/**
+	 * Polls a TF tracker until field value pops up for the passed field
+	 * 
+	 * @param tracker
+	 * @param fieldName
+	 * @param fieldValue
+	 * @throws RemoteException
+	 */
+	public void waitForTrackerFieldValueToAppear(String tracker,
+			String fieldName, String fieldValue) throws RemoteException {
+		for (int i = 0; i < ccfMaxWaitTime; i += ccfRetryInterval) {
+			TrackerFieldDO[] trackerFields = connection.getTrackerClient()
+					.getFields(tracker);
+			TrackerFieldDO monitoredField = null;
+			for (TrackerFieldDO trackerField : trackerFields) {
+				if (trackerField.getName().equals(fieldName)) {
+					monitoredField = trackerField;
+					break;
+				}
+			}
+			if (monitoredField == null) {
+				throw new RemoteException("Field " + fieldName
+						+ " could not be found in tracker " + tracker);
+			}
+			TrackerFieldValueDO[] fieldValues = monitoredField.getFieldValues();
+			if (fieldValues == null) {
+				continue;
+			}
+			for (TrackerFieldValueDO trackerFieldValue : fieldValues) {
+				if (fieldValue.equals(trackerFieldValue.getValue())) {
+					return;
+				}
+			}
+		}
+		throw new RemoteException("Field value " + fieldValue
+				+ " did not appear for field " + fieldName + " in tracker "
+				+ tracker + " within the given time: " + ccfMaxWaitTime);
+	}
+
+	/**
+	 * Polls a TF tracker until field value disappears for the passed field
+	 * 
+	 * @param tracker
+	 * @param fieldName
+	 * @param fieldValue
+	 * @throws RemoteException
+	 */
+	public void waitForTrackerFieldValueToDisappear(String tracker,
+			String fieldName, String fieldValue) throws RemoteException {
+
+		mainloop: for (int i = 0; i < ccfMaxWaitTime; i += ccfRetryInterval) {
+			TrackerFieldDO[] trackerFields = connection.getTrackerClient()
+					.getFields(tracker);
+			TrackerFieldDO monitoredField = null;
+			for (TrackerFieldDO trackerField : trackerFields) {
+				if (trackerField.getName().equals(fieldName)) {
+					monitoredField = trackerField;
+					break;
+				}
+			}
+			if (monitoredField == null) {
+				throw new RemoteException("Field " + fieldName
+						+ " could not be found in tracker " + tracker);
+			}
+			TrackerFieldValueDO[] fieldValues = monitoredField.getFieldValues();
+			if (fieldValues == null) {
+				return;
+			}
+			for (TrackerFieldValueDO trackerFieldValue : fieldValues) {
+				if (fieldValue.equals(trackerFieldValue.getValue())) {
+					continue mainloop;
+				}
+			}
+			return;
+		}
+		throw new RemoteException("Field value " + fieldValue
+				+ " did not disappear for field " + fieldName + " in tracker "
+				+ tracker + " within the given time: " + ccfMaxWaitTime);
+	}
+
+	public void setPbiTracker(String pbiTracker) {
+		this.pbiTracker = pbiTracker;
+	}
+
+	public String getPbiTracker() {
+		return pbiTracker;
 	}
 }
