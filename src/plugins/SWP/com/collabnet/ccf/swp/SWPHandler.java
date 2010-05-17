@@ -71,6 +71,25 @@ public class SWPHandler {
 	private Map<String, Map<Long, AbstractMap.SimpleEntry<AbstractMap.SimpleEntry<Long, RevisionInfo>, Release>>> releaseCache = new HashMap<String, Map<Long, AbstractMap.SimpleEntry<AbstractMap.SimpleEntry<Long, RevisionInfo>, Release>>>();
 	private Map<String, Map<Long, AbstractMap.SimpleEntry<AbstractMap.SimpleEntry<Long, RevisionInfo>, Task>>> taskCache = new HashMap<String, Map<Long, AbstractMap.SimpleEntry<AbstractMap.SimpleEntry<Long, RevisionInfo>, Task>>>();
 	private Map<String, AbstractMap.SimpleEntry<Long, RevisionInfo>> themeCache = new HashMap<String, AbstractMap.SimpleEntry<Long, RevisionInfo>>();
+	private Map<String, Long> productIdCache = new HashMap<String, Long>();
+	
+	/**
+	 * Returns id of product in question
+	 * Uses a cache internally
+	 * @param productName
+	 * @param endpoint
+	 * @return
+	 * @throws ScrumWorksException
+	 */
+	private Long getProductId(String productName, ScrumWorksAPIService endpoint) throws ScrumWorksException {
+		Long productId = productIdCache.get(productName);
+		if (productId == null) {
+			Product product = endpoint.getProductByName(productName);
+			productId = product.getId();
+			productIdCache.put(productName, productId);
+		}
+		return productId;
+	}
 
 	/**
 	 * This constant is used as a factor for SWP revission numbers The rationale
@@ -362,7 +381,7 @@ public class SWPHandler {
 			minorVersion = 0;
 		}
 
-		Product product = endpoint.getProductByName(swpProductName);
+		Long productId = getProductId(swpProductName, endpoint);
 
 		// now do the query, passed revision number is not included in the
 		// result set
@@ -371,7 +390,7 @@ public class SWPHandler {
 		FilterChangesByType filter = new FilterChangesByType();
 		filter.setIncludeTasks(true);
 		AggregateVersionedData changesSinceCurrentRevision = endpoint
-				.getChangesSinceRevisionForTypes(product.getId(), queryVersion, false, filter);
+				.getChangesSinceRevisionForTypes(productId, queryVersion, false, filter);
 
 		// initialize some data structures to capture deleted and inserted
 		// artifacts
@@ -505,7 +524,7 @@ public class SWPHandler {
 			minorVersion = 0;
 		}
 
-		Product product = endpoint.getProductByName(swpProductName);
+		Long productId = getProductId(swpProductName, endpoint);
 
 		// now do the query, passed revision number is not included in the
 		// result set
@@ -514,7 +533,7 @@ public class SWPHandler {
 		FilterChangesByType filter = new FilterChangesByType();
 		filter.setIncludeBacklogItems(true);
 		AggregateVersionedData changesSinceCurrentRevision = endpoint
-				.getChangesSinceRevisionForTypes(product.getId(), queryVersion, false, filter);
+				.getChangesSinceRevisionForTypes(productId, queryVersion, false, filter);
 
 		// initialize some data structures to capture deleted and inserted
 		// artifacts
@@ -754,7 +773,7 @@ public class SWPHandler {
 			pbi.setBusinessWeight(bw);
 		}
 
-		Product product = endpoint.getProductByName(swpProductName);
+		Long productId = getProductId(swpProductName, endpoint);
 
 		List<Theme> currentlySetThemes = pbi.getThemes();
 		// now updates the themes
@@ -772,8 +791,7 @@ public class SWPHandler {
 			}
 			if (!themeSet.isEmpty()) {
 				// retrieve all themes of the product
-				List<Theme> swpThemes = endpoint.getThemesForProduct(product
-						.getId());
+				List<Theme> swpThemes = endpoint.getThemesForProduct(productId);
 				if (swpThemes == null || swpThemes.size() == 0) {
 					log.warn("Attempt to set themes not present in SWP.");
 					for (String theme : themeSet) {
@@ -1078,7 +1096,7 @@ public class SWPHandler {
 			}
 		}
 
-		Product product = endpoint.getProductByName(swpProductName);
+		Long productId = getProductId(swpProductName, endpoint);
 
 		// now set the themes
 		if (themes != null && !themes.isEmpty()) {
@@ -1091,8 +1109,7 @@ public class SWPHandler {
 			if (!themeSet.isEmpty()) {
 				List<Theme> currentlySetThemes = pbi.getThemes();
 				// retrieve all themes of the product
-				List<Theme> swpThemes = endpoint.getThemesForProduct(product
-						.getId());
+				List<Theme> swpThemes = endpoint.getThemesForProduct(productId);
 				if (swpThemes == null || swpThemes.size() == 0) {
 					log.warn("Attempt to set themes not present in SWP.");
 					for (String theme : themeSet) {
@@ -1120,7 +1137,7 @@ public class SWPHandler {
 
 		// now set the product
 		// TODO Do not use the symbolic product name but its id
-		pbi.setProductId(product.getId());
+		pbi.setProductId(productId);
 
 		// now determine the release (parent artifact)
 		String parentArtifact = ga.getDepParentTargetArtifactId();
@@ -1132,7 +1149,7 @@ public class SWPHandler {
 						SWPMetaData.SWPType.RELEASE)) {
 			// parent id is no release, we assign the first release in the list
 			Release release = endpoint.getReleasesForProduct(
-					endpoint.getProductByName(swpProductName).getId()).get(0);
+					getProductId(swpProductName, endpoint)).get(0);
 			log
 					.warn(parentArtifact
 							+ " of parent repository "
@@ -1278,7 +1295,7 @@ public class SWPHandler {
 			minorVersion = 0;
 		}
 
-		Product product = endpoint.getProductByName(swpProductName);
+		Long productId = getProductId(swpProductName, endpoint);
 
 		// now do the query, passed revision number is not included in the
 		// result set
@@ -1287,7 +1304,7 @@ public class SWPHandler {
 		FilterChangesByType filter = new FilterChangesByType();
 		filter.setIncludeProduct(true);
 		AggregateVersionedData changesSinceCurrentRevision = endpoint
-				.getChangesSinceRevisionForTypes(product.getId(), queryVersion, false, filter);
+				.getChangesSinceRevisionForTypes(productId, queryVersion, false, filter);
 		
 		// initialize some data structures to capture deleted and inserted
 		// artifacts
@@ -1422,7 +1439,7 @@ public class SWPHandler {
 			minorVersion = 0;
 		}
 
-		Product product = endpoint.getProductByName(swpProductName);
+		Long productId = getProductId(swpProductName, endpoint);
 
 		// now do the query, passed revision number is not included in the
 		// result set
@@ -1431,7 +1448,7 @@ public class SWPHandler {
 		FilterChangesByType filter = new FilterChangesByType();
 		filter.setIncludeReleases(true);
 		AggregateVersionedData changesSinceCurrentRevision = endpoint
-				.getChangesSinceRevisionForTypes(product.getId(), queryVersion, false, filter);
+				.getChangesSinceRevisionForTypes(productId, queryVersion, false, filter);
 		
 		// initialize some data structures to capture deleted and inserted
 		// artifacts
@@ -1568,7 +1585,7 @@ public class SWPHandler {
 			minorVersion = 0;
 		}
 
-		Product product = endpoint.getProductByName(swpProductName);
+		Long productId = getProductId(swpProductName, endpoint);
 
 		// now do the query, passed revision number is not included in the
 		// result set
@@ -1577,7 +1594,7 @@ public class SWPHandler {
 		FilterChangesByType filter = new FilterChangesByType();
 		filter.setIncludeThemes(true);
 		AggregateVersionedData changesSinceCurrentRevision = endpoint
-				.getChangesSinceRevisionForTypes(product.getId(), queryVersion, false, filter);
+				.getChangesSinceRevisionForTypes(productId, queryVersion, false, filter);
 
 		// initialize some data structures to capture deleted and inserted
 		// artifacts
@@ -1717,8 +1734,8 @@ public class SWPHandler {
 		addProductReleaseField(ga, ReleaseFields.title, release.getName());
 
 		// set parent artifact (Product)
-		Product product = endpoint.getProductByName(swpProductName);
-		ga.setDepParentSourceArtifactId(product.getId().toString());
+		Long productId = getProductId(swpProductName, endpoint);
+		ga.setDepParentSourceArtifactId(productId.toString());
 		ga.setDepParentSourceRepositoryId(swpProductName
 				+ SWPMetaData.REPOSITORY_ID_SEPARATOR + SWPMetaData.PRODUCT);
 
@@ -1756,8 +1773,8 @@ public class SWPHandler {
 		long artificialVersionNumber = cachedTheme.getKey();
 		RevisionInfo releaseRevision = cachedTheme.getValue();
 		
-		Product product = endpoint.getProductByName(swpProductName);
-		List<Theme> themes = endpoint.getThemesForProduct(product.getId());
+		Long productId = getProductId(swpProductName, endpoint);
+		List<Theme> themes = endpoint.getThemesForProduct(productId);
 		for (Theme theme : themes) {
 			addThemeField(ga, ThemeFields.name, theme.getName());
 		}
