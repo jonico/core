@@ -1575,7 +1575,7 @@ public class SWPHandler {
 		int queryVersion = new Long(majorVersion == 0 ? 0 : majorVersion - 1)
 				.intValue();
 		FilterChangesByType filter = new FilterChangesByType();
-		filter.setIncludeReleases(true);
+		filter.setIncludeThemes(true);
 		AggregateVersionedData changesSinceCurrentRevision = endpoint
 				.getChangesSinceRevisionForTypes(product.getId(), queryVersion, false, filter);
 
