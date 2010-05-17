@@ -37,6 +37,7 @@ import com.danube.scrumworks.api2.client.AggregateVersionedData;
 import com.danube.scrumworks.api2.client.BacklogItem;
 import com.danube.scrumworks.api2.client.BacklogItemChanges;
 import com.danube.scrumworks.api2.client.BusinessWeight;
+import com.danube.scrumworks.api2.client.FilterChangesByType;
 import com.danube.scrumworks.api2.client.Product;
 import com.danube.scrumworks.api2.client.ProductChanges;
 import com.danube.scrumworks.api2.client.Release;
@@ -367,8 +368,10 @@ public class SWPHandler {
 		// result set
 		int queryVersion = new Long(majorVersion == 0 ? 0 : majorVersion - 1)
 				.intValue();
+		FilterChangesByType filter = new FilterChangesByType();
+		filter.setIncludeTasks(true);
 		AggregateVersionedData changesSinceCurrentRevision = endpoint
-				.getChangesSinceRevision(product.getId(), queryVersion);
+				.getChangesSinceRevisionForTypes(product.getId(), queryVersion, false, filter);
 
 		// initialize some data structures to capture deleted and inserted
 		// artifacts
@@ -508,8 +511,10 @@ public class SWPHandler {
 		// result set
 		int queryVersion = new Long(majorVersion == 0 ? 0 : majorVersion - 1)
 				.intValue();
+		FilterChangesByType filter = new FilterChangesByType();
+		filter.setIncludeBacklogItems(true);
 		AggregateVersionedData changesSinceCurrentRevision = endpoint
-				.getChangesSinceRevision(product.getId(), queryVersion);
+				.getChangesSinceRevisionForTypes(product.getId(), queryVersion, false, filter);
 
 		// initialize some data structures to capture deleted and inserted
 		// artifacts
@@ -1279,9 +1284,11 @@ public class SWPHandler {
 		// result set
 		int queryVersion = new Long(majorVersion == 0 ? 0 : majorVersion - 1)
 				.intValue();
+		FilterChangesByType filter = new FilterChangesByType();
+		filter.setIncludeProduct(true);
 		AggregateVersionedData changesSinceCurrentRevision = endpoint
-				.getChangesSinceRevision(product.getId(), queryVersion);
-
+				.getChangesSinceRevisionForTypes(product.getId(), queryVersion, false, filter);
+		
 		// initialize some data structures to capture deleted and inserted
 		// artifacts
 		Set<Long> alreadyProcessedArtifacts = new HashSet<Long>();
@@ -1421,9 +1428,11 @@ public class SWPHandler {
 		// result set
 		int queryVersion = new Long(majorVersion == 0 ? 0 : majorVersion - 1)
 				.intValue();
+		FilterChangesByType filter = new FilterChangesByType();
+		filter.setIncludeReleases(true);
 		AggregateVersionedData changesSinceCurrentRevision = endpoint
-				.getChangesSinceRevision(product.getId(), queryVersion);
-
+				.getChangesSinceRevisionForTypes(product.getId(), queryVersion, false, filter);
+		
 		// initialize some data structures to capture deleted and inserted
 		// artifacts
 		Set<Long> alreadyProcessedArtifacts = new HashSet<Long>();
@@ -1565,8 +1574,10 @@ public class SWPHandler {
 		// result set
 		int queryVersion = new Long(majorVersion == 0 ? 0 : majorVersion - 1)
 				.intValue();
+		FilterChangesByType filter = new FilterChangesByType();
+		filter.setIncludeReleases(true);
 		AggregateVersionedData changesSinceCurrentRevision = endpoint
-				.getChangesSinceRevision(product.getId(), queryVersion);
+				.getChangesSinceRevisionForTypes(product.getId(), queryVersion, false, filter);
 
 		// initialize some data structures to capture deleted and inserted
 		// artifacts
