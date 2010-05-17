@@ -667,9 +667,10 @@ public class TeamForgeTester {
 	 * @param fieldName
 	 * @param fieldValue
 	 * @throws RemoteException
+	 * @throws InterruptedException 
 	 */
 	public void waitForTrackerFieldValueToAppear(String tracker,
-			String fieldName, String fieldValue) throws RemoteException {
+			String fieldName, String fieldValue) throws RemoteException, InterruptedException {
 		for (int i = 0; i < ccfMaxWaitTime; i += ccfRetryInterval) {
 			TrackerFieldDO[] trackerFields = connection.getTrackerClient()
 					.getFields(tracker);
@@ -686,6 +687,7 @@ public class TeamForgeTester {
 			}
 			TrackerFieldValueDO[] fieldValues = monitoredField.getFieldValues();
 			if (fieldValues == null) {
+				Thread.sleep(ccfRetryInterval);
 				continue;
 			}
 			for (TrackerFieldValueDO trackerFieldValue : fieldValues) {
@@ -693,6 +695,7 @@ public class TeamForgeTester {
 					return;
 				}
 			}
+			Thread.sleep(ccfRetryInterval);
 		}
 		throw new RemoteException("Field value " + fieldValue
 				+ " did not appear for field " + fieldName + " in tracker "
@@ -706,9 +709,10 @@ public class TeamForgeTester {
 	 * @param fieldName
 	 * @param fieldValue
 	 * @throws RemoteException
+	 * @throws InterruptedException 
 	 */
 	public void waitForTrackerFieldValueToDisappear(String tracker,
-			String fieldName, String fieldValue) throws RemoteException {
+			String fieldName, String fieldValue) throws RemoteException, InterruptedException {
 
 		mainloop: for (int i = 0; i < ccfMaxWaitTime; i += ccfRetryInterval) {
 			TrackerFieldDO[] trackerFields = connection.getTrackerClient()
@@ -730,6 +734,7 @@ public class TeamForgeTester {
 			}
 			for (TrackerFieldValueDO trackerFieldValue : fieldValues) {
 				if (fieldValue.equals(trackerFieldValue.getValue())) {
+					Thread.sleep(ccfRetryInterval);
 					continue mainloop;
 				}
 			}
