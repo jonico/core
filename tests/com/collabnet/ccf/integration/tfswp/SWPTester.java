@@ -629,7 +629,7 @@ public class SWPTester {
 	 */
 	public Long getSprintId(final String sprintName) throws ScrumWorksException {
 		final List<com.danube.scrumworks.api2.client.Sprint> sprints = getSWPEndpoint()
-				.getSprints(getProduct().getId());
+				.getSprintsForProduct(getProduct().getId());
 		for (com.danube.scrumworks.api2.client.Sprint sprint : sprints) {
 			if (sprint.getName().equals(sprintName)) {
 				return sprint.getId();
