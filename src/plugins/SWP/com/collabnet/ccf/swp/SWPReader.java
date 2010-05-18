@@ -2,7 +2,9 @@ package com.collabnet.ccf.swp;
 
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.xml.datatype.DatatypeConfigurationException;
 
@@ -30,6 +32,12 @@ import com.collabnet.ccf.swp.SWPMetaData.SWPType;
  * 
  */
 public class SWPReader extends AbstractReader<Connection> {
+	/**
+	 * This map is used to determine whether a specific entity type is ready for
+	 * transmitting its artifacts. This helps to reduce the number of cases
+	 * where child artifacts are created before their parent artifacts.
+	 */
+	private Map<String, Integer> entityTypePriority = new HashMap<String, Integer>();
 	private String username;
 	private String password;
 	private String serverUrl;
@@ -87,29 +95,29 @@ public class SWPReader extends AbstractReader<Connection> {
 			/**
 			 * Create a new generic artifact data structure
 			 */
-			//genericArtifact.setSourceArtifactVersion("-1");
-			//genericArtifact
-			//		.setSourceArtifactLastModifiedDate(GenericArtifactHelper.df
-			//				.format(new Date(0)));
+			// genericArtifact.setSourceArtifactVersion("-1");
+			// genericArtifact
+			// .setSourceArtifactLastModifiedDate(GenericArtifactHelper.df
+			// .format(new Date(0)));
 			genericArtifact.setArtifactMode(ArtifactModeValue.COMPLETE);
 			genericArtifact.setArtifactType(ArtifactTypeValue.PLAINARTIFACT);
 			genericArtifact.setSourceArtifactId(artifactId);
 
 			if (swpType.equals(SWPMetaData.SWPType.TASK)) {
-				swpHandler.retrieveTask(connection.getEndpoint(), artifactId, swpProductName,
-						genericArtifact);
+				swpHandler.retrieveTask(connection.getEndpoint(), artifactId,
+						swpProductName, genericArtifact);
 			} else if (swpType.equals(SWPMetaData.SWPType.PBI)) {
-				swpHandler.retrievePBI(connection.getEndpoint(), artifactId, swpProductName,
-						genericArtifact);
+				swpHandler.retrievePBI(connection.getEndpoint(), artifactId,
+						swpProductName, genericArtifact);
 			} else if (swpType.equals(SWPMetaData.SWPType.PRODUCT)) {
-				swpHandler.retrieveProduct(connection.getEndpoint(), artifactId, swpProductName,
-						genericArtifact);
+				swpHandler.retrieveProduct(connection.getEndpoint(),
+						artifactId, swpProductName, genericArtifact);
 			} else if (swpType.equals(SWPMetaData.SWPType.RELEASE)) {
-				swpHandler.retrieveRelease(connection.getEndpoint(), artifactId, swpProductName,
-						genericArtifact);
+				swpHandler.retrieveRelease(connection.getEndpoint(),
+						artifactId, swpProductName, genericArtifact);
 			} else if (swpType.equals(SWPMetaData.SWPType.THEME)) {
-				swpHandler.retrieveThemes(connection.getEndpoint(), artifactId, swpProductName,
-						genericArtifact);
+				swpHandler.retrieveThemes(connection.getEndpoint(), artifactId,
+						swpProductName, genericArtifact);
 			} else {
 				String cause = "Unsupported repository format: "
 						+ sourceRepositoryId;
@@ -186,14 +194,22 @@ public class SWPReader extends AbstractReader<Connection> {
 		String sourceRepositoryId = this.getSourceRepositoryId(syncInfo);
 		String sourceRepositoryKind = this.getSourceRepositoryKind(syncInfo);
 		String lastSynchronizedVersion = this.getLastSourceVersion(syncInfo);
+		String targetSystemId = this.getTargetSystemId(syncInfo);
+		String targetRepositoryId = this.getTargetRepositoryId(syncInfo);
+
+		String repositoryKey = sourceSystemId + ":" + sourceRepositoryId + ":"
+				+ targetSystemId + ":" + targetRepositoryId;
+
 		long majorVersion = 0;
 		long minorVersion = 0;
 		try {
 			majorVersion = Long.parseLong(lastSynchronizedVersion);
-			/* 
-			 * The minor version determines the last artifact that has been transported within a single SWP revision
-			 * The first artifact will have minor version 2, the second version 4, ... and the last one will have
-			 * (number of artifacts in revision) * 2 + 1 to indicate that this is the last one 
+			/*
+			 * The minor version determines the last artifact that has been
+			 * transported within a single SWP revision The first artifact will
+			 * have minor version 2, the second version 4, ... and the last one
+			 * will have (number of artifacts in revision) * 2 + 1 to indicate
+			 * that this is the last one
 			 */
 			minorVersion = majorVersion % SWPHandler.SWP_REVISION_FACTOR;
 			// normalize major revision number
@@ -208,6 +224,15 @@ public class SWPReader extends AbstractReader<Connection> {
 				.retrieveSWPTypeFromRepositoryId(sourceRepositoryId);
 		String swpProductName = SWPMetaData
 				.retrieveProductFromRepositoryId(sourceRepositoryId);
+		String correspondingProductRepositoryId = swpProductName
+				+ SWPMetaData.REPOSITORY_ID_SEPARATOR + SWPMetaData.PRODUCT;
+		String correspondingReleaseRepositoryId = swpProductName
+				+ SWPMetaData.REPOSITORY_ID_SEPARATOR + SWPMetaData.RELEASE;
+		String correspondingThemeRepositoryId = swpProductName
+				+ SWPMetaData.REPOSITORY_ID_SEPARATOR + SWPMetaData.THEME;
+		String correspondingPBIRepositoryId = swpProductName
+				+ SWPMetaData.REPOSITORY_ID_SEPARATOR + SWPMetaData.PBI;
+
 		if (swpType.equals(SWPMetaData.SWPType.UNKNOWN)
 				|| swpProductName == null) {
 			String cause = "Invalid repository format: " + sourceRepositoryId;
@@ -236,21 +261,107 @@ public class SWPReader extends AbstractReader<Connection> {
 		ArrayList<ArtifactState> artifactStates = new ArrayList<ArtifactState>();
 		try {
 			if (swpType.equals(SWPType.TASK)) {
-				swpHandler.getChangedTasks(connection.getEndpoint(), swpProductName, artifactStates,
-						majorVersion, minorVersion, getUsername());
+				// determine whether higher priority items are still in the
+				// queue
+				if (getNumberOfWaitingArtifactsForAllTargetSystems(
+						sourceSystemId, correspondingPBIRepositoryId) != 0
+						|| getNumberOfWaitingArtifactsForAllTargetSystems(
+								sourceSystemId,
+								correspondingProductRepositoryId) != 0
+						|| getNumberOfWaitingArtifactsForAllTargetSystems(
+								sourceSystemId,
+								correspondingReleaseRepositoryId) != 0
+						|| getNumberOfWaitingArtifactsForAllTargetSystems(
+								sourceSystemId, correspondingThemeRepositoryId) != 0) {
+					// reset entity type priority
+					entityTypePriority.put(repositoryKey, 0);
+					log
+							.debug("Do not query new tasks for "
+									+ repositoryKey
+									+ " since items of higher prioritized entity types are still in the queue ...");
+				} else {
+					Integer queuePriority = entityTypePriority
+							.get(repositoryKey);
+					if (queuePriority == null || queuePriority == 0) {
+						entityTypePriority.put(repositoryKey, 1);
+					} else if (queuePriority == 1) {
+						entityTypePriority.put(repositoryKey, 2);
+						log.debug("Increasing priority of queue " + repositoryKey);
+					} else if (queuePriority == 2) {
+						entityTypePriority.put(repositoryKey, 3);
+						log.debug("Increasing priority of queue " + repositoryKey);
+					} else {
+						entityTypePriority.put(repositoryKey, 0);
+						swpHandler.getChangedTasks(connection.getEndpoint(),
+								swpProductName, artifactStates, majorVersion,
+								minorVersion, getUsername());
+					}
+				}
 			} else if (swpType.equals(SWPType.PBI)) {
-				swpHandler.getChangedPBIs(connection.getEndpoint(), swpProductName, artifactStates,
-						majorVersion, minorVersion, getUsername());
+				// determine whether higher priority items are still in the
+				// queue
+				if (getNumberOfWaitingArtifactsForAllTargetSystems(
+						sourceSystemId, correspondingProductRepositoryId) != 0
+						|| getNumberOfWaitingArtifactsForAllTargetSystems(
+								sourceSystemId,
+								correspondingReleaseRepositoryId) != 0
+						|| getNumberOfWaitingArtifactsForAllTargetSystems(
+								sourceSystemId, correspondingThemeRepositoryId) != 0) {
+					// reset entity type priority
+					entityTypePriority.put(repositoryKey, 0);
+					log
+							.debug("Do not query new PBIs for "
+									+ repositoryKey
+									+ " since items of higher prioritized entity types are still in the queue ...");
+				} else {
+					Integer queuePriority = entityTypePriority
+							.get(repositoryKey);
+					if (queuePriority == null || queuePriority == 0) {
+						entityTypePriority.put(repositoryKey, 1);
+						log.debug("Increasing priority of queue " + repositoryKey);
+					} else if (queuePriority == 1) {
+						entityTypePriority.put(repositoryKey, 2);
+						log.debug("Increasing priority of queue " + repositoryKey);
+					} else {
+						entityTypePriority.put(repositoryKey, 0);
+						swpHandler.getChangedPBIs(connection.getEndpoint(),
+								swpProductName, artifactStates, majorVersion,
+								minorVersion, getUsername());
+					}
+				}
 			} else if (swpType.equals(SWPType.PRODUCT)) {
-				swpHandler.getChangedProducts(connection.getEndpoint(), swpProductName, artifactStates,
-						majorVersion, minorVersion, getUsername());
+				swpHandler.getChangedProducts(connection.getEndpoint(),
+						swpProductName, artifactStates, majorVersion,
+						minorVersion, getUsername());
 			} else if (swpType.equals(SWPType.RELEASE)) {
-				swpHandler.getChangedReleases(connection.getEndpoint(), swpProductName,
-						artifactStates, majorVersion, minorVersion, getUsername());
+				// determine whether higher priority items are still in the
+				// queue
+				if (getNumberOfWaitingArtifactsForAllTargetSystems(
+						sourceSystemId, correspondingProductRepositoryId) != 0) {
+					// reset entity type priority
+					entityTypePriority.put(repositoryKey, 0);
+					log
+							.debug("Do not query new releases for "
+									+ repositoryKey
+									+ " since items of higher prioritized entity types are still in the queue ...");
+				} else {
+					Integer queuePriority = entityTypePriority
+							.get(repositoryKey);
+					if (queuePriority == null || queuePriority == 0) {
+						entityTypePriority.put(repositoryKey, 1);
+						log.debug("Increasing priority of queue " + repositoryKey);
+					} else {
+						entityTypePriority.put(repositoryKey, 0);
+						swpHandler.getChangedReleases(connection.getEndpoint(),
+								swpProductName, artifactStates, majorVersion,
+								minorVersion, getUsername());
+					}
+				}
 			} else if (swpType.equals(SWPType.THEME)) {
-				swpHandler.getChangedThemes(connection.getEndpoint(), swpProductName,
-						artifactStates, majorVersion, minorVersion, getUsername());
-			}else {
+				swpHandler.getChangedThemes(connection.getEndpoint(),
+						swpProductName, artifactStates, majorVersion,
+						minorVersion, getUsername());
+			} else {
 				String cause = "Unsupported repository format: "
 						+ sourceRepositoryId;
 				log.error(cause);
