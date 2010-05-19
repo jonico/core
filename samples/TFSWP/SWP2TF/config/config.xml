@@ -247,7 +247,7 @@
 		<property name="password" value="${swp.server.password}" />
 		<property name="resyncUserName" value="${swp.server.resync.username}"></property>
 		<property name="connectionManager" ref="SWPConnectionManager"></property>
-		<property name="sleepInterval" value="1000"></property>
+		<property name="sleepInterval" value="250"></property>
 		<property name="maxAttachmentSizePerArtifact" value="${swp.max.attachmentsize.per.artifact}" />
 		<!-- Let this restart every 6 hours -->
 		<property name="autoRestartPeriod" value="21600" />
