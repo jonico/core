@@ -21,6 +21,7 @@ import javax.xml.datatype.XMLGregorianCalendar;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.collabnet.ccf.core.AbstractWriter;
 import com.collabnet.ccf.core.ArtifactState;
 import com.collabnet.ccf.core.CCFRuntimeException;
 import com.collabnet.ccf.core.ga.GenericArtifact;
@@ -37,6 +38,7 @@ import com.danube.scrumworks.api2.client.AggregateVersionedData;
 import com.danube.scrumworks.api2.client.BacklogItem;
 import com.danube.scrumworks.api2.client.BacklogItemChanges;
 import com.danube.scrumworks.api2.client.BusinessWeight;
+import com.danube.scrumworks.api2.client.FilterChangesById;
 import com.danube.scrumworks.api2.client.FilterChangesByType;
 import com.danube.scrumworks.api2.client.Product;
 import com.danube.scrumworks.api2.client.ProductChanges;
@@ -666,12 +668,60 @@ public class SWPHandler {
 			GenericArtifactField completedDate,
 			GenericArtifactField description, GenericArtifactField estimate,
 			GenericArtifactField penalty, GenericArtifactField title,
-			List<GenericArtifactField> themes, String swpProductName,
+			List<GenericArtifactField> themes, String swpProductName, String connectorUser,
 			GenericArtifact ga) throws NumberFormatException, RemoteException,
 			ScrumWorksException {
-		BacklogItem pbi = endpoint.getBacklogItemById(new Long(ga
-				.getTargetArtifactId()));
-		// TODO Do conflict resolution
+		// first figure out whether we have to update or not
+		Long pbiId = new Long(ga
+				.getTargetArtifactId());
+		Long lastSyncVersion = new Long(-1);
+		int lastKnownRevision = 0;
+		String lastSyncVersionStr = ga.getTargetArtifactVersion();
+		if (lastSyncVersionStr == null
+				|| lastSyncVersionStr
+						.equalsIgnoreCase(GenericArtifact.VALUE_UNKNOWN)) {
+			lastSyncVersionStr = GenericArtifactHelper.ARTIFACT_VERSION_FORCE_RESYNC;
+		}
+		try {
+			lastSyncVersion = Long.parseLong(lastSyncVersionStr);
+		} catch (NumberFormatException e) {
+			String message = "Last successful synchronization version of artifact "
+					+ pbiId
+					+ " is not a number "
+					+ lastSyncVersionStr;
+			//log.error(message, e);
+			throw new CCFRuntimeException(message, e);
+		}
+		lastKnownRevision = new Long(lastSyncVersion / SWP_REVISION_FACTOR).intValue() - 1;
+		if (lastKnownRevision < 0) {
+			lastKnownRevision = 0;
+		}
+		
+		FilterChangesById pbiFilter = new FilterChangesById();
+		pbiFilter.getBacklogItemIds().add(pbiId);
+		AggregateVersionedData changesSinceLastKnownRevision = endpoint.getChangesSinceRevisionForIds(lastKnownRevision , false, pbiFilter);
+		if (changesSinceLastKnownRevision == null || changesSinceLastKnownRevision.getBacklogItemChanges().size() != 1) {
+			String message = "Could not find current version of PBI " + pbiId + " which should be at least " + lastKnownRevision;
+			//log.error(message);
+			throw new CCFRuntimeException(message);
+		}
+		BacklogItemChanges pbiSpecificChangesInCurrentRevision = changesSinceLastKnownRevision.getBacklogItemChanges().get(0);
+		int currentRevision = pbiSpecificChangesInCurrentRevision.getRevisionInfo().getRevisionNumber();
+		
+		List<BacklogItem> pbiChanges = pbiSpecificChangesInCurrentRevision.getAddedOrChangedEntities();
+		if (pbiChanges.size() != 1 || !pbiChanges.get(0).getId().equals(pbiId)) {
+			String message = "Could not find current version of PBI " + pbiId + " which should be at least " + lastKnownRevision;
+			//log.error(message);
+			throw new CCFRuntimeException(message);
+		}
+		
+		// do conflict resolution
+		if (!AbstractWriter.handleConflicts(currentRevision * SWP_REVISION_FACTOR, ga)) {
+			return null;
+		}
+		
+		BacklogItem pbi = pbiChanges.get(0);
+		
 		if (active != null && active.getFieldValueHasChanged()) {
 			pbi.setActive((Boolean) active.getFieldValue());
 		}
@@ -840,8 +890,44 @@ public class SWPHandler {
 		} else {
 			pbi.setReleaseId(new Long(parentArtifact));
 		}
+		
+		// now we have to determine the new revision number
+		pbi = endpoint.updateBacklogItem(pbi);
+		
+		changesSinceLastKnownRevision = endpoint.getChangesSinceRevisionForIds(currentRevision - 1, true, pbiFilter);
+		if (changesSinceLastKnownRevision == null || changesSinceLastKnownRevision.getBacklogItemChanges().isEmpty()) {
+			String message = "Could not find updated version of PBI " + pbiId + " which should be at least " + currentRevision;
+			//log.error(message);
+			throw new CCFRuntimeException(message);
+		}
+		List<BacklogItemChanges> pbiSpecificChanges = changesSinceLastKnownRevision.getBacklogItemChanges();
+		
+		ListIterator<BacklogItemChanges> it = pbiSpecificChanges.listIterator(pbiSpecificChanges.size());
+		while (it.hasPrevious()) {
+			BacklogItemChanges pbiSpecificChangesInRevision = it.previous();
 
-		return endpoint.updateBacklogItem(pbi);
+			RevisionInfo processedRevisionInfo = pbiSpecificChangesInRevision
+				.getRevisionInfo();
+			int processedRevisionNumber = processedRevisionInfo
+				.getRevisionNumber();
+			
+			if (processedRevisionInfo.getUserName().equals(connectorUser) || processedRevisionNumber == currentRevision) {
+				// set the fields here
+				ga.setTargetArtifactVersion(Long.toString(processedRevisionNumber * SWP_REVISION_FACTOR));
+				Date artifactLastModifiedDate = new Date(0);
+				if (processedRevisionInfo.getTimeStamp() != null) {
+						artifactLastModifiedDate = processedRevisionInfo.getTimeStamp()
+							.toGregorianCalendar().getTime();
+				}
+				ga.setTargetArtifactLastModifiedDate(GenericArtifactHelper.df
+						.format(artifactLastModifiedDate));
+				return pbi;
+			}
+		}
+		
+		String message = "Could not find updated version of PBI " + pbiId + " which should be at least " + currentRevision;
+		//log.error(message);
+		throw new CCFRuntimeException(message);
 	}
 
 	/**
@@ -865,9 +951,58 @@ public class SWPHandler {
 			GenericArtifactField estimatedHours,
 			GenericArtifactField originalEstimate,
 			GenericArtifactField pointPerson, GenericArtifactField status,
-			GenericArtifactField title, GenericArtifact ga)
+			GenericArtifactField title, String connectorUser, GenericArtifact ga)
 			throws NumberFormatException, RemoteException, ScrumWorksException {
-		Task task = endpoint.getTaskById(new Long(ga.getTargetArtifactId()));
+		
+		// first figure out whether we have to update or not
+		Long taskId = new Long(ga
+				.getTargetArtifactId());
+		Long lastSyncVersion = new Long(-1);
+		int lastKnownRevision = 0;
+		String lastSyncVersionStr = ga.getTargetArtifactVersion();
+		if (lastSyncVersionStr == null
+				|| lastSyncVersionStr
+						.equalsIgnoreCase(GenericArtifact.VALUE_UNKNOWN)) {
+			lastSyncVersionStr = GenericArtifactHelper.ARTIFACT_VERSION_FORCE_RESYNC;
+		}
+		try {
+			lastSyncVersion = Long.parseLong(lastSyncVersionStr);
+		} catch (NumberFormatException e) {
+			String message = "Last successful synchronization version of artifact "
+					+ taskId
+					+ " is not a number "
+					+ lastSyncVersionStr;
+			//log.error(message, e);
+			throw new CCFRuntimeException(message, e);
+		}
+		lastKnownRevision = new Long(lastSyncVersion / SWP_REVISION_FACTOR).intValue() - 1;
+		if (lastKnownRevision < 0) {
+			lastKnownRevision = 0;
+		}
+		
+		FilterChangesById taskFilter = new FilterChangesById();
+		taskFilter.getTaskIds().add(taskId);
+		AggregateVersionedData changesSinceLastKnownRevision = endpoint.getChangesSinceRevisionForIds(lastKnownRevision , false, taskFilter);
+		if (changesSinceLastKnownRevision == null || changesSinceLastKnownRevision.getTaskChanges().size() != 1) {
+			String message = "Could not find current version of Task " + taskId + " which should be at least " + lastKnownRevision;
+			//log.error(message);
+			throw new CCFRuntimeException(message);
+		}
+		TaskChanges taskSpecificChangesInCurrentRevision = changesSinceLastKnownRevision.getTaskChanges().get(0);
+		int currentRevision = taskSpecificChangesInCurrentRevision.getRevisionInfo().getRevisionNumber();
+		
+		List<Task> taskChanges = taskSpecificChangesInCurrentRevision.getAddedOrChangedEntities();
+		if (taskChanges.size() != 1 || !taskChanges.get(0).getId().equals(taskId)) {
+			String message = "Could not find current version of Task " + taskId + " which should be at least " + lastKnownRevision;
+			//log.error(message);
+			throw new CCFRuntimeException(message);
+		}
+		
+		// do conflict resolution
+		if (!AbstractWriter.handleConflicts(currentRevision * SWP_REVISION_FACTOR, ga)) {
+			return null;
+		}
+		Task task = taskChanges.get(0);
 		// TODO Do conflict resolution
 		if (description != null && description.getFieldValueHasChanged()) {
 			task.setDescription((String) description.getFieldValue());
@@ -966,8 +1101,44 @@ public class SWPHandler {
 				task.setBacklogItemId(parentId);
 			}
 		}
+		
+		// now we have to determine the new revision number
+		task = endpoint.updateTask(task);
+		
+		changesSinceLastKnownRevision = endpoint.getChangesSinceRevisionForIds(currentRevision - 1, true, taskFilter);
+		if (changesSinceLastKnownRevision == null || changesSinceLastKnownRevision.getTaskChanges().isEmpty()) {
+			String message = "Could not find updated version of Task " + taskId + " which should be at least " + currentRevision;
+			//log.error(message);
+			throw new CCFRuntimeException(message);
+		}
+		List<TaskChanges> taskSpecificChanges = changesSinceLastKnownRevision.getTaskChanges();
+		
+		ListIterator<TaskChanges> it = taskSpecificChanges.listIterator(taskSpecificChanges.size());
+		while (it.hasPrevious()) {
+			TaskChanges taskSpecificChangesInRevision = it.previous();
 
-		return endpoint.updateTask(task);
+			RevisionInfo processedRevisionInfo = taskSpecificChangesInRevision
+				.getRevisionInfo();
+			int processedRevisionNumber = processedRevisionInfo
+				.getRevisionNumber();
+			
+			if (processedRevisionInfo.getUserName().equals(connectorUser) || processedRevisionNumber == currentRevision) {
+				// set the fields here
+				ga.setTargetArtifactVersion(Long.toString(processedRevisionNumber * SWP_REVISION_FACTOR));
+				Date artifactLastModifiedDate = new Date(0);
+				if (processedRevisionInfo.getTimeStamp() != null) {
+						artifactLastModifiedDate = processedRevisionInfo.getTimeStamp()
+							.toGregorianCalendar().getTime();
+				}
+				ga.setTargetArtifactLastModifiedDate(GenericArtifactHelper.df
+						.format(artifactLastModifiedDate));
+				return task;
+			}
+		}
+		
+		String message = "Could not find updated version of Task " + taskId + " which should be at least " + currentRevision;
+		//log.error(message);
+		throw new CCFRuntimeException(message);
 	}
 
 	/**
@@ -991,7 +1162,7 @@ public class SWPHandler {
 			GenericArtifactField completedDate,
 			GenericArtifactField description, GenericArtifactField estimate,
 			GenericArtifactField penalty, GenericArtifactField title,
-			List<GenericArtifactField> themes, String swpProductName,
+			List<GenericArtifactField> themes, String swpProductName, String resyncUser,
 			GenericArtifact ga) throws RemoteException, ScrumWorksException {
 		BacklogItem pbi = new BacklogItem();
 		if (active != null) {
@@ -1160,8 +1331,49 @@ public class SWPHandler {
 		} else {
 			pbi.setReleaseId(new Long(parentArtifact));
 		}
+		
+		// now we have to determine revision number of the newly created artifact
+		int revisionNumberBeforeCreate = endpoint.getCurrentRevisionInfo().getRevisionNumber();
+		pbi = endpoint.createBacklogItem(pbi);
+		Long pbiId = pbi.getId();
+		FilterChangesById pbiFilter = new FilterChangesById();
+		pbiFilter.getBacklogItemIds().add(pbiId);
+		
+		AggregateVersionedData changesSinceLastKnownRevision = endpoint.getChangesSinceRevisionForIds(revisionNumberBeforeCreate, true, pbiFilter);
+		if (changesSinceLastKnownRevision == null || changesSinceLastKnownRevision.getBacklogItemChanges().isEmpty()) {
+			String message = "Could not find updated version of PBI " + pbiId + " which should be at least " + revisionNumberBeforeCreate;
+			//log.error(message);
+			throw new CCFRuntimeException(message);
+		}
+		List<BacklogItemChanges> pbiSpecificChanges = changesSinceLastKnownRevision.getBacklogItemChanges();
+		
+		ListIterator<BacklogItemChanges> it = pbiSpecificChanges.listIterator(pbiSpecificChanges.size());
+		while (it.hasPrevious()) {
+			BacklogItemChanges pbiSpecificChangesInRevision = it.previous();
 
-		return endpoint.createBacklogItem(pbi);
+			RevisionInfo processedRevisionInfo = pbiSpecificChangesInRevision
+				.getRevisionInfo();
+			int processedRevisionNumber = processedRevisionInfo
+				.getRevisionNumber();
+			
+			if (processedRevisionInfo.getUserName().equals(resyncUser)) {
+				// set the fields here
+				ga.setTargetArtifactVersion(Long.toString(processedRevisionNumber * SWP_REVISION_FACTOR));
+				Date artifactLastModifiedDate = new Date(0);
+				if (processedRevisionInfo.getTimeStamp() != null) {
+						artifactLastModifiedDate = processedRevisionInfo.getTimeStamp()
+							.toGregorianCalendar().getTime();
+				}
+				ga.setTargetArtifactLastModifiedDate(GenericArtifactHelper.df
+						.format(artifactLastModifiedDate));
+				ga.setTargetArtifactId(pbiId.toString());
+				return pbi;
+			}
+		}
+		
+		String message = "Could not find updated version of PBI " + pbiId + " which should be at least " + revisionNumberBeforeCreate;
+		//log.error(message);
+		throw new CCFRuntimeException(message);
 	}
 
 	/**
@@ -1183,7 +1395,7 @@ public class SWPHandler {
 			GenericArtifactField estimatedHours,
 			GenericArtifactField originalEstimate,
 			GenericArtifactField pointPerson, GenericArtifactField status,
-			GenericArtifactField title, String swpProductName,
+			GenericArtifactField title, String swpProductName, String resyncUser, 
 			GenericArtifact ga) throws RemoteException, ScrumWorksException {
 		Task task = new Task();
 		if (description != null) {
@@ -1266,8 +1478,49 @@ public class SWPHandler {
 		} else {
 			task.setBacklogItemId(new Long(parent));
 		}
+		
+		// now we have to determine revision number of the newly created artifact
+		int revisionNumberBeforeCreate = endpoint.getCurrentRevisionInfo().getRevisionNumber();
+		task = endpoint.createTask(task);
+		Long taskId = task.getId();
+		FilterChangesById taskFilter = new FilterChangesById();
+		taskFilter.getTaskIds().add(taskId);
+		
+		AggregateVersionedData changesSinceLastKnownRevision = endpoint.getChangesSinceRevisionForIds(revisionNumberBeforeCreate, true, taskFilter);
+		if (changesSinceLastKnownRevision == null || changesSinceLastKnownRevision.getTaskChanges().isEmpty()) {
+			String message = "Could not find updated version of Task " + taskId + " which should be at least " + revisionNumberBeforeCreate;
+			//log.error(message);
+			throw new CCFRuntimeException(message);
+		}
+		List<TaskChanges> taskSpecificChanges = changesSinceLastKnownRevision.getTaskChanges();
+		
+		ListIterator<TaskChanges> it = taskSpecificChanges.listIterator(taskSpecificChanges.size());
+		while (it.hasPrevious()) {
+			TaskChanges taskSpecificChangesInRevision = it.previous();
 
-		return endpoint.createTask(task);
+			RevisionInfo processedRevisionInfo = taskSpecificChangesInRevision
+				.getRevisionInfo();
+			int processedRevisionNumber = processedRevisionInfo
+				.getRevisionNumber();
+			
+			if (processedRevisionInfo.getUserName().equals(resyncUser)) {
+				// set the fields here
+				ga.setTargetArtifactVersion(Long.toString(processedRevisionNumber * SWP_REVISION_FACTOR));
+				Date artifactLastModifiedDate = new Date(0);
+				if (processedRevisionInfo.getTimeStamp() != null) {
+						artifactLastModifiedDate = processedRevisionInfo.getTimeStamp()
+							.toGregorianCalendar().getTime();
+				}
+				ga.setTargetArtifactLastModifiedDate(GenericArtifactHelper.df
+						.format(artifactLastModifiedDate));
+				ga.setTargetArtifactId(taskId.toString());
+				return task;
+			}
+		}
+		
+		String message = "Could not find updated version of Task " + taskId + " which should be at least " + revisionNumberBeforeCreate;
+		//log.error(message);
+		throw new CCFRuntimeException(message);
 	}
 
 	/**

@@ -1,7 +1,6 @@
 package com.collabnet.ccf.swp;
 
 import java.rmi.RemoteException;
-import java.util.Date;
 import java.util.List;
 
 import javax.xml.datatype.DatatypeConfigurationException;
@@ -48,7 +47,7 @@ public class SWPWriter extends AbstractWriter<Connection> implements
 	private String serverUrl;
 	private String resyncUserName;
 	private String resyncPassword;
-	
+
 	private SWPHandler swpHandler;
 
 	@Override
@@ -83,19 +82,17 @@ public class SWPWriter extends AbstractWriter<Connection> implements
 		try {
 			if (swpType.equals(SWPType.TASK)) {
 				Task result = createTask(ga, swpProductName, connection);
-				ga.setTargetArtifactId(result.getId().toString());
-				ga.setTargetArtifactVersion("-1");
-				ga.setTargetArtifactLastModifiedDate(GenericArtifactHelper.df
-						.format(new Date(0)));
-				log.info("Created task " + result.getId() + " of PBI "+ result.getBacklogItemId() + " with data from " + ga.getSourceArtifactId());
+				if (result != null) {
+					log.info("Created task " + result.getId() + " of PBI "
+						+ result.getBacklogItemId() + " with data from "
+						+ ga.getSourceArtifactId());
+				}
 			} else if (swpType.equals(SWPType.PBI)) {
-				BacklogItem result = createPBI(ga, swpProductName,
-						connection);
-				ga.setTargetArtifactId(result.getId().toString());
-				ga.setTargetArtifactVersion("-1");
-				ga.setTargetArtifactLastModifiedDate(GenericArtifactHelper.df
-						.format(new Date(0)));
-				log.info("Created PBI "+ result.getKey() + " with data from " + ga.getSourceArtifactId());
+				BacklogItem result = createPBI(ga, swpProductName, connection);
+				if (result != null) {
+					log.info("Created PBI " + result.getKey() + " with data from "
+							+ ga.getSourceArtifactId());
+				}
 			} else {
 				String cause = "Unsupported repository format: "
 						+ targetRepositoryId;
@@ -121,7 +118,7 @@ public class SWPWriter extends AbstractWriter<Connection> implements
 	 * @param swpHandler
 	 * @return newly created PBI
 	 * @throws RemoteException
-	 * @throws ScrumWorksException 
+	 * @throws ScrumWorksException
 	 */
 	private BacklogItem createPBI(GenericArtifact ga, String swpProductName,
 			Connection connection) throws RemoteException, ScrumWorksException {
@@ -141,10 +138,13 @@ public class SWPWriter extends AbstractWriter<Connection> implements
 				.getMandatoryGAField(PBIFields.penalty.getFieldName(), ga);
 		GenericArtifactField title = GenericArtifactHelper.getMandatoryGAField(
 				PBIFields.title.getFieldName(), ga);
-		List<GenericArtifactField> themes = ga.getAllGenericArtifactFieldsWithSameFieldName(PBIFields.theme.getFieldName());
-		
-		return swpHandler.createPBI(connection.getEndpoint(), active, benefit, completedDate,
-				description, estimate, penalty, title, themes, swpProductName, ga);
+		List<GenericArtifactField> themes = ga
+				.getAllGenericArtifactFieldsWithSameFieldName(PBIFields.theme
+						.getFieldName());
+
+		return swpHandler.createPBI(connection.getEndpoint(), active, benefit,
+				completedDate, description, estimate, penalty, title, themes,
+				swpProductName, getResyncUserName() == null ? getUserName():getResyncUserName(), ga);
 	}
 
 	/**
@@ -154,8 +154,8 @@ public class SWPWriter extends AbstractWriter<Connection> implements
 	 * @param swpProductName
 	 * @param swpHandler
 	 * @return newly created task
-	 * @throws RemoteException 
-	 * @throws ScrumWorksException 
+	 * @throws RemoteException
+	 * @throws ScrumWorksException
 	 */
 	private Task createTask(GenericArtifact ga, String swpProductName,
 			Connection connection) throws RemoteException, ScrumWorksException {
@@ -165,8 +165,8 @@ public class SWPWriter extends AbstractWriter<Connection> implements
 				.getMandatoryGAField(TaskFields.estimatedHours.getFieldName(),
 						ga);
 		GenericArtifactField originalEstimate = GenericArtifactHelper
-		.getMandatoryGAField(TaskFields.originalEstimate.getFieldName(),
-				ga);
+				.getMandatoryGAField(
+						TaskFields.originalEstimate.getFieldName(), ga);
 		GenericArtifactField pointPerson = GenericArtifactHelper
 				.getMandatoryGAField(TaskFields.pointPerson.getFieldName(), ga);
 		GenericArtifactField status = GenericArtifactHelper
@@ -176,8 +176,9 @@ public class SWPWriter extends AbstractWriter<Connection> implements
 		// ga);
 		GenericArtifactField title = GenericArtifactHelper.getMandatoryGAField(
 				TaskFields.title.getFieldName(), ga);
-		return swpHandler.createTask(connection.getEndpoint(), description, estimatedHours, originalEstimate, pointPerson,
-				status, title, swpProductName, ga);
+		return swpHandler.createTask(connection.getEndpoint(), description,
+				estimatedHours, originalEstimate, pointPerson, status, title,
+				swpProductName, getResyncUserName() == null ? getUserName():getResyncUserName(), ga);
 	}
 
 	@Override
@@ -268,21 +269,17 @@ public class SWPWriter extends AbstractWriter<Connection> implements
 		try {
 			if (swpType.equals(SWPType.TASK)) {
 				Task result = updateTask(ga, swpProductName, connection);
-				// TODO Use result to update ga once we have global revision
-				// numbers
-				ga.setTargetArtifactVersion("-1");
-				ga.setTargetArtifactLastModifiedDate(GenericArtifactHelper.df
-						.format(new Date(0)));
-				log.info("Updated task " + result.getId() + " of PBI "+ result.getBacklogItemId() + " with data from " + ga.getSourceArtifactId());
+				if (result != null) {
+					log.info("Updated task " + result.getId() + " of PBI "
+							+ result.getBacklogItemId() + " with data from "
+							+ ga.getSourceArtifactId());
+				}
 			} else if (swpType.equals(SWPType.PBI)) {
-				BacklogItem result = updatePBI(ga, swpProductName,
-						connection);
-				ga.setTargetArtifactVersion("-1");
-				ga.setTargetArtifactLastModifiedDate(GenericArtifactHelper.df
-						.format(new Date(0)));
-				// TODO Use result to update ga once we have global revision
-				// numbers
-				log.info("Updated PBI "+ result.getKey() + " with data from " + ga.getSourceArtifactId());
+				BacklogItem result = updatePBI(ga, swpProductName, connection);
+				if (result != null) {
+					log.info("Updated PBI " + result.getKey()
+							+ " with data from " + ga.getSourceArtifactId());
+				}
 			} else {
 				String cause = "Unsupported repository format: "
 						+ targetRepositoryId;
@@ -312,11 +309,11 @@ public class SWPWriter extends AbstractWriter<Connection> implements
 	 * @return
 	 * @throws RemoteException
 	 * @throws NumberFormatException
-	 * @throws ScrumWorksException 
+	 * @throws ScrumWorksException
 	 */
 	private BacklogItem updatePBI(GenericArtifact ga, String swpProductName,
-			Connection connection) throws
-			NumberFormatException, RemoteException, ScrumWorksException {
+			Connection connection) throws NumberFormatException,
+			RemoteException, ScrumWorksException {
 		// TODO should we allow to set the active property?
 		GenericArtifactField active = GenericArtifactHelper
 				.getMandatoryGAField(PBIFields.active.getFieldName(), ga);
@@ -333,11 +330,14 @@ public class SWPWriter extends AbstractWriter<Connection> implements
 				.getMandatoryGAField(PBIFields.penalty.getFieldName(), ga);
 		GenericArtifactField title = GenericArtifactHelper.getMandatoryGAField(
 				PBIFields.title.getFieldName(), ga);
-		
-		List<GenericArtifactField> themes = ga.getAllGenericArtifactFieldsWithSameFieldName(PBIFields.theme.getFieldName());
-		
-		return swpHandler.updatePBI(connection.getEndpoint(), active, benefit, completedDate,
-				description, estimate, penalty, title, themes, swpProductName, ga);
+
+		List<GenericArtifactField> themes = ga
+				.getAllGenericArtifactFieldsWithSameFieldName(PBIFields.theme
+						.getFieldName());
+
+		return swpHandler.updatePBI(connection.getEndpoint(), active, benefit,
+				completedDate, description, estimate, penalty, title, themes,
+				swpProductName, getUserName() ,ga);
 	}
 
 	/**
@@ -349,19 +349,19 @@ public class SWPWriter extends AbstractWriter<Connection> implements
 	 * @return updated task object
 	 * @throws RemoteException
 	 * @throws NumberFormatException
-	 * @throws ScrumWorksException 
+	 * @throws ScrumWorksException
 	 */
 	private Task updateTask(GenericArtifact ga, String swpProductName,
-			Connection connection) throws
-			NumberFormatException, RemoteException, ScrumWorksException {
+			Connection connection) throws NumberFormatException,
+			RemoteException, ScrumWorksException {
 		GenericArtifactField description = GenericArtifactHelper
 				.getMandatoryGAField(TaskFields.description.getFieldName(), ga);
 		GenericArtifactField estimatedHours = GenericArtifactHelper
 				.getMandatoryGAField(TaskFields.estimatedHours.getFieldName(),
 						ga);
 		GenericArtifactField originalEstimate = GenericArtifactHelper
-		.getMandatoryGAField(TaskFields.originalEstimate.getFieldName(),
-				ga);
+				.getMandatoryGAField(
+						TaskFields.originalEstimate.getFieldName(), ga);
 		GenericArtifactField pointPerson = GenericArtifactHelper
 				.getMandatoryGAField(TaskFields.pointPerson.getFieldName(), ga);
 		GenericArtifactField status = GenericArtifactHelper
@@ -371,8 +371,9 @@ public class SWPWriter extends AbstractWriter<Connection> implements
 		// ga);
 		GenericArtifactField title = GenericArtifactHelper.getMandatoryGAField(
 				TaskFields.title.getFieldName(), ga);
-		return swpHandler.updateTask(connection.getEndpoint(), description, estimatedHours, originalEstimate, pointPerson,
-				status, title, ga);
+		return swpHandler.updateTask(connection.getEndpoint(), description,
+				estimatedHours, originalEstimate, pointPerson, status, title, getUserName(),
+				ga);
 	}
 
 	/**
@@ -517,7 +518,7 @@ public class SWPWriter extends AbstractWriter<Connection> implements
 	public String getUserName() {
 		return userName;
 	}
-	
+
 	/**
 	 * Sets user name for SWP connector user
 	 * 
@@ -620,7 +621,7 @@ public class SWPWriter extends AbstractWriter<Connection> implements
 			exceptions.add(new ValidationException(
 					"serverUrl-property not set", this));
 		}
-		
+
 		try {
 			swpHandler = new SWPHandler();
 		} catch (DatatypeConfigurationException e) {
