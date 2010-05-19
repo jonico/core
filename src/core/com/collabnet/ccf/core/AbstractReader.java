@@ -222,6 +222,10 @@ public abstract class AbstractReader<T> extends Component implements
 					if (list != null) {
 						number += list.size();
 					}
+					List<GenericArtifact> shippedList = record.getArtifactsToBeShippedList();
+					if (shippedList != null) {
+						number += shippedList.size();
+					}
 				}
 			}
 		}
