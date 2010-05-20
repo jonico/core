@@ -34,15 +34,25 @@ import com.collabnet.ccf.swp.SWPMetaData.SWPType;
 public class SWPReader extends AbstractReader<Connection> {
 	/**
 	 * This map is used to determine whether a specific entity type is ready for
-	 * transmitting its artifacts. This helps to reduce the number of cases
-	 * where child artifacts are created before their parent artifacts.
+	 * transmitting its artifacts. This prevents cases where child artifacts are
+	 * created before their parent artifacts.
 	 */
-	private Map<String, Integer> entityTypePriority = new HashMap<String, Integer>();
+	private Map<String, Integer> lastRevisionInQueue = new HashMap<String, Integer>();
+
 	private String username;
 	private String password;
 	private String serverUrl;
 	private String resyncUserName;
 	private SWPHandler swpHandler = null;
+
+	/**
+	 * This variable is used to determine whether higher prioritized entity
+	 * types are shipped first This property is set to false by default because
+	 * this will not enable you to sync one SWP entity type to multiple target
+	 * systems using the same CCF version or to just synch one low priority
+	 * entity type
+	 */
+	private boolean serializeArtifactShipments = false;
 
 	private static final Log log = LogFactory.getLog(SWPReader.class);
 
@@ -261,72 +271,91 @@ public class SWPReader extends AbstractReader<Connection> {
 		ArrayList<ArtifactState> artifactStates = new ArrayList<ArtifactState>();
 		try {
 			if (swpType.equals(SWPType.TASK)) {
-				// determine whether higher priority items are still in the
-				// queue
-				if (getNumberOfWaitingArtifactsForAllTargetSystems(
-						sourceSystemId, correspondingPBIRepositoryId) != 0
-						|| getNumberOfWaitingArtifactsForAllTargetSystems(
-								sourceSystemId,
-								correspondingProductRepositoryId) != 0
-						|| getNumberOfWaitingArtifactsForAllTargetSystems(
-								sourceSystemId,
-								correspondingReleaseRepositoryId) != 0
-						|| getNumberOfWaitingArtifactsForAllTargetSystems(
-								sourceSystemId, correspondingThemeRepositoryId) != 0) {
-					// reset entity type priority
-					entityTypePriority.put(repositoryKey, 0);
-					log
-							.debug("Do not query new tasks for "
-									+ repositoryKey
-									+ " since items of higher prioritized entity types are still in the queue ...");
+				if (!isSerializeArtifactShipments()) {
+					swpHandler.getChangedTasks(connection.getEndpoint(),
+							swpProductName, artifactStates, majorVersion,
+							minorVersion, getUsername());
 				} else {
-					Integer queuePriority = entityTypePriority
-							.get(repositoryKey);
-					if (queuePriority == null || queuePriority == 0) {
-						entityTypePriority.put(repositoryKey, 1);
-					} else if (queuePriority == 1) {
-						entityTypePriority.put(repositoryKey, 2);
-						log.debug("Increasing priority of queue " + repositoryKey);
-					} else if (queuePriority == 2) {
-						entityTypePriority.put(repositoryKey, 3);
-						log.debug("Increasing priority of queue " + repositoryKey);
+					// determine whether higher priority items are still in the
+					// queue
+					if (getNumberOfWaitingArtifactsForAllTargetSystems(
+							sourceSystemId, correspondingPBIRepositoryId) != 0
+							|| getNumberOfWaitingArtifactsForAllTargetSystems(
+									sourceSystemId,
+									correspondingProductRepositoryId) != 0
+							|| getNumberOfWaitingArtifactsForAllTargetSystems(
+									sourceSystemId,
+									correspondingReleaseRepositoryId) != 0
+							|| getNumberOfWaitingArtifactsForAllTargetSystems(
+									sourceSystemId,
+									correspondingThemeRepositoryId) != 0) {
+						// reset entity type priority
+						lastRevisionInQueue.put(repositoryKey, 0);
+						log
+								.debug("Do not query new tasks for "
+										+ repositoryKey
+										+ " since items of higher prioritized entity types are still in the queue ...");
 					} else {
-						entityTypePriority.put(repositoryKey, 0);
-						swpHandler.getChangedTasks(connection.getEndpoint(),
-								swpProductName, artifactStates, majorVersion,
-								minorVersion, getUsername());
+						Integer queuePriority = lastRevisionInQueue
+								.get(repositoryKey);
+						if (queuePriority == null || queuePriority == 0) {
+							lastRevisionInQueue.put(repositoryKey, 1);
+						} else if (queuePriority == 1) {
+							lastRevisionInQueue.put(repositoryKey, 2);
+							log.debug("Increasing priority of queue "
+									+ repositoryKey);
+						} else if (queuePriority == 2) {
+							lastRevisionInQueue.put(repositoryKey, 3);
+							log.debug("Increasing priority of queue "
+									+ repositoryKey);
+						} else {
+							lastRevisionInQueue.put(repositoryKey, 0);
+							swpHandler.getChangedTasks(
+									connection.getEndpoint(), swpProductName,
+									artifactStates, majorVersion, minorVersion,
+									getUsername());
+						}
 					}
 				}
 			} else if (swpType.equals(SWPType.PBI)) {
-				// determine whether higher priority items are still in the
-				// queue
-				if (getNumberOfWaitingArtifactsForAllTargetSystems(
-						sourceSystemId, correspondingProductRepositoryId) != 0
-						|| getNumberOfWaitingArtifactsForAllTargetSystems(
-								sourceSystemId,
-								correspondingReleaseRepositoryId) != 0
-						|| getNumberOfWaitingArtifactsForAllTargetSystems(
-								sourceSystemId, correspondingThemeRepositoryId) != 0) {
-					// reset entity type priority
-					entityTypePriority.put(repositoryKey, 0);
-					log
-							.debug("Do not query new PBIs for "
-									+ repositoryKey
-									+ " since items of higher prioritized entity types are still in the queue ...");
+				if (!isSerializeArtifactShipments()) {
+					swpHandler.getChangedPBIs(connection.getEndpoint(),
+							swpProductName, artifactStates, majorVersion,
+							minorVersion, getUsername());
 				} else {
-					Integer queuePriority = entityTypePriority
-							.get(repositoryKey);
-					if (queuePriority == null || queuePriority == 0) {
-						entityTypePriority.put(repositoryKey, 1);
-						log.debug("Increasing priority of queue " + repositoryKey);
-					} else if (queuePriority == 1) {
-						entityTypePriority.put(repositoryKey, 2);
-						log.debug("Increasing priority of queue " + repositoryKey);
+					// determine whether higher priority items are still in the
+					// queue
+					if (getNumberOfWaitingArtifactsForAllTargetSystems(
+							sourceSystemId, correspondingProductRepositoryId) != 0
+							|| getNumberOfWaitingArtifactsForAllTargetSystems(
+									sourceSystemId,
+									correspondingReleaseRepositoryId) != 0
+							|| getNumberOfWaitingArtifactsForAllTargetSystems(
+									sourceSystemId,
+									correspondingThemeRepositoryId) != 0) {
+						// reset entity type priority
+						lastRevisionInQueue.put(repositoryKey, 0);
+						log
+								.debug("Do not query new PBIs for "
+										+ repositoryKey
+										+ " since items of higher prioritized entity types are still in the queue ...");
 					} else {
-						entityTypePriority.put(repositoryKey, 0);
-						swpHandler.getChangedPBIs(connection.getEndpoint(),
-								swpProductName, artifactStates, majorVersion,
-								minorVersion, getUsername());
+						Integer queuePriority = lastRevisionInQueue
+								.get(repositoryKey);
+						if (queuePriority == null || queuePriority == 0) {
+							lastRevisionInQueue.put(repositoryKey, 1);
+							log.debug("Increasing priority of queue "
+									+ repositoryKey);
+						} else if (queuePriority == 1) {
+							lastRevisionInQueue.put(repositoryKey, 2);
+							log.debug("Increasing priority of queue "
+									+ repositoryKey);
+						} else {
+							lastRevisionInQueue.put(repositoryKey, 0);
+							swpHandler.getChangedPBIs(connection.getEndpoint(),
+									swpProductName, artifactStates,
+									majorVersion, minorVersion, getUsername());
+						}
 					}
 				}
 			} else if (swpType.equals(SWPType.PRODUCT)) {
@@ -334,27 +363,35 @@ public class SWPReader extends AbstractReader<Connection> {
 						swpProductName, artifactStates, majorVersion,
 						minorVersion, getUsername());
 			} else if (swpType.equals(SWPType.RELEASE)) {
-				// determine whether higher priority items are still in the
-				// queue
-				if (getNumberOfWaitingArtifactsForAllTargetSystems(
-						sourceSystemId, correspondingProductRepositoryId) != 0) {
-					// reset entity type priority
-					entityTypePriority.put(repositoryKey, 0);
-					log
-							.debug("Do not query new releases for "
-									+ repositoryKey
-									+ " since items of higher prioritized entity types are still in the queue ...");
+				if (!isSerializeArtifactShipments()) {
+					swpHandler.getChangedReleases(connection.getEndpoint(),
+							swpProductName, artifactStates, majorVersion,
+							minorVersion, getUsername());
 				} else {
-					Integer queuePriority = entityTypePriority
-							.get(repositoryKey);
-					if (queuePriority == null || queuePriority == 0) {
-						entityTypePriority.put(repositoryKey, 1);
-						log.debug("Increasing priority of queue " + repositoryKey);
+					// determine whether higher priority items are still in the
+					// queue
+					if (getNumberOfWaitingArtifactsForAllTargetSystems(
+							sourceSystemId, correspondingProductRepositoryId) != 0) {
+						// reset entity type priority
+						lastRevisionInQueue.put(repositoryKey, 0);
+						log
+								.debug("Do not query new releases for "
+										+ repositoryKey
+										+ " since items of higher prioritized entity types are still in the queue ...");
 					} else {
-						entityTypePriority.put(repositoryKey, 0);
-						swpHandler.getChangedReleases(connection.getEndpoint(),
-								swpProductName, artifactStates, majorVersion,
-								minorVersion, getUsername());
+						Integer queuePriority = lastRevisionInQueue
+								.get(repositoryKey);
+						if (queuePriority == null || queuePriority == 0) {
+							lastRevisionInQueue.put(repositoryKey, 1);
+							log.debug("Increasing priority of queue "
+									+ repositoryKey);
+						} else {
+							lastRevisionInQueue.put(repositoryKey, 0);
+							swpHandler.getChangedReleases(connection
+									.getEndpoint(), swpProductName,
+									artifactStates, majorVersion, minorVersion,
+									getUsername());
+						}
 					}
 				}
 			} else if (swpType.equals(SWPType.THEME)) {
@@ -535,5 +572,26 @@ public class SWPReader extends AbstractReader<Connection> {
 			exceptions.add(new ValidationException(
 					"Could not initialize SWPHandler", this));
 		}
+	}
+
+	/**
+	 * This method is used to define whether higher prioritized entity types are
+	 * shipped first This property is set to false by default because this will
+	 * not enable you to sync one SWP entity type to multiple target systems
+	 * using the same CCF version or to just synch one low priority entity type
+	 */
+	public void setSerializeArtifactShipments(boolean serializeArtifactShipments) {
+		this.serializeArtifactShipments = serializeArtifactShipments;
+	}
+
+	/**
+	 * This method is used to determine whether higher prioritized entity types
+	 * are shipped first This property is set to false by default because this
+	 * will not enable you to sync one SWP entity type to multiple target
+	 * systems using the same CCF version or to just synch one low priority
+	 * entity type
+	 */
+	public boolean isSerializeArtifactShipments() {
+		return serializeArtifactShipments;
 	}
 }
