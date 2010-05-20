@@ -37,7 +37,7 @@ public class SWPReader extends AbstractReader<Connection> {
 	 * transmitting its artifacts. This prevents cases where child artifacts are
 	 * created before their parent artifacts.
 	 */
-	private Map<String, Integer> lastRevisionInQueue = new HashMap<String, Integer>();
+	private Map<String, Long> lastRevisionInQueue = new HashMap<String, Long>();
 
 	private String username;
 	private String password;
@@ -212,8 +212,10 @@ public class SWPReader extends AbstractReader<Connection> {
 
 		long majorVersion = 0;
 		long minorVersion = 0;
+		long artificalRevision = 0;
 		try {
 			majorVersion = Long.parseLong(lastSynchronizedVersion);
+			artificalRevision = majorVersion;
 			/*
 			 * The minor version determines the last artifact that has been
 			 * transported within a single SWP revision The first artifact will
@@ -290,30 +292,47 @@ public class SWPReader extends AbstractReader<Connection> {
 									sourceSystemId,
 									correspondingThemeRepositoryId) != 0) {
 						// reset entity type priority
-						lastRevisionInQueue.put(repositoryKey, 0);
 						log
 								.debug("Do not query new tasks for "
 										+ repositoryKey
-										+ " since items of higher prioritized entity types are still in the queue ...");
+										+ " since changes of higher prioritized entity types are still in the queue ...");
 					} else {
-						Integer queuePriority = lastRevisionInQueue
-								.get(repositoryKey);
-						if (queuePriority == null || queuePriority == 0) {
-							lastRevisionInQueue.put(repositoryKey, 1);
-						} else if (queuePriority == 1) {
-							lastRevisionInQueue.put(repositoryKey, 2);
-							log.debug("Increasing priority of queue "
-									+ repositoryKey);
-						} else if (queuePriority == 2) {
-							lastRevisionInQueue.put(repositoryKey, 3);
-							log.debug("Increasing priority of queue "
-									+ repositoryKey);
-						} else {
-							lastRevisionInQueue.put(repositoryKey, 0);
-							swpHandler.getChangedTasks(
-									connection.getEndpoint(), swpProductName,
-									artifactStates, majorVersion, minorVersion,
-									getUsername());
+						// first check out last PBI revision in queue
+						Long lastPBIRevisionInQueue = lastRevisionInQueue
+								.get(correspondingPBIRepositoryId);
+						if (lastPBIRevisionInQueue == null) {
+							log
+									.debug("Do not query new tasks for "
+											+ repositoryKey
+											+ " since PBI changes are not yet synched ...");
+							return new ArrayList<ArtifactState>();
+						}
+						// now retrieve changed tasks since last known revision
+						swpHandler.getChangedTasks(connection.getEndpoint(),
+								swpProductName, artifactStates, majorVersion,
+								minorVersion, getUsername());
+						// check whether new tasks are present
+						if (artifactStates.isEmpty()) {
+							return new ArrayList<ArtifactState>();
+						}
+						// now check whether new PBIs have popped up since last
+						// task synch that are not synchronized yet
+						List<ArtifactState> pbiStates = new ArrayList<ArtifactState>();
+						swpHandler.getChangedPBIs(connection.getEndpoint(),
+								swpProductName, pbiStates, lastPBIRevisionInQueue / SWPHandler.SWP_REVISION_FACTOR,
+								lastPBIRevisionInQueue % SWPHandler.SWP_REVISION_FACTOR, getUsername());
+						if (!pbiStates.isEmpty()) {
+							// determine lastPBIInProduct revision
+							Long lastPBIRevisionInProduct = pbiStates.get(
+									pbiStates.size() - 1)
+									.getArtifactVersion();
+							if (lastPBIRevisionInQueue < lastPBIRevisionInProduct) {
+								log
+										.debug("Do not query new tasks for "
+												+ repositoryKey
+												+ " since some newer PBI changes are not yet synched ...");
+								return new ArrayList<ArtifactState>();
+							}
 						}
 					}
 				}
@@ -334,34 +353,106 @@ public class SWPReader extends AbstractReader<Connection> {
 									sourceSystemId,
 									correspondingThemeRepositoryId) != 0) {
 						// reset entity type priority
-						lastRevisionInQueue.put(repositoryKey, 0);
 						log
 								.debug("Do not query new PBIs for "
 										+ repositoryKey
-										+ " since items of higher prioritized entity types are still in the queue ...");
+										+ " since changes of higher prioritized entity types are still in the queue ...");
 					} else {
-						Integer queuePriority = lastRevisionInQueue
-								.get(repositoryKey);
-						if (queuePriority == null || queuePriority == 0) {
-							lastRevisionInQueue.put(repositoryKey, 1);
-							log.debug("Increasing priority of queue "
-									+ repositoryKey);
-						} else if (queuePriority == 1) {
-							lastRevisionInQueue.put(repositoryKey, 2);
-							log.debug("Increasing priority of queue "
-									+ repositoryKey);
-						} else {
-							lastRevisionInQueue.put(repositoryKey, 0);
-							swpHandler.getChangedPBIs(connection.getEndpoint(),
-									swpProductName, artifactStates,
-									majorVersion, minorVersion, getUsername());
+						// first check out last release revision in queue
+						Long lastReleaseRevisionInQueue = lastRevisionInQueue
+								.get(correspondingReleaseRepositoryId);
+						if (lastReleaseRevisionInQueue == null) {
+							log
+									.debug("Do not query new PBIs for "
+											+ repositoryKey
+											+ " since release changes are not yet synched ...");
+							return new ArrayList<ArtifactState>();
 						}
+
+						// now check out last theme revision in queue
+						Long lastThemeRevisionInQueue = lastRevisionInQueue
+								.get(correspondingThemeRepositoryId);
+						if (lastThemeRevisionInQueue == null) {
+							log
+									.debug("Do not query new PBIs for "
+											+ repositoryKey
+											+ " since theme changes are not yet synched ...");
+							return new ArrayList<ArtifactState>();
+						}
+
+						// now retrieve changed revisions since last known
+						// revision
+						swpHandler.getChangedPBIs(connection.getEndpoint(),
+								swpProductName, artifactStates, majorVersion,
+								minorVersion, getUsername());
+
+						// check whether new PBIs are present
+						if (artifactStates.isEmpty()) {
+							lastRevisionInQueue.put(
+									correspondingPBIRepositoryId,
+									artificalRevision);
+							return new ArrayList<ArtifactState>();
+						}
+						// now check whether new releases have popped up since
+						// last
+						// pbi synch that are not synchronized yet
+						List<ArtifactState> releaseStates = new ArrayList<ArtifactState>();
+						swpHandler.getChangedReleases(connection.getEndpoint(),
+								swpProductName, releaseStates, lastReleaseRevisionInQueue / SWPHandler.SWP_REVISION_FACTOR,
+								lastReleaseRevisionInQueue % SWPHandler.SWP_REVISION_FACTOR, getUsername());
+						if (!releaseStates.isEmpty()) {
+							// determine lastReleaseInProduct revision
+							Long lastReleaseRevisionInProduct = releaseStates
+									.get(releaseStates.size() - 1)
+									.getArtifactVersion();
+							if (lastReleaseRevisionInQueue < lastReleaseRevisionInProduct) {
+								log
+										.debug("Do not query new PBIs for "
+												+ repositoryKey
+												+ " since some newer release changes are not yet synched ...");
+								return new ArrayList<ArtifactState>();
+							}
+						}
+
+						// now check whether new themes have popped up since
+						// last
+						// pbi synch that are not synchronized yet
+						List<ArtifactState> themeStates = new ArrayList<ArtifactState>();
+						swpHandler.getChangedThemes(connection.getEndpoint(),
+								swpProductName, themeStates, lastThemeRevisionInQueue / SWPHandler.SWP_REVISION_FACTOR,
+								lastThemeRevisionInQueue % SWPHandler.SWP_REVISION_FACTOR, getUsername());
+						if (!themeStates.isEmpty()) {
+							// determine lastThemeInProduct revision
+							Long lastThemeRevisionInProduct = themeStates.get(
+									themeStates.size() - 1)
+									.getArtifactVersion();
+							if (lastThemeRevisionInQueue < lastThemeRevisionInProduct) {
+								log
+										.debug("Do not query new PBIs for "
+												+ repositoryKey
+												+ " since some newer theme changes are not yet synched ...");
+								return new ArrayList<ArtifactState>();
+							}
+						}
+						// update last revision in queue
+						lastRevisionInQueue.put(correspondingPBIRepositoryId,
+								artifactStates.get(artifactStates.size() - 1)
+										.getArtifactVersion());
 					}
 				}
 			} else if (swpType.equals(SWPType.PRODUCT)) {
 				swpHandler.getChangedProducts(connection.getEndpoint(),
 						swpProductName, artifactStates, majorVersion,
 						minorVersion, getUsername());
+				// update last revision in queue
+				if (!artifactStates.isEmpty()) {
+					lastRevisionInQueue.put(correspondingProductRepositoryId,
+							artifactStates.get(artifactStates.size() - 1)
+									.getArtifactVersion());
+				} else {
+					lastRevisionInQueue.put(correspondingProductRepositoryId,
+							artificalRevision);
+				}
 			} else if (swpType.equals(SWPType.RELEASE)) {
 				if (!isSerializeArtifactShipments()) {
 					swpHandler.getChangedReleases(connection.getEndpoint(),
@@ -372,32 +463,92 @@ public class SWPReader extends AbstractReader<Connection> {
 					// queue
 					if (getNumberOfWaitingArtifactsForAllTargetSystems(
 							sourceSystemId, correspondingProductRepositoryId) != 0) {
-						// reset entity type priority
-						lastRevisionInQueue.put(repositoryKey, 0);
 						log
 								.debug("Do not query new releases for "
 										+ repositoryKey
-										+ " since items of higher prioritized entity types are still in the queue ...");
+										+ " since changes of higher prioritized entity types are still in the queue ...");
 					} else {
-						Integer queuePriority = lastRevisionInQueue
-								.get(repositoryKey);
-						if (queuePriority == null || queuePriority == 0) {
-							lastRevisionInQueue.put(repositoryKey, 1);
-							log.debug("Increasing priority of queue "
-									+ repositoryKey);
+						// determine whether higher priority items are still in the
+						// queue
+						if (getNumberOfWaitingArtifactsForAllTargetSystems(
+								sourceSystemId, correspondingProductRepositoryId) != 0
+								|| getNumberOfWaitingArtifactsForAllTargetSystems(
+										sourceSystemId,
+										correspondingReleaseRepositoryId) != 0
+								|| getNumberOfWaitingArtifactsForAllTargetSystems(
+										sourceSystemId,
+										correspondingThemeRepositoryId) != 0) {
+							// reset entity type priority
+							log
+									.debug("Do not query new releases for "
+											+ repositoryKey
+											+ " since changes of higher prioritized entity types are still in the queue ...");
 						} else {
-							lastRevisionInQueue.put(repositoryKey, 0);
-							swpHandler.getChangedReleases(connection
-									.getEndpoint(), swpProductName,
-									artifactStates, majorVersion, minorVersion,
-									getUsername());
-						}
+							// first check out last product revision in queue
+							Long lastProductRevisionInQueue = lastRevisionInQueue
+									.get(correspondingProductRepositoryId);
+							if (lastProductRevisionInQueue == null) {
+								log
+										.debug("Do not query new releases for "
+												+ repositoryKey
+												+ " since product changes are not yet synched ...");
+								return new ArrayList<ArtifactState>();
+							}
+							// now retrieve changed revisions since last known
+							// revision
+							swpHandler.getChangedReleases(connection.getEndpoint(),
+									swpProductName, artifactStates, majorVersion,
+									minorVersion, getUsername());
+
+							// check whether new releases are present
+							if (artifactStates.isEmpty()) {
+								lastRevisionInQueue.put(
+										correspondingReleaseRepositoryId,
+										artificalRevision);
+								return new ArrayList<ArtifactState>();
+							}
+							// now check whether new product changes have popped up since
+							// last
+							// release synch that are not synchronized yet
+							List<ArtifactState> productStates = new ArrayList<ArtifactState>();
+							swpHandler.getChangedProducts(connection.getEndpoint(),
+									swpProductName, productStates, lastProductRevisionInQueue / SWPHandler.SWP_REVISION_FACTOR,
+									lastProductRevisionInQueue % SWPHandler.SWP_REVISION_FACTOR, getUsername());
+							if (!productStates.isEmpty()) {
+								// determine lastProductInProduct revision
+								Long lastProductRevisionInProduct = productStates
+										.get(productStates.size() - 1)
+										.getArtifactVersion();
+								if (lastProductRevisionInQueue < lastProductRevisionInProduct) {
+									log
+											.debug("Do not query new releases for "
+													+ repositoryKey
+													+ " since some newer product changes are not yet synched ...");
+									return new ArrayList<ArtifactState>();
+								}
+							}
+							// update last revision in queue
+							lastRevisionInQueue.put(
+									correspondingReleaseRepositoryId,
+									artifactStates.get(
+											artifactStates.size() - 1)
+											.getArtifactVersion());
+						}	
 					}
 				}
 			} else if (swpType.equals(SWPType.THEME)) {
 				swpHandler.getChangedThemes(connection.getEndpoint(),
 						swpProductName, artifactStates, majorVersion,
 						minorVersion, getUsername());
+				// update last revision in queue
+				if (!artifactStates.isEmpty()) {
+					lastRevisionInQueue.put(correspondingThemeRepositoryId,
+							artifactStates.get(artifactStates.size() - 1)
+									.getArtifactVersion());
+				} else {
+					lastRevisionInQueue.put(correspondingThemeRepositoryId,
+							artificalRevision);
+				}
 			} else {
 				String cause = "Unsupported repository format: "
 						+ sourceRepositoryId;

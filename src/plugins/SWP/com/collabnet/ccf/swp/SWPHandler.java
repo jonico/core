@@ -419,8 +419,8 @@ public class SWPHandler {
 			alreadyProcessedArtifacts.addAll(deletedArtifacts);
 
 			// check whether this revision have been caused by the connector
-			// user itself
-			if (processedRevisionInfo.getUserName().equals(connectorUser)) {
+			// user itself and it's not the initial synch
+			if (queryVersion != 0 && processedRevisionInfo.getUserName().equals(connectorUser)) {
 				// insert all changed and created artifacts in the processed
 				// artifacts list
 				for (Task task : changedOrAddedTasks) {
@@ -513,7 +513,7 @@ public class SWPHandler {
 	 * @throws ScrumWorksException
 	 */
 	public void getChangedPBIs(ScrumWorksAPIService endpoint,
-			String swpProductName, ArrayList<ArtifactState> artifactStates,
+			String swpProductName, List<ArtifactState> artifactStates,
 			long majorVersion, long minorVersion, String connectorUser)
 			throws RemoteException, ScrumWorksException {
 		/*
@@ -562,8 +562,8 @@ public class SWPHandler {
 			alreadyProcessedArtifacts.addAll(deletedArtifacts);
 
 			// check whether this revision have been caused by the connector
-			// user itself
-			if (processedRevisionInfo.getUserName().equals(connectorUser)) {
+			// user itself and it is not the initial synch
+			if (queryVersion != 0 && processedRevisionInfo.getUserName().equals(connectorUser)) {
 				// insert all changed and created artifacts in the processed
 				// artifacts list
 				for (BacklogItem pbi : changedOrAddedPBIs) {
@@ -1532,7 +1532,7 @@ public class SWPHandler {
 	 * @throws ScrumWorksException
 	 */
 	public void getChangedProducts(ScrumWorksAPIService endpoint,
-			String swpProductName, ArrayList<ArtifactState> artifactStates,
+			String swpProductName, List<ArtifactState> artifactStates,
 			long majorVersion, long minorVersion, String connectorUser)
 			throws RemoteException, ScrumWorksException {
 		// TODO Can we do some optimizations here since we should only get one
@@ -1584,8 +1584,8 @@ public class SWPHandler {
 			alreadyProcessedArtifacts.addAll(deletedArtifacts);
 
 			// check whether this revision have been caused by the connector
-			// user itself
-			if (processedRevisionInfo.getUserName().equals(connectorUser)) {
+			// user itself and it is not the initial synch
+			if (queryVersion != 0 && processedRevisionInfo.getUserName().equals(connectorUser)) {
 				// insert all changed and created artifacts in the processed
 				// artifacts list
 				for (Product prod : changedOrAddedProducts) {
@@ -1678,7 +1678,7 @@ public class SWPHandler {
 	 * @throws ScrumWorksException
 	 */
 	public void getChangedReleases(ScrumWorksAPIService endpoint,
-			String swpProductName, ArrayList<ArtifactState> artifactStates,
+			String swpProductName, List<ArtifactState> artifactStates,
 			long majorVersion, long minorVersion, String connectorUser)
 			throws RemoteException, ScrumWorksException {
 		// TODO Implement polling
@@ -1728,8 +1728,8 @@ public class SWPHandler {
 			alreadyProcessedArtifacts.addAll(deletedArtifacts);
 
 			// check whether this revision have been caused by the connector
-			// user itself
-			if (processedRevisionInfo.getUserName().equals(connectorUser)) {
+			// user itself and it's not the initial synch
+			if (queryVersion != 0 && processedRevisionInfo.getUserName().equals(connectorUser)) {
 				// insert all changed and created artifacts in the processed
 				// artifacts list
 				for (Release release : changedOrAddedReleases) {
@@ -1825,7 +1825,7 @@ public class SWPHandler {
 	 * @throws ScrumWorksException
 	 */
 	public void getChangedThemes(ScrumWorksAPIService endpoint,
-			String swpProductName, ArrayList<ArtifactState> artifactStates,
+			String swpProductName, List<ArtifactState> artifactStates,
 			long majorVersion, long minorVersion, String connectorUser)
 			throws RemoteException, ScrumWorksException {
 		/*
