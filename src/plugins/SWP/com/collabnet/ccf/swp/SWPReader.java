@@ -44,6 +44,13 @@ public class SWPReader extends AbstractReader<Connection> {
 	private String serverUrl;
 	private String resyncUserName;
 	private SWPHandler swpHandler = null;
+	
+	/**
+	 * Whenever an program is added to a product, new program epics can show up
+	 * Since a program addition is only visible due to a change in the product (not in the epics)
+	 * we use this variable to determine whether we have to resynchronize all themes
+	 */
+	private boolean resetThemeSynchronization = false;
 
 	/**
 	 * This variable is used to determine whether higher prioritized entity
@@ -372,7 +379,7 @@ public class SWPReader extends AbstractReader<Connection> {
 						// now check out last theme revision in queue
 						Long lastThemeRevisionInQueue = lastRevisionInQueue
 								.get(correspondingThemeRepositoryId);
-						if (lastThemeRevisionInQueue == null) {
+						if (lastThemeRevisionInQueue == null || resetThemeSynchronization) {
 							log
 									.debug("Do not query new PBIs for "
 											+ repositoryKey
@@ -420,7 +427,7 @@ public class SWPReader extends AbstractReader<Connection> {
 						List<ArtifactState> themeStates = new ArrayList<ArtifactState>();
 						swpHandler.getChangedThemes(connection.getEndpoint(),
 								swpProductName, themeStates, lastThemeRevisionInQueue / SWPHandler.SWP_REVISION_FACTOR,
-								lastThemeRevisionInQueue % SWPHandler.SWP_REVISION_FACTOR, getUsername());
+								lastThemeRevisionInQueue % SWPHandler.SWP_REVISION_FACTOR, getUsername(), resetThemeSynchronization);
 						if (!themeStates.isEmpty()) {
 							// determine lastThemeInProduct revision
 							Long lastThemeRevisionInProduct = themeStates.get(
@@ -438,6 +445,8 @@ public class SWPReader extends AbstractReader<Connection> {
 						lastRevisionInQueue.put(correspondingPBIRepositoryId,
 								artifactStates.get(artifactStates.size() - 1)
 										.getArtifactVersion());
+						// trigger theme resynch
+						resetThemeSynchronization = true;
 					}
 				}
 			} else if (swpType.equals(SWPType.PRODUCT)) {
@@ -449,6 +458,9 @@ public class SWPReader extends AbstractReader<Connection> {
 					lastRevisionInQueue.put(correspondingProductRepositoryId,
 							artifactStates.get(artifactStates.size() - 1)
 									.getArtifactVersion());
+					if (serializeArtifactShipments) {
+						resetThemeSynchronization = true;
+					}
 				} else {
 					lastRevisionInQueue.put(correspondingProductRepositoryId,
 							artificalRevision);
@@ -539,7 +551,8 @@ public class SWPReader extends AbstractReader<Connection> {
 			} else if (swpType.equals(SWPType.THEME)) {
 				swpHandler.getChangedThemes(connection.getEndpoint(),
 						swpProductName, artifactStates, majorVersion,
-						minorVersion, getUsername());
+						minorVersion, getUsername(), resetThemeSynchronization);
+				resetThemeSynchronization = false;
 				// update last revision in queue
 				if (!artifactStates.isEmpty()) {
 					lastRevisionInQueue.put(correspondingThemeRepositoryId,
@@ -733,6 +746,7 @@ public class SWPReader extends AbstractReader<Connection> {
 	 */
 	public void setSerializeArtifactShipments(boolean serializeArtifactShipments) {
 		this.serializeArtifactShipments = serializeArtifactShipments;
+		resetThemeSynchronization = true;
 	}
 
 	/**

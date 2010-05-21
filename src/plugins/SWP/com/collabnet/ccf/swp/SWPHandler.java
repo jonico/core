@@ -1821,13 +1821,45 @@ public class SWPHandler {
 	 * @param swpProductName
 	 * @param artifactStates
 	 * @param version
+	 * @param resetThemeSynchronization if true, current revision number + 1 is used to force a resync
 	 * @throws RemoteException
 	 * @throws ScrumWorksException
 	 */
 	public void getChangedThemes(ScrumWorksAPIService endpoint,
 			String swpProductName, List<ArtifactState> artifactStates,
-			long majorVersion, long minorVersion, String connectorUser)
+			long majorVersion, long minorVersion, String connectorUser, boolean resetThemeSynchronization)
 			throws RemoteException, ScrumWorksException {
+		
+		if (resetThemeSynchronization) {
+			RevisionInfo currentRevision = endpoint.getCurrentRevisionInfo();
+			int revisionNumber = currentRevision.getRevisionNumber() + 1;
+			if (!(majorVersion < revisionNumber)) {
+				return;
+			}
+			ArtifactState artifactState = new ArtifactState();
+			artifactState.setArtifactId("themesFor"+swpProductName);
+			XMLGregorianCalendar xmlTimestamp = currentRevision.getTimeStamp();
+			Date artifactLastModifiedDate = new Date(0);
+			if (xmlTimestamp != null) {
+				artifactLastModifiedDate = xmlTimestamp
+						.toGregorianCalendar().getTime();
+			}
+			artifactState
+					.setArtifactLastModifiedDate(artifactLastModifiedDate);
+			long artificialRevisionNumber = revisionNumber
+					* SWP_REVISION_FACTOR;
+			artifactState.setArtifactVersion(artificialRevisionNumber);
+			artifactStates.add(artifactState);
+			// now update the cache
+			themeCache
+					.put(
+							swpProductName,
+							new AbstractMap.SimpleEntry<Long, RevisionInfo>(
+									artificialRevisionNumber,
+									currentRevision));
+			return;
+		}
+		
 		/*
 		 * find out whether we have to start querying at the next revision or
 		 * whether there are still some pending shipments of the current
@@ -1883,7 +1915,7 @@ public class SWPHandler {
 				artifactState
 						.setArtifactLastModifiedDate(artifactLastModifiedDate);
 				long artificialRevisionNumber = processedRevisionNumber
-						* SWP_REVISION_FACTOR + 1;
+						* SWP_REVISION_FACTOR + 3;
 				artifactState.setArtifactVersion(artificialRevisionNumber);
 				artifactStates.add(artifactState);
 				// now update the cache
