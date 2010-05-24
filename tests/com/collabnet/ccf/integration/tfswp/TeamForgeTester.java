@@ -232,6 +232,19 @@ public class TeamForgeTester {
 		return backlogItemDescription;
 	}
 
+	/**
+	 * Creates a backlog item titled TestTitle and a child task with the given values. 
+	 * 
+	 * @param title the task title
+	 * @param description the task description, null for empty <blank> description
+	 * @param status the status, null for Not Started
+	 * @param assignedUsername the assigned user for the task, null for the TeamForge test user
+	 * @param remainingEffort the remaining task hours
+	 * @param originalEstimate the original task estimate
+	 * @return the task artifact
+	 * @throws RemoteException if TeamForge can not be reached
+	 * @throws PlanningFolderRuleViolationException 
+	 */
 	public ArtifactDO createTaskAndPBI(String title, String description,
 			String status, String assignedUsername, int remainingEffort,
 			int originalEstimate) throws RemoteException,
@@ -242,11 +255,37 @@ public class TeamForgeTester {
 		flexFields.setValues(new String[] {});
 		ArtifactDO pbi = createBacklogItem("TestTitle", "TestDescription",
 				null, flexFields);
-		ArtifactDO task = connection.getTrackerClient().createArtifact(
-				getTaskTracker(), title, description, null, null, status, null,
-				0, originalEstimate, remainingEffort, false, assignedUsername,
-				null, null, flexFields, null, null, null);
+		ArtifactDO task = createTask(title, description, status,
+				assignedUsername, remainingEffort, originalEstimate);
 		createArtifactDependency(pbi.getId(), task.getId(), "Parent-child relationship created by unit test");
+		return task;
+	}
+
+	/**
+	 * Creates a task without a parent dependency. 
+	 * 
+	 * @param title the task title
+	 * @param description the task description, null for empty <blank> description
+	 * @param status the status, null for Not Started
+	 * @param assignedUsername the assigned user for the task, null for the TeamForge test user
+	 * @param remainingEffort the remaining task hours
+	 * @param originalEstimate the original task estimate
+	 * @return the task artifact
+	 * @throws RemoteException if TeamForge can not be reached
+	 */
+	public ArtifactDO createTask(String title, String description,
+			String status, String assignedUsername, int remainingEffort,
+			int originalEstimate) throws RemoteException {
+		Validate.notNull(title, "null title"); 
+		
+		final String taskDescription = description == null ? "<blank>" : description;
+		final String taskStatus = status == null ? TaskStatus.NOT_STARTED.getStatus() : status; 
+		final String taskUser = assignedUsername == null ? getUserName() : assignedUsername; 
+		
+		ArtifactDO task = connection.getTrackerClient().createArtifact(
+				getTaskTracker(), title, taskDescription, null, null, taskStatus, null,
+				0, originalEstimate, remainingEffort, false, taskUser,
+				null, null, new FieldValues(), null, null, null);
 		return task;
 	}
 

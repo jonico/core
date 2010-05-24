@@ -3,6 +3,8 @@ package com.collabnet.ccf.integration.tfswp;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
+import java.rmi.RemoteException;
+
 import org.junit.Before;
 import org.junit.Test;
 
@@ -82,6 +84,22 @@ public class TestTaskWithImproperParentage extends TFSWPIntegrationTest {
 		doTestTeamForgeSynchronizeToScrumWorksParentTask(); 
 		doTestScrumWorksSynchronizeToTeamForgeParentTaskKeepsInvalidParentage(); 
 		doTestScrumWorksSynchronizeToTeamForgeChildTaskResetBacklogItemParentage(); 
+		doTestTeamForgeCreateTaskWithoutBacklogItemParent(); 
+	}
+
+	/**
+	 * Tests that a task created in TeamForge without a backlog item as its parent 
+	 * will not be created in ScrumWorks. 
+	 * 
+	 * @throws Exception if an error occurs 
+	 */
+	private void doTestTeamForgeCreateTaskWithoutBacklogItemParent() throws Exception {
+		// execute 
+		getTeamForgeTester().createTask("task without parent", null, null, null, 0, 0);
+		
+		// verify
+		Thread.sleep(getCcfMaxWaitTime()); 
+		assertEquals(2, getSWPTester().getTasksForBacklogItem(scrumWorksBacklogItem.getId()).size()); 
 	}
 
 	/**

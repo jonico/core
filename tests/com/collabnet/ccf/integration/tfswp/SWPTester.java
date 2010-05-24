@@ -1,7 +1,5 @@
 package com.collabnet.ccf.integration.tfswp;
 
-import static org.junit.Assert.assertEquals;
-
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -274,7 +272,7 @@ public class SWPTester {
 		List<Task> tasks = null;
 		for (int i = 0; i < (customTimeout == null ? ccfMaxWaitTime
 				: customTimeout); i += ccfRetryInterval) {
-			tasks = getSWPEndpoint().getTasks(backlogItem.getId());
+			tasks = getTasksForBacklogItem(backlogItem.getId());
 			List<String> taskNames = new ArrayList<String>(); 
 			for (Task task : tasks) {
 				taskNames.add(task.getName()); 
@@ -291,6 +289,18 @@ public class SWPTester {
 				"Tasks were not found within the given time: "
 						+ (customTimeout == null ? ccfMaxWaitTime
 								: customTimeout) + tasks);
+	}
+
+	/**
+	 * Returns the tasks for the backlog item. 
+	 * 
+	 * @param backlogItem
+	 * @return the tasks for the backlog item 
+	 * @throws ScrumWorksException if an error occurs from ScrumWorks
+	 */
+	public List<Task> getTasksForBacklogItem(final Long backlogItemId)
+			throws ScrumWorksException {
+		return getSWPEndpoint().getTasks(backlogItemId);
 	}
 
 	/**
