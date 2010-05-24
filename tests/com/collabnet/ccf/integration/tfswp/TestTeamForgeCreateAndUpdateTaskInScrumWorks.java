@@ -10,8 +10,6 @@ import java.util.List;
 
 import org.junit.Test;
 
-import com.danube.scrumworks.api.client.types.BacklogItemWSO;
-import com.danube.scrumworks.api.client.types.TaskWSO;
 import com.danube.scrumworks.api2.client.BacklogItem;
 import com.danube.scrumworks.api2.client.Task;
 
@@ -54,10 +52,8 @@ public class TestTeamForgeCreateAndUpdateTaskInScrumWorks extends TFSWPIntegrati
 		getTeamForgeTester().updateTask(taskId, title, description,
 				status, assignedToUser, remainingEffort, originalEstimate);
 
-		List<Task> tasks = getSWPTester().waitForTaskToAppear(pbi, title, 1, null);
-		Task task = tasks.get(0);
+		Task task = getSWPTester().waitForTaskToAppear(pbi, title, 1, null);
 
-		assertEquals(1, tasks.size());
 		assertEquals(title, task.getName());
 		assertEquals(description, task.getDescription());
 		assertEquals(status, task.getStatus());
@@ -78,8 +74,7 @@ public class TestTeamForgeCreateAndUpdateTaskInScrumWorks extends TFSWPIntegrati
 				newStatus, newAssignedToUser, newRemainingEffort, newOriginalEstimate);
 
 		// now we have to wait for the update to come through
-		List<Task> tasksFromScrumWorks = getSWPTester().waitForTaskToAppear(pbi, newTitle, 1, null);
-		task = tasksFromScrumWorks.get(0); 
+		task = getSWPTester().waitForTaskToAppear(pbi, newTitle, 1, null); 
 
 		assertEquals(newTitle, task.getName());
 		assertEquals(newDescription, task.getDescription());
@@ -102,8 +97,7 @@ public class TestTeamForgeCreateAndUpdateTaskInScrumWorks extends TFSWPIntegrati
 				yetAnotherStatus, yetAnotherUser, zeroEffort, newOriginalEstimate);
 		
 		// now we have to wait for the update to come through
-		tasksFromScrumWorks = getSWPTester().waitForTaskToAppear(pbi, yetAnotherTitle, 1, null);
-		task = tasksFromScrumWorks.get(0); 
+		task = getSWPTester().waitForTaskToAppear(pbi, yetAnotherTitle, 1, null); 
 
 		assertEquals(yetAnotherTitle, task.getName());
 		assertEquals(yetAnotherDescription, task.getDescription());

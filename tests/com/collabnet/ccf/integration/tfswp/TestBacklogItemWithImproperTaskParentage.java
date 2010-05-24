@@ -151,8 +151,7 @@ public class TestBacklogItemWithImproperTaskParentage extends TFSWPIntegrationTe
 				teamForgeTask.getEstimatedEffort()); 
 		
 		// verify
-		List<Task> scrumWorksTasks = getSWPTester().waitForTaskToAppear(scrumWorksBacklogItem, updatedTitle, 1, null); 
-		Task updatedScrumWorksTask = scrumWorksTasks.get(0); 
+		Task updatedScrumWorksTask = getSWPTester().waitForTaskToAppear(scrumWorksBacklogItem, updatedTitle, 1, null); 
 		assertEquals(updatedTitle, updatedScrumWorksTask.getName());
 	}
 

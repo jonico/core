@@ -246,8 +246,8 @@ public class SWPTester {
 	}
 
 	/**
-	 * Returns the tasks for the given backlog item after the tasks are created
-	 * in ScrumWorks.
+	 * Returns the task for the given backlog item after the task is created or
+	 * updated in ScrumWorks.
 	 * 
 	 * @param backlogItemWSO
 	 *            the backlog item
@@ -265,7 +265,7 @@ public class SWPTester {
 	 * @throws IllegalArgumentException
 	 *             if backlogItemWSO argument is <code>null</code>
 	 */
-	public List<Task> waitForTaskToAppear(final BacklogItem backlogItem,
+	public Task waitForTaskToAppear(final BacklogItem backlogItem,
 			final String expectedTaskTitle, final int numberOfTasks,
 			Long customTimeout) throws InterruptedException,
 			ScrumWorksException {
@@ -275,12 +275,16 @@ public class SWPTester {
 		for (int i = 0; i < (customTimeout == null ? ccfMaxWaitTime
 				: customTimeout); i += ccfRetryInterval) {
 			tasks = getSWPEndpoint().getTasks(backlogItem.getId());
+			List<String> taskNames = new ArrayList<String>(); 
+			for (Task task : tasks) {
+				taskNames.add(task.getName()); 
+			}
+			int indexOfMatchingTaskTitle = taskNames.indexOf(expectedTaskTitle); 
 			if (tasks == null || tasks.size() < numberOfTasks
-					|| !tasks.get(0).getName().equals(expectedTaskTitle)) {
+					|| indexOfMatchingTaskTitle == -1) {
 				Thread.sleep(ccfRetryInterval);
 			} else {
-				assertEquals(numberOfTasks, tasks.size());
-				return tasks;
+				return tasks.get(indexOfMatchingTaskTitle);
 			}
 		}
 		throw new RuntimeException(

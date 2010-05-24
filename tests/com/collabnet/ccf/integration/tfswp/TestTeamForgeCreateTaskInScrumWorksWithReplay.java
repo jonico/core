@@ -10,8 +10,6 @@ import java.util.List;
 
 import org.junit.Test;
 
-import com.danube.scrumworks.api.client.types.BacklogItemWSO;
-import com.danube.scrumworks.api.client.types.TaskWSO;
 import com.danube.scrumworks.api2.client.BacklogItem;
 import com.danube.scrumworks.api2.client.Task;
 
@@ -56,10 +54,8 @@ public class TestTeamForgeCreateTaskInScrumWorksWithReplay extends TFSWPIntegrat
 		// now we wait until CCF replay comes into play
 		// This is not optimal because it can happen that no artifact got quarantined at all
 		// To write a better test, we have to remotely pause/resume CCF project mappings
-		List<Task> tasks = getSWPTester().waitForTaskToAppear(pbi, title, 1, CCF_ARTIFACT_REPLAY_TIMEOUT);
-		Task task = tasks.get(0);
+		Task task = getSWPTester().waitForTaskToAppear(pbi, title, 1, CCF_ARTIFACT_REPLAY_TIMEOUT);
 
-		assertEquals(1, tasks.size());
 		assertEquals(title, task.getName());
 		assertEquals(description, task.getDescription());
 		assertEquals(status, task.getStatus());

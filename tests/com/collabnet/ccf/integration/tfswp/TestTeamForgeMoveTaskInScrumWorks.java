@@ -3,7 +3,8 @@
  */
 package com.collabnet.ccf.integration.tfswp;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.util.List;
 
@@ -53,11 +54,7 @@ public class TestTeamForgeMoveTaskInScrumWorks extends TFSWPIntegrationTest {
 		getTeamForgeTester().updateTask(taskTF.getId(), title, description,
 				status, assignedToUser, remainingEffort, originalEstimate);
 
-		List<Task> tasksSWP = null;
-		tasksSWP = getSWPTester().waitForTaskToAppear(firstSWPPBI, title, 1, null); 
-
-		assertEquals(1, tasksSWP.size());
-		Task taskSWP = tasksSWP.get(0);
+		Task taskSWP = getSWPTester().waitForTaskToAppear(firstSWPPBI, title, 1, null);
 		
 		// now we create a second PBI without any tasks
 		FieldValues flexFields = new FieldValues();
@@ -88,13 +85,14 @@ public class TestTeamForgeMoveTaskInScrumWorks extends TFSWPIntegrationTest {
 		
 		
 		// wait for title change to show up
-		taskSWP = getSWPTester().waitForTaskToAppear(secondSWPPBI, newTitle, 1, null).get(0); 
+		taskSWP = getSWPTester().waitForTaskToAppear(secondSWPPBI, newTitle, 1, null); 
 		assertEquals(newTitle, taskSWP.getName());
 		
 		// check whether move operation took place
 		assertEquals(secondSWPPBI.getId(), taskSWP.getBacklogItemId());
 		
 		// first SWP PBI should not have any children any more
+		List<Task> tasksSWP = null;
 		tasksSWP = getSWPTester().getSWPEndpoint().getTasks(firstSWPPBI.getId());
 		assertTrue(tasksSWP.isEmpty());
 		
