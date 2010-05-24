@@ -3,8 +3,6 @@ package com.collabnet.ccf.integration.tfswp;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
-import java.util.List;
-
 import org.junit.Before;
 import org.junit.Test;
 
@@ -12,7 +10,6 @@ import com.collabnet.teamforge.api.FieldValues;
 import com.collabnet.teamforge.api.tracker.ArtifactDO;
 import com.collabnet.teamforge.api.tracker.ArtifactRow;
 import com.danube.scrumworks.api2.client.BacklogItem;
-import com.danube.scrumworks.api2.client.ScrumWorksException;
 
 /**
  * Tests that when a backlog item in TeamForge has a backlog item as its parent, 
@@ -65,7 +62,6 @@ public class TestTeamForgeBacklogItemParentOfBacklogItem extends TFSWPIntegratio
 	
 	/**
 	 * Tests that data can be synchronized even though the backlog item is a child of another backlog item. 
-	 * Each method can be run independently. 
 	 * 
 	 * @throws Exception if an error occurs
 	 */
@@ -76,6 +72,28 @@ public class TestTeamForgeBacklogItemParentOfBacklogItem extends TFSWPIntegratio
 		doTestScrumWorksSynchronizeToTeamForgeParentBacklogItem(); 
 		doTestScrumWorksSynchronizeToTeamForgeChildBacklogItem(); 
 		doTestTeamForgeCreateChildBacklogItem(); 
+		doTestTeamForgeCreateBacklogItemWithoutPlanningFolder(); 
+	}
+
+	/** 
+	 * Tests that a backlog item created in TeamForge without a planning folder 
+	 * is synchronized from TeamForge to ScrumWorks.  The backlog item in ScrumWorks is created
+	 * in the top-most release of the product backlog.
+	 * 
+	 * @throws Exception if an error occurs
+	 */
+	private void doTestTeamForgeCreateBacklogItemWithoutPlanningFolder() throws Exception {
+		final String backlogItemTitle = "teamForge created PBI without planning folder";
+
+		// execute 
+		getTeamForgeTester().createBacklogItem(backlogItemTitle, 
+				null, 
+				null, 
+				new FieldValues());
+		
+		// verify 
+		BacklogItem scrumWorksBacklogItem = getSWPTester().waitForBacklogItemToUpdate(backlogItemTitle); 
+		assertEquals(SWPTester.RELEASE_2, getSWPTester().getReleaseName(scrumWorksBacklogItem.getReleaseId())); 
 	}
 
 	/**
@@ -87,7 +105,7 @@ public class TestTeamForgeBacklogItemParentOfBacklogItem extends TFSWPIntegratio
 	private void doTestTeamForgeCreateChildBacklogItem() throws Exception {
 		// execute
 		ArtifactDO teamForgeCreatedBacklogItem = getTeamForgeTester().createBacklogItem("teamForge created child PBI", 
-				"description", 
+				null, 
 				release, 
 				new FieldValues()); 
 		getTeamForgeTester().createArtifactDependency(teamForgeParentBacklogItem.getId(), 
