@@ -246,9 +246,49 @@ public class TeamForgeTester {
 				getTaskTracker(), title, description, null, null, status, null,
 				0, originalEstimate, remainingEffort, false, assignedUsername,
 				null, null, flexFields, null, null, null);
-		connection.getTrackerClient().createArtifactDependency(pbi.getId(),
-				task.getId(), "Parent-child relationship created by unit test");
+		createArtifactDependency(pbi.getId(), task.getId(), "Parent-child relationship created by unit test");
 		return task;
+	}
+
+	/**
+	 * Creates a dependency between two artifacts. 
+	 * 
+	 * @param parentId the id for the parent artifact
+	 * @param childId the id for the child artifact
+	 * @param message text describing the type of relationship
+	 * @throws RemoteException if TeamForge can not be accessed
+	 * @throws PlanningFolderRuleViolationException if there is an error with the planning folder
+	 */
+	public void createArtifactDependency(final String parentId, final String childId, final String message)
+			throws RemoteException, PlanningFolderRuleViolationException {
+		connection.getTrackerClient().createArtifactDependency(parentId,
+				childId, message);
+	}
+	
+	/**
+	 * Returns the updated backlog item from TeamForge after the backlog item has been updated. 
+	 * 
+	 * @param title the updated title
+	 * @param numberOfBacklogItems the number of backlog items in TeamForge
+	 * @return the updated backlog item
+	 * @throws Exception if an error occurs 
+	 */
+	public ArtifactRow waitForBacklogItemToUpdate(final String title, final int numberOfBacklogItems) throws Exception {
+		for (int i = 0; i < ccfMaxWaitTime; i += ccfRetryInterval) {
+			ArtifactRow[] artifacts = waitForBacklogItemsToAppear(numberOfBacklogItems);
+			List<String> backlogItemNames = new ArrayList<String>(); 
+			for (ArtifactRow artifactRow : artifacts) {
+				backlogItemNames.add(artifactRow.getTitle()); 
+			}
+			int indexOfUpdateTitle = backlogItemNames.indexOf(title);
+			if (indexOfUpdateTitle == -1) {
+				Thread.sleep(ccfRetryInterval); 
+			} else {
+				return artifacts[indexOfUpdateTitle]; 
+			}
+		}
+		throw new RuntimeException("Backlog item with the given title: " + title 
+				+ " was not updated in the time: " + ccfMaxWaitTime); 
 	}
 
 	/**
@@ -257,8 +297,7 @@ public class TeamForgeTester {
 	 * @param backlogItemId
 	 * @return
 	 * @throws RemoteException
-	 *             if TeamForge can not be accessed if TeamForge can not be
-	 *             accessed
+	 *             if TeamForge can not be accessed 
 	 * @throws PlanningFolderRuleViolationException
 	 *             if there is an error with the planning folder
 	 */
@@ -413,8 +452,7 @@ public class TeamForgeTester {
 				.getParentDependencyList(taskId).getDataRows()[0];
 		connection.getTrackerClient().removeArtifactDependency(
 				rel.getOriginId(), rel.getTargetId());
-		connection.getTrackerClient().createArtifactDependency(newParentId,
-				taskId, "reparenting ...");
+		createArtifactDependency(newParentId, taskId, "reparenting ...");
 	}
 
 	/**
@@ -524,7 +562,7 @@ public class TeamForgeTester {
 	 * @throws IllegalArgumentException
 	 *             if an argument is <code>null</code>
 	 */
-	private FieldValues getFlexFields(final String artifactId)
+	public FieldValues getFlexFields(final String artifactId)
 			throws RemoteException {
 		Validate.notNull(artifactId, "null artifact id");
 

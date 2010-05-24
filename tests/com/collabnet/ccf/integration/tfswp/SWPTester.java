@@ -306,7 +306,32 @@ public class SWPTester {
 		Product product = getProduct();
 		return waitForBacklogItemToAppear(product, numberOfPBIs, null);
 	}
-
+	
+	/**
+	 * Returns the backlog items after the title of a backlog item has been updated 
+	 * in ScrumWorks.  
+	 * @throws InterruptedException if the thread can not sleep
+	 * @throws ScrumWorksException if an error occurs from ScrumWorks
+	 */
+	public BacklogItem waitForBacklogItemToUpdate(final String title) throws InterruptedException, ScrumWorksException {
+		List<BacklogItem> backlogItems = new ArrayList<BacklogItem>(); 
+		for (int i = 0; i < ccfMaxWaitTime; i += ccfRetryInterval) {
+			backlogItems = getSWPEndpoint().getBacklogItemsInProduct(getProduct().getId(), false); 
+			List<String> backlogItemNames = new ArrayList<String>(); 
+			for (BacklogItem backlogItem : backlogItems) {
+				backlogItemNames.add(backlogItem.getName()); 
+			}
+			int indexOfUpdateBacklogItem = backlogItemNames.indexOf(title);
+			if (indexOfUpdateBacklogItem == -1) {
+				Thread.sleep(ccfRetryInterval);
+			} else {
+				return backlogItems.get(indexOfUpdateBacklogItem); 
+			}
+		}
+		throw new RuntimeException("Backlog items with the given title: " + title 
+				+ " were not found within the given time: " + ccfMaxWaitTime);  
+	}
+	
 	/**
 	 * Returns the product object for the given product name.
 	 * 

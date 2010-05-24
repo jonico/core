@@ -84,21 +84,9 @@ public class TestTeamForgeUpdateBacklogItemInScrumWorks extends TFSWPIntegration
 		getTeamForgeTester().updateBacklogItem(backlogItemDO.getId(), title, description, release, flexFields); 
 		
 		// verify 
-		List<BacklogItem> allPbis = null;
-		BacklogItem updatedPbi = null; 
-		getSWPTester().waitForBacklogItemsToAppear(1); 
-		for (int i = 0; i < getCcfMaxWaitTime(); i += getCcfRetryInterval()) {
-			allPbis = getSWPTester().getSWPEndpoint().getBacklogItemsInProduct(getSWPTester().getProduct().getId(), false); 
-			updatedPbi = allPbis.get(0);
-			if (!updatedPbi.getName().equals(title)) {
-				Thread.sleep(getCcfRetryInterval());
-			} else {
-				break;
-			}
-		}
+		BacklogItem updatedPbi = getSWPTester().waitForBacklogItemToUpdate(title); 
 		
 		assertEquals(title, updatedPbi.getName()); 
-		assertEquals(1, allPbis.size());
 		assertEquals(title, updatedPbi.getName());
 		assertEquals(description, updatedPbi.getDescription());
 		assertEquals(benefit, updatedPbi.getBusinessWeight().getBenefit().toString()); 

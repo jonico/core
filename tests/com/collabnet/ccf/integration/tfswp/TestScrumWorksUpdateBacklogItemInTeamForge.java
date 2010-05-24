@@ -82,7 +82,7 @@ public class TestScrumWorksUpdateBacklogItemInTeamForge extends TFSWPIntegration
 		final BacklogItem scrumWorksPbiFromUpdate = getSWPTester().updateBacklogItem(backlogItem); 
 
 		// verify
-		ArtifactRow teamForgePbi = waitForBacklogItemToUpdate(title);
+		ArtifactRow teamForgePbi = getTeamForgeTester().waitForBacklogItemToUpdate(title, 1);
 		 
 		assertEquals(title, teamForgePbi.getTitle()); 
 		assertEquals(description, teamForgePbi.getDescription());
