@@ -50,7 +50,6 @@ public class TestBacklogItemWithImproperTaskParentage extends TFSWPIntegrationTe
 		
 		scrumWorksBacklogItem = getSWPTester().createBacklogItem("child backlog item", release); 
 		scrumWorksTask = getSWPTester().createTask(taskTitle, null, null, null, null, scrumWorksBacklogItem.getId()); 
-		getSWPTester().waitForTaskToAppear(scrumWorksBacklogItem, taskTitle, 1, null);  
 		
 		ArtifactRow[] teamForgeBacklogItems = getTeamForgeTester().waitForBacklogItemsToAppear(1);
 		teamForgeBacklogItem = teamForgeBacklogItems[0]; 
@@ -61,7 +60,7 @@ public class TestBacklogItemWithImproperTaskParentage extends TFSWPIntegrationTe
 				teamForgeTask.getId()); 
 		getTeamForgeTester().createArtifactDependency(teamForgeTask.getId(), 
 				teamForgeBacklogItem.getId(), 
-		"Backlog item parent of backlog item"); 
+				"Backlog item parent of backlog item"); 
 	}
 	
 	/**
