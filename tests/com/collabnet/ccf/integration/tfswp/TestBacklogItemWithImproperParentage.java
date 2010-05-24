@@ -67,12 +67,12 @@ public class TestBacklogItemWithImproperParentage extends TFSWPIntegrationTest {
 	 */
 	@Test
 	public void testBacklogItemParentOfBacklogItem() throws Exception {
+		doTestTeamForgeCreateChildBacklogItem(); 
+		doTestTeamForgeCreateBacklogItemWithoutPlanningFolder(); 
 		doTestTeamForgeSynchronizeToScrumWorksParentBacklogItem(); 
 		doTestTeamForgeSynchronizeToScrumWorksChildBacklogItem(); 
 		doTestScrumWorksSynchronizeToTeamForgeParentBacklogItem(); 
 		doTestScrumWorksSynchronizeToTeamForgeChildBacklogItem(); 
-		doTestTeamForgeCreateChildBacklogItem(); 
-		doTestTeamForgeCreateBacklogItemWithoutPlanningFolder(); 
 	}
 
 	/** 
