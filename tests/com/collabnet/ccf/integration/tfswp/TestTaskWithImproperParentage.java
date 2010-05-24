@@ -3,11 +3,11 @@ package com.collabnet.ccf.integration.tfswp;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
-import java.rmi.RemoteException;
-
 import org.junit.Before;
 import org.junit.Test;
 
+import com.collabnet.teamforge.api.FieldValues;
+import com.collabnet.teamforge.api.tracker.ArtifactDO;
 import com.collabnet.teamforge.api.tracker.ArtifactRow;
 import com.danube.scrumworks.api2.client.BacklogItem;
 import com.danube.scrumworks.api2.client.Task;
@@ -80,11 +80,33 @@ public class TestTaskWithImproperParentage extends TFSWPIntegrationTest {
 	 */
 	@Test
 	public void testBacklogItemParentOfBacklogItem() throws Exception {
+		doTestTeamForgeCreateTaskWithoutBacklogItemParent(); 
+		doTestTeamForgeCreateTaskWithChildParent(); 
 		doTestTeamForgeSynchronizeToScrumWorksChildTask(); 
 		doTestTeamForgeSynchronizeToScrumWorksParentTask(); 
 		doTestScrumWorksSynchronizeToTeamForgeParentTaskKeepsInvalidParentage(); 
 		doTestScrumWorksSynchronizeToTeamForgeChildTaskResetBacklogItemParentage(); 
-		doTestTeamForgeCreateTaskWithoutBacklogItemParent(); 
+	}
+
+	/** 
+	 * Tests that a task created in TeamForge with a child as its parent 
+	 * will not be created in ScrumWorks. 
+	 * 
+	 * @throws Exception if an error occurs
+	 */
+	private void doTestTeamForgeCreateTaskWithChildParent() throws Exception {
+		// execute 
+		ArtifactDO createdTask = getTeamForgeTester().getConnection().getTrackerClient().createArtifact(
+				getTeamForgeTester().getTaskTracker(), "task with parent task", "<blank>", null, null, 
+				TaskStatus.NOT_STARTED.getStatus(), null,
+				0, 0, 0, false, getTeamForgeTester().getUserName(),
+				null, teamForgeParentTask.getPlanningFolderId(), new FieldValues(), null, null, null);
+		getTeamForgeTester().createArtifactDependency(teamForgeParentTask.getId(), createdTask.getId(), 
+				"created task with parent task"); 
+		
+		// verify 
+		Thread.sleep(getCcfMaxWaitTime()); 
+		assertEquals(2, getSWPTester().getTasksForBacklogItem(scrumWorksBacklogItem.getId()).size()); 
 	}
 
 	/**
