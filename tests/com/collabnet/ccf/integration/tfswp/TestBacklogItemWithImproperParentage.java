@@ -21,7 +21,7 @@ import com.danube.scrumworks.api2.client.BacklogItem;
  *
  */
 
-public class TestTeamForgeBacklogItemParentOfBacklogItem extends TFSWPIntegrationTest {
+public class TestBacklogItemWithImproperParentage extends TFSWPIntegrationTest {
 	/** Release name for all backlog items. */ 
 	private static final String release = SWPTester.RELEASE_1;
 
