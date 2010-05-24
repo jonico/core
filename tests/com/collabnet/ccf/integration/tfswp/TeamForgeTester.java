@@ -470,6 +470,31 @@ public class TeamForgeTester {
 			throws RemoteException, InterruptedException {
 		return waitForArtifactToAppear(numberOfPbis, getPbiTracker(), "backlog item");
 	}
+	
+	/**
+	 * Returns the updated task from TeamForge after the task has been updated. 
+	 * 
+	 * @param taskTitle the updated task title 
+	 * @param numberOfTasks the total number of tasks 
+	 * @throws Exception
+	 */
+	public ArtifactRow waitForTaskToUpdate(final String taskTitle, final int numberOfTasks)throws Exception {
+		for (int i = 0; i < ccfMaxWaitTime; i += ccfRetryInterval) {
+			ArtifactRow[] artifacts = waitForTasksToAppear(numberOfTasks); 
+			List<String> taskNames = new ArrayList<String>(); 
+			for (ArtifactRow task : artifacts) {
+				taskNames.add(task.getTitle()); 
+			}
+			int indexOfUpdatedTitle = taskNames.indexOf(taskTitle); 
+			if (indexOfUpdatedTitle == -1) {
+				Thread.sleep(ccfRetryInterval); 
+			} else {
+				return artifacts[indexOfUpdatedTitle]; 
+			}
+		}
+		throw new RuntimeException("Task with the given title: " + taskTitle 
+				+ " was not updated in the time: " + ccfMaxWaitTime); 
+	}
 
 	/**
 	 * Returns the tasks after the tasks appear in the parent backlog item.

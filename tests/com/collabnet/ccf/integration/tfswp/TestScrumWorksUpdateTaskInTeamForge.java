@@ -82,7 +82,7 @@ public class TestScrumWorksUpdateTaskInTeamForge extends TFSWPIntegrationTest {
 		getSWPTester().updateTask(taskToBeUpdated); 
 		
 		// verify 
-		ArtifactRow teamForgeTask = waitForTaskToUpdate(taskTitle);
+		ArtifactRow teamForgeTask = getTeamForgeTester().waitForTaskToUpdate(taskTitle, 1);
 		
 		assertEquals(taskTitle, teamForgeTask.getTitle()); 
 		assertEquals(description, teamForgeTask.getDescription()); 
@@ -96,25 +96,5 @@ public class TestScrumWorksUpdateTaskInTeamForge extends TFSWPIntegrationTest {
 		
 		assertEquals(teamForgeBacklogItem.getId(), getTeamForgeTester().getParentId(teamForgeTask.getId())); 
 		
-	}
-
-	/**
-	 * Returns the updateTask from TeamForge after the task has been updated. 
-	 * 
-	 * @param taskTitle
-	 * @throws Exception
-	 */
-	private ArtifactRow waitForTaskToUpdate(final String taskTitle)throws Exception {
-		ArtifactRow teamForgeTask;
-		for (int i = 0; i < getCcfMaxWaitTime(); i += getCcfRetryInterval()) {
-			ArtifactRow[] artifacts = getTeamForgeTester().waitForTasksToAppear(1); 
-			teamForgeTask = artifacts[0]; 
-			if (!teamForgeTask.getTitle().equals(taskTitle)) { 
-				Thread.sleep(getCcfRetryInterval()); 
-			} else {
-				return teamForgeTask;  
-			}
-		}
-		throw new RuntimeException("Task not updated within the timeout: " + getCcfMaxWaitTime()); 
 	}
 }

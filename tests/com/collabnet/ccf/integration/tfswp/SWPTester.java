@@ -512,7 +512,7 @@ public class SWPTester {
 	 *            the person who volunteered for the task, null for
 	 *            (unspecified)
 	 * @param status
-	 *            the status
+	 *            the status, null for Not Started
 	 * @param currentEstimate
 	 *            the current estimate, null for 0
 	 * @param backlogItemId
@@ -527,13 +527,16 @@ public class SWPTester {
 	 *             <code>null</code>
 	 */
 	public Task createTask(final String title, final String description,
-			final String pointPerson, final TaskStatus status,
+			final String pointPerson, TaskStatus status,
 			final String currentEstimate, final Long backlogItemId)
 			throws NumberFormatException, ScrumWorksException {
 		Validate.notNull(title, "null title");
-		Validate.notNull(status, "null status");
 		Validate.notNull(backlogItemId, "null backlog item id");
 
+		if (status == null) {
+			status = TaskStatus.NOT_STARTED; 
+		}
+		
 		final Integer taskEstimate = currentEstimate == null ? 0 : Integer
 				.parseInt(currentEstimate);
 		Task task = new Task();
