@@ -57,7 +57,7 @@ public class TestBacklogItemWithImproperParentage extends TFSWPIntegrationTest {
 		
 		getTeamForgeTester().createArtifactDependency(teamForgeParentBacklogItem.getId(), 
 				teamForgeChildBacklogItem.getId(), 
-		"Backlog item parent of backlog item"); 
+				"Backlog item parent of backlog item"); 
 	}
 	
 	/**
