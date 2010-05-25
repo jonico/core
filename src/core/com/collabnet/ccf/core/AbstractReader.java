@@ -196,6 +196,33 @@ public abstract class AbstractReader<T> extends Component implements
 			}
 		}
 	}
+	
+	/**
+	 * Returns the currently processed sync info of the
+	 * synchronization status record in question
+	 * 
+	 * @param sourceSystemId
+	 *            source system id
+	 * @param sourceRepositoryId
+	 *            source repository id
+	 * @param targetSystemId
+	 *            target system id
+	 * @param targetRepositoryId
+	 *            target repository id
+	 * @return synch info for record in question
+	 */
+	public Document getCurrentSynchInfo(String sourceSystemId,
+			String sourceRepositoryId, String targetSystemId,
+			String targetRepositoryId) {
+		String repositoryKey = sourceSystemId + ":" + sourceRepositoryId + ":"
+				+ targetSystemId + ":" + targetRepositoryId;
+		RepositoryRecord record = repositoryRecordHashMap.get(repositoryKey);
+		if (record == null) {
+			return null;
+		} else {
+			return record.getSyncInfo();
+		}
+	}
 
 	/**
 	 * Returns the number of artifacts waiting to be synchronized for all target

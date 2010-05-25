@@ -112,6 +112,14 @@ public class SWPReader extends AbstractReader<Connection> {
 		String sourceSystemKind = this.getSourceSystemKind(syncInfo);
 		String sourceRepositoryId = this.getSourceRepositoryId(syncInfo);
 		String sourceRepositoryKind = this.getSourceRepositoryKind(syncInfo);
+		String lastSynchronizedVersion = this.getLastSourceVersion(syncInfo);
+		boolean ignoreResyncUser = false;
+
+		if (lastSynchronizedVersion == null
+				|| lastSynchronizedVersion.equals("0")
+				|| !ignoreConnectorUserUpdates) {
+			ignoreResyncUser = true;
+		}
 
 		// find out what to extract
 		SWPType swpType = SWPMetaData
@@ -155,21 +163,23 @@ public class SWPReader extends AbstractReader<Connection> {
 			if (swpType.equals(SWPMetaData.SWPType.TASK)) {
 				swpHandler.retrieveTask(connection.getEndpoint(), artifactId,
 						swpProductName, getResyncUserName() == null ? ""
-								: getResyncUserName(), genericArtifact);
+								: getResyncUserName(), ignoreResyncUser,
+						genericArtifact);
 			} else if (swpType.equals(SWPMetaData.SWPType.PBI)) {
 				swpHandler.retrievePBI(connection.getEndpoint(), artifactId,
 						swpProductName, getResyncUserName() == null ? ""
-								: getResyncUserName(), genericArtifact);
+								: getResyncUserName(), ignoreResyncUser,
+						genericArtifact);
 			} else if (swpType.equals(SWPMetaData.SWPType.PRODUCT)) {
 				swpHandler.retrieveProduct(connection.getEndpoint(),
 						artifactId, swpProductName,
 						getResyncUserName() == null ? "" : getResyncUserName(),
-						genericArtifact);
+						ignoreResyncUser, genericArtifact);
 			} else if (swpType.equals(SWPMetaData.SWPType.RELEASE)) {
 				swpHandler.retrieveRelease(connection.getEndpoint(),
 						artifactId, swpProductName,
 						getResyncUserName() == null ? "" : getResyncUserName(),
-						genericArtifact);
+						ignoreResyncUser, genericArtifact);
 			} else if (swpType.equals(SWPMetaData.SWPType.THEME)) {
 				swpHandler.retrieveThemes(connection.getEndpoint(), artifactId,
 						swpProductName, genericArtifact);
