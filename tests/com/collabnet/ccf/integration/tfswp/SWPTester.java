@@ -40,6 +40,9 @@ public class SWPTester {
 
 	/** 2nd release. */
 	public static final String RELEASE_2 = "Release 2.0";
+	
+	/** Test release. */ 
+	public static final String RELEASE_3 = "RenamedTestRelease"; 
 
 	/** Core product theme. */
 	public static final String THEME_CORE = "Core";

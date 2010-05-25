@@ -93,7 +93,7 @@ public class TestBacklogItemWithImproperParentage extends TFSWPIntegrationTest {
 		
 		// verify 
 		BacklogItem scrumWorksBacklogItem = getSWPTester().waitForBacklogItemToUpdate(backlogItemTitle); 
-		assertEquals(SWPTester.RELEASE_2, getSWPTester().getReleaseName(scrumWorksBacklogItem.getReleaseId())); 
+		assertEquals(SWPTester.RELEASE_3, getSWPTester().getReleaseName(scrumWorksBacklogItem.getReleaseId())); 
 	}
 
 	/**
