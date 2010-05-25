@@ -56,6 +56,7 @@ public class TestBacklogItemWithImproperTaskParentage extends TFSWPIntegrationTe
 		ArtifactRow[] teamForgeTasks = getTeamForgeTester().waitForTasksToAppear(1);
 		teamForgeTask = teamForgeTasks[0]; 
 		
+		Thread.sleep(2000); 
 		getTeamForgeTester().getConnection().getTrackerClient().removeArtifactDependency(teamForgeBacklogItem.getId(), 
 				teamForgeTask.getId()); 
 		getTeamForgeTester().createArtifactDependency(teamForgeTask.getId(), 
@@ -70,11 +71,11 @@ public class TestBacklogItemWithImproperTaskParentage extends TFSWPIntegrationTe
 	 */
 	@Test
 	public void testBacklogItemParentOfBacklogItem() throws Exception {
-//		doTestTeamForgeSynchronizeToScrumWorksChildBacklogItem(); 
-//		doTestTeamForgeSynchronizeToScrumWorksParentTask(); 
-//		doTestScrumWorksSynchronizeToTeamForgeParentTaskKeepsInvalidParentage(); 
-//		doTestScrumWorksSynchronizeToTeamForgeChildBacklogItemRemovesParentage(); 
-//		doTestScrumWorksSynchronizeToTeamForgeParentTaskResetParentage(); 
+		doTestTeamForgeSynchronizeToScrumWorksChildBacklogItem(); 
+		doTestTeamForgeSynchronizeToScrumWorksParentTask(); 
+		doTestScrumWorksSynchronizeToTeamForgeParentTaskKeepsInvalidParentage(); 
+		doTestScrumWorksSynchronizeToTeamForgeChildBacklogItemRemovesParentage(); 
+		doTestScrumWorksSynchronizeToTeamForgeParentTaskResetParentage(); 
 	}
 
 	/**
