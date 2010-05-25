@@ -98,9 +98,6 @@ public class SWPMetaData {
 	
 	public enum PBIFields {
 		// TODO Differentiate between program and product releases
-		// TODO Include themes
-		// TODO lookup release/sprint name and include it in artifact
-		// TODO Include comments
 		id("id", GenericArtifactField.FieldValueTypeValue.STRING),
 		benefit("benefit", GenericArtifactField.FieldValueTypeValue.INTEGER),
 		penalty("penalty", GenericArtifactField.FieldValueTypeValue.INTEGER),
@@ -119,6 +116,7 @@ public class SWPMetaData {
 		team("team", GenericArtifactField.FieldValueTypeValue.STRING),
 		title("title", GenericArtifactField.FieldValueTypeValue.STRING),
 		theme("theme", GenericArtifactField.FieldValueTypeValue.STRING),
+		comment("Comment Text", GenericArtifactField.FieldValueTypeValue.STRING),
 		active("active", GenericArtifactField.FieldValueTypeValue.BOOLEAN);
 		
 		private GenericArtifactField.FieldValueTypeValue valueType;
@@ -139,8 +137,6 @@ public class SWPMetaData {
 	}
 	
 	public enum TaskFields {
-		// TODO Include comments
-		// TODO includes hours spent on this task?
 		id("id", GenericArtifactField.FieldValueTypeValue.STRING),
 		backlogItemId("backLogItemId", GenericArtifactField.FieldValueTypeValue.STRING),
 		description("description", GenericArtifactField.FieldValueTypeValue.STRING),
@@ -150,6 +146,7 @@ public class SWPMetaData {
 		pointPerson("pointPerson", GenericArtifactField.FieldValueTypeValue.STRING),
 		originalEstimate("originalEstimate", GenericArtifactField.FieldValueTypeValue.INTEGER),
 		taskBoardStatusRank("taskBoardStatusRank", GenericArtifactField.FieldValueTypeValue.DOUBLE),
+		comment("Comment Text", GenericArtifactField.FieldValueTypeValue.STRING),
 		title("title", GenericArtifactField.FieldValueTypeValue.STRING);
 		
 		private GenericArtifactField.FieldValueTypeValue valueType;

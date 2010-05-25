@@ -44,18 +44,20 @@ public class SWPReader extends AbstractReader<Connection> {
 	private String serverUrl;
 	private String resyncUserName;
 	private SWPHandler swpHandler = null;
-	
+
 	/**
 	 * Whenever an program is added to a product, new program epics can show up
-	 * Since a program addition is only visible due to a change in the product (not in the epics)
-	 * we use this variable to determine whether we have to resynchronize all themes
+	 * Since a program addition is only visible due to a change in the product
+	 * (not in the epics) we use this variable to determine whether we have to
+	 * resynchronize all themes
 	 */
-	private boolean triggerThemeResynchronization = false;
-	
+	private Map<String, Boolean> triggerThemeResynchronization = new HashMap<String, Boolean>();
+
 	/**
-	 * This variable determines whether PBIs have been shipped in the last getChangedPBIs call
+	 * This variable determines whether PBIs have been shipped in the last
+	 * getChangedPBIs call
 	 */
-	private boolean shippedPBIsInLastCall = false;
+	private Map<String, Boolean> shippedPBIsInLastCall = new HashMap<String, Boolean>();
 
 	/**
 	 * This variable is used to determine whether higher prioritized entity
@@ -65,6 +67,35 @@ public class SWPReader extends AbstractReader<Connection> {
 	 * entity type
 	 */
 	private boolean serializeArtifactShipments = false;
+
+	private boolean ignoreConnectorUserUpdates = true;
+
+	/**
+	 * Sets whether updated and created artifacts from the connector user should
+	 * be ignored This is the default behavior to avoid infinite update loops.
+	 * However, in artifact export scenarios, where all artifacts should be
+	 * extracted, this property should be set to false
+	 * 
+	 * @param ignoreConnectorUserUpdates
+	 *            whether to ignore artifacts that have been created or lastly
+	 *            modified by the connector user
+	 */
+	public void setIgnoreConnectorUserUpdates(boolean ignoreConnectorUserUpdates) {
+		this.ignoreConnectorUserUpdates = ignoreConnectorUserUpdates;
+	}
+
+	/**
+	 * Retrieves whether updated and created artifacts from the connector user
+	 * should be ignored This is the default behavior to avoid infinite update
+	 * loops. However, in artifact export scenarios, where all artifacts should
+	 * be extracted, this property should is set to false
+	 * 
+	 * @return the ignoreConnectorUserUpdates whether to ignore artifacts that
+	 *         have been created or lastly modified by the connector user
+	 */
+	public boolean isIgnoreConnectorUserUpdates() {
+		return ignoreConnectorUserUpdates;
+	}
 
 	private static final Log log = LogFactory.getLog(SWPReader.class);
 
@@ -117,26 +148,28 @@ public class SWPReader extends AbstractReader<Connection> {
 			/**
 			 * Create a new generic artifact data structure
 			 */
-			// genericArtifact.setSourceArtifactVersion("-1");
-			// genericArtifact
-			// .setSourceArtifactLastModifiedDate(GenericArtifactHelper.df
-			// .format(new Date(0)));
 			genericArtifact.setArtifactMode(ArtifactModeValue.COMPLETE);
 			genericArtifact.setArtifactType(ArtifactTypeValue.PLAINARTIFACT);
 			genericArtifact.setSourceArtifactId(artifactId);
 
 			if (swpType.equals(SWPMetaData.SWPType.TASK)) {
 				swpHandler.retrieveTask(connection.getEndpoint(), artifactId,
-						swpProductName, genericArtifact);
+						swpProductName, getResyncUserName() == null ? ""
+								: getResyncUserName(), genericArtifact);
 			} else if (swpType.equals(SWPMetaData.SWPType.PBI)) {
 				swpHandler.retrievePBI(connection.getEndpoint(), artifactId,
-						swpProductName, genericArtifact);
+						swpProductName, getResyncUserName() == null ? ""
+								: getResyncUserName(), genericArtifact);
 			} else if (swpType.equals(SWPMetaData.SWPType.PRODUCT)) {
 				swpHandler.retrieveProduct(connection.getEndpoint(),
-						artifactId, swpProductName, genericArtifact);
+						artifactId, swpProductName,
+						getResyncUserName() == null ? "" : getResyncUserName(),
+						genericArtifact);
 			} else if (swpType.equals(SWPMetaData.SWPType.RELEASE)) {
 				swpHandler.retrieveRelease(connection.getEndpoint(),
-						artifactId, swpProductName, genericArtifact);
+						artifactId, swpProductName,
+						getResyncUserName() == null ? "" : getResyncUserName(),
+						genericArtifact);
 			} else if (swpType.equals(SWPMetaData.SWPType.THEME)) {
 				swpHandler.retrieveThemes(connection.getEndpoint(), artifactId,
 						swpProductName, genericArtifact);
@@ -288,7 +321,8 @@ public class SWPReader extends AbstractReader<Connection> {
 				if (!isSerializeArtifactShipments()) {
 					swpHandler.getChangedTasks(connection.getEndpoint(),
 							swpProductName, artifactStates, majorVersion,
-							minorVersion, getUsername());
+							minorVersion, getUsername(),
+							isIgnoreConnectorUserUpdates());
 				} else {
 					// determine whether higher priority items are still in the
 					// queue
@@ -322,7 +356,8 @@ public class SWPReader extends AbstractReader<Connection> {
 						// now retrieve changed tasks since last known revision
 						swpHandler.getChangedTasks(connection.getEndpoint(),
 								swpProductName, artifactStates, majorVersion,
-								minorVersion, getUsername());
+								minorVersion, getUsername(),
+								isIgnoreConnectorUserUpdates());
 						// check whether new tasks are present
 						if (artifactStates.isEmpty()) {
 							return new ArrayList<ArtifactState>();
@@ -331,13 +366,16 @@ public class SWPReader extends AbstractReader<Connection> {
 						// task synch that are not synchronized yet
 						List<ArtifactState> pbiStates = new ArrayList<ArtifactState>();
 						swpHandler.getChangedPBIs(connection.getEndpoint(),
-								swpProductName, pbiStates, lastPBIRevisionInQueue / SWPHandler.SWP_REVISION_FACTOR,
-								lastPBIRevisionInQueue % SWPHandler.SWP_REVISION_FACTOR, getUsername());
+								swpProductName, pbiStates,
+								lastPBIRevisionInQueue
+										/ SWPHandler.SWP_REVISION_FACTOR,
+								lastPBIRevisionInQueue
+										% SWPHandler.SWP_REVISION_FACTOR,
+								getUsername(), isIgnoreConnectorUserUpdates());
 						if (!pbiStates.isEmpty()) {
 							// determine lastPBIInProduct revision
 							Long lastPBIRevisionInProduct = pbiStates.get(
-									pbiStates.size() - 1)
-									.getArtifactVersion();
+									pbiStates.size() - 1).getArtifactVersion();
 							if (lastPBIRevisionInQueue < lastPBIRevisionInProduct) {
 								log
 										.debug("Do not query new tasks for "
@@ -352,15 +390,19 @@ public class SWPReader extends AbstractReader<Connection> {
 				if (!isSerializeArtifactShipments()) {
 					swpHandler.getChangedPBIs(connection.getEndpoint(),
 							swpProductName, artifactStates, majorVersion,
-							minorVersion, getUsername());
+							minorVersion, getUsername(),
+							isIgnoreConnectorUserUpdates());
 				} else {
-					if (shippedPBIsInLastCall == true) {
-						shippedPBIsInLastCall = false;
+					Boolean shippedPBIsInLastCallUnboxed = shippedPBIsInLastCall
+							.get(swpProductName);
+					if (shippedPBIsInLastCallUnboxed != null
+							&& shippedPBIsInLastCallUnboxed == true) {
+						shippedPBIsInLastCall.put(swpProductName, false);
 						// trigger theme resynch
-						triggerThemeResynchronization = true;
-						return new ArrayList<ArtifactState>(); 
+						triggerThemeResynchronization.put(swpProductName, true);
+						return new ArrayList<ArtifactState>();
 					}
-					
+
 					// determine whether higher priority items are still in the
 					// queue
 					if (getNumberOfWaitingArtifactsForAllTargetSystems(
@@ -391,7 +433,11 @@ public class SWPReader extends AbstractReader<Connection> {
 						// now check out last theme revision in queue
 						Long lastThemeRevisionInQueue = lastRevisionInQueue
 								.get(correspondingThemeRepositoryId);
-						if (lastThemeRevisionInQueue == null || triggerThemeResynchronization) {
+
+						Boolean triggerThemeResynchronizationUnboxed = triggerThemeResynchronization
+								.get(swpProductName);
+						if (lastThemeRevisionInQueue == null
+								|| (triggerThemeResynchronizationUnboxed != null && triggerThemeResynchronizationUnboxed == true)) {
 							log
 									.debug("Do not query new PBIs for "
 											+ repositoryKey
@@ -403,7 +449,8 @@ public class SWPReader extends AbstractReader<Connection> {
 						// revision
 						swpHandler.getChangedPBIs(connection.getEndpoint(),
 								swpProductName, artifactStates, majorVersion,
-								minorVersion, getUsername());
+								minorVersion, getUsername(),
+								isIgnoreConnectorUserUpdates());
 
 						// check whether new PBIs are present
 						if (artifactStates.isEmpty()) {
@@ -417,8 +464,12 @@ public class SWPReader extends AbstractReader<Connection> {
 						// pbi synch that are not synchronized yet
 						List<ArtifactState> releaseStates = new ArrayList<ArtifactState>();
 						swpHandler.getChangedReleases(connection.getEndpoint(),
-								swpProductName, releaseStates, lastReleaseRevisionInQueue / SWPHandler.SWP_REVISION_FACTOR,
-								lastReleaseRevisionInQueue % SWPHandler.SWP_REVISION_FACTOR, getUsername());
+								swpProductName, releaseStates,
+								lastReleaseRevisionInQueue
+										/ SWPHandler.SWP_REVISION_FACTOR,
+								lastReleaseRevisionInQueue
+										% SWPHandler.SWP_REVISION_FACTOR,
+								getUsername(), isIgnoreConnectorUserUpdates());
 						if (!releaseStates.isEmpty()) {
 							// determine lastReleaseInProduct revision
 							Long lastReleaseRevisionInProduct = releaseStates
@@ -438,8 +489,13 @@ public class SWPReader extends AbstractReader<Connection> {
 						// pbi synch that are not synchronized yet
 						List<ArtifactState> themeStates = new ArrayList<ArtifactState>();
 						swpHandler.getChangedThemes(connection.getEndpoint(),
-								swpProductName, themeStates, lastThemeRevisionInQueue / SWPHandler.SWP_REVISION_FACTOR,
-								lastThemeRevisionInQueue % SWPHandler.SWP_REVISION_FACTOR, getUsername(), triggerThemeResynchronization);
+								swpProductName, themeStates,
+								lastThemeRevisionInQueue
+										/ SWPHandler.SWP_REVISION_FACTOR,
+								lastThemeRevisionInQueue
+										% SWPHandler.SWP_REVISION_FACTOR,
+								getUsername(), triggerThemeResynchronization
+										.get(swpProductName));
 						if (!themeStates.isEmpty()) {
 							// determine lastThemeInProduct revision
 							Long lastThemeRevisionInProduct = themeStates.get(
@@ -458,20 +514,21 @@ public class SWPReader extends AbstractReader<Connection> {
 								artifactStates.get(artifactStates.size() - 1)
 										.getArtifactVersion());
 						// indicate that PBIs have been shipped in this call
-						shippedPBIsInLastCall = true;
+						shippedPBIsInLastCall.put(swpProductName, true);
 					}
 				}
 			} else if (swpType.equals(SWPType.PRODUCT)) {
 				swpHandler.getChangedProducts(connection.getEndpoint(),
 						swpProductName, artifactStates, majorVersion,
-						minorVersion, getUsername());
+						minorVersion, getUsername(),
+						isIgnoreConnectorUserUpdates());
 				// update last revision in queue
 				if (!artifactStates.isEmpty()) {
 					lastRevisionInQueue.put(correspondingProductRepositoryId,
 							artifactStates.get(artifactStates.size() - 1)
 									.getArtifactVersion());
 					if (serializeArtifactShipments) {
-						triggerThemeResynchronization = true;
+						triggerThemeResynchronization.put(swpProductName, true);
 					}
 				} else {
 					lastRevisionInQueue.put(correspondingProductRepositoryId,
@@ -481,7 +538,8 @@ public class SWPReader extends AbstractReader<Connection> {
 				if (!isSerializeArtifactShipments()) {
 					swpHandler.getChangedReleases(connection.getEndpoint(),
 							swpProductName, artifactStates, majorVersion,
-							minorVersion, getUsername());
+							minorVersion, getUsername(),
+							isIgnoreConnectorUserUpdates());
 				} else {
 					// determine whether higher priority items are still in the
 					// queue
@@ -492,10 +550,12 @@ public class SWPReader extends AbstractReader<Connection> {
 										+ repositoryKey
 										+ " since changes of higher prioritized entity types are still in the queue ...");
 					} else {
-						// determine whether higher priority items are still in the
+						// determine whether higher priority items are still in
+						// the
 						// queue
 						if (getNumberOfWaitingArtifactsForAllTargetSystems(
-								sourceSystemId, correspondingProductRepositoryId) != 0
+								sourceSystemId,
+								correspondingProductRepositoryId) != 0
 								|| getNumberOfWaitingArtifactsForAllTargetSystems(
 										sourceSystemId,
 										correspondingReleaseRepositoryId) != 0
@@ -520,9 +580,11 @@ public class SWPReader extends AbstractReader<Connection> {
 							}
 							// now retrieve changed revisions since last known
 							// revision
-							swpHandler.getChangedReleases(connection.getEndpoint(),
-									swpProductName, artifactStates, majorVersion,
-									minorVersion, getUsername());
+							swpHandler.getChangedReleases(connection
+									.getEndpoint(), swpProductName,
+									artifactStates, majorVersion, minorVersion,
+									getUsername(),
+									isIgnoreConnectorUserUpdates());
 
 							// check whether new releases are present
 							if (artifactStates.isEmpty()) {
@@ -531,13 +593,19 @@ public class SWPReader extends AbstractReader<Connection> {
 										artificalRevision);
 								return new ArrayList<ArtifactState>();
 							}
-							// now check whether new product changes have popped up since
+							// now check whether new product changes have popped
+							// up since
 							// last
 							// release synch that are not synchronized yet
 							List<ArtifactState> productStates = new ArrayList<ArtifactState>();
-							swpHandler.getChangedProducts(connection.getEndpoint(),
-									swpProductName, productStates, lastProductRevisionInQueue / SWPHandler.SWP_REVISION_FACTOR,
-									lastProductRevisionInQueue % SWPHandler.SWP_REVISION_FACTOR, getUsername());
+							swpHandler.getChangedProducts(connection
+									.getEndpoint(), swpProductName,
+									productStates, lastProductRevisionInQueue
+											/ SWPHandler.SWP_REVISION_FACTOR,
+									lastProductRevisionInQueue
+											% SWPHandler.SWP_REVISION_FACTOR,
+									getUsername(),
+									isIgnoreConnectorUserUpdates());
 							if (!productStates.isEmpty()) {
 								// determine lastProductInProduct revision
 								Long lastProductRevisionInProduct = productStates
@@ -557,14 +625,15 @@ public class SWPReader extends AbstractReader<Connection> {
 									artifactStates.get(
 											artifactStates.size() - 1)
 											.getArtifactVersion());
-						}	
+						}
 					}
 				}
 			} else if (swpType.equals(SWPType.THEME)) {
 				swpHandler.getChangedThemes(connection.getEndpoint(),
 						swpProductName, artifactStates, majorVersion,
-						minorVersion, getUsername(), triggerThemeResynchronization);
-				triggerThemeResynchronization = false;
+						minorVersion, getUsername(),
+						triggerThemeResynchronization.get(swpProductName));
+				triggerThemeResynchronization.put(swpProductName, false);
 				// update last revision in queue
 				if (!artifactStates.isEmpty()) {
 					lastRevisionInQueue.put(correspondingThemeRepositoryId,
@@ -758,7 +827,6 @@ public class SWPReader extends AbstractReader<Connection> {
 	 */
 	public void setSerializeArtifactShipments(boolean serializeArtifactShipments) {
 		this.serializeArtifactShipments = serializeArtifactShipments;
-		triggerThemeResynchronization = true;
 	}
 
 	/**

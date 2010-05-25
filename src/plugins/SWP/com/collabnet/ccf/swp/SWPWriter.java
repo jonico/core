@@ -84,14 +84,14 @@ public class SWPWriter extends AbstractWriter<Connection> implements
 				Task result = createTask(ga, swpProductName, connection);
 				if (result != null) {
 					log.info("Created task " + result.getId() + " of PBI "
-						+ result.getBacklogItemId() + " with data from "
-						+ ga.getSourceArtifactId());
+							+ result.getBacklogItemId() + " with data from "
+							+ ga.getSourceArtifactId());
 				}
 			} else if (swpType.equals(SWPType.PBI)) {
 				BacklogItem result = createPBI(ga, swpProductName, connection);
 				if (result != null) {
-					log.info("Created PBI " + result.getKey() + " with data from "
-							+ ga.getSourceArtifactId());
+					log.info("Created PBI " + result.getKey()
+							+ " with data from " + ga.getSourceArtifactId());
 				}
 			} else {
 				String cause = "Unsupported repository format: "
@@ -141,10 +141,15 @@ public class SWPWriter extends AbstractWriter<Connection> implements
 		List<GenericArtifactField> themes = ga
 				.getAllGenericArtifactFieldsWithSameFieldName(PBIFields.theme
 						.getFieldName());
+		List<GenericArtifactField> comments = ga
+				.getAllGenericArtifactFieldsWithSameFieldName(PBIFields.comment
+						.getFieldName());
 
 		return swpHandler.createPBI(connection.getEndpoint(), active, benefit,
 				completedDate, description, estimate, penalty, title, themes,
-				swpProductName, getResyncUserName() == null ? getUserName():getResyncUserName(), ga);
+				comments, swpProductName,
+				getResyncUserName() == null ? getUserName()
+						: getResyncUserName(), ga);
 	}
 
 	/**
@@ -176,9 +181,16 @@ public class SWPWriter extends AbstractWriter<Connection> implements
 		// ga);
 		GenericArtifactField title = GenericArtifactHelper.getMandatoryGAField(
 				TaskFields.title.getFieldName(), ga);
+
+		List<GenericArtifactField> comments = ga
+				.getAllGenericArtifactFieldsWithSameFieldName(TaskFields.comment
+						.getFieldName());
+
 		return swpHandler.createTask(connection.getEndpoint(), description,
 				estimatedHours, originalEstimate, pointPerson, status, title,
-				swpProductName, getResyncUserName() == null ? getUserName():getResyncUserName(), ga);
+				comments, swpProductName,
+				getResyncUserName() == null ? getUserName()
+						: getResyncUserName(), ga);
 	}
 
 	@Override
@@ -335,9 +347,13 @@ public class SWPWriter extends AbstractWriter<Connection> implements
 				.getAllGenericArtifactFieldsWithSameFieldName(PBIFields.theme
 						.getFieldName());
 
+		List<GenericArtifactField> comments = ga
+				.getAllGenericArtifactFieldsWithSameFieldName(PBIFields.comment
+						.getFieldName());
+
 		return swpHandler.updatePBI(connection.getEndpoint(), active, benefit,
 				completedDate, description, estimate, penalty, title, themes,
-				swpProductName, getUserName() ,ga);
+				comments, swpProductName, getUserName(), ga);
 	}
 
 	/**
@@ -371,9 +387,14 @@ public class SWPWriter extends AbstractWriter<Connection> implements
 		// ga);
 		GenericArtifactField title = GenericArtifactHelper.getMandatoryGAField(
 				TaskFields.title.getFieldName(), ga);
+
+		List<GenericArtifactField> comments = ga
+				.getAllGenericArtifactFieldsWithSameFieldName(TaskFields.comment
+						.getFieldName());
+
 		return swpHandler.updateTask(connection.getEndpoint(), description,
-				estimatedHours, originalEstimate, pointPerson, status, title, getUserName(),
-				ga);
+				estimatedHours, originalEstimate, pointPerson, status, title,
+				comments, getUserName(), ga);
 	}
 
 	/**

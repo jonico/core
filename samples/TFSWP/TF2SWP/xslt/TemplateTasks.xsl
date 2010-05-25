@@ -105,5 +105,14 @@
 			</xsl:choose>
 		</field>
 	</xsl:template>
+	<xsl:template match='ccf:field[@fieldName="Comment Text"]'>
+		<field>
+			<xsl:copy-of select="@*" />
+			<xsl:attribute name="fieldName">Comment Text</xsl:attribute>
+			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
+			<xsl:attribute name="fieldValueType">String</xsl:attribute>
+			<xsl:value-of select="." />
+		</field>
+	</xsl:template>
 	<xsl:template match="text()" />
 </xsl:stylesheet>

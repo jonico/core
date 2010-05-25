@@ -253,6 +253,7 @@
 		<property name="autoRestartPeriod" value="21600" />
 		<property name="shipAttachments" value="true" />		
 		<property name="serializeArtifactShipments" value="true" />
+		<property name="ignoreConnectorUserUpdates" value="true" />
 		<!-- This plugs in the polling hospital -->
 		<property name="hospitalDatabaseReader" ref="HospitalDatabaseExtractor" />
 		<property name="nameOfEntityService" value="TFEntityService" />
