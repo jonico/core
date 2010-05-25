@@ -464,6 +464,8 @@ public class GenericArtifact {
 	public final static String ERROR_INTERNAL_DATABASE_TABLE_CORRUPT = "internalDatabaseTableCorruptionError";
 	
 	public final static String ERROR_PARENT_ARTIFACT_NOT_PRESENT = "parentArtifactNotPresentError";
+	
+	public final static String ERROR_INVALID_PARENT_ARTIFACT = "invalidParentArtifactError";
 
 	public final static String ERROR_INCORRECT_SQL_STATEMENT = "incorrectSQLStatementError";
 

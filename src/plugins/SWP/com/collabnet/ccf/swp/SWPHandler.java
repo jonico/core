@@ -1593,7 +1593,7 @@ public class SWPHandler {
 					+ parentRepository
 					+ "). Bailing out ...";
 			log.error(error);
-			ga.setErrorCode(GenericArtifact.ERROR_PARENT_ARTIFACT_NOT_PRESENT);
+			ga.setErrorCode(GenericArtifact.ERROR_INVALID_PARENT_ARTIFACT);
 			throw new CCFRuntimeException(error);
 		} else {
 			task.setBacklogItemId(new Long(parent));
