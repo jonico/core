@@ -66,6 +66,10 @@ public class TestTaskWithImproperParentage extends TFSWPIntegrationTest {
 			teamForgeParentTask = teamForgeTasks[1]; 
 		}
 		
+		// FIXME Why do we have a sleep here? (race condition for dependency creation)?
+		// In this case, it would be better to update one of the child tasks again and wait for this update to come through
+		Thread.sleep(2000);
+		
 		getTeamForgeTester().getConnection().getTrackerClient().removeArtifactDependency(teamForgeBacklogItem.getId(), 
 				teamForgeChildTask.getId()); 
 		getTeamForgeTester().createArtifactDependency(teamForgeParentTask.getId(), 
@@ -145,7 +149,8 @@ public class TestTaskWithImproperParentage extends TFSWPIntegrationTest {
 
 	/** 
 	 * Tests that data can be synchronized from ScrumWorks to TeamForge for the parent task and 
-	 * the task parentage will not change because the task is still parent to the child task. 
+	 * the task parentage will not change because the task is still parent to the child task.
+	 *  
 	 *  
 	 * @throws Exception if an error occurs 
 	 */
