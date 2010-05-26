@@ -113,8 +113,10 @@ public class TestBacklogItemWithImproperParentage extends TFSWPIntegrationTest {
 				teamForgeCreatedBacklogItem.getId(), 
 				"created backlog item is child of another backlog item");
 		
-		// FIXME Just because we set a parent child relationship, we cannot be sure that this has been synched
+		// Just because we set a parent child relationship, we cannot be sure that this has been synched
 		// (we have to update one PBI first and check this update went through)
+		getSWPTester().updateBacklogItem(scrumWorksParentBacklogItem); 
+		getTeamForgeTester().waitForBacklogItemToUpdate(scrumWorksParentBacklogItem.getName(), 2); 
 		
 		// verify
 		getSWPTester().waitForBacklogItemsToAppear(3); 

@@ -56,9 +56,9 @@ public class TestBacklogItemWithImproperTaskParentage extends TFSWPIntegrationTe
 		ArtifactRow[] teamForgeTasks = getTeamForgeTester().waitForTasksToAppear(1);
 		teamForgeTask = teamForgeTasks[0]; 
 		
-		// FIXME Why do we have a sleep here? (race condition for dependency creation)?
-		// In this case, it would be better to update one of the child tasks again and wait for this update to come through
-		Thread.sleep(2000);
+		// update task to ensure that the dependency creation is finished
+		getSWPTester().updateTask(scrumWorksTask); 
+		getTeamForgeTester().waitForTaskToUpdate(scrumWorksTask.getName(), 1); 
 		
 		getTeamForgeTester().getConnection().getTrackerClient().removeArtifactDependency(teamForgeBacklogItem.getId(), 
 				teamForgeTask.getId()); 
