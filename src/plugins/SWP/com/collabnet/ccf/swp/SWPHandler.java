@@ -196,7 +196,8 @@ public class SWPHandler {
 				} else {
 					// program theme
 					addPBIField(ga, PBIFields.theme, theme.getName() + " ("
-							+ getProgramName(theme.getProgramId(), endpoint) + ")");
+							+ getProgramName(theme.getProgramId(), endpoint)
+							+ ")");
 				}
 			}
 		}
@@ -895,51 +896,75 @@ public class SWPHandler {
 
 		Long productId = getProductId(swpProductName, endpoint);
 
-		List<Theme> currentlySetThemes = pbi.getThemes();
 		// now updates the themes
+		List<Theme> currentlySetThemes = pbi.getThemes();
 		if (themes != null && !themes.isEmpty()) {
-			Set<String> themeSet = new HashSet<String>();
+			Set<String> anticipatedThemeNames = new HashSet<String>();
 			boolean nullValueSet = false;
 			for (GenericArtifactField field : themes) {
 				if (field.getFieldValueHasChanged()) {
 					if (field.getFieldValue() != null) {
-						themeSet.add(field.getFieldValue().toString());
+						anticipatedThemeNames.add(field.getFieldValue().toString());
 					} else {
 						nullValueSet = true;
 					}
 				}
 			}
-			if (!themeSet.isEmpty()) {
+			if (!anticipatedThemeNames.isEmpty()) {
 				// retrieve all themes of the product
-				List<Theme> swpThemes = endpoint.getThemesForProduct(productId);
-				if (swpThemes == null || swpThemes.size() == 0) {
+				List<Theme> availableThemes = endpoint.getThemesForProduct(productId);
+				if (availableThemes == null || availableThemes.size() == 0) {
 					log.warn("Attempt to set themes not present in SWP.");
-					for (String theme : themeSet) {
+					for (String theme : anticipatedThemeNames) {
 						log.warn("Missing theme: " + theme);
 					}
 				} else {
-					List<Theme> swpThemeWSOs = new ArrayList<Theme>();
-					for (Theme theme : swpThemes) {
+					Set <String> currentlySetThemeNames = new HashSet<String>(currentlySetThemes.size());
+					for (Theme theme : currentlySetThemes) {
 						// compute theme names
 						String themeName = theme.getName();
 						// differentiate between product and program themes here
 						if (theme.getProgramId() != null) {
-							themeName = themeName + " ("
-							+ getProgramName(theme.getProgramId(), endpoint) + ")";
+							themeName = themeName
+									+ " ("
+									+ getProgramName(theme.getProgramId(),
+											endpoint) + ")";
 						}
-						
-						if (themeSet.contains(themeName)) {
-							themeSet.remove(themeName);
-							swpThemeWSOs.add(theme);
+						currentlySetThemeNames.add(themeName);
+					}
+					
+					List<Theme> newThemes = new ArrayList<Theme>();
+					for (Theme theme : availableThemes) {
+						// compute theme names
+						String themeName = theme.getName();
+						// differentiate between product and program themes here
+						if (theme.getProgramId() != null) {
+							themeName = themeName
+									+ " ("
+									+ getProgramName(theme.getProgramId(),
+											endpoint) + ")";
+						}
+						if (anticipatedThemeNames.contains(themeName)) {
+							anticipatedThemeNames.remove(themeName);
+							newThemes.add(theme);
+							if (!currentlySetThemeNames.contains(themeName)) {
+								// we will only keep this list if it turns out that we will only add known themes
+								// this happens if invalid theme names were found
+								currentlySetThemes.add(theme);
+							}
 						}
 					}
-					currentlySetThemes.clear();
-					currentlySetThemes.addAll(swpThemeWSOs);
-					if (!themeSet.isEmpty()) {
+					if (!anticipatedThemeNames.isEmpty()) {
 						log.warn("Attempt to set themes not present in SWP.");
-						for (String theme : themeSet) {
+						for (String theme : anticipatedThemeNames) {
 							log.warn("Missing theme: " + theme);
 						}
+						log
+								.warn("Since this could be due to a theme or program rename operation, we will only apply additional themes but not remove already set ones ...");
+					} else {
+						// we can safely remove the existing themes
+						currentlySetThemes.clear();
+						currentlySetThemes.addAll(newThemes);
 					}
 				}
 			} else if (nullValueSet) {
@@ -949,8 +974,6 @@ public class SWPHandler {
 				// changed since the last update
 				currentlySetThemes.clear();
 			}
-		} else {
-			currentlySetThemes.clear();
 		}
 
 		// now determine the release (parent artifact)
@@ -1402,45 +1425,46 @@ public class SWPHandler {
 
 		// now set the themes
 		if (themes != null && !themes.isEmpty()) {
-			Set<String> themeSet = new HashSet<String>();
+			Set<String> anticipatedThemeNames = new HashSet<String>();
 			for (GenericArtifactField field : themes) {
 				if (field.getFieldValue() != null) {
-					themeSet.add(field.getFieldValue().toString());
+					anticipatedThemeNames.add(field.getFieldValue().toString());
 				}
 			}
-			if (!themeSet.isEmpty()) {
-				List<Theme> currentlySetThemes = pbi.getThemes();
+			if (!anticipatedThemeNames.isEmpty()) {
 				// retrieve all themes of the product
-				List<Theme> swpThemes = endpoint.getThemesForProduct(productId);
-				if (swpThemes == null || swpThemes.size() == 0) {
+				List<Theme> availableThemes = endpoint.getThemesForProduct(productId);
+				if (availableThemes == null || availableThemes.size() == 0) {
 					log.warn("Attempt to set themes not present in SWP.");
-					for (String theme : themeSet) {
+					for (String theme : anticipatedThemeNames) {
 						log.warn("Missing theme: " + theme);
 					}
 				} else {
-					List<Theme> swpThemeWSOs = new ArrayList<Theme>();
-					for (Theme theme : swpThemes) {
+					List<Theme> currentlySetThemes = pbi.getThemes();
+					
+					List<Theme> newThemes = new ArrayList<Theme>();
+					for (Theme theme : availableThemes) {
 						// compute theme names
 						String themeName = theme.getName();
 						// differentiate between product and program themes here
 						if (theme.getProgramId() != null) {
-							themeName = themeName + " ("
-							+ getProgramName(theme.getProgramId(), endpoint) + ")";
+							themeName = themeName
+									+ " ("
+									+ getProgramName(theme.getProgramId(),
+											endpoint) + ")";
 						}
-						
-						if (themeSet.contains(themeName)) {
-							themeSet.remove(themeName);
-							swpThemeWSOs.add(theme);
+						if (anticipatedThemeNames.contains(themeName)) {
+							anticipatedThemeNames.remove(themeName);
+							newThemes.add(theme);
 						}
 					}
-					currentlySetThemes.clear();
-					currentlySetThemes.addAll(swpThemeWSOs);
-					if (!themeSet.isEmpty()) {
+					if (!anticipatedThemeNames.isEmpty()) {
 						log.warn("Attempt to set themes not present in SWP.");
-						for (String theme : themeSet) {
+						for (String theme : anticipatedThemeNames) {
 							log.warn("Missing theme: " + theme);
 						}
 					}
+					currentlySetThemes.addAll(newThemes);
 				}
 			}
 		}
@@ -2035,8 +2059,10 @@ public class SWPHandler {
 			Boolean resetThemeSynchronization) throws RemoteException,
 			ScrumWorksException {
 
-		if (resetThemeSynchronization != null
-				&& resetThemeSynchronization == true) {
+		// we return the current revision number if themes have not been synched
+		// so far or a reset should be made
+		if (resetThemeSynchronization == null
+				|| resetThemeSynchronization == true) {
 			RevisionInfo currentRevision = endpoint.getCurrentRevisionInfo();
 			int revisionNumber = currentRevision.getRevisionNumber() + 1;
 			if (!(majorVersion < revisionNumber)) {
