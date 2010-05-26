@@ -57,7 +57,8 @@ public class TestBacklogItemWithImproperParentage extends TFSWPIntegrationTest {
 		
 		getTeamForgeTester().createArtifactDependency(teamForgeParentBacklogItem.getId(), 
 				teamForgeChildBacklogItem.getId(), 
-				"Backlog item parent of backlog item"); 
+				"Backlog item parent of backlog item");
+		
 	}
 	
 	/**
@@ -110,7 +111,10 @@ public class TestBacklogItemWithImproperParentage extends TFSWPIntegrationTest {
 				new FieldValues()); 
 		getTeamForgeTester().createArtifactDependency(teamForgeParentBacklogItem.getId(), 
 				teamForgeCreatedBacklogItem.getId(), 
-				"created backlog item is child of another backlog item"); 
+				"created backlog item is child of another backlog item");
+		
+		// FIXME Just because we set a parent child relationship, we cannot be sure that this has been synched
+		// (we have to update one PBI first and check this update went through)
 		
 		// verify
 		getSWPTester().waitForBacklogItemsToAppear(3); 
