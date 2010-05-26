@@ -43,6 +43,7 @@ import com.danube.scrumworks.api2.client.FilterChangesById;
 import com.danube.scrumworks.api2.client.FilterChangesByType;
 import com.danube.scrumworks.api2.client.Product;
 import com.danube.scrumworks.api2.client.ProductChanges;
+import com.danube.scrumworks.api2.client.Program;
 import com.danube.scrumworks.api2.client.Release;
 import com.danube.scrumworks.api2.client.ReleaseChanges;
 import com.danube.scrumworks.api2.client.RevisionInfo;
@@ -75,6 +76,7 @@ public class SWPHandler {
 	private Map<String, Map<Long, AbstractMap.SimpleEntry<AbstractMap.SimpleEntry<Long, RevisionInfo>, Task>>> taskCache = new HashMap<String, Map<Long, AbstractMap.SimpleEntry<AbstractMap.SimpleEntry<Long, RevisionInfo>, Task>>>();
 	private Map<String, AbstractMap.SimpleEntry<Long, RevisionInfo>> themeCache = new HashMap<String, AbstractMap.SimpleEntry<Long, RevisionInfo>>();
 	private Map<String, Long> productIdCache = new HashMap<String, Long>();
+	private Map<Long, String> programNameCache = new HashMap<Long, String>();
 
 	/**
 	 * Returns id of product in question Uses a cache internally
@@ -93,6 +95,26 @@ public class SWPHandler {
 			productIdCache.put(productName, productId);
 		}
 		return productId;
+	}
+
+	/**
+	 * Retrieves the program name of a program with passed id. Uses a cache
+	 * internally.
+	 * 
+	 * @param programId
+	 * @param endpoint
+	 * @return
+	 * @throws ScrumWorksException
+	 */
+	private String getProgramName(Long programId, ScrumWorksAPIService endpoint)
+			throws ScrumWorksException {
+		String programName = programNameCache.get(programId);
+		if (programName == null) {
+			Program program = endpoint.getProgramById(programId);
+			programName = program.getName();
+			programNameCache.put(programId, programName);
+		}
+		return programName;
 	}
 
 	/**
@@ -167,8 +189,15 @@ public class SWPHandler {
 		if (themes == null || themes.size() == 0) {
 			addPBIField(ga, PBIFields.theme, null);
 		} else {
-			for (Theme themeWSO : themes) {
-				addPBIField(ga, PBIFields.theme, themeWSO.getName());
+			for (Theme theme : themes) {
+				// differentiate between product and program themes here
+				if (theme.getProgramId() == null) {
+					addPBIField(ga, PBIFields.theme, theme.getName());
+				} else {
+					// program theme
+					addPBIField(ga, PBIFields.theme, theme.getName() + " ("
+							+ getProgramName(theme.getProgramId(), endpoint) + ")");
+				}
 			}
 		}
 
@@ -890,10 +919,18 @@ public class SWPHandler {
 					}
 				} else {
 					List<Theme> swpThemeWSOs = new ArrayList<Theme>();
-					for (Theme themeWSO : swpThemes) {
-						if (themeSet.contains(themeWSO.getName())) {
-							themeSet.remove(themeWSO.getName());
-							swpThemeWSOs.add(themeWSO);
+					for (Theme theme : swpThemes) {
+						// compute theme names
+						String themeName = theme.getName();
+						// differentiate between product and program themes here
+						if (theme.getProgramId() != null) {
+							themeName = themeName + " ("
+							+ getProgramName(theme.getProgramId(), endpoint) + ")";
+						}
+						
+						if (themeSet.contains(themeName)) {
+							themeSet.remove(themeName);
+							swpThemeWSOs.add(theme);
 						}
 					}
 					currentlySetThemes.clear();
@@ -1382,10 +1419,18 @@ public class SWPHandler {
 					}
 				} else {
 					List<Theme> swpThemeWSOs = new ArrayList<Theme>();
-					for (Theme themeWSO : swpThemes) {
-						if (themeSet.contains(themeWSO.getName())) {
-							themeSet.remove(themeWSO.getName());
-							swpThemeWSOs.add(themeWSO);
+					for (Theme theme : swpThemes) {
+						// compute theme names
+						String themeName = theme.getName();
+						// differentiate between product and program themes here
+						if (theme.getProgramId() != null) {
+							themeName = themeName + " ("
+							+ getProgramName(theme.getProgramId(), endpoint) + ")";
+						}
+						
+						if (themeSet.contains(themeName)) {
+							themeSet.remove(themeName);
+							swpThemeWSOs.add(theme);
 						}
 					}
 					currentlySetThemes.clear();
@@ -2234,7 +2279,14 @@ public class SWPHandler {
 		Long productId = getProductId(swpProductName, endpoint);
 		List<Theme> themes = endpoint.getThemesForProduct(productId);
 		for (Theme theme : themes) {
-			addThemeField(ga, ThemeFields.name, theme.getName());
+			// differentiate between product and program themes here
+			if (theme.getProgramId() == null) {
+				addThemeField(ga, ThemeFields.name, theme.getName());
+			} else {
+				// program theme
+				addThemeField(ga, ThemeFields.name, theme.getName() + " ("
+						+ getProgramName(theme.getProgramId(), endpoint) + ")");
+			}
 		}
 		if (themes.isEmpty()) {
 			addThemeField(ga, ThemeFields.name, null);
