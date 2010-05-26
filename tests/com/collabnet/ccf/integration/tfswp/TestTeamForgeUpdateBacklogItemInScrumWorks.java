@@ -14,6 +14,7 @@ import com.collabnet.teamforge.api.FieldValues;
 import com.collabnet.teamforge.api.tracker.ArtifactDO;
 import com.danube.scrumworks.api.client.types.BacklogItemWSO;
 import com.danube.scrumworks.api2.client.BacklogItem;
+import com.danube.scrumworks.api2.client.Comment;
 
 /**
  * Tests updating backlog item fields in TeamForge and verifying the synchronization in ScrumWorks.   
@@ -101,5 +102,13 @@ public class TestTeamForgeUpdateBacklogItemInScrumWorks extends TFSWPIntegration
 		// check whether bogus values have been transported
 		assertNotSame(bogusKey, updatedPbi.getKey());
 		assertNull(updatedPbi.getSprintId());
+		
+		// now we check whether comments have been transported
+		List<Comment> comments = getSWPTester().getSWPEndpoint().getCommentsForBacklogItem(updatedPbi.getId());
+		assertEquals(1, comments.size());
+		for (Comment comment : comments) {
+			assertTrue(comment.getText().contains("updating pbi ..."));
+		} 
+		
 	}
 }
