@@ -3,14 +3,14 @@
  */
 package com.collabnet.ccf.integration.tfswp;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
+import static org.junit.Assert.*;
 
 import java.util.List;
 
 import org.junit.Test;
 
 import com.danube.scrumworks.api2.client.BacklogItem;
+import com.danube.scrumworks.api2.client.Comment;
 import com.danube.scrumworks.api2.client.Task;
 
 /**
@@ -74,7 +74,15 @@ public class TestTeamForgeCreateAndUpdateTaskInScrumWorks extends TFSWPIntegrati
 				newStatus, newAssignedToUser, newRemainingEffort, newOriginalEstimate);
 
 		// now we have to wait for the update to come through
-		task = getSWPTester().waitForTaskToAppear(pbi, newTitle, 1, null); 
+		task = getSWPTester().waitForTaskToAppear(pbi, newTitle, 1, null);
+		
+		// now we check whether comments have been transported
+		List<Comment> comments = getSWPTester().getSWPEndpoint().getCommentsForTask(task.getId());
+		assertEquals(2, comments.size());
+		for (Comment comment : comments) {
+			assertTrue(comment.getText().contains("updating task ..."));
+		}
+		
 
 		assertEquals(newTitle, task.getName());
 		assertEquals(newDescription, task.getDescription());
