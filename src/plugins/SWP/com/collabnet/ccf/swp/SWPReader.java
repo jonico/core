@@ -72,6 +72,11 @@ public class SWPReader extends AbstractReader<Connection> {
 	private boolean ignoreConnectorUserUpdates = true;
 
 	/**
+	 * Determines whether after every PBI shipment, SWP meta data should be resynched
+	 */
+	private boolean triggerMetaDataResynchronizationAfterPBIShipment = false;
+
+	/**
 	 * Sets whether updated and created artifacts from the connector user should
 	 * be ignored This is the default behavior to avoid infinite update loops.
 	 * However, in artifact export scenarios, where all artifacts should be
@@ -397,14 +402,16 @@ public class SWPReader extends AbstractReader<Connection> {
 							minorVersion, getUsername(),
 							isIgnoreConnectorUserUpdates());
 				} else {
-					Boolean shippedPBIsInLastCallUnboxed = shippedPBIsInLastCall
-							.get(swpProductName);
-					if (shippedPBIsInLastCallUnboxed != null
-							&& shippedPBIsInLastCallUnboxed == true) {
-						shippedPBIsInLastCall.put(swpProductName, false);
-						// trigger theme resynch
-						triggerThemeResynchronization.put(swpProductName, true);
-						return new ArrayList<ArtifactState>();
+					if (isTriggerMetaDataResynchronizationAfterPBIShipment()) {
+						Boolean shippedPBIsInLastCallUnboxed = shippedPBIsInLastCall
+								.get(swpProductName);
+						if (shippedPBIsInLastCallUnboxed != null
+								&& shippedPBIsInLastCallUnboxed == true) {
+							shippedPBIsInLastCall.put(swpProductName, false);
+							// trigger theme resynch
+							triggerThemeResynchronization.put(swpProductName, true);
+							return new ArrayList<ArtifactState>();
+						}
 					}
 
 					// determine whether higher priority items are still in the
@@ -824,5 +831,20 @@ public class SWPReader extends AbstractReader<Connection> {
 	 */
 	public boolean isSerializeArtifactShipments() {
 		return serializeArtifactShipments;
+	}
+
+	/**
+	 * Defines whether after every PBI shipment, SWP meta data should be resynched
+	 */
+	public void setTriggerMetaDataResynchronizationAfterPBIShipment(
+			boolean triggerMetaDataResynchronizationAfterPBIShipment) {
+		this.triggerMetaDataResynchronizationAfterPBIShipment = triggerMetaDataResynchronizationAfterPBIShipment;
+	}
+
+	/**
+	 * Tells whether after every PBI shipment, SWP meta data should be resynched
+	 */
+	public boolean isTriggerMetaDataResynchronizationAfterPBIShipment() {
+		return triggerMetaDataResynchronizationAfterPBIShipment;
 	}
 }
