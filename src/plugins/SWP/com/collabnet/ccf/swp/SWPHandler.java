@@ -2133,9 +2133,6 @@ public class SWPHandler {
 			// latest revision number here
 			RevisionInfo currentRevision = endpoint.getCurrentRevisionInfo();
 			int revisionNumber = currentRevision.getRevisionNumber() + 1;
-			if (!(majorVersion < revisionNumber)) {
-				return;
-			}
 			ArtifactState artifactState = new ArtifactState();
 			artifactState.setArtifactId("themesFor" + swpProductName);
 			XMLGregorianCalendar xmlTimestamp = currentRevision.getTimeStamp();
