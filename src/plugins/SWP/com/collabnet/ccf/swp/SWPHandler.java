@@ -54,7 +54,6 @@ import com.danube.scrumworks.api2.client.Task;
 import com.danube.scrumworks.api2.client.TaskChanges;
 import com.danube.scrumworks.api2.client.Team;
 import com.danube.scrumworks.api2.client.Theme;
-import com.danube.scrumworks.api2.client.ThemeChanges;
 
 /**
  * This class encapsulates all calls to the SWP backend
@@ -185,6 +184,7 @@ public class SWPHandler {
 		addPBIField(ga, PBIFields.title, pbi.getName());
 
 		// retrieve themes
+		programNameCache.clear();
 		List<Theme> themes = pbi.getThemes();
 		if (themes == null || themes.size() == 0) {
 			addPBIField(ga, PBIFields.theme, null);
@@ -897,6 +897,7 @@ public class SWPHandler {
 		Long productId = getProductId(swpProductName, endpoint);
 
 		// now updates the themes
+		programNameCache.clear();
 		List<Theme> currentlySetThemes = pbi.getThemes();
 		if (themes != null && !themes.isEmpty()) {
 			Set<String> anticipatedThemeNames = new HashSet<String>();
@@ -904,7 +905,8 @@ public class SWPHandler {
 			for (GenericArtifactField field : themes) {
 				if (field.getFieldValueHasChanged()) {
 					if (field.getFieldValue() != null) {
-						anticipatedThemeNames.add(field.getFieldValue().toString());
+						anticipatedThemeNames.add(field.getFieldValue()
+								.toString());
 					} else {
 						nullValueSet = true;
 					}
@@ -912,14 +914,16 @@ public class SWPHandler {
 			}
 			if (!anticipatedThemeNames.isEmpty()) {
 				// retrieve all themes of the product
-				List<Theme> availableThemes = endpoint.getThemesForProduct(productId);
+				List<Theme> availableThemes = endpoint
+						.getThemesForProduct(productId);
 				if (availableThemes == null || availableThemes.size() == 0) {
 					log.warn("Attempt to set themes not present in SWP.");
 					for (String theme : anticipatedThemeNames) {
 						log.warn("Missing theme: " + theme);
 					}
 				} else {
-					Set <String> currentlySetThemeNames = new HashSet<String>(currentlySetThemes.size());
+					Set<String> currentlySetThemeNames = new HashSet<String>(
+							currentlySetThemes.size());
 					for (Theme theme : currentlySetThemes) {
 						// compute theme names
 						String themeName = theme.getName();
@@ -932,7 +936,7 @@ public class SWPHandler {
 						}
 						currentlySetThemeNames.add(themeName);
 					}
-					
+
 					List<Theme> newThemes = new ArrayList<Theme>();
 					for (Theme theme : availableThemes) {
 						// compute theme names
@@ -948,8 +952,10 @@ public class SWPHandler {
 							anticipatedThemeNames.remove(themeName);
 							newThemes.add(theme);
 							if (!currentlySetThemeNames.contains(themeName)) {
-								// we will only keep this list if it turns out that we will only add known themes
-								// this happens if invalid theme names were found
+								// we will only keep this list if it turns out
+								// that we will only add known themes
+								// this happens if invalid theme names were
+								// found
 								currentlySetThemes.add(theme);
 							}
 						}
@@ -991,7 +997,7 @@ public class SWPHandler {
 		} else {
 			pbi.setReleaseId(new Long(parentArtifact));
 		}
-		
+
 		// now we add the comments
 		if (comments != null) {
 			for (GenericArtifactField comment : comments) {
@@ -1232,7 +1238,7 @@ public class SWPHandler {
 				task.setBacklogItemId(parentId);
 			}
 		}
-		
+
 		// now we add the comments
 		if (comments != null) {
 			for (GenericArtifactField comment : comments) {
@@ -1424,6 +1430,7 @@ public class SWPHandler {
 		Long productId = getProductId(swpProductName, endpoint);
 
 		// now set the themes
+		programNameCache.clear();
 		if (themes != null && !themes.isEmpty()) {
 			Set<String> anticipatedThemeNames = new HashSet<String>();
 			for (GenericArtifactField field : themes) {
@@ -1433,7 +1440,8 @@ public class SWPHandler {
 			}
 			if (!anticipatedThemeNames.isEmpty()) {
 				// retrieve all themes of the product
-				List<Theme> availableThemes = endpoint.getThemesForProduct(productId);
+				List<Theme> availableThemes = endpoint
+						.getThemesForProduct(productId);
 				if (availableThemes == null || availableThemes.size() == 0) {
 					log.warn("Attempt to set themes not present in SWP.");
 					for (String theme : anticipatedThemeNames) {
@@ -1441,7 +1449,7 @@ public class SWPHandler {
 					}
 				} else {
 					List<Theme> currentlySetThemes = pbi.getThemes();
-					
+
 					List<Theme> newThemes = new ArrayList<Theme>();
 					for (Theme theme : availableThemes) {
 						// compute theme names
@@ -1748,8 +1756,6 @@ public class SWPHandler {
 			long majorVersion, long minorVersion, String connectorUser,
 			boolean ignoreConnectorUpdates) throws RemoteException,
 			ScrumWorksException {
-		// TODO Can we do some optimizations here since we should only get one
-		// product item back?
 
 		/*
 		 * find out whether we have to start querying at the next revision or
@@ -1880,6 +1886,10 @@ public class SWPHandler {
 														processedRevisionInfo),
 												artifact));
 						lastItemInTransaction = false;
+
+						// since only one product can be changed, we can return
+						// after the first entry
+						return;
 					}
 				}
 				processedMinorVersion -= 2;
@@ -2077,6 +2087,8 @@ public class SWPHandler {
 						.getTime();
 			}
 			artifactState.setArtifactLastModifiedDate(artifactLastModifiedDate);
+			// by not adding a minor number, we make sure not to miss anything
+			// for the future revision
 			long artificialRevisionNumber = revisionNumber
 					* SWP_REVISION_FACTOR;
 			artifactState.setArtifactVersion(artificialRevisionNumber);
@@ -2106,57 +2118,53 @@ public class SWPHandler {
 				.intValue();
 		FilterChangesByType filter = new FilterChangesByType();
 		filter.setIncludeThemes(true);
+		// add programs to the filter since this could impact theme names
+		filter.setIncludePrograms(true);
+		// add product to the filter since this could impact theme names
+		filter.setIncludeProduct(true);
 		AggregateVersionedData changesSinceCurrentRevision = endpoint
 				.getChangesSinceRevisionForTypes(productId, queryVersion,
 						false, filter);
 
-		// initialize some data structures to capture deleted and inserted
-		// artifacts
-		List<ThemeChanges> themeSpecificChanges = changesSinceCurrentRevision
-				.getThemeChanges();
-		ListIterator<ThemeChanges> it = themeSpecificChanges
-				.listIterator(themeSpecificChanges.size());
-		while (it.hasPrevious()) {
-			ThemeChanges themeSpecificChangesInRevision = it.previous();
-
-			RevisionInfo processedRevisionInfo = themeSpecificChangesInRevision
-					.getRevisionInfo();
-			int processedRevisionNumber = processedRevisionInfo
-					.getRevisionNumber();
-			List<Theme> changedOrAddedThemes = themeSpecificChangesInRevision
-					.getAddedOrChangedEntities();
-			List<Long> deletedArtifacts = themeSpecificChangesInRevision
-					.getDeletedIds();
-			if (changedOrAddedThemes.isEmpty() && deletedArtifacts.isEmpty()) {
-				continue;
-			} else {
-				// we only transport that something has changed but now what has
-				// changed
-				ArtifactState artifactState = new ArtifactState();
-				artifactState.setArtifactId("themesFor" + swpProductName);
-				XMLGregorianCalendar xmlTimestamp = processedRevisionInfo
-						.getTimeStamp();
-				Date artifactLastModifiedDate = new Date(0);
-				if (xmlTimestamp != null) {
-					artifactLastModifiedDate = xmlTimestamp
-							.toGregorianCalendar().getTime();
-				}
-				artifactState
-						.setArtifactLastModifiedDate(artifactLastModifiedDate);
-				long artificialRevisionNumber = processedRevisionNumber
-						* SWP_REVISION_FACTOR + 3;
-				artifactState.setArtifactVersion(artificialRevisionNumber);
-				artifactStates.add(artifactState);
-				// now update the cache
-				themeCache
-						.put(
-								swpProductName,
-								new AbstractMap.SimpleEntry<Long, RevisionInfo>(
-										artificialRevisionNumber,
-										processedRevisionInfo));
+		if (!changesSinceCurrentRevision.getThemeChanges().isEmpty()
+				|| !changesSinceCurrentRevision.getProgramChanges().isEmpty()
+				|| !changesSinceCurrentRevision.getProductChanges().isEmpty()) {
+			// since we do not need the real data, we can also just use the
+			// latest revision number here
+			RevisionInfo currentRevision = endpoint.getCurrentRevisionInfo();
+			int revisionNumber = currentRevision.getRevisionNumber() + 1;
+			if (!(majorVersion < revisionNumber)) {
 				return;
 			}
+			ArtifactState artifactState = new ArtifactState();
+			artifactState.setArtifactId("themesFor" + swpProductName);
+			XMLGregorianCalendar xmlTimestamp = currentRevision.getTimeStamp();
+			Date artifactLastModifiedDate = new Date(0);
+			if (xmlTimestamp != null) {
+				artifactLastModifiedDate = xmlTimestamp.toGregorianCalendar()
+						.getTime();
+			}
+			artifactState.setArtifactLastModifiedDate(artifactLastModifiedDate);
+			// by not adding a minor number, we make sure not to miss anything
+			// for the future revision
+			long artificialRevisionNumber = revisionNumber
+					* SWP_REVISION_FACTOR;
+			artifactState.setArtifactVersion(artificialRevisionNumber);
+			artifactStates.add(artifactState);
+			// now update the cache
+			themeCache.put(swpProductName,
+					new AbstractMap.SimpleEntry<Long, RevisionInfo>(
+							artificialRevisionNumber, currentRevision));
 		}
+	}
+	
+	/**
+	 * Returns current SWP revision
+	 * @return current SWP revision
+	 * @throws ScrumWorksException 
+	 */
+	public RevisionInfo getCurrentRevision(ScrumWorksAPIService endpoint) throws ScrumWorksException {
+		return endpoint.getCurrentRevisionInfo(); 
 	}
 
 	/**
@@ -2303,6 +2311,8 @@ public class SWPHandler {
 		RevisionInfo releaseRevision = cachedTheme.getValue();
 
 		Long productId = getProductId(swpProductName, endpoint);
+
+		programNameCache.clear();
 		List<Theme> themes = endpoint.getThemesForProduct(productId);
 		for (Theme theme : themes) {
 			// differentiate between product and program themes here
