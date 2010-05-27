@@ -72,7 +72,8 @@ public class SWPReader extends AbstractReader<Connection> {
 	private boolean ignoreConnectorUserUpdates = true;
 
 	/**
-	 * Determines whether after every PBI shipment, SWP meta data should be resynched
+	 * Determines whether after every PBI shipment, SWP meta data should be
+	 * resynched
 	 */
 	private boolean triggerMetaDataResynchronizationAfterPBIShipment = false;
 
@@ -331,9 +332,6 @@ public class SWPReader extends AbstractReader<Connection> {
 
 		ArrayList<ArtifactState> artifactStates = new ArrayList<ArtifactState>();
 		try {
-			// first, retrieve current revision
-			RevisionInfo currentRevison = swpHandler.getCurrentRevision(connection.getEndpoint());
-			Long currentArtificialRevisionNumber = (currentRevison.getRevisionNumber() + 1) * SWPHandler.SWP_REVISION_FACTOR;
 			if (swpType.equals(SWPType.TASK)) {
 				if (!isSerializeArtifactShipments()) {
 					swpHandler.getChangedTasks(connection.getEndpoint(),
@@ -372,6 +370,14 @@ public class SWPReader extends AbstractReader<Connection> {
 						// now check whether new PBIs have popped up since last
 						// task synch that are not synchronized yet
 						List<ArtifactState> pbiStates = new ArrayList<ArtifactState>();
+
+						// first, retrieve current revision
+						RevisionInfo currentRevison = swpHandler
+								.getCurrentRevision(connection.getEndpoint());
+						Long currentArtificialRevisionNumber = (currentRevison
+								.getRevisionNumber() + 1)
+								* SWPHandler.SWP_REVISION_FACTOR;
+
 						swpHandler.getChangedPBIs(connection.getEndpoint(),
 								swpProductName, pbiStates,
 								lastPBIRevisionInQueue
@@ -391,7 +397,9 @@ public class SWPReader extends AbstractReader<Connection> {
 								return new ArrayList<ArtifactState>();
 							}
 						} else {
-							lastRevisionInQueue.put(correspondingPBIRepositoryId, currentArtificialRevisionNumber);
+							lastRevisionInQueue.put(
+									correspondingPBIRepositoryId,
+									currentArtificialRevisionNumber);
 						}
 					}
 				}
@@ -409,7 +417,8 @@ public class SWPReader extends AbstractReader<Connection> {
 								&& shippedPBIsInLastCallUnboxed == true) {
 							shippedPBIsInLastCall.put(swpProductName, false);
 							// trigger theme resynch
-							triggerThemeResynchronization.put(swpProductName, true);
+							triggerThemeResynchronization.put(swpProductName,
+									true);
 							return new ArrayList<ArtifactState>();
 						}
 					}
@@ -417,8 +426,7 @@ public class SWPReader extends AbstractReader<Connection> {
 					// determine whether higher priority items are still in the
 					// queue
 					if (getNumberOfWaitingArtifactsForAllTargetSystems(
-									sourceSystemId,
-									correspondingReleaseRepositoryId) != 0
+							sourceSystemId, correspondingReleaseRepositoryId) != 0
 							|| getNumberOfWaitingArtifactsForAllTargetSystems(
 									sourceSystemId,
 									correspondingThemeRepositoryId) != 0) {
@@ -446,7 +454,8 @@ public class SWPReader extends AbstractReader<Connection> {
 						Boolean triggerThemeResynchronizationUnboxed = triggerThemeResynchronization
 								.get(swpProductName);
 						if (lastThemeRevisionInQueue == null
-								|| triggerThemeResynchronizationUnboxed == null || triggerThemeResynchronizationUnboxed == true) {
+								|| triggerThemeResynchronizationUnboxed == null
+								|| triggerThemeResynchronizationUnboxed == true) {
 							log
 									.debug("Do not query new PBIs for "
 											+ repositoryKey
@@ -456,6 +465,13 @@ public class SWPReader extends AbstractReader<Connection> {
 
 						// now retrieve changed revisions since last known
 						// revision
+						// first, retrieve current revision
+						RevisionInfo currentRevison = swpHandler
+								.getCurrentRevision(connection.getEndpoint());
+						Long currentArtificialRevisionNumber = (currentRevison
+								.getRevisionNumber() + 1)
+								* SWPHandler.SWP_REVISION_FACTOR;
+
 						swpHandler.getChangedPBIs(connection.getEndpoint(),
 								swpProductName, artifactStates, majorVersion,
 								minorVersion, getUsername(),
@@ -492,7 +508,9 @@ public class SWPReader extends AbstractReader<Connection> {
 								return new ArrayList<ArtifactState>();
 							}
 						} else {
-							lastRevisionInQueue.put(correspondingReleaseRepositoryId, currentArtificialRevisionNumber);
+							lastRevisionInQueue.put(
+									correspondingReleaseRepositoryId,
+									currentArtificialRevisionNumber);
 						}
 
 						// now check whether new themes have popped up since
@@ -520,7 +538,9 @@ public class SWPReader extends AbstractReader<Connection> {
 								return new ArrayList<ArtifactState>();
 							}
 						} else {
-							lastRevisionInQueue.put(correspondingThemeRepositoryId, currentArtificialRevisionNumber);
+							lastRevisionInQueue.put(
+									correspondingThemeRepositoryId,
+									currentArtificialRevisionNumber);
 						}
 						// update last revision in queue
 						lastRevisionInQueue.put(correspondingPBIRepositoryId,
@@ -531,6 +551,13 @@ public class SWPReader extends AbstractReader<Connection> {
 					}
 				}
 			} else if (swpType.equals(SWPType.PRODUCT)) {
+				// first, retrieve current revision
+				RevisionInfo currentRevison = swpHandler
+						.getCurrentRevision(connection.getEndpoint());
+				Long currentArtificialRevisionNumber = (currentRevison
+						.getRevisionNumber() + 1)
+						* SWPHandler.SWP_REVISION_FACTOR;
+
 				swpHandler.getChangedProducts(connection.getEndpoint(),
 						swpProductName, artifactStates, majorVersion,
 						minorVersion, getUsername(),
@@ -570,12 +597,19 @@ public class SWPReader extends AbstractReader<Connection> {
 											+ " since product changes are not yet synched ...");
 							return new ArrayList<ArtifactState>();
 						}
+
+						// first, retrieve current revision
+						RevisionInfo currentRevison = swpHandler
+								.getCurrentRevision(connection.getEndpoint());
+						Long currentArtificialRevisionNumber = (currentRevison
+								.getRevisionNumber() + 1)
+								* SWPHandler.SWP_REVISION_FACTOR;
+
 						// now retrieve changed revisions since last known
 						// revision
-						swpHandler.getChangedReleases(connection
-								.getEndpoint(), swpProductName,
-								artifactStates, majorVersion, minorVersion,
-								getUsername(),
+						swpHandler.getChangedReleases(connection.getEndpoint(),
+								swpProductName, artifactStates, majorVersion,
+								minorVersion, getUsername(),
 								isIgnoreConnectorUserUpdates());
 
 						// check whether new releases are present
@@ -590,14 +624,13 @@ public class SWPReader extends AbstractReader<Connection> {
 						// last
 						// release synch that are not synchronized yet
 						List<ArtifactState> productStates = new ArrayList<ArtifactState>();
-						swpHandler.getChangedProducts(connection
-								.getEndpoint(), swpProductName,
-								productStates, lastProductRevisionInQueue
+						swpHandler.getChangedProducts(connection.getEndpoint(),
+								swpProductName, productStates,
+								lastProductRevisionInQueue
 										/ SWPHandler.SWP_REVISION_FACTOR,
 								lastProductRevisionInQueue
 										% SWPHandler.SWP_REVISION_FACTOR,
-								getUsername(),
-								isIgnoreConnectorUserUpdates());
+								getUsername(), isIgnoreConnectorUserUpdates());
 						if (!productStates.isEmpty()) {
 							// determine lastProductInProduct revision
 							Long lastProductRevisionInProduct = productStates
@@ -611,17 +644,25 @@ public class SWPReader extends AbstractReader<Connection> {
 								return new ArrayList<ArtifactState>();
 							}
 						} else {
-							lastRevisionInQueue.put(correspondingProductRepositoryId, currentArtificialRevisionNumber);
+							lastRevisionInQueue.put(
+									correspondingProductRepositoryId,
+									currentArtificialRevisionNumber);
 						}
 						// update last revision in queue
 						lastRevisionInQueue.put(
 								correspondingReleaseRepositoryId,
-								artifactStates.get(
-										artifactStates.size() - 1)
+								artifactStates.get(artifactStates.size() - 1)
 										.getArtifactVersion());
 					}
 				}
 			} else if (swpType.equals(SWPType.THEME)) {
+				// first, retrieve current revision
+				RevisionInfo currentRevison = swpHandler
+						.getCurrentRevision(connection.getEndpoint());
+				Long currentArtificialRevisionNumber = (currentRevison
+						.getRevisionNumber() + 1)
+						* SWPHandler.SWP_REVISION_FACTOR;
+
 				swpHandler.getChangedThemes(connection.getEndpoint(),
 						swpProductName, artifactStates, majorVersion,
 						minorVersion, getUsername(),
@@ -834,7 +875,8 @@ public class SWPReader extends AbstractReader<Connection> {
 	}
 
 	/**
-	 * Defines whether after every PBI shipment, SWP meta data should be resynched
+	 * Defines whether after every PBI shipment, SWP meta data should be
+	 * resynched
 	 */
 	public void setTriggerMetaDataResynchronizationAfterPBIShipment(
 			boolean triggerMetaDataResynchronizationAfterPBIShipment) {
