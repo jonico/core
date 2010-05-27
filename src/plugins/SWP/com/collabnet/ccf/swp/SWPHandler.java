@@ -991,9 +991,7 @@ public class SWPHandler {
 		} else {
 			pbi.setReleaseId(new Long(parentArtifact));
 		}
-
-		pbi = endpoint.updateBacklogItem(pbi);
-
+		
 		// now we add the comments
 		if (comments != null) {
 			for (GenericArtifactField comment : comments) {
@@ -1003,6 +1001,8 @@ public class SWPHandler {
 				}
 			}
 		}
+
+		pbi = endpoint.updateBacklogItem(pbi);
 
 		// now we have to determine the new revision
 		changesSinceLastKnownRevision = endpoint.getChangesSinceRevisionForIds(
@@ -1232,9 +1232,7 @@ public class SWPHandler {
 				task.setBacklogItemId(parentId);
 			}
 		}
-
-		task = endpoint.updateTask(task);
-
+		
 		// now we add the comments
 		if (comments != null) {
 			for (GenericArtifactField comment : comments) {
@@ -1244,6 +1242,8 @@ public class SWPHandler {
 				}
 			}
 		}
+
+		task = endpoint.updateTask(task);
 
 		// now we have to determine the new revision number
 		changesSinceLastKnownRevision = endpoint.getChangesSinceRevisionForIds(
