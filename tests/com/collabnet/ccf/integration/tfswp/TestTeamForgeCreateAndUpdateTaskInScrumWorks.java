@@ -75,14 +75,6 @@ public class TestTeamForgeCreateAndUpdateTaskInScrumWorks extends TFSWPIntegrati
 
 		// now we have to wait for the update to come through
 		task = getSWPTester().waitForTaskToAppear(pbi, newTitle, 1, null);
-		
-		// now we check whether comments have been transported
-		List<Comment> comments = getSWPTester().getSWPEndpoint().getCommentsForTask(task.getId());
-		assertEquals(2, comments.size());
-		for (Comment comment : comments) {
-			assertTrue(comment.getText().contains("updating task ..."));
-		}
-		
 
 		assertEquals(newTitle, task.getName());
 		assertEquals(newDescription, task.getDescription());
@@ -114,6 +106,15 @@ public class TestTeamForgeCreateAndUpdateTaskInScrumWorks extends TFSWPIntegrati
 		assertEquals(newOriginalEstimate, task.getOriginalEstimate().intValue());
 		assertEquals(assignedToUser + " (" + assignedToUser + ")", task
 				.getPointPerson());
+
+		// now we check whether comments have been transported
+		List<Comment> comments = getSWPTester().getSWPEndpoint().getCommentsForTask(task.getId());
+		
+		// if multiple comments are added to TF in the same second, it might deliver it multiple times
+		assertTrue(comments.size() > 2);
+		for (Comment comment : comments) {
+			assertTrue(comment.getText().contains("updating task ..."));
+		}
 		
 	}
 
