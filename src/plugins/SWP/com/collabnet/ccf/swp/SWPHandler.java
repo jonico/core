@@ -184,7 +184,6 @@ public class SWPHandler {
 		addPBIField(ga, PBIFields.title, pbi.getName());
 
 		// retrieve themes
-		programNameCache.clear();
 		List<Theme> themes = pbi.getThemes();
 		if (themes == null || themes.size() == 0) {
 			addPBIField(ga, PBIFields.theme, null);
@@ -2097,6 +2096,8 @@ public class SWPHandler {
 			themeCache.put(swpProductName,
 					new AbstractMap.SimpleEntry<Long, RevisionInfo>(
 							artificialRevisionNumber, currentRevision));
+			// we have to clear the program name cache since a program could have been updated in between
+			programNameCache.clear();
 			return;
 		}
 
@@ -2129,6 +2130,9 @@ public class SWPHandler {
 		if (!changesSinceCurrentRevision.getThemeChanges().isEmpty()
 				|| !changesSinceCurrentRevision.getProgramChanges().isEmpty()
 				|| !changesSinceCurrentRevision.getProductChanges().isEmpty()) {
+			if (!changesSinceCurrentRevision.getProgramChanges().isEmpty()) {
+				programNameCache.clear();
+			}
 			// since we do not need the real data, we can also just use the
 			// latest revision number here
 			RevisionInfo currentRevision = endpoint.getCurrentRevisionInfo();
