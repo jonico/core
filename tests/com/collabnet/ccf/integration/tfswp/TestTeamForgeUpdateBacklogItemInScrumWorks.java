@@ -54,7 +54,7 @@ public class TestTeamForgeUpdateBacklogItemInScrumWorks extends TFSWPIntegration
 		final FieldValues flexFields = getTeamForgeTester().convertToFlexField(names, 
 				new String[] {benefit, penalty, effort, theme1, theme2, null, null, null}); 
 		
-		backlogItemDO = getTeamForgeTester().createBacklogItem(title, description, release, flexFields); 
+		backlogItemDO = getTeamForgeTester().createBacklogItem(title, description, release, flexFields);
 	}
 	
 	/**
@@ -65,6 +65,7 @@ public class TestTeamForgeUpdateBacklogItemInScrumWorks extends TFSWPIntegration
 	 */
 	@Test
 	public void testUpdateBacklogItem() throws Exception {
+		getSWPTester().waitForBacklogItemsToAppear(1);
 		// execute
 		final String title = "updated TFPBI";
 		final String description = "updated TFPBIDescription";
