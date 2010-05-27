@@ -114,7 +114,13 @@ public class TestBacklogItemWithImproperTaskParentage extends TFSWPIntegrationTe
 		getSWPTester().updateTask(scrumWorksTask); 
 		
 		// verify 
+		getTeamForgeTester().waitForTaskToUpdate(updatedTitle, 1);
+
+		// wait for the dependency to change
+		getSWPTester().updateTask(scrumWorksTask);
 		ArtifactRow updatedTaskInTeamForge = getTeamForgeTester().waitForTaskToUpdate(updatedTitle, 1);
+		
+		
 		assertEquals(updatedTitle, updatedTaskInTeamForge.getTitle());
 		assertEquals(teamForgeBacklogItem.getId(), getTeamForgeTester().getParentId(updatedTaskInTeamForge.getId())); 
 	}
