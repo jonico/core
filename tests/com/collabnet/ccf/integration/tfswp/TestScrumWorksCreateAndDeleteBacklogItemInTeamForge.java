@@ -11,13 +11,14 @@ import com.collabnet.teamforge.api.tracker.ArtifactRow;
 import com.danube.scrumworks.api2.client.BacklogItem;
 
 /**
- * Tests that a backlog item created in ScrumWorks is correctly synched in TeamForge. 
+ * Tests that a backlog item created in ScrumWorks is correctly synched in TeamForge.
+ * Tests that a backlog item deleted in ScrumWorks is correctly synched in TeamForge.
  * 
  * @author Kelley
  *
  */
 
-public class TestScrumWorksCreateBacklogItemInTeamForge extends TFSWPIntegrationTest {
+public class TestScrumWorksCreateAndDeleteBacklogItemInTeamForge extends TFSWPIntegrationTest {
 
 	/**
 	 * Tests creating a backlog item in ScrumWorks and synchronizing to TeamForge.  
@@ -26,7 +27,7 @@ public class TestScrumWorksCreateBacklogItemInTeamForge extends TFSWPIntegration
 	 * @throws Exception if an error occurs 
 	 */
 	@Test
-	public void testBacklogItemCreationInScrumWorksToTeamForge() throws Exception {
+	public void testBacklogItemCreationAndDeletionInScrumWorksToTeamForge() throws Exception {
 		// execute
 		final String title = "ScrumWorks Backlog Item";
 		final String description = "ScrumWorks Backlog Item Description";
@@ -78,5 +79,10 @@ public class TestScrumWorksCreateBacklogItemInTeamForge extends TFSWPIntegration
 						TeamForgeTester.FIELD_THEME, 
 						TeamForgeTester.FIELD_THEME));
 		
+		// now delete PBI again
+		getSWPTester().deleteAllPBIsInSWP();
+		
+		// wait that PBI disappears in TF
+		getTeamForgeTester().waitForBacklogItemsToDisappear(0);
 	}
 }

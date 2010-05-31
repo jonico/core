@@ -22,12 +22,12 @@ import com.danube.scrumworks.api2.client.Release;
 import com.danube.scrumworks.api2.client.ScrumWorksException;
 
 /**
- * Tests updating backlog item fields in TeamForge and verifying the synchronization in ScrumWorks.   
+ * Tests creating, updating and deleting releases in ScrumWorks and whether these operations synch to TF   
  * 
  * @author Kelley
  *
  */
-public class TestScrumWorksCreateAndUpdateReleaseInTeamForge extends TFSWPIntegrationTest {
+public class TestScrumWorksCreateUpdateAndDeleteReleaseInTeamForge extends TFSWPIntegrationTest {
 	private Release swpRelease = null;
 	PlanningFolderRow tfRelease = null;
 
@@ -119,5 +119,13 @@ public class TestScrumWorksCreateAndUpdateReleaseInTeamForge extends TFSWPIntegr
 		assertEquals(newReleaseDescription, updatedTFRelease.getDescription());
 		assertEquals(newStartDate.getTime(), updatedTFRelease.getStartDate());
 		assertEquals(newReleaseDate.getTime(), updatedTFRelease.getEndDate());
+		
+		// now delete release in SWP
+		getSWPTester().getSWPEndpoint().deleteEmptyRelease(swpRelease.getId());
+		// do not delete object twice
+		swpRelease = null;
+		getTeamForgeTester().waitForPlanningFoldersToDisappear(productPFId, alreadyExistingReleasesInTF, false);
+		// do not delete object twice
+		tfRelease = null;
 	}
 }

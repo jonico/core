@@ -511,6 +511,32 @@ public class TeamForgeTester {
 	}
 	
 	/**
+	 * Waits until only numberOfPbis PBIs are left in TF
+	 * 
+	 * @throws RemoteException
+	 *             if the TeamForge API can not be accessed
+	 * @throws InterruptedException
+	 *             if the thread can not sleep
+	 */
+	public ArtifactRow[] waitForBacklogItemsToDisappear(final int numberOfPbis)
+			throws RemoteException, InterruptedException {
+		return waitForArtifactToDisappear(numberOfPbis, getPbiTracker(), "backlog item");
+	}
+	
+	/**
+	 * Waits until only numberOfTasks tasks are left in TF
+	 * 
+	 * @throws RemoteException
+	 *             if the TeamForge API can not be accessed
+	 * @throws InterruptedException
+	 *             if the thread can not sleep
+	 */
+	public ArtifactRow[] waitForTasksToDisappear(final int numberOfTasks)
+			throws RemoteException, InterruptedException {
+		return waitForArtifactToDisappear(numberOfTasks, getTaskTracker(), "task");
+	}
+	
+	/**
 	 * Returns the updated task from TeamForge after the task has been updated. 
 	 * 
 	 * @param taskTitle the updated task title 
@@ -583,6 +609,42 @@ public class TeamForgeTester {
 		throw new RemoteException(numberOfArtifacts + " " + entityType
 				+ "(s) were not found within the given time: " + ccfMaxWaitTime);
 	}
+	
+	/**
+	 * Waits until only the requested number of requested artifacts is still present.
+	 * 
+	 * @param numberOfArtifacts
+	 *            the maximum number of artifacts still there 
+	 * @param artifactTypeId
+	 *            the artifact's type id
+	 * @param entityType
+	 *            the text describing the type of artifact
+	 * @throws RemoteException
+	 *             if the TeamForge API can not be accessed
+	 * @throws InterruptedException
+	 *             if the thread can not sleep
+	 */
+	private ArtifactRow[] waitForArtifactToDisappear(final int numberOfArtifacts,
+			String artifactTypeId, String entityType) throws RemoteException,
+			InterruptedException {
+		assert artifactTypeId != null : "null artifact type";
+		assert entityType != null : "null entity type";
+
+		ArtifactList artifactList;
+		ArtifactRow[] artifactRows;
+		for (int i = 0; i < ccfMaxWaitTime; i += ccfRetryInterval) {
+			artifactList = connection.getTrackerClient().getArtifactList(
+					artifactTypeId, null);
+			artifactRows = artifactList.getDataRows();
+			if (artifactRows.length > numberOfArtifacts) {
+				Thread.sleep(ccfRetryInterval);
+			} else {
+				return artifactRows;
+			}
+		}
+		throw new RemoteException(numberOfArtifacts + " " + entityType
+				+ "(s) were not reached within the given time: " + ccfMaxWaitTime);
+	}
 
 	/**
 	 * Waits until parent has at least numberOfPFs child planning folders
@@ -612,6 +674,37 @@ public class TeamForgeTester {
 		}
 		throw new RemoteException(numberOfPFs
 				+ " planning folder(s) were not found within the given time: "
+				+ ccfMaxWaitTime);
+	}
+	
+	/**
+	 * Waits until parent has at most numberOfPFs child planning folders
+	 * 
+	 * @param parent
+	 *            id of parent folder
+	 * @param numberOfPFs
+	 *            number of PFs to wait for
+	 * @param recursive
+	 *            determines whether a recursive search should be done or not
+	 * @return
+	 * @throws RemoteException
+	 * @throws InterruptedException
+	 */
+	public PlanningFolderRow[] waitForPlanningFoldersToDisappear(String parent,
+			int numberOfPFs, boolean recursive) throws RemoteException,
+			InterruptedException {
+		PlanningFolderRow[] pfRows;
+		for (int i = 0; i < ccfMaxWaitTime; i += ccfRetryInterval) {
+			pfRows = connection.getPlanningClient().getPlanningFolderList(
+					parent, recursive).getDataRows();
+			if (pfRows.length > numberOfPFs) {
+				Thread.sleep(ccfRetryInterval);
+			} else {
+				return pfRows;
+			}
+		}
+		throw new RemoteException(numberOfPFs
+				+ " planning folder(s) were not reached within the given time: "
 				+ ccfMaxWaitTime);
 	}
 

@@ -10,12 +10,12 @@ import com.danube.scrumworks.api2.client.BacklogItem;
 
 /**
  * Tests that a task created in ScrumWorks is correctly synchronized in
- * TeamForge.
+ * TeamForge and deleted again if deleted in ScrumWorks.
  * 
  * @author Kelley
  * 
  */
-public class TestScrumWorksCreateTaskInTeamForge extends TFSWPIntegrationTest {
+public class TestScrumWorksCreateAndDeleteTaskInTeamForge extends TFSWPIntegrationTest {
 	private BacklogItem scrumWorksBacklogItem;
 	private final String release = SWPTester.RELEASE_1;
 
@@ -75,6 +75,11 @@ public class TestScrumWorksCreateTaskInTeamForge extends TFSWPIntegrationTest {
 		final ArtifactRow backlogItem = allBacklogItems[0];
 		assertEquals(backlogItem.getId(), getTeamForgeTester().getParentId(
 				task.getId()));
+		
+		// now delete task again
+		getSWPTester().deleteAllTasksInSWP();
+		getTeamForgeTester().waitForTasksToDisappear(0);
+		
 	}
 
 }
