@@ -241,7 +241,8 @@ public class TFWriter extends AbstractWriter<Connection> implements
 							+ data.asXML(), e);
 					return null;
 				}
-			} else if (TFConnectionFactory.isPlanningFolderRepository(targetRepositoryId)) {
+			} else if (TFConnectionFactory
+					.isPlanningFolderRepository(targetRepositoryId)) {
 				// we write planning folders, so first do a check whether we
 				// support this feature
 				if (!connection.supports53()) {
@@ -260,14 +261,17 @@ public class TFWriter extends AbstractWriter<Connection> implements
 						GenericArtifactField.FieldValueTypeValue.STRING);
 				populateTargetArtifactAttributesFromPlanningFolder(ga, result);
 				return returnDocument(ga);
-			} else if (TFConnectionFactory.isTrackerMetaDataRepository(targetRepositoryId)) {
+			} else if (TFConnectionFactory
+					.isTrackerMetaDataRepository(targetRepositoryId)) {
 				TrackerDO result = null;
-				String trackerId = TFConnectionFactory.extractTrackerFromMetaDataRepositoryId(targetRepositoryId);
-				result = updateTrackerMetaData(ga, trackerId, connection); 
+				String trackerId = TFConnectionFactory
+						.extractTrackerFromMetaDataRepositoryId(targetRepositoryId);
+				result = updateTrackerMetaData(ga, trackerId, connection);
 				populateTargetArtifactAttributesFromTracker(ga, result);
 				return returnDocument(ga);
 			} else {
-				throw new CCFRuntimeException("Unknown repository id format: "+targetRepositoryId);
+				throw new CCFRuntimeException("Unknown repository id format: "
+						+ targetRepositoryId);
 			}
 		} finally {
 			disconnect(connection);
@@ -294,7 +298,8 @@ public class TFWriter extends AbstractWriter<Connection> implements
 		}
 		TrackerDO result = null;
 		try {
-			result = trackerHandler.updateTrackerMetaData(ga, trackerId, fieldsToBeChanged, connection);
+			result = trackerHandler.updateTrackerMetaData(ga, trackerId,
+					fieldsToBeChanged, connection);
 		} catch (RemoteException e) {
 			String cause = "Could not update meta data of tracker " + trackerId
 					+ e.getMessage();
@@ -303,7 +308,8 @@ public class TFWriter extends AbstractWriter<Connection> implements
 			throw new CCFRuntimeException(cause, e);
 		}
 		if (result != null) {
-			log.info("Successfully updated meta data of tracker "+ result.getId());
+			log.info("Successfully updated meta data of tracker "
+					+ result.getId());
 		}
 		return result;
 	}
@@ -428,7 +434,8 @@ public class TFWriter extends AbstractWriter<Connection> implements
 					this.populateTargetArtifactAttributes(ga, result);
 				}
 				return this.returnDocument(ga);
-			} else if (TFConnectionFactory.isPlanningFolderRepository(targetRepositoryId)) {
+			} else if (TFConnectionFactory
+					.isPlanningFolderRepository(targetRepositoryId)) {
 				// we write planning folders, so first do a check whether we
 				// support this feature
 				if (!connection.supports53()) {
@@ -471,14 +478,17 @@ public class TFWriter extends AbstractWriter<Connection> implements
 							result);
 				}
 				return returnDocument(ga);
-			} else if (TFConnectionFactory.isTrackerMetaDataRepository(targetRepositoryId)) {
+			} else if (TFConnectionFactory
+					.isTrackerMetaDataRepository(targetRepositoryId)) {
 				TrackerDO result = null;
-				String trackerId = TFConnectionFactory.extractTrackerFromMetaDataRepositoryId(targetRepositoryId);
-				result = updateTrackerMetaData(ga, trackerId, connection); 
+				String trackerId = TFConnectionFactory
+						.extractTrackerFromMetaDataRepositoryId(targetRepositoryId);
+				result = updateTrackerMetaData(ga, trackerId, connection);
 				populateTargetArtifactAttributesFromTracker(ga, result);
 				return returnDocument(ga);
 			} else {
-				throw new CCFRuntimeException("Unknown repository id format: "+targetRepositoryId);
+				throw new CCFRuntimeException("Unknown repository id format: "
+						+ targetRepositoryId);
 			}
 		} finally {
 			disconnect(connection);
@@ -586,7 +596,8 @@ public class TFWriter extends AbstractWriter<Connection> implements
 			}
 		}
 
-		planningFolder = connection.getPlanningClient().getPlanningFolderData(id);
+		planningFolder = connection.getPlanningClient().getPlanningFolderData(
+				id);
 
 		// now we have to cope with moving planning folders around
 		String parentArtifactId = ga.getDepParentTargetArtifactId();
@@ -601,7 +612,8 @@ public class TFWriter extends AbstractWriter<Connection> implements
 					// move to top
 					connection.getPlanningClient().movePlanningFolder(id,
 							project);
-					planningFolder = connection.getPlanningClient().getPlanningFolderData(id);
+					planningFolder = connection.getPlanningClient()
+							.getPlanningFolderData(id);
 				}
 			} else {
 				// check whether correct parent is already assigned
@@ -609,7 +621,8 @@ public class TFWriter extends AbstractWriter<Connection> implements
 						.equals(planningFolder.getParentFolderId())) {
 					connection.getPlanningClient().movePlanningFolder(id,
 							parentArtifactId);
-					planningFolder = connection.getPlanningClient().getPlanningFolderData(id);
+					planningFolder = connection.getPlanningClient()
+							.getPlanningFolderData(id);
 				}
 			}
 		}
@@ -647,7 +660,8 @@ public class TFWriter extends AbstractWriter<Connection> implements
 			ArtifactDO artifact = trackerHandler.getTrackerItem(connection,
 					targetParentArtifactId);
 			parentArtifact = new GenericArtifact();
-			// make sure that we do not update the synchronization status record for replayed attachments
+			// make sure that we do not update the synchronization status record
+			// for replayed attachments
 			parentArtifact.setTransactionId(ga.getTransactionId());
 			parentArtifact
 					.setArtifactType(GenericArtifact.ArtifactTypeValue.PLAINARTIFACT);
@@ -789,10 +803,8 @@ public class TFWriter extends AbstractWriter<Connection> implements
 			estimatedEffort = GenericArtifactHelper.getIntMandatoryGAField(
 					TFArtifactMetaData.TFFields.estimatedHours.getFieldName(),
 					ga);
-			actualEffort = GenericArtifactHelper
-					.getIntMandatoryGAField(
-							TFArtifactMetaData.TFFields.actualHours
-									.getFieldName(), ga);
+			actualEffort = GenericArtifactHelper.getIntMandatoryGAField(
+					TFArtifactMetaData.TFFields.actualHours.getFieldName(), ga);
 
 			remainingEffort = GenericArtifactHelper.getIntMandatoryGAField(
 					TFArtifactMetaData.TFFields.remainingEffort.getFieldName(),
@@ -829,24 +841,27 @@ public class TFWriter extends AbstractWriter<Connection> implements
 				resolvedReleaseId = trackerHandler.convertReleaseId(connection,
 						resolvedReleaseId, folderId);
 			}
-			
+
 			// now we have to deal with the parent dependencies
 			String parentId = ga.getDepParentTargetArtifactId();
 			boolean associateWithParent = false;
-			if (parentId != null && !parentId.equals(GenericArtifact.VALUE_UNKNOWN) && !parentId.equals(GenericArtifact.VALUE_NONE)) {
+			if (parentId != null
+					&& !parentId.equals(GenericArtifact.VALUE_UNKNOWN)
+					&& !parentId.equals(GenericArtifact.VALUE_NONE)) {
 				// parent is a planning folder
 				if (parentId.startsWith("plan")) {
 					planningFolder = parentId;
 				} else {
 					associateWithParent = true;
 					if (planningFolder == null) {
-						ArtifactDO parentArtifact = connection.getTrackerClient().getArtifactData(parentId);
+						ArtifactDO parentArtifact = connection
+								.getTrackerClient().getArtifactData(parentId);
 						planningFolder = parentArtifact.getPlanningFolderId();
 					}
-					
+
 				}
 			}
-			
+
 			result = trackerHandler.createArtifact(connection, folderId,
 					description, category, group, status, statusClass,
 					customer, priority, estimatedEffort, actualEffort,
@@ -854,12 +869,13 @@ public class TFWriter extends AbstractWriter<Connection> implements
 					resolvedReleaseId, flexFieldNames, flexFieldValues,
 					flexFieldTypes, title, comments, remainingEffort,
 					autosumming, planningFolder);
-			
+
 			// now create parent dependency
 			if (associateWithParent) {
-				trackerHandler.createArtifactDependency(connection, parentId, result.getId(), "CCF created parent-child dependency");
+				trackerHandler.createArtifactDependency(connection, parentId,
+						result.getId(), "CCF created parent-child dependency");
 			}
-			
+
 			log.info("New artifact " + result.getId()
 					+ " is created with the change from "
 					+ ga.getSourceArtifactId());
@@ -897,7 +913,7 @@ public class TFWriter extends AbstractWriter<Connection> implements
 		ga.setTargetArtifactLastModifiedDate(targetArtifactLastModifiedDateStr);
 		ga.setTargetArtifactVersion(Integer.toString(result.getVersion()));
 	}
-	
+
 	private void populateTargetArtifactAttributesFromTracker(
 			GenericArtifact ga, TrackerDO result) {
 		ga.setTargetArtifactId(result.getId());
@@ -1010,10 +1026,8 @@ public class TFWriter extends AbstractWriter<Connection> implements
 			estimatedEffort = GenericArtifactHelper.getMandatoryGAField(
 					TFArtifactMetaData.TFFields.estimatedHours.getFieldName(),
 					ga);
-			actualEffort = GenericArtifactHelper
-					.getMandatoryGAField(
-							TFArtifactMetaData.TFFields.actualHours
-									.getFieldName(), ga);
+			actualEffort = GenericArtifactHelper.getMandatoryGAField(
+					TFArtifactMetaData.TFFields.actualHours.getFieldName(), ga);
 			remainingEffort = GenericArtifactHelper.getMandatoryGAField(
 					TFArtifactMetaData.TFFields.remainingEffort.getFieldName(),
 					ga);
@@ -1050,42 +1064,44 @@ public class TFWriter extends AbstractWriter<Connection> implements
 			boolean associateWithParent = false;
 			boolean deleteOldParentAssociation = false;
 			String currentParentId = null;
-			
-			if (newParentId != null && !newParentId.equals(GenericArtifact.VALUE_UNKNOWN)) {
+
+			if (newParentId != null
+					&& !newParentId.equals(GenericArtifact.VALUE_UNKNOWN)) {
 				// now find out current parent id
-				ArtifactDependencyRow[] parents = trackerHandler.getArtifactParentDependencies(connection, id);
+				ArtifactDependencyRow[] parents = trackerHandler
+						.getArtifactParentDependencies(connection, id);
 				if (parents.length != 0) {
 					// only take first entry of this record
 					ArtifactDependencyRow parent = parents[0];
 					currentParentId = parent.getOriginId();
 				}
-				
+
 				if (newParentId.equals(GenericArtifact.VALUE_NONE)) {
 					// we have to set the planning folder to null
-					planningFolder = TFToGenericArtifactConverter.createGenericArtifactField(
-							TFArtifactMetaData.TFFields.planningFolder,
-							null, ga, null,
-							false);
-					
+					planningFolder = TFToGenericArtifactConverter
+							.createGenericArtifactField(
+									TFArtifactMetaData.TFFields.planningFolder,
+									null, ga, null, false);
+
 					// we have to deassociate the old parent
 					if (currentParentId != null) {
 						deleteOldParentAssociation = true;
 					}
 				}
-				
+
 				else if (newParentId.startsWith("plan")) {
 					// we have to set the planning folder to the new parent
-					planningFolder = TFToGenericArtifactConverter.createGenericArtifactField(
-							TFArtifactMetaData.TFFields.planningFolder,
-							newParentId, ga, null,
-							false);
-					
+					planningFolder = TFToGenericArtifactConverter
+							.createGenericArtifactField(
+									TFArtifactMetaData.TFFields.planningFolder,
+									newParentId, ga, null, false);
+
 					// we have to deassociate the old parent
 					if (currentParentId != null) {
 						deleteOldParentAssociation = true;
 					}
 				}
-				
+
 				else if (!newParentId.equals(currentParentId)) {
 					// new parent is a tracker item
 					// we have to deassociate the old parent
@@ -1093,17 +1109,22 @@ public class TFWriter extends AbstractWriter<Connection> implements
 						deleteOldParentAssociation = true;
 					}
 					associateWithParent = true;
-					// we have to change the planning folder if there was no special value requested for this
-					if (connection.supports53() && (planningFolder == null || !planningFolder.getFieldValueHasChanged())) {
-						ArtifactDO parentArtifact = trackerHandler.getTrackerItem(connection, newParentId);
-						planningFolder = TFToGenericArtifactConverter.createGenericArtifactField(
-								TFArtifactMetaData.TFFields.planningFolder,
-								parentArtifact.getPlanningFolderId(), ga, null,
-								false);
+					// we have to change the planning folder if there was no
+					// special value requested for this
+					if (connection.supports53()
+							&& (planningFolder == null || !planningFolder
+									.getFieldValueHasChanged())) {
+						ArtifactDO parentArtifact = trackerHandler
+								.getTrackerItem(connection, newParentId);
+						planningFolder = TFToGenericArtifactConverter
+								.createGenericArtifactField(
+										TFArtifactMetaData.TFFields.planningFolder,
+										parentArtifact.getPlanningFolderId(),
+										ga, null, false);
 					}
 				}
 			}
-			
+
 			result = trackerHandler.updateArtifact(ga, connection, folderId,
 					description, category, group, status, statusClass,
 					customer, priority, estimatedEffort, actualEffort,
@@ -1111,8 +1132,9 @@ public class TFWriter extends AbstractWriter<Connection> implements
 					resolvedReleaseId, flexFieldNames, flexFieldValues,
 					flexFieldTypes, overriddenFlexFields, title, id, comments,
 					translateTechnicalReleaseIds, remainingEffort, autosumming,
-					planningFolder, deleteOldParentAssociation, currentParentId, associateWithParent, newParentId);
-			
+					planningFolder, deleteOldParentAssociation,
+					currentParentId, associateWithParent, newParentId);
+
 			if (result != null) {
 				log.info("Artifact " + id + " is updated successfully");
 			}
@@ -1332,13 +1354,38 @@ public class TFWriter extends AbstractWriter<Connection> implements
 		GenericArtifact parentArtifact = null;
 		try {
 			connection = connect(ga);
-			attachmentHandler.deleteAttachment(connection, targetArtifactId,
-					artifactId, ga);
-			log.info("Attachment " + targetArtifactId + " is deleted");
-			ArtifactDO artifact = trackerHandler.getTrackerItem(connection,
-					artifactId);
+			try {
+				attachmentHandler.deleteAttachment(connection,
+						targetArtifactId, artifactId, ga);
+			} catch (AxisFault e) {
+				javax.xml.namespace.QName faultCode = e.getFaultCode();
+				if (faultCode.getLocalPart().equals("NoSuchObjectFault")) {
+					log.warn("Attachment " + targetArtifactId
+							+ " does not exist any more!");
+					return null;
+				} else {
+					throw e;
+				}
+			}
+			log.info("Attachment " + targetArtifactId
+					+ " is deleted successfully.");
+			ArtifactDO artifact = null;
+			try {
+				artifact = trackerHandler.getTrackerItem(connection,
+						artifactId);
+			} catch (AxisFault e) {
+				javax.xml.namespace.QName faultCode = e.getFaultCode();
+				if (faultCode.getLocalPart().equals("NoSuchObjectFault")) {
+					log.warn("Artifact " + artifactId
+							+ " does not exist any more!");
+					return null;
+				} else {
+					throw e;
+				}
+			}
 			parentArtifact = new GenericArtifact();
-			// make sure that we do not update the synchronization status record for replayed attachments
+			// make sure that we do not update the synchronization status record
+			// for replayed attachments
 			parentArtifact.setTransactionId(ga.getTransactionId());
 			parentArtifact
 					.setArtifactType(GenericArtifact.ArtifactTypeValue.PLAINARTIFACT);
@@ -1375,6 +1422,7 @@ public class TFWriter extends AbstractWriter<Connection> implements
 			parentArtifact
 					.setTargetSystemTimezone(ga.getTargetSystemTimezone());
 		} catch (RemoteException e) {
+
 			String message = "Exception while deleting attachment "
 					+ artifactId;
 			log.error(message, e);
@@ -1410,10 +1458,147 @@ public class TFWriter extends AbstractWriter<Connection> implements
 
 	@Override
 	public Document deleteArtifact(Document gaDocument) {
-		// throw new
-		// CCFRuntimeException("deleteArtifact is not implemented...!");
-		log.warn("deleteArtifact is not implemented...!");
-		return null;
+		GenericArtifact ga = null;
+		try {
+			ga = GenericArtifactHelper
+					.createGenericArtifactJavaObject(gaDocument);
+		} catch (GenericArtifactParsingException e) {
+			String cause = "Problem occured while parsing the GenericArtifact into Document";
+			log.error(cause, e);
+			XPathUtils.addAttribute(gaDocument.getRootElement(),
+					GenericArtifactHelper.ERROR_CODE,
+					GenericArtifact.ERROR_GENERIC_ARTIFACT_PARSING);
+			throw new CCFRuntimeException(cause, e);
+		}
+		// now we have to figure out whether we have to delete a planning folder
+		// or a tracker item
+		String targetRepositoryId = ga.getTargetRepositoryId();
+		String targetArtifactId = ga.getTargetArtifactId();
+		Connection connection = null;
+		GenericArtifact deletedArtifact = new GenericArtifact();
+		// make sure that we do not update the synchronization status record for
+		// replayed attachments
+		deletedArtifact.setTransactionId(ga.getTransactionId());
+		deletedArtifact
+				.setArtifactType(GenericArtifact.ArtifactTypeValue.PLAINARTIFACT);
+		deletedArtifact
+				.setArtifactAction(GenericArtifact.ArtifactActionValue.DELETE);
+		deletedArtifact
+				.setArtifactMode(GenericArtifact.ArtifactModeValue.CHANGEDFIELDSONLY);
+		deletedArtifact.setConflictResolutionPriority(ga
+				.getConflictResolutionPriority());
+		deletedArtifact.setSourceArtifactId(ga.getSourceArtifactId());
+		deletedArtifact.setSourceArtifactLastModifiedDate(ga
+				.getSourceArtifactLastModifiedDate());
+		deletedArtifact.setSourceArtifactVersion(ga.getSourceArtifactVersion());
+		deletedArtifact.setSourceRepositoryId(ga.getSourceRepositoryId());
+		deletedArtifact.setSourceSystemId(ga.getSourceSystemId());
+		deletedArtifact.setSourceSystemKind(ga.getSourceSystemKind());
+		deletedArtifact.setSourceRepositoryKind(ga.getSourceRepositoryKind());
+		deletedArtifact.setSourceSystemTimezone(ga.getSourceSystemTimezone());
+
+		deletedArtifact.setTargetArtifactId(targetArtifactId);
+		deletedArtifact.setTargetRepositoryId(ga.getTargetRepositoryId());
+		deletedArtifact.setTargetRepositoryKind(ga.getTargetRepositoryKind());
+		deletedArtifact.setTargetSystemId(ga.getTargetSystemId());
+		deletedArtifact.setTargetSystemKind(ga.getTargetSystemKind());
+		deletedArtifact.setTargetSystemTimezone(ga.getTargetSystemTimezone());
+
+		try {
+			connection = connect(ga);
+			// now we have to figure out whether we have to delete a planning
+			// folder or a tracker item
+			if (TFConnectionFactory.isTrackerRepository(targetRepositoryId)) {
+				ArtifactDO artifact = null;
+				try {
+					artifact = trackerHandler.getTrackerItem(connection,
+							targetArtifactId);
+				} catch (AxisFault e) {
+					javax.xml.namespace.QName faultCode = e.getFaultCode();
+					if (faultCode.getLocalPart().equals("NoSuchObjectFault")) {
+						log.warn("Artifact " + targetArtifactId
+								+ " does not exist any more!");
+					} else {
+						throw e;
+					}
+				}
+				if (artifact != null) {
+					deletedArtifact.setTargetArtifactLastModifiedDate(DateUtil
+							.format(artifact.getLastModifiedDate()));
+					deletedArtifact.setTargetArtifactVersion(Integer
+							.toString(artifact.getVersion()));
+					try {
+						trackerHandler.removeArtifact(connection, targetArtifactId);
+					} catch (AxisFault e) {
+						javax.xml.namespace.QName faultCode = e.getFaultCode();
+						if (faultCode.getLocalPart().equals("NoSuchObjectFault")) {
+							log.warn("Artifact " + targetArtifactId
+									+ " does not exist any more!");
+						} else {
+							throw e;
+						}
+					}
+					log.info("Artifact " + targetArtifactId + " is deleted successfully.");
+				}
+			} else if (TFConnectionFactory
+					.isPlanningFolderRepository(targetRepositoryId)) {
+				PlanningFolderDO artifact = null;
+				try {
+					artifact = connection.getPlanningClient()
+						.getPlanningFolderData(targetArtifactId);
+				} catch (AxisFault e) {
+					javax.xml.namespace.QName faultCode = e.getFaultCode();
+					if (faultCode.getLocalPart().equals("NoSuchObjectFault")) {
+						log.warn("Artifact " + targetArtifactId
+								+ " does not exist any more!");
+					} else {
+						throw e;
+					}
+				}
+				if (artifact != null) {
+					deletedArtifact.setTargetArtifactLastModifiedDate(DateUtil
+							.format(artifact.getLastModifiedDate()));
+					deletedArtifact.setTargetArtifactVersion(Integer
+							.toString(artifact.getVersion()));
+					try {
+						connection.getPlanningClient().deletePlanningFolder(
+								targetArtifactId);
+					} catch (AxisFault e) {
+						javax.xml.namespace.QName faultCode = e.getFaultCode();
+						if (faultCode.getLocalPart().equals("NoSuchObjectFault")) {
+							log.warn("Artifact " + targetArtifactId
+									+ " does not exist any more!");
+						} else {
+							throw e;
+						}
+					}
+					log.info("Artifact " + targetArtifactId + " is deleted successfully.");
+				}
+			} else {
+				log.warn("deleteArtifact is not implemented for repository "
+						+ targetRepositoryId);
+			}
+		} catch (RemoteException e) {
+			String message = "Exception while deleting artifact "
+					+ targetArtifactId;
+			log.error(message, e);
+			throw new CCFRuntimeException(message, e);
+		} finally {
+			if (connection != null) {
+				this.disconnect(connection);
+			}
+		}
+		Document returnDocument = null;
+		try {
+			returnDocument = GenericArtifactHelper
+					.createGenericArtifactXMLDocument(deletedArtifact);
+		} catch (GenericArtifactParsingException e) {
+			String message = "Exception while deleting artifact "
+					+ targetArtifactId + ". Could not parse Generic artifact";
+			log.error(message, e);
+			throw new CCFRuntimeException(message, e);
+		}
+		return returnDocument;
 	}
 
 	@Override

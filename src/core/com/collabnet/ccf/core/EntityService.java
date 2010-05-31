@@ -283,6 +283,29 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 					targetParentArtifactId = resultsDep[0].toString();
 				}
 				if (StringUtils.isEmpty(targetParentArtifactId)) {
+					if (artifactAction
+							.equals(GenericArtifactHelper.ARTIFACT_ACTION_DELETE)) {
+						String cause = "Parent artifact "
+								+ sourceParentArtifactId
+								+ " for attachment "
+								+ sourceArtifactId
+								+ " is not yet created on the target system for combination "
+								+ sourceArtifactId
+								+ "-"
+								+ sourceRepositoryId
+								+ "-"
+								+ sourceSystemId
+								+ "-"
+								+ targetRepositoryId
+								+ "-"
+								+ targetSystemId
+								+ ". Since attachment has been marked to be deleted, ignoring the shipment ...";
+						log.warn(cause);
+						XPathUtils.addAttribute(element,
+								GenericArtifactHelper.ARTIFACT_ACTION,
+								GenericArtifactHelper.ARTIFACT_ACTION_IGNORE);
+						return new Object[] { data };
+					}
 					String cause = "Parent artifact "
 							+ sourceParentArtifactId
 							+ " for attachment "
@@ -371,23 +394,47 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 										targetSystemId,
 										sourceParentRepositoryId)) {
 									String cause = "Parent artifact "
-										+ sourceParentArtifactId
-										+ " for artifact "
-										+ sourceArtifactId
-										+ " is not yet created on the target system for combination "
-										+ sourceArtifactId
-										+ "-"
-										+ sourceRepositoryId
-										+ "-"
-										+ sourceSystemId
-										+ "-"
-										+ targetRepositoryId
-										+ "-"
-										+ targetSystemId
-										+ ". Since no project mapping exists for "
-										+ sourceParentRepositoryId
-										+ " CCF does not bail out but ignores parent dependency.";
+											+ sourceParentArtifactId
+											+ " for artifact "
+											+ sourceArtifactId
+											+ " is not yet created on the target system for combination "
+											+ sourceArtifactId
+											+ "-"
+											+ sourceRepositoryId
+											+ "-"
+											+ sourceSystemId
+											+ "-"
+											+ targetRepositoryId
+											+ "-"
+											+ targetSystemId
+											+ ". Since no project mapping exists for "
+											+ sourceParentRepositoryId
+											+ " CCF does not bail out but ignores parent dependency.";
 									log.warn(cause);
+								} else if (artifactAction
+										.equals(GenericArtifactHelper.ARTIFACT_ACTION_DELETE)) {
+									String cause = "Parent artifact "
+											+ sourceParentArtifactId
+											+ " for artifact "
+											+ sourceArtifactId
+											+ " is not yet created on the target system for combination "
+											+ sourceArtifactId
+											+ "-"
+											+ sourceRepositoryId
+											+ "-"
+											+ sourceSystemId
+											+ "-"
+											+ targetRepositoryId
+											+ "-"
+											+ targetSystemId
+											+ ". Since artifact has been marked to be deleted, ignoring the shipment ...";
+									log.warn(cause);
+									XPathUtils
+											.addAttribute(
+													element,
+													GenericArtifactHelper.ARTIFACT_ACTION,
+													GenericArtifactHelper.ARTIFACT_ACTION_IGNORE);
+									return new Object[] { data };
 								} else {
 									String cause = "Parent artifact "
 											+ sourceParentArtifactId
@@ -453,7 +500,6 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 											GenericArtifactHelper.DEP_PARENT_TARGET_REPOSITORY_ID,
 											targetParentRepositoryId);
 						}
-
 					}
 				}
 			}
@@ -471,10 +517,6 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 							GenericArtifactHelper.ARTIFACT_ACTION,
 							GenericArtifactHelper.ARTIFACT_ACTION_UPDATE);
 				} else if (artifactAction
-						.equals(GenericArtifactHelper.ARTIFACT_ACTION_UPDATE)) {
-					// Do nothing. Because the artifact is already marked as
-					// update
-				} else if (artifactAction
 						.equals(GenericArtifactHelper.ARTIFACT_ACTION_CREATE)) {
 					String cause = "The artifact action is marked as "
 							+ artifactAction
@@ -485,15 +527,6 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 					XPathUtils.addAttribute(element,
 							GenericArtifactHelper.ARTIFACT_ACTION,
 							GenericArtifactHelper.ARTIFACT_ACTION_UPDATE);
-				} else if (artifactAction
-						.equals(GenericArtifactHelper.ARTIFACT_ACTION_DELETE)) {
-					XPathUtils.addAttribute(element,
-							GenericArtifactHelper.ARTIFACT_ACTION,
-							GenericArtifactHelper.ARTIFACT_ACTION_DELETE);
-				} else if (artifactAction
-						.equals(GenericArtifactHelper.ARTIFACT_ACTION_RESYNC)) {
-					// Do nothing. Because the artifact is already marked as
-					// update
 				}
 			} else {
 				if (artifactAction
@@ -513,17 +546,16 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 							GenericArtifactHelper.ARTIFACT_ACTION,
 							GenericArtifactHelper.ARTIFACT_ACTION_CREATE);
 				} else if (artifactAction
-						.equals(GenericArtifactHelper.ARTIFACT_ACTION_CREATE)) {
-					// Do nothing. Because the artifact is already marked as
-					// create
-				} else if (artifactAction
 						.equals(GenericArtifactHelper.ARTIFACT_ACTION_DELETE)) {
 					String cause = "The artifact action is marked as "
 							+ artifactAction
 							+ ".\nBut the Entity Service could not find a target artifact id for source artifact id "
-							+ sourceArtifactId;
-					log.error(cause);
-					throw new CCFRuntimeException(cause);
+							+ sourceArtifactId + ". Ignoring the artifact ...";
+					log.warn(cause);
+					XPathUtils.addAttribute(element,
+							GenericArtifactHelper.ARTIFACT_ACTION,
+							GenericArtifactHelper.ARTIFACT_ACTION_IGNORE);
+					return new Object[] { data };
 				} else if (artifactAction
 						.equals(GenericArtifactHelper.ARTIFACT_ACTION_RESYNC)) {
 					String cause = "The artifact action is marked as "
@@ -551,9 +583,11 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 	}
 
 	/**
-	 * Returns whether a project mapping exists in the target system for the repository id of the parent artifact
-	 * This information is used to determine whether to bail out if no equivalent to the parent artifact can be found
-	 * in the target system.
+	 * Returns whether a project mapping exists in the target system for the
+	 * repository id of the parent artifact This information is used to
+	 * determine whether to bail out if no equivalent to the parent artifact can
+	 * be found in the target system.
+	 * 
 	 * @param sourceSystemId
 	 * @param targetSystemId
 	 * @param sourceParentRepositoryId
@@ -568,8 +602,7 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 
 		Object[] resultSet = null;
 		projectMappingDatabaseReader.connect();
-		resultSet = projectMappingDatabaseReader.next(inputParameters,
-				1);
+		resultSet = projectMappingDatabaseReader.next(inputParameters, 1);
 		if (resultSet == null || resultSet.length == 0) {
 			return false;
 		}
