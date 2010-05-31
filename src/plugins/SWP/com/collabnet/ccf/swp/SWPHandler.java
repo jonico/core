@@ -2263,13 +2263,17 @@ public class SWPHandler {
 				.getDescription());
 		addProductReleaseField(ga, ReleaseFields.productId, release
 				.getProductId());
-		addProductReleaseField(ga, ReleaseFields.programId, release
-				.getProgramId());
+		Long programId = release.getProgramId();
+		addProductReleaseField(ga, ReleaseFields.programId, programId);
 		addProductReleaseField(ga, ReleaseFields.releaseDate, release
 				.getEndDate());
 		addProductReleaseField(ga, ReleaseFields.startDate, release
 				.getStartDate());
-		addProductReleaseField(ga, ReleaseFields.title, release.getName());
+		String releaseTitle = release.getName();
+		if (programId != null) {
+			releaseTitle = releaseTitle + " (" + getProgramName(null, endpoint) + ")";
+		}
+		addProductReleaseField(ga, ReleaseFields.title, releaseTitle);
 
 		// set parent artifact (Product)
 		Long productId = getProductId(swpProductName, endpoint);
