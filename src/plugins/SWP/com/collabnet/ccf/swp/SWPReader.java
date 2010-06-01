@@ -276,6 +276,10 @@ public class SWPReader extends AbstractReader<Connection> {
 		long minorVersion = 0;
 		try {
 			majorVersion = Long.parseLong(lastSynchronizedVersion);
+			// this happens if CCF terminated during initial artifact synch
+			if (majorVersion < 0) {
+				majorVersion = 0;
+			}
 			/*
 			 * The minor version determines the last artifact that has been
 			 * transported within a single SWP revision The first artifact will
