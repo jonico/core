@@ -2107,7 +2107,7 @@ public class SWPHandler {
 				}
 				continue;
 			}
-			if (!deletedArtifacts.isEmpty()) {
+			if (!deletedArtifacts.isEmpty() && !firstProductQuery) {
 				int numberOfDeletedArtifacts = deletedArtifacts.size();
 				// now we have to sort the deleted artifacts
 				Collections.sort(deletedArtifacts);
@@ -2323,7 +2323,7 @@ public class SWPHandler {
 				}
 				continue;
 			}
-			if (!deletedArtifacts.isEmpty()) {
+			if (!deletedArtifacts.isEmpty() && !firstReleaseQuery) {
 				int numberOfDeletedArtifacts = deletedArtifacts.size();
 				// now we have to sort the deleted artifacts
 				Collections.sort(deletedArtifacts);
