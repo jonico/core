@@ -518,11 +518,25 @@ public class SWPHandler {
 			return;
 		}*/
 
-		FilterChangesByType filter = new FilterChangesByType();
-		filter.setIncludeTasks(true);
-		AggregateVersionedData changesSinceCurrentRevision = endpoint
+		
+		AggregateVersionedData changesSinceCurrentRevision = null;
+		if (firstTaskQuery) {
+			List<Task> tasks = endpoint.getTasksForProduct(productId);
+			if (tasks.isEmpty()) {
+				return;
+			}
+			FilterChangesById idSet = new FilterChangesById();
+			for (Task task : tasks) {
+				idSet.getTaskIds().add(task.getId());
+			}
+			changesSinceCurrentRevision = endpoint.getChangesSinceRevisionForIds(0, false, idSet);
+		} else {
+			FilterChangesByType filter = new FilterChangesByType();
+			filter.setIncludeTasks(true);
+			changesSinceCurrentRevision = endpoint
 				.getChangesSinceRevisionForTypes(productId, queryVersion,
-						false, filter);
+				false, filter);
+		}
 
 		// initialize some data structures to capture deleted and inserted
 		// artifacts
@@ -788,11 +802,24 @@ public class SWPHandler {
 			return;
 		}*/
 
-		FilterChangesByType filter = new FilterChangesByType();
-		filter.setIncludeBacklogItems(true);
-		AggregateVersionedData changesSinceCurrentRevision = endpoint
-				.getChangesSinceRevisionForTypes(productId, queryVersion,
-						false, filter);
+		AggregateVersionedData changesSinceCurrentRevision = null;
+		if (firstPBIQuery) {
+			List <BacklogItem> pbis = endpoint.getBacklogItemsInProduct(productId, false);
+			if (pbis.isEmpty()) {
+				return;
+			}
+			FilterChangesById idSet = new FilterChangesById();
+			for (BacklogItem backlogItem : pbis) {
+				idSet.getBacklogItemIds().add(backlogItem.getId());
+			}
+			changesSinceCurrentRevision = endpoint.getChangesSinceRevisionForIds(0, false, idSet);
+		} else {
+			FilterChangesByType filter = new FilterChangesByType();
+			filter.setIncludeBacklogItems(true);
+			changesSinceCurrentRevision = endpoint
+					.getChangesSinceRevisionForTypes(productId, queryVersion,
+							false, filter);
+		}
 
 		// initialize some data structures to capture deleted and inserted
 		// artifacts
