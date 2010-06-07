@@ -1,6 +1,7 @@
 package com.collabnet.ccf.swp;
 
 import java.rmi.RemoteException;
+import java.text.SimpleDateFormat;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -34,7 +35,7 @@ import com.collabnet.ccf.swp.SWPMetaData.ProductFields;
 import com.collabnet.ccf.swp.SWPMetaData.ReleaseFields;
 import com.collabnet.ccf.swp.SWPMetaData.SWPType;
 import com.collabnet.ccf.swp.SWPMetaData.TaskFields;
-import com.collabnet.ccf.swp.SWPMetaData.ThemeFields;
+import com.collabnet.ccf.swp.SWPMetaData.MetaDataFields;
 import com.danube.scrumworks.api2.client.AggregateVersionedData;
 import com.danube.scrumworks.api2.client.BacklogItem;
 import com.danube.scrumworks.api2.client.BacklogItemChanges;
@@ -62,7 +63,6 @@ import com.danube.scrumworks.api2.client.Theme;
  * 
  */
 public class SWPHandler {
-
 	private static final Log log = LogFactory.getLog(SWPHandler.class);
 	private DatatypeFactory calendarConverter;
 
@@ -73,9 +73,44 @@ public class SWPHandler {
 	private Map<String, Map<Long, AbstractMap.SimpleEntry<AbstractMap.SimpleEntry<Long, RevisionInfo>, Product>>> productCache = new HashMap<String, Map<Long, AbstractMap.SimpleEntry<AbstractMap.SimpleEntry<Long, RevisionInfo>, Product>>>();
 	private Map<String, Map<Long, AbstractMap.SimpleEntry<AbstractMap.SimpleEntry<Long, RevisionInfo>, Release>>> releaseCache = new HashMap<String, Map<Long, AbstractMap.SimpleEntry<AbstractMap.SimpleEntry<Long, RevisionInfo>, Release>>>();
 	private Map<String, Map<Long, AbstractMap.SimpleEntry<AbstractMap.SimpleEntry<Long, RevisionInfo>, Task>>> taskCache = new HashMap<String, Map<Long, AbstractMap.SimpleEntry<AbstractMap.SimpleEntry<Long, RevisionInfo>, Task>>>();
-	private Map<String, AbstractMap.SimpleEntry<Long, RevisionInfo>> themeCache = new HashMap<String, AbstractMap.SimpleEntry<Long, RevisionInfo>>();
+	private Map<String, AbstractMap.SimpleEntry<Long, RevisionInfo>> metaDataCache = new HashMap<String, AbstractMap.SimpleEntry<Long, RevisionInfo>>();
 	private Map<String, Long> productIdCache = new HashMap<String, Long>();
 	private Map<Long, String> programNameCache = new HashMap<Long, String>();
+	// this date formatter is used to produce string representations of sprint start/end dates
+	private SimpleDateFormat simpleDateFormat = new SimpleDateFormat("MM/dd/yyyy");
+
+	/**
+	 * Returns the string representation of a sprint in a team if team should be mentioned first
+	 * @param sprint
+	 * @param team
+	 * @return
+	 */
+	private String getTeamSprintStringRepresentation (Sprint sprint, Team team) {
+		Date startDate = sprint.getStartDate().toGregorianCalendar().getTime();
+		Date endDate = sprint.getEndDate().toGregorianCalendar().getTime();
+		StringBuffer value = new StringBuffer(team.getName() + " " + simpleDateFormat.format(startDate) + " - " + simpleDateFormat.format(endDate));
+		if (sprint.getName() != null && sprint.getName().trim().length() > 0) {
+			value.append(" -- " + sprint.getName());
+		}
+		return value.toString();
+	}
+	
+	/**
+	 * Returns the string representation of a sprint in a team if sprint should be mentioned first
+	 * @param sprint
+	 * @param team
+	 * @return
+	 */
+	private String getSprintTeamStringRepresentation (Sprint sprint, Team team) {
+		Date startDate = sprint.getStartDate().toGregorianCalendar().getTime();
+		Date endDate = sprint.getEndDate().toGregorianCalendar().getTime();
+		StringBuffer value = new StringBuffer(simpleDateFormat.format(startDate) + " - " + simpleDateFormat.format(endDate));
+		if (sprint.getName() != null && sprint.getName().trim().length() > 0) {
+			value.append(" -- " + sprint.getName());
+		}
+		value.append(" ("+team.getName()+")");
+		return value.toString();
+	}
 
 	/**
 	 * Returns id of product in question Uses a cache internally
@@ -221,17 +256,21 @@ public class SWPHandler {
 				addPBIField(ga, PBIFields.sprintId, null);
 				addPBIField(ga, PBIFields.team, "");
 				addPBIField(ga, PBIFields.sprint, "");
+				addPBIField(ga, PBIFields.teamSprint, "");
+				addPBIField(ga, PBIFields.sprintTeam, "");
 				addPBIField(ga, PBIFields.sprintStart, null);
 				addPBIField(ga, PBIFields.sprintEnd, null);
 			} else {
 				addPBIField(ga, PBIFields.sprintId, sprintId);
-				Sprint sprintWSO = endpoint.getSprintById(sprintId);
-				addPBIField(ga, PBIFields.sprint, sprintWSO.getName());
-				addPBIField(ga, PBIFields.sprintStart, sprintWSO.getStartDate());
-				addPBIField(ga, PBIFields.sprintEnd, sprintWSO.getEndDate());
+				Sprint sprint = endpoint.getSprintById(sprintId);
+				addPBIField(ga, PBIFields.sprint, sprint.getName());
+				addPBIField(ga, PBIFields.sprintStart, sprint.getStartDate());
+				addPBIField(ga, PBIFields.sprintEnd, sprint.getEndDate());
 				// retrieve team name
-				Team team = endpoint.getTeamById(sprintWSO.getTeamId());
+				Team team = endpoint.getTeamById(sprint.getTeamId());
 				addPBIField(ga, PBIFields.team, team.getName());
+				addPBIField(ga, PBIFields.teamSprint, getTeamSprintStringRepresentation(sprint, team));
+				addPBIField(ga, PBIFields.sprintTeam, getSprintTeamStringRepresentation(sprint, team));
 			}
 		} else {
 			ga.setArtifactAction(ArtifactActionValue.DELETE);
@@ -405,7 +444,7 @@ public class SWPHandler {
 	}
 
 	/**
-	 * Adds a theme field to a generic artifact
+	 * Adds a meta data field to a generic artifact
 	 * 
 	 * @param genericArtifact
 	 * @param field
@@ -413,8 +452,8 @@ public class SWPHandler {
 	 * @param value
 	 *            value of the theme field
 	 */
-	private void addThemeField(GenericArtifact genericArtifact,
-			ThemeFields field, Object value) {
+	private void addMetaDataField(GenericArtifact genericArtifact,
+			MetaDataFields field, Object value) {
 		// all fields are from field type "mandatoryField" since SWP has a
 		// static field model
 		GenericArtifactField gaField = genericArtifact.addNewField(field
@@ -2459,36 +2498,36 @@ public class SWPHandler {
 	}
 
 	/**
-	 * Returns the themes whenever their properties change In contrast to all
-	 * other methods of thi kind, this method will only return one single
-	 * artificial entry that indicates that any of the themes in question has
-	 * been deleted, created or changed
+	 * Returns the teams, sprints, themes whenever their properties change. In contrast to all
+	 * other methods of this kind, this method will only return one single
+	 * artificial entry that indicates that any of the themes, teams, sprints in question have
+	 * been deleted, created or changed.
 	 * 
 	 * @param swpProductName
 	 * @param artifactStates
 	 * @param version
-	 * @param resetThemeSynchronization
+	 * @param resetMetaDataSynchronization
 	 *            if true, current revision number + 1 is used to force a resync
 	 * @throws RemoteException
 	 * @throws ScrumWorksException
 	 */
-	public void getChangedThemes(ScrumWorksAPIService endpoint,
+	public void getChangedMetaData(ScrumWorksAPIService endpoint,
 			String swpProductName, List<ArtifactState> artifactStates,
 			long majorVersion, long minorVersion, String connectorUser,
-			Boolean resetThemeSynchronization) throws RemoteException,
+			Boolean resetMetaDataSynchronization) throws RemoteException,
 			ScrumWorksException {
 
 		// we return the current revision number if themes have not been synched
 		// so far or a reset should be made
-		if (resetThemeSynchronization == null
-				|| resetThemeSynchronization == true) {
+		if (resetMetaDataSynchronization == null
+				|| resetMetaDataSynchronization == true) {
 			RevisionInfo currentRevision = endpoint.getCurrentRevisionInfo();
 			int revisionNumber = currentRevision.getRevisionNumber() + 1;
 			if (!(majorVersion < revisionNumber)) {
 				return;
 			}
 			ArtifactState artifactState = new ArtifactState();
-			artifactState.setArtifactId("themesFor" + swpProductName);
+			artifactState.setArtifactId(SWPMetaData.SWP_METADATA_ID_PREFIX + swpProductName);
 			XMLGregorianCalendar xmlTimestamp = currentRevision.getTimeStamp();
 			Date artifactLastModifiedDate = new Date(0);
 			if (xmlTimestamp != null) {
@@ -2503,7 +2542,7 @@ public class SWPHandler {
 			artifactState.setArtifactVersion(artificialRevisionNumber);
 			artifactStates.add(artifactState);
 			// now update the cache
-			themeCache.put(swpProductName,
+			metaDataCache.put(swpProductName,
 					new AbstractMap.SimpleEntry<Long, RevisionInfo>(
 							artificialRevisionNumber, currentRevision));
 			// we have to clear the program name cache since a program could
@@ -2530,6 +2569,8 @@ public class SWPHandler {
 				.intValue();
 		FilterChangesByType filter = new FilterChangesByType();
 		filter.setIncludeThemes(true);
+		filter.setIncludeTeams(true);
+		filter.setIncludeSprints(true);
 		// add programs to the filter since this could impact theme names
 		filter.setIncludePrograms(true);
 		// add product to the filter since this could impact theme names
@@ -2540,7 +2581,9 @@ public class SWPHandler {
 
 		if (!changesSinceCurrentRevision.getThemeChanges().isEmpty()
 				|| !changesSinceCurrentRevision.getProgramChanges().isEmpty()
-				|| !changesSinceCurrentRevision.getProductChanges().isEmpty()) {
+				|| !changesSinceCurrentRevision.getProductChanges().isEmpty()
+				|| !changesSinceCurrentRevision.getTeamChanges().isEmpty()
+				|| !changesSinceCurrentRevision.getSprintChanges().isEmpty()) {
 			if (!changesSinceCurrentRevision.getProgramChanges().isEmpty()) {
 				programNameCache.clear();
 			}
@@ -2549,7 +2592,7 @@ public class SWPHandler {
 			RevisionInfo currentRevision = endpoint.getCurrentRevisionInfo();
 			int revisionNumber = currentRevision.getRevisionNumber() + 1;
 			ArtifactState artifactState = new ArtifactState();
-			artifactState.setArtifactId("themesFor" + swpProductName);
+			artifactState.setArtifactId(SWPMetaData.SWP_METADATA_ID_PREFIX + swpProductName);
 			XMLGregorianCalendar xmlTimestamp = currentRevision.getTimeStamp();
 			Date artifactLastModifiedDate = new Date(0);
 			if (xmlTimestamp != null) {
@@ -2564,7 +2607,7 @@ public class SWPHandler {
 			artifactState.setArtifactVersion(artificialRevisionNumber);
 			artifactStates.add(artifactState);
 			// now update the cache
-			themeCache.put(swpProductName,
+			metaDataCache.put(swpProductName,
 					new AbstractMap.SimpleEntry<Long, RevisionInfo>(
 							artificialRevisionNumber, currentRevision));
 		}
@@ -2716,27 +2759,27 @@ public class SWPHandler {
 
 	/**
 	 * Populates the generic artifact data structure with the names of all
-	 * themes related to the product
+	 * themes and teams/sprints related to the product
 	 * 
 	 * @param id
-	 *            id of the themes in question - ignored at the moment
+	 *            id of the themes, sprints, teams in question - ignored at the moment
 	 * @param product
 	 *            SWP product name
 	 * @throws RemoteException
 	 * @throws ScrumWorksException
 	 */
-	public void retrieveThemes(ScrumWorksAPIService endpoint, String id,
+	public void retrieveMetaData(ScrumWorksAPIService endpoint, String id,
 			String swpProductName, GenericArtifact ga)
 			throws NumberFormatException, RemoteException, ScrumWorksException {
 
-		AbstractMap.SimpleEntry<Long, RevisionInfo> cachedTheme = themeCache
+		AbstractMap.SimpleEntry<Long, RevisionInfo> cachedMetaData = metaDataCache
 				.get(swpProductName);
-		if (cachedTheme == null) {
+		if (cachedMetaData == null) {
 			throw new CCFRuntimeException("Could not retrieve  " + id
 					+ " from the cache.");
 		}
-		long artificialVersionNumber = cachedTheme.getKey();
-		RevisionInfo releaseRevision = cachedTheme.getValue();
+		long artificialVersionNumber = cachedMetaData.getKey();
+		RevisionInfo metaDataRevision = cachedMetaData.getValue();
 
 		Long productId = getProductId(swpProductName, endpoint);
 
@@ -2745,20 +2788,46 @@ public class SWPHandler {
 		for (Theme theme : themes) {
 			// differentiate between product and program themes here
 			if (theme.getProgramId() == null) {
-				addThemeField(ga, ThemeFields.name, theme.getName());
+				addMetaDataField(ga, MetaDataFields.theme, theme.getName());
 			} else {
 				// program theme
-				addThemeField(ga, ThemeFields.name, theme.getName() + " ("
+				addMetaDataField(ga, MetaDataFields.theme, theme.getName() + " ("
 						+ getProgramName(theme.getProgramId(), endpoint) + ")");
 			}
 		}
 		if (themes.isEmpty()) {
-			addThemeField(ga, ThemeFields.name, null);
+			addMetaDataField(ga, MetaDataFields.theme, null);
 		}
+		
+		boolean sprintsPresent = false;
+		boolean teamsPresent = false;
+		// now add the teams/sprints
+		List <Team> teams = endpoint.getTeamsForProduct(productId);
+		for (Team team : teams) {
+			teamsPresent = true;
+			addMetaDataField(ga, MetaDataFields.team, team.getName());
+			// retrieve sprints related to team
+			List <Sprint> sprints = endpoint.getSprintsInProductForTeam(productId, team.getId());
+			for (Sprint sprint : sprints) {
+				sprintsPresent = true;
+				addMetaDataField(ga, MetaDataFields.teamSprint, getTeamSprintStringRepresentation(sprint, team));
+				addMetaDataField(ga, MetaDataFields.sprintTeam, getSprintTeamStringRepresentation(sprint, team));
+			}
+		}
+		if (!teamsPresent) {
+			addMetaDataField(ga, MetaDataFields.team, null);
+			addMetaDataField(ga, MetaDataFields.teamSprint, null);
+			addMetaDataField(ga, MetaDataFields.sprintTeam, null);
+		}
+		if (!sprintsPresent) {
+			addMetaDataField(ga, MetaDataFields.teamSprint, null);
+			addMetaDataField(ga, MetaDataFields.sprintTeam, null);
+		}
+		
 		ga.setSourceArtifactVersion(Long.toString(artificialVersionNumber));
 		Date artifactLastModifiedDate = new Date(0);
-		if (releaseRevision.getTimeStamp() != null) {
-			artifactLastModifiedDate = releaseRevision.getTimeStamp()
+		if (metaDataRevision.getTimeStamp() != null) {
+			artifactLastModifiedDate = metaDataRevision.getTimeStamp()
 					.toGregorianCalendar().getTime();
 		}
 		ga.setSourceArtifactLastModifiedDate(GenericArtifactHelper.df

@@ -50,9 +50,9 @@ public class SWPReader extends AbstractReader<Connection> {
 	 * Whenever an program is added to a product, new program epics can show up
 	 * Since a program addition is only visible due to a change in the product
 	 * (not in the epics) we use this variable to determine whether we have to
-	 * resynchronize all themes
+	 * resynchronize the meta data (themes, sprints, teams)
 	 */
-	private Map<String, Boolean> triggerThemeResynchronization = new HashMap<String, Boolean>();
+	private Map<String, Boolean> triggerMetaDataResynchronization = new HashMap<String, Boolean>();
 
 	/**
 	 * This variable determines whether PBIs have been shipped in the last
@@ -187,8 +187,8 @@ public class SWPReader extends AbstractReader<Connection> {
 						artifactId, swpProductName,
 						getResyncUserName() == null ? "" : getResyncUserName(),
 						ignoreResyncUser, genericArtifact);
-			} else if (swpType.equals(SWPMetaData.SWPType.THEME)) {
-				swpHandler.retrieveThemes(connection.getEndpoint(), artifactId,
+			} else if (swpType.equals(SWPMetaData.SWPType.METADATA)) {
+				swpHandler.retrieveMetaData(connection.getEndpoint(), artifactId,
 						swpProductName, genericArtifact);
 			} else {
 				String cause = "Unsupported repository format: "
@@ -304,8 +304,8 @@ public class SWPReader extends AbstractReader<Connection> {
 				+ SWPMetaData.REPOSITORY_ID_SEPARATOR + SWPMetaData.PRODUCT;
 		String correspondingReleaseRepositoryId = swpProductName
 				+ SWPMetaData.REPOSITORY_ID_SEPARATOR + SWPMetaData.RELEASE;
-		String correspondingThemeRepositoryId = swpProductName
-				+ SWPMetaData.REPOSITORY_ID_SEPARATOR + SWPMetaData.THEME;
+		String correspondingMetaDataRepositoryId = swpProductName
+				+ SWPMetaData.REPOSITORY_ID_SEPARATOR + SWPMetaData.METADATA;
 		String correspondingPBIRepositoryId = swpProductName
 				+ SWPMetaData.REPOSITORY_ID_SEPARATOR + SWPMetaData.PBI;
 
@@ -421,7 +421,7 @@ public class SWPReader extends AbstractReader<Connection> {
 								&& shippedPBIsInLastCallUnboxed == true) {
 							shippedPBIsInLastCall.put(swpProductName, false);
 							// trigger theme resynch
-							triggerThemeResynchronization.put(swpProductName,
+							triggerMetaDataResynchronization.put(swpProductName,
 									true);
 							return new ArrayList<ArtifactState>();
 						}
@@ -433,7 +433,7 @@ public class SWPReader extends AbstractReader<Connection> {
 							sourceSystemId, correspondingReleaseRepositoryId) != 0
 							|| getNumberOfWaitingArtifactsForAllTargetSystems(
 									sourceSystemId,
-									correspondingThemeRepositoryId) != 0) {
+									correspondingMetaDataRepositoryId) != 0) {
 						// reset entity type priority
 						log
 								.debug("Do not query new PBIs for "
@@ -451,13 +451,13 @@ public class SWPReader extends AbstractReader<Connection> {
 							return new ArrayList<ArtifactState>();
 						}
 
-						// now check out last theme revision in queue
-						Long lastThemeRevisionInQueue = lastRevisionInQueue
-								.get(correspondingThemeRepositoryId);
+						// now check out last meta data revision in queue
+						Long lastMetaDataRevisionInQueue = lastRevisionInQueue
+								.get(correspondingMetaDataRepositoryId);
 
-						Boolean triggerThemeResynchronizationUnboxed = triggerThemeResynchronization
+						Boolean triggerThemeResynchronizationUnboxed = triggerMetaDataResynchronization
 								.get(swpProductName);
-						if (lastThemeRevisionInQueue == null
+						if (lastMetaDataRevisionInQueue == null
 								|| triggerThemeResynchronizationUnboxed == null
 								|| triggerThemeResynchronizationUnboxed == true) {
 							log
@@ -520,30 +520,30 @@ public class SWPReader extends AbstractReader<Connection> {
 						// now check whether new themes have popped up since
 						// last
 						// pbi synch that are not synchronized yet
-						List<ArtifactState> themeStates = new ArrayList<ArtifactState>();
-						swpHandler.getChangedThemes(connection.getEndpoint(),
-								swpProductName, themeStates,
-								lastThemeRevisionInQueue
+						List<ArtifactState> metaDataStates = new ArrayList<ArtifactState>();
+						swpHandler.getChangedMetaData(connection.getEndpoint(),
+								swpProductName, metaDataStates,
+								lastMetaDataRevisionInQueue
 										/ SWPHandler.SWP_REVISION_FACTOR,
-								lastThemeRevisionInQueue
+								lastMetaDataRevisionInQueue
 										% SWPHandler.SWP_REVISION_FACTOR,
-								getUsername(), triggerThemeResynchronization
+								getUsername(), triggerMetaDataResynchronization
 										.get(swpProductName));
-						if (!themeStates.isEmpty()) {
-							// determine lastThemeInProduct revision
-							Long lastThemeRevisionInProduct = themeStates.get(
-									themeStates.size() - 1)
+						if (!metaDataStates.isEmpty()) {
+							// determine lastMeataDataInProduct revision
+							Long lastMetaDataRevisionInProduct = metaDataStates.get(
+									metaDataStates.size() - 1)
 									.getArtifactVersion();
-							if (lastThemeRevisionInQueue < lastThemeRevisionInProduct) {
+							if (lastMetaDataRevisionInQueue < lastMetaDataRevisionInProduct) {
 								log
 										.debug("Do not query new PBIs for "
 												+ repositoryKey
-												+ " since some newer theme changes are not yet synched ...");
+												+ " since some newer meta data changes are not yet synched ...");
 								return new ArrayList<ArtifactState>();
 							}
 						} else {
 							lastRevisionInQueue.put(
-									correspondingThemeRepositoryId,
+									correspondingMetaDataRepositoryId,
 									currentArtificialRevisionNumber);
 						}
 						// update last revision in queue
@@ -659,7 +659,7 @@ public class SWPReader extends AbstractReader<Connection> {
 										.getArtifactVersion());
 					}
 				}
-			} else if (swpType.equals(SWPType.THEME)) {
+			} else if (swpType.equals(SWPType.METADATA)) {
 				// first, retrieve current revision
 				RevisionInfo currentRevison = swpHandler
 						.getCurrentRevision(connection.getEndpoint());
@@ -667,18 +667,18 @@ public class SWPReader extends AbstractReader<Connection> {
 						.getRevisionNumber() + 1)
 						* SWPHandler.SWP_REVISION_FACTOR;
 
-				swpHandler.getChangedThemes(connection.getEndpoint(),
+				swpHandler.getChangedMetaData(connection.getEndpoint(),
 						swpProductName, artifactStates, majorVersion,
 						minorVersion, getUsername(),
-						triggerThemeResynchronization.get(swpProductName));
-				triggerThemeResynchronization.put(swpProductName, false);
+						triggerMetaDataResynchronization.get(swpProductName));
+				triggerMetaDataResynchronization.put(swpProductName, false);
 				// update last revision in queue
 				if (!artifactStates.isEmpty()) {
-					lastRevisionInQueue.put(correspondingThemeRepositoryId,
+					lastRevisionInQueue.put(correspondingMetaDataRepositoryId,
 							artifactStates.get(artifactStates.size() - 1)
 									.getArtifactVersion());
 				} else {
-					lastRevisionInQueue.put(correspondingThemeRepositoryId,
+					lastRevisionInQueue.put(correspondingMetaDataRepositoryId,
 							currentArtificialRevisionNumber);
 				}
 			} else {

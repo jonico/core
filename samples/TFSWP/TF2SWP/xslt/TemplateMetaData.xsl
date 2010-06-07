@@ -18,7 +18,7 @@
 	<xsl:template match='/ccf:artifact[@artifactType = "plainArtifact"]'>
 		<artifact xmlns="http://ccf.open.collab.net/GenericArtifactV1.0">
 			<xsl:copy-of select="@*" />
-			<!-- Since the SWPWriter does not support themes yet, we just ignore all shipments -->
+			<!-- Since the SWPWriter does not support meta data changes yet, we just ignore all shipments -->
 			<xsl:attribute name="artifactAction">ignore</xsl:attribute>
 			<xsl:apply-templates />
 		</artifact>

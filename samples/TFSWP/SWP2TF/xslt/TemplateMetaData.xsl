@@ -24,10 +24,18 @@
 	<xsl:template match="/ccf:artifact[@artifactType = 'attachment']">
 		<xsl:copy-of select="." />
 	</xsl:template>
-	<xsl:template match='ccf:field[@fieldName="name"]'>
+	<xsl:template match='ccf:field[@fieldName="theme"]'>
 		<field>
 			<xsl:copy-of select="@*" />
 			<xsl:attribute name="fieldName">Themes</xsl:attribute>
+			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
+			<xsl:value-of select="." />
+		</field>
+	</xsl:template>
+	<xsl:template match='ccf:field[@fieldName="teamSprint"]'>
+		<field>
+			<xsl:copy-of select="@*" />
+			<xsl:attribute name="fieldName">Team/Sprint</xsl:attribute>
 			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
 			<xsl:value-of select="." />
 		</field>

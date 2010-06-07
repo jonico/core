@@ -881,8 +881,8 @@ public class TFTrackerHandler {
 	}
 
 	/**
-	 * Updates fields of tracker definition
-	 * This method currently does not support conflict detection
+	 * Updates fields of tracker definition This method currently does not
+	 * support conflict detection
 	 * 
 	 * @param ga
 	 * @param trackerId
@@ -896,17 +896,17 @@ public class TFTrackerHandler {
 	public TrackerDO updateTrackerMetaData(GenericArtifact ga,
 			String trackerId, Map<String, SortedSet<String>> fieldsToBeChanged,
 			Connection connection) throws RemoteException {
-
-		boolean updated = false;
-		while (!updated) {
-			updated = true;
-			try {
-				for (String fieldName : fieldsToBeChanged.keySet()) {
+		Exception exception = null;
+		for (String fieldName : fieldsToBeChanged.keySet()) {
+			boolean updated = false;
+			while (!updated) {
+				updated = true;
+				try {
 					// we have to refetch this data in the loop to avoid version
 					// mismatch exceptions
-					TrackerFieldDO[] fields = connection.getTrackerClient().getFields(
-							trackerId);
-		
+					TrackerFieldDO[] fields = connection.getTrackerClient()
+							.getFields(trackerId);
+
 					// find field in question (we do not create new fields yet)
 					TrackerFieldDO trackerField = null;
 					for (TrackerFieldDO field : fields) {
@@ -917,8 +917,14 @@ public class TFTrackerHandler {
 					}
 					if (trackerField == null) {
 						throw new CCFRuntimeException("Field " + fieldName
-								+ " of tracker " + trackerId + " could not be found.");
+								+ " of tracker " + trackerId
+								+ " could not be found.");
 					}
+
+					// find out whether field is single select or multi select
+					boolean fieldIsSingleSelect = trackerField.getFieldType()
+							.equals(TrackerFieldDO.FIELD_TYPE_SINGLE_SELECT);
+
 					SortedSet<String> anticipatedFieldValues = fieldsToBeChanged
 							.get(fieldName);
 					List<TrackerFieldValueDO> deletedFieldValues = new ArrayList<TrackerFieldValueDO>();
@@ -926,7 +932,7 @@ public class TFTrackerHandler {
 					Map<String, String> currentValues = new HashMap<String, String>();
 					TrackerFieldValueDO[] currentFieldValues = trackerField
 							.getFieldValues();
-		
+
 					for (TrackerFieldValueDO currentFieldValue : currentFieldValues) {
 						currentValues.put(currentFieldValue.getValue(),
 								currentFieldValue.getId());
@@ -935,31 +941,35 @@ public class TFTrackerHandler {
 							deletedFieldValues.add(currentFieldValue);
 						}
 					}
-		
+
 					for (String anticipatedFieldValue : anticipatedFieldValues) {
 						if (!currentValues.containsKey(anticipatedFieldValue)) {
 							addedFieldValues.add(anticipatedFieldValue);
 						}
 					}
-		
-					if (deletedFieldValues.isEmpty() && addedFieldValues.isEmpty()) {
+
+					if (deletedFieldValues.isEmpty()
+							&& addedFieldValues.isEmpty()) {
 						continue;
 					}
-					
+
 					List<TrackerFieldValueDO> updatedValuesList = new ArrayList<TrackerFieldValueDO>();
 					for (String anticipatedFieldValue : anticipatedFieldValues) {
 						TrackerFieldValueDO fieldValue = new TrackerFieldValueDO(
 								connection.supports50());
 						fieldValue.setIsDefault(false);
 						fieldValue.setValue(anticipatedFieldValue);
-						fieldValue.setId(currentValues.get(anticipatedFieldValue));
+						fieldValue.setId(currentValues
+								.get(anticipatedFieldValue));
 						updatedValuesList.add(fieldValue);
 					}
-		
-					// we cannot delete field values if those are still used by tracker
+
+					// we cannot delete field values if those are still used by
+					// tracker
 					// items
 					for (TrackerFieldValueDO deletedFieldValue : deletedFieldValues) {
-						if (isFieldValueUsed(trackerId, fieldName, deletedFieldValue,
+						if (isFieldValueUsed(trackerId, fieldName,
+								deletedFieldValue, fieldIsSingleSelect,
 								connection)) {
 							log
 									.warn("Could not delete field value "
@@ -971,26 +981,42 @@ public class TFTrackerHandler {
 											+ " because there are still artifacts that use this value.");
 							int insertIndex = getInsertIndex(updatedValuesList,
 									deletedFieldValue);
-							updatedValuesList.add(insertIndex, deletedFieldValue);
+							updatedValuesList.add(insertIndex,
+									deletedFieldValue);
 						}
 					}
 					TrackerFieldValueDO[] fieldValues = new TrackerFieldValueDO[updatedValuesList
 							.size()];
 					updatedValuesList.toArray(fieldValues);
 					trackerField.setFieldValues(fieldValues);
-					connection.getTrackerClient().setField(trackerId, trackerField);
+					connection.getTrackerClient().setField(trackerId,
+							trackerField);
+				} catch (AxisFault e) {
+					javax.xml.namespace.QName faultCode = e.getFaultCode();
+					if (!faultCode.getLocalPart()
+							.equals("VersionMismatchFault")) {
+						// throw e;
+						// we do not throw an error yet since we like to give
+						// other fields the chance to be properly updated
+						log
+								.error(
+										"During TF meta data update, an error occured, proceeding to give other fields a chance to be updated ..."
+												+ e.getMessage(), e);
+						exception = e;
+						continue;
+					}
+					updated = false;
+					// we currently do not support conflict detection for meta
+					// data updates
+					logConflictResolutor
+							.warn(
+									"Stale tracker meta data update, will override in any case ...:",
+									e);
 				}
-			} catch (AxisFault e) {
-				javax.xml.namespace.QName faultCode = e.getFaultCode();
-				if (!faultCode.getLocalPart().equals("VersionMismatchFault")) {
-					throw e;
-				}
-				updated = false;
-				// we currently do not support conflict detection for meta data updates
-				logConflictResolutor.warn(
-						"Stale tracker meta data update, will override in any case ...:",
-						e);
 			}
+		}
+		if (exception != null) {
+			throw new CCFRuntimeException("During TF tracker meta data update, at least one exception occured." , exception);
 		}
 		return connection.getTrackerClient().getTrackerData(trackerId);
 	}
@@ -1008,9 +1034,10 @@ public class TFTrackerHandler {
 	}
 
 	private boolean isFieldValueUsed(String trackerId, String fieldName,
-			TrackerFieldValueDO fieldValue, Connection connection)
-			throws RemoteException {
-		Filter filter = new Filter(fieldName, fieldValue.getValue());
+			TrackerFieldValueDO fieldValue, boolean fieldIsSingleSelect,
+			Connection connection) throws RemoteException {
+		Filter filter = new Filter(fieldName, fieldIsSingleSelect ? fieldValue
+				.getId() : fieldValue.getValue());
 		Filter[] filters = { filter };
 		String[] selectedColumns = { ArtifactSoapDO.COLUMN_ID };
 		ArtifactDetailList artifactList = connection.getTrackerClient()

@@ -16,7 +16,7 @@ public class SWPMetaData {
 	 * 
 	 */
 	public enum SWPType {
-		PBI, TASK, SPRINT, TEAM, RELEASE, /* PROGRAM_RELEASE, */ PRODUCT, EPIC, /* PROGRAM, */ /* PROGRAM_EPIC ,*/ THEME, /*PROGRAM_THEME, */ IMPEDIMENT, USER, UNKNOWN
+		PBI, TASK, SPRINT, TEAM, RELEASE, /* PROGRAM_RELEASE, */ PRODUCT, EPIC, /* PROGRAM, */ /* PROGRAM_EPIC ,*/ METADATA, /*PROGRAM_THEME, */ IMPEDIMENT, USER, UNKNOWN
 	}
 
 	public final static String PBI = "PBI";
@@ -29,11 +29,13 @@ public class SWPMetaData {
 	public final static String EPIC = "Epic";
 	//public final static String PROGRAM = "Program";
 	//public final static String PROGRAM_EPIC = "ProgramEpic";
-	public final static String THEME = "Theme";
+	public final static String METADATA = "MetaData";
 	//public final static String PROGRAM_THEME = "ProgramTheme";
 	public final static String IMPEDIMENT = "Impediment";
 	public final static String USER = "User";
 	public final static String UNKNOWN = "UNKNOWN";
+	
+	public static final String SWP_METADATA_ID_PREFIX = "metaDataFor";
 
 	/**
 	 * Character used to separate the components of a repository id
@@ -71,8 +73,8 @@ public class SWPMetaData {
 		//	return SWPType.PROGRAM;
 		//if (repositoryId.endsWith(PROGRAM_THEME))
 		//	return SWPType.PROGRAM_THEME;
-		if (repositoryId.endsWith(THEME))
-			return SWPType.THEME;
+		if (repositoryId.endsWith(METADATA))
+			return SWPType.METADATA;
 		if (repositoryId.endsWith(EPIC))
 			return SWPType.EPIC;
 		//if (repositoryId.endsWith(PROGRAM_EPIC))
@@ -114,6 +116,8 @@ public class SWPMetaData {
 		sprint("sprint", GenericArtifactField.FieldValueTypeValue.STRING),
 		sprintId("sprintId", GenericArtifactField.FieldValueTypeValue.STRING),
 		team("team", GenericArtifactField.FieldValueTypeValue.STRING),
+		teamSprint("teamSprint", GenericArtifactField.FieldValueTypeValue.STRING),
+		sprintTeam("sprintTeam", GenericArtifactField.FieldValueTypeValue.STRING),
 		title("title", GenericArtifactField.FieldValueTypeValue.STRING),
 		theme("theme", GenericArtifactField.FieldValueTypeValue.STRING),
 		comment("Comment Text", GenericArtifactField.FieldValueTypeValue.STRING),
@@ -218,13 +222,16 @@ public class SWPMetaData {
 		}
 	}
 	
-	public enum ThemeFields {
-		name("name", GenericArtifactField.FieldValueTypeValue.STRING);
+	public enum MetaDataFields {
+		theme("theme", GenericArtifactField.FieldValueTypeValue.STRING),
+		teamSprint("teamSprint", GenericArtifactField.FieldValueTypeValue.STRING),
+		team("team", GenericArtifactField.FieldValueTypeValue.STRING),
+		sprintTeam("sprintTeam", GenericArtifactField.FieldValueTypeValue.STRING);
 		
 		private GenericArtifactField.FieldValueTypeValue valueType;
 		private String fieldName;
 		
-		private ThemeFields(String fieldName, GenericArtifactField.FieldValueTypeValue valueType) {
+		private MetaDataFields(String fieldName, GenericArtifactField.FieldValueTypeValue valueType) {
 			this.fieldName = fieldName;
 			this.valueType = valueType;
 		}
