@@ -306,8 +306,8 @@ public class SWPMetaData {
 	public static String getTeamSprintStringRepresentation(String sprintName, String startDate, String endDate,
 			String teamName) {
 		StringBuffer value = new StringBuffer(teamName + " "
-				+ sprintDateFormat.format(startDate) + " - "
-				+ sprintDateFormat.format(endDate));
+				+ startDate + " - "
+				+ endDate);
 		if (sprintName != null && sprintName.trim().length() > 0) {
 			value.append(" -- " + sprintName);
 		}
