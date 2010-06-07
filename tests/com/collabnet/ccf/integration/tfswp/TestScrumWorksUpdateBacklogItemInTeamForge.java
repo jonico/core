@@ -114,7 +114,8 @@ public class TestScrumWorksUpdateBacklogItemInTeamForge extends
 		assertEquals(Arrays.asList(benefit, penalty, effort,
 				scrumWorksPbiFromUpdate.getKey(), SWPMetaData
 						.getTeamSprintStringRepresentation(sprint.getName(),
-								sprint.getStartDate(), sprint.getEndDate(),
+								sprint.getStartDateAsTwoDigitMonthAndDate(), 
+								sprint.getEndDateAsTwoDigitMonthAndDate(),
 								sprint.getTeam()), sprint.getStartDate(),
 				sprint.getEndDate(), theme1, theme2), getTeamForgeTester()
 				.getFieldValues(artifactId, TeamForgeTester.FIELD_BENEFIT,

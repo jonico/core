@@ -62,17 +62,51 @@ public enum Sprint {
 	}
 	
 	/**
-	 * @return the start date in XX/XX/XXXX format
+	 * @return the start date in X/X/XXXX format without leading 0 for single digit month or day
 	 */
 	public String getStartDate() {
 		return start; 
 	}
 	
 	/**
-	 * @return the end date in XX/XX/XXXX format
+	 * @return the start date in XX/XX/XXXX format with two digits for month and day
+	 */
+	public String getStartDateAsTwoDigitMonthAndDate() {
+		return convertToTwoDigitMonthAndDate(start); 
+	}
+	
+	/**
+	 * @return the end date in X/X/XXXX format without leading 0 for single digit month or day
 	 */
 	public String getEndDate() {
 		return end; 
+	}
+	
+	/**
+	 * @return the end date in XX/XX/XXXX format with two digits for month and day 
+	 */
+	public String getEndDateAsTwoDigitMonthAndDate() {
+		return convertToTwoDigitMonthAndDate(end); 
+	}
+
+	/**
+	 * Converts the date string into XX/XX/XXXX with leading 0 if there is a single digit month or day. 
+	 * 
+	 * @param dateString the date string to convert
+	 * @return the date string in XX/XX/XXXX with two digits for month and day
+	 */
+	private String convertToTwoDigitMonthAndDate(final String dateString) {
+		final String[] splitDateString = dateString.split("/"); 
+		final StringBuffer dateWithTwoDigitMonthDate = new StringBuffer(); 
+		final int monthAndDateStrings = splitDateString.length - 1;
+		for (int i = 0; i < monthAndDateStrings; i++) {
+			if (splitDateString[i].length() < 2) {
+				dateWithTwoDigitMonthDate.append("0"); 
+			}
+			dateWithTwoDigitMonthDate.append(splitDateString[i] + "/"); 
+		}
+		dateWithTwoDigitMonthDate.append(splitDateString[2]);
+		return dateWithTwoDigitMonthDate.toString();
 	}
 	
 	/**
