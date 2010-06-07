@@ -14,7 +14,6 @@ import org.junit.Test;
 
 import com.collabnet.teamforge.api.FieldValues;
 import com.danube.scrumworks.api2.client.BacklogItem;
-import com.danube.scrumworks.api2.client.Product;
 
 /**
  * Creates a backlog item in TeamForge and verifies the backlog item in
@@ -45,8 +44,6 @@ public class TestTeamForgeCreateBacklogItemInScrumWorks extends
 		final String theme2 = SWPTester.THEME_GUI;
 		// and now some bogus values that should be ignored
 		String bogusKey = "bogusKey";
-		String bogusSprint = "bogusSprint";
-		String bogusTeam = "bogusTeam";
 
 		// execute
 		final FieldValues flexFields = getTeamForgeTester().convertToFlexField(
@@ -54,17 +51,15 @@ public class TestTeamForgeCreateBacklogItemInScrumWorks extends
 						TeamForgeTester.FIELD_PENALTY,
 						TeamForgeTester.FIELD_EFFORT,
 						TeamForgeTester.FIELD_THEME,
-						TeamForgeTester.FIELD_THEME, TeamForgeTester.FIELD_KEY,
-						TeamForgeTester.FIELD_TEAM,
-						TeamForgeTester.FIELD_SPRINT_NAME },
+						TeamForgeTester.FIELD_THEME, 
+						TeamForgeTester.FIELD_KEY},
 				new String[] { benefit, penalty, effort, theme1, theme2,
-						bogusKey, bogusTeam, bogusSprint });
+						bogusKey});
 
 		getTeamForgeTester().createBacklogItem(title, description, release,
 				flexFields);
 
 		// verify
-		final Product product = getSWPTester().getProduct();
 		List<BacklogItem> pbis = getSWPTester().waitForBacklogItemsToAppear(1);
 
 		assertEquals(1, pbis.size());

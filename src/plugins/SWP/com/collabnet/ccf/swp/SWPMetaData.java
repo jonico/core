@@ -294,6 +294,25 @@ public class SWPMetaData {
 		}
 		return value.toString();
 	}
+	
+	/**
+	 * Returns the string representation of a sprint in a team if team should be
+	 * mentioned first
+	 * 
+	 * @param sprint
+	 * @param team
+	 * @return
+	 */
+	public static String getTeamSprintStringRepresentation(String sprintName, String startDate, String endDate,
+			String teamName) {
+		StringBuffer value = new StringBuffer(teamName + " "
+				+ sprintDateFormat.format(startDate) + " - "
+				+ sprintDateFormat.format(endDate));
+		if (sprintName != null && sprintName.trim().length() > 0) {
+			value.append(" -- " + sprintName);
+		}
+		return value.toString();
+	}
 
 	/**
 	 * Returns the string representation of a sprint in a team if sprint should

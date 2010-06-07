@@ -1,7 +1,6 @@
 package com.collabnet.ccf.swp;
 
 import java.rmi.RemoteException;
-import java.text.SimpleDateFormat;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -30,12 +29,12 @@ import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifact.ArtifactActionValue;
 import com.collabnet.ccf.core.ga.GenericArtifactField.FieldActionValue;
+import com.collabnet.ccf.swp.SWPMetaData.MetaDataFields;
 import com.collabnet.ccf.swp.SWPMetaData.PBIFields;
 import com.collabnet.ccf.swp.SWPMetaData.ProductFields;
 import com.collabnet.ccf.swp.SWPMetaData.ReleaseFields;
 import com.collabnet.ccf.swp.SWPMetaData.SWPType;
 import com.collabnet.ccf.swp.SWPMetaData.TaskFields;
-import com.collabnet.ccf.swp.SWPMetaData.MetaDataFields;
 import com.danube.scrumworks.api2.client.AggregateVersionedData;
 import com.danube.scrumworks.api2.client.BacklogItem;
 import com.danube.scrumworks.api2.client.BacklogItemChanges;

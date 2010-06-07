@@ -59,10 +59,10 @@ public class TeamForgeTester {
 	public static final String FIELD_KEY = "SWP-Key";
 
 	/** Variable name for the backlog item's team. */
-	public static final String FIELD_TEAM = "Team";
+	//public static final String FIELD_TEAM = "Team";
 
 	/** Variable name for the backlog item's sprint's name. */
-	public static final String FIELD_SPRINT_NAME = "Sprint";
+	public static final String FIELD_TEAM_SPRINT_NAME = "Team/Sprint";
 
 	/** Variable name for the backlog item's sprint's start date. */
 	public static final String FIELD_SPRINT_START = "Sprint Start";

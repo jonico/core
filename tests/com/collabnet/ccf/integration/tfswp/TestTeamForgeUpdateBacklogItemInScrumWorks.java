@@ -12,7 +12,6 @@ import org.junit.Test;
 
 import com.collabnet.teamforge.api.FieldValues;
 import com.collabnet.teamforge.api.tracker.ArtifactDO;
-import com.danube.scrumworks.api.client.types.BacklogItemWSO;
 import com.danube.scrumworks.api2.client.BacklogItem;
 import com.danube.scrumworks.api2.client.Comment;
 
@@ -29,8 +28,7 @@ public class TestTeamForgeUpdateBacklogItemInScrumWorks extends TFSWPIntegration
 		TeamForgeTester.FIELD_THEME, 
 		TeamForgeTester.FIELD_THEME,
 		TeamForgeTester.FIELD_KEY,
-		TeamForgeTester.FIELD_TEAM,
-		TeamForgeTester.FIELD_SPRINT_NAME};
+		TeamForgeTester.FIELD_TEAM_SPRINT_NAME};
 
 	private ArtifactDO backlogItemDO; 
 
@@ -52,7 +50,7 @@ public class TestTeamForgeUpdateBacklogItemInScrumWorks extends TFSWPIntegration
 
 		// execute, do not set bogus values here
 		final FieldValues flexFields = getTeamForgeTester().convertToFlexField(names, 
-				new String[] {benefit, penalty, effort, theme1, theme2, null, null, null}); 
+				new String[] {benefit, penalty, effort, theme1, theme2, null, null}); 
 		
 		backlogItemDO = getTeamForgeTester().createBacklogItem(title, description, release, flexFields);
 	}
@@ -77,11 +75,9 @@ public class TestTeamForgeUpdateBacklogItemInScrumWorks extends TFSWPIntegration
 		final String theme2 = SWPTester.THEME_DOCUMENTATION;
 		// and now some bogus values that should be ignored
 		String bogusKey = "bogusKey";
-		String bogusSprint = "bogusSprint";
-		String bogusTeam = "bogusTeam";
 		
 		final FieldValues flexFields = getTeamForgeTester().convertToFlexField(names, 
-				new String[] {benefit, penalty, effort, theme1, theme2, bogusKey, bogusTeam, bogusSprint});
+				new String[] {benefit, penalty, effort, theme1, theme2, bogusKey, null});
 		
 		getTeamForgeTester().updateBacklogItem(backlogItemDO.getId(), title, description, release, flexFields); 
 		
