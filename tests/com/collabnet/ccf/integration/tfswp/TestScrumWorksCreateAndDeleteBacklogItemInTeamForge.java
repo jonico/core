@@ -40,8 +40,8 @@ public class TestScrumWorksCreateAndDeleteBacklogItemInTeamForge extends
 		final String benefit = "10";
 		final String penalty = "20";
 		final String effort = "30";
-		final String theme1 = SWPTester.THEME_CORE;
-		final String theme2 = SWPTester.THEME_GUI;
+		final String theme1 = SWPTester.THEME_GUI;
+		final String theme2 = SWPTester.THEME_CORE;
 		Sprint sprint = Sprint.SPRINT_1_AUTOMATED_TEAM;
 
 		BacklogItem pbiInScrumWorks = getSWPTester().createBacklogItem(title,
@@ -68,7 +68,8 @@ public class TestScrumWorksCreateAndDeleteBacklogItemInTeamForge extends
 		final String artifactId = pbiInTeamForge.getId();
 		assertEquals(Arrays.asList(benefit, penalty, effort, pbiInScrumWorks
 				.getKey(), SWPMetaData.getTeamSprintStringRepresentation(sprint
-				.getName(), sprint.getStartDate(), sprint.getEndDate(), sprint
+				.getName(), sprint.getStartDateAsTwoDigitMonthAndDate(), 
+				sprint.getEndDateAsTwoDigitMonthAndDate(), sprint
 				.getTeam()), sprint.getStartDate(), sprint.getEndDate(),
 				theme1, theme2), getTeamForgeTester().getFieldValues(
 				artifactId, TeamForgeTester.FIELD_BENEFIT,
