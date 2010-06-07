@@ -76,41 +76,7 @@ public class SWPHandler {
 	private Map<String, AbstractMap.SimpleEntry<Long, RevisionInfo>> metaDataCache = new HashMap<String, AbstractMap.SimpleEntry<Long, RevisionInfo>>();
 	private Map<String, Long> productIdCache = new HashMap<String, Long>();
 	private Map<Long, String> programNameCache = new HashMap<Long, String>();
-	// this date formatter is used to produce string representations of sprint start/end dates
-	private SimpleDateFormat simpleDateFormat = new SimpleDateFormat("MM/dd/yyyy");
-
-	/**
-	 * Returns the string representation of a sprint in a team if team should be mentioned first
-	 * @param sprint
-	 * @param team
-	 * @return
-	 */
-	private String getTeamSprintStringRepresentation (Sprint sprint, Team team) {
-		Date startDate = sprint.getStartDate().toGregorianCalendar().getTime();
-		Date endDate = sprint.getEndDate().toGregorianCalendar().getTime();
-		StringBuffer value = new StringBuffer(team.getName() + " " + simpleDateFormat.format(startDate) + " - " + simpleDateFormat.format(endDate));
-		if (sprint.getName() != null && sprint.getName().trim().length() > 0) {
-			value.append(" -- " + sprint.getName());
-		}
-		return value.toString();
-	}
 	
-	/**
-	 * Returns the string representation of a sprint in a team if sprint should be mentioned first
-	 * @param sprint
-	 * @param team
-	 * @return
-	 */
-	private String getSprintTeamStringRepresentation (Sprint sprint, Team team) {
-		Date startDate = sprint.getStartDate().toGregorianCalendar().getTime();
-		Date endDate = sprint.getEndDate().toGregorianCalendar().getTime();
-		StringBuffer value = new StringBuffer(simpleDateFormat.format(startDate) + " - " + simpleDateFormat.format(endDate));
-		if (sprint.getName() != null && sprint.getName().trim().length() > 0) {
-			value.append(" -- " + sprint.getName());
-		}
-		value.append(" ("+team.getName()+")");
-		return value.toString();
-	}
 
 	/**
 	 * Returns id of product in question Uses a cache internally
@@ -269,8 +235,8 @@ public class SWPHandler {
 				// retrieve team name
 				Team team = endpoint.getTeamById(sprint.getTeamId());
 				addPBIField(ga, PBIFields.team, team.getName());
-				addPBIField(ga, PBIFields.teamSprint, getTeamSprintStringRepresentation(sprint, team));
-				addPBIField(ga, PBIFields.sprintTeam, getSprintTeamStringRepresentation(sprint, team));
+				addPBIField(ga, PBIFields.teamSprint, SWPMetaData.getTeamSprintStringRepresentation(sprint, team));
+				addPBIField(ga, PBIFields.sprintTeam, SWPMetaData.getSprintTeamStringRepresentation(sprint, team));
 			}
 		} else {
 			ga.setArtifactAction(ArtifactActionValue.DELETE);
@@ -2810,8 +2776,8 @@ public class SWPHandler {
 			List <Sprint> sprints = endpoint.getSprintsInProductForTeam(productId, team.getId());
 			for (Sprint sprint : sprints) {
 				sprintsPresent = true;
-				addMetaDataField(ga, MetaDataFields.teamSprint, getTeamSprintStringRepresentation(sprint, team));
-				addMetaDataField(ga, MetaDataFields.sprintTeam, getSprintTeamStringRepresentation(sprint, team));
+				addMetaDataField(ga, MetaDataFields.teamSprint, SWPMetaData.getTeamSprintStringRepresentation(sprint, team));
+				addMetaDataField(ga, MetaDataFields.sprintTeam, SWPMetaData.getSprintTeamStringRepresentation(sprint, team));
 			}
 		}
 		if (!teamsPresent) {
