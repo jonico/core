@@ -40,8 +40,8 @@ public class TestScrumWorksCreateAndDeleteBacklogItemInTeamForge extends
 		final String benefit = "10";
 		final String penalty = "20";
 		final String effort = "30";
-		final String theme1 = SWPTester.THEME_GUI;
-		final String theme2 = SWPTester.THEME_CORE;
+		final String theme1 = SWPTester.THEME_CORE;
+		final String theme2 = SWPTester.THEME_GUI;
 		Sprint sprint = Sprint.SPRINT_1_AUTOMATED_TEAM;
 
 		BacklogItem pbiInScrumWorks = getSWPTester().createBacklogItem(title,
