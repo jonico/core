@@ -6,9 +6,6 @@ import static org.junit.Assert.assertTrue;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.GregorianCalendar;
-import java.util.List;
-
-import javax.xml.datatype.DatatypeFactory;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -16,7 +13,6 @@ import org.junit.Test;
 import com.collabnet.ccf.swp.SWPMetaData;
 import com.collabnet.teamforge.api.tracker.ArtifactRow;
 import com.danube.scrumworks.api2.client.BacklogItem;
-import com.danube.scrumworks.api2.client.Theme;
 
 /**
  * Tests that a backlog item updated in ScrumWorks is correctly synched in
@@ -86,10 +82,7 @@ public class TestScrumWorksUpdateBacklogItemInTeamForge extends
 				.get(Calendar.YEAR), today.get(Calendar.MONTH), today
 				.get(Calendar.DAY_OF_MONTH));
 		backlogItem.setCompletedDate(doneDate.getTime());
-		List<Theme> themes = backlogItem.getThemes();
-		backlogItem.getThemes().remove(themes);
-		backlogItem.getThemes().addAll(
-				getSWPTester().transformToThemeWSO(theme1, theme2));
+		backlogItem.setThemes(getSWPTester().transformToThemeWSO(theme1, theme2)); 
 		final BacklogItem scrumWorksPbiFromUpdate = getSWPTester()
 				.updateBacklogItem(backlogItem);
 
