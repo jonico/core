@@ -6,6 +6,7 @@ import static org.junit.Assert.assertNull;
 
 import java.rmi.RemoteException;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.GregorianCalendar;
 
 import javax.xml.datatype.DatatypeFactory;
@@ -68,8 +69,8 @@ public class TestScrumWorksCreateUpdateAndDeleteReleaseInTeamForge extends TFSWP
 		// use random title with system millis inside to identify
 		String releaseTitle = "Release" + System.currentTimeMillis();
 		String releaseDescription = "Release automatically created by a unit test";
-		XMLGregorianCalendar releaseDate = null;
-		XMLGregorianCalendar startDate = null;
+		Date releaseDate = null;
+		Date startDate = null;
 		swpRelease = new Release();
 		swpRelease.setArchived(false); 
 		swpRelease.setName(releaseTitle); 
@@ -103,8 +104,8 @@ public class TestScrumWorksCreateUpdateAndDeleteReleaseInTeamForge extends TFSWP
 		GregorianCalendar newStartDate = new GregorianCalendar(today.get(Calendar.YEAR), today.get(Calendar.MONTH) ,today.get(Calendar.DAY_OF_MONTH));
 		GregorianCalendar newReleaseDate = (GregorianCalendar) newStartDate.clone(); 
 		newReleaseDate.add(Calendar.DAY_OF_MONTH, 1);
-		XMLGregorianCalendar xmlNewStartDate = DatatypeFactory.newInstance().newXMLGregorianCalendar(newStartDate); 
-		XMLGregorianCalendar xmlNewReleaseDate = DatatypeFactory.newInstance().newXMLGregorianCalendar(newReleaseDate);  
+		Date xmlNewStartDate = newStartDate.getTime(); 
+		Date xmlNewReleaseDate = newReleaseDate.getTime();  
 		
 		swpRelease.setName(newReleaseTitle);
 		swpRelease.setDescription(newReleaseDescription);

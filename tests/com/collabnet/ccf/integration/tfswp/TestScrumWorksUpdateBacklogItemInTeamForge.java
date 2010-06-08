@@ -85,8 +85,7 @@ public class TestScrumWorksUpdateBacklogItemInTeamForge extends
 		GregorianCalendar doneDate = new GregorianCalendar(today
 				.get(Calendar.YEAR), today.get(Calendar.MONTH), today
 				.get(Calendar.DAY_OF_MONTH));
-		backlogItem.setCompletedDate(DatatypeFactory.newInstance()
-				.newXMLGregorianCalendar(doneDate));
+		backlogItem.setCompletedDate(doneDate.getTime());
 		List<Theme> themes = backlogItem.getThemes();
 		backlogItem.getThemes().remove(themes);
 		backlogItem.getThemes().addAll(

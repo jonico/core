@@ -41,7 +41,7 @@ public class TestScrumWorksCreateandDeleteThemeInTeamForge extends
 	@After
 	public void tearDown() throws ScrumWorksException, RemoteException {
 		if (theme != null) {
-			getSWPTester().getSWPEndpoint().deleteTheme(theme);
+			getSWPTester().getSWPEndpoint().deleteTheme(theme.getId());
 		}
 		super.tearDown();
 	}
@@ -67,7 +67,7 @@ public class TestScrumWorksCreateandDeleteThemeInTeamForge extends
 				getTeamForgeTester().getPbiTracker(),
 				TeamForgeTester.FIELD_THEME, themeName);
 		// delete theme
-		getSWPTester().getSWPEndpoint().deleteTheme(theme);
+		getSWPTester().getSWPEndpoint().deleteTheme(theme.getId());
 		// wait until new theme disappears in TF
 		getTeamForgeTester().waitForTrackerFieldValueToDisappear(
 				getTeamForgeTester().getPbiTracker(),
