@@ -15,8 +15,6 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.xml.datatype.DatatypeConfigurationException;
-import javax.xml.datatype.DatatypeFactory;
-import javax.xml.datatype.XMLGregorianCalendar;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -63,7 +61,7 @@ import com.danube.scrumworks.api2.client.Theme;
  */
 public class SWPHandler {
 	private static final Log log = LogFactory.getLog(SWPHandler.class);
-	private DatatypeFactory calendarConverter;
+	//private DatatypeFactory calendarConverter;
 
 	// caching data structures
 	// AbstractMap.SimpleEntry is only used because it comes close to the Pair
@@ -142,7 +140,7 @@ public class SWPHandler {
 	 * @throws DatatypeConfigurationException
 	 */
 	public SWPHandler() throws DatatypeConfigurationException {
-		calendarConverter = DatatypeFactory.newInstance();
+		// calendarConverter = DatatypeFactory.newInstance();
 	}
 
 	/**
@@ -246,8 +244,7 @@ public class SWPHandler {
 		ga.setSourceArtifactVersion(Long.toString(artificialVersionNumber));
 		Date artifactLastModifiedDate = new Date(0);
 		if (pbiRevision.getTimeStamp() != null) {
-			artifactLastModifiedDate = pbiRevision.getTimeStamp()
-					.toGregorianCalendar().getTime();
+			artifactLastModifiedDate = pbiRevision.getTimeStamp();
 		}
 		ga.setSourceArtifactLastModifiedDate(GenericArtifactHelper.df
 				.format(artifactLastModifiedDate));
@@ -320,8 +317,7 @@ public class SWPHandler {
 				.toString(artificialVersionNumber));
 		Date artifactLastModifiedDate = new Date(0);
 		if (taskRevision.getTimeStamp() != null) {
-			artifactLastModifiedDate = taskRevision.getTimeStamp()
-					.toGregorianCalendar().getTime();
+			artifactLastModifiedDate = taskRevision.getTimeStamp();
 		}
 		genericArtifact
 				.setSourceArtifactLastModifiedDate(GenericArtifactHelper.df
@@ -606,12 +602,11 @@ public class SWPHandler {
 						ArtifactState artifactState = new ArtifactState();
 						artifactState.setArtifactId(deletedArtifactId
 								.toString());
-						XMLGregorianCalendar xmlTimestamp = processedRevisionInfo
+						Date xmlTimestamp = processedRevisionInfo
 								.getTimeStamp();
 						Date artifactLastModifiedDate = new Date(0);
 						if (xmlTimestamp != null) {
-							artifactLastModifiedDate = xmlTimestamp
-									.toGregorianCalendar().getTime();
+							artifactLastModifiedDate = xmlTimestamp;
 						}
 						artifactState
 								.setArtifactLastModifiedDate(artifactLastModifiedDate);
@@ -676,12 +671,11 @@ public class SWPHandler {
 						ArtifactState artifactState = new ArtifactState();
 						artifactState
 								.setArtifactId(artifact.getId().toString());
-						XMLGregorianCalendar xmlTimestamp = processedRevisionInfo
+						Date xmlTimestamp = processedRevisionInfo
 								.getTimeStamp();
 						Date artifactLastModifiedDate = new Date(0);
 						if (xmlTimestamp != null) {
-							artifactLastModifiedDate = xmlTimestamp
-									.toGregorianCalendar().getTime();
+							artifactLastModifiedDate = xmlTimestamp;
 						}
 						artifactState
 								.setArtifactLastModifiedDate(artifactLastModifiedDate);
@@ -888,12 +882,11 @@ public class SWPHandler {
 						ArtifactState artifactState = new ArtifactState();
 						artifactState.setArtifactId(deletedArtifactId
 								.toString());
-						XMLGregorianCalendar xmlTimestamp = processedRevisionInfo
+						Date xmlTimestamp = processedRevisionInfo
 								.getTimeStamp();
 						Date artifactLastModifiedDate = new Date(0);
 						if (xmlTimestamp != null) {
-							artifactLastModifiedDate = xmlTimestamp
-									.toGregorianCalendar().getTime();
+							artifactLastModifiedDate = xmlTimestamp;
 						}
 						artifactState
 								.setArtifactLastModifiedDate(artifactLastModifiedDate);
@@ -958,12 +951,11 @@ public class SWPHandler {
 						ArtifactState artifactState = new ArtifactState();
 						artifactState
 								.setArtifactId(artifact.getId().toString());
-						XMLGregorianCalendar xmlTimestamp = processedRevisionInfo
+						Date xmlTimestamp = processedRevisionInfo
 								.getTimeStamp();
 						Date artifactLastModifiedDate = new Date(0);
 						if (xmlTimestamp != null) {
-							artifactLastModifiedDate = xmlTimestamp
-									.toGregorianCalendar().getTime();
+							artifactLastModifiedDate = xmlTimestamp;
 						}
 						artifactState
 								.setArtifactLastModifiedDate(artifactLastModifiedDate);
@@ -1092,8 +1084,7 @@ public class SWPHandler {
 			if (completedDateFieldValue == null) {
 				pbi.setCompletedDate(null);
 			} else {
-				pbi.setCompletedDate(calendarConverter
-						.newXMLGregorianCalendar(completedDateFieldValue));
+				pbi.setCompletedDate(completedDateFieldValue.getTime());
 			}
 		}
 
@@ -1333,7 +1324,7 @@ public class SWPHandler {
 				Date artifactLastModifiedDate = new Date(0);
 				if (processedRevisionInfo.getTimeStamp() != null) {
 					artifactLastModifiedDate = processedRevisionInfo
-							.getTimeStamp().toGregorianCalendar().getTime();
+							.getTimeStamp();
 				}
 				ga.setTargetArtifactLastModifiedDate(GenericArtifactHelper.df
 						.format(artifactLastModifiedDate));
@@ -1573,7 +1564,7 @@ public class SWPHandler {
 				Date artifactLastModifiedDate = new Date(0);
 				if (processedRevisionInfo.getTimeStamp() != null) {
 					artifactLastModifiedDate = processedRevisionInfo
-							.getTimeStamp().toGregorianCalendar().getTime();
+							.getTimeStamp();
 				}
 				ga.setTargetArtifactLastModifiedDate(GenericArtifactHelper.df
 						.format(artifactLastModifiedDate));
@@ -1624,8 +1615,7 @@ public class SWPHandler {
 			if (completedDateFieldValue == null) {
 				pbi.setCompletedDate(null);
 			} else {
-				pbi.setCompletedDate(calendarConverter
-						.newXMLGregorianCalendar(completedDateFieldValue));
+				pbi.setCompletedDate(completedDateFieldValue.getTime());
 			}
 		}
 
@@ -1845,7 +1835,7 @@ public class SWPHandler {
 				Date artifactLastModifiedDate = new Date(0);
 				if (processedRevisionInfo.getTimeStamp() != null) {
 					artifactLastModifiedDate = processedRevisionInfo
-							.getTimeStamp().toGregorianCalendar().getTime();
+							.getTimeStamp();
 				}
 				ga.setTargetArtifactLastModifiedDate(GenericArtifactHelper.df
 						.format(artifactLastModifiedDate));
@@ -2017,7 +2007,7 @@ public class SWPHandler {
 				Date artifactLastModifiedDate = new Date(0);
 				if (processedRevisionInfo.getTimeStamp() != null) {
 					artifactLastModifiedDate = processedRevisionInfo
-							.getTimeStamp().toGregorianCalendar().getTime();
+							.getTimeStamp();
 				}
 				ga.setTargetArtifactLastModifiedDate(GenericArtifactHelper.df
 						.format(artifactLastModifiedDate));
@@ -2135,12 +2125,11 @@ public class SWPHandler {
 						ArtifactState artifactState = new ArtifactState();
 						artifactState.setArtifactId(deletedArtifactId
 								.toString());
-						XMLGregorianCalendar xmlTimestamp = processedRevisionInfo
+						Date xmlTimestamp = processedRevisionInfo
 								.getTimeStamp();
 						Date artifactLastModifiedDate = new Date(0);
 						if (xmlTimestamp != null) {
-							artifactLastModifiedDate = xmlTimestamp
-									.toGregorianCalendar().getTime();
+							artifactLastModifiedDate = xmlTimestamp;
 						}
 						artifactState
 								.setArtifactLastModifiedDate(artifactLastModifiedDate);
@@ -2205,12 +2194,11 @@ public class SWPHandler {
 						ArtifactState artifactState = new ArtifactState();
 						artifactState
 								.setArtifactId(artifact.getId().toString());
-						XMLGregorianCalendar xmlTimestamp = processedRevisionInfo
+						Date xmlTimestamp = processedRevisionInfo
 								.getTimeStamp();
 						Date artifactLastModifiedDate = new Date(0);
 						if (xmlTimestamp != null) {
-							artifactLastModifiedDate = xmlTimestamp
-									.toGregorianCalendar().getTime();
+							artifactLastModifiedDate = xmlTimestamp;
 						}
 						artifactState
 								.setArtifactLastModifiedDate(artifactLastModifiedDate);
@@ -2351,12 +2339,11 @@ public class SWPHandler {
 						ArtifactState artifactState = new ArtifactState();
 						artifactState.setArtifactId(deletedArtifactId
 								.toString());
-						XMLGregorianCalendar xmlTimestamp = processedRevisionInfo
+						Date xmlTimestamp = processedRevisionInfo
 								.getTimeStamp();
 						Date artifactLastModifiedDate = new Date(0);
 						if (xmlTimestamp != null) {
-							artifactLastModifiedDate = xmlTimestamp
-									.toGregorianCalendar().getTime();
+							artifactLastModifiedDate = xmlTimestamp;
 						}
 						artifactState
 								.setArtifactLastModifiedDate(artifactLastModifiedDate);
@@ -2422,12 +2409,11 @@ public class SWPHandler {
 						ArtifactState artifactState = new ArtifactState();
 						artifactState
 								.setArtifactId(artifact.getId().toString());
-						XMLGregorianCalendar xmlTimestamp = processedRevisionInfo
+						Date xmlTimestamp = processedRevisionInfo
 								.getTimeStamp();
 						Date artifactLastModifiedDate = new Date(0);
 						if (xmlTimestamp != null) {
-							artifactLastModifiedDate = xmlTimestamp
-									.toGregorianCalendar().getTime();
+							artifactLastModifiedDate = xmlTimestamp;
 						}
 						artifactState
 								.setArtifactLastModifiedDate(artifactLastModifiedDate);
@@ -2493,11 +2479,10 @@ public class SWPHandler {
 			}
 			ArtifactState artifactState = new ArtifactState();
 			artifactState.setArtifactId(SWPMetaData.SWP_METADATA_ID_PREFIX + swpProductName);
-			XMLGregorianCalendar xmlTimestamp = currentRevision.getTimeStamp();
+			Date xmlTimestamp = currentRevision.getTimeStamp();
 			Date artifactLastModifiedDate = new Date(0);
 			if (xmlTimestamp != null) {
-				artifactLastModifiedDate = xmlTimestamp.toGregorianCalendar()
-						.getTime();
+				artifactLastModifiedDate = xmlTimestamp;
 			}
 			artifactState.setArtifactLastModifiedDate(artifactLastModifiedDate);
 			// by not adding a minor number, we make sure not to miss anything
@@ -2558,11 +2543,10 @@ public class SWPHandler {
 			int revisionNumber = currentRevision.getRevisionNumber() + 1;
 			ArtifactState artifactState = new ArtifactState();
 			artifactState.setArtifactId(SWPMetaData.SWP_METADATA_ID_PREFIX + swpProductName);
-			XMLGregorianCalendar xmlTimestamp = currentRevision.getTimeStamp();
+			Date xmlTimestamp = currentRevision.getTimeStamp();
 			Date artifactLastModifiedDate = new Date(0);
 			if (xmlTimestamp != null) {
-				artifactLastModifiedDate = xmlTimestamp.toGregorianCalendar()
-						.getTime();
+				artifactLastModifiedDate = xmlTimestamp;
 			}
 			artifactState.setArtifactLastModifiedDate(artifactLastModifiedDate);
 			// by not adding a minor number, we make sure not to miss anything
@@ -2639,8 +2623,7 @@ public class SWPHandler {
 				.toString(artificialVersionNumber));
 		Date artifactLastModifiedDate = new Date(0);
 		if (productRevision.getTimeStamp() != null) {
-			artifactLastModifiedDate = productRevision.getTimeStamp()
-					.toGregorianCalendar().getTime();
+			artifactLastModifiedDate = productRevision.getTimeStamp();
 		}
 		genericArtifact
 				.setSourceArtifactLastModifiedDate(GenericArtifactHelper.df
@@ -2715,8 +2698,7 @@ public class SWPHandler {
 		ga.setSourceArtifactVersion(Long.toString(artificialVersionNumber));
 		Date artifactLastModifiedDate = new Date(0);
 		if (releaseRevision.getTimeStamp() != null) {
-			artifactLastModifiedDate = releaseRevision.getTimeStamp()
-					.toGregorianCalendar().getTime();
+			artifactLastModifiedDate = releaseRevision.getTimeStamp();
 		}
 		ga.setSourceArtifactLastModifiedDate(GenericArtifactHelper.df
 				.format(artifactLastModifiedDate));
@@ -2792,8 +2774,7 @@ public class SWPHandler {
 		ga.setSourceArtifactVersion(Long.toString(artificialVersionNumber));
 		Date artifactLastModifiedDate = new Date(0);
 		if (metaDataRevision.getTimeStamp() != null) {
-			artifactLastModifiedDate = metaDataRevision.getTimeStamp()
-					.toGregorianCalendar().getTime();
+			artifactLastModifiedDate = metaDataRevision.getTimeStamp();
 		}
 		ga.setSourceArtifactLastModifiedDate(GenericArtifactHelper.df
 				.format(artifactLastModifiedDate));

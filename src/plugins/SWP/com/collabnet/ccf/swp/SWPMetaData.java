@@ -284,8 +284,8 @@ public class SWPMetaData {
 	 */
 	public static String getTeamSprintStringRepresentation(Sprint sprint,
 			Team team) {
-		Date startDate = sprint.getStartDate().toGregorianCalendar().getTime();
-		Date endDate = sprint.getEndDate().toGregorianCalendar().getTime();
+		Date startDate = sprint.getStartDate();
+		Date endDate = sprint.getEndDate();
 		StringBuffer value = new StringBuffer(team.getName() + " "
 				+ sprintDateFormat.format(startDate) + " - "
 				+ sprintDateFormat.format(endDate));
@@ -324,8 +324,8 @@ public class SWPMetaData {
 	 */
 	public static String getSprintTeamStringRepresentation(Sprint sprint,
 			Team team) {
-		Date startDate = sprint.getStartDate().toGregorianCalendar().getTime();
-		Date endDate = sprint.getEndDate().toGregorianCalendar().getTime();
+		Date startDate = sprint.getStartDate();
+		Date endDate = sprint.getEndDate();
 		StringBuffer value = new StringBuffer(sprintDateFormat
 				.format(startDate)
 				+ " - " + sprintDateFormat.format(endDate));
