@@ -52,6 +52,7 @@ import com.danube.scrumworks.api2.client.Task;
 import com.danube.scrumworks.api2.client.TaskChanges;
 import com.danube.scrumworks.api2.client.Team;
 import com.danube.scrumworks.api2.client.Theme;
+import com.danube.scrumworks.api2.client.User;
 
 /**
  * This class encapsulates all calls to the SWP backend
@@ -61,7 +62,7 @@ import com.danube.scrumworks.api2.client.Theme;
  */
 public class SWPHandler {
 	private static final Log log = LogFactory.getLog(SWPHandler.class);
-	//private DatatypeFactory calendarConverter;
+	// private DatatypeFactory calendarConverter;
 
 	// caching data structures
 	// AbstractMap.SimpleEntry is only used because it comes close to the Pair
@@ -73,7 +74,6 @@ public class SWPHandler {
 	private Map<String, AbstractMap.SimpleEntry<Long, RevisionInfo>> metaDataCache = new HashMap<String, AbstractMap.SimpleEntry<Long, RevisionInfo>>();
 	private Map<String, Long> productIdCache = new HashMap<String, Long>();
 	private Map<Long, String> programNameCache = new HashMap<Long, String>();
-	
 
 	/**
 	 * Returns id of product in question Uses a cache internally
@@ -232,8 +232,10 @@ public class SWPHandler {
 				// retrieve team name
 				Team team = endpoint.getTeamById(sprint.getTeamId());
 				addPBIField(ga, PBIFields.team, team.getName());
-				addPBIField(ga, PBIFields.teamSprint, SWPMetaData.getTeamSprintStringRepresentation(sprint, team));
-				addPBIField(ga, PBIFields.sprintTeam, SWPMetaData.getSprintTeamStringRepresentation(sprint, team));
+				addPBIField(ga, PBIFields.teamSprint, SWPMetaData
+						.getTeamSprintStringRepresentation(sprint, team));
+				addPBIField(ga, PBIFields.sprintTeam, SWPMetaData
+						.getSprintTeamStringRepresentation(sprint, team));
 			}
 		} else {
 			ga.setArtifactAction(ArtifactActionValue.DELETE);
@@ -461,64 +463,47 @@ public class SWPHandler {
 
 		// if this is an initial synch, we can retrieve the current state of the
 		// tasks
-		/*if (firstTaskQuery) {
-			RevisionInfo processedRevisionInfo = endpoint
-					.getCurrentRevisionInfo();
-			// we like to avoid duplicate shipments, so we use a revision number not taken
-			// but still low enough that all future artifact shipments will come through
-			int processedRevisionNumber = processedRevisionInfo
-					.getRevisionNumber() + 1;
-			List<Task> changedOrAddedTasks = endpoint
-					.getTasksForProduct(productId);
-			int numberOfChangedOrAddedArtifacts = changedOrAddedTasks.size();
-			boolean lastItemInTransaction = true;
+		/*
+		 * if (firstTaskQuery) { RevisionInfo processedRevisionInfo = endpoint
+		 * .getCurrentRevisionInfo(); // we like to avoid duplicate shipments,
+		 * so we use a revision number not taken // but still low enough that
+		 * all future artifact shipments will come through int
+		 * processedRevisionNumber = processedRevisionInfo .getRevisionNumber()
+		 * + 1; List<Task> changedOrAddedTasks = endpoint
+		 * .getTasksForProduct(productId); int numberOfChangedOrAddedArtifacts =
+		 * changedOrAddedTasks.size(); boolean lastItemInTransaction = true;
+		 * 
+		 * ListIterator<Task> it2 = changedOrAddedTasks
+		 * .listIterator(numberOfChangedOrAddedArtifacts);
+		 * 
+		 * while (it2.hasPrevious()) { Task artifact = it2.previous(); // now
+		 * prepend item to the list ArtifactState artifactState = new
+		 * ArtifactState();
+		 * artifactState.setArtifactId(artifact.getId().toString());
+		 * XMLGregorianCalendar xmlTimestamp = processedRevisionInfo
+		 * .getTimeStamp(); Date artifactLastModifiedDate = new Date(0); if
+		 * (xmlTimestamp != null) { artifactLastModifiedDate = xmlTimestamp
+		 * .toGregorianCalendar().getTime(); } artifactState
+		 * .setArtifactLastModifiedDate(artifactLastModifiedDate);
+		 * 
+		 * // the real revision number is unknown, so we use -1 for all but //
+		 * the latest shipment long artificialRevisionNumber =
+		 * (lastItemInTransaction ? processedRevisionNumber SWP_REVISION_FACTOR
+		 * : -1); artifactState.setArtifactVersion(artificialRevisionNumber);
+		 * artifactStates.add(0, artifactState); // now update the cache
+		 * Map<Long, AbstractMap.SimpleEntry<AbstractMap.SimpleEntry<Long,
+		 * RevisionInfo>, Task>> productSpecificCache = taskCache
+		 * .get(swpProductName); if (productSpecificCache == null) {
+		 * productSpecificCache = new HashMap<Long,
+		 * AbstractMap.SimpleEntry<AbstractMap.SimpleEntry<Long, RevisionInfo>,
+		 * Task>>(); taskCache.put(swpProductName, productSpecificCache); }
+		 * productSpecificCache .put( artifact.getId(), new
+		 * AbstractMap.SimpleEntry<AbstractMap.SimpleEntry<Long, RevisionInfo>,
+		 * Task>( new AbstractMap.SimpleEntry<Long, RevisionInfo>(
+		 * artificialRevisionNumber, processedRevisionInfo), artifact));
+		 * lastItemInTransaction = false; } return; }
+		 */
 
-			ListIterator<Task> it2 = changedOrAddedTasks
-					.listIterator(numberOfChangedOrAddedArtifacts);
-
-			while (it2.hasPrevious()) {
-				Task artifact = it2.previous();
-				// now prepend item to the list
-				ArtifactState artifactState = new ArtifactState();
-				artifactState.setArtifactId(artifact.getId().toString());
-				XMLGregorianCalendar xmlTimestamp = processedRevisionInfo
-						.getTimeStamp();
-				Date artifactLastModifiedDate = new Date(0);
-				if (xmlTimestamp != null) {
-					artifactLastModifiedDate = xmlTimestamp
-							.toGregorianCalendar().getTime();
-				}
-				artifactState
-						.setArtifactLastModifiedDate(artifactLastModifiedDate);
-
-				// the real revision number is unknown, so we use -1 for all but
-				// the latest shipment
-				long artificialRevisionNumber = (lastItemInTransaction ? processedRevisionNumber
-						* SWP_REVISION_FACTOR
-						: -1);
-				artifactState.setArtifactVersion(artificialRevisionNumber);
-				artifactStates.add(0, artifactState);
-				// now update the cache
-				Map<Long, AbstractMap.SimpleEntry<AbstractMap.SimpleEntry<Long, RevisionInfo>, Task>> productSpecificCache = taskCache
-						.get(swpProductName);
-				if (productSpecificCache == null) {
-					productSpecificCache = new HashMap<Long, AbstractMap.SimpleEntry<AbstractMap.SimpleEntry<Long, RevisionInfo>, Task>>();
-					taskCache.put(swpProductName, productSpecificCache);
-				}
-				productSpecificCache
-						.put(
-								artifact.getId(),
-								new AbstractMap.SimpleEntry<AbstractMap.SimpleEntry<Long, RevisionInfo>, Task>(
-										new AbstractMap.SimpleEntry<Long, RevisionInfo>(
-												artificialRevisionNumber,
-												processedRevisionInfo),
-										artifact));
-				lastItemInTransaction = false;
-			}
-			return;
-		}*/
-
-		
 		AggregateVersionedData changesSinceCurrentRevision = null;
 		if (firstTaskQuery) {
 			List<Task> tasks = endpoint.getTasksForProduct(productId);
@@ -529,13 +514,14 @@ public class SWPHandler {
 			for (Task task : tasks) {
 				idSet.getTaskIds().add(task.getId());
 			}
-			changesSinceCurrentRevision = endpoint.getChangesSinceRevisionForIds(0, false, idSet);
+			changesSinceCurrentRevision = endpoint
+					.getChangesSinceRevisionForIds(0, false, idSet);
 		} else {
 			FilterChangesByType filter = new FilterChangesByType();
 			filter.setIncludeTasks(true);
 			changesSinceCurrentRevision = endpoint
-				.getChangesSinceRevisionForTypes(productId, queryVersion,
-				false, filter);
+					.getChangesSinceRevisionForTypes(productId, queryVersion,
+							false, filter);
 		}
 
 		// initialize some data structures to capture deleted and inserted
@@ -745,64 +731,49 @@ public class SWPHandler {
 		boolean firstPBIQuery = (queryVersion == 0);
 
 		// for the first query, we can just use the current state of all PBIs
-		/*if (firstPBIQuery) {
-			RevisionInfo processedRevisionInfo = endpoint
-					.getCurrentRevisionInfo();
-			// we like to avoid duplicate shipments, so we use a revision number not taken
-			// but still low enough that all future artifact shipments will come through
-			int processedRevisionNumber = processedRevisionInfo
-					.getRevisionNumber() + 1;
-			List<BacklogItem> changedOrAddedPBIs = endpoint
-					.getBacklogItemsInProduct(productId, false);
-			int numberOfChangedOrAddedArtifacts = changedOrAddedPBIs.size();
-			boolean lastItemInTransaction = true;
-			ListIterator<BacklogItem> it2 = changedOrAddedPBIs
-					.listIterator(numberOfChangedOrAddedArtifacts);
-			
-			while (it2.hasPrevious()) {
-				BacklogItem artifact = it2.previous();
-
-				ArtifactState artifactState = new ArtifactState();
-				artifactState.setArtifactId(artifact.getId().toString());
-				XMLGregorianCalendar xmlTimestamp = processedRevisionInfo
-						.getTimeStamp();
-				Date artifactLastModifiedDate = new Date(0);
-				if (xmlTimestamp != null) {
-					artifactLastModifiedDate = xmlTimestamp
-							.toGregorianCalendar().getTime();
-				}
-				artifactState
-						.setArtifactLastModifiedDate(artifactLastModifiedDate);
-				// the real revision number is unknown, so we use -1 for all but
-				// the latest shipment
-				long artificialRevisionNumber = (lastItemInTransaction ? processedRevisionNumber
-						* SWP_REVISION_FACTOR
-						: -1);
-				artifactState.setArtifactVersion(artificialRevisionNumber);
-				artifactStates.add(0, artifactState);
-				// now update the cache
-				Map<Long, AbstractMap.SimpleEntry<AbstractMap.SimpleEntry<Long, RevisionInfo>, BacklogItem>> productSpecificCache = pbiCache
-						.get(swpProductName);
-				if (productSpecificCache == null) {
-					productSpecificCache = new HashMap<Long, AbstractMap.SimpleEntry<AbstractMap.SimpleEntry<Long, RevisionInfo>, BacklogItem>>();
-					pbiCache.put(swpProductName, productSpecificCache);
-				}
-				productSpecificCache
-						.put(
-								artifact.getId(),
-								new AbstractMap.SimpleEntry<AbstractMap.SimpleEntry<Long, RevisionInfo>, BacklogItem>(
-										new AbstractMap.SimpleEntry<Long, RevisionInfo>(
-												artificialRevisionNumber,
-												processedRevisionInfo),
-										artifact));
-				lastItemInTransaction = false;
-			}
-			return;
-		}*/
+		/*
+		 * if (firstPBIQuery) { RevisionInfo processedRevisionInfo = endpoint
+		 * .getCurrentRevisionInfo(); // we like to avoid duplicate shipments,
+		 * so we use a revision number not taken // but still low enough that
+		 * all future artifact shipments will come through int
+		 * processedRevisionNumber = processedRevisionInfo .getRevisionNumber()
+		 * + 1; List<BacklogItem> changedOrAddedPBIs = endpoint
+		 * .getBacklogItemsInProduct(productId, false); int
+		 * numberOfChangedOrAddedArtifacts = changedOrAddedPBIs.size(); boolean
+		 * lastItemInTransaction = true; ListIterator<BacklogItem> it2 =
+		 * changedOrAddedPBIs .listIterator(numberOfChangedOrAddedArtifacts);
+		 * 
+		 * while (it2.hasPrevious()) { BacklogItem artifact = it2.previous();
+		 * 
+		 * ArtifactState artifactState = new ArtifactState();
+		 * artifactState.setArtifactId(artifact.getId().toString());
+		 * XMLGregorianCalendar xmlTimestamp = processedRevisionInfo
+		 * .getTimeStamp(); Date artifactLastModifiedDate = new Date(0); if
+		 * (xmlTimestamp != null) { artifactLastModifiedDate = xmlTimestamp
+		 * .toGregorianCalendar().getTime(); } artifactState
+		 * .setArtifactLastModifiedDate(artifactLastModifiedDate); // the real
+		 * revision number is unknown, so we use -1 for all but // the latest
+		 * shipment long artificialRevisionNumber = (lastItemInTransaction ?
+		 * processedRevisionNumber SWP_REVISION_FACTOR : -1);
+		 * artifactState.setArtifactVersion(artificialRevisionNumber);
+		 * artifactStates.add(0, artifactState); // now update the cache
+		 * Map<Long, AbstractMap.SimpleEntry<AbstractMap.SimpleEntry<Long,
+		 * RevisionInfo>, BacklogItem>> productSpecificCache = pbiCache
+		 * .get(swpProductName); if (productSpecificCache == null) {
+		 * productSpecificCache = new HashMap<Long,
+		 * AbstractMap.SimpleEntry<AbstractMap.SimpleEntry<Long, RevisionInfo>,
+		 * BacklogItem>>(); pbiCache.put(swpProductName, productSpecificCache);
+		 * } productSpecificCache .put( artifact.getId(), new
+		 * AbstractMap.SimpleEntry<AbstractMap.SimpleEntry<Long, RevisionInfo>,
+		 * BacklogItem>( new AbstractMap.SimpleEntry<Long, RevisionInfo>(
+		 * artificialRevisionNumber, processedRevisionInfo), artifact));
+		 * lastItemInTransaction = false; } return; }
+		 */
 
 		AggregateVersionedData changesSinceCurrentRevision = null;
 		if (firstPBIQuery) {
-			List <BacklogItem> pbis = endpoint.getBacklogItemsInProduct(productId, false);
+			List<BacklogItem> pbis = endpoint.getBacklogItemsInProduct(
+					productId, false);
 			if (pbis.isEmpty()) {
 				return;
 			}
@@ -810,7 +781,8 @@ public class SWPHandler {
 			for (BacklogItem backlogItem : pbis) {
 				idSet.getBacklogItemIds().add(backlogItem.getId());
 			}
-			changesSinceCurrentRevision = endpoint.getChangesSinceRevisionForIds(0, false, idSet);
+			changesSinceCurrentRevision = endpoint
+					.getChangesSinceRevisionForIds(0, false, idSet);
 		} else {
 			FilterChangesByType filter = new FilterChangesByType();
 			filter.setIncludeBacklogItems(true);
@@ -1421,7 +1393,6 @@ public class SWPHandler {
 			return null;
 		}
 		Task task = taskChanges.get(0);
-		// TODO Do conflict resolution
 		if (description != null && description.getFieldValueHasChanged()) {
 			task.setDescription((String) description.getFieldValue());
 		}
@@ -1480,7 +1451,18 @@ public class SWPHandler {
 		}
 
 		if (pointPerson != null && pointPerson.getFieldValueHasChanged()) {
-			task.setPointPerson((String) pointPerson.getFieldValue());
+			String anticipatedPointPerson = pointPerson.getFieldValue()
+					.toString();
+			try {
+				User user = endpoint.getUserByUserName(anticipatedPointPerson);
+				task.setPointPerson(user.getDisplayName());
+			} catch (Exception e) {
+				log
+						.warn("Could not retrieve user object for anticipated point person "
+								+ anticipatedPointPerson
+								+ " so using untranslated value ...");
+				task.setPointPerson(anticipatedPointPerson);
+			}
 		}
 
 		if (status != null && status.getFieldValueHasChanged()) {
@@ -1923,7 +1905,18 @@ public class SWPHandler {
 		}
 
 		if (pointPerson != null) {
-			task.setPointPerson((String) pointPerson.getFieldValue());
+			String anticipatedPointPerson = pointPerson.getFieldValue()
+					.toString();
+			try {
+				User user = endpoint.getUserByUserName(anticipatedPointPerson);
+				task.setPointPerson(user.getDisplayName());
+			} catch (Exception e) {
+				log
+						.warn("Could not retrieve user object for anticipated point person "
+								+ anticipatedPointPerson
+								+ " so using untranslated value ...");
+				task.setPointPerson(anticipatedPointPerson);
+			}
 		}
 
 		if (status != null) {
@@ -2449,10 +2442,10 @@ public class SWPHandler {
 	}
 
 	/**
-	 * Returns the teams, sprints, themes whenever their properties change. In contrast to all
-	 * other methods of this kind, this method will only return one single
-	 * artificial entry that indicates that any of the themes, teams, sprints in question have
-	 * been deleted, created or changed.
+	 * Returns the teams, sprints, themes whenever their properties change. In
+	 * contrast to all other methods of this kind, this method will only return
+	 * one single artificial entry that indicates that any of the themes, teams,
+	 * sprints in question have been deleted, created or changed.
 	 * 
 	 * @param swpProductName
 	 * @param artifactStates
@@ -2478,7 +2471,8 @@ public class SWPHandler {
 				return;
 			}
 			ArtifactState artifactState = new ArtifactState();
-			artifactState.setArtifactId(SWPMetaData.SWP_METADATA_ID_PREFIX + swpProductName);
+			artifactState.setArtifactId(SWPMetaData.SWP_METADATA_ID_PREFIX
+					+ swpProductName);
 			Date xmlTimestamp = currentRevision.getTimeStamp();
 			Date artifactLastModifiedDate = new Date(0);
 			if (xmlTimestamp != null) {
@@ -2542,7 +2536,8 @@ public class SWPHandler {
 			RevisionInfo currentRevision = endpoint.getCurrentRevisionInfo();
 			int revisionNumber = currentRevision.getRevisionNumber() + 1;
 			ArtifactState artifactState = new ArtifactState();
-			artifactState.setArtifactId(SWPMetaData.SWP_METADATA_ID_PREFIX + swpProductName);
+			artifactState.setArtifactId(SWPMetaData.SWP_METADATA_ID_PREFIX
+					+ swpProductName);
 			Date xmlTimestamp = currentRevision.getTimeStamp();
 			Date artifactLastModifiedDate = new Date(0);
 			if (xmlTimestamp != null) {
@@ -2709,7 +2704,8 @@ public class SWPHandler {
 	 * themes and teams/sprints related to the product
 	 * 
 	 * @param id
-	 *            id of the themes, sprints, teams in question - ignored at the moment
+	 *            id of the themes, sprints, teams in question - ignored at the
+	 *            moment
 	 * @param product
 	 *            SWP product name
 	 * @throws RemoteException
@@ -2738,27 +2734,31 @@ public class SWPHandler {
 				addMetaDataField(ga, MetaDataFields.theme, theme.getName());
 			} else {
 				// program theme
-				addMetaDataField(ga, MetaDataFields.theme, theme.getName() + " ("
-						+ getProgramName(theme.getProgramId(), endpoint) + ")");
+				addMetaDataField(ga, MetaDataFields.theme, theme.getName()
+						+ " (" + getProgramName(theme.getProgramId(), endpoint)
+						+ ")");
 			}
 		}
 		if (themes.isEmpty()) {
 			addMetaDataField(ga, MetaDataFields.theme, null);
 		}
-		
+
 		boolean sprintsPresent = false;
 		boolean teamsPresent = false;
 		// now add the teams/sprints
-		List <Team> teams = endpoint.getTeamsForProduct(productId);
+		List<Team> teams = endpoint.getTeamsForProduct(productId);
 		for (Team team : teams) {
 			teamsPresent = true;
 			addMetaDataField(ga, MetaDataFields.team, team.getName());
 			// retrieve sprints related to team
-			List <Sprint> sprints = endpoint.getSprintsInProductForTeam(productId, team.getId());
+			List<Sprint> sprints = endpoint.getSprintsInProductForTeam(
+					productId, team.getId());
 			for (Sprint sprint : sprints) {
 				sprintsPresent = true;
-				addMetaDataField(ga, MetaDataFields.teamSprint, SWPMetaData.getTeamSprintStringRepresentation(sprint, team));
-				addMetaDataField(ga, MetaDataFields.sprintTeam, SWPMetaData.getSprintTeamStringRepresentation(sprint, team));
+				addMetaDataField(ga, MetaDataFields.teamSprint, SWPMetaData
+						.getTeamSprintStringRepresentation(sprint, team));
+				addMetaDataField(ga, MetaDataFields.sprintTeam, SWPMetaData
+						.getSprintTeamStringRepresentation(sprint, team));
 			}
 		}
 		if (!teamsPresent) {
@@ -2770,7 +2770,7 @@ public class SWPHandler {
 			addMetaDataField(ga, MetaDataFields.teamSprint, null);
 			addMetaDataField(ga, MetaDataFields.sprintTeam, null);
 		}
-		
+
 		ga.setSourceArtifactVersion(Long.toString(artificialVersionNumber));
 		Date artifactLastModifiedDate = new Date(0);
 		if (metaDataRevision.getTimeStamp() != null) {

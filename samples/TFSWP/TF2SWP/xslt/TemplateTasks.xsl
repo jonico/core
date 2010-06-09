@@ -68,7 +68,7 @@
 					<xsl:value-of select="''" />
 				</xsl:when>
 				<xsl:otherwise>
-					<xsl:value-of select="concat(.,' (',.,')')"/>
+					<xsl:value-of select="."/>
 				</xsl:otherwise>
 			</xsl:choose>
 		</field>

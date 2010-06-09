@@ -62,7 +62,7 @@
 			<xsl:copy-of select="@*" />
 			<xsl:attribute name="fieldName">pointPerson</xsl:attribute>
 			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
-			<xsl:value-of select="."/>
+			<xsl:value-of select="substring-before(substring-after(.,'('),')')" />
 		</field>
 	</xsl:template>
 	<xsl:template match='ccf:field[@fieldName="remainingEffort"]'>
