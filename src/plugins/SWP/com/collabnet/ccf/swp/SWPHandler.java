@@ -1451,17 +1451,20 @@ public class SWPHandler {
 		}
 
 		if (pointPerson != null && pointPerson.getFieldValueHasChanged()) {
-			String anticipatedPointPerson = pointPerson.getFieldValue()
-					.toString();
-			try {
-				User user = endpoint.getUserByUserName(anticipatedPointPerson);
-				task.setPointPerson(user.getDisplayName());
-			} catch (Exception e) {
-				log
-						.warn("Could not retrieve user object for anticipated point person "
-								+ anticipatedPointPerson
-								+ " so using untranslated value ...");
-				task.setPointPerson(anticipatedPointPerson);
+			String anticipatedPointPerson = (String) pointPerson.getFieldValue();
+			if (anticipatedPointPerson != null && !anticipatedPointPerson.isEmpty()) {
+				try {
+					User user = endpoint.getUserByUserName(anticipatedPointPerson);
+					task.setPointPerson(user.getDisplayName());
+				} catch (Exception e) {
+					log
+							.warn("Could not retrieve user object for anticipated point person "
+									+ anticipatedPointPerson
+									+ " so using untranslated value ...");
+					task.setPointPerson(anticipatedPointPerson);
+				}
+			} else {
+				task.setPointPerson(null);
 			}
 		}
 
@@ -1905,17 +1908,18 @@ public class SWPHandler {
 		}
 
 		if (pointPerson != null) {
-			String anticipatedPointPerson = pointPerson.getFieldValue()
-					.toString();
-			try {
-				User user = endpoint.getUserByUserName(anticipatedPointPerson);
-				task.setPointPerson(user.getDisplayName());
-			} catch (Exception e) {
-				log
-						.warn("Could not retrieve user object for anticipated point person "
-								+ anticipatedPointPerson
-								+ " so using untranslated value ...");
-				task.setPointPerson(anticipatedPointPerson);
+			String anticipatedPointPerson = (String) pointPerson.getFieldValue();
+			if (anticipatedPointPerson != null && !anticipatedPointPerson.isEmpty()) {
+				try {
+					User user = endpoint.getUserByUserName(anticipatedPointPerson);
+					task.setPointPerson(user.getDisplayName());
+				} catch (Exception e) {
+					log
+							.warn("Could not retrieve user object for anticipated point person "
+									+ anticipatedPointPerson
+									+ " so using untranslated value ...");
+					task.setPointPerson(anticipatedPointPerson);
+				}
 			}
 		}
 
