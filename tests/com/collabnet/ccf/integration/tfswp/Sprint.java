@@ -1,5 +1,9 @@
 package com.collabnet.ccf.integration.tfswp;
 
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
+
 /**
  * Sprints in ScrumWorks used for testing purposes. 
  * 
@@ -22,6 +26,12 @@ public enum Sprint {
 	 * First sprint for the one team. 
 	 */
 	SPRINT_1_ONE_TEAM ("Initial sprint for OneTeam", "4/15/2010", "6/11/2010", "OneTeam"); 
+
+	/** Date format of M/D/YYYY. */ 
+	private final SimpleDateFormat dateFormatMonthDayYear = new SimpleDateFormat("M/d/yyyy");
+	
+	/** Date format of YYYY-MM-DD. */ 
+	private final SimpleDateFormat dateFormatYearMonthYear = new SimpleDateFormat("yyyy-MM-dd"); 
 	
 	/** The team associated to the sprint. */ 
 	private String team; 
@@ -30,10 +40,10 @@ public enum Sprint {
 	private String name; 
 	
 	/** The start date of the sprint. */ 
-	private String start; 
+	private Calendar start; 
 	
 	/** The end date of the sprint. */ 
-	private String end; 
+	private Calendar end; 
 	
 	/**
 	 * Constructs a new {@link Sprint} with the given string representation. 
@@ -49,9 +59,24 @@ public enum Sprint {
 		assert team != null : "null team"; 
 		
 		this.name = name; 
-		this.start = start; 
-		this.end = end;
+		this.start = convertStringToDate(start); 
+		this.end = convertStringToDate(end);
 		this.team = team; 
+	}
+
+	/**
+	 * Converts a string formatted as M/D/YYYY to a Calendar. 
+	 * 
+	 * @param dateString the date string to be converted
+	 * @return the Calendar 
+	 */
+	private Calendar convertStringToDate(final String dateString) {
+		final String[] splitDateString = dateString.split("/"); 
+		final int startMonth = Integer.parseInt(splitDateString[0]) - 1; 
+		final int startDay = Integer.parseInt(splitDateString[1]); 
+		final int startYear = Integer.parseInt(splitDateString[2]); 
+		Calendar date = new GregorianCalendar(startYear, startMonth, startDay);
+		return date;
 	}
 	
 	/**
@@ -62,53 +87,33 @@ public enum Sprint {
 	}
 	
 	/**
-	 * @return the start date in X/X/XXXX format without leading 0 for single digit month or day
+	 * @return the start date in M/D/YYYY format without leading 0 for single digit month or day
 	 */
 	public String getStartDate() {
-		return start; 
+		return dateFormatMonthDayYear.format(start.getTime()); 
 	}
 	
 	/**
-	 * @return the start date in XX/XX/XXXX format with two digits for month and day
+	 * @return the start date in M/D/YYYY format with two digits for month and day
 	 */
 	public String getStartDateAsTwoDigitMonthAndDate() {
-		return convertToTwoDigitMonthAndDate(start); 
+		return dateFormatYearMonthYear.format(start.getTime());
 	}
 	
 	/**
-	 * @return the end date in X/X/XXXX format without leading 0 for single digit month or day
+	 * @return the end date in YYYY-MM-DD format without leading 0 for single digit month or day
 	 */
 	public String getEndDate() {
-		return end; 
+		return dateFormatMonthDayYear.format(end.getTime());
 	}
 	
 	/**
-	 * @return the end date in XX/XX/XXXX format with two digits for month and day 
+	 * @return the end date in YYYY-MM-DD format with two digits for month and day 
 	 */
 	public String getEndDateAsTwoDigitMonthAndDate() {
-		return convertToTwoDigitMonthAndDate(end); 
+		return dateFormatYearMonthYear.format(end.getTime()); 
 	}
 
-	/**
-	 * Converts the date string into XX/XX/XXXX with leading 0 if there is a single digit month or day. 
-	 * 
-	 * @param dateString the date string to convert
-	 * @return the date string in XX/XX/XXXX with two digits for month and day
-	 */
-	private String convertToTwoDigitMonthAndDate(final String dateString) {
-		final String[] splitDateString = dateString.split("/"); 
-		final StringBuffer dateWithTwoDigitMonthDate = new StringBuffer(); 
-		final int monthAndDateStrings = splitDateString.length - 1;
-		for (int i = 0; i < monthAndDateStrings; i++) {
-			if (splitDateString[i].length() < 2) {
-				dateWithTwoDigitMonthDate.append("0"); 
-			}
-			dateWithTwoDigitMonthDate.append(splitDateString[i] + "/"); 
-		}
-		dateWithTwoDigitMonthDate.append(splitDateString[2]);
-		return dateWithTwoDigitMonthDate.toString();
-	}
-	
 	/**
 	 * @return the team associated to the sprint
 	 */
