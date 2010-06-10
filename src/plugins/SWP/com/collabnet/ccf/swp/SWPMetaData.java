@@ -272,7 +272,7 @@ public class SWPMetaData {
 	// this date formatter is used to produce string representations of sprint
 	// start/end dates
 	public final static SimpleDateFormat sprintDateFormat = new SimpleDateFormat(
-			"MM/dd/yyyy");
+			"yyyy-MM-dd");
 
 	/**
 	 * Returns the string representation of a sprint in a team if team should be
