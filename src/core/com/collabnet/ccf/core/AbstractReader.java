@@ -605,17 +605,36 @@ public abstract class AbstractReader<T> extends Component implements
 											.debug("Artifact data is stale, pick up in next update cycle ...");
 									sortedGAs = new ArrayList<GenericArtifact>();
 								} else {
-									List<GenericArtifact> artifactAttachments = null;
-									if (shipAttachments) {
-										artifactAttachments = this
-												.getArtifactAttachments(
-														syncInfo, artifactData);
-									} else {
-										artifactAttachments = new ArrayList<GenericArtifact>();
+									List<GenericArtifact> artifactAttachments = new ArrayList<GenericArtifact>();
+									List<GenericArtifact> artifactDependencies = new ArrayList<GenericArtifact>();
+									try {
+										if (shipAttachments) {
+											artifactAttachments = this
+													.getArtifactAttachments(
+															syncInfo,
+															artifactData);
+										}
+										artifactDependencies = this
+												.getArtifactDependencies(
+														syncInfo, artifactId);
+									} catch (Exception e) {
+										// if this is a connection exception, we
+										// will retry, otherwise, we will proceed
+										// with a warning
+										boolean connectionException = connectionManager
+												.isUseStandardTimeoutHandlingCode()
+												&& this.handleException(e,
+														connectionManager);
+										if (connectionException) {
+											// this will trigger a retry
+											throw e;
+										} else {
+											log
+													.warn("Could not retrieve all attachments/dependencies for artifact "
+															+ artifactId
+															+ ". Only plain artifact is synchronized ...");
+										}
 									}
-									List<GenericArtifact> artifactDependencies = this
-											.getArtifactDependencies(syncInfo,
-													artifactId);
 
 									sortedGAs = combineAndSort(artifactData,
 											artifactAttachments,
@@ -635,23 +654,26 @@ public abstract class AbstractReader<T> extends Component implements
 											connectionManager);
 							if (!connectionException) {
 								retry = false;
-
+								log.error("Error retrieving artifact "
+										+ artifactState.getArtifactId());
 								if (e instanceof CCFRuntimeException) {
 									throw (CCFRuntimeException) e;
 								} else if (e instanceof RuntimeException) {
 									throw (RuntimeException) e;
 								} else {
 									throw new CCFRuntimeException(
-											"An exception occured", e);
+											"An exception occured ", e);
 								}
 							} else {
 								retry = true;
 								if (numberOfTries == 1) {
 									// first try, long error message
-									log
-											.warn(
-													"Network related problem occurred while connecting to external system. Try operation again",
-													e);
+									log.warn(
+											"Network related problem occurred while retrieving data for artifact "
+													+ artifactState
+															.getArtifactId()
+													+ ". Try operation again",
+											e);
 								} else if (msToSleep < maxMsToSleep) {
 									// error occurred again, short error
 									// message, go
@@ -662,7 +684,10 @@ public abstract class AbstractReader<T> extends Component implements
 									// int timeOut = (int) Math.pow(2,
 									// numberOfTries);
 									log
-											.warn("Network related error occurred again ("
+											.warn("Network related error for artifact "
+													+ artifactState
+															.getArtifactId()
+													+ " occurred again ("
 													+ e.getMessage()
 													+ "), incremented timeout, now sleeping for "
 													+ msToSleep
@@ -677,7 +702,10 @@ public abstract class AbstractReader<T> extends Component implements
 									}
 								} else {
 									log
-											.warn("Network related error occurred again, switched to maximum waiting time ("
+											.warn("Network related error for artifact "
+													+ artifactState
+															.getArtifactId()
+													+ " occurred again, switched to maximum waiting time ("
 													+ e.getMessage()
 													+ "), sleeping for "
 													+ maxMsToSleep
