@@ -112,12 +112,14 @@ public abstract class AbstractReader<T> extends Component implements
 	 * cause service wrapper to restart the connector.
 	 */
 	private static boolean restartConnector = false;
-	
+
 	/**
-	 * If this property is set to something else but null, artifacts quarantined by a component with this name (typically the entity service)
-	 * will get special treatment during artifact replay: The XSLTProcessor will transform the payload again.
+	 * If this property is set to something else but null, artifacts quarantined
+	 * by a component with this name (typically the entity service) will get
+	 * special treatment during artifact replay: The XSLTProcessor will
+	 * transform the payload again.
 	 */
-	private String nameOfEntityService = null; 
+	private String nameOfEntityService = null;
 
 	/**
 	 * If the shutDownConnector variable is set, this will cause service wrapper
@@ -374,10 +376,9 @@ public abstract class AbstractReader<T> extends Component implements
 				// our buffer is empty, so we can ask for new synch info again
 				currentRecord.readyForNewSynchInfo();
 				if (!currentRecord.isNewSyncInfoReceived()) {
-					log
-							.debug("Have to wait until sync info for "
-									+ currentRecord.getRepositoryId()
-									+ " is up to date again ...");
+					log.debug("Have to wait until sync info for "
+							+ currentRecord.getRepositoryId()
+							+ " is up to date again ...");
 					return new Object[] {};
 				}
 				log
@@ -476,8 +477,10 @@ public abstract class AbstractReader<T> extends Component implements
 				} while (retry);
 				if (!artifactsToBeRead.isEmpty()) {
 					artifactsToBeReadList.addAll(artifactsToBeRead);
-					/* we ship artifacts, so the retrieved synch info for this project mapping
-					 * may not be up to date until the artifacts to be read buffer has been completely emptied
+					/*
+					 * we ship artifacts, so the retrieved synch info for this
+					 * project mapping may not be up to date until the artifacts
+					 * to be read buffer has been completely emptied
 					 */
 					currentRecord.notReadyForNewSynchInfo();
 				}
@@ -502,7 +505,8 @@ public abstract class AbstractReader<T> extends Component implements
 								.debug("Successfully parsed quarantined artifact with transaction id "
 										+ artifactState.getTransactionId());
 						// reset error code and transaction id
-						replayedArtifact.setErrorCode(artifactState.getErrorCode());
+						replayedArtifact.setErrorCode(artifactState
+								.getErrorCode());
 						replayedArtifact.setTransactionId(artifactState
 								.getTransactionId());
 						sortedGAs.add(replayedArtifact);
@@ -538,17 +542,36 @@ public abstract class AbstractReader<T> extends Component implements
 											.debug("Artifact data is stale, pick up in next update cycle ...");
 									sortedGAs = new ArrayList<GenericArtifact>();
 								} else {
-									List<GenericArtifact> artifactAttachments = null;
-									if (shipAttachments) {
-										artifactAttachments = this
-												.getArtifactAttachments(
-														syncInfo, artifactData);
-									} else {
-										artifactAttachments = new ArrayList<GenericArtifact>();
+									List<GenericArtifact> artifactAttachments = new ArrayList<GenericArtifact>();
+									List<GenericArtifact> artifactDependencies = new ArrayList<GenericArtifact>();
+									try {
+										if (shipAttachments) {
+											artifactAttachments = this
+													.getArtifactAttachments(
+															syncInfo,
+															artifactData);
+										}
+										artifactDependencies = this
+												.getArtifactDependencies(
+														syncInfo, artifactId);
+									} catch (Exception e) {
+										// if this is a connection exception, we
+										// will retry, otherwise, we will proceed
+										// with a warning
+										boolean connectionException = connectionManager
+												.isUseStandardTimeoutHandlingCode()
+												&& this.handleException(e,
+														connectionManager);
+										if (connectionException) {
+											// this will trigger a retry
+											throw e;
+										} else {
+											log
+													.warn("Could not retrieve all attachments/dependencies for artifact "
+															+ artifactId
+															+ ". Only plain artifact is synchronized ...");
+										}
 									}
-									List<GenericArtifact> artifactDependencies = this
-											.getArtifactDependencies(syncInfo,
-													artifactId);
 
 									sortedGAs = combineAndSort(artifactData,
 											artifactAttachments,
@@ -568,23 +591,26 @@ public abstract class AbstractReader<T> extends Component implements
 											connectionManager);
 							if (!connectionException) {
 								retry = false;
-
+								log.error("Error retrieving artifact "
+										+ artifactState.getArtifactId());
 								if (e instanceof CCFRuntimeException) {
 									throw (CCFRuntimeException) e;
 								} else if (e instanceof RuntimeException) {
 									throw (RuntimeException) e;
 								} else {
 									throw new CCFRuntimeException(
-											"An exception occured", e);
+											"An exception occured ", e);
 								}
 							} else {
 								retry = true;
 								if (numberOfTries == 1) {
 									// first try, long error message
-									log
-											.warn(
-													"Network related problem occurred while connecting to external system. Try operation again",
-													e);
+									log.warn(
+											"Network related problem occurred while retrieving data for artifact "
+													+ artifactState
+															.getArtifactId()
+													+ ". Try operation again",
+											e);
 								} else if (msToSleep < maxMsToSleep) {
 									// error occurred again, short error
 									// message, go
@@ -595,7 +621,10 @@ public abstract class AbstractReader<T> extends Component implements
 									// int timeOut = (int) Math.pow(2,
 									// numberOfTries);
 									log
-											.warn("Network related error occurred again ("
+											.warn("Network related error for artifact "
+													+ artifactState
+															.getArtifactId()
+													+ " occurred again ("
 													+ e.getMessage()
 													+ "), incremented timeout, now sleeping for "
 													+ msToSleep
@@ -610,7 +639,10 @@ public abstract class AbstractReader<T> extends Component implements
 									}
 								} else {
 									log
-											.warn("Network related error occurred again, switched to maximum waiting time ("
+											.warn("Network related error for artifact "
+													+ artifactState
+															.getArtifactId()
+													+ " occurred again, switched to maximum waiting time ("
 													+ e.getMessage()
 													+ "), sleeping for "
 													+ maxMsToSleep
@@ -633,7 +665,7 @@ public abstract class AbstractReader<T> extends Component implements
 				artifactsToBeShippedList.addAll(sortedGAs);
 				if (artifactsToBeShippedList.isEmpty())
 					return new Object[] {};
-				
+
 				GenericArtifact genericArtifact = artifactsToBeShippedList
 						.remove(0);
 				try {
@@ -740,17 +772,25 @@ public abstract class AbstractReader<T> extends Component implements
 				ArtifactState artifactState = new ArtifactState();
 				artifactState.setTransactionId(result.get(0).toString());
 				artifactState.setReplayedArtifactData(result.get(1).toString());
-				// if we know the name of the entity service, we can decide whether the artifact should be transformed
-				// again. Otherwise, we will not change the default error code (ok) and no transformation will take place
+				// if we know the name of the entity service, we can decide
+				// whether the artifact should be transformed
+				// again. Otherwise, we will not change the default error code
+				// (ok) and no transformation will take place
 				if (getNameOfEntityService() != null) {
 					Object originatingComponent = result.get(2);
-					if (originatingComponent == null || !originatingComponent.equals(getNameOfEntityService())) {
-						log.debug("Do not trigger a further transformation of quarantined artifact's payload.");
-						artifactState.setErrorCode(GenericArtifact.ERROR_REPLAYED_WITHOUT_TRANSFORMATION);
+					if (originatingComponent == null
+							|| !originatingComponent
+									.equals(getNameOfEntityService())) {
+						log
+								.debug("Do not trigger a further transformation of quarantined artifact's payload.");
+						artifactState
+								.setErrorCode(GenericArtifact.ERROR_REPLAYED_WITHOUT_TRANSFORMATION);
 					} else {
 						// quarantined artifact should be transformed again
-						log.debug("Trigger a further transformation of quarantined artifact's payload.");
-						artifactState.setErrorCode(GenericArtifact.ERROR_REPLAYED_WITH_TRANSFORMATION);
+						log
+								.debug("Trigger a further transformation of quarantined artifact's payload.");
+						artifactState
+								.setErrorCode(GenericArtifact.ERROR_REPLAYED_WITH_TRANSFORMATION);
 					}
 				}
 				artifactState.setReplayedArtifact(true);
@@ -914,7 +954,7 @@ public abstract class AbstractReader<T> extends Component implements
 			log
 					.warn("Reader will not poll hospital for quarantined entries since hospitalDatabaseReader property has not been set.");
 		}
-		
+
 		if (getNameOfEntityService() == null) {
 			log
 					.warn("Retransformation of replayed artifacts is not configured since nameOfEntityService property has not been set.");
@@ -1399,20 +1439,27 @@ public abstract class AbstractReader<T> extends Component implements
 	}
 
 	/**
-	 * Sets the name of the component that should be recognized to be the entity service during artifact replay
-	 * Only if the originating component of a quarantined artifact record matches this name, the payload will be
-	 * transformed again 
-	 * @param nameOfEntityService name of the component that should be treated as the entity service component (null by default)
+	 * Sets the name of the component that should be recognized to be the entity
+	 * service during artifact replay Only if the originating component of a
+	 * quarantined artifact record matches this name, the payload will be
+	 * transformed again
+	 * 
+	 * @param nameOfEntityService
+	 *            name of the component that should be treated as the entity
+	 *            service component (null by default)
 	 */
 	public void setNameOfEntityService(String nameOfEntityService) {
 		this.nameOfEntityService = nameOfEntityService;
 	}
 
 	/**
-	 * Returns the name of the component that should be recognized to be the entity service during artifact replay
-	 * Only if the originating component of a quarantined artifact record matches this name, the payload will be
-	 * transformed again 
-	 * @return name of the component that should be treated as the entity service component (null by default)
+	 * Returns the name of the component that should be recognized to be the
+	 * entity service during artifact replay Only if the originating component
+	 * of a quarantined artifact record matches this name, the payload will be
+	 * transformed again
+	 * 
+	 * @return name of the component that should be treated as the entity
+	 *         service component (null by default)
 	 */
 	public String getNameOfEntityService() {
 		return nameOfEntityService;
