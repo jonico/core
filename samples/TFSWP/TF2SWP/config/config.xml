@@ -220,7 +220,7 @@
 		<property name="maxAttachmentSizePerArtifact" value="${sfee.max.attachmentsize.per.artifact}" />
 		<!-- Let this restart every 6 hours -->
 		<property name="autoRestartPeriod" value="21600"/>
-		<property name="shipAttachments" value="true"/>
+		<property name="shipAttachments" value="false"/>
 		
 		<!-- This plugs in in the polling hospital -->
 		<property name="hospitalDatabaseReader" ref="HospitalDatabaseExtractor"/>
