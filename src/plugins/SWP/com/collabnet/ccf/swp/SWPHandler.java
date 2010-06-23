@@ -520,8 +520,7 @@ public class SWPHandler {
 			FilterChangesByType filter = new FilterChangesByType();
 			filter.setIncludeTasks(true);
 			changesSinceCurrentRevision = endpoint
-					.getChangesSinceRevisionForTypes(productId, queryVersion,
-							false, filter);
+					.getChangesSinceRevisionForTypes(productId, queryVersion, filter);
 		}
 
 		// initialize some data structures to capture deleted and inserted
@@ -787,8 +786,7 @@ public class SWPHandler {
 			FilterChangesByType filter = new FilterChangesByType();
 			filter.setIncludeBacklogItems(true);
 			changesSinceCurrentRevision = endpoint
-					.getChangesSinceRevisionForTypes(productId, queryVersion,
-							false, filter);
+					.getChangesSinceRevisionForTypes(productId, queryVersion, filter);
 		}
 
 		// initialize some data structures to capture deleted and inserted
@@ -2055,8 +2053,7 @@ public class SWPHandler {
 		FilterChangesByType filter = new FilterChangesByType();
 		filter.setIncludeProduct(true);
 		AggregateVersionedData changesSinceCurrentRevision = endpoint
-				.getChangesSinceRevisionForTypes(productId, queryVersion,
-						false, filter);
+				.getChangesSinceRevisionForTypes(productId, queryVersion, filter);
 
 		// initialize some data structures to capture deleted and inserted
 		// artifacts
@@ -2270,8 +2267,7 @@ public class SWPHandler {
 		FilterChangesByType filter = new FilterChangesByType();
 		filter.setIncludeReleases(true);
 		AggregateVersionedData changesSinceCurrentRevision = endpoint
-				.getChangesSinceRevisionForTypes(productId, queryVersion,
-						false, filter);
+				.getChangesSinceRevisionForTypes(productId, queryVersion, filter);
 
 		// initialize some data structures to capture deleted and inserted
 		// artifacts
@@ -2524,8 +2520,7 @@ public class SWPHandler {
 		// add product to the filter since this could impact theme names
 		filter.setIncludeProduct(true);
 		AggregateVersionedData changesSinceCurrentRevision = endpoint
-				.getChangesSinceRevisionForTypes(productId, queryVersion,
-						false, filter);
+				.getChangesSinceRevisionForTypes(productId, queryVersion, filter);
 
 		if (!changesSinceCurrentRevision.getThemeChanges().isEmpty()
 				|| !changesSinceCurrentRevision.getProgramChanges().isEmpty()
