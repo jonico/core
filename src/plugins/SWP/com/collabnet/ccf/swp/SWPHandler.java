@@ -520,7 +520,8 @@ public class SWPHandler {
 			FilterChangesByType filter = new FilterChangesByType();
 			filter.setIncludeTasks(true);
 			changesSinceCurrentRevision = endpoint
-					.getChangesSinceRevisionForTypes(productId, queryVersion, filter);
+					.getChangesSinceRevisionForTypes(productId, queryVersion,
+							filter);
 		}
 
 		// initialize some data structures to capture deleted and inserted
@@ -652,6 +653,32 @@ public class SWPHandler {
 						|| (majorVersion == processedRevisionNumber && minorVersion < processedMinorVersion)) {
 					// check whether artifact has been already processed
 					if (!alreadyProcessedArtifacts.contains(artifact.getId())) {
+						// check whether task has been moved out of the product
+						// first we have to retrieve the parent PBI (to find out the product)
+						BacklogItem parentPBI = null;
+						try {
+							parentPBI = endpoint.getBacklogItemById(artifact
+									.getBacklogItemId());
+						} catch (Exception e) {
+							// if we cannot retrieve the parent PBI this can be an indication
+							// that the task has been moved and the CCF user just does not have permissions
+							// to access the other product, but we cannot be absolutely sure
+							log.debug("While retrieving parent pbi "
+									+ artifact.getBacklogItemId() + " of task "
+									+ artifact.getId()
+									+ " an exception occured", e);
+							continue;
+						}
+						if (!productId.equals(parentPBI.getProductId())) {
+							// this debug message will be repeated until a newer
+							// PBI becomes available
+							log.debug("Task " + artifact.getId()
+									+ " has been moved out of product "
+									+ swpProductName + " to product with id "
+									+ parentPBI.getProductId()
+									+ ". Ignoring PBI ...");
+							continue;
+						}
 						// now prepend item to the list
 						ArtifactState artifactState = new ArtifactState();
 						artifactState
@@ -786,7 +813,8 @@ public class SWPHandler {
 			FilterChangesByType filter = new FilterChangesByType();
 			filter.setIncludeBacklogItems(true);
 			changesSinceCurrentRevision = endpoint
-					.getChangesSinceRevisionForTypes(productId, queryVersion, filter);
+					.getChangesSinceRevisionForTypes(productId, queryVersion,
+							filter);
 		}
 
 		// initialize some data structures to capture deleted and inserted
@@ -917,6 +945,19 @@ public class SWPHandler {
 						|| (majorVersion == processedRevisionNumber && minorVersion < processedMinorVersion)) {
 					// check whether artifact has been already processed
 					if (!alreadyProcessedArtifacts.contains(artifact.getId())) {
+						// now check whether artifact has been moved out of the
+						// product
+						if (!productId.equals(artifact.getProductId())) {
+							// this debug message will be repeated until a newer
+							// PBI becomes available
+							log.debug("PBI " + artifact.getKey()
+									+ " has been moved out of product "
+									+ swpProductName + " to product with id "
+									+ artifact.getProductId()
+									+ ". Ignoring PBI ...");
+							continue;
+						}
+
 						// now prepend item to the list
 						ArtifactState artifactState = new ArtifactState();
 						artifactState
@@ -1449,10 +1490,13 @@ public class SWPHandler {
 		}
 
 		if (pointPerson != null && pointPerson.getFieldValueHasChanged()) {
-			String anticipatedPointPerson = (String) pointPerson.getFieldValue();
-			if (anticipatedPointPerson != null && !anticipatedPointPerson.isEmpty()) {
+			String anticipatedPointPerson = (String) pointPerson
+					.getFieldValue();
+			if (anticipatedPointPerson != null
+					&& !anticipatedPointPerson.isEmpty()) {
 				try {
-					User user = endpoint.getUserByUserName(anticipatedPointPerson);
+					User user = endpoint
+							.getUserByUserName(anticipatedPointPerson);
 					task.setPointPerson(user.getDisplayName());
 				} catch (Exception e) {
 					log
@@ -1906,10 +1950,13 @@ public class SWPHandler {
 		}
 
 		if (pointPerson != null) {
-			String anticipatedPointPerson = (String) pointPerson.getFieldValue();
-			if (anticipatedPointPerson != null && !anticipatedPointPerson.isEmpty()) {
+			String anticipatedPointPerson = (String) pointPerson
+					.getFieldValue();
+			if (anticipatedPointPerson != null
+					&& !anticipatedPointPerson.isEmpty()) {
 				try {
-					User user = endpoint.getUserByUserName(anticipatedPointPerson);
+					User user = endpoint
+							.getUserByUserName(anticipatedPointPerson);
 					task.setPointPerson(user.getDisplayName());
 				} catch (Exception e) {
 					log
@@ -2053,7 +2100,8 @@ public class SWPHandler {
 		FilterChangesByType filter = new FilterChangesByType();
 		filter.setIncludeProduct(true);
 		AggregateVersionedData changesSinceCurrentRevision = endpoint
-				.getChangesSinceRevisionForTypes(productId, queryVersion, filter);
+				.getChangesSinceRevisionForTypes(productId, queryVersion,
+						filter);
 
 		// initialize some data structures to capture deleted and inserted
 		// artifacts
@@ -2267,7 +2315,8 @@ public class SWPHandler {
 		FilterChangesByType filter = new FilterChangesByType();
 		filter.setIncludeReleases(true);
 		AggregateVersionedData changesSinceCurrentRevision = endpoint
-				.getChangesSinceRevisionForTypes(productId, queryVersion, filter);
+				.getChangesSinceRevisionForTypes(productId, queryVersion,
+						filter);
 
 		// initialize some data structures to capture deleted and inserted
 		// artifacts
@@ -2520,7 +2569,8 @@ public class SWPHandler {
 		// add product to the filter since this could impact theme names
 		filter.setIncludeProduct(true);
 		AggregateVersionedData changesSinceCurrentRevision = endpoint
-				.getChangesSinceRevisionForTypes(productId, queryVersion, filter);
+				.getChangesSinceRevisionForTypes(productId, queryVersion,
+						filter);
 
 		if (!changesSinceCurrentRevision.getThemeChanges().isEmpty()
 				|| !changesSinceCurrentRevision.getProgramChanges().isEmpty()
