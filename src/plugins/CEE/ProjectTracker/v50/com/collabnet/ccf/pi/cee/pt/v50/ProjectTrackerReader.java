@@ -1455,17 +1455,22 @@ public class ProjectTrackerReader extends
 		String targetRepositoryKind = this.getTargetRepositoryKind(syncInfo);
 		String targetSystemId = this.getTargetSystemId(syncInfo);
 		String targetSystemKind = this.getTargetSystemKind(syncInfo);
+		
+		String sourceSystemTimezone = this.getSourceSystemTimezone(syncInfo);
+		String targetSystemTimezone = this.getTargetSystemTimezone(syncInfo);
 
 		ga.setSourceRepositoryId(sourceRepositoryId);
 		ga.setSourceRepositoryKind(sourceRepositoryKind);
 		ga.setSourceSystemId(sourceSystemId);
 		ga.setSourceSystemKind(sourceSystemKind);
 		ga.setConflictResolutionPriority(conflictResolutionPriority);
+		ga.setSourceSystemTimezone(sourceSystemTimezone);
 
 		ga.setTargetRepositoryId(targetRepositoryId);
 		ga.setTargetRepositoryKind(targetRepositoryKind);
 		ga.setTargetSystemId(targetSystemId);
 		ga.setTargetSystemKind(targetSystemKind);
+		ga.setTargetSystemTimezone(targetSystemTimezone);
 	}
 
 	/**
