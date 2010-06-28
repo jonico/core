@@ -858,19 +858,21 @@ public class QCHandler {
 			String sourceRepositoryKind, String sourceSystemId,
 			String sourceSystemKind, String targetRepositoryId,
 			String targetRepositoryKind, String targetSystemId,
-			String targetSystemKind, String thisTransactionId) {
+			String targetSystemKind, String thisTransactionId, String sourceSystemTimezone, String targetSystemTimezone) {
 
 		latestDefectArtifact.setSourceArtifactId(sourceArtifactId);
 		latestDefectArtifact.setSourceRepositoryId(sourceRepositoryId);
 		latestDefectArtifact.setSourceRepositoryKind(sourceRepositoryKind);
 		latestDefectArtifact.setSourceSystemId(sourceSystemId);
 		latestDefectArtifact.setSourceSystemKind(sourceSystemKind);
+		latestDefectArtifact.setSourceSystemTimezone(sourceSystemTimezone);
 
 		latestDefectArtifact.setTargetRepositoryId(targetRepositoryId);
 		latestDefectArtifact.setTargetRepositoryKind(targetRepositoryKind);
 		latestDefectArtifact.setTargetSystemId(targetSystemId);
 		latestDefectArtifact.setTargetSystemKind(targetSystemKind);
 		latestDefectArtifact.setSourceArtifactVersion(thisTransactionId);
+		latestDefectArtifact.setTargetSystemTimezone(targetSystemTimezone);
 
 		return latestDefectArtifact;
 	}
