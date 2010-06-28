@@ -114,7 +114,7 @@ public class SWPWriter extends AbstractWriter<Connection> implements
 	 * Creates a new SWP PBI
 	 * 
 	 * @param ga
-	 * @param swpProductName
+	 * @param swpProductName 
 	 * @param swpHandler
 	 * @return newly created PBI
 	 * @throws RemoteException
@@ -128,7 +128,6 @@ public class SWPWriter extends AbstractWriter<Connection> implements
 		GenericArtifactField benefit = GenericArtifactHelper
 				.getMandatoryGAField(PBIFields.benefit.getFieldName(), ga);
 		GenericArtifactField completedDate = GenericArtifactHelper
-		// TODO time zone conversion necessary?
 				.getMandatoryGAField(PBIFields.completedDate.getFieldName(), ga);
 		GenericArtifactField description = GenericArtifactHelper
 				.getMandatoryGAField(PBIFields.description.getFieldName(), ga);

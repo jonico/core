@@ -27,6 +27,7 @@ import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifact.ArtifactActionValue;
 import com.collabnet.ccf.core.ga.GenericArtifactField.FieldActionValue;
+import com.collabnet.ccf.core.utils.DateUtil;
 import com.collabnet.ccf.swp.SWPMetaData.MetaDataFields;
 import com.collabnet.ccf.swp.SWPMetaData.PBIFields;
 import com.collabnet.ccf.swp.SWPMetaData.ProductFields;
@@ -181,8 +182,8 @@ public class SWPHandler {
 			BusinessWeight bw = pbi.getBusinessWeight();
 			addPBIField(ga, PBIFields.benefit, bw.getBenefit());
 			addPBIField(ga, PBIFields.penalty, bw.getPenalty());
-			// TODO time zone conversion necessary?
-			addPBIField(ga, PBIFields.completedDate, pbi.getCompletedDate());
+			GenericArtifactField completedDateField = addPBIField(ga, PBIFields.completedDate, pbi.getCompletedDate());
+			SWPMetaData.setDateFieldValue(pbi.getCompletedDate(), ga.getSourceSystemTimezone(), completedDateField);
 			addPBIField(ga, PBIFields.description, pbi.getDescription());
 			addPBIField(ga, PBIFields.estimate, pbi.getEstimate());
 			addPBIField(ga, PBIFields.key, pbi.getKey());
@@ -227,15 +228,17 @@ public class SWPHandler {
 				addPBIField(ga, PBIFields.sprintId, sprintId);
 				Sprint sprint = endpoint.getSprintById(sprintId);
 				addPBIField(ga, PBIFields.sprint, sprint.getName());
-				addPBIField(ga, PBIFields.sprintStart, sprint.getStartDate());
-				addPBIField(ga, PBIFields.sprintEnd, sprint.getEndDate());
+				GenericArtifactField sprintStartField = addPBIField(ga, PBIFields.sprintStart, sprint.getStartDate());
+				SWPMetaData.setDateFieldValue(sprint.getStartDate(), ga.getSourceSystemTimezone(), sprintStartField);
+				GenericArtifactField sprintEndField = addPBIField(ga, PBIFields.sprintEnd, sprint.getEndDate());
+				SWPMetaData.setDateFieldValue(sprint.getEndDate(), ga.getSourceSystemTimezone(), sprintEndField);
 				// retrieve team name
 				Team team = endpoint.getTeamById(sprint.getTeamId());
 				addPBIField(ga, PBIFields.team, team.getName());
 				addPBIField(ga, PBIFields.teamSprint, SWPMetaData
-						.getTeamSprintStringRepresentation(sprint, team));
+						.getTeamSprintStringRepresentation(sprint, team, ga.getSourceSystemTimezone()));
 				addPBIField(ga, PBIFields.sprintTeam, SWPMetaData
-						.getSprintTeamStringRepresentation(sprint, team));
+						.getSprintTeamStringRepresentation(sprint, team, ga.getSourceSystemTimezone()));
 			}
 		} else {
 			ga.setArtifactAction(ArtifactActionValue.DELETE);
@@ -375,7 +378,7 @@ public class SWPHandler {
 	 * @param value
 	 *            value of the PBI field
 	 */
-	private void addPBIField(GenericArtifact genericArtifact, PBIFields field,
+	private GenericArtifactField addPBIField(GenericArtifact genericArtifact, PBIFields field,
 			Object value) {
 		// all fields are from field type "mandatoryField" since SWP has a
 		// static field model
@@ -384,6 +387,7 @@ public class SWPHandler {
 		gaField.setFieldValueType(field.getValueType());
 		gaField.setFieldAction(FieldActionValue.REPLACE);
 		gaField.setFieldValue(value);
+		return gaField;
 	}
 
 	/**
@@ -395,7 +399,7 @@ public class SWPHandler {
 	 * @param value
 	 *            value of the product release field
 	 */
-	private void addProductReleaseField(GenericArtifact genericArtifact,
+	private GenericArtifactField addProductReleaseField(GenericArtifact genericArtifact,
 			ReleaseFields field, Object value) {
 		// all fields are from field type "mandatoryField" since SWP has a
 		// static field model
@@ -404,6 +408,7 @@ public class SWPHandler {
 		gaField.setFieldValueType(field.getValueType());
 		gaField.setFieldAction(FieldActionValue.REPLACE);
 		gaField.setFieldValue(value);
+		return gaField;
 	}
 
 	/**
@@ -1095,7 +1100,15 @@ public class SWPHandler {
 			if (completedDateFieldValue == null) {
 				pbi.setCompletedDate(null);
 			} else {
-				pbi.setCompletedDate(completedDateFieldValue.getTime());
+				Date convertedDate = null;
+				Date dateValue = completedDateFieldValue.getTime();
+				if (DateUtil.isAbsoluteDateInTimezone(dateValue, "GMT")) {
+					convertedDate = DateUtil.convertGMTToTimezoneAbsoluteDate(
+							dateValue, ga.getTargetSystemTimezone());
+				} else {
+					convertedDate = dateValue;
+				}
+				pbi.setCompletedDate(convertedDate);
 			}
 		}
 
@@ -1642,7 +1655,15 @@ public class SWPHandler {
 			if (completedDateFieldValue == null) {
 				pbi.setCompletedDate(null);
 			} else {
-				pbi.setCompletedDate(completedDateFieldValue.getTime());
+				Date convertedDate = null;
+				Date dateValue = completedDateFieldValue.getTime();
+				if (DateUtil.isAbsoluteDateInTimezone(dateValue, "GMT")) {
+					convertedDate = DateUtil.convertGMTToTimezoneAbsoluteDate(
+							dateValue, ga.getTargetSystemTimezone());
+				} else {
+					convertedDate = dateValue;
+				}
+				pbi.setCompletedDate(convertedDate);
 			}
 		}
 
@@ -2683,6 +2704,7 @@ public class SWPHandler {
 	 * 
 	 * @param id
 	 *            id of the PBI
+	 * @param sourceSystemTimezone 
 	 * @param product
 	 *            SWP product name
 	 * @throws RemoteException
@@ -2719,10 +2741,15 @@ public class SWPHandler {
 					.getProductId());
 			Long programId = release.getProgramId();
 			addProductReleaseField(ga, ReleaseFields.programId, programId);
-			addProductReleaseField(ga, ReleaseFields.releaseDate, release
+			
+			GenericArtifactField releaseDateField = addProductReleaseField(ga, ReleaseFields.releaseDate, release
 					.getEndDate());
-			addProductReleaseField(ga, ReleaseFields.startDate, release
+			SWPMetaData.setDateFieldValue(release.getEndDate(), ga.getSourceSystemTimezone(), releaseDateField);
+			
+			GenericArtifactField startDateField = addProductReleaseField(ga, ReleaseFields.startDate, release
 					.getStartDate());
+			SWPMetaData.setDateFieldValue(release.getStartDate(), ga.getSourceSystemTimezone(), startDateField);
+			
 			String releaseTitle = release.getName();
 			if (programId != null) {
 				releaseTitle = releaseTitle + " ("
@@ -2805,9 +2832,9 @@ public class SWPHandler {
 			for (Sprint sprint : sprints) {
 				sprintsPresent = true;
 				addMetaDataField(ga, MetaDataFields.teamSprint, SWPMetaData
-						.getTeamSprintStringRepresentation(sprint, team));
+						.getTeamSprintStringRepresentation(sprint, team, ga.getSourceSystemTimezone()));
 				addMetaDataField(ga, MetaDataFields.sprintTeam, SWPMetaData
-						.getSprintTeamStringRepresentation(sprint, team));
+						.getSprintTeamStringRepresentation(sprint, team, ga.getSourceSystemTimezone()));
 			}
 		}
 		if (!teamsPresent) {

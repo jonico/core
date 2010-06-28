@@ -2,8 +2,11 @@ package com.collabnet.ccf.swp;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.GregorianCalendar;
+import java.util.TimeZone;
 
 import com.collabnet.ccf.core.ga.GenericArtifactField;
+import com.collabnet.ccf.core.utils.DateUtil;
 import com.danube.scrumworks.api2.client.Sprint;
 import com.danube.scrumworks.api2.client.Team;
 
@@ -21,14 +24,7 @@ public class SWPMetaData {
 	 * 
 	 */
 	public enum SWPType {
-		PBI, TASK, SPRINT, TEAM, RELEASE, /* PROGRAM_RELEASE, */PRODUCT, EPIC, /*
-																			 * PROGRAM,
-																			 *//*
-																				 * PROGRAM_EPIC
-																				 * ,
-																				 */METADATA, /*
-																							 * PROGRAM_THEME,
-																							 */IMPEDIMENT, USER, UNKNOWN
+		PBI, TASK, SPRINT, TEAM, RELEASE, PRODUCT, EPIC, METADATA, IMPEDIMENT, USER, UNKNOWN
 	}
 
 	public final static String PBI = "PBI";
@@ -273,6 +269,10 @@ public class SWPMetaData {
 	// start/end dates
 	public final static SimpleDateFormat sprintDateFormat = new SimpleDateFormat(
 			"yyyy-MM-dd");
+	
+	static {
+		sprintDateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
+	}
 
 	/**
 	 * Returns the string representation of a sprint in a team if team should be
@@ -283,9 +283,11 @@ public class SWPMetaData {
 	 * @return
 	 */
 	public static String getTeamSprintStringRepresentation(Sprint sprint,
-			Team team) {
+			Team team, String timezone) {
 		Date startDate = sprint.getStartDate();
+		startDate = DateUtil.convertToGMTAbsoluteDate(startDate, timezone);
 		Date endDate = sprint.getEndDate();
+		endDate = DateUtil.convertToGMTAbsoluteDate(endDate, timezone);
 		StringBuffer value = new StringBuffer(team.getName() + " "
 				+ sprintDateFormat.format(startDate) + " - "
 				+ sprintDateFormat.format(endDate));
@@ -323,9 +325,13 @@ public class SWPMetaData {
 	 * @return
 	 */
 	public static String getSprintTeamStringRepresentation(Sprint sprint,
-			Team team) {
+			Team team, String timezone) {
 		Date startDate = sprint.getStartDate();
+		startDate = DateUtil.convertToGMTAbsoluteDate(startDate, timezone);
 		Date endDate = sprint.getEndDate();
+		endDate = DateUtil.convertToGMTAbsoluteDate(endDate, timezone);
+		
+		// TODO Do we have to do time zone conversion here?
 		StringBuffer value = new StringBuffer(sprintDateFormat
 				.format(startDate)
 				+ " - " + sprintDateFormat.format(endDate));
@@ -334,6 +340,43 @@ public class SWPMetaData {
 		}
 		value.append(" (" + team.getName() + ")");
 		return value.toString();
+	}
+	
+	/**
+	 * This method does the necessary time zone conversion
+	 * @param value
+	 * @param sourceSystemTimezone
+	 * @param field
+	 */
+	public static void setDateFieldValue(Object value,
+			String sourceSystemTimezone, GenericArtifactField field){
+		Date dateValue = null;
+		
+		if(value instanceof GregorianCalendar){
+			dateValue = ((GregorianCalendar)value).getTime();
+		}
+		else if(value instanceof Date){
+			dateValue = (Date) value;
+		}
+		else if(value instanceof String){
+			long dataValue = Long.parseLong((String) value)*1000;
+			Date returnDate = new Date(dataValue);
+			dateValue = returnDate;
+		}
+		
+		if (dateValue == null) {
+			field.setFieldValue(null);
+			field.setFieldValueType(GenericArtifactField.FieldValueTypeValue.DATE);
+		}
+		else if(DateUtil.isAbsoluteDateInTimezone(dateValue, sourceSystemTimezone)){
+			dateValue = DateUtil.convertToGMTAbsoluteDate(dateValue, sourceSystemTimezone);
+			field.setFieldValue(dateValue);
+			field.setFieldValueType(GenericArtifactField.FieldValueTypeValue.DATE);
+		}
+		else {
+			field.setFieldValueType(GenericArtifactField.FieldValueTypeValue.DATE);
+			field.setFieldValue(dateValue);
+		}
 	}
 
 	// TODO Include meta info for the other SWP types

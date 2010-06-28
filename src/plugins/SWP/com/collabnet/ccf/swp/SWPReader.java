@@ -120,6 +120,7 @@ public class SWPReader extends AbstractReader<Connection> {
 		String sourceRepositoryId = this.getSourceRepositoryId(syncInfo);
 		String sourceRepositoryKind = this.getSourceRepositoryKind(syncInfo);
 		String lastSynchronizedVersion = this.getLastSourceVersion(syncInfo);
+		
 		boolean ignoreResyncUser = false;
 
 		if (lastSynchronizedVersion == null
@@ -141,6 +142,7 @@ public class SWPReader extends AbstractReader<Connection> {
 		}
 
 		GenericArtifact genericArtifact = new GenericArtifact();
+		
 		Connection connection;
 		try {
 			connection = connect(sourceSystemId, sourceSystemKind,
@@ -163,9 +165,10 @@ public class SWPReader extends AbstractReader<Connection> {
 			/**
 			 * Create a new generic artifact data structure
 			 */
+			populateSrcAndDest(syncInfo, genericArtifact);
+			genericArtifact.setSourceArtifactId(artifactId);
 			genericArtifact.setArtifactMode(ArtifactModeValue.COMPLETE);
 			genericArtifact.setArtifactType(ArtifactTypeValue.PLAINARTIFACT);
-			genericArtifact.setSourceArtifactId(artifactId);
 
 			if (swpType.equals(SWPMetaData.SWPType.TASK)) {
 				swpHandler.retrieveTask(connection.getEndpoint(), artifactId,
@@ -203,8 +206,6 @@ public class SWPReader extends AbstractReader<Connection> {
 		} finally {
 			disconnect(connection);
 		}
-
-		populateSrcAndDest(syncInfo, genericArtifact);
 		return genericArtifact;
 	}
 
@@ -226,30 +227,33 @@ public class SWPReader extends AbstractReader<Connection> {
 	 * @param ga
 	 */
 	private void populateSrcAndDest(Document syncInfo, GenericArtifact ga) {
-		String sourceArtifactId = ga.getSourceArtifactId();
 		String sourceRepositoryId = this.getSourceRepositoryId(syncInfo);
 		String sourceRepositoryKind = this.getSourceRepositoryKind(syncInfo);
 		String sourceSystemId = this.getSourceSystemId(syncInfo);
 		String sourceSystemKind = this.getSourceSystemKind(syncInfo);
 		String conflictResolutionPriority = this
 				.getConflictResolutionPriority(syncInfo);
+		
+		String sourceSystemTimezone = this.getSourceSystemTimezone(syncInfo);
+		String targetSystemTimezone = this.getTargetSystemTimezone(syncInfo);
 
 		String targetRepositoryId = this.getTargetRepositoryId(syncInfo);
 		String targetRepositoryKind = this.getTargetRepositoryKind(syncInfo);
 		String targetSystemId = this.getTargetSystemId(syncInfo);
 		String targetSystemKind = this.getTargetSystemKind(syncInfo);
 
-		ga.setSourceArtifactId(sourceArtifactId);
 		ga.setSourceRepositoryId(sourceRepositoryId);
 		ga.setSourceRepositoryKind(sourceRepositoryKind);
 		ga.setSourceSystemId(sourceSystemId);
 		ga.setSourceSystemKind(sourceSystemKind);
 		ga.setConflictResolutionPriority(conflictResolutionPriority);
+		ga.setSourceSystemTimezone(sourceSystemTimezone);
 
 		ga.setTargetRepositoryId(targetRepositoryId);
 		ga.setTargetRepositoryKind(targetRepositoryKind);
 		ga.setTargetSystemId(targetSystemId);
 		ga.setTargetSystemKind(targetSystemKind);
+		ga.setTargetSystemTimezone(targetSystemTimezone);
 	}
 
 	@Override
