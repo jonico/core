@@ -703,7 +703,6 @@ public class ProjectTrackerReader extends
 		String artifactIdentifier = artifactId.substring(artifactId
 				.lastIndexOf(":") + 1);
 		String sourceSystemTimezone = this.getSourceSystemTimezone(syncInfo);
-		String targetSystemTimezone = this.getTargetSystemTimezone(syncInfo);
 		Date lastModifiedDate = this.getLastModifiedDate(syncInfo);
 		long fromTime = lastModifiedDate.getTime();
 		boolean reloadedArtifactType = false;
