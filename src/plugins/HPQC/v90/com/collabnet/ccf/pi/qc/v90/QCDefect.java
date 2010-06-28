@@ -131,7 +131,7 @@ public class QCDefect extends Bug implements IQCDefect {
 					|| thisFieldsDatatype
 							.equals(GenericArtifactField.FieldValueTypeValue.DATETIME)) {
 				String connectorSystemTimeZone = TimeZone.getDefault()
-						.getDisplayName(false, TimeZone.SHORT);
+						.getID();
 				Date dateValue = getFieldAsDate(thisField.getFieldName());
 				if (dateValue != null) {
 					if (DateUtil.isAbsoluteDateInTimezone(dateValue,

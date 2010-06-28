@@ -35,7 +35,6 @@ import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.utils.DateUtil;
 import com.collabnet.ccf.pi.qc.v90.api.IConnection;
 import com.collabnet.ccf.pi.qc.v90.api.IRecordSet;
-import com.collabnet.ccf.pi.qc.v90.api.dcom.Bug;
 import com.collabnet.ccf.pi.qc.v90.api.dcom.Requirement;
 import com.jacob.com.Dispatch;
 
@@ -127,8 +126,7 @@ public class QCRequirement extends Requirement implements IQCRequirement {
 					.equals(GenericArtifactField.FieldValueTypeValue.DATE)
 					|| thisFieldsDatatype
 							.equals(GenericArtifactField.FieldValueTypeValue.DATETIME)) {
-				String connectorSystemTimeZone = TimeZone.getDefault()
-						.getDisplayName(false, TimeZone.SHORT);
+				String connectorSystemTimeZone = TimeZone.getDefault().getID();
 				Date dateValue = getFieldAsDate(thisField.getFieldName());
 				if (dateValue != null) {
 					if (DateUtil.isAbsoluteDateInTimezone(dateValue,
