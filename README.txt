@@ -1,4 +1,4 @@
-CollabNet TeamForge to ScrumWorks Integration 1.0
+CollabNet TeamForge to ScrumWorks Integration 1.4
 (based on CollabNet Connector Framework Version 1.4.0)
                  
 Introduction:
@@ -42,3 +42,23 @@ For help on setting up CCF and its GUI, see the following:
 License
 -------
 Please refer to License.txt for license information.
+
+Support for CollabNet Certified Integrations
+-----------------------------
+
+Find out about CollabNet Technical Support: http://www.open.collab.net/support/
+
+Information about CollabNet Consulting services is at http://www.open.collab.net/consulting/
+
+Join openCollabNet for community support: http://ccf.open.collab.net/ds/viewForumSummary.do?dsForumId=591
+
+About CollabNet
+--------------- 
+
+CollabNet leads the industry in Agile application lifecycle management (Agile ALM) in the Cloud. The CollabNet TeamForge™ ALM platform, CollabNet Subversion 
+software configuration management (SCM) solution, and ScrumWorks® project and program management software enable teams using any environment, methodology, 
+and technology to increase productivity by up to 50% and to reduce the cost of software development by up to 80%.  The company also offers training, 
+including Certified ScrumMaster training, software development process improvement services, and an innovative community management approach to driving 
+enterprise development success.  As the founder of the open source Subversion project, CollabNet has collaborative development for distributed teams in its 
+DNA. Millions of users at more than 2,500 organizations have transformed the way they develop software with CollabNet. For more information, visit 
+http://www.collab.net.
