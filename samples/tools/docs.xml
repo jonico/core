@@ -68,6 +68,7 @@
     <include name="QCTF/**/*.xml" />
   	<include name="QCTFOLD/**/*.xml" />
     <include name="QCPT/**/*.xml" />
+  	<include name="TFSWP/**/*.xml" />
     <exclude name="**/input/*.xml" />
     <exclude name="**/output/*.xml" />
     <exclude name="**/xslt/*.xml" />
@@ -268,6 +269,7 @@
     		<include name="QCTF/**/*.xml" />
 			<include name="QCTFOLD/**/*.xml" />
     		<include name="QCPT/**/*.xml" />
+      		<include name="SWPTF/**/*.xml" />
     		<exclude name="**/input/*.xml" />
     		<exclude name="**/output/*.xml" />
     		<exclude name="**/xslt/*.xml" />

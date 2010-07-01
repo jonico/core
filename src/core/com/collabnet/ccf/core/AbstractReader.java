@@ -24,6 +24,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
@@ -194,6 +195,68 @@ public abstract class AbstractReader<T> extends Component implements
 				return Integer.toString(list.size());
 			}
 		}
+	}
+	
+	/**
+	 * Returns the currently processed sync info of the
+	 * synchronization status record in question
+	 * 
+	 * @param sourceSystemId
+	 *            source system id
+	 * @param sourceRepositoryId
+	 *            source repository id
+	 * @param targetSystemId
+	 *            target system id
+	 * @param targetRepositoryId
+	 *            target repository id
+	 * @return synch info for record in question
+	 */
+	public Document getCurrentSynchInfo(String sourceSystemId,
+			String sourceRepositoryId, String targetSystemId,
+			String targetRepositoryId) {
+		String repositoryKey = sourceSystemId + ":" + sourceRepositoryId + ":"
+				+ targetSystemId + ":" + targetRepositoryId;
+		RepositoryRecord record = repositoryRecordHashMap.get(repositoryKey);
+		if (record == null) {
+			return null;
+		} else {
+			return record.getSyncInfo();
+		}
+	}
+
+	/**
+	 * Returns the number of artifacts waiting to be synchronized for all target
+	 * systems connected to the source repository
+	 * 
+	 * @param sourceSystemId
+	 *            source system id
+	 * @param sourceRepositoryId
+	 *            source repository id
+	 * @return number of artifacts waiting for specific synchronization status
+	 *         record
+	 */
+	public int getNumberOfWaitingArtifactsForAllTargetSystems(
+			String sourceSystemId, String sourceRepositoryId) {
+		String repositoryKey = sourceSystemId + ":" + sourceRepositoryId + ":";
+		Set<String> keys = repositoryRecordHashMap.keySet();
+		int number = 0;
+		for (String key : keys) {
+			if (key.startsWith(repositoryKey)) {
+				RepositoryRecord record = repositoryRecordHashMap.get(key);
+				if (record != null) {
+					List<ArtifactState> list = record
+							.getArtifactsToBeReadList();
+					if (list != null) {
+						number += list.size();
+					}
+					List<GenericArtifact> shippedList = record.getArtifactsToBeShippedList();
+					if (shippedList != null) {
+						number += shippedList.size();
+					}
+				}
+			}
+		}
+		return number;
 	}
 
 	/**

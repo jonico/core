@@ -18,7 +18,6 @@
 package com.collabnet.ccf.teamforge;
 
 import java.rmi.RemoteException;
-import java.util.Date;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
@@ -47,18 +46,35 @@ public class TFConnectionFactory implements ConnectionFactory<Connection> {
 
 	/**
 	 * Returns whether this repository id belongs to a tracker
-	 * If not, it belongs to a planning folder
 	 * @param repositoryId repositoryId
 	 * @return true if repository id belongs to a tracker
 	 */
 	public static boolean isTrackerRepository(String repositoryId) {
-		return repositoryId.startsWith("tracker");
+		return repositoryId.startsWith("tracker") && !repositoryId.endsWith("MetaData");
 	}
 	
 	/**
-	 * If the repository id contains the project id this will be returned
+	 * Returns whether this repository id belongs to a planning folder repository
+	 * @param repositoryId repositoryId
+	 * @return true if repository id belongs to a planning folder
+	 */
+	public static boolean isPlanningFolderRepository(String repositoryId) {
+		return repositoryId.startsWith("proj") && repositoryId.endsWith("planningFolders");
+	}
+	
+	/**
+	 * Returns whether this repository id belongs to a tracker meta data repository
+	 * @param repositoryId repositoryId
+	 * @return true if repository id belongs to a tracker meta data repository
+	 */
+	public static boolean isTrackerMetaDataRepository(String repositoryId) {
+		return repositoryId.startsWith("tracker") && repositoryId.endsWith("MetaData");
+	}
+	
+	/**
+	 * If the planning folder repository id contains the project id this will be returned
 	 * @param repositoryId
-	 * @return
+	 * @return project id
 	 */
 	public static String extractProjectFromRepositoryId(String repositoryId) {
 		if(repositoryId != null){
@@ -75,7 +91,25 @@ public class TFConnectionFactory implements ConnectionFactory<Connection> {
 		throw new IllegalArgumentException("Repository id is not valid.");
 	}
 	
-	
+	/**
+	 * If the meta data repository id contains the tracker id this will be returned
+	 * @param repositoryId
+	 * @return tracker id
+	 */
+	public static String extractTrackerFromMetaDataRepositoryId(String repositoryId) {
+		if(repositoryId != null){
+			String[] splitRepo = repositoryId.split("-");
+			if(splitRepo != null){
+				if(splitRepo.length != 2){
+					throw new IllegalArgumentException("MetaData Repository id is not valid.");
+				}
+				else {
+					return splitRepo[0];
+				}
+			}
+		}
+		throw new IllegalArgumentException("Meta Data Repository id is not valid.");
+	}
 	
 	/**
 	 * Connection Factory implementation for the TF adaptor. 
@@ -114,9 +148,8 @@ public class TFConnectionFactory implements ConnectionFactory<Connection> {
 		
 		try {
 			String key = systemId + systemKind + repositoryId + repositoryKind + connectionInfo + credentialInfo;
-			Date currentDate = new Date();
 			// we want to make sure that we always get a new connection here since we do connection management on our own
-			connection =  Connection.getConnection(connectionInfo, username, password, null, key, currentDate.toString(), false);
+			connection =  Connection.getConnection(connectionInfo, username, password, null, key, Long.toString(System.currentTimeMillis()), false);
 			connection.login();
 		} catch (RemoteException e) {
 			String cause = "While trying to login into TF "+ connectionInfo 

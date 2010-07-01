@@ -20,8 +20,12 @@ package com.collabnet.ccf.teamforge;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.SortedSet;
 
 import org.apache.axis.AxisFault;
 import org.apache.commons.lang.StringUtils;
@@ -34,7 +38,6 @@ import com.collabnet.ccf.core.eis.connection.ConnectionManager;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.utils.DateUtil;
-import com.collabnet.ce.soap50.webservices.tracker.Artifact2SoapDO;
 import com.collabnet.ce.soap50.webservices.tracker.ArtifactSoapDO;
 import com.collabnet.teamforge.api.Connection;
 import com.collabnet.teamforge.api.FieldValues;
@@ -50,9 +53,11 @@ import com.collabnet.teamforge.api.planning.PlanningFolderDO;
 import com.collabnet.teamforge.api.planning.PlanningFolderRow;
 import com.collabnet.teamforge.api.tracker.ArtifactDO;
 import com.collabnet.teamforge.api.tracker.ArtifactDependencyRow;
+import com.collabnet.teamforge.api.tracker.ArtifactDetailList;
 import com.collabnet.teamforge.api.tracker.ArtifactDetailRow;
 import com.collabnet.teamforge.api.tracker.TrackerDO;
 import com.collabnet.teamforge.api.tracker.TrackerFieldDO;
+import com.collabnet.teamforge.api.tracker.TrackerFieldValueDO;
 
 /**
  * The tracker handler class provides support for listing and/or edit trackers
@@ -128,10 +133,10 @@ public class TFTrackerHandler {
 		Filter[] filter = { new Filter("modifiedAfter", Filter.DATE_FORMAT
 				.format(lastModifiedDate)) };
 		ArtifactDetailRow[] rows = null;
-		rows = connection.getTrackerClient().getArtifactDetailList(
-					trackerId, selectedColumns, filter, sortKeys, 0, -1, false,
-					true).getDataRows();
-			
+		rows = connection.getTrackerClient().getArtifactDetailList(trackerId,
+				selectedColumns, filter, sortKeys, 0, -1, false, true)
+				.getDataRows();
+
 		if (rows != null) {
 			log.debug("There were " + rows.length + " artifacts changed");
 		}
@@ -147,13 +152,28 @@ public class TFTrackerHandler {
 						&& lastArtifactVersion == rows[i].getVersion()) {
 					duplicateFound = true;
 				} else {
-					ArtifactDO artifactData = connection.getTrackerClient()
-							.getArtifactData(id);
-					if (!artifactData.getLastModifiedBy().equals(connectorUser)) {
-						if (duplicateFound) {
-							detailRowsNew.add(artifactData);
+					try {
+						ArtifactDO artifactData = connection.getTrackerClient()
+								.getArtifactData(id);
+						// if the version number has changed again in the mean
+						// time ignore the artifact
+						// since it will show up again in the next query
+						if (rows[i].getVersion() == artifactData.getVersion()
+								&& !artifactData.getLastModifiedBy().equals(
+										connectorUser)) {
+							if (duplicateFound) {
+								detailRowsNew.add(artifactData);
+							}
+							detailRowsFull.add(artifactData);
 						}
-						detailRowsFull.add(artifactData);
+					} catch (AxisFault e) {
+						javax.xml.namespace.QName faultCode = e.getFaultCode();
+						if (!faultCode.getLocalPart().equals(
+								"NoSuchObjectFault")) {
+							throw e;
+						}
+						log.debug("Artifact " + id
+								+ " has been deleted in the mean time ...:", e);
 					}
 				}
 			}
@@ -257,8 +277,8 @@ public class TFTrackerHandler {
 				status, // status
 				customer, // customer
 				priority, // priority
-				autosumming?0:estimatedEfforts, // estimated efforts
-				autosumming?0:remainingEfforts, // remaining efforts 
+				autosumming ? 0 : estimatedEfforts, // estimated efforts
+				autosumming ? 0 : remainingEfforts, // remaining efforts
 				autosumming,
 				assignedTo, // assigned user name
 				reportedReleaseId, planningFolderId, flexFields, null, null,
@@ -408,7 +428,7 @@ public class TFTrackerHandler {
 						ga)) {
 					return null;
 				}
-				
+
 				if (deleteOldParentAssociation && !oldParentRemoved) {
 					removeArtifactDependency(connection, currentParentId, Id);
 					oldParentRemoved = true;
@@ -444,10 +464,11 @@ public class TFTrackerHandler {
 				flexFields.setNames(finalFlexFieldNames.toArray(new String[0]));
 				flexFields.setValues(finalFlexFieldValues.toArray());
 				flexFields.setTypes(finalFlexFieldTypes.toArray(new String[0]));
-				
-				// we need this property to determine whether we may update the efforts fields
+
+				// we need this property to determine whether we may update the
+				// efforts fields
 				boolean autoSummingTurnedOn = artifactData.getAutosumming();
-				
+
 				if (autosumming != null
 						&& autosumming.getFieldValueHasChanged()) {
 					Object fieldValueObj = autosumming.getFieldValue();
@@ -461,7 +482,7 @@ public class TFTrackerHandler {
 					autoSummingTurnedOn = fieldValue;
 					artifactData.setAutosumming(fieldValue);
 				}
-				
+
 				// check if we do not support the autosumming flag at all
 				if (!connection.supports53()) {
 					autoSummingTurnedOn = false;
@@ -671,19 +692,19 @@ public class TFTrackerHandler {
 			}
 		}
 
-		
-		// it looks as if since TF 5.3, not every update call automatically increases the version number
+		// it looks as if since TF 5.3, not every update call automatically
+		// increases the version number
 		// hence we retrieve the artifact version here again
 		if (comments.length == 0) {
 			// artifactData.setVersion(artifactData.getVersion() + 1);
-			artifactData = connection.getTrackerClient()
-				.getArtifactData(Id);
+			artifactData = connection.getTrackerClient().getArtifactData(Id);
 		}
-		
+
 		if (associateWithParent) {
-			createArtifactDependency(connection, newParentId, Id, "CCF generated parent-child relationship");
+			createArtifactDependency(connection, newParentId, Id,
+					"CCF generated parent-child relationship");
 		}
-		
+
 		log.info("Artifact updated id: " + artifactData.getId()
 				+ " in tracker " + artifactData.getFolderId());
 		return artifactData;
@@ -857,5 +878,171 @@ public class TFTrackerHandler {
 			return null;
 		else
 			return detailRowsNew;
+	}
+
+	/**
+	 * Updates fields of tracker definition This method currently does not
+	 * support conflict detection
+	 * 
+	 * @param ga
+	 * @param trackerId
+	 *            tracker in question
+	 * @param fieldsToBeChanged
+	 *            fields to be adjusted
+	 * @param connection
+	 * @return
+	 * @throws RemoteException
+	 */
+	public TrackerDO updateTrackerMetaData(GenericArtifact ga,
+			String trackerId, Map<String, SortedSet<String>> fieldsToBeChanged,
+			Connection connection) throws RemoteException {
+		Exception exception = null;
+		for (String fieldName : fieldsToBeChanged.keySet()) {
+			boolean updated = false;
+			while (!updated) {
+				updated = true;
+				try {
+					// we have to refetch this data in the loop to avoid version
+					// mismatch exceptions
+					TrackerFieldDO[] fields = connection.getTrackerClient()
+							.getFields(trackerId);
+
+					// find field in question (we do not create new fields yet)
+					TrackerFieldDO trackerField = null;
+					for (TrackerFieldDO field : fields) {
+						if (field.getName().equals(fieldName)) {
+							trackerField = field;
+							break;
+						}
+					}
+					if (trackerField == null) {
+						throw new CCFRuntimeException("Field " + fieldName
+								+ " of tracker " + trackerId
+								+ " could not be found.");
+					}
+
+					// find out whether field is single select or multi select
+					boolean fieldIsSingleSelect = trackerField.getFieldType()
+							.equals(TrackerFieldDO.FIELD_TYPE_SINGLE_SELECT);
+
+					SortedSet<String> anticipatedFieldValues = fieldsToBeChanged
+							.get(fieldName);
+					List<TrackerFieldValueDO> deletedFieldValues = new ArrayList<TrackerFieldValueDO>();
+					Set<String> addedFieldValues = new HashSet<String>();
+					Map<String, String> currentValues = new HashMap<String, String>();
+					TrackerFieldValueDO[] currentFieldValues = trackerField
+							.getFieldValues();
+
+					for (TrackerFieldValueDO currentFieldValue : currentFieldValues) {
+						currentValues.put(currentFieldValue.getValue(),
+								currentFieldValue.getId());
+						if (!anticipatedFieldValues.contains(currentFieldValue
+								.getValue())) {
+							deletedFieldValues.add(currentFieldValue);
+						}
+					}
+
+					for (String anticipatedFieldValue : anticipatedFieldValues) {
+						if (!currentValues.containsKey(anticipatedFieldValue)) {
+							addedFieldValues.add(anticipatedFieldValue);
+						}
+					}
+
+					if (deletedFieldValues.isEmpty()
+							&& addedFieldValues.isEmpty()) {
+						continue;
+					}
+
+					List<TrackerFieldValueDO> updatedValuesList = new ArrayList<TrackerFieldValueDO>();
+					for (String anticipatedFieldValue : anticipatedFieldValues) {
+						TrackerFieldValueDO fieldValue = new TrackerFieldValueDO(
+								connection.supports50());
+						fieldValue.setIsDefault(false);
+						fieldValue.setValue(anticipatedFieldValue);
+						fieldValue.setId(currentValues
+								.get(anticipatedFieldValue));
+						updatedValuesList.add(fieldValue);
+					}
+
+					// we cannot delete field values if those are still used by
+					// tracker
+					// items
+					for (TrackerFieldValueDO deletedFieldValue : deletedFieldValues) {
+						if (isFieldValueUsed(trackerId, fieldName,
+								deletedFieldValue, fieldIsSingleSelect,
+								connection)) {
+							log
+									.warn("Could not delete field value "
+											+ deletedFieldValue.getValue()
+											+ " of field "
+											+ fieldName
+											+ " in tracker "
+											+ trackerId
+											+ " because there are still artifacts that use this value.");
+							int insertIndex = getInsertIndex(updatedValuesList,
+									deletedFieldValue);
+							updatedValuesList.add(insertIndex,
+									deletedFieldValue);
+						}
+					}
+					TrackerFieldValueDO[] fieldValues = new TrackerFieldValueDO[updatedValuesList
+							.size()];
+					updatedValuesList.toArray(fieldValues);
+					trackerField.setFieldValues(fieldValues);
+					connection.getTrackerClient().setField(trackerId,
+							trackerField);
+				} catch (AxisFault e) {
+					javax.xml.namespace.QName faultCode = e.getFaultCode();
+					if (!faultCode.getLocalPart()
+							.equals("VersionMismatchFault")) {
+						// throw e;
+						// we do not throw an error yet since we like to give
+						// other fields the chance to be properly updated
+						log
+								.error(
+										"During TF meta data update, an error occured, proceeding to give other fields a chance to be updated ..."
+												+ e.getMessage(), e);
+						exception = e;
+						continue;
+					}
+					updated = false;
+					// we currently do not support conflict detection for meta
+					// data updates
+					logConflictResolutor
+							.warn(
+									"Stale tracker meta data update, will override in any case ...:",
+									e);
+				}
+			}
+		}
+		if (exception != null) {
+			throw new CCFRuntimeException("During TF tracker meta data update, at least one exception occured." , exception);
+		}
+		return connection.getTrackerClient().getTrackerData(trackerId);
+	}
+
+	private int getInsertIndex(List<TrackerFieldValueDO> updatedValuesList,
+			TrackerFieldValueDO insertedValue) {
+		int index = 0;
+		for (TrackerFieldValueDO fieldValue : updatedValuesList) {
+			if (fieldValue.getValue().compareTo(insertedValue.getValue()) > 0) {
+				break;
+			}
+			++index;
+		}
+		return index;
+	}
+
+	private boolean isFieldValueUsed(String trackerId, String fieldName,
+			TrackerFieldValueDO fieldValue, boolean fieldIsSingleSelect,
+			Connection connection) throws RemoteException {
+		Filter filter = new Filter(fieldName, fieldIsSingleSelect ? fieldValue
+				.getId() : fieldValue.getValue());
+		Filter[] filters = { filter };
+		String[] selectedColumns = { ArtifactSoapDO.COLUMN_ID };
+		ArtifactDetailList artifactList = connection.getTrackerClient()
+				.getArtifactDetailList(trackerId, selectedColumns, filters,
+						null, 0, 1, false, true);
+		return artifactList.getDataRows().length > 0;
 	}
 }

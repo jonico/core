@@ -448,6 +448,8 @@ public class GenericArtifact {
 	public final static String ERROR_TRANSFORMER_FILE = "transformerFileError";
 
 	public final static String ERROR_EXTERNAL_SYSTEM_WRITE = "externalSystemWriteError";
+	
+	public final static String ERROR_META_DATA_WRITE = "metaDataWriteError";
 
 	public final static String ERROR_MAX_CONNECTIONS_REACHED_FOR_POOL = "maxConnectionReachedForPoolError";
 
@@ -462,6 +464,8 @@ public class GenericArtifact {
 	public final static String ERROR_INTERNAL_DATABASE_TABLE_CORRUPT = "internalDatabaseTableCorruptionError";
 	
 	public final static String ERROR_PARENT_ARTIFACT_NOT_PRESENT = "parentArtifactNotPresentError";
+	
+	public final static String ERROR_INVALID_PARENT_ARTIFACT = "invalidParentArtifactError";
 
 	public final static String ERROR_INCORRECT_SQL_STATEMENT = "incorrectSQLStatementError";
 
