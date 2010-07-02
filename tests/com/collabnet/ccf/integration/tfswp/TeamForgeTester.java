@@ -380,7 +380,7 @@ public class TeamForgeTester {
 	 * @throws PlanningFolderRuleViolationException
 	 *             if there is an error with the planning folder
 	 */
-	private ArtifactDO updateArtifact(final ArtifactDO artifact,
+	public ArtifactDO updateArtifact(final ArtifactDO artifact,
 			final String updateString) throws RemoteException,
 			PlanningFolderRuleViolationException {
 		connection.getTrackerClient().setArtifactData(artifact, updateString,
@@ -612,6 +612,17 @@ public class TeamForgeTester {
 		}
 		throw new RemoteException(numberOfArtifacts + " " + entityType
 				+ "(s) were not found within the given time: " + ccfMaxWaitTime);
+	}
+	
+	/**
+	 * Return the artifact with the given id. 
+	 * 
+	 * @param artifactId the artifact id
+	 * @return the artifact data object
+	 * @throws RemoteException if the TeamForge API can not be accessed
+	 */
+	public ArtifactDO getArtifactDO(final String artifactId) throws RemoteException {
+		return connection.getTrackerClient().getArtifactData(artifactId); 
 	}
 	
 	/**

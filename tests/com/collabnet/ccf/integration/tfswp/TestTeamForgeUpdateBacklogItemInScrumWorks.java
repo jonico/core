@@ -1,7 +1,6 @@
 package com.collabnet.ccf.integration.tfswp;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -65,6 +64,7 @@ public class TestTeamForgeUpdateBacklogItemInScrumWorks extends TFSWPIntegration
 	@Test
 	public void testUpdateBacklogItem() throws Exception {
 		getSWPTester().waitForBacklogItemsToAppear(1);
+		
 		// execute
 		final String title = "updated TFPBI";
 		final String description = "updated TFPBIDescription";
@@ -107,19 +107,5 @@ public class TestTeamForgeUpdateBacklogItemInScrumWorks extends TFSWPIntegration
 		for (Comment comment : comments) {
 			assertTrue(comment.getText().contains("updating pbi ..."));
 		} 
-		
-		final String updatedSprintTitle = "updatedSprintTitle";
-		updatedPbi.setSprintId(getSWPTester().getSprintId(Sprint.SPRINT_1_AUTOMATED_TEAM.getName()));
-		updatedPbi.setName(updatedSprintTitle);
-		getSWPTester().updateBacklogItem(updatedPbi);
-		getTeamForgeTester().waitForBacklogItemToUpdate(updatedSprintTitle, 1);
-		
-		// execute
-		final String revisedTitle = "done PBI"; 
-		getTeamForgeTester().updateBacklogItem(backlogItemDO.getId(), revisedTitle, description, release, TeamForgeTester.STATUS_DONE, flexFields); 
-
-		// verify 
-		BacklogItem doneDateUpdatedPbi = getSWPTester().waitForBacklogItemToUpdate(revisedTitle); 
-		assertNotNull("Done date should have been set", doneDateUpdatedPbi.getCompletedDate()); 
 	}
 }
