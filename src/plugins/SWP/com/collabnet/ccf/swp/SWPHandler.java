@@ -1097,9 +1097,11 @@ public class SWPHandler {
 		if (completedDate != null && completedDate.getFieldValueHasChanged()) {
 			GregorianCalendar completedDateFieldValue = (GregorianCalendar) completedDate
 					.getFieldValue();
+			// if the PBI should be reopened, we always reopen it
 			if (completedDateFieldValue == null) {
 				pbi.setCompletedDate(null);
-			} else {
+			} else if (pbi.getCompletedDate() == null) {
+				// only set the new date if not already closed
 				Date convertedDate = null;
 				Date dateValue = completedDateFieldValue.getTime();
 				if (DateUtil.isAbsoluteDateInTimezone(dateValue, "GMT")) {
@@ -1110,6 +1112,7 @@ public class SWPHandler {
 				}
 				pbi.setCompletedDate(convertedDate);
 			}
+			// otherwise do nothing since PBI is already closed
 		}
 
 		if (description != null && description.getFieldValueHasChanged()) {

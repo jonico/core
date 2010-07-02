@@ -334,6 +334,7 @@ public class TeamForgeTester {
 	 * Updates and returns the updated backlog item.
 	 * 
 	 * @param backlogItemId
+	 * @param status status of the backlog item
 	 * @return
 	 * @throws RemoteException
 	 *             if TeamForge can not be accessed 
@@ -342,12 +343,15 @@ public class TeamForgeTester {
 	 */
 	public ArtifactDO updateBacklogItem(final String backlogItemId,
 			final String title, final String description, final String release,
-			final FieldValues flexFields) throws RemoteException,
+			String status, final FieldValues flexFields) throws RemoteException,
 			PlanningFolderRuleViolationException {
 		ArtifactDO pbi = retrieveAndUpdateArtifactTitleAndDescription(
 				backlogItemId, title, description);
 		pbi.setPlanningFolderId(getPlanningFolderId(release));
 		pbi.setFlexFields(flexFields);
+		if (status != null) {
+			pbi.setStatus(status); 
+		}
 		return updateArtifact(pbi, "updating pbi ...");
 	}
 

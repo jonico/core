@@ -179,7 +179,7 @@ public class TestBacklogItemWithImproperTaskParentage extends TFSWPIntegrationTe
 				updatedTitle, 
 				teamForgeBacklogItem.getDescription(), 
 				release, 
-				getTeamForgeTester().getFlexFields(teamForgeBacklogItem.getId())); 
+				null, getTeamForgeTester().getFlexFields(teamForgeBacklogItem.getId())); 
 		
 		// verify
 		BacklogItem updatedScrumWorksBacklogItem = getSWPTester().waitForBacklogItemToUpdate(updatedTitle); 

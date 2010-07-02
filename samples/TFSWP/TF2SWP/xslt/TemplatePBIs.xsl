@@ -91,17 +91,17 @@
 			<xsl:value-of select="." />
 		</field>
 	</xsl:template>
-	<xsl:template match='ccf:field[@fieldName="closeDate"]'>
+	<xsl:template match='ccf:field[@fieldName="status"]'>
 		<field>
 			<xsl:copy-of select="@*" />
 			<xsl:attribute name="fieldValueType">Date</xsl:attribute>
 			<xsl:attribute name="fieldName">completedDate</xsl:attribute>
 			<xsl:choose>
-				<xsl:when test="string(.)=''">
+				<xsl:when test="string(.)='Open'">
 					<xsl:attribute name="fieldValueIsNull">true</xsl:attribute>
 				</xsl:when>
 				<xsl:otherwise>
-					<xsl:value-of select="." />
+					<xsl:value-of select="/ccf:artifact/ccf:field[@fieldName='lastModifiedDate']" />
 				</xsl:otherwise>
 			</xsl:choose>	
 		</field>
