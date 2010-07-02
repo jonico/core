@@ -490,7 +490,7 @@ public class SWPTester {
 		backlogItem.setReleaseId(getReleaseId(releaseName));
 		backlogItem.setSprintId(sprintId);
 		backlogItem.setName(title);
-		backlogItem.getThemes().addAll(themeForBacklogItem); 
+		backlogItem.setThemes(themeForBacklogItem); 
 		return getSWPEndpoint().createBacklogItem(backlogItem);
 		// return getSWPEndpoint().createBacklogItem(new BacklogItemWSO(true,
 		// null, businessWeight, null, description, Integer.parseInt(estimate),
