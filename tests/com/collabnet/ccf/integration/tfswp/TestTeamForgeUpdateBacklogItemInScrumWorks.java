@@ -108,12 +108,14 @@ public class TestTeamForgeUpdateBacklogItemInScrumWorks extends TFSWPIntegration
 			assertTrue(comment.getText().contains("updating pbi ..."));
 		} 
 		
-		// setup
-		final String revisedTitle = "done PBI"; 
-		updatedPbi.setSprintId(getSWPTester().getSprintId(Sprint.SPRINT_1_AUTOMATED_TEAM.getName())); 
+		final String updatedSprintTitle = "updatedSprintTitle";
+		updatedPbi.setSprintId(getSWPTester().getSprintId(Sprint.SPRINT_1_AUTOMATED_TEAM.getName()));
+		updatedPbi.setName(updatedSprintTitle);
 		getSWPTester().updateBacklogItem(updatedPbi);
+		getTeamForgeTester().waitForBacklogItemToUpdate(updatedSprintTitle, 1);
 		
 		// execute
+		final String revisedTitle = "done PBI"; 
 		getTeamForgeTester().updateBacklogItem(backlogItemDO.getId(), revisedTitle, description, release, TeamForgeTester.STATUS_DONE, flexFields); 
 
 		// verify 
