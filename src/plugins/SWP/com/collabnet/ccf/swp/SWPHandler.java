@@ -1300,6 +1300,7 @@ public class SWPHandler {
 			log
 					.warn(parentArtifact
 							+ " of repository "
+							+ ga.getDepParentTargetRepositoryId()
 							+ " is no valid release, so we do not change the associated release.");
 		} else {
 			pbi.setReleaseId(new Long(parentArtifact));
