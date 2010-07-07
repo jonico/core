@@ -233,7 +233,8 @@ public class ProjectTrackerWriter extends
 					+ " with the attachment " + sourceAttachmentId
 					+ " from artifact " + parentSourceArtifactId);
 			parentArtifact = new GenericArtifact();
-			// make sure that we do not update the synchronization status record for replayed attachments
+			// make sure that we do not update the synchronization status record
+			// for replayed attachments
 			parentArtifact.setTransactionId(ga.getTransactionId());
 			parentArtifact
 					.setArtifactType(GenericArtifact.ArtifactTypeValue.PLAINARTIFACT);
@@ -327,8 +328,8 @@ public class ProjectTrackerWriter extends
 				.getArtifactIdFromFullyQualifiedArtifactId(targetArtifactId);
 		String repositoryId = ga.getTargetRepositoryId();
 		String repositoryKey = this.getRepositoryKey(ga);
-		String artifactTypeDisplayName = repositoryId
-				.substring(repositoryId.lastIndexOf(":") + 1);	
+		String artifactTypeDisplayName = repositoryId.substring(repositoryId
+				.lastIndexOf(":") + 1);
 		try {
 			twsclient = this.getConnection(ga);
 			List<ClientArtifact> cla = null;
@@ -439,7 +440,10 @@ public class ProjectTrackerWriter extends
 
 			// FIXME This is not atomic
 			ClientArtifactListXMLHelper artifactHelper = twsclient
-					.updateArtifactList(cla, modifiedOnMilliSeconds, isProvideReason());
+					.updateArtifactList(cla, modifiedOnMilliSeconds,
+							isProvideReason(),
+							isFoundReasonForCurrentlyProcessedArtifact(),
+							getReasonForCurrentlyProcessedArtifact());
 
 			ptHelper.processWSErrors(artifactHelper);
 			log.info("Artifact " + targetArtifactId
@@ -567,7 +571,9 @@ public class ProjectTrackerWriter extends
 
 			// cla.add(ca);
 			ClientArtifactListXMLHelper artifactHelper = twsclient
-					.createArtifactList(ca, isProvideReason());
+					.createArtifactList(ca, isProvideReason(),
+							isFoundReasonForCurrentlyProcessedArtifact(),
+							getReasonForCurrentlyProcessedArtifact());
 			ptHelper.processWSErrors(artifactHelper);
 
 			List<ClientArtifact> artifacts = artifactHelper.getAllArtifacts();
@@ -624,7 +630,8 @@ public class ProjectTrackerWriter extends
 			String targetArtifactTypeNameSpace,
 			String targetArtifactTypeTagName, ClientArtifact currentArtifact,
 			TrackerArtifactType trackerArtifactType) {
-		// llh
+		setFoundReasonForCurrentlyProcessedArtifact(false);
+		setReasonForCurrentlyProcessedArtifact(null);
 		String targetArtifactId = ga.getTargetArtifactId();
 		String targetSystemTimezone = ga.getTargetSystemTimezone();
 		String artifactId = null;
@@ -659,7 +666,9 @@ public class ProjectTrackerWriter extends
 			}
 			String fullyQualifiedFieldTagName = null;
 			TrackerAttribute trackerAttribute = null;
-			if (!fieldName.equals(ProjectTrackerReader.COMMENT_FIELD_NAME)) {
+			if (!fieldName.equals(ProjectTrackerReader.COMMENT_FIELD_NAME)
+					&& !fieldName
+							.equals(ProjectTrackerReader.REASON_FIELD_NAME)) {
 				fullyQualifiedFieldTagName = this
 						.getFullyQualifiedFieldTagName(fieldDisplayName,
 								namespace, trackerArtifactType);
@@ -668,6 +677,10 @@ public class ProjectTrackerWriter extends
 			}
 			if (fieldName.equals(ProjectTrackerReader.COMMENT_FIELD_NAME)) {
 				this.addComment(field, ca);
+			} else if (fieldName.equals(ProjectTrackerReader.REASON_FIELD_NAME)) {
+				setFoundReasonForCurrentlyProcessedArtifact(true);
+				setReasonForCurrentlyProcessedArtifact((String) field
+						.getFieldValue());
 			} else if (field.getFieldValueType() == GenericArtifactField.FieldValueTypeValue.USER) {
 				if (!processedUserFields.contains(fieldName)) {
 					List<GenericArtifactField> gaUserFields = ga
@@ -1159,7 +1172,8 @@ public class ProjectTrackerWriter extends
 			ga.setTargetArtifactVersion(Long.toString(modifiedOnMilliSeconds));
 
 			parentArtifact = new GenericArtifact();
-			// make sure that we do not update the synchronization status record for replayed attachments
+			// make sure that we do not update the synchronization status record
+			// for replayed attachments
 			parentArtifact.setTransactionId(ga.getTransactionId());
 			parentArtifact
 					.setArtifactType(GenericArtifact.ArtifactTypeValue.PLAINARTIFACT);
@@ -1288,6 +1302,8 @@ public class ProjectTrackerWriter extends
 	 * the source system once a new artifact has been created.
 	 */
 	private String resyncPassword;
+	private String reasonForCurrentlyProcessedArtifact = null;
+	private boolean foundReasonForCurrentlyProcessedArtifact = false;
 
 	/**
 	 * Sets the optional resync username
@@ -1383,7 +1399,9 @@ public class ProjectTrackerWriter extends
 	}
 
 	/**
-	 * Determine whether every artifact update/creation should be justified with a default reason
+	 * Determine whether every artifact update/creation should be justified with
+	 * a default reason
+	 * 
 	 * @param provideReason
 	 */
 	public void setProvideReason(boolean provideReason) {
@@ -1391,10 +1409,30 @@ public class ProjectTrackerWriter extends
 	}
 
 	/**
-	 * Returns whether every artifact creation/update will be justified with a default reason
+	 * Returns whether every artifact creation/update will be justified with a
+	 * default reason
+	 * 
 	 * @return true if reason is always provided, false if not
 	 */
 	public boolean isProvideReason() {
 		return provideReason;
+	}
+
+	private void setReasonForCurrentlyProcessedArtifact(
+			String reasonForCurrentlyProcessedArtifact) {
+		this.reasonForCurrentlyProcessedArtifact = reasonForCurrentlyProcessedArtifact;
+	}
+
+	private String getReasonForCurrentlyProcessedArtifact() {
+		return reasonForCurrentlyProcessedArtifact;
+	}
+
+	private void setFoundReasonForCurrentlyProcessedArtifact(
+			boolean foundReasonForCurrentlyProcessedArtifact) {
+		this.foundReasonForCurrentlyProcessedArtifact = foundReasonForCurrentlyProcessedArtifact;
+	}
+
+	private boolean isFoundReasonForCurrentlyProcessedArtifact() {
+		return foundReasonForCurrentlyProcessedArtifact;
 	}
 }
