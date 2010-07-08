@@ -28,7 +28,7 @@ import org.apache.commons.logging.LogFactory;
  *
  */
 public class ShutDownCCF extends Thread {
-	
+	private Long forcedShutdownDelay = null;
 	private int exitCode;
 	private static final Log log = LogFactory.getLog(ShutDownCCF.class);
 	private static boolean alreadyExited=false;
@@ -45,6 +45,8 @@ public class ShutDownCCF extends Thread {
 			}
 			else {
 				alreadyExited=true;
+				// After 10 seconds, we will kill the VM even if shutdown hooks are still in process
+				new ShutDownCCF(exitCode, new Long(10000)).start();
 				new ShutDownCCF(exitCode).start();
 			}
 		}
@@ -53,10 +55,28 @@ public class ShutDownCCF extends Thread {
 	public ShutDownCCF(int exitCode) {
 		setDaemon(true);
 		this.exitCode=exitCode;
-	}	
+	}
+	
+	public ShutDownCCF(int exitCode, Long forcedShutDownDelay) {
+		setDaemon(true);
+		this.exitCode=exitCode;
+		this.forcedShutdownDelay = forcedShutDownDelay; 
+	}
 		
 	public void run() {
-			log.info("Calling System.exit with exit code "+exitCode);
-			System.exit(exitCode);
+			if (forcedShutdownDelay == null) {
+				log.info("Calling System.exit with exit code "+exitCode);
+				System.exit(exitCode);
+			} else {
+				try {
+					Thread.sleep(forcedShutdownDelay);
+				} catch (InterruptedException e) {
+					// if our sleep got interrupted, we do not have to forcefully terminate the VM
+					log.debug("Forcefully shutting down the VM seems not to be necessary, quitting ...");
+					return;
+				}
+				log.warn("Shutdown hooks needed more than " + forcedShutdownDelay + " milliseconds, forcefully shutting down VM ...");
+				Runtime.getRuntime().halt(exitCode);
+			}
 	}
 }
