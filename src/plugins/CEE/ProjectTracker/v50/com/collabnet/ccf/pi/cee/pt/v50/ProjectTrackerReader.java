@@ -739,6 +739,7 @@ public class ProjectTrackerReader extends
 							+ retrievedArtifactId + ", so do not ship it ...");
 					return null;
 				}
+				
 				String retrievedProject = artifact.getProject();
 				if (retrievedProject != null) {
 					String sourceRepositoryId = this
@@ -1025,6 +1026,11 @@ public class ProjectTrackerReader extends
 						String modifiedOnStr = attValue;
 						long modifiedOnMilliSeconds = Long
 								.parseLong(modifiedOnStr);
+						if (modifiedOnMilliSeconds == 32503622400000L) {
+							// fix if modified date is not set correctly
+							log.error("Invalid last modified date detected for artifact " + artifactId);
+							return null;
+						}
 						Date modifiedOnDate = new Date(modifiedOnMilliSeconds);
 						String lastModificationDate = DateUtil
 								.format(modifiedOnDate);
@@ -1294,6 +1300,11 @@ public class ProjectTrackerReader extends
 				if (transactions != null) {
 					for (HistoryTransaction transaction : transactions) {
 						long modifiedOn = transaction.getModifiedOn();
+						if (modifiedOn == 32503622400000L) {
+							// fix if modified date is not set correctly
+							log.error("Invalid last modified date detected!");
+							continue;
+						}
 						String modifiedBy = transaction.getModifiedBy();
 						if (transaction != null) {
 							HistoryActivity[] historyActivities = transaction
