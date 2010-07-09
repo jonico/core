@@ -99,9 +99,9 @@ public class QCDefect extends Bug implements IQCDefect {
 	 * @param qcc
 	 * @param actionId
 	 * @param entityId
-	 * @param attachmentNames
-	 *            (DEPRECATED)
+	 * @param attachmentNames (DEPRECATED)
 	 * @param isResync
+	 * @param lastModifiedBy 
 	 * @return GenericArtifact Containing all the field values.
 	 */
 	public GenericArtifact getGenericArtifactObject(IConnection qcc,
@@ -109,7 +109,7 @@ public class QCDefect extends Bug implements IQCDefect {
 			int commentQualifier, List<String> attachmentNames,
 			String syncInfoTransactionId, String connectorUser,
 			QCHandler defectHandler, String sourceSystemTimezone,
-			boolean isResync) {
+			boolean isResync, String lastModifiedBy) {
 		genericArtifact = QCConfigHelper.getSchemaFieldsForDefect(qcc, isResync);
 		List<String> txnIds = defectHandler.getTransactionIdsInRangeForDefects(qcc,
 				Integer.parseInt(entityId), Integer
@@ -254,6 +254,17 @@ public class QCDefect extends Bug implements IQCDefect {
 						"BG_DEV_COMMENTS").get(0).setFieldValue(deltaComment);
 			}
 		}
+
+		// add last modified user as a mappable field
+		GenericArtifactField field;
+		field = genericArtifact.addNewField(
+					QCConfigHelper.lastModifiedUserFieldName,
+					GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
+		field.setFieldValueType(
+				GenericArtifactField.FieldValueTypeValue.STRING);
+		field.setFieldValue(lastModifiedBy);
+
+		
 		return genericArtifact;
 
 	}

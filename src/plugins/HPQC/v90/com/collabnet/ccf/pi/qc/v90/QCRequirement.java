@@ -98,6 +98,7 @@ public class QCRequirement extends Requirement implements IQCRequirement {
 	 * @param attachmentNames
 	 *            (DEPRECATED)
 	 * @param isResync
+	 * @param lastModifiedBy 
 	 * @return GenericArtifact Containing all the field values.
 	 */
 	public GenericArtifact getGenericArtifactObject(IConnection qcc,
@@ -105,7 +106,7 @@ public class QCRequirement extends Requirement implements IQCRequirement {
 			int commentQualifier, List<String> attachmentNames,
 			String syncInfoTransactionId, String connectorUser,
 			QCHandler defectHandler, String sourceSystemTimezone,
-			boolean isResync, String technicalRequirementsTypeID) {
+			boolean isResync, String technicalRequirementsTypeID, String lastModifiedBy) {
 		genericArtifact = QCConfigHelper.getSchemaFieldsForRequirement(qcc, technicalRequirementsTypeID, isResync);
 		List<String> txnIds = defectHandler.getTransactionIdsInRangeForRequirements(qcc,
 				Integer.parseInt(entityId), Integer
@@ -249,6 +250,16 @@ public class QCRequirement extends Requirement implements IQCRequirement {
 						"RQ_DEV_COMMENTS").get(0).setFieldValue(deltaComment);
 			}
 		}
+		
+		// add last modified user as a mappable field
+		GenericArtifactField field;
+		field = genericArtifact.addNewField(
+					QCConfigHelper.lastModifiedUserFieldName,
+					GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
+		field.setFieldValueType(
+				GenericArtifactField.FieldValueTypeValue.STRING);
+		field.setFieldValue(lastModifiedBy);
+
 		return genericArtifact;
 
 	}

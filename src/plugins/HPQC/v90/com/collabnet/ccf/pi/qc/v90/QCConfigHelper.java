@@ -63,6 +63,7 @@ public class QCConfigHelper {
 	static final String rqReqIdFieldName = "RQ_REQ_ID";
 	static final String auActionIdFieldName = "AU_ACTION_ID";
 	static final String apFieldNameFieldName = "AP_FIELD_NAME";
+	static final String lastModifiedUserFieldName = "LAST_MODIFIED_USER";
 
 	static final String apOldValueFieldName = "AP_OLD_VALUE";
 	static final String apOldLongValueFieldName = "AP_OLD_LONG_VALUE";

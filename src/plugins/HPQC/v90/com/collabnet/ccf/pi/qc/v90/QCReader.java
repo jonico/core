@@ -402,7 +402,8 @@ public class QCReader extends AbstractReader<IConnection> {
 									syncInfoTransactionId,
 									isIgnoreConnectorUserUpdates() ? getUserName()
 											: "", defectHandler,
-									sourceSystemTimezone, isResync);
+									sourceSystemTimezone, isResync,
+									lastModifiedBy);
 					// if (latestDefectArtifact == null)
 					// return null;
 					latestArtifact = defectHandler.getArtifactActionForDefects(
@@ -491,7 +492,8 @@ public class QCReader extends AbstractReader<IConnection> {
 									isIgnoreConnectorUserUpdates() ? getUserName()
 											: "", defectHandler,
 									sourceSystemTimezone, isResync,
-									technicalRequirementsTypeId);
+									technicalRequirementsTypeId,
+									lastModifiedBy);
 					// if (latestDefectArtifact == null)
 					// return null;
 					latestArtifact = defectHandler
