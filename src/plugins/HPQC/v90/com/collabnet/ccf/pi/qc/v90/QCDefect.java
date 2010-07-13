@@ -32,6 +32,7 @@ import org.apache.commons.logging.LogFactory;
 
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
+import com.collabnet.ccf.core.ga.GenericArtifactField.FieldActionValue;
 import com.collabnet.ccf.core.utils.DateUtil;
 import com.collabnet.ccf.pi.qc.v90.api.IConnection;
 import com.collabnet.ccf.pi.qc.v90.api.IRecordSet;
@@ -262,6 +263,7 @@ public class QCDefect extends Bug implements IQCDefect {
 					GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
 		field.setFieldValueType(
 				GenericArtifactField.FieldValueTypeValue.STRING);
+		field.setFieldAction(FieldActionValue.REPLACE);
 		field.setFieldValue(lastModifiedBy);
 
 		

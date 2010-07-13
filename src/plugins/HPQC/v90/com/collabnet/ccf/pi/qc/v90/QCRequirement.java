@@ -32,6 +32,7 @@ import org.apache.commons.logging.LogFactory;
 
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
+import com.collabnet.ccf.core.ga.GenericArtifactField.FieldActionValue;
 import com.collabnet.ccf.core.utils.DateUtil;
 import com.collabnet.ccf.pi.qc.v90.api.IConnection;
 import com.collabnet.ccf.pi.qc.v90.api.IRecordSet;
@@ -259,6 +260,7 @@ public class QCRequirement extends Requirement implements IQCRequirement {
 		field.setFieldValueType(
 				GenericArtifactField.FieldValueTypeValue.STRING);
 		field.setFieldValue(lastModifiedBy);
+		field.setFieldAction(FieldActionValue.REPLACE);
 
 		return genericArtifact;
 
