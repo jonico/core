@@ -21,8 +21,8 @@ import java.io.File;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
@@ -97,6 +97,16 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 	 * quarantined and the operation will never be retried
 	 */
 	private boolean immediatelyQuarantineLockedDefects = true;
+	
+	/**
+	 * If this property is enabled, QCWriter will attempt to figure out if the field
+	 * value has remained the same apart from formatting differences incurred by the
+	 * conversion to plain text. If so, the field will not be updated in order to
+	 * preserve the existing formatting.
+	 * 
+	 * False by default to maintain backwards compatibility.
+	 */
+	private Boolean preserveSemanticallyUnchangedHTMLFieldValues = null;
 
 	public QCWriter() {
 		super();
@@ -197,7 +207,7 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 
 		// FIXME This is not atomic
 		defectHandler.updateDefect(connection, targetArtifactId, allFields,
-				this.getUserName(), targetSystemTimezone).safeRelease();
+				this.getUserName(), targetSystemTimezone, getPreserveSemanticallyUnchangedHTMLFieldValues()).safeRelease();
 		log.info("QC Defect " + targetArtifactId + " on "
 				+ genericArtifact.getTargetRepositoryId()
 				+ " is updated successfully with the changes from "
@@ -249,7 +259,7 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 			log.warn("It is not possible to modify the root level requirement folder, so ignoring the update ...");
 		} else {
 			defectHandler.updateRequirement(connection, targetArtifactId, allFields,
-					this.getUserName(), targetSystemTimezone, targetParentArtifactId).safeRelease();
+					this.getUserName(), targetSystemTimezone, targetParentArtifactId, getPreserveSemanticallyUnchangedHTMLFieldValues()).safeRelease();
 			log.info("QC Requirement " + targetArtifactId + " on "
 					+ genericArtifact.getTargetRepositoryId()
 					+ " is updated successfully with the changes from "
@@ -446,9 +456,10 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 
 		List<GenericArtifactField> allFields = genericArtifact
 				.getAllGenericArtifactFields();
-		List<String> allFieldNames = new ArrayList<String>();
+		Set<String> allFieldNames = new HashSet<String>();
 		for (int cnt = 0; cnt < allFields.size(); cnt++) {
-			if (allFields.get(cnt).getFieldName().equals("BG_DEV_COMMENTS")) {
+			if (allFields.get(cnt).getFieldName().equals(QCConfigHelper.QC_BG_DEV_COMMENTS) ||
+				allFields.get(cnt).getFieldName().equals(QCConfigHelper.QC_RQ_DEV_COMMENTS)) {
 				continue;
 			}
 			if (!(allFieldNames.contains(allFields.get(cnt).getFieldName()))
@@ -458,28 +469,24 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 				List<GenericArtifactField> allSameFields = genericArtifact
 						.getAllGenericArtifactFieldsWithSameFieldName(allFields
 								.get(cnt).getFieldName());
-				HashSet<String> allValues = new HashSet<String>();
+				StringBuilder concatenatedString = new StringBuilder();
+								
 				for (GenericArtifactField field : allSameFields) {
-					allValues.add((String) field.getFieldValue());
-				}
-				String EMPTY_STRING = "";
-				String concatinatedString = EMPTY_STRING;
-				Iterator<String> it = allValues.iterator();
-				while (it.hasNext()) {
-					String value = it.next();
-					if (!StringUtils.isEmpty(value)) {
-						if (concatinatedString != EMPTY_STRING) {
-							concatinatedString += ";";
+					// this code assumes that multi select fields are always of type string
+					String value = (String) field.getFieldValue();
+					if (!StringUtils.isEmpty(value)) { 
+						if (concatenatedString.length() != 0) {
+							concatenatedString.append(";");
 						}
-						concatinatedString += value;
+						concatenatedString.append(value);
 					}
 				}
+				
 				genericArtifact.getAllGenericArtifactFieldsWithSameFieldName(
 						allFields.get(cnt).getFieldName()).get(0)
-						.setFieldValue(concatinatedString);
+						.setFieldValue(concatenatedString.toString());
 			}
 			allFieldNames.add(allFields.get(cnt).getFieldName());
-
 		}
 
 		return genericArtifact;
@@ -628,18 +635,23 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 			log
 					.warn("resyncUserName-property has not been set, so that initial resyncs after artifact creation are not possible.");
 		}
-
+		
+		if (!getPreserveSemanticallyUnchangedHTMLFieldValues()) {
+			log.warn("preserveSemanticallyUnchangedHTMLFieldValues property is not set, defaulting to false for backwards compatibility.");
+			//setPreserveSemanticallyUnchangedHTMLFieldValues(false);
+		}
+		
 		if (this.getServerUrl() == null) {
 			exceptions.add(new ValidationException(
-					"serverUrl property is not set for the QCReader", this));
+					"serverUrl property is not set for the QCWriter", this));
 		}
 		if (this.getUserName() == null) {
 			exceptions.add(new ValidationException(
-					"userName property is not set for the QCReader", this));
+					"userName property is not set for the QCWriter", this));
 		}
 		if (this.getPassword() == null) {
 			exceptions.add(new ValidationException(
-					"password property is not set for the QCReader", this));
+					"password property is not set for the QCWriter", this));
 		}
 
 		if (exceptions.size() == 0) {
@@ -1404,6 +1416,28 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 	 */
 	public int getCountBeforeCOMReinitialization() {
 		return countBeforeCOMReinitialization;
+	}
+	/**
+	 * Define whether QCWriter will attempt to figure out if the field
+	 * value has remained the same apart from formatting differences incurred by the
+	 * conversion to plain text. If so, the field will not be updated in order to
+	 * preserve the existing formatting. Defaults to false.
+	 */
+	public void setPreserveSemanticallyUnchangedHTMLFieldValues(
+			boolean preserveSemanticallyUnchangedHTMLFieldValues) {
+		this.preserveSemanticallyUnchangedHTMLFieldValues = preserveSemanticallyUnchangedHTMLFieldValues;
+	}
+
+	/**
+	 * If this property is enabled, QCWriter will attempt to figure out if the field
+	 * value has remained the same apart from formatting differences incurred by the
+	 * conversion to plain text. If so, the field will not be updated in order to
+	 * preserve the existing formatting.
+	 * 
+	 * @return whether QCWriter will attempt to preserve HTML formatting.
+	 */
+	public boolean getPreserveSemanticallyUnchangedHTMLFieldValues() {
+		return preserveSemanticallyUnchangedHTMLFieldValues;
 	}
 
 }

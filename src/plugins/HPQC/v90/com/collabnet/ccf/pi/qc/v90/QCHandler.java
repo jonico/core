@@ -22,8 +22,10 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TimeZone;
 import java.util.TreeSet;
 
@@ -36,6 +38,7 @@ import com.collabnet.ccf.core.CCFRuntimeException;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.utils.DateUtil;
+import com.collabnet.ccf.core.utils.GATransformerUtil;
 import com.collabnet.ccf.pi.qc.v90.api.DefectAlreadyLockedException;
 import com.collabnet.ccf.pi.qc.v90.api.IBug;
 import com.collabnet.ccf.pi.qc.v90.api.ICommand;
@@ -64,8 +67,6 @@ public class QCHandler {
 	private QCGAHelper qcGAHelper = new QCGAHelper();
 	private final static String QC_BUG_ID = "BG_BUG_ID";
 	private final static String QC_REQ_ID = "RQ_REQ_ID";
-	private final static String QC_BG_DEV_COMMENTS = "BG_DEV_COMMENTS";
-	private final static String QC_RQ_DEV_COMMENTS = "RQ_DEV_COMMENTS";
 	private final static String QC_BUG_VER_STAMP = "BG_BUG_VER_STAMP";
 	private final static String QC_BG_ATTACHMENT = "BG_ATTACHMENT";
 	private final static String QC_RQ_ATTACHMENT = "RQ_ATTACHMENT";
@@ -147,13 +148,14 @@ public class QCHandler {
 	 * @param connectorUser
 	 *            The connectorUser name used while updating the comments
 	 * @param targetParentArtifactId
+	 * @param preserveSemanticallyUnchangedHTMLFieldValues 
 	 * @return IQCRequirement Updated requirement object
 	 * 
 	 */
 	public IQCRequirement updateRequirement(IConnection qcc,
 			String requirementId, List<GenericArtifactField> allFields,
 			String connectorUser, String targetSystemTimezone,
-			String targetParentArtifactId) {
+			String targetParentArtifactId, boolean preserveSemanticallyUnchangedHTMLFieldValues) {
 
 		IRequirementsFactory reqFactory = null;
 		IRequirement req = null;
@@ -197,7 +199,7 @@ public class QCHandler {
 				}
 			}
 
-			List<String> allFieldNames = new ArrayList<String>();
+			Set<String> allFieldNames = new HashSet<String>();
 			String fieldValue = null;
 			for (int cnt = 0; cnt < allFields.size(); cnt++) {
 
@@ -214,7 +216,7 @@ public class QCHandler {
 				else
 					fieldValue = (String) thisField.getFieldValue();
 
-				if (fieldName.equals(QC_RQ_DEV_COMMENTS)) {
+				if (fieldName.equals(QCConfigHelper.QC_RQ_DEV_COMMENTS)) {
 					String oldFieldValue = req.getFieldAsString(fieldName);
 					if ((!StringUtils.isEmpty(oldFieldValue)
 							&& !StringUtils.isEmpty(fieldValue) && !oldFieldValue
@@ -225,12 +227,30 @@ public class QCHandler {
 								fieldValue, connectorUser);
 					}
 				}
+				// only handle every field once
+				// if there was a multi select field, we already concatenated all its values in the field value of its first occurrence
 				if (!(allFieldNames.contains(allFields.get(cnt).getFieldName()))
 						&& !(fieldName.equals(QC_REQ_ID)
 								|| fieldName.equals(QC_RQ_ATTACHMENT) || fieldName
 								.equals(QC_RQ_VTS))) {
-					try {
-						req.setField(fieldName, fieldValue);
+					try {	
+						if (!fieldName.equals(QCConfigHelper.QC_RQ_DEV_COMMENTS) && // always overwrite comments.
+							preserveSemanticallyUnchangedHTMLFieldValues && 
+							!StringUtils.isEmpty(fieldValue) && 
+							fieldValue.startsWith(QCConfigHelper.HTMLSTRING_PREFIX)) {
+
+							String oldFieldValue = req.getFieldAsString(fieldName);
+							String strippedOldValue = GATransformerUtil.stripHTML(oldFieldValue).replaceAll("\\s", "");
+							String strippedNewValue = GATransformerUtil.stripHTML(fieldValue).replaceAll("\\s", "");
+							if (StringUtils.isEmpty(oldFieldValue) ||
+								! strippedNewValue.equals(strippedOldValue)) {
+								req.setField(fieldName, fieldValue);
+							} else {
+								log.info("skipping update of field '" + fieldName + "', because only fomatting has changed.");
+							}
+						} else {
+							req.setField(fieldName, fieldValue);
+						}
 					} catch (ComFailException e) {
 						String message = "Exception while setting the value of field "
 								+ fieldName
@@ -242,7 +262,7 @@ public class QCHandler {
 						throw new CCFRuntimeException(message, e);
 					}
 				}
-				if (!fieldName.equals(QC_RQ_DEV_COMMENTS))
+				if (!fieldName.equals(QCConfigHelper.QC_RQ_DEV_COMMENTS))
 					allFieldNames.add(fieldName);
 			}
 
@@ -346,7 +366,8 @@ public class QCHandler {
 	 */
 	public IQCDefect updateDefect(IConnection qcc, String bugId,
 			List<GenericArtifactField> allFields, String connectorUser,
-			String targetSystemTimezone) {
+			String targetSystemTimezone,
+			boolean preserveSemanticallyUnchangedHTMLFieldValues) {
 
 		IBugFactory bugFactory = null;
 		IBug bug = null;
@@ -354,7 +375,7 @@ public class QCHandler {
 			bugFactory = qcc.getBugFactory();
 			bug = bugFactory.getItem(bugId);
 			bug.lockObject();
-			List<String> allFieldNames = new ArrayList<String>();
+			Set<String> allFieldNames = new HashSet<String>();
 			String fieldValue = null;
 			for (int cnt = 0; cnt < allFields.size(); cnt++) {
 
@@ -371,24 +392,42 @@ public class QCHandler {
 				else
 					fieldValue = (String) thisField.getFieldValue();
 
-				if (fieldName.equals(QC_BG_DEV_COMMENTS)) {
+				if (fieldName.equals(QCConfigHelper.QC_BG_DEV_COMMENTS)) {
 					String oldFieldValue = bug.getFieldAsString(fieldName);
-					if ((!StringUtils.isEmpty(oldFieldValue)
-							&& !StringUtils.isEmpty(fieldValue) && !oldFieldValue
-							.equals(fieldValue))
-							|| (StringUtils.isEmpty(oldFieldValue) && !StringUtils
-									.isEmpty(fieldValue))) {
+					if ((!StringUtils.isEmpty(oldFieldValue) && 
+						 !StringUtils.isEmpty(fieldValue) &&
+						 !oldFieldValue.equals(fieldValue))
+						|| 
+						(StringUtils.isEmpty(oldFieldValue) &&
+						 !StringUtils.isEmpty(fieldValue))) {
 						fieldValue = getConcatinatedCommentValue(oldFieldValue,
 								fieldValue, connectorUser);
 					}
 				}
+				// only handle every field once
+				// if there was a multi select field, we already concatenated all its values in the field value of its first occurrence
 				if (!(allFieldNames.contains(allFields.get(cnt).getFieldName()))
 						&& !(fieldName.equals(QC_BUG_ID)
 								|| fieldName.equals(QC_BUG_VER_STAMP)
 								|| fieldName.equals(QC_BG_ATTACHMENT) || fieldName
 								.equals(QC_BG_VTS))) {
 					try {
-						bug.setField(fieldName, fieldValue);
+						if (!fieldName.equals(QCConfigHelper.QC_BG_DEV_COMMENTS) && // always update comments
+							preserveSemanticallyUnchangedHTMLFieldValues && 
+							!StringUtils.isEmpty(fieldValue) && 
+							fieldValue.startsWith(QCConfigHelper.HTMLSTRING_PREFIX)) {
+							String oldFieldValue = bug.getFieldAsString(fieldName);
+							String strippedOldValue = GATransformerUtil.stripHTML(oldFieldValue).replaceAll("\\s", "");
+							String strippedNewValue = GATransformerUtil.stripHTML(fieldValue).replaceAll("\\s", "");
+							if (StringUtils.isEmpty(oldFieldValue) ||
+								! strippedNewValue.equals(strippedOldValue)) {
+								bug.setField(fieldName, fieldValue);
+							} else {
+								log.info("skipping update of field '" + fieldName + "', because only fomatting has changed.");
+							}
+						} else {
+							bug.setField(fieldName, fieldValue);
+						}
 					} catch (ComFailException e) {
 						String message = "Exception while setting the value of field "
 								+ fieldName
@@ -400,7 +439,7 @@ public class QCHandler {
 						throw new CCFRuntimeException(message, e);
 					}
 				}
-				if (!fieldName.equals(QC_BG_DEV_COMMENTS))
+				if (!fieldName.equals(QCConfigHelper.QC_BG_DEV_COMMENTS))
 					allFieldNames.add(fieldName);
 			}
 			bug.post();
@@ -495,7 +534,7 @@ public class QCHandler {
 				else
 					fieldValue = (String) thisField.getFieldValue();
 
-				if (fieldName.equals(QC_BG_DEV_COMMENTS)) {
+				if (fieldName.equals(QCConfigHelper.QC_BG_DEV_COMMENTS)) {
 					String oldFieldValue = bug.getFieldAsString(fieldName);
 					if ((!StringUtils.isEmpty(oldFieldValue)
 							&& !StringUtils.isEmpty(fieldValue) && !oldFieldValue
@@ -532,7 +571,7 @@ public class QCHandler {
 				} else {
 					log.debug(fieldName);
 				}
-				if (!fieldName.equals(QC_BG_DEV_COMMENTS))
+				if (!fieldName.equals(QCConfigHelper.QC_BG_DEV_COMMENTS))
 					allFieldNames.add(fieldName);
 			}
 			bug.post();
@@ -1060,7 +1099,7 @@ public class QCHandler {
 
 		for (int newCnt = 0; newCnt < newRc; newCnt++, newRs.next()) {
 			String fieldName = newRs.getFieldValueAsString("AP_FIELD_NAME");
-			if (fieldName.equals("BG_DEV_COMMENTS")) {
+			if (fieldName.equals(QCConfigHelper.QC_BG_DEV_COMMENTS)) {
 				String oldFieldValue = newRs
 						.getFieldValueAsString("AP_OLD_LONG_VALUE");
 				newFieldValue = newRs
@@ -1116,7 +1155,7 @@ public class QCHandler {
 
 		for (int newCnt = 0; newCnt < newRc; newCnt++, newRs.next()) {
 			String fieldName = newRs.getFieldValueAsString("AP_FIELD_NAME");
-			if (fieldName.equals("RQ_DEV_COMMENTS")) {
+			if (fieldName.equals(QCConfigHelper.QC_RQ_DEV_COMMENTS)) {
 				String oldFieldValue = newRs
 						.getFieldValueAsString("AP_OLD_LONG_VALUE");
 				newFieldValue = newRs
@@ -1376,7 +1415,7 @@ public class QCHandler {
 				else
 					fieldValue = (String) thisField.getFieldValue();
 
-				if (fieldName.equals(QC_RQ_DEV_COMMENTS)) {
+				if (fieldName.equals(QCConfigHelper.QC_RQ_DEV_COMMENTS)) {
 					String oldFieldValue = req.getFieldAsString(fieldName);
 					if ((!StringUtils.isEmpty(oldFieldValue)
 							&& !StringUtils.isEmpty(fieldValue) && !oldFieldValue
@@ -1407,7 +1446,7 @@ public class QCHandler {
 				} else {
 					log.debug(fieldName);
 				}
-				if (!fieldName.equals(QC_RQ_DEV_COMMENTS))
+				if (!fieldName.equals(QCConfigHelper.QC_RQ_DEV_COMMENTS))
 					allFieldNames.add(fieldName);
 			}
 			req.setTypeId(informalRequirementsType);

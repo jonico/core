@@ -22,6 +22,9 @@ package com.collabnet.ccf.pi.qc.v90;
 
 
 
+import java.util.HashSet;
+import java.util.Set;
+
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -69,6 +72,45 @@ public class QCConfigHelper {
 	static final String apOldLongValueFieldName = "AP_OLD_LONG_VALUE";
 
 	static final String CARDINALITY_GREATER_THAN_ONE = "GT1";
+	
+	/**
+	 * if a field transported by CCF starts with this value, it is assumed to
+	 * map to an HTMLString field in QC.
+	 */
+	static final String HTMLSTRING_PREFIX = "<html><body>";
+
+	final static String QC_BG_DEV_COMMENTS = "BG_DEV_COMMENTS";
+
+	final static String QC_RQ_DEV_COMMENTS = "RQ_DEV_COMMENTS";
+	
+	public Set<String> getFieldsNamesOfType(
+			IConnection connection,
+			String trackerType, // "BUG" or "REQ"
+			String fieldValueType // "memo" for HTMLStrings
+			) {
+
+		Set<String> res = new HashSet<String>();
+
+		String sql = String.format(
+				"SELECT SF_COLUMN_NAME FROM SYSTEM_FIELD WHERE SF_TABLE_NAME='%s' AND SF_COLUMN_TYPE='%s' AND SF_USER_LABEL IS NOT NULL",
+				trackerType,
+				fieldValueType);
+		IRecordSet rs = null;
+		try {
+			rs = QCHandler.executeSQL(connection, sql);
+			int rc = rs.getRecordCount();
+			for (int cnt = 0; cnt < rc; cnt++, rs.next()) {
+				String columnName = rs.getFieldValueAsString(sfColumnName);
+				res.add(columnName);
+			}
+		} finally {
+			if (rs != null) {
+				rs.safeRelease();
+				rs = null;
+			}
+		}
+		return res;
+	}
 
 	private static GenericArtifactField.FieldValueTypeValue convertQCDataTypeToGADatatype(String dataType, String editStyle, String columnName) {
 
@@ -214,7 +256,8 @@ public class QCConfigHelper {
 
 		// Get all the fields in the project represented
 		// by qcc
-		String sql = "SELECT * FROM REQ_TYPE_FIELD rf, system_field sf where rf.rtf_type_id = '"
+		String sql = "SELECT * FROM REQ_TYPE_FIELD rf, system_field sf where sf.sf_user_label is not null and"
+				+ " rf.rtf_type_id = '"
 				+ technicalReleaseTypeId
 				+ "' and rf.rtf_sf_column_name = sf.sf_column_name";
 		GenericArtifact genericArtifact = null;
@@ -225,7 +268,7 @@ public class QCConfigHelper {
 			genericArtifact = new GenericArtifact();
 			for (int cnt = 0; cnt < rc; cnt++, rs.next()) {
 				String columnName = rs.getFieldValueAsString(sfColumnName);
-				if (isResync && columnName.equals("RQ_DEV_COMMENTS")) {
+				if (isResync && columnName.equals(QC_RQ_DEV_COMMENTS)) {
 					continue;
 				}
 				String columnType = rs.getFieldValueAsString(sfColumnType);
@@ -299,7 +342,7 @@ public class QCConfigHelper {
 
 		// Get all the fields in the project represented
 		// by qcc
-		String sql = "SELECT * FROM SYSTEM_FIELD WHERE SF_TABLE_NAME='BUG'";
+		String sql = "SELECT * FROM SYSTEM_FIELD WHERE SF_TABLE_NAME='BUG' AND SF_USER_LABEL IS NOT NULL";
 		GenericArtifact genericArtifact = null;
 		IRecordSet rs = null;
 		try {
@@ -309,7 +352,7 @@ public class QCConfigHelper {
 			for(int cnt = 0 ; cnt < rc ; cnt++, rs.next())
 			{
 				String columnName = rs.getFieldValueAsString(sfColumnName);
-				if(isResync && columnName.equals("BG_DEV_COMMENTS")) {
+				if(isResync && columnName.equals(QCConfigHelper.QC_BG_DEV_COMMENTS)) {
 					continue;
 				}
 				String columnType = rs.getFieldValueAsString(sfColumnType);

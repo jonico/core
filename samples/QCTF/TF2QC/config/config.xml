@@ -417,6 +417,7 @@
         <property name="resyncPassword" value="${qc.system.1.resync.password}"></property>
 		<property name="connectionManager" ref="QCConnectionManager"></property>
 		<property name="immediatelyQuarantineLockedDefects" value="true"/>
+		<property name="preserveSemanticallyUnchangedHTMLFieldValues" value="true"/>
 	</bean>
 
 	<bean id="IdentityMappingTableInserter"
