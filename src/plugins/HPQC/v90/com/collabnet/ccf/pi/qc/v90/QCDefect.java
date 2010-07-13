@@ -252,7 +252,7 @@ public class QCDefect extends Bug implements IQCDefect {
 			}
 			if (deltaComment != null) {
 				genericArtifact.getAllGenericArtifactFieldsWithSameFieldName(
-						"BG_DEV_COMMENTS").get(0).setFieldValue(deltaComment);
+						QCConfigHelper.QC_BG_DEV_COMMENTS).get(0).setFieldValue(deltaComment);
 			}
 		}
 
