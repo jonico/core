@@ -248,7 +248,7 @@ public class QCRequirement extends Requirement implements IQCRequirement {
 			}
 			if (deltaComment != null) {
 				genericArtifact.getAllGenericArtifactFieldsWithSameFieldName(
-						"RQ_DEV_COMMENTS").get(0).setFieldValue(deltaComment);
+						QCConfigHelper.QC_RQ_DEV_COMMENTS).get(0).setFieldValue(deltaComment);
 			}
 		}
 		
