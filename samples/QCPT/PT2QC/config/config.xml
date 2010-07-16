@@ -37,6 +37,19 @@
 		<constructor-arg value="${ccf.jmxPort}" />
 	</bean>
 
+	<bean id="PartialUpdateHospitalWriter" class="com.collabnet.ccf.core.config.HospitalFilter">
+		<description>If we could only perform a partial update,
+		this component will place the artifact in the hospital, 
+		so it can be reprocessed later.</description>
+		<property name="script">
+			<value>
+			var errorCode = oa_data.getRootElement().selectSingleNode("@errorCode").getText();
+			errorCode != "objectLocked";
+			</value>
+		</property>
+		<property name="exceptionMessage" value="Artifact has been locked in QC, so we only partially updated it and moving unprocessed comments to the hospital for later re-processing." />
+	</bean>
+
 	<bean id="SystemUtil" class="org.openadaptor.util.SystemUtil">
 		<description>
 			Embed this in your config to expose useful management bean.
@@ -98,8 +111,12 @@
                     value-ref="SynchronizationStatusAndIdentityMappingTableUpdaterPT2QC" />
                     
                 <!-- This plugs in the polling hospital -->
-				<entry key-ref="SynchronizationStatusAndIdentityMappingTableUpdaterPT2QC"
-					value-ref="HospitalUpdatorSQLConverterFixed" />
+				<entry key-ref="SynchronizationStatusAndIdentityMappingTableUpdaterPT2QC">
+					<list>
+						<ref bean="HospitalUpdatorSQLConverterFixed"/>
+						<ref bean="PartialUpdateHospitalWriter" />
+					</list>
+				</entry>
 					
 				<!-- This plugs in the polling hospital -->
 				<entry key-ref="HospitalUpdatorSQLConverterReprocessed"
@@ -325,6 +342,7 @@
 		<property name="skipNewerVersionsOfQuarantinedArtifacts" value="false"/><property name="alwaysPassResynchedArtifacts" value="false"/>
 		<property name="identityMapEventWaitCount" value="8"/>
         <property name="identityMapEventWaitTime" value="500"/>
+		<property name="alwaysPassPartialArtifacts" value="true"/>
     </bean>
 
     <bean id="HospitalDatabaseReaderPT2QC"

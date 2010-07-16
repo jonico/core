@@ -80,6 +80,12 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 	private boolean alwaysPassResynchedArtifacts = false;
 
 	/**
+	 * If this property is set to true (false by default), partial artifacts
+	 * are even transported if a newer version has already been synchronized
+	 */
+	private boolean alwaysPassPartialArtifacts = false;
+
+	/**
 	 * openAdaptor Method to process all input and puts out the results This
 	 * method will only handle Dom4J documents encoded in the generic XML schema
 	 */
@@ -138,6 +144,8 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 					element, GenericArtifactHelper.SOURCE_ARTIFACT_VERSION);
 			String transactionId = XPathUtils.getAttributeValue(element,
 					GenericArtifactHelper.TRANSACTION_ID);
+			String artifactMode = XPathUtils.getAttributeValue(element, GenericArtifactHelper.ARTIFACT_MODE);
+			boolean isPartialUpdate = GenericArtifactHelper.ARTIFACT_MODE_CHANGED_FIELDS_ONLY.equals(artifactMode);
 
 			boolean replayedArtifact = (transactionId != null && !transactionId
 					.equals(GenericArtifact.VALUE_UNKNOWN));
@@ -220,10 +228,11 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 										+ " so artifact will not be skipped.");
 					} else {
 						// only skip if this is not an intended artifact resync
-						// obvious resync duplicates are still filtered out
-						if ((!artifactAction
-								.equals(GenericArtifactHelper.ARTIFACT_ACTION_RESYNC))
-								|| ((sourceArtifactVersionLongFromTable > sourceArtifactVersionLong) && !isAlwaysPassResynchedArtifacts())) {
+						// obvious resync duplicates are still filtered out.
+						// partial updates are always passed through.
+						if ((!isPartialUpdate || !isAlwaysPassPartialArtifacts())
+							&& ((!artifactAction.equals(GenericArtifactHelper.ARTIFACT_ACTION_RESYNC))
+							   || ((sourceArtifactVersionLongFromTable > sourceArtifactVersionLong) && !isAlwaysPassResynchedArtifacts()))) {
 							log
 									.warn("\nSource artifact last modified date in table "
 											+ DateUtil
@@ -1242,4 +1251,22 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 		return alwaysPassResynchedArtifacts;
 	}
 
+	/**
+	 * If this property is set to true (false by default), partial artifacts
+	 * are even transported if a newer version has already been synchronized
+	 * 
+	 * @param alwaysPassResynchedArtifacts
+	 */
+	public void setAlwaysPassPartialArtifacts(
+			boolean alwaysPassPartialArtifacts) {
+		this.alwaysPassPartialArtifacts = alwaysPassPartialArtifacts;
+	}
+
+	/**
+	 * If this property is set to true (false by default), partial artifacts
+	 * are even transported if a newer version has already been synchronized
+	 */
+	public boolean isAlwaysPassPartialArtifacts() {
+		return alwaysPassPartialArtifacts;
+	}
 }

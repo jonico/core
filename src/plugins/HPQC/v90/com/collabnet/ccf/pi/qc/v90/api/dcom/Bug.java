@@ -210,29 +210,6 @@ public class Bug extends ActiveXComponent implements IBugActions {
 		setField("BG_DESCRIPTION", desc);
 	}
 
-	@Deprecated
-	public void addComment(Comment append) {
-		try {
-			lockObject();
-			String s = getFieldAsString("BG_DEV_COMMENTS");
-			if (s == null || s.trim().length() == 0)
-				s = "<html><body></body></html>";
-
-			int notBody = s.indexOf("</body></html>");
-			s = s.substring(0, notBody);
-			s += Utils.formatComment(append);
-			s += "</body></html>";
-
-			setField("BG_DEV_COMMENTS", s);
-			post();
-		} catch (Exception ex) {
-			logger.warn("failed to add comment to " + getId() + ":"
-					+ ex.getMessage());
-		} finally {
-			unlockObject();
-		}
-	}
-
 	public List<String> getAttachmentsNames() {
 		IFactoryList attachments = new BugFactory(
 				getPropertyAsComponent("Attachments")).getFilter().getNewList();

@@ -73,7 +73,7 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 	private static final Log log = LogFactory.getLog(QCWriter.class);
 	// private static final Log logConflictResolutor =
 	// LogFactory.getLog("com.collabnet.ccf.core.conflict.resolution");
-	private QCHandler defectHandler;
+	private QCHandler artifactHandler;
 	private QCAttachmentHandler attachmentHandler;
 	private QCGAHelper qcGAHelper;
 	// private ConnectionManager<IConnection> connectionManager = null;
@@ -106,7 +106,7 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 	 * 
 	 * False by default to maintain backwards compatibility.
 	 */
-	private Boolean preserveSemanticallyUnchangedHTMLFieldValues = null;
+	private boolean preserveSemanticallyUnchangedHTMLFieldValues = true;
 
 	public QCWriter() {
 		super();
@@ -200,14 +200,23 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 				genericArtifact)) {
 			return;
 		}
+		String conflictResolutionPriority = genericArtifact.getConflictResolutionPriority();
+		boolean ignoreLocks = conflictResolutionPriority.equals(GenericArtifact.VALUE_CONFLICT_RESOLUTION_PRIORITY_ALWAYS_OVERRIDE_AND_IGNORE_LOCKS);
 
 		// IQCDefect updatedArtifact = defectHandler.updateDefect(
 		// connection, targetArtifactId, allFields, this
 		// .getUserName(), targetSystemTimezone);
 
 		// FIXME This is not atomic
-		defectHandler.updateDefect(connection, targetArtifactId, allFields,
-				this.getUserName(), targetSystemTimezone, getPreserveSemanticallyUnchangedHTMLFieldValues()).safeRelease();
+		artifactHandler.updateDefect(
+				connection,
+				targetArtifactId,
+				allFields,
+				this.getUserName(),
+				targetSystemTimezone,
+				getPreserveSemanticallyUnchangedHTMLFieldValues(),
+				ignoreLocks,
+				genericArtifact);
 		log.info("QC Defect " + targetArtifactId + " on "
 				+ genericArtifact.getTargetRepositoryId()
 				+ " is updated successfully with the changes from "
@@ -250,6 +259,9 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 		}
 		String targetParentArtifactId = genericArtifact.getDepParentTargetArtifactId();
 
+		String conflictResolutionPriority = genericArtifact.getConflictResolutionPriority();
+		boolean ignoreLocks = conflictResolutionPriority.equals(GenericArtifact.VALUE_CONFLICT_RESOLUTION_PRIORITY_ALWAYS_OVERRIDE_AND_IGNORE_LOCKS);
+
 		// IQCDefect updatedArtifact = defectHandler.updateDefect(
 		// connection, targetArtifactId, allFields, this
 		// .getUserName(), targetSystemTimezone);
@@ -258,8 +270,9 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 		if (targetArtifactId.equals("0")) {
 			log.warn("It is not possible to modify the root level requirement folder, so ignoring the update ...");
 		} else {
-			defectHandler.updateRequirement(connection, targetArtifactId, allFields,
-					this.getUserName(), targetSystemTimezone, targetParentArtifactId, getPreserveSemanticallyUnchangedHTMLFieldValues()).safeRelease();
+			artifactHandler.updateRequirement(connection, targetArtifactId, allFields,
+					this.getUserName(), targetSystemTimezone, targetParentArtifactId, getPreserveSemanticallyUnchangedHTMLFieldValues(), ignoreLocks,
+					genericArtifact);
 			log.info("QC Requirement " + targetArtifactId + " on "
 					+ genericArtifact.getTargetRepositoryId()
 					+ " is updated successfully with the changes from "
@@ -636,11 +649,6 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 					.warn("resyncUserName-property has not been set, so that initial resyncs after artifact creation are not possible.");
 		}
 		
-		if (!getPreserveSemanticallyUnchangedHTMLFieldValues()) {
-			log.warn("preserveSemanticallyUnchangedHTMLFieldValues property is not set, defaulting to false for backwards compatibility.");
-			//setPreserveSemanticallyUnchangedHTMLFieldValues(false);
-		}
-		
 		if (this.getServerUrl() == null) {
 			exceptions.add(new ValidationException(
 					"serverUrl property is not set for the QCWriter", this));
@@ -655,7 +663,7 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 		}
 
 		if (exceptions.size() == 0) {
-			defectHandler = new QCHandler();
+			artifactHandler = new QCHandler();
 			attachmentHandler = new QCAttachmentHandler();
 			qcGAHelper = new QCGAHelper();
 		}
@@ -732,7 +740,7 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 			if (QCConnectionFactory.isDefectRepository(targetRepositoryId)) {
 				IQCDefect createdArtifact = null;
 				try {
-					createdArtifact = defectHandler.createDefect(connection,
+					createdArtifact = artifactHandler.createDefect(connection,
 							allFields, this.getUserName(), targetSystemTimezone);
 					if (createdArtifact != null) {
 						targetArtifactIdAfterCreation = createdArtifact.getId();
@@ -769,7 +777,7 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 				try {
 					String parentArtifactId = genericArtifact.getDepParentTargetArtifactId();
 					String informalRequirementsType = QCConnectionFactory.extractInformalRequirementsType(targetRepositoryId);
-					createdArtifact = defectHandler.createRequirement(connection,
+					createdArtifact = artifactHandler.createRequirement(connection,
 							allFields, this.getUserName(), targetSystemTimezone, informalRequirementsType, parentArtifactId);
 					if (createdArtifact != null) {
 						targetArtifactIdAfterCreation = createdArtifact.getId();
@@ -1379,7 +1387,7 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 	}
 
 	public QCHandler getDefectHandler() {
-		return defectHandler;
+		return artifactHandler;
 	}
 
 	/**

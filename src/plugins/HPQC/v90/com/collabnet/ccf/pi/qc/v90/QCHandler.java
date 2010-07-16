@@ -37,6 +37,7 @@ import com.collabnet.ccf.core.ArtifactState;
 import com.collabnet.ccf.core.CCFRuntimeException;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
+import com.collabnet.ccf.core.ga.GenericArtifact.ArtifactModeValue;
 import com.collabnet.ccf.core.utils.DateUtil;
 import com.collabnet.ccf.core.utils.GATransformerUtil;
 import com.collabnet.ccf.pi.qc.v90.api.DefectAlreadyLockedException;
@@ -149,93 +150,93 @@ public class QCHandler {
 	 *            The connectorUser name used while updating the comments
 	 * @param targetParentArtifactId
 	 * @param preserveSemanticallyUnchangedHTMLFieldValues 
-	 * @return IQCRequirement Updated requirement object
+	 * @param ignoreLocks 
+	 * @param genericArtifact 
 	 * 
 	 */
-	public IQCRequirement updateRequirement(IConnection qcc,
+	public void updateRequirement(IConnection qcc,
 			String requirementId, List<GenericArtifactField> allFields,
 			String connectorUser, String targetSystemTimezone,
-			String targetParentArtifactId, boolean preserveSemanticallyUnchangedHTMLFieldValues) {
+			String targetParentArtifactId, boolean preserveSemanticallyUnchangedHTMLFieldValues,
+			boolean ignoreLocks, GenericArtifact genericArtifact) {
 
 		IRequirementsFactory reqFactory = null;
 		IRequirement req = null;
+		boolean lockedReq = false;
+		boolean movedLock = false;
+		boolean wasPartialUpdate = false;
+		boolean shouldPerformCompleteUpdate = genericArtifact.getArtifactMode() != GenericArtifact.ArtifactModeValue.CHANGEDFIELDSONLY;
+
 		IVersionControl versionControl = null;
 		boolean versionControlSupported = false;
 		try {
 			reqFactory = qcc.getRequirementsFactory();
 			req = reqFactory.getItem(requirementId);
-			req.lockObject();
 			versionControl = req.getVersionControlObject();
+
 			if (versionControl != null) {
-				try {
-					versionControlSupported = versionControl
-							.checkOut("CCF Checkout");
-				} catch (ComFailException e) {
-					// check whether we have already checked out this
-					// requirement
-					if (qcc.getUsername().equals(
-							req.getFieldAsString("RQ_VC_CHECKOUT_USER_NAME"))) {
-						log
-								.warn("Requirement "
-										+ req.getId()
-										+ " has been already checked out by connector user "
-										+ qcc.getUsername()
-										+ " so we still proceed ...");
-					} else {
-						String message = "Requirement "
-								+ req.getId()
-								+ " has been checked out by "
-								+ req
-										.getFieldAsString("RQ_VC_CHECKOUT_USER_NAME")
-								+ " on "
-								+ req.getFieldAsDate("RQ_VC_CHECKOUT_DATE")
-								+ " at "
-								+ req.getFieldAsString("RQ_VC_CHECKOUT_TIME")
-								+ " with version number "
-								+ req.getFieldAsInt("RQ_VC_VERSION_NUMBER");
-						log.error(message, e);
-						throw new CCFRuntimeException(message, e);
-					}
+				versionControlSupported = ccfCheckoutReq(qcc, req, versionControl);
+			}
+			if (ignoreLocks && isLocked(qcc, requirementId, false)) {
+				if (!shouldPerformCompleteUpdate) {
+					// comments that have previously been quarantined for later processing.
+					genericArtifact.setErrorCode(GenericArtifact.ERROR_OBJECT_LOCKED);
+					throw new CCFRuntimeException(String.format(
+							"could not perform partial update, because requirement '%s' is still locked / locked again.",
+							requirementId));
+				} else {
+					moveLock(qcc, requirementId, false);
+					movedLock = true;
 				}
 			}
+			req.lockObject();
+			lockedReq = true;
 
 			Set<String> allFieldNames = new HashSet<String>();
 			String fieldValue = null;
-			for (int cnt = 0; cnt < allFields.size(); cnt++) {
+			for (GenericArtifactField thisField : allFields) {
 
-				GenericArtifactField thisField = allFields.get(cnt);
 				String fieldName = thisField.getFieldName();
+				if (!shouldPerformCompleteUpdate
+						&& !QCConfigHelper.QC_RQ_DEV_COMMENTS.equals(fieldName)) {
+						// we already updated the other fields before and are only
+						// interested in the comments this time.
+						continue;
+					}
 				if (thisField.getFieldValueType().equals(
 						GenericArtifactField.FieldValueTypeValue.DATE)
-						|| thisField
-								.getFieldValueType()
-								.equals(
-										GenericArtifactField.FieldValueTypeValue.DATETIME))
+						|| thisField.getFieldValueType().equals(GenericArtifactField.FieldValueTypeValue.DATETIME)) {
 					fieldValue = getProperFieldValue(thisField,
 							targetSystemTimezone);
-				else
+				} else {
 					fieldValue = (String) thisField.getFieldValue();
+				}
 
+				try {	
 				if (fieldName.equals(QCConfigHelper.QC_RQ_DEV_COMMENTS)) {
 					String oldFieldValue = req.getFieldAsString(fieldName);
-					if ((!StringUtils.isEmpty(oldFieldValue)
-							&& !StringUtils.isEmpty(fieldValue) && !oldFieldValue
-							.equals(fieldValue))
-							|| (StringUtils.isEmpty(oldFieldValue) && !StringUtils
-									.isEmpty(fieldValue))) {
+					if ((!StringUtils.isEmpty(oldFieldValue) &&
+						 !StringUtils.isEmpty(fieldValue) &&
+						 !oldFieldValue.equals(fieldValue))
+					    ||
+					    (StringUtils.isEmpty(oldFieldValue) &&
+			    		 !StringUtils.isEmpty(fieldValue))) {
 						fieldValue = getConcatinatedCommentValue(oldFieldValue,
 								fieldValue, connectorUser);
 					}
-				}
-				// only handle every field once
-				// if there was a multi select field, we already concatenated all its values in the field value of its first occurrence
-				if (!(allFieldNames.contains(allFields.get(cnt).getFieldName()))
+					if (!movedLock) {
+						req.setField(fieldName, fieldValue);
+					} else {
+						wasPartialUpdate = true;
+					}
+				} else if (!(allFieldNames.contains(thisField.getFieldName()))
 						&& !(fieldName.equals(QC_REQ_ID)
 								|| fieldName.equals(QC_RQ_ATTACHMENT) || fieldName
 								.equals(QC_RQ_VTS))) {
-					try {	
-						if (!fieldName.equals(QCConfigHelper.QC_RQ_DEV_COMMENTS) && // always overwrite comments.
-							preserveSemanticallyUnchangedHTMLFieldValues && 
+					 
+					// only handle every field once
+					// if there was a multi select field, we already concatenated all its values in the field value of its first occurrence
+						if (preserveSemanticallyUnchangedHTMLFieldValues && 
 							!StringUtils.isEmpty(fieldValue) && 
 							fieldValue.startsWith(QCConfigHelper.HTMLSTRING_PREFIX)) {
 
@@ -251,6 +252,8 @@ public class QCHandler {
 						} else {
 							req.setField(fieldName, fieldValue);
 						}
+						allFieldNames.add(fieldName);
+				}
 					} catch (ComFailException e) {
 						String message = "Exception while setting the value of field "
 								+ fieldName
@@ -261,12 +264,10 @@ public class QCHandler {
 						log.error(message, e);
 						throw new CCFRuntimeException(message, e);
 					}
-				}
-				if (!fieldName.equals(QCConfigHelper.QC_RQ_DEV_COMMENTS))
-					allFieldNames.add(fieldName);
 			}
 
 			req.post();
+
 			String parentId = req.getParentId();
 			// move to other parent if necessary
 			if (targetParentArtifactId != null
@@ -285,33 +286,19 @@ public class QCHandler {
 			}
 
 		} catch (DefectAlreadyLockedException e) {
+			/*
+			 * do not try to restore a moved lock here, because this 
+			 * condition would only occur if another user re-locked the 
+			 * artifact before we could acquire it after stealing it.
+			 */
 			String message = "Attempt to lock the requirement with id "
 					+ requirementId + " failed.";
-			// retrieving user who locked the bug
-			IRecordSet rs = null;
-			try {
-				rs = executeSQL(qcc,
-						"SELECT LK_USER FROM LOCKS WHERE LK_OBJECT_KEY = '"
-								+ requirementId + "'");
-				if (rs.getRecordCount() != 1) {
-					message = message
-							+ " Could not find out the user who locked it.";
-				} else {
-					String userName = rs.getFieldValueAsString("LK_USER");
-					message = message + " Requirement has been locked by user "
-							+ userName;
-				}
-			} catch (Exception f) {
-				// we do not want to throw a further exception in case we could
-				// not determine the log
-				message = message
-						+ " Could not find out the user who locked it: "
-						+ f.getMessage();
-			} finally {
-				if (rs != null) {
-					rs.safeRelease();
-					rs = null;
-				}
+			String lockOwner = getLockOwner(qcc, requirementId, false);
+			
+			if (StringUtils.isEmpty(lockOwner)) {
+				message += " Could not find out the user who locked it.";
+			} else {
+				message += " Requirement has been locked by user " + lockOwner;
 			}
 
 			throw new CCFRuntimeException(message, e);
@@ -337,16 +324,73 @@ public class QCHandler {
 					String message = "Failed to checkin requirement "
 							+ req.getId() + " again";
 					log.error(message, e);
-					req.unlockObject();
+					if (lockedReq) {
+						req.unlockObject();
+					}
+					if (movedLock) {
+						restoreLock(qcc, requirementId, false);
+						if (wasPartialUpdate) {
+							// mark requirement as only partially updated, so later components can
+							// react appropriately.
+							genericArtifact.setErrorCode(GenericArtifact.ERROR_OBJECT_LOCKED);
+							genericArtifact.setArtifactMode(ArtifactModeValue.CHANGEDFIELDSONLY);
+						}
+					}
 					throw new CCFRuntimeException(message, e);
 				}
 			}
 			if (req != null) {
-				req.unlockObject();
+				if (lockedReq) {
+					req.unlockObject();
+				}
+				req.safeRelease();
 			}
-			reqFactory = null;
+			if (movedLock) {
+				restoreLock(qcc, requirementId, false);
+				if (wasPartialUpdate) {
+					// mark requirement as only partially updated, so later components can
+					// react appropriately.
+					genericArtifact.setErrorCode(GenericArtifact.ERROR_OBJECT_LOCKED);
+					genericArtifact.setArtifactMode(ArtifactModeValue.CHANGEDFIELDSONLY);
+				}
+			}
+
 		}
-		return new QCRequirement((Requirement) req);
+	}
+
+	private boolean ccfCheckoutReq(IConnection qcc, IRequirement req,
+			IVersionControl versionControl) {
+		boolean versionControlSupported = false;
+		try {
+			versionControlSupported = versionControl.checkOut("CCF Checkout");
+		} catch (ComFailException e) {
+			// check whether we have already checked out this
+			// requirement
+			if (qcc.getUsername().equals(
+					req.getFieldAsString("RQ_VC_CHECKOUT_USER_NAME"))) {
+				log
+						.warn("Requirement "
+								+ req.getId()
+								+ " has been already checked out by connector user "
+								+ qcc.getUsername()
+								+ " so we still proceed ...");
+			} else {
+				String message = "Requirement "
+						+ req.getId()
+						+ " has been checked out by "
+						+ req
+								.getFieldAsString("RQ_VC_CHECKOUT_USER_NAME")
+						+ " on "
+						+ req.getFieldAsDate("RQ_VC_CHECKOUT_DATE")
+						+ " at "
+						+ req.getFieldAsString("RQ_VC_CHECKOUT_TIME")
+						+ " with version number "
+						+ req.getFieldAsInt("RQ_VC_VERSION_NUMBER");
+				log.error(message, e);
+				throw new CCFRuntimeException(message, e);
+			}
+		}
+		return versionControlSupported;
 	}
 
 	/**
@@ -361,59 +405,85 @@ public class QCHandler {
 	 *            that need to be updated on the old values.
 	 * @param connectorUser
 	 *            The connectorUser name used while updating the comments
-	 * @return IQCDefect Updated defect object
-	 * 
+	 * @param ignoreLocks 
+	 * @param genericArtifact 
 	 */
-	public IQCDefect updateDefect(IConnection qcc, String bugId,
+	public void updateDefect(IConnection qcc, String bugId,
 			List<GenericArtifactField> allFields, String connectorUser,
 			String targetSystemTimezone,
-			boolean preserveSemanticallyUnchangedHTMLFieldValues) {
+			boolean preserveSemanticallyUnchangedHTMLFieldValues,
+			boolean ignoreLocks, GenericArtifact genericArtifact) {
 
 		IBugFactory bugFactory = null;
 		IBug bug = null;
+		boolean lockedBug = false;
+		boolean movedLock = false;
+		boolean wasPartialUpdate = false;
+		boolean shouldPerformCompleteUpdate = genericArtifact.getArtifactMode() != GenericArtifact.ArtifactModeValue.CHANGEDFIELDSONLY;
 		try {
 			bugFactory = qcc.getBugFactory();
 			bug = bugFactory.getItem(bugId);
+			if (ignoreLocks && isLocked(qcc, bugId, true)) {
+				if (!shouldPerformCompleteUpdate) {
+					// comments that have previously been quarantined for later processing.
+					genericArtifact.setErrorCode(GenericArtifact.ERROR_OBJECT_LOCKED);
+					throw new CCFRuntimeException(String.format(
+							"could not perform partial update, because defect '%s' is still locked / locked again.",
+							bugId));
+				} else {
+					moveLock(qcc, bugId, true);
+					movedLock = true;
+				}
+			}
 			bug.lockObject();
+			lockedBug = true;
 			Set<String> allFieldNames = new HashSet<String>();
 			String fieldValue = null;
-			for (int cnt = 0; cnt < allFields.size(); cnt++) {
+			for (GenericArtifactField thisField : allFields) {
 
-				GenericArtifactField thisField = allFields.get(cnt);
 				String fieldName = thisField.getFieldName();
+				if (!shouldPerformCompleteUpdate
+					&& !QCConfigHelper.QC_BG_DEV_COMMENTS.equals(fieldName)) {
+					// we already updated the other fields before and are only
+					// interested in the comments this time.
+					continue;
+				}
 				if (thisField.getFieldValueType().equals(
 						GenericArtifactField.FieldValueTypeValue.DATE)
 						|| thisField
 								.getFieldValueType()
 								.equals(
-										GenericArtifactField.FieldValueTypeValue.DATETIME))
-					fieldValue = getProperFieldValue(thisField,
-							targetSystemTimezone);
-				else
+										GenericArtifactField.FieldValueTypeValue.DATETIME)) {
+					fieldValue = getProperFieldValue(thisField, targetSystemTimezone);
+				} else {
 					fieldValue = (String) thisField.getFieldValue();
-
-				if (fieldName.equals(QCConfigHelper.QC_BG_DEV_COMMENTS)) {
-					String oldFieldValue = bug.getFieldAsString(fieldName);
-					if ((!StringUtils.isEmpty(oldFieldValue) && 
-						 !StringUtils.isEmpty(fieldValue) &&
-						 !oldFieldValue.equals(fieldValue))
-						|| 
-						(StringUtils.isEmpty(oldFieldValue) &&
-						 !StringUtils.isEmpty(fieldValue))) {
-						fieldValue = getConcatinatedCommentValue(oldFieldValue,
-								fieldValue, connectorUser);
-					}
 				}
-				// only handle every field once
-				// if there was a multi select field, we already concatenated all its values in the field value of its first occurrence
-				if (!(allFieldNames.contains(allFields.get(cnt).getFieldName()))
-						&& !(fieldName.equals(QC_BUG_ID)
-								|| fieldName.equals(QC_BUG_VER_STAMP)
-								|| fieldName.equals(QC_BG_ATTACHMENT) || fieldName
-								.equals(QC_BG_VTS))) {
-					try {
-						if (!fieldName.equals(QCConfigHelper.QC_BG_DEV_COMMENTS) && // always update comments
-							preserveSemanticallyUnchangedHTMLFieldValues && 
+
+				try {
+					if (fieldName.equals(QCConfigHelper.QC_BG_DEV_COMMENTS)) {
+						String oldFieldValue = bug.getFieldAsString(fieldName);
+						if ((!StringUtils.isEmpty(oldFieldValue) && 
+							 !StringUtils.isEmpty(fieldValue) &&
+							 !oldFieldValue.equals(fieldValue))
+							|| 
+							(StringUtils.isEmpty(oldFieldValue) &&
+							 !StringUtils.isEmpty(fieldValue))) {
+							fieldValue = getConcatinatedCommentValue(oldFieldValue,
+									fieldValue, connectorUser);
+						}
+						if (!movedLock) {
+							bug.setField(fieldName, fieldValue);
+						} else {
+							wasPartialUpdate = true;
+						}
+					} else if (!(allFieldNames.contains(thisField.getFieldName()))
+							&& !(fieldName.equals(QC_BUG_ID)
+									|| fieldName.equals(QC_BUG_VER_STAMP)
+									|| fieldName.equals(QC_BG_ATTACHMENT) || fieldName
+									.equals(QC_BG_VTS))) {
+						// only handle every field once
+						// if there was a multi select field, we already concatenated all its values in the field value of its first occurrence
+						if (preserveSemanticallyUnchangedHTMLFieldValues && 
 							!StringUtils.isEmpty(fieldValue) && 
 							fieldValue.startsWith(QCConfigHelper.HTMLSTRING_PREFIX)) {
 							String oldFieldValue = bug.getFieldAsString(fieldName);
@@ -428,49 +498,35 @@ public class QCHandler {
 						} else {
 							bug.setField(fieldName, fieldValue);
 						}
-					} catch (ComFailException e) {
-						String message = "Exception while setting the value of field "
-								+ fieldName
-								+ " to "
-								+ fieldValue
-								+ ": "
-								+ e.getMessage();
-						log.error(message, e);
-						throw new CCFRuntimeException(message, e);
+						allFieldNames.add(fieldName);
 					}
+				} catch (ComFailException e) {
+					String message = "Exception while setting the value of field "
+							+ fieldName
+							+ " to "
+							+ fieldValue
+							+ ": "
+							+ e.getMessage();
+					log.error(message, e);
+					throw new CCFRuntimeException(message, e);
 				}
-				if (!fieldName.equals(QCConfigHelper.QC_BG_DEV_COMMENTS))
-					allFieldNames.add(fieldName);
 			}
 			bug.post();
+			
 		} catch (DefectAlreadyLockedException e) {
+			/*
+			 * do not try to restore a moved lock here, because this 
+			 * condition would only occur if another user re-locked the 
+			 * artifact before we could acquire it after stealing it.
+			 */
 			String message = "Attempt to lock the defect with id " + bugId
 					+ " failed.";
-			// retrieving user who locked the bug
-			IRecordSet rs = null;
-			try {
-				rs = executeSQL(qcc,
-						"SELECT LK_USER FROM LOCKS WHERE LK_OBJECT_KEY = '"
-								+ bugId + "'");
-				if (rs.getRecordCount() != 1) {
-					message = message
-							+ " Could not find out the user who locked it.";
-				} else {
-					String userName = rs.getFieldValueAsString("LK_USER");
-					message = message + " Defect has been locked by user "
-							+ userName;
-				}
-			} catch (Exception f) {
-				// we do not want to throw a further exception in case we could
-				// not determine the log
-				message = message
-						+ " Could not find out the user who locked it: "
-						+ f.getMessage();
-			} finally {
-				if (rs != null) {
-					rs.safeRelease();
-					rs = null;
-				}
+			String lockOwner = getLockOwner(qcc, bugId, true);
+			
+			if (StringUtils.isEmpty(lockOwner)) {
+				message += " Could not find out the user who locked it.";
+			} else {
+				message += " Defect has been locked by user " + lockOwner;
 			}
 
 			throw new CCFRuntimeException(message, e);
@@ -487,12 +543,108 @@ public class QCHandler {
 			log.error(message, e);
 			throw new CCFRuntimeException(message + ": " + e.getMessage(), e);
 		} finally {
-			if (bug != null) {
-				bug.unlockObject();
+			if(bug != null) {
+				if (lockedBug) {
+					bug.unlockObject();
+				}
+				bug.safeRelease();
 			}
-			bugFactory = null;
+			if (movedLock) {
+				restoreLock(qcc, bugId, true);
+				if (wasPartialUpdate) {
+					// mark defect as only partially updated, so later components can
+					// react appropriately.
+					genericArtifact.setErrorCode(GenericArtifact.ERROR_OBJECT_LOCKED);
+					genericArtifact.setArtifactMode(ArtifactModeValue.CHANGEDFIELDSONLY);
+				}
+			}
 		}
-		return new QCDefect((Bug) bug);
+	}
+
+	private void moveLock(IConnection qcc, String artifactId, boolean isDefect) {
+		deleteStaleMovedLock(qcc, artifactId, isDefect);
+		int newLockId = -(Integer.parseInt(artifactId) + 1);
+		String sql = String.format(
+				"UPDATE LOCKS SET LK_OBJECT_KEY='%s' WHERE LK_OBJECT_KEY='%s' AND LK_OBJECT_TYPE='%s'",
+				newLockId,
+				artifactId,
+				artifactTypeString(isDefect));
+		IRecordSet rs = null;
+		try {
+			rs = executeSQL(qcc, sql);
+		} finally {
+			if (rs != null) {
+				rs.safeRelease();
+				rs = null;
+			}
+		}
+	}
+	
+	private void restoreLock(IConnection qcc, String artifactId, boolean isDefect) {
+		int currentLockId = -(Integer.parseInt(artifactId) + 1);
+		String sql = String.format(
+				"UPDATE LOCKS SET LK_OBJECT_KEY='%s' WHERE LK_OBJECT_KEY='%s' AND LK_OBJECT_TYPE='%s'",
+				artifactId,
+				currentLockId,
+				artifactTypeString(isDefect));
+		IRecordSet rs = null;
+		try {
+			rs = executeSQL(qcc, sql);
+		} catch (Exception e) {
+			deleteStaleMovedLock(qcc, artifactId, isDefect);
+		} finally {
+			if (rs != null) {
+				rs.safeRelease();
+				rs = null;
+			}
+		}
+	}
+	private boolean isLocked(IConnection qcc, String artifactId, boolean isDefect) {
+		return !StringUtils.isEmpty(getLockOwner(qcc, artifactId, isDefect));
+	}
+
+	private String artifactTypeString(boolean isDefect) {
+		return isDefect ? "BUG" : "REQ";
+	}
+	
+	private void deleteStaleMovedLock(IConnection qcc, String artifactId,
+			boolean isDefect) {
+		int newArtifactId = -(Integer.parseInt(artifactId) + 1);
+		String sql = String.format("DELETE FROM LOCKS WHERE LK_OBJECT_KEY = '%s' AND LK_OBJECT_TYPE = '%s'",
+				newArtifactId,
+				artifactTypeString(isDefect));
+		IRecordSet rs = null;
+		try {
+			rs = executeSQL(qcc, sql);
+		} finally {
+			if (rs != null) {
+				rs.safeRelease();
+				rs = null;
+			}
+		}
+	}
+
+	private String getLockOwner(IConnection qcc, String artifactId,
+			boolean isDefect) {
+		// retrieving user who locked the bug
+		IRecordSet rs = null;
+		try {
+			rs = executeSQL(qcc, String.format(
+					"SELECT LK_USER FROM LOCKS WHERE LK_OBJECT_KEY = '%s' AND LK_OBJECT_TYPE = '%s'",
+					artifactId,
+					artifactTypeString(isDefect)));
+			if (rs.getRecordCount() != 1) {
+				return null;
+			} else {
+				String userName = rs.getFieldValueAsString("LK_USER");
+				return userName;
+			}
+		} finally {
+			if (rs != null) {
+				rs.safeRelease();
+				rs = null;
+			}
+		}
 	}
 
 	/**
@@ -1366,36 +1518,7 @@ public class QCHandler {
 			req.lockObject();
 			versionControl = req.getVersionControlObject();
 			if (versionControl != null) {
-				try {
-					versionControlSupported = versionControl
-							.checkOut("CCF Checkout");
-				} catch (ComFailException e) {
-					// check whether we have already checked out this
-					// requirement
-					if (qcc.getUsername().equals(
-							req.getFieldAsString("RQ_VC_CHECKOUT_USER_NAME"))) {
-						log
-								.warn("Requirement "
-										+ req.getId()
-										+ " has been already checked out by connector user "
-										+ qcc.getUsername()
-										+ " so we still proceed ...");
-					} else {
-						String message = "Requirement "
-								+ req.getId()
-								+ " has been checked out by "
-								+ req
-										.getFieldAsString("RQ_VC_CHECKOUT_USER_NAME")
-								+ " on "
-								+ req.getFieldAsDate("RQ_VC_CHECKOUT_DATE")
-								+ " at "
-								+ req.getFieldAsString("RQ_VC_CHECKOUT_TIME")
-								+ " with version number "
-								+ req.getFieldAsInt("RQ_VC_VERSION_NUMBER");
-						log.error(message, e);
-						throw new CCFRuntimeException(message, e);
-					}
-				}
+				versionControlSupported = ccfCheckoutReq(qcc, req, versionControl);
 			}
 
 			List<String> allFieldNames = new ArrayList<String>();

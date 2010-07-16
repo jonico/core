@@ -322,8 +322,9 @@ public abstract class AbstractWriter<T> extends Component implements
 				gaDocument
 						.setErrorCode(GenericArtifact.ERROR_CONFLICT_DETECTED);
 				throw new CCFRuntimeException(message);
-			} else if ((conflictResolutionPriority
-					.equals(GenericArtifact.VALUE_CONFLICT_RESOLUTION_PRIORITY_ALWAYS_OVERRIDE))) {
+			} else if ((conflictResolutionPriority.equals(GenericArtifact.VALUE_CONFLICT_RESOLUTION_PRIORITY_ALWAYS_OVERRIDE))
+						||
+						conflictResolutionPriority.equals(GenericArtifact.VALUE_CONFLICT_RESOLUTION_PRIORITY_ALWAYS_OVERRIDE_AND_IGNORE_LOCKS)) {
 				logConflictResolutor
 						.warn("Conflict detected for artifact combination "
 								+ sourceArtifactId + "-" + sourceRepositoryId

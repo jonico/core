@@ -149,7 +149,7 @@ artifact was lastly updated in the target system.  There is one reserved value "
 			</xs:attribute>
 			<xs:attribute name="conflictResolutionPriority" type="xs:string" use="required">
 				<xs:annotation>
-					<xs:documentation>If a conflict is detected in the target system, the value of this attribute will be used to determine, whether the target artifact should be overriden or not. Reserved values are "quarantineArtifact", "alwaysIgnore" and "alwaysOverride".</xs:documentation>
+					<xs:documentation>If a conflict is detected in the target system, the value of this attribute will be used to determine, whether the target artifact should be overriden or not. Reserved values are "quarantineArtifact", "alwaysIgnore", "alwaysOverride", and "alwaysOverrideAndIgnoreLocks".</xs:documentation>
 				</xs:annotation>
 			</xs:attribute>
 			<xs:attribute name="artifactType" use="required">

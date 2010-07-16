@@ -418,9 +418,19 @@ public class GenericArtifact {
 	private Document sourceDocument;
 
 	/**
+	 * Constant value for conflict resolution priority "alwaysIgnore"
+	 */
+	public static final String VALUE_CONFLICT_RESOLUTION_PRIORITY_ALWAYS_IGNORE = "alwaysIgnore";
+	
+	/**
 	 * Constant value for conflict resolution priority "alwaysOverride"
 	 */
 	public static final String VALUE_CONFLICT_RESOLUTION_PRIORITY_ALWAYS_OVERRIDE = "alwaysOverride";
+
+	/**
+	 * Constant value for conflict resolution priority "alwaysOverrideAndIgnoreLocks";
+	 */
+	public static final String VALUE_CONFLICT_RESOLUTION_PRIORITY_ALWAYS_OVERRIDE_AND_IGNORE_LOCKS = "alwaysOverrideAndIgnoreLocks";
 
 	/**
 	 * Constant value for conflict resolution priority "quarantineArtifact"
@@ -437,11 +447,6 @@ public class GenericArtifact {
 	 * This is the constant attribute values should set to if there is definitely not such a thing (e. g. parentArtifactId)
 	 */
 	public static final String VALUE_NONE = "none";
-
-	/**
-	 * Constant value for conflict resolution priority "alwaysIgnore"
-	 */
-	public static final String VALUE_CONFLICT_RESOLUTION_PRIORITY_ALWAYS_IGNORE = "alwaysIgnore";
 
 	public final static String ERROR_TRANSFORMER_TRANSFORMATION = "transformerTransformationError";
 
