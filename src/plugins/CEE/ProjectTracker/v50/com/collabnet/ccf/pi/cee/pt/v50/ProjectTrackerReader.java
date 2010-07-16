@@ -1050,8 +1050,9 @@ public class ProjectTrackerReader extends
 				long commentTime = Long.parseLong(commentDate);
 				String commentor = comment.getCommenter();
 				if (commentTime > fromTime
-						&& (!commentor.equals(this.getUsername()) || !isIgnoreConnectorUserUpdates())
-						&& (!commentor.equals(this.getResyncUserName()) || !isIgnoreConnectorUserUpdates())) {
+						// here, commentor is always lower case, so ignore case.
+						&& (!commentor.equalsIgnoreCase(this.getUsername()) || !isIgnoreConnectorUserUpdates())
+						&& (!commentor.equalsIgnoreCase(this.getResyncUserName()) || !isIgnoreConnectorUserUpdates())) {
 					String commentText = comment.getCommentText();
 					String commenter = comment.getCommenter();
 					commentText = (isShipCommentsWithCreationDate() ? "\nComment Creation Date: "
