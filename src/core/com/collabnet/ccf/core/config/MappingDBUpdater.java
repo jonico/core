@@ -17,6 +17,7 @@
 
 package com.collabnet.ccf.core.config;
 
+import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
 
@@ -339,9 +340,13 @@ public class MappingDBUpdater extends LifecycleComponent implements
 			String depChildTargetArtifactId, String depChildTargetRepositoryId,
 			String depChildTargetRepositoryKind) {
 
-		String targetArtifactIdFromTable = lookupTargetArtifactId(element,
+		OrderedHashMap identityMappingTableRow = lookupIdentiyMappingRow(element,
 				sourceArtifactId, sourceSystemId, sourceRepositoryId,
-				targetSystemId, targetRepositoryId, artifactType);
+				targetSystemId, targetRepositoryId, artifactType); 
+		String targetArtifactIdFromTable = null;
+		if (identityMappingTableRow != null) {
+			targetArtifactIdFromTable = (String) identityMappingTableRow.get(0);
+		}
 		if (targetArtifactIdFromTable == null) {
 			this.createIdentityMapping(sourceSystemId, sourceRepositoryId,
 					targetSystemId, targetRepositoryId, sourceSystemKind,
@@ -356,6 +361,26 @@ public class MappingDBUpdater extends LifecycleComponent implements
 					depChildSourceRepositoryKind, depChildTargetArtifactId,
 					depChildTargetRepositoryId, depChildTargetRepositoryKind);
 		} else {
+			if (identityMappingTableRow.size() > 3) {
+				//Timestamp sourceLastModificationTimeFromTable = (Timestamp) identityMappingTableRow.get(1);
+				long sourceArtifactVersionFromTable = parseVersionNumber(identityMappingTableRow.get(2));
+				long targetArtifactVersionFromTable = parseVersionNumber(identityMappingTableRow.get(3));
+				long sourceArtifactVersionConverted = parseVersionNumber(sourceArtifactVersion);
+				long targetArtifactVersionConverted = parseVersionNumber(targetArtifactVersion);
+				
+				if (sourceArtifactVersionConverted < sourceArtifactVersionFromTable) {
+					log.debug("overriding incoming source artifact version ("+sourceArtifactVersionConverted+
+							") with version from id-mapping-table ("+sourceArtifactVersionFromTable+")");
+					sourceArtifactVersion = Long.toString(sourceArtifactVersionFromTable);
+					//sourceTime = sourceLastModificationTimeFromTable;
+				}
+				
+				if (targetArtifactVersionConverted < targetArtifactVersionFromTable) {
+					log.debug("overriding incoming target artifact version ("+targetArtifactVersionConverted+
+							") with version from id-mapping-table ("+targetArtifactVersionFromTable+")");
+					targetArtifactVersion = Long.toString(targetArtifactVersionFromTable);
+				}
+			}
 			this.updateIdentityMapping(sourceSystemId, sourceRepositoryId,
 					targetSystemId, targetRepositoryId, sourceArtifactId,
 					sourceTime, targetTime, sourceArtifactVersion,
@@ -368,12 +393,29 @@ public class MappingDBUpdater extends LifecycleComponent implements
 		}
 
 	}
+	
+	
+	/**
+	 * Tries to convert the input to a number. If input is null or input.toString() cannot be parsed,
+	 * returns -2, because -1 is already in use to indicate systems that don't support version control.
+	 * @param input 
+	 * @return the parsed value of the input, or -2 if input is null or its string representation cannot be parsed.
+	 */
+	private long parseVersionNumber(Object input) {
+		if (input == null) return -2;
+		try {
+			return Long.parseLong(input.toString());
+		} catch (NumberFormatException nfe) {
+			return -2;
+		}
+	}
 
-	private String lookupTargetArtifactId(Element element,
+	private OrderedHashMap lookupIdentiyMappingRow(Element element,
 			String sourceArtifactId, String sourceSystemId,
 			String sourceRepositoryId, String targetSystemId,
 			String targetRepositoryId, String artifactType) {
 		String targetArtifactId = null;
+		OrderedHashMap result = null;
 		IOrderedMap inputParameters = new OrderedHashMap();
 
 		inputParameters.add(sourceSystemId);
@@ -389,15 +431,12 @@ public class MappingDBUpdater extends LifecycleComponent implements
 		//identityMappingDatabaseReader.disconnect();
 
 		if (resultSet == null || resultSet.length == 0) {
-			targetArtifactId = null;
+			result = null;
 		} else if (resultSet.length == 1) {
 			if (resultSet[0] instanceof OrderedHashMap) {
-				OrderedHashMap result = (OrderedHashMap) resultSet[0];
+				result = (OrderedHashMap) resultSet[0];
 				if (result.size() > 0) {
-					targetArtifactId = result.get(0).toString();
-					log.debug("The value of targetArtifactId="
-							+ targetArtifactId);
-					return targetArtifactId;
+					return result;
 				} else {
 					String cause = "Seems as if the SQL statement for identityMappingDatabase reader does not return values.";
 					XPathUtils
@@ -431,7 +470,7 @@ public class MappingDBUpdater extends LifecycleComponent implements
 			log.error(cause);
 			throw new CCFRuntimeException(cause);
 		}
-		return targetArtifactId;
+		return result;
 	}
 
 	private void createIdentityMapping(String sourceSystemId,
