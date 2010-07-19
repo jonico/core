@@ -131,7 +131,7 @@
 			errorCode != "objectLocked";
 			</value>
 		</property>
-		<property name="exceptionMessage" value="Artifact has been locked in QC, so we only partially updated it and moving unprocessed comments to the hospital for later re-processing." />
+		<property name="exceptionMessage" value="Artifact has been locked in QC, so CCF only partially updated it and moved unprocessed comments to the hospital for later re-processing." />
 	</bean>
 
 	<bean id="ExceptionConvertor" class="com.collabnet.ccf.core.hospital.CCFExceptionToOrderedMapConvertor"><property name="logMessageTemplate" value="${ccf.logMessageTemplate}" /><property name="timestampFormat" value="yyyy-MM-dd HH:mm:ss zzz"/><property name="onlyQuarantineGenericArtifacts" value="true"/>
@@ -638,7 +638,19 @@
 		<!-- batch size of one means process one row per message and so on -->
 		<property name="batchSize" value="0" />
 		<property name="sql">
-			<value>SELECT ID, GENERIC_ARTIFACT, ORIGINATING_COMPONENT FROM HOSPITAL WHERE REPROCESSED = FALSE AND ERROR_CODE = 'replay' AND SOURCE_SYSTEM_ID = '?' and SOURCE_REPOSITORY_ID = '?' AND TARGET_SYSTEM_ID = '?' and TARGET_REPOSITORY_ID = '?' ORDER BY ID ASC LIMIT 1</value>
+		<value>
+		SELECT ID, GENERIC_ARTIFACT, ORIGINATING_COMPONENT FROM HOSPITAL
+		WHERE REPROCESSED = FALSE AND
+		 (ERROR_CODE = 'replay'
+		  OR ((ERROR_CODE = 'objectLocked' OR ERROR_CODE = 'objectCheckedOutError')
+		       AND DATEDIFF('mi', CONVERT(SUBSTRING(TIMESTAMP, 1, 19), TIMESTAMP), NOW) > 5))
+		 AND SOURCE_SYSTEM_ID = '?'
+		 AND SOURCE_REPOSITORY_ID = '?'
+		 AND TARGET_SYSTEM_ID = '?'
+		 AND TARGET_REPOSITORY_ID = '?' 
+	    ORDER BY ID ASC 
+	    LIMIT 1
+	    </value>
 		</property>
 	</bean>
 	

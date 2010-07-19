@@ -177,16 +177,19 @@ public class QCHandler {
 			if (versionControl != null) {
 				versionControlSupported = ccfCheckoutReq(qcc, req, versionControl);
 			}
-			if (ignoreLocks && isLocked(qcc, requirementId, false)) {
-				if (!shouldPerformCompleteUpdate) {
-					// comments that have previously been quarantined for later processing.
-					genericArtifact.setErrorCode(GenericArtifact.ERROR_OBJECT_LOCKED);
-					throw new CCFRuntimeException(String.format(
-							"could not perform partial update, because requirement '%s' is still locked / locked again.",
-							requirementId));
-				} else {
-					moveLock(qcc, requirementId, false);
-					movedLock = true;
+			if (ignoreLocks) {
+				String lockOwner = getLockOwner(qcc, requirementId, false);
+				if (!StringUtils.isEmpty(lockOwner)) {
+					if (!shouldPerformCompleteUpdate) {
+						// comments that have previously been quarantined for later processing.
+						throw new DefectAlreadyLockedException(String.format(
+								"Could not perform partial update, because requirement '%s' is still locked / locked again by user '%s'.",
+								requirementId,
+								lockOwner));
+					} else {
+						moveLock(qcc, requirementId, false);
+						movedLock = true;
+					}
 				}
 			}
 			req.lockObject();
@@ -213,57 +216,57 @@ public class QCHandler {
 				}
 
 				try {	
-				if (fieldName.equals(QCConfigHelper.QC_RQ_DEV_COMMENTS)) {
-					String oldFieldValue = req.getFieldAsString(fieldName);
-					if ((!StringUtils.isEmpty(oldFieldValue) &&
-						 !StringUtils.isEmpty(fieldValue) &&
-						 !oldFieldValue.equals(fieldValue))
-					    ||
-					    (StringUtils.isEmpty(oldFieldValue) &&
-			    		 !StringUtils.isEmpty(fieldValue))) {
-						fieldValue = getConcatinatedCommentValue(oldFieldValue,
-								fieldValue, connectorUser);
-					}
-					if (!movedLock) {
-						req.setField(fieldName, fieldValue);
-					} else {
-						wasPartialUpdate = true;
-					}
-				} else if (!(allFieldNames.contains(thisField.getFieldName()))
-						&& !(fieldName.equals(QC_REQ_ID)
-								|| fieldName.equals(QC_RQ_ATTACHMENT) || fieldName
-								.equals(QC_RQ_VTS))) {
-					 
-					// only handle every field once
-					// if there was a multi select field, we already concatenated all its values in the field value of its first occurrence
-						if (preserveSemanticallyUnchangedHTMLFieldValues && 
-							!StringUtils.isEmpty(fieldValue) && 
-							fieldValue.startsWith(QCConfigHelper.HTMLSTRING_PREFIX)) {
-
-							String oldFieldValue = req.getFieldAsString(fieldName);
-							String strippedOldValue = GATransformerUtil.stripHTML(oldFieldValue).replaceAll("\\s", "");
-							String strippedNewValue = GATransformerUtil.stripHTML(fieldValue).replaceAll("\\s", "");
-							if (StringUtils.isEmpty(oldFieldValue) ||
-								! strippedNewValue.equals(strippedOldValue)) {
-								req.setField(fieldName, fieldValue);
-							} else {
-								log.info("skipping update of field '" + fieldName + "', because only fomatting has changed.");
-							}
-						} else {
-							req.setField(fieldName, fieldValue);
+					if (fieldName.equals(QCConfigHelper.QC_RQ_DEV_COMMENTS)) {
+						String oldFieldValue = req.getFieldAsString(fieldName);
+						if ((!StringUtils.isEmpty(oldFieldValue) &&
+							 !StringUtils.isEmpty(fieldValue) &&
+							 !oldFieldValue.equals(fieldValue))
+						    ||
+						    (StringUtils.isEmpty(oldFieldValue) &&
+				    		 !StringUtils.isEmpty(fieldValue))) {
+							fieldValue = getConcatinatedCommentValue(oldFieldValue,
+									fieldValue, connectorUser);
 						}
-						allFieldNames.add(fieldName);
-				}
-					} catch (ComFailException e) {
-						String message = "Exception while setting the value of field "
-								+ fieldName
-								+ " to "
-								+ fieldValue
-								+ ": "
-								+ e.getMessage();
-						log.error(message, e);
-						throw new CCFRuntimeException(message, e);
+						if (!movedLock) {
+							req.setField(fieldName, fieldValue);
+						} else {
+							wasPartialUpdate = true;
+						}
+					} else if (!(allFieldNames.contains(thisField.getFieldName()))
+							&& !(fieldName.equals(QC_REQ_ID)
+									|| fieldName.equals(QC_RQ_ATTACHMENT) || fieldName
+									.equals(QC_RQ_VTS))) {
+						 
+						// only handle every field once
+						// if there was a multi select field, we already concatenated all its values in the field value of its first occurrence
+							if (preserveSemanticallyUnchangedHTMLFieldValues && 
+								!StringUtils.isEmpty(fieldValue) && 
+								fieldValue.startsWith(QCConfigHelper.HTMLSTRING_PREFIX)) {
+	
+								String oldFieldValue = req.getFieldAsString(fieldName);
+								String strippedOldValue = GATransformerUtil.stripHTML(oldFieldValue).replaceAll("\\s", "");
+								String strippedNewValue = GATransformerUtil.stripHTML(fieldValue).replaceAll("\\s", "");
+								if (StringUtils.isEmpty(oldFieldValue) ||
+									! strippedNewValue.equals(strippedOldValue)) {
+									req.setField(fieldName, fieldValue);
+								} else {
+									log.info("skipping update of field '" + fieldName + "', because only fomatting has changed.");
+								}
+							} else {
+								req.setField(fieldName, fieldValue);
+							}
+							allFieldNames.add(fieldName);
 					}
+				} catch (ComFailException e) {
+					String message = "Exception while setting the value of field "
+							+ fieldName
+							+ " to "
+							+ fieldValue
+							+ ": "
+							+ e.getMessage();
+					log.error(message, e);
+					throw new CCFRuntimeException(message, e);
+				}
 			}
 
 			req.post();
@@ -291,17 +294,23 @@ public class QCHandler {
 			 * condition would only occur if another user re-locked the 
 			 * artifact before we could acquire it after stealing it.
 			 */
-			String message = "Attempt to lock the requirement with id "
-					+ requirementId + " failed.";
-			String lockOwner = getLockOwner(qcc, requirementId, false);
 			
-			if (StringUtils.isEmpty(lockOwner)) {
-				message += " Could not find out the user who locked it.";
+			if (!shouldPerformCompleteUpdate && ignoreLocks) {
+				throw new CCFRuntimeException(e.getMessage(), e);
 			} else {
-				message += " Requirement has been locked by user " + lockOwner;
+		
+				String message = "Attempt to lock the requirement with id "
+						+ requirementId + " failed.";
+				String lockOwner = getLockOwner(qcc, requirementId, false);
+				
+				if (StringUtils.isEmpty(lockOwner)) {
+						message += " Could not find out the user who locked it.";
+					} else {
+						message += " Requirement has been locked by user " + lockOwner;
+					}
+		
+				throw new CCFRuntimeException(message, e);
 			}
-
-			throw new CCFRuntimeException(message, e);
 		} catch (ComFailException e) {
 			req.undo();
 
@@ -423,16 +432,19 @@ public class QCHandler {
 		try {
 			bugFactory = qcc.getBugFactory();
 			bug = bugFactory.getItem(bugId);
-			if (ignoreLocks && isLocked(qcc, bugId, true)) {
-				if (!shouldPerformCompleteUpdate) {
-					// comments that have previously been quarantined for later processing.
-					genericArtifact.setErrorCode(GenericArtifact.ERROR_OBJECT_LOCKED);
-					throw new CCFRuntimeException(String.format(
-							"could not perform partial update, because defect '%s' is still locked / locked again.",
-							bugId));
-				} else {
-					moveLock(qcc, bugId, true);
-					movedLock = true;
+			if (ignoreLocks) {
+				String lockOwner = getLockOwner(qcc, bugId, true);
+				if (!StringUtils.isEmpty(lockOwner)) {
+					if (!shouldPerformCompleteUpdate) {
+						// comments that have previously been quarantined for later processing.
+						throw new DefectAlreadyLockedException(String.format(
+								"Could not perform partial update, because defect '%s' is still locked / locked again by user '%s'.",
+								bugId,
+								lockOwner));
+					} else {
+						moveLock(qcc, bugId, true);
+						movedLock = true;
+					}
 				}
 			}
 			bug.lockObject();
@@ -519,17 +531,22 @@ public class QCHandler {
 			 * condition would only occur if another user re-locked the 
 			 * artifact before we could acquire it after stealing it.
 			 */
-			String message = "Attempt to lock the defect with id " + bugId
-					+ " failed.";
-			String lockOwner = getLockOwner(qcc, bugId, true);
 			
-			if (StringUtils.isEmpty(lockOwner)) {
-				message += " Could not find out the user who locked it.";
+			if (!shouldPerformCompleteUpdate && ignoreLocks) {
+				throw new CCFRuntimeException(e.getMessage(), e);
 			} else {
-				message += " Defect has been locked by user " + lockOwner;
-			}
+				String message = "Attempt to lock the defect with id " + bugId
+						+ " failed.";
+				String lockOwner = getLockOwner(qcc, bugId, true);
+				
+				if (StringUtils.isEmpty(lockOwner)) {
+					message += " Could not find out the user who locked it.";
+				} else {
+					message += " Defect has been locked by user " + lockOwner;
+				}
 
-			throw new CCFRuntimeException(message, e);
+				throw new CCFRuntimeException(message, e);
+			}
 		} catch (ComFailException e) {
 			bug.undo();
 			String message = "ComFailException while updating the defect with id "
@@ -598,9 +615,6 @@ public class QCHandler {
 				rs = null;
 			}
 		}
-	}
-	private boolean isLocked(IConnection qcc, String artifactId, boolean isDefect) {
-		return !StringUtils.isEmpty(getLockOwner(qcc, artifactId, isDefect));
 	}
 
 	private String artifactTypeString(boolean isDefect) {
