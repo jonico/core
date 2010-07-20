@@ -781,7 +781,7 @@ public class ProjectTrackerReader extends
 			lastModifiedBy = artifact.getAttributeValue(
 					TrackerWebServicesClient.DEFAULT_NAMESPACE,
 					TrackerWebServicesClient.MODIFIED_BY_FIELD_NAME);
-			if (lastModifiedBy.equals(getUsername())
+			if (lastModifiedBy.equalsIgnoreCase(getUsername())
 					&& isIgnoreConnectorUserUpdates()) {
 				log
 						.debug("Artifact has been lastly modified by connector user and will not be synchronized");
@@ -796,7 +796,7 @@ public class ProjectTrackerReader extends
 			ProjectTrackerReader.artifactHistoryList.set(ahlVersion);
 
 			GenericArtifact ga = new GenericArtifact();
-			if (lastModifiedBy.equals(this.getResyncUserName())
+			if (lastModifiedBy.equalsIgnoreCase(this.getResyncUserName())
 					&& isIgnoreConnectorUserUpdates()) {
 				ga
 						.setArtifactAction(GenericArtifact.ArtifactActionValue.RESYNC);
@@ -1362,7 +1362,7 @@ public class ProjectTrackerReader extends
 											}
 										}
 										if (this.isIgnoreConnectorUserUpdates()) {
-											if (modifiedBy.equals(this
+											if (modifiedBy.equalsIgnoreCase(this
 													.getUsername())) {
 												state = artifactIdStateMap
 														.get(historyArtifactId);
