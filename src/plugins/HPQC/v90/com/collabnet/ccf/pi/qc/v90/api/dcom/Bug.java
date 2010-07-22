@@ -26,13 +26,11 @@ import org.apache.log4j.Logger;
 
 import com.collabnet.ccf.core.CCFRuntimeException;
 import com.collabnet.ccf.core.utils.DateUtil;
-import com.collabnet.ccf.pi.qc.v90.api.Comment;
 import com.collabnet.ccf.pi.qc.v90.api.DefectAlreadyLockedException;
 import com.collabnet.ccf.pi.qc.v90.api.IAttachment;
 import com.collabnet.ccf.pi.qc.v90.api.IAttachmentFactory;
 import com.collabnet.ccf.pi.qc.v90.api.IBugActions;
 import com.collabnet.ccf.pi.qc.v90.api.IFactoryList;
-import com.collabnet.ccf.pi.qc.v90.api.Utils;
 import com.jacob.activeX.ActiveXComponent;
 import com.jacob.com.DateUtilities;
 import com.jacob.com.Dispatch;
@@ -86,7 +84,7 @@ public class Bug extends ActiveXComponent implements IBugActions {
 		Variant res = Dispatch.call(this, "Field", field);
 		if (res.isNull()) {
 			return null;
-		} else if (res.getvt() == 3) {
+		} else if (res.getvt() == Variant.VariantInt) {
 			int val = res.getInt();
 			return Integer.toString(val);
 		} else {
@@ -121,7 +119,7 @@ public class Bug extends ActiveXComponent implements IBugActions {
 
 	public Integer getFieldAsInt(String field) {
 		Variant res = Dispatch.call(this, "Field", field);
-		if (res.isNull() || res.getvt() == 9) {
+		if (res.isNull() || res.getvt() == Variant.VariantDispatch) {
 			return null;
 		} else {
 			return res.getInt();
@@ -129,7 +127,7 @@ public class Bug extends ActiveXComponent implements IBugActions {
 	}
 
 	public void setField(String field, String value) {
-		Dispatch.invoke(this, "Field", 4, new Object[] { field, value },
+		Dispatch.invoke(this, "Field", Dispatch.Put, new Object[] { field, value },
 				new int[2]);
 	}
 
@@ -319,7 +317,62 @@ public class Bug extends ActiveXComponent implements IBugActions {
 	public void setCommentsAsHTML(String s) {
 		setField("BG_DEV_COMMENTS", s);
 	}
+	
+    /**
+     * Support for values that are not directly contained in this Bug, but
+     * are instead determined via a separate, referenced object (i.e.
+     * a joined table at the DB level). Values for these fields must be
+     * indirectly obtained by first obtaining a separate COM object for the
+     * referenced field, and then calling a direct property-get on that object.
+     * Concrete example: Bug release and cycle info
+     * @param fieldName name of the referenced field (e.g. BG_DETECTED_IN_REL)
+     * @param subFieldName (sub) field in the referenced field whose value 
+     *          you want
+     * @return value from the referenced object as a String
+     */
+    public String getReferencedFieldAsString(String fieldName,
+                                             String subFieldName) {
+        String val = null;
+		Variant res = Dispatch.call(this, "Field", fieldName);
+		if (!res.isNull()) {
+            Dispatch subfield = res.getDispatch();
+            Variant subfieldVal = Dispatch.call(subfield, subFieldName);
+            if (!subfieldVal.isNull()) {
+                // NOTE: assuming that getString works for datetimes/numbers too
+                val = subfieldVal.getString();
+            }
+		}
+        return val;
+    }
 
+    /**
+     * Support for values that are not directly contained in this Bug, but
+     * are instead determined via a separate, referenced object (i.e.
+     * a joined table at the DB level). Values for these fields must be
+     * indirectly obtained by first obtaining a separate COM object for the
+     * referenced field, and then calling a direct property-get on that object.
+     * Concrete example: Bug release and cycle info
+     * @param fieldName name of the referenced field (e.g. BG_DETECTED_IN_REL)
+     * @param subFieldName (sub) field in the referenced field whose value 
+     *          you want
+     * @return value from the referenced object as an Integer
+     */
+    public Integer getReferencedFieldAsInt(String fieldName,
+                                             String subFieldName) {
+        Integer val = null;
+		Variant res = Dispatch.call(this, "Field", fieldName);
+		if (!res.isNull()) {
+            Dispatch subfield = res.getDispatch();
+            Variant subfieldVal = Dispatch.call(subfield, subFieldName);
+            if (!subfieldVal.isNull()) {
+                // NOTE: assuming that getString works for datetimes/numbers too
+                val = subfieldVal.getInt();
+            }
+		}
+        return val;
+    }
+
+    
 	// public List<AttachmentData> getAttachmentData() {
 	//
 	// List<AttachmentData> attachmentDataList = new

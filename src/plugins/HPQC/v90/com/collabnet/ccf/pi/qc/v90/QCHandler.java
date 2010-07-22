@@ -234,8 +234,9 @@ public class QCHandler {
 						}
 					} else if (!(allFieldNames.contains(thisField.getFieldName()))
 							&& !(fieldName.equals(QC_REQ_ID)
-									|| fieldName.equals(QC_RQ_ATTACHMENT) || fieldName
-									.equals(QC_RQ_VTS))) {
+									|| fieldName.equals(QC_RQ_ATTACHMENT) 
+									|| fieldName.equals(QC_RQ_VTS)
+									|| fieldName.endsWith(QCConfigHelper.HUMAN_READABLE_SUFFIX))) {
 						 
 						// only handle every field once
 						// if there was a multi select field, we already concatenated all its values in the field value of its first occurrence
@@ -491,8 +492,9 @@ public class QCHandler {
 					} else if (!(allFieldNames.contains(thisField.getFieldName()))
 							&& !(fieldName.equals(QC_BUG_ID)
 									|| fieldName.equals(QC_BUG_VER_STAMP)
-									|| fieldName.equals(QC_BG_ATTACHMENT) || fieldName
-									.equals(QC_BG_VTS))) {
+									|| fieldName.equals(QC_BG_ATTACHMENT) 
+									|| fieldName.equals(QC_BG_VTS)
+									|| fieldName.endsWith(QCConfigHelper.HUMAN_READABLE_SUFFIX))) {
 						// only handle every field once
 						// if there was a multi select field, we already concatenated all its values in the field value of its first occurrence
 						if (preserveSemanticallyUnchangedHTMLFieldValues && 
@@ -720,8 +722,9 @@ public class QCHandler {
 				if (!(allFieldNames.contains(allFields.get(cnt).getFieldName()))
 						&& !(fieldName.equals(QC_BUG_ID)
 								|| fieldName.equals(QC_BUG_VER_STAMP)
-								|| fieldName.equals(QC_BG_ATTACHMENT) || fieldName
-								.equals(QC_BG_VTS))) {
+								|| fieldName.equals(QC_BG_ATTACHMENT) 
+								|| fieldName.equals(QC_BG_VTS)
+								|| fieldName.endsWith(QCConfigHelper.HUMAN_READABLE_SUFFIX))) {
 					try {
 						bug.setField(fieldName, fieldValue);
 					} catch (Exception e) {
@@ -1566,8 +1569,9 @@ public class QCHandler {
 
 				if (!(allFieldNames.contains(allFields.get(cnt).getFieldName()))
 						&& !(fieldName.equals(QC_REQ_ID)
-								|| fieldName.equals(QC_RQ_ATTACHMENT) || fieldName
-								.equals(QC_RQ_VTS))) {
+								|| fieldName.equals(QC_RQ_ATTACHMENT)
+								|| fieldName.equals(QC_RQ_VTS)
+								|| fieldName.endsWith(QCConfigHelper.HUMAN_READABLE_SUFFIX))) {
 					try {
 						req.setField(fieldName, fieldValue);
 					} catch (Exception e) {

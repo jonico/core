@@ -33,6 +33,7 @@ import org.apache.commons.logging.LogFactory;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactField.FieldActionValue;
+import com.collabnet.ccf.core.ga.GenericArtifactField.FieldValueTypeValue;
 import com.collabnet.ccf.core.utils.DateUtil;
 import com.collabnet.ccf.pi.qc.v90.api.IConnection;
 import com.collabnet.ccf.pi.qc.v90.api.IRecordSet;
@@ -127,10 +128,44 @@ public class QCDefect extends Bug implements IQCDefect {
 			GenericArtifactField.FieldValueTypeValue thisFieldsDatatype = thisField
 					.getFieldValueType();
 
-			if (thisFieldsDatatype
-					.equals(GenericArtifactField.FieldValueTypeValue.DATE)
-					|| thisFieldsDatatype
-							.equals(GenericArtifactField.FieldValueTypeValue.DATETIME)) {
+            String fieldName = thisField.getFieldName();
+            boolean isJoinedField = QCConfigHelper.isJoinedField(qcc, true, fieldName); 
+            if (isJoinedField) {
+                // Assume the 'Name' property is what is wanted from these
+                // referenced objects. Could maybe introduce something like
+                // QCConfigHelper.mapJoinedFieldIdToDisplay() to do this, but it
+                // looks like there's no way to map from OTA property names to
+                // DB column names. In any case Bugs have only 4 reference props
+                // and they all have a Name attribute, so the assumption is safe.
+            	
+            	
+            	// set the referenced ID number as this field's value.
+            	Integer thisFieldVal = getReferencedFieldAsInt(fieldName, "ID");
+            	thisField.setFieldValue(thisFieldVal);
+            	
+				/*
+				 * since joined fields map to an (integer) ID, but customers
+				 * might be interested in the string value of the mapped field,
+				 * we add a synthetic field to the genericArtifact, reflecting
+				 * the attributes contained in this field. This field is of type
+				 * STRING and has _HUMAN_READABLE appended to its name.
+				 */
+            	String syntheticFieldName = thisField.getFieldName() + QCConfigHelper.HUMAN_READABLE_SUFFIX;
+                String syntheticFieldValue = getReferencedFieldAsString(fieldName, "Name");
+            	GenericArtifactField syntheticField = genericArtifact.addNewField(syntheticFieldName, GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
+                syntheticField.setAlternativeFieldName(syntheticFieldName);
+                syntheticField.setFieldValue(syntheticFieldValue);
+                syntheticField.setFieldValueType(FieldValueTypeValue.STRING);
+                // copy over the other attributes.
+                syntheticField.setFieldAction(thisField.getFieldAction());
+                syntheticField.setFieldValueHasChanged(thisField.getFieldValueHasChanged());
+                syntheticField.setMaxOccurs(thisField.getMaxOccurs());
+                syntheticField.setMaxOccursValue(thisField.getMaxOccursValue());
+                syntheticField.setMinOccurs(thisField.getMinOccurs());
+                syntheticField.setMinOccursValue(thisField.getMinOccursValue());
+                syntheticField.setNullValueSupported(thisField.getNullValueSupported());
+            } else if (thisFieldsDatatype.equals(GenericArtifactField.FieldValueTypeValue.DATE)
+					|| thisFieldsDatatype.equals(GenericArtifactField.FieldValueTypeValue.DATETIME)) {
 				String connectorSystemTimeZone = TimeZone.getDefault()
 						.getID();
 				Date dateValue = getFieldAsDate(thisField.getFieldName());
@@ -148,20 +183,12 @@ public class QCDefect extends Bug implements IQCDefect {
 						thisField.setFieldValue(dateValue);
 					}
 				}
-			}
-			if (thisFieldsDatatype
-					.equals(GenericArtifactField.FieldValueTypeValue.INTEGER)) {
-				thisField
-						.setFieldValue(getFieldAsInt(thisField.getFieldName()));
-			}
-			if (thisFieldsDatatype
-					.equals(GenericArtifactField.FieldValueTypeValue.HTMLSTRING)) {
-				thisField.setFieldValue(getFieldAsString(thisField
-						.getFieldName()));
-			}
-			// INFO Changes for user attributes handling...
-			if (thisFieldsDatatype
-					.equals(GenericArtifactField.FieldValueTypeValue.USER)) {
+			} else if (thisFieldsDatatype.equals(GenericArtifactField.FieldValueTypeValue.INTEGER)) {
+				thisField.setFieldValue(getFieldAsInt(thisField.getFieldName()));
+			} else if (thisFieldsDatatype.equals(GenericArtifactField.FieldValueTypeValue.HTMLSTRING)) {
+				thisField.setFieldValue(getFieldAsString(thisField.getFieldName()));
+			} else if (thisFieldsDatatype.equals(GenericArtifactField.FieldValueTypeValue.USER)) {
+				// INFO Changes for user attributes handling...
 				String fieldValue = getFieldAsString(thisField.getFieldName());
 
 				if (StringUtils.isEmpty(fieldValue) || fieldValue == null) {
@@ -187,15 +214,9 @@ public class QCDefect extends Bug implements IQCDefect {
 						}
 					}
 				}
-			}
-
-			if (thisFieldsDatatype
-					.equals(GenericArtifactField.FieldValueTypeValue.BASE64STRING)) {
-				thisField
-						.setFieldValue(getFieldAsInt(thisField.getFieldName()));
-			}
-			if (thisFieldsDatatype
-					.equals(GenericArtifactField.FieldValueTypeValue.STRING)) {
+			} else if (thisFieldsDatatype.equals(GenericArtifactField.FieldValueTypeValue.BASE64STRING)) {
+				thisField.setFieldValue(getFieldAsInt(thisField.getFieldName()));
+			} else if (thisFieldsDatatype.equals(GenericArtifactField.FieldValueTypeValue.STRING)) {
 				if (thisField.getMaxOccurs() == GenericArtifactField.CARDINALITY_UNBOUNDED) {
 
 					String fieldValue = getFieldAsString(thisField
@@ -220,7 +241,6 @@ public class QCDefect extends Bug implements IQCDefect {
 					}
 
 				} else {
-					String fieldName = thisField.getFieldName();
 					String fieldValueAsString = null;
 					if (fieldName.equals("BG_VTS")) {
 						Date dateFieldValue = getFieldAsDate(fieldName);
@@ -233,7 +253,6 @@ public class QCDefect extends Bug implements IQCDefect {
 						thisField.setFieldValue(fieldValueAsString);
 					}
 				}
-
 			}
 		}
 		// If this is a resync request do not ship comments
@@ -270,7 +289,6 @@ public class QCDefect extends Bug implements IQCDefect {
 		return genericArtifact;
 
 	}
-
 	/*
 	 * public boolean isMultiSelectField(String fieldName, IConnection qcc) {
 	 * 

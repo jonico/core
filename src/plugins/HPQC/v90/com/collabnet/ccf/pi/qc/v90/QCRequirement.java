@@ -123,8 +123,50 @@ public class QCRequirement extends Requirement implements IQCRequirement {
 			thisField.setFieldValueHasChanged(true);
 			GenericArtifactField.FieldValueTypeValue thisFieldsDatatype = thisField
 					.getFieldValueType();
+            String fieldName = thisField.getFieldName();
 
-			if (thisFieldsDatatype
+            boolean isJoinedField = QCConfigHelper.isJoinedField(qcc, false, fieldName);
+            
+            if (isJoinedField) {
+                // Assume the 'Name' property is what is wanted from these
+                // referenced objects. Could maybe introduce something like
+                // QCConfigHelper.mapJoinedFieldIdToDisplay() to do this, but it
+                // looks like there's no way to map from OTA property names to
+                // DB column names. In any case Bugs have only 4 reference props
+                // and they all have a Name attribute, so the assumption is safe.
+            	
+            	// set the referenced ID number as this field's value.
+            	
+            	if ("RQ_TYPE_ID".equals(fieldName)) {
+					String fieldValueAsString = getFieldAsString(fieldName);
+					thisField.setFieldValue(fieldValueAsString);
+            	} else {
+	            	Integer[] fieldValues = getReferencedFieldAsIntArray(fieldName, "ID");
+	                String[]  syntheticFieldValues = getReferencedFieldAsStringArray(fieldName, "Name");
+	            	String syntheticFieldName = null;
+	            	boolean noValue = fieldValues.length == 0;
+            		thisField.setFieldValue(noValue ? null : fieldValues[0]);
+            		syntheticFieldName = thisField.getFieldName() + QCConfigHelper.HUMAN_READABLE_SUFFIX;
+
+            		createSyntheticField(
+            				thisField, 
+            				genericArtifact.addNewField(syntheticFieldName, GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD),
+            				syntheticFieldName,
+            				noValue ? null : syntheticFieldValues[0]);
+	            	for(int i = 1; i < fieldValues.length; ++i) {
+	            		GenericArtifactField newField = genericArtifact.addNewField(fieldName, GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
+	            		copyFieldAttributes(thisField, newField);
+		            	newField.setFieldValue(fieldValues[i]);
+	            		syntheticFieldName = thisField.getFieldName() + QCConfigHelper.HUMAN_READABLE_SUFFIX;
+	            		createSyntheticField(
+	            				thisField, 
+	            				genericArtifact.addNewField(syntheticFieldName, GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD),
+	            				syntheticFieldName,
+	            				syntheticFieldValues[i]);
+		            	
+	            	}
+            	}
+            } else if (thisFieldsDatatype
 					.equals(GenericArtifactField.FieldValueTypeValue.DATE)
 					|| thisFieldsDatatype
 							.equals(GenericArtifactField.FieldValueTypeValue.DATETIME)) {
@@ -144,20 +186,17 @@ public class QCRequirement extends Requirement implements IQCRequirement {
 						thisField.setFieldValue(dateValue);
 					}
 				}
-			}
-			if (thisFieldsDatatype
+			} else if (thisFieldsDatatype
 					.equals(GenericArtifactField.FieldValueTypeValue.INTEGER)) {
 				thisField
 						.setFieldValue(getFieldAsInt(thisField.getFieldName()));
-			}
-			if (thisFieldsDatatype
+			} else if (thisFieldsDatatype
 					.equals(GenericArtifactField.FieldValueTypeValue.HTMLSTRING)) {
 				thisField.setFieldValue(getFieldAsString(thisField
 						.getFieldName()));
-			}
-			// INFO Changes for user attributes handling...
-			if (thisFieldsDatatype
+			} else if (thisFieldsDatatype
 					.equals(GenericArtifactField.FieldValueTypeValue.USER)) {
+				// INFO Changes for user attributes handling...
 				String fieldValue = getFieldAsString(thisField.getFieldName());
 
 				if (StringUtils.isEmpty(fieldValue) || fieldValue == null) {
@@ -183,14 +222,11 @@ public class QCRequirement extends Requirement implements IQCRequirement {
 						}
 					}
 				}
-			}
-
-			if (thisFieldsDatatype
+			} else if (thisFieldsDatatype
 					.equals(GenericArtifactField.FieldValueTypeValue.BASE64STRING)) {
 				thisField
 						.setFieldValue(getFieldAsInt(thisField.getFieldName()));
-			}
-			if (thisFieldsDatatype
+			} else if (thisFieldsDatatype
 					.equals(GenericArtifactField.FieldValueTypeValue.STRING)) {
 				if (thisField.getMaxOccurs() == GenericArtifactField.CARDINALITY_UNBOUNDED) {
 
@@ -216,7 +252,6 @@ public class QCRequirement extends Requirement implements IQCRequirement {
 					}
 
 				} else {
-					String fieldName = thisField.getFieldName();
 					String fieldValueAsString = null;
 					if (fieldName.equals("RQ_VTS")) {
 						Date dateFieldValue = getFieldAsDate(fieldName);
@@ -264,6 +299,30 @@ public class QCRequirement extends Requirement implements IQCRequirement {
 
 		return genericArtifact;
 
+	}
+
+	private void createSyntheticField(GenericArtifactField thisField,
+			GenericArtifactField syntheticField, String syntheticFieldName,
+			Object syntheticFieldValue) {
+		copyFieldAttributes(thisField, syntheticField);
+		// overwrite AlternativeFieldName, FieldValue and FieldValueType
+		syntheticField.setAlternativeFieldName(syntheticFieldName);
+		syntheticField.setFieldValue(syntheticFieldValue);
+		syntheticField.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
+	}
+
+	private void copyFieldAttributes(GenericArtifactField from,
+			GenericArtifactField to) {
+		to.setAlternativeFieldName(from.getAlternativeFieldName());
+		to.setFieldValue(from.getFieldValue());
+		to.setFieldValueType(from.getFieldValueType());
+		to.setFieldAction(from.getFieldAction());
+		to.setFieldValueHasChanged(from.getFieldValueHasChanged());
+		to.setMaxOccurs(from.getMaxOccurs());
+		to.setMaxOccursValue(from.getMaxOccursValue());
+		to.setMinOccurs(from.getMinOccurs());
+		to.setMinOccursValue(from.getMinOccursValue());
+		to.setNullValueSupported(from.getNullValueSupported());
 	}
 
 

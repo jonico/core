@@ -65,10 +65,10 @@ public class Requirement extends ActiveXComponent implements
 		Variant res = Dispatch.call(this, "Field", field);
 		if (res.isNull()) {
 			return null;
-		} else if (res.getvt() == 3) {
+		} else if (res.getvt() == Variant.VariantInt) {
 			int val = res.getInt();
 			return Integer.toString(val);
-		} else if (res.getvt() == 7) {
+		} else if (res.getvt() == Variant.VariantDate) {
 			logger.warn("Field " + field
 					+ " should have contained a string but contained a date: "
 					+ res.getDate());
@@ -83,7 +83,7 @@ public class Requirement extends ActiveXComponent implements
 		double ddate = 0.0;
 		if (res.isNull()) {
 			return null;
-		} else if (res.getvt() == 8) {
+		} else if (res.getvt() == Variant.VariantString) {
 			logger.warn("Field " + field
 					+ " should have contained a date but contained a string: "
 					+ res.getString());
@@ -109,9 +109,9 @@ public class Requirement extends ActiveXComponent implements
 
 	public Integer getFieldAsInt(String field) {
 		Variant res = Dispatch.call(this, "Field", field);
-		if (res.isNull() || res.getvt() == 9) {
+		if (res.isNull() || res.getvt() == Variant.VariantDispatch) {
 			return null;
-		} else if (res.getvt() == 8) {
+		} else if (res.getvt() == Variant.VariantString) {
 			logger.warn("Field " + field
 					+ " should have contained an int but contained a string: "
 					+ res.getString());
@@ -120,9 +120,57 @@ public class Requirement extends ActiveXComponent implements
 			return res.getInt();
 		}
 	}
+	
+    
+    public Integer[] getReferencedFieldAsIntArray(String fieldName, String subFieldName) {
+    	List<Integer> result = new ArrayList<Integer>();
+    	Variant res = Dispatch.call(this, "Field", fieldName);
+    	if (!res.isNull()) {
+    		assert(res.getvt() == Variant.VariantDispatch);
+    		Dispatch list = res.getDispatch();
+    		Variant listSize = Dispatch.call(list, "Count");
+    		assert(listSize.getvt() == Variant.VariantInt);
+    		int numItems = listSize.getInt();
+    		for(int i = 1; i <= numItems; i++) {
+    			Variant itemObj = Dispatch.call(list, "Item", i);
+    			assert(itemObj.getvt() == Variant.VariantDispatch);
+    			Dispatch subfield = itemObj.getDispatch();
+				Variant subFieldVal = Dispatch.call(subfield, subFieldName);
+				assert(subFieldVal.getvt() == Variant.VariantInt);
+				if (!subFieldVal.isNull()) {
+					result.add(subFieldVal.getInt());
+				}
+    		}
+    	}
+    	return result.toArray(new Integer[]{});
+    }
+
+    public String[] getReferencedFieldAsStringArray(String fieldName, String subFieldName) {
+    	List<String> result = new ArrayList<String>();
+    	Variant res = Dispatch.call(this, "Field", fieldName);
+    	if (!res.isNull()) {
+    		assert(res.getvt() == Variant.VariantDispatch);
+    		Dispatch list = res.getDispatch();
+    		Variant listSize = Dispatch.call(list, "Count");
+    		assert(listSize.getvt() == Variant.VariantInt);
+    		int numItems = listSize.getInt();
+    		for(int i = 1; i <= numItems; i++) {
+    			Variant itemObj = Dispatch.call(list, "Item", i);
+    			assert(itemObj.getvt() == Variant.VariantDispatch);
+    			Dispatch subfield = itemObj.getDispatch();
+				Variant subFieldVal = Dispatch.call(subfield, subFieldName);
+				assert(subFieldVal.getvt() == Variant.VariantString);
+				if (!subFieldVal.isNull()) {
+					result.add(subFieldVal.getString());
+				}
+    		}
+    	}
+    	return result.toArray(new String[]{});
+    }
+
 
 	public void setField(String field, String value) {
-		Dispatch.invoke(this, "Field", 4, new Object[] { field, value },
+		Dispatch.invoke(this, "Field", Dispatch.Put, new Object[] { field, value },
 				new int[2]);
 	}
 
@@ -377,7 +425,7 @@ public class Requirement extends ActiveXComponent implements
 		} catch (Exception e) {
 			; // do nothing
 		}
-		if (result == null || result.getvt() != 9) {
+		if (result == null || result.getvt() != Variant.VariantDispatch) {
 			return null;
 		} else {
 			Dispatch dispatch = result.getDispatch();
