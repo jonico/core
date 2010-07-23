@@ -179,7 +179,7 @@ public class QCHandler {
 			}
 			if (ignoreLocks) {
 				String lockOwner = getLockOwner(qcc, requirementId, false);
-				if (!StringUtils.isEmpty(lockOwner)) {
+				if (!StringUtils.isEmpty(lockOwner) && !qcc.getUsername().equalsIgnoreCase(lockOwner)) {
 					if (!shouldPerformCompleteUpdate) {
 						// comments that have previously been quarantined for later processing.
 						throw new DefectAlreadyLockedException(String.format(
@@ -252,6 +252,13 @@ public class QCHandler {
 									req.setField(fieldName, fieldValue);
 								} else {
 									log.info("skipping update of field '" + fieldName + "', because only fomatting has changed.");
+								}
+							} else if("RQ_TARGET_REL".equals(fieldName) || "RQ_TARGET_RCYC".equals(fieldName)) {
+								// hard-code the linked fields here
+								if(fieldValue == null || fieldValue.trim().length() == 0) {
+									req.clearListValuedField(fieldName);
+								} else {
+									req.setListValuedField(fieldName, fieldValue);
 								}
 							} else {
 								req.setField(fieldName, fieldValue);
@@ -376,7 +383,7 @@ public class QCHandler {
 		} catch (ComFailException e) {
 			// check whether we have already checked out this
 			// requirement
-			if (qcc.getUsername().equals(
+			if (qcc.getUsername().equalsIgnoreCase(
 					req.getFieldAsString("RQ_VC_CHECKOUT_USER_NAME"))) {
 				log
 						.warn("Requirement "
@@ -435,7 +442,7 @@ public class QCHandler {
 			bug = bugFactory.getItem(bugId);
 			if (ignoreLocks) {
 				String lockOwner = getLockOwner(qcc, bugId, true);
-				if (!StringUtils.isEmpty(lockOwner)) {
+				if (!StringUtils.isEmpty(lockOwner) && !qcc.getUsername().equalsIgnoreCase(lockOwner)) {
 					if (!shouldPerformCompleteUpdate) {
 						// comments that have previously been quarantined for later processing.
 						throw new DefectAlreadyLockedException(String.format(
@@ -1573,7 +1580,16 @@ public class QCHandler {
 								|| fieldName.equals(QC_RQ_VTS)
 								|| fieldName.endsWith(QCConfigHelper.HUMAN_READABLE_SUFFIX))) {
 					try {
-						req.setField(fieldName, fieldValue);
+						if("RQ_TARGET_REL".equals(fieldName) || "RQ_TARGET_RCYC".equals(fieldName)) {
+							// hard-code the linked fields here
+							if(fieldValue == null || fieldValue.trim().length() == 0) {
+								req.clearListValuedField(fieldName);
+							} else {
+								req.setListValuedField(fieldName, fieldValue);
+							}
+						} else { 
+							req.setField(fieldName, fieldValue);
+						}
 					} catch (Exception e) {
 						String message = "Exception while setting the value of field "
 								+ fieldName

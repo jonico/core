@@ -69,4 +69,6 @@ public interface IRequirement extends ILifeCycle {
 	boolean isModified();
 	
 	IVersionControl getVersionControlObject();
+	public void clearListValuedField(String fieldName);
+	public void setListValuedField(String fieldName, String fieldValue);
 }

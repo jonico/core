@@ -17,6 +17,7 @@
 
 package com.collabnet.ccf.pi.qc.v90.api.dcom;
 
+import java.awt.Component;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
@@ -26,6 +27,7 @@ import org.apache.log4j.Logger;
 
 import com.collabnet.ccf.core.CCFRuntimeException;
 import com.collabnet.ccf.core.utils.DateUtil;
+import com.collabnet.ccf.pi.qc.v90.QCRequirement;
 import com.collabnet.ccf.pi.qc.v90.api.DefectAlreadyLockedException;
 import com.collabnet.ccf.pi.qc.v90.api.IAttachment;
 import com.collabnet.ccf.pi.qc.v90.api.IAttachmentFactory;
@@ -431,6 +433,34 @@ public class Requirement extends ActiveXComponent implements
 			Dispatch dispatch = result.getDispatch();
 			return new VersionControl(dispatch);
 		}
+	}
+
+	@Override
+	public void clearListValuedField(String fieldName) {
+		setField(fieldName, null);
+		/*
+		Variant field = Dispatch.call(this, "Field", fieldName);
+		if(!field.isNull() && field.getvt() == Variant.VariantDispatch) {
+    		Dispatch list = field.getDispatch();
+    		Dispatch.call(list, "Clear");
+		}
+		*/
+	}
+
+	@Override
+	public void setListValuedField(String fieldName, String fieldValue) {
+		ActiveXComponent list = createList();
+		for (String val : QCRequirement.getFieldValues(fieldValue)) {
+			Dispatch.call(list, "Add", val);
+			//Dispatch.put(list, "Add", new Integer(1));
+		}
+		Dispatch.invoke(this, "Field", Dispatch.Put, new Object[] { fieldName, list },
+				new int[2]);
+	}
+	
+	public ActiveXComponent createList() {
+		ActiveXComponent c = new ActiveXComponent("TDApiOle80.List");
+		return c;
 	}
 
 }

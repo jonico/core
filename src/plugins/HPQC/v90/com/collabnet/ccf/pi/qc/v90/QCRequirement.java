@@ -326,7 +326,7 @@ public class QCRequirement extends Requirement implements IQCRequirement {
 	}
 
 
-	public List<String> getFieldValues(String fieldValue) {
+	public static List<String> getFieldValues(String fieldValue) {
 
 		List<String> fieldValues = new ArrayList<String>();
 		StringTokenizer st = new StringTokenizer(fieldValue, ";");
