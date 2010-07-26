@@ -13,6 +13,9 @@ public class JerichoUtils implements FormatterProxy {
 	 * @return formatted plain text
 	 */
 	public static String htmlToText(String html) {
+		if (html == null) {
+			return "";
+		}
 		Source source=new Source(html);
 		return source.getRenderer().toString();
 	}
