@@ -104,7 +104,7 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 	 * conversion to plain text. If so, the field will not be updated in order to
 	 * preserve the existing formatting.
 	 * 
-	 * False by default to maintain backwards compatibility.
+	 * True by default. This can be set to false for backwards compatible behavior.
 	 */
 	private boolean preserveSemanticallyUnchangedHTMLFieldValues = true;
 
