@@ -1314,7 +1314,6 @@ public class ProjectTrackerReader extends
 						if (historyActivities != null) {
 							for (HistoryActivity historyActivity : historyActivities) {
 								if (historyActivity != null) {
-									String activityArtifactId = historyActivity.getArtifactId();
 									String activityType = historyActivity.getType();
 									if ("DependencyAdded".equals(activityType) ||
 										"DependencyDeleted".equals(activityType)) {
@@ -1331,15 +1330,13 @@ public class ProjectTrackerReader extends
 
 									Date modifiedOnDate = new Date(modifiedOn);
 									if (lastModifiedDate.after(modifiedOnDate)) {
-										log.info("lastModified from DB is after artifact last modified date.");
-									} else {
-										log.info("lastModified from DB is before artifact modifiedOn date.");
+										log.warn("lastModified from synchronization status table ("+lastModifiedDate+") is after last modified date of artifact "+historyArtifactId+" ("+modifiedOnDate+").");
 									}
 
 									ArtifactState state = null;
 									if (artifactIdStateMap.containsKey(historyArtifactId)) {
 										state = artifactIdStateMap.get(historyArtifactId);
-										state.setArtifactLastModifiedDate(new Date(modifiedOn));
+										state.setArtifactLastModifiedDate(modifiedOnDate);
 										state.setArtifactVersion(modifiedOn);
 										if (!duplicateDetected) {
 											artifactStatesDuplicate.remove(state);
