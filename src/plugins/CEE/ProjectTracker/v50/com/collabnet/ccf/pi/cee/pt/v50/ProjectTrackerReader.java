@@ -1300,6 +1300,8 @@ public class ProjectTrackerReader extends
 						.getHistoryTransaction();
 				if (transactions != null) {
 					for (HistoryTransaction transaction : transactions) {
+						if (transaction == null)
+							continue;
 						long modifiedOn = transaction.getModifiedOn();
 						if (modifiedOn == 32503622400000L) {
 							// fix if modified date is not set correctly
@@ -1307,74 +1309,65 @@ public class ProjectTrackerReader extends
 							continue;
 						}
 						String modifiedBy = transaction.getModifiedBy();
-						if (transaction != null) {
-							HistoryActivity[] historyActivities = transaction
-									.getHistoryActivity();
-							if (historyActivities != null) {
-								for (HistoryActivity historyActivity : historyActivities) {
-									if (historyActivity != null) {
-										String historyArtifactId = artifactTypeFullyQualifiedName
-												+ ":"
-												+ historyActivity
-														.getArtifactId();
-										if (historyArtifactId
-												.equals(lastShippedArtifactId)
-												&& fromTimeLong == modifiedOn) {
-											duplicateDetected = true;
-											continue;
-										}
+						HistoryActivity[] historyActivities = transaction
+								.getHistoryActivity();
+						if (historyActivities != null) {
+							for (HistoryActivity historyActivity : historyActivities) {
+								if (historyActivity != null) {
+									String activityArtifactId = historyActivity.getArtifactId();
+									String activityType = historyActivity.getType();
+									if ("DependencyAdded".equals(activityType) ||
+										"DependencyDeleted".equals(activityType)) {
+										continue;
+									}
+									String historyArtifactId = artifactTypeFullyQualifiedName
+											+ ":"
+											+ historyActivity.getArtifactId();
+									if (historyArtifactId.equals(lastShippedArtifactId)
+											&& fromTimeLong == modifiedOn) {
+										duplicateDetected = true;
+										continue;
+									}
 
-										ArtifactState state = null;
-										if (artifactIdStateMap
-												.containsKey(historyArtifactId)) {
-											state = artifactIdStateMap
-													.get(historyArtifactId);
-											state
-													.setArtifactLastModifiedDate(new Date(
-															modifiedOn));
-											state
-													.setArtifactVersion(modifiedOn);
+									Date modifiedOnDate = new Date(modifiedOn);
+									if (lastModifiedDate.after(modifiedOnDate)) {
+										log.info("lastModified from DB is after artifact last modified date.");
+									} else {
+										log.info("lastModified from DB is before artifact modifiedOn date.");
+									}
+
+									ArtifactState state = null;
+									if (artifactIdStateMap.containsKey(historyArtifactId)) {
+										state = artifactIdStateMap.get(historyArtifactId);
+										state.setArtifactLastModifiedDate(new Date(modifiedOn));
+										state.setArtifactVersion(modifiedOn);
+										if (!duplicateDetected) {
+											artifactStatesDuplicate.remove(state);
+											artifactStatesDuplicate.add(state);
+										} else {
+											artifactStatesNew.remove(state);
+											artifactStatesNew.add(state);
+										}
+									} else {
+										state = new ArtifactState();
+										state.setArtifactId(historyArtifactId);
+										state.setArtifactLastModifiedDate(new Date(modifiedOn));
+										state.setArtifactVersion(modifiedOn);
+										artifactIdStateMap.put(historyArtifactId, state);
+										if (!duplicateDetected) {
+											artifactStatesDuplicate.add(state);
+										} else {
+											artifactStatesNew.add(state);
+										}
+									}
+									if (this.isIgnoreConnectorUserUpdates()) {
+										if (modifiedBy.equalsIgnoreCase(this.getUsername())) {
+											state = artifactIdStateMap.get(historyArtifactId);
+											artifactIdStateMap.remove(historyArtifactId);
 											if (!duplicateDetected) {
-												artifactStatesDuplicate
-														.remove(state);
-												artifactStatesDuplicate
-														.add(state);
+												artifactStatesDuplicate.remove(state);
 											} else {
 												artifactStatesNew.remove(state);
-												artifactStatesNew.add(state);
-											}
-										} else {
-											state = new ArtifactState();
-											state
-													.setArtifactId(historyArtifactId);
-											state
-													.setArtifactLastModifiedDate(new Date(
-															modifiedOn));
-											state
-													.setArtifactVersion(modifiedOn);
-											artifactIdStateMap.put(
-													historyArtifactId, state);
-											if (!duplicateDetected) {
-												artifactStatesDuplicate
-														.add(state);
-											} else {
-												artifactStatesNew.add(state);
-											}
-										}
-										if (this.isIgnoreConnectorUserUpdates()) {
-											if (modifiedBy.equalsIgnoreCase(this
-													.getUsername())) {
-												state = artifactIdStateMap
-														.get(historyArtifactId);
-												artifactIdStateMap
-														.remove(historyArtifactId);
-												if (!duplicateDetected) {
-													artifactStatesDuplicate
-															.remove(state);
-												} else {
-													artifactStatesNew
-															.remove(state);
-												}
 											}
 										}
 									}
