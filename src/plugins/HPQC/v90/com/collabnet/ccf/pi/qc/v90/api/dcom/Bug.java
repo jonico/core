@@ -26,6 +26,7 @@ import org.apache.log4j.Logger;
 
 import com.collabnet.ccf.core.CCFRuntimeException;
 import com.collabnet.ccf.core.utils.DateUtil;
+import com.collabnet.ccf.pi.qc.v90.api.AttachmentUploadStillInProgressException;
 import com.collabnet.ccf.pi.qc.v90.api.DefectAlreadyLockedException;
 import com.collabnet.ccf.pi.qc.v90.api.IAttachment;
 import com.collabnet.ccf.pi.qc.v90.api.IAttachmentFactory;
@@ -245,10 +246,17 @@ public class Bug extends ActiveXComponent implements IBugActions {
 			logger.debug("Attachment " + attachmentName + " has been read.");
 			File attachmentFile = new File(fileName);
 			if (!attachmentFile.exists()) {
+				/*
+				 * If an attachment is still being uploaded when CCF tries to retrieve it,
+				 * the QC 9.2 COM-API seems to succeed, but the file doesn't exist after the
+				 * Load call.
+				 * 
+				 * QCReader.handleException() unwraps the AttachmentUploadStillInProgressException and
+				 * causes the artifact to be retried.
+				 */
 				String message = "The attachment File " + fileName
-						+ " does not exist";
-				logger.error(message);
-				throw new CCFRuntimeException(message);
+						+ " does not exist yet, retrying.";
+				throw new AttachmentUploadStillInProgressException(message);
 			}
 
 			int size = Dispatch.get(item, "FileSize").getInt();

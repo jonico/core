@@ -40,6 +40,7 @@ import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactField.FieldActionValue;
 import com.collabnet.ccf.core.utils.DateUtil;
+import com.collabnet.ccf.pi.qc.v90.api.AttachmentUploadStillInProgressException;
 import com.collabnet.ccf.pi.qc.v90.api.IAttachmentFactory;
 import com.collabnet.ccf.pi.qc.v90.api.IBug;
 import com.collabnet.ccf.pi.qc.v90.api.IConnection;
@@ -511,6 +512,8 @@ public class QCAttachmentHandler {
 									bugFactory = qcc.getBugFactory();
 									bug = bugFactory.getItem(entityId);
 									qcAttachmentFile = bug.retrieveAttachmentData(attachmentName);
+								} catch (AttachmentUploadStillInProgressException e) {
+									throw e;
 								} catch (Exception e) {
 									String message = "An Exception occured in QCAttachmentHandler.getGenericArtifactObjectOfAttachment"
 										+ " while trying to do retrieveAttachmentData on Filename "+attachmentName;
@@ -531,6 +534,8 @@ public class QCAttachmentHandler {
 									reqFactory = qcc.getRequirementsFactory();
 									req = reqFactory.getItem(entityId);
 									qcAttachmentFile = req.retrieveAttachmentData(attachmentName);
+								} catch (AttachmentUploadStillInProgressException e) {
+									throw e;
 								} catch (Exception e) {
 									String message = "An Exception occured in QCAttachmentHandler.getGenericArtifactObjectOfAttachment"
 										+ " while trying to do retrieveAttachmentData on Filename "+attachmentName;

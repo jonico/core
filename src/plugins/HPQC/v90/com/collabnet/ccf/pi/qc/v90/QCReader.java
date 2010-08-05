@@ -35,6 +35,7 @@ import com.collabnet.ccf.core.eis.connection.ConnectionException;
 import com.collabnet.ccf.core.eis.connection.ConnectionManager;
 import com.collabnet.ccf.core.eis.connection.MaxConnectionsReachedException;
 import com.collabnet.ccf.core.ga.GenericArtifact;
+import com.collabnet.ccf.pi.qc.v90.api.AttachmentUploadStillInProgressException;
 import com.collabnet.ccf.pi.qc.v90.api.DefectAlreadyLockedException;
 import com.collabnet.ccf.pi.qc.v90.api.IConnection;
 
@@ -220,6 +221,8 @@ public class QCReader extends AbstractReader<IConnection> {
 			}
 		} else if (rootCause instanceof DefectAlreadyLockedException) {
 			return true;
+		} else if (rootCause instanceof AttachmentUploadStillInProgressException) {
+			return true;
 		} else if (rootCause instanceof CCFRuntimeException) {
 			Throwable cause = rootCause.getCause();
 			return handleException(cause, connectionManager);
@@ -298,7 +301,9 @@ public class QCReader extends AbstractReader<IConnection> {
 					ga.setSourceArtifactVersion(ga.getSourceArtifactVersion());
 				}
 			}
-		} catch (Exception e1) {
+		} catch (AttachmentUploadStillInProgressException e) {
+			throw e;
+		}catch (Exception e1) {
 			String cause = "Error in fetching the attachments from QC";
 			log.error(cause, e1);
 			throw new CCFRuntimeException(cause, e1);
