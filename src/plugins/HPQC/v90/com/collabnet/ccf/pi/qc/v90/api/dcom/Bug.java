@@ -22,6 +22,10 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
+import org.apache.commons.vfs.FileObject;
+import org.apache.commons.vfs.FileSystemException;
+import org.apache.commons.vfs.VFS;
+import org.apache.commons.vfs.provider.local.LocalFile;
 import org.apache.log4j.Logger;
 
 import com.collabnet.ccf.core.CCFRuntimeException;
@@ -240,11 +244,31 @@ public class Bug extends ActiveXComponent implements IBugActions {
 			if (!fileName.endsWith(attachmentName))
 				continue;
 			// Dispatch.get(item, "Data");
-			logger.debug("Going to load attachment " + attachmentName + " ...");
-			Dispatch.call(item, "Load", true, "");
+			logger.info("Going to load attachment " + attachmentName + " ...");
+			Variant callResult = Dispatch.call(item, "Load", true, "");
+			if (callResult != null) {
+				logger.info("result of Load call has type: " + callResult.getvt());
+			} else {
+				logger.info("result of Load call was null.");
+			}
+			logger.info("Attachment " + attachmentName + " has been read.");
 
-			logger.debug("Attachment " + attachmentName + " has been read.");
+			logger.info("accessing file via commons-vfs");
+			try {
+				FileObject fo = VFS.getManager().resolveFile(fileName);
+				if (!fo.exists()) {
+					logger.info("commons-vfs says '"+fileName+"' doesn't exist.");
+				}
+			} catch (FileSystemException e) {
+				logger.error("commons-vfs error: " + e.getMessage());
+			}
+			
+
+			logger.info("accessing attachment via JRE file API");
 			File attachmentFile = new File(fileName);
+
+			int size = Dispatch.get(item, "FileSize").getInt();
+			logger.info("expected file size: " + size);
 			if (!attachmentFile.exists()) {
 				/*
 				 * If an attachment is still being uploaded when CCF tries to retrieve it,
@@ -254,12 +278,10 @@ public class Bug extends ActiveXComponent implements IBugActions {
 				 * QCReader.handleException() unwraps the AttachmentUploadStillInProgressException and
 				 * causes the artifact to be retried.
 				 */
-				String message = "The attachment File " + fileName
-						+ " does not exist yet, retrying.";
+				String message = String.format("The attachment File %s does not exist yet, retrying.",
+						fileName);
 				throw new AttachmentUploadStillInProgressException(message);
 			}
-
-			int size = Dispatch.get(item, "FileSize").getInt();
 			if (size != attachmentFile.length()) {
 				logger.warn("Downloaded file size (" + attachmentFile.length()
 						+ ") and expected file size (" + size
