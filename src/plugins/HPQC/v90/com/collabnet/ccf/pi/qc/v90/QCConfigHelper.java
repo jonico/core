@@ -96,27 +96,25 @@ public class QCConfigHelper {
 
 		JoinedField(String parentTable, String parentCol, String childTable,
 				String childIdCol, String childDisplayCol) {
+			//Log log = LogFactory.getLog(JoinedField.class);
 			m_parentTable = parentTable;
 			m_parentCol = parentCol;
 			m_childTable = childTable;
 			m_childIdCol = childIdCol;
 			m_childDisplayCol = childDisplayCol;
 
+			// only log an error here, so we don't stop CCF from working when
+			// customers don't use joined fields at all.
 			if (m_parentTable == null)
-				throw new IllegalArgumentException(
-						"Parent table name for joined field can't be null");
+				log.error("Parent table name for joined field can't be null");
 			if (m_parentCol == null)
-				throw new IllegalArgumentException(
-						"Parent column name for joined field can't be null");
+				log.error("Parent column name for joined field can't be null");
 			if (m_childTable == null)
-				throw new IllegalArgumentException(
-						"Child table name of joined field can't be null");
+				log.error("Child table name of joined field can't be null");
 			if (m_childIdCol == null)
-				throw new IllegalArgumentException(
-						"ID column of joined field can't be null");
+				log.error("ID column of joined field can't be null");
 			if (m_childDisplayCol == null)
-				throw new IllegalArgumentException(
-						"Display column of joined field can't be null");
+				log.error("Display column of joined field can't be null");
 		}
 
 		String parentTable() {
@@ -151,46 +149,51 @@ public class QCConfigHelper {
 	 * is running; cache the result so we don't have to repeatedly to SQL
 	 * queries
 	 */
-	private static ArrayList<JoinedField> queryAllJoinedFields(IConnection qcc) {
-		final String sql = "SELECT * FROM SYSTEM_FIELD WHERE SF_REFERENCE_TABLE IS NOT NULL";
+	private static synchronized ArrayList<JoinedField> queryAllJoinedFields(
+			IConnection qcc) {
+		final String sql = "SELECT "
+			+ sfColumnName + ", "
+			+ sfJoinParentTable + ", "
+			+ sfJoinTable + ", "
+			+ sfJoinRowKey + ", "
+			+ sfJoinRowDisplayName
+			+" FROM SYSTEM_FIELD WHERE (SF_TABLE_NAME='BUG' OR SF_TABLE_NAME='REQ') AND SF_REFERENCE_TABLE IS NOT NULL";
 
+		ArrayList<JoinedField> joinedFields = s_JoinedFields;
 		if (s_JoinedFields == null) {
-			// we're changing a static member: make sure only 1 thread at a time
-			synchronized (QCConfigHelper.class) {
-				s_JoinedFields = new ArrayList<JoinedField>();
-				IRecordSet rs = null;
-				try {
-					rs = QCHandler.executeSQL(qcc, sql);
-					int rc = rs.getRecordCount();
-					for (int cnt = 0; cnt < rc; cnt++, rs.next()) {
-						String colName   = rs.getFieldValueAsString(sfColumnName);
-						String tableName = rs.getFieldValueAsString(sfJoinParentTable);
-						s_JoinedFields.add(new JoinedField(
-								tableName,
-								colName, 
-								rs.getFieldValueAsString(sfJoinTable),
-								rs.getFieldValueAsString(sfJoinRowKey),
-								rs.getFieldValueAsString(sfJoinRowDisplayName)));
-						if ("BG_TARGET_REL".equals(colName) || "BG_TARGET_RCYC".equals(colName)) {
-							// special case: add corresponding RQ joined fields, because QC doesn't populate
-							// the columns for RQ_TARGET_*.
-							colName = colName.replaceFirst("BG", "RQ");
-							s_JoinedFields.add(new JoinedField(
-									"REQ", 
-									colName, 
-									rs.getFieldValueAsString(sfJoinTable), 
-									rs.getFieldValueAsString(sfJoinRowKey), 
-									rs.getFieldValueAsString(sfJoinRowDisplayName)));
-						}
-
+			// we're changing a static member: make sure only 1 thread at a
+			// time
+			joinedFields = new ArrayList<JoinedField>();
+			IRecordSet rs = null;
+			try {
+				rs = QCHandler.executeSQL(qcc, sql);
+				int rc = rs.getRecordCount();
+				for (int cnt = 0; cnt < rc; cnt++, rs.next()) {
+					String colName = rs.getFieldValueAsString(sfColumnName);
+					String tableName = rs.getFieldValueAsString(sfJoinParentTable);
+					String joinTableName = rs.getFieldValueAsString(sfJoinTable);
+					String joinRowKey = rs.getFieldValueAsString(sfJoinRowKey);
+					String joinRowDisplayName = rs.getFieldValueAsString(sfJoinRowDisplayName);
+					joinedFields.add(new JoinedField(tableName, colName,
+							joinTableName, joinRowKey, joinRowDisplayName));
+					if ("BG_TARGET_REL".equals(colName)
+							|| "BG_TARGET_RCYC".equals(colName)) {
+						// special case: add corresponding RQ joined fields,
+						// because QC doesn't populate
+						// the columns for RQ_TARGET_*.
+						colName = colName.replaceFirst("BG", "RQ");
+						joinedFields.add(new JoinedField("REQ", colName,
+								joinTableName, joinRowKey, joinRowDisplayName));
 					}
-				} finally {
-					if (rs != null)
-						rs.safeRelease();
+				}
+				s_JoinedFields = joinedFields;
+			} finally {
+				if (rs != null) {
+					rs.safeRelease();
 				}
 			}
 		}
-		return s_JoinedFields;
+		return joinedFields;
 	}
 
 	static List<String> getJoinedFieldDisplayNames(IConnection qcc,boolean isDefect, String fieldName) {
