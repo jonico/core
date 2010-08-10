@@ -17,21 +17,23 @@
 
 package com.collabnet.ccf.pi.qc.v90.api.dcom;
 
-import java.awt.Component;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.log4j.Logger;
 
 import com.collabnet.ccf.core.CCFRuntimeException;
 import com.collabnet.ccf.core.utils.DateUtil;
 import com.collabnet.ccf.pi.qc.v90.QCRequirement;
+import com.collabnet.ccf.pi.qc.v90.api.AttachmentUploadStillInProgressException;
 import com.collabnet.ccf.pi.qc.v90.api.DefectAlreadyLockedException;
 import com.collabnet.ccf.pi.qc.v90.api.IAttachment;
 import com.collabnet.ccf.pi.qc.v90.api.IAttachmentFactory;
 import com.collabnet.ccf.pi.qc.v90.api.IFactoryList;
+import com.collabnet.ccf.pi.qc.v90.api.IFilter;
 import com.collabnet.ccf.pi.qc.v90.api.IRequirementsActions;
 import com.collabnet.ccf.pi.qc.v90.api.IVersionControl;
 import com.jacob.activeX.ActiveXComponent;
@@ -46,6 +48,8 @@ public class Requirement extends ActiveXComponent implements
 	 */
 	private static final long serialVersionUID = 1L;
 	public static Logger logger = Logger.getLogger(Requirement.class);
+	public static ConcurrentHashMap<String, Integer> attachmentRetryCount = new ConcurrentHashMap<String, Integer>();
+
 
 	public Requirement(Dispatch arg0) {
 		super(arg0);
@@ -241,38 +245,82 @@ public class Requirement extends ActiveXComponent implements
 	public File retrieveAttachmentData(String attachmentName) {
 		//int maxAttachmentUploadWaitCount = 10;
 		//int waitCount = 0;
-		IFactoryList attachments = new AttachmentFactory(
-				getPropertyAsComponent("Attachments")).getFilter().getNewList();
+		IFilter filter = new AttachmentFactory(getPropertyAsComponent("Attachments")).getFilter();
+		IFactoryList attachments = filter.getNewList();
 		for (int n = 1; n <= attachments.getCount(); ++n) {
 			Dispatch item = attachments.getItem(n);
 			String fileName = Dispatch.get(item, "FileName").toString();
 			if (!fileName.endsWith(attachmentName))
 				continue;
-			logger.debug("Going to load attachment " + attachmentName + " ...");
+			
+			String attachmentKey = attachmentName + getId();
+			Integer retryCount = attachmentRetryCount.get(attachmentKey);
+			retryCount = retryCount == null ? 1 : retryCount + 1;
+			attachmentRetryCount.put(attachmentKey, retryCount);
+			boolean maxRetryCountReached = retryCount >= 10;
+
+			logger.info("Going to load attachment " + attachmentName + " ...");
 			Dispatch.call(item, "Load", true, "");
 			// Dispatch.get(item, "Data");
-			logger.debug("Attachment " + attachmentName + " has been read.");
+			logger.info("Attachment " + attachmentName + " has been read.");
 			File attachmentFile = new File(fileName);
 			
 			if (!attachmentFile.exists()) {
-				String message = "The attachment File " + fileName
-						+ " does not exist";
-				logger.error(message);
-				throw new CCFRuntimeException(message);
+				/*
+				 * If an attachment is still being uploaded when CCF tries to retrieve it,
+				 * the QC 9.2 COM-API seems to succeed, but the file doesn't exist after the
+				 * Load call.
+				 * 
+				 * QCReader.handleException() unwraps the AttachmentUploadStillInProgressException and
+				 * causes the artifact to be retried.
+				 */
+				String message = String.format("The attachment file %s does not exist yet, ",
+						fileName);
+				if (!maxRetryCountReached) {
+					throw new AttachmentUploadStillInProgressException(message + "retrying.");
+				} else {
+					// give up on this attachment but don't stop other attachments
+					// from being added with the same name later.
+					attachmentRetryCount.remove(attachmentKey);
+					throw new CCFRuntimeException(message + "giving up.");
+				}
 			}
 			
 			int size = Dispatch.get(item, "FileSize").getInt();
-			if (size != attachmentFile.length()) {
-				logger.warn("Downloaded file size (" + attachmentFile.length()
+			if (size != attachmentFile.length() &&
+				// retry, because QC10 may report an incorrect size but still loads correctly.
+				attachmentFile.length() != reloadAttachmentSize(filter.getNewList(), attachmentName)) {
+				String message = "Downloaded file size ("
+						+ attachmentFile.length()
 						+ ") and expected file size (" + size
 						+ ") do not match for attachment "
-						+ attachmentFile.getAbsolutePath());
+						+ attachmentFile.getAbsolutePath();
+				if (!maxRetryCountReached) {
+					throw new AttachmentUploadStillInProgressException(message);
+				} else {
+					logger.warn(message + ". Shipping what we've got so far.");
+				}
 			}
-			
+			attachmentRetryCount.remove(attachmentKey);
 			return attachmentFile;
 		}
 
 		throw new IllegalArgumentException("No attachment with matching file name found: "+attachmentName);
+	}
+
+	private long reloadAttachmentSize(IFactoryList attachments, String attachmentName) {
+		String fileName = null;
+		for (int n = 1; n <= attachments.getCount(); ++n) {
+			Dispatch item = attachments.getItem(n);
+			fileName = Dispatch.get(item, "FileName").toString();
+			if (!fileName.endsWith(attachmentName))
+				continue;
+		}
+		if (fileName != null) {
+			return new File(fileName).length();
+		} else {
+			return -1L;
+		}
 	}
 
 	public void createNewAttachment(String fileName, String description,

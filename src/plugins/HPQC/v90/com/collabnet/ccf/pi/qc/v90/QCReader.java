@@ -27,7 +27,6 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dom4j.Document;
 import org.openadaptor.core.exception.ValidationException;
-import org.springframework.transaction.config.TxNamespaceHandler;
 
 import com.collabnet.ccf.core.AbstractReader;
 import com.collabnet.ccf.core.ArtifactState;
