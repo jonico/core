@@ -392,10 +392,9 @@ public class ProjectTrackerReader extends
 																	.addNewField(
 																			AttachmentMetaData.ATTACHMENT_DATA_FILE,
 																			GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
-															attachmentDataFileField
-																	.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
-															attachmentDataFileField
-																	.setFieldValue(attachmentDataFile);
+															attachmentDataFileField.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
+															attachmentDataFileField.setFieldValue(attachmentDataFile);
+															attachmentDataFileField.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
 															bytes = null;
 														}
 													} catch (IOException e) {

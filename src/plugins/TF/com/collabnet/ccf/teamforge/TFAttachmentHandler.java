@@ -237,6 +237,7 @@ public class TFAttachmentHandler {
 					attachmentDataFileField
 							.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
 					attachmentDataFileField.setFieldValue(attachmentDataFile);
+					attachmentDataFileField.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
 					data = null;
 				}
 			} catch (IOException e) {
