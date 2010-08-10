@@ -850,15 +850,12 @@ public class QCHandler {
 	 * 
 	 */
 	public List<ArtifactState> getLatestChangedDefects(IConnection qcc,
-			String connectorUser, String transactionId) {
+			String transactionId) {
 
 		int rc = 0;
 		String sql = "SELECT AU_ENTITY_ID, AU_ACTION_ID, AU_TIME FROM AUDIT_LOG WHERE AU_ENTITY_TYPE = 'BUG' AND AU_ACTION_ID > '"
 				+ transactionId
-				+ "' AND AU_ACTION!='DELETE' AND AU_USER != '"
-				+ connectorUser
-				+ "' AND AU_FATHER_ID = '-1' ORDER BY AU_ACTION_ID";
-
+				+ "' AND AU_ACTION!='DELETE' AND AU_FATHER_ID = '-1' ORDER BY AU_ACTION_ID";
 		log.debug(sql);
 		ArrayList<ArtifactState> changedDefects = new ArrayList<ArtifactState>();
 		HashMap<String, ArtifactState> artifactIdStateMap = new HashMap<String, ArtifactState>();
@@ -1051,7 +1048,6 @@ public class QCHandler {
 
 	/**
 	 * Assigns values of the incoming parameters to the incoming genericArtifact
-	 * and returns the updated one.
 	 * 
 	 * @param latestDefectArtifact
 	 *            The GenericArtifact to which the following values need to be
@@ -1066,14 +1062,14 @@ public class QCHandler {
 	 * @param targetSystemId
 	 * @param targetSystemKind
 	 * @param thisTransactionId
-	 * @return Assigned GenericArtifact
 	 */
-	public GenericArtifact assignValues(GenericArtifact latestDefectArtifact,
+	public void assignValues(GenericArtifact latestDefectArtifact,
 			String sourceArtifactId, String sourceRepositoryId,
 			String sourceRepositoryKind, String sourceSystemId,
 			String sourceSystemKind, String targetRepositoryId,
 			String targetRepositoryKind, String targetSystemId,
-			String targetSystemKind, String thisTransactionId, String sourceSystemTimezone, String targetSystemTimezone) {
+			String targetSystemKind, String thisTransactionId, 
+			String sourceSystemTimezone, String targetSystemTimezone) {
 
 		latestDefectArtifact.setSourceArtifactId(sourceArtifactId);
 		latestDefectArtifact.setSourceRepositoryId(sourceRepositoryId);
@@ -1088,8 +1084,6 @@ public class QCHandler {
 		latestDefectArtifact.setTargetSystemKind(targetSystemKind);
 		latestDefectArtifact.setSourceArtifactVersion(thisTransactionId);
 		latestDefectArtifact.setTargetSystemTimezone(targetSystemTimezone);
-
-		return latestDefectArtifact;
 	}
 
 	/**
@@ -1111,6 +1105,7 @@ public class QCHandler {
 	 *            defect created date and find out the artifactAction.
 	 * @return GenericArtifact Updated artifact
 	 */
+	/*
 	public GenericArtifact getArtifactActionForDefects(
 			GenericArtifact latestDefectArtifact, IConnection qcc,
 			String syncInfoTransactionId, String actionId, int entityId,
@@ -1126,50 +1121,33 @@ public class QCHandler {
 			Date newBgVts = DateUtil.parseQCDate(bgVts);
 			genArtifactFields.get(0).setFieldValue(newBgVts);
 			String lastModifiedDate = DateUtil.format(newBgVts);
-			latestDefectArtifact
-					.setSourceArtifactLastModifiedDate(lastModifiedDate);
+			latestDefectArtifact.setSourceArtifactLastModifiedDate(lastModifiedDate);
 		}
 		return latestDefectArtifact;
 	}
-
-	/**
-	 * Obtains the artifactAction based on the date at which that requirement
-	 * was created and the lastReadTime synchronization parameter.
-	 * 
-	 * @param entityId
-	 *            The requirement Id for which the search has to be made in QC
-	 * @param actionId
-	 *            The transactionId at which it needs to be determined if the
-	 *            defect is a create or update.
-	 * @param qcc
-	 *            The Connection object
-	 * @param latestDefectArtifact
-	 *            The GenericArtifact into which the artifactAction is populated
-	 *            after it is determined.
-	 * @param lastReadTime
-	 *            This is synchronization parameter used to compare with the
-	 *            defect created date and find out the artifactAction.
-	 * @return GenericArtifact Updated artifact
 	 */
-	public GenericArtifact getArtifactActionForRequirements(
-			GenericArtifact latestDefectArtifact, IConnection qcc,
-			String syncInfoTransactionId, String actionId, int entityId,
-			String lastReadTime) {
-
-		List<GenericArtifactField> genArtifactFields = latestDefectArtifact
-				.getAllGenericArtifactFieldsWithSameFieldName("RQ_VTS");
-		// Date lastReadDate = DateUtil.parse(lastReadTime);
-		// Date createdOn = qcGAHelper.getDefectCreatedDate(qcc, entityId);
+	
+	
+	/**
+	 * updates the artifact's last modification date to the one passed into the method.
+	 * 
+	 * This is necessary, because the modification date may have changed between when
+	 * the last transaction to be processed was determined and the point in time when
+	 * the artifact is processed.
+	 * 
+	 * @param artifact the artifact to adjust.
+	 * @param lastModifiedDate the date to set for the artifact.
+	 */
+	public void adjustLastModificationDate(
+			GenericArtifact artifact, Date lastModifiedDate, boolean isDefect) {
+		String fieldName = isDefect ? "BG_VTS" : "RQ_VTS";
+		List<GenericArtifactField> genArtifactFields = artifact
+				.getAllGenericArtifactFieldsWithSameFieldName(fieldName);
 		if (genArtifactFields != null && genArtifactFields.get(0) != null) {
-			String rqVts = qcGAHelper.findVtsFromQC(qcc, Integer
-					.parseInt(actionId), entityId);
-			Date newRqVts = DateUtil.parseQCDate(rqVts);
-			genArtifactFields.get(0).setFieldValue(newRqVts);
-			String lastModifiedDate = DateUtil.format(newRqVts);
-			latestDefectArtifact
-					.setSourceArtifactLastModifiedDate(lastModifiedDate);
+			genArtifactFields.get(0).setFieldValue(lastModifiedDate);
 		}
-		return latestDefectArtifact;
+		String lastModifiedDateStr = DateUtil.format(lastModifiedDate);
+		artifact.setSourceArtifactLastModifiedDate(lastModifiedDateStr);
 	}
 
 	public List<String> getTransactionIdsInRangeForDefects(IConnection qcc,
@@ -1402,7 +1380,7 @@ public class QCHandler {
 	 * @param fieldName
 	 * @return
 	 */
-	public String getIntegerValueFromGenericArtifactInDefectHandler(
+	public String getIntegerValueFromGenericArtifactAsString(
 			GenericArtifact individualGenericArtifact, String fieldName) {
 
 		Integer intFieldValue = (Integer) individualGenericArtifact
@@ -1467,15 +1445,14 @@ public class QCHandler {
 		return qcDefectArray;
 	}
 
-	public List<ArtifactState> getLatestChangedRequirements(IConnection qcc,
-			String connectorUser, String transactionId,
+	public List<ArtifactState> getLatestChangedRequirements(
+			IConnection qcc,
+			String transactionId,
 			String technicalRequirementsId) {
 		int rc = 0;
 		String sql = "SELECT AL.AU_ENTITY_ID AS AU_ENTITY_ID, AL.AU_ACTION_ID AS AU_ACTION_ID, AL.AU_TIME AS AU_TIME FROM AUDIT_LOG AL, REQ WHERE AL.AU_ENTITY_TYPE = 'REQ' AND AU_ACTION_ID > '"
 				+ transactionId
-				+ "' AND AL.AU_ACTION!='DELETE' AND AL.AU_USER != '"
-				+ connectorUser
-				+ "' AND AL.AU_FATHER_ID = '-1'"
+				+ "' AND AL.AU_ACTION!='DELETE' AND AL.AU_FATHER_ID = '-1'"
 				+ " AND REQ.RQ_TYPE_ID = '"
 				+ technicalRequirementsId
 				+ "'"

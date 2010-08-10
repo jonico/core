@@ -108,11 +108,8 @@ public class QCRequirement extends Requirement implements IQCRequirement {
 			String syncInfoTransactionId, String connectorUser,
 			QCHandler defectHandler, String sourceSystemTimezone,
 			boolean isResync, String technicalRequirementsTypeID, String lastModifiedBy) {
+		// FIXME: remove need for isResync
 		genericArtifact = QCConfigHelper.getSchemaFieldsForRequirement(qcc, technicalRequirementsTypeID, isResync);
-		List<String> txnIds = defectHandler.getTransactionIdsInRangeForRequirements(qcc,
-				Integer.parseInt(entityId), Integer
-						.parseInt(syncInfoTransactionId), Integer
-						.parseInt(actionId), connectorUser);
 
 		List<GenericArtifactField> allFields = genericArtifact
 				.getAllGenericArtifactFields();
@@ -256,7 +253,6 @@ public class QCRequirement extends Requirement implements IQCRequirement {
 					if (fieldName.equals("RQ_VTS")) {
 						Date dateFieldValue = getFieldAsDate(fieldName);
 						thisField.setFieldValue(dateFieldValue);
-						// thisField.setFieldValue(DateUtil.formatQCDate(dateFieldValue));
 						thisField
 								.setFieldValueType(GenericArtifactField.FieldValueTypeValue.DATETIME);
 					} else {
@@ -272,6 +268,13 @@ public class QCRequirement extends Requirement implements IQCRequirement {
 			IRecordSet auditPropertiesRS = null;
 			String deltaComment = null;
 			try {
+				List<String> txnIds = defectHandler.getTransactionIdsInRangeForRequirements(
+					qcc,
+					Integer.parseInt(entityId), 
+					Integer.parseInt(syncInfoTransactionId),
+					Integer.parseInt(actionId),
+					connectorUser);
+
 				auditPropertiesRS = defectHandler.getAuditPropertiesRecordSet(
 						qcc, txnIds);
 				deltaComment = defectHandler

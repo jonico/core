@@ -24,4 +24,7 @@ public interface IRecordSet extends ILifeCycle {
     public String getColNameAsString(int index);
     public String getColName(int index);
     public void next();
+    public void first();
+    public void last();
+    public int getCacheSize();
 }

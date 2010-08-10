@@ -113,10 +113,6 @@ public class QCDefect extends Bug implements IQCDefect {
 			QCHandler defectHandler, String sourceSystemTimezone,
 			boolean isResync, String lastModifiedBy) {
 		genericArtifact = QCConfigHelper.getSchemaFieldsForDefect(qcc, isResync);
-		List<String> txnIds = defectHandler.getTransactionIdsInRangeForDefects(qcc,
-				Integer.parseInt(entityId), Integer
-						.parseInt(syncInfoTransactionId), Integer
-						.parseInt(actionId), connectorUser);
 
 		List<GenericArtifactField> allFields = genericArtifact
 				.getAllGenericArtifactFields();
@@ -260,6 +256,11 @@ public class QCDefect extends Bug implements IQCDefect {
 			IRecordSet auditPropertiesRS = null;
 			String deltaComment = null;
 			try {
+				List<String> txnIds = defectHandler.getTransactionIdsInRangeForDefects(qcc,
+					Integer.parseInt(entityId), Integer
+					.parseInt(syncInfoTransactionId), Integer
+					.parseInt(actionId), connectorUser);
+
 				auditPropertiesRS = defectHandler.getAuditPropertiesRecordSet(
 						qcc, txnIds);
 				deltaComment = defectHandler

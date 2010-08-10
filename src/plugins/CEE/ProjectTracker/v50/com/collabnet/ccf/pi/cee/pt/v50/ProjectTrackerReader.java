@@ -781,12 +781,7 @@ public class ProjectTrackerReader extends
 			lastModifiedBy = artifact.getAttributeValue(
 					TrackerWebServicesClient.DEFAULT_NAMESPACE,
 					TrackerWebServicesClient.MODIFIED_BY_FIELD_NAME);
-			if (lastModifiedBy.equalsIgnoreCase(getUsername())
-					&& isIgnoreConnectorUserUpdates()) {
-				log
-						.debug("Artifact has been lastly modified by connector user and will not be synchronized");
-				return null;
-			}
+			GenericArtifact ga = new GenericArtifact();
 			// String createdOnTimeMillis = artifact.getAttributeValue(
 			// TrackerWebServicesClient.DEFAULT_NAMESPACE,
 			// CREATED_ON_FIELD);
@@ -795,11 +790,9 @@ public class ProjectTrackerReader extends
 					artifactIdentifier, fromTime, null);
 			ProjectTrackerReader.artifactHistoryList.set(ahlVersion);
 
-			GenericArtifact ga = new GenericArtifact();
 			if (lastModifiedBy.equalsIgnoreCase(this.getResyncUserName())
 					&& isIgnoreConnectorUserUpdates()) {
-				ga
-						.setArtifactAction(GenericArtifact.ArtifactActionValue.RESYNC);
+				ga.setArtifactAction(GenericArtifact.ArtifactActionValue.RESYNC);
 			}
 			ga.setArtifactType(GenericArtifact.ArtifactTypeValue.PLAINARTIFACT);
 			ga.setArtifactMode(GenericArtifact.ArtifactModeValue.COMPLETE);
@@ -1039,8 +1032,27 @@ public class ProjectTrackerReader extends
 						ga.setSourceArtifactVersion(Long
 								.toString(modifiedOnMilliSeconds));
 					} else if (attributeName.equals(CREATED_ON_FIELD_NAME)) {
-						// String createdOnStr = attValue;
-						// long createdOnTime = Long.parseLong(createdOnStr);
+						String createdOnStr = attValue;
+						long createdOnTime = Long.parseLong(createdOnStr);
+						
+						if (lastModifiedBy.equalsIgnoreCase(getUsername())
+								&& isIgnoreConnectorUserUpdates()) {
+							// Artifact has been lastly modified by connector user.
+							if (fromTime <=  createdOnTime) {
+								log.info(String.format(
+										"resync is necessary, despite the artifact %s last being updated by the connector user",
+										artifactId));
+								ga.setArtifactAction(GenericArtifact.ArtifactActionValue.RESYNC);
+							} else {
+								log.info(String.format(
+										"artifact %s is an ordinary connector update, ignore it.",
+										artifactId));
+								// set action to ignore in order to ensure the last modification
+								// time is updated in the sync status table.
+								ga.setArtifactAction(GenericArtifact.ArtifactActionValue.IGNORE);
+							}
+						}
+
 					}
 				}
 			}
@@ -1308,7 +1320,7 @@ public class ProjectTrackerReader extends
 							log.error("Invalid last modified date detected!");
 							continue;
 						}
-						String modifiedBy = transaction.getModifiedBy();
+
 						HistoryActivity[] historyActivities = transaction
 								.getHistoryActivity();
 						if (historyActivities != null) {
@@ -1357,6 +1369,7 @@ public class ProjectTrackerReader extends
 											artifactStatesNew.add(state);
 										}
 									}
+									/*
 									if (this.isIgnoreConnectorUserUpdates()) {
 										if (modifiedBy.equalsIgnoreCase(this.getUsername())) {
 											state = artifactIdStateMap.get(historyArtifactId);
@@ -1368,6 +1381,7 @@ public class ProjectTrackerReader extends
 											}
 										}
 									}
+									*/
 								}
 							}
 						}

@@ -45,6 +45,7 @@ import com.collabnet.ccf.pi.qc.v90.api.IRequirement;
 import com.collabnet.ccf.pi.qc.v90.api.IRequirementsFactory;
 import com.collabnet.ccf.pi.qc.v90.api.dcom.Bug;
 import com.collabnet.ccf.pi.qc.v90.api.dcom.Requirement;
+import com.jacob.com.Dispatch;
 /**
  * This class contains several methods that are used by QCHandler, QCAttachmentHandler and QCWriter
  * and are Generic so that some of the functionalities could be reused in other components
@@ -276,7 +277,7 @@ public class QCGAHelper {
 	 */
 	public String findVtsFromQC(IConnection qcc, int actionId, int entityId) {
 
-		String sql = "SELECT * FROM AUDIT_LOG WHERE AU_ACTION_ID='" + actionId
+		String sql = "SELECT AU_TIME FROM AUDIT_LOG WHERE AU_ACTION_ID='" + actionId
 				+ "' AND AU_ACTION!='DELETE' AND AU_ENTITY_ID='" + entityId + "'";
 		IRecordSet newRs = null;
 		try {
@@ -301,7 +302,7 @@ public class QCGAHelper {
 	 * @param attachmentName
 	 * @return
 	 */
-	public List<String> getFromTable(IConnection qcc, String entityId,
+	public static List<String> getFromTable(IConnection qcc, String entityId,
 			String attachmentName) {
 
 		List<String> attachmentDetails = null;
@@ -381,6 +382,7 @@ public class QCGAHelper {
 	 * 			The defectId for which the search has to be made in QC
 	 * @param txnId
 	 * 			The transactionId starting from which the search has to be made for a particular defectId in QC
+	 * @param upperTransactionId 
 	 * @param qcc
 	 *            The Connection object
 	 * @param connectorUser
@@ -389,7 +391,7 @@ public class QCGAHelper {
 	 * @return List<Object> -> String TransactionId and List of attachment names for the given defectId after the given transactionId
 	 */
 	public List<Object> getTxnIdAndAuDescriptionForDefect(String bugId, String txnId,
-			IConnection qcc, String connectorUser, String resyncUser) {
+			String upperTransactionId, IConnection qcc, String connectorUser, String resyncUser) {
 
 		List<Object> txnIdAndAuDescription = new ArrayList<Object>();
 		String transactionId = null;
@@ -404,7 +406,8 @@ public class QCGAHelper {
 				+ bugId
 				//Removed and au_father_id='-1'
 				+ "' and au_action!='DELETE' and au_entity_type='BUG' and au_user !='"+connectorUser + resyncUserFilter +"' and au_action_id > '"
-				+ txnId + "' order by au_action_id desc";
+				+ txnId + "' and au_action_id <= '"
+				+ upperTransactionId + "' order by au_action_id desc";
 		IRecordSet newRs = null;
 		try {
 			newRs = QCHandler.executeSQL(qcc, sql);
@@ -461,6 +464,7 @@ public class QCGAHelper {
 	 * 			The  requirement Id for which the search has to be made in QC
 	 * @param txnId
 	 * 			The transactionId starting from which the search has to be made for a particular requirement id in QC
+	 * @param upperTransactionId 
 	 * @param qcc
 	 *            The Connection object
 	 * @param connectorUser
@@ -469,7 +473,7 @@ public class QCGAHelper {
 	 * @return List<Object> -> String TransactionId and List of attachment names for the given  requirement id after the given transactionId
 	 */
 	public List<Object> getTxnIdAndAuDescriptionForRequirement(String requirementId, String txnId,
-			IConnection qcc, String connectorUser, String resyncUser) {
+			String upperTransactionId, IConnection qcc, String connectorUser, String resyncUser) {
 
 		List<Object> txnIdAndAuDescription = new ArrayList<Object>();
 		String transactionId = null;
@@ -487,7 +491,8 @@ public class QCGAHelper {
 				+ requirementId
 				//Removed and au_father_id='-1'
 				+ "' and au_action!='DELETE' and au_entity_type='REQ' and au_user !='"+connectorUser + resyncUserFilter +"' and au_action_id > '"
-				+ txnId + "' order by au_action_id desc";
+ 				+ txnId + "' and au_action_id <= '"
+				+ upperTransactionId + "' order by au_action_id desc";
 		IRecordSet newRs = null;
 		try {
 			newRs = QCHandler.executeSQL(qcc, sql);
@@ -560,6 +565,154 @@ public class QCGAHelper {
 		}
 	}
 	
+	public static class ArtifactInformation {
+		public String	lastTransactionId;
+		public String	lastModifiedBy;
+		public Date 	creationDate;
+		public Date		lastModifiedDate;
+		public String	creationTransactionId;
+	}
+
+	
+	public static ArtifactInformation getRequirementInformation(IConnection qcc, String requirementId, String txnId) {
+		ArtifactInformation res = new ArtifactInformation();
+		// this property decides whether artifact can already be returned or whether attachment transactions are still not completed due to missing check in
+		boolean shipArtifact = false;
+		
+		String sql = "select AU_TIME, AU_ACTION_ID, AU_DESCRIPTION, AU_USER from audit_log where au_entity_id = '"
+				+ requirementId
+				//Removed and au_father_id='-1'
+				+ "' and au_action!='DELETE' and au_entity_type='REQ' and au_action_id > '"
+				+ txnId + "' order by au_action_id desc";
+		IRecordSet newRs = null;
+		try {
+			newRs = QCHandler.executeSQL(qcc, sql);
+			int newRc = newRs.getRecordCount();
+			log.debug("In QCHandler.getTxnIdAndAuDescriptionForRequirement, sql=" + sql);
+			if(newRc>0) {
+				for (int newCnt = 0; newCnt < newRc; newCnt++, newRs.next()) {
+					if (!shipArtifact){
+						res.lastTransactionId = newRs.getFieldValueAsString("AU_ACTION_ID");
+						res.lastModifiedBy = newRs.getFieldValueAsString("AU_USER");
+						res.lastModifiedDate = DateUtil.parseQCDate(newRs.getFieldValueAsString("AU_TIME"));
+					}
+					String auDescription = newRs.getFieldValueAsString("AU_DESCRIPTION");
+					List<String> attachDescription = getAttachmentOperation(auDescription);
+					if (attachDescription != null && attachDescription.size() > 0) {
+						if (attachDescription.get(1) != null){
+							if(attachDescription.get(1).equals("added")) {
+								String attachmentName = attachDescription.get(2);
+								// here we have to check whether attachment already exists
+								if (getFromTable(qcc, requirementId, attachmentName) != null) {
+									shipArtifact = true;
+								} else {
+									log.debug("Looks as if attachment transaction has not yet completed.");
+								}
+							}
+							else if(attachDescription.get(1).equals("deleted")){
+								String attachmentName = attachDescription.get(2);
+								// here we have to check whether attachment still exists
+								if (getFromTable(qcc, requirementId, attachmentName) == null) {
+									shipArtifact = true;
+								} else {
+									log.debug("Looks as if attachment transaction has not yet completed.");
+								}
+							}
+							else {
+								shipArtifact = true;
+							}
+						}
+					} else {
+						shipArtifact = true;
+					}
+				}
+			}
+		}
+		finally {
+			if(newRs != null){
+				newRs.safeRelease();
+				newRs = null;
+			}
+		}
+		if (!shipArtifact) {
+			return null;
+		}
+		try {
+			// retrieve the object creation date
+			sql = String.format("select AU_TIME, AU_ACTION_ID from AUDIT_LOG"
+					+ " where au_entity_id = '%s' and au_action!='DELETE' and au_entity_type='%s' "
+					+ " order by au_action_id asc",
+					requirementId,
+					"REQ");
+
+			newRs = QCHandler.executeSQL(qcc, sql);
+			int newRc = newRs.getRecordCount();
+			if (newRc > 0) {
+				String creationDate = newRs.getFieldValueAsString("AU_TIME");
+				res.creationDate = DateUtil.parseQCDate(creationDate);
+				res.creationTransactionId = newRs.getFieldValueAsString("AU_ACTION_ID");
+			}
+		} finally {
+			if(newRs != null){
+				newRs.safeRelease();
+				newRs = null;
+			}
+		}
+		return res;
+	}
+	
+	public static ArtifactInformation getDefectInformation(IConnection qcc, String artifactId, String txnId) {
+		String artifactType = "BUG";
+		ArtifactInformation res = new ArtifactInformation();
+		
+		//Removed and au_father_id='-1'
+		String sql = "select AU_TIME, AU_ACTION_ID, AU_DESCRIPTION, AU_USER from audit_log where au_entity_id = '"
+			+  artifactId
+			//Removed and au_father_id='-1'
+			+ "' and au_action!='DELETE' and au_entity_type='BUG' and au_action_id > '"
+			+ txnId + "' order by au_action_id desc";
+		IRecordSet newRs = null;
+		try {			
+			newRs = QCHandler.executeSQL(qcc, sql);
+			int newRc = newRs.getRecordCount();
+			log.debug("In QCHandler.getTxnIdAndAuDescriptionForDefect, sql=" + sql);
+			if(newRc > 0) {
+				res.lastTransactionId = newRs.getFieldValueAsString("AU_ACTION_ID");
+				res.lastModifiedBy = newRs.getFieldValueAsString("AU_USER");
+				String auTimeStr = newRs.getFieldValueAsString("AU_TIME");
+				res.lastModifiedDate = DateUtil.parseQCDate(auTimeStr);
+			} else {
+				log.warn(String.format("could not retrieve information for artifact id '%s'", artifactId));
+			}
+			
+		} finally {
+			if(newRs != null){
+				newRs.safeRelease();
+				newRs = null;
+			}
+		}
+		try {
+			// retrieve the object creation date
+			sql = String.format("select AU_TIME, AU_ACTION_ID from AUDIT_LOG"
+					+ " where au_entity_id = '%s' and au_action!='DELETE' and au_entity_type='%s' "
+					+ " order by au_action_id asc",
+					artifactId,
+					artifactType);
+			newRs = QCHandler.executeSQL(qcc, sql);
+			int newRc = newRs.getRecordCount();
+			if (newRc > 0) {
+				String creationDate = newRs.getFieldValueAsString("AU_TIME");
+				res.creationDate = DateUtil.parseQCDate(creationDate);
+				res.creationTransactionId = newRs.getFieldValueAsString("AU_ACTION_ID");
+			}
+		} finally {
+			if(newRs != null){
+				newRs.safeRelease();
+				newRs = null;
+			}
+		}
+		return res;
+	}
 	
 	/**
 	 * Gets the exact operation of the attachment i.e, added, deleted or updated
@@ -570,7 +723,7 @@ public class QCGAHelper {
 	 * @return List<String> This list contains 1. attachLabel ("attachment") 2.
 	 *         exact operation("added" or "updated") 3. attachment ID
 	 */
-	public List<String> getAttachmentOperation(String auDescription) {
+	public static List<String> getAttachmentOperation(String auDescription) {
 
 		List<String> attachDescription = new ArrayList<String>();
 		if (auDescription != null) {
