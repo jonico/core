@@ -1547,6 +1547,10 @@ public class QCHandler {
 
 			List<String> allFieldNames = new ArrayList<String>();
 			String fieldValue = null;
+			
+			// make sure requirement type is set early, to avoid unknown req type - ccf395
+			req.setTypeId(informalRequirementsType);
+
 			for (int cnt = 0; cnt < allFields.size(); cnt++) {
 
 				GenericArtifactField thisField = allFields.get(cnt);
