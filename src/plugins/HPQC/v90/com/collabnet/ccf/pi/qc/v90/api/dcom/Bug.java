@@ -251,11 +251,11 @@ public class Bug extends ActiveXComponent implements IBugActions {
 			// Dispatch.get(item, "Data");
 			logger.info("Going to load attachment " + attachmentName + " ...");
 			Dispatch.call(item, "Load", true, "");
-			logger.info("Attachment " + attachmentName + " has been read.");
+			logger.debug("Attachment " + attachmentName + " has been read.");
 			File attachmentFile = new File(fileName);
 
 			int size = Dispatch.get(item, "FileSize").getInt();
-			logger.info("expected file size: " + size);
+			logger.debug("expected file size: " + size);
 			if (!attachmentFile.exists()) {
 				/*
 				 * If an attachment is still being uploaded when CCF tries to retrieve it,
@@ -268,7 +268,7 @@ public class Bug extends ActiveXComponent implements IBugActions {
 				String message = String.format("The attachment file %s does not exist yet, ",
 						fileName);
 				if (!maxRetryCountReached) {
-					throw new AttachmentUploadStillInProgressException(message + "retrying.");
+					throw new AttachmentUploadStillInProgressException(message + "retrying ...");
 				} else {
 					// give up on this attachment but don't stop other attachments
 					// from being added with the same name later.

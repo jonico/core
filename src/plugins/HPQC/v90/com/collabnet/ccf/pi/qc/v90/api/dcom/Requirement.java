@@ -262,7 +262,7 @@ public class Requirement extends ActiveXComponent implements
 			logger.info("Going to load attachment " + attachmentName + " ...");
 			Dispatch.call(item, "Load", true, "");
 			// Dispatch.get(item, "Data");
-			logger.info("Attachment " + attachmentName + " has been read.");
+			logger.debug("Attachment " + attachmentName + " has been read.");
 			File attachmentFile = new File(fileName);
 			
 			if (!attachmentFile.exists()) {
@@ -277,7 +277,7 @@ public class Requirement extends ActiveXComponent implements
 				String message = String.format("The attachment file %s does not exist yet, ",
 						fileName);
 				if (!maxRetryCountReached) {
-					throw new AttachmentUploadStillInProgressException(message + "retrying.");
+					throw new AttachmentUploadStillInProgressException(message + "retrying ...");
 				} else {
 					// give up on this attachment but don't stop other attachments
 					// from being added with the same name later.
