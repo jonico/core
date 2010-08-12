@@ -258,8 +258,9 @@ public class Requirement extends ActiveXComponent implements
 			retryCount = retryCount == null ? 1 : retryCount + 1;
 			attachmentRetryCount.put(attachmentKey, retryCount);
 			boolean maxRetryCountReached = retryCount >= 10;
+			int size = Dispatch.get(item, "FileSize").getInt();
 
-			logger.info("Going to load attachment " + attachmentName + " ...");
+			logger.info("Going to load attachment " + attachmentName + " , expected file size: " + size);
 			Dispatch.call(item, "Load", true, "");
 			// Dispatch.get(item, "Data");
 			logger.debug("Attachment " + attachmentName + " has been read.");
@@ -286,8 +287,8 @@ public class Requirement extends ActiveXComponent implements
 				}
 			}
 			
-			int size = Dispatch.get(item, "FileSize").getInt();
-			if (size != attachmentFile.length() &&
+			
+			if ((size != attachmentFile.length() || size == 0) &&
 				// retry, because QC10 may report an incorrect size but still loads correctly.
 				attachmentFile.length() != reloadAttachmentSize(filter.getNewList(), attachmentName)) {
 				String message = "Downloaded file size ("

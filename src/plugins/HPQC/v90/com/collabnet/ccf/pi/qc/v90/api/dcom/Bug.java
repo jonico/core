@@ -248,13 +248,14 @@ public class Bug extends ActiveXComponent implements IBugActions {
 			attachmentRetryCount.put(attachmentKey, retryCount);
 			boolean maxRetryCountReached = retryCount >= 10;
 			
+			int size = Dispatch.get(item, "FileSize").getInt();
 			// Dispatch.get(item, "Data");
-			logger.info("Going to load attachment " + attachmentName + " ...");
+			logger.info("Going to load attachment " + attachmentName + ", expected file size: " + size);
 			Dispatch.call(item, "Load", true, "");
 			logger.debug("Attachment " + attachmentName + " has been read.");
 			File attachmentFile = new File(fileName);
 
-			int size = Dispatch.get(item, "FileSize").getInt();
+			
 			logger.debug("expected file size: " + size);
 			if (!attachmentFile.exists()) {
 				/*
@@ -276,7 +277,7 @@ public class Bug extends ActiveXComponent implements IBugActions {
 					throw new CCFRuntimeException(message + "giving up.");
 				}
 			}
-			if (size != attachmentFile.length() &&
+			if ((size != attachmentFile.length() || size == 0) &&
 				// retry, because QC10 may report an incorrect size but still loads correctly.
 				attachmentFile.length() != reloadAttachmentSize(filter.getNewList(), attachmentName)) {
 				String message = "Downloaded file size ("
