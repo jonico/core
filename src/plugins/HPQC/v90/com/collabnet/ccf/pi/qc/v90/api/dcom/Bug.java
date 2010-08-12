@@ -279,7 +279,7 @@ public class Bug extends ActiveXComponent implements IBugActions {
 			}
 			if ((size != attachmentFile.length() || size == 0) &&
 				// retry, because QC10 may report an incorrect size but still loads correctly.
-				attachmentFile.length() != reloadAttachmentSize(filter.getNewList(), attachmentName)) {
+				attachmentFile.length() != reloadAttachmentSize(filter, attachmentName)) {
 				String message = "Downloaded file size ("
 						+ attachmentFile.length()
 						+ ") and expected file size (" + size
@@ -300,7 +300,13 @@ public class Bug extends ActiveXComponent implements IBugActions {
 						+ attachmentName);
 	}
 
-	private long reloadAttachmentSize(IFactoryList attachments, String attachmentName) {
+	private long reloadAttachmentSize(IFilter filter, String attachmentName) {
+		// give QC a chance to refresh its meta data
+		try {
+			Thread.sleep(1000);
+		} catch (InterruptedException e) {
+		}
+		IFactoryList attachments = filter.getNewList();
 		String fileName = null;
 		for (int n = 1; n <= attachments.getCount(); ++n) {
 			Dispatch item = attachments.getItem(n);
