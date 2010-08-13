@@ -746,10 +746,10 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 						targetArtifactIdAfterCreation = createdArtifact.getId();
 						log.info("Defect " + targetArtifactIdAfterCreation
 								+ " is created on "
-								+ genericArtifact.getSourceRepositoryId()
+								+ genericArtifact.getTargetRepositoryId()
 								+ " with the artifact details "
 								+ genericArtifact.getSourceArtifactId() + " on "
-								+ genericArtifact.getTargetRepositoryId());
+								+ genericArtifact.getSourceRepositoryId());
 						genericArtifact
 								.setTargetArtifactId(targetArtifactIdAfterCreation);
 						// send this artifact to RCDU (Read Connector Database Updater)
@@ -783,10 +783,10 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 						targetArtifactIdAfterCreation = createdArtifact.getId();
 						log.info("Requirement " + targetArtifactIdAfterCreation
 								+ " is created on "
-								+ genericArtifact.getSourceRepositoryId()
+								+ genericArtifact.getTargetRepositoryId()
 								+ " with the artifact details "
 								+ genericArtifact.getSourceArtifactId() + " on "
-								+ genericArtifact.getTargetRepositoryId());
+								+ genericArtifact.getSourceRepositoryId());
 						genericArtifact
 								.setTargetArtifactId(targetArtifactIdAfterCreation);
 						
