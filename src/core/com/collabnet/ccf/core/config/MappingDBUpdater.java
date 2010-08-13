@@ -17,7 +17,6 @@
 
 package com.collabnet.ccf.core.config;
 
-import java.sql.Timestamp;
 import java.util.Date;
 import java.util.List;
 
@@ -414,7 +413,6 @@ public class MappingDBUpdater extends LifecycleComponent implements
 			String sourceArtifactId, String sourceSystemId,
 			String sourceRepositoryId, String targetSystemId,
 			String targetRepositoryId, String artifactType) {
-		String targetArtifactId = null;
 		OrderedHashMap result = null;
 		IOrderedMap inputParameters = new OrderedHashMap();
 

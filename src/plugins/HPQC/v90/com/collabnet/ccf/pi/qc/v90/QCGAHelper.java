@@ -36,8 +36,8 @@ import org.apache.commons.logging.LogFactory;
 import com.collabnet.ccf.core.CCFRuntimeException;
 import com.collabnet.ccf.core.utils.DateUtil;
 import com.collabnet.ccf.pi.qc.v90.api.IBug;
-import com.collabnet.ccf.pi.qc.v90.api.IConnection;
 import com.collabnet.ccf.pi.qc.v90.api.IBugFactory;
+import com.collabnet.ccf.pi.qc.v90.api.IConnection;
 import com.collabnet.ccf.pi.qc.v90.api.IFactoryList;
 import com.collabnet.ccf.pi.qc.v90.api.IFilter;
 import com.collabnet.ccf.pi.qc.v90.api.IRecordSet;
@@ -45,7 +45,6 @@ import com.collabnet.ccf.pi.qc.v90.api.IRequirement;
 import com.collabnet.ccf.pi.qc.v90.api.IRequirementsFactory;
 import com.collabnet.ccf.pi.qc.v90.api.dcom.Bug;
 import com.collabnet.ccf.pi.qc.v90.api.dcom.Requirement;
-import com.jacob.com.Dispatch;
 /**
  * This class contains several methods that are used by QCHandler, QCAttachmentHandler and QCWriter
  * and are Generic so that some of the functionalities could be reused in other components

@@ -702,31 +702,6 @@ public class QCReader extends AbstractReader<IConnection> {
 		}
 	}
 
-	/**
-	 * To assign values to mandatory artifact properties in the case of an empty
-	 * artifact.
-	 * 
-	 * @param emptyGenericArtifact
-	 *            The GenericArtifact Java object to be populated
-	 * @param connection
-	 *            The IConnection object
-	 * @return GenericArtifact after populating the required fields.
-	 * 
-	 */
-	public GenericArtifact populateRequiredFields(
-			GenericArtifact emptyGenericArtifact, IConnection connection) {
-
-		emptyGenericArtifact = QCConfigHelper.getSchemaFieldsForDefect(
-				connection);
-		emptyGenericArtifact
-				.setArtifactMode(GenericArtifact.ArtifactModeValue.UNKNOWN);
-		emptyGenericArtifact
-				.setArtifactType(GenericArtifact.ArtifactTypeValue.UNKNOWN);
-		emptyGenericArtifact
-				.setArtifactAction(GenericArtifact.ArtifactActionValue.UNKNOWN);
-
-		return emptyGenericArtifact;
-	}
 
 	/**
 	 * To convert a string into QC specific timestamp

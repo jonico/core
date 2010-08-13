@@ -913,7 +913,7 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 				attachmentHandler.createAttachmentForDefect(connection, parentArtifactId,
 						attachmentName, contentTypeValue, attachmentFile,
 						attachmentSourceUrl, attachmentDescription);
-				List<String> attachmentIdAndType = qcGAHelper.getFromTable(
+				List<String> attachmentIdAndType = QCGAHelper.getFromTable(
 						connection, parentArtifactId, attachmentName);
 				String attachmentId = null;
 				if (attachmentIdAndType != null) {
@@ -938,7 +938,7 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 				attachmentHandler.createAttachmentForRequirement(connection, parentArtifactId,
 						attachmentName, contentTypeValue, attachmentFile,
 						attachmentSourceUrl, attachmentDescription);
-				List<String> attachmentIdAndType = qcGAHelper.getFromTable(
+				List<String> attachmentIdAndType = QCGAHelper.getFromTable(
 						connection, parentArtifactId, attachmentName);
 				String attachmentId = null;
 				if (attachmentIdAndType != null) {

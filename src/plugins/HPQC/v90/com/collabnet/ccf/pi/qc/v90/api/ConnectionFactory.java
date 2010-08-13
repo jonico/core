@@ -21,7 +21,6 @@ import com.collabnet.ccf.core.eis.connection.ConnectionException;
 import com.collabnet.ccf.pi.qc.v90.api.dcom.Connection;
 
 public class ConnectionFactory {
-	@SuppressWarnings("unchecked")
 	public static IConnection getInstance(String server, String domain, String project, String user, String pass) throws ConnectionException {
 		IConnection instance = null;
 		try {
