@@ -712,7 +712,7 @@ public class QCAttachmentHandler {
 		if (attachmentName != null) {
 			List<String> attachmentIdAndType = null;
 			if(!deletedAttachments){
-				attachmentIdAndType = qcGAHelper.getFromTable(qcc, entityId,
+				attachmentIdAndType = QCGAHelper.getFromTable(qcc, entityId,
 						attachmentName);
 				if (attachmentIdAndType != null) {
 					String attachmentId = attachmentIdAndType.get(0); // CR_REF_ID

@@ -40,7 +40,6 @@ import com.collabnet.ccf.core.eis.connection.ConnectionManager;
 import com.collabnet.ccf.core.eis.connection.MaxConnectionsReachedException;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
-import com.collabnet.ccf.core.ga.GenericArtifact.ArtifactActionValue;
 import com.collabnet.teamforge.api.Connection;
 import com.collabnet.teamforge.api.planning.PlanningFolderDO;
 import com.collabnet.teamforge.api.tracker.ArtifactDO;
@@ -446,12 +445,7 @@ public class TFReader extends AbstractReader<Connection> {
 				genericArtifact = TFToGenericArtifactConverter.convertArtifact(connection.supports53(), artifact, fieldsMap,
 						lastModifiedDate, this.isIncludeFieldMetaData(),
 						sourceSystemTimezone);
-				if (isIgnore) {
-					// overwrite the artifact action.
-					genericArtifact.setArtifactAction(ArtifactActionValue.IGNORE);
-				} else if (isResync) {
-					genericArtifact.setArtifactAction(ArtifactActionValue.RESYNC);
-				}
+
 				// now care about parent artifacts/planning folders
 				// first we find out whether we have a parent artifact or not
 				// but only if we don't ignore this shipment anyway

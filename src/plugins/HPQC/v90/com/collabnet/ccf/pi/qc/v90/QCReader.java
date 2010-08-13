@@ -36,6 +36,7 @@ import com.collabnet.ccf.core.eis.connection.ConnectionManager;
 import com.collabnet.ccf.core.eis.connection.MaxConnectionsReachedException;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.pi.qc.v90.QCGAHelper.ArtifactInformation;
+import com.collabnet.ccf.pi.qc.v90.api.AttachmentUploadStillInProgressException;
 import com.collabnet.ccf.pi.qc.v90.api.DefectAlreadyLockedException;
 import com.collabnet.ccf.pi.qc.v90.api.IConnection;
 
@@ -218,6 +219,8 @@ public class QCReader extends AbstractReader<IConnection> {
 			}
 		} else if (rootCause instanceof DefectAlreadyLockedException) {
 			return true;
+		} else if (rootCause instanceof AttachmentUploadStillInProgressException) {
+			return true;
 		} else if (rootCause instanceof CCFRuntimeException) {
 			Throwable cause = rootCause.getCause();
 			return handleException(cause, connectionManager);
@@ -296,7 +299,9 @@ public class QCReader extends AbstractReader<IConnection> {
 					ga.setSourceArtifactVersion(ga.getSourceArtifactVersion());
 				}
 			}
-		} catch (Exception e1) {
+		} catch (AttachmentUploadStillInProgressException e) {
+			throw e;
+		}catch (Exception e1) {
 			String cause = "Error in fetching the attachments from QC";
 			log.error(cause, e1);
 			throw new CCFRuntimeException(cause, e1);
@@ -325,7 +330,6 @@ public class QCReader extends AbstractReader<IConnection> {
 	 */
 	@Override
 	public GenericArtifact getArtifactData(Document syncInfo, String artifactId) {
-		String sourceArtifactId = artifactId;
 		String sourceRepositoryId = getSourceRepositoryId(syncInfo);
 		String sourceRepositoryKind = getSourceRepositoryKind(syncInfo);
 		String sourceSystemId = getSourceSystemId(syncInfo);
@@ -337,8 +341,6 @@ public class QCReader extends AbstractReader<IConnection> {
 		String sourceSystemTimezone = this.getSourceSystemTimezone(syncInfo);
 		String targetSystemTimezone = this.getTargetSystemTimezone(syncInfo);
 
-		String fromTimestamp = this
-				.getLastSourceArtifactModificationDate(syncInfo);
 		// String fromTime = convertIntoString(fromTimestamp);
 		String syncInfoTransactionId = this.getLastSourceVersion(syncInfo);
 		IConnection connection = null;
@@ -378,8 +380,14 @@ public class QCReader extends AbstractReader<IConnection> {
 					isResync = true;
 				} else if (info.lastModifiedBy.equalsIgnoreCase(getUserName()) && isIgnoreConnectorUserUpdates()) {
 					if (Integer.parseInt(info.creationTransactionId) > Integer.parseInt(syncInfoTransactionId)) {
+						log.info(String.format(
+								"resync is necessary, despite the defect %s last being updated by the connector user",
+								artifactId));
 						isResync = true;
 					} else {
+						log.info(String.format(
+								"defect %s is an ordinary connector update, ignore it.",
+								artifactId));
 						ignoreArtifact = true;
 					}
 				}
@@ -400,9 +408,9 @@ public class QCReader extends AbstractReader<IConnection> {
 								null,
 								syncInfoTransactionId,
 								isIgnoreConnectorUserUpdates() ? getUserName() : "",
+								isIgnoreConnectorUserUpdates() ? getResyncUserName() : "",
 								artifactHandler,
 								sourceSystemTimezone,
-								isResync,
 								info.lastModifiedBy);
 					}
 					
@@ -457,8 +465,14 @@ public class QCReader extends AbstractReader<IConnection> {
 				} else if (info.lastModifiedBy.equalsIgnoreCase(getUserName())
 						&& isIgnoreConnectorUserUpdates()) {
 					if (Integer.parseInt(info.creationTransactionId) > Integer.parseInt(syncInfoTransactionId)) {
+						log.info(String.format(
+								"resync is necessary, despite the requirement %s last being updated by the connector user",
+								artifactId));
 						isResync = true;
 					} else {
+						log.info(String.format(
+								"requirement %s is an ordinary connector update, ignore it.",
+								artifactId));
 						ignoreArtifact = true;
 					}
 				}
@@ -481,9 +495,10 @@ public class QCReader extends AbstractReader<IConnection> {
 								this.getCommentQualifier(),
 								null,
 								syncInfoTransactionId,
-								isIgnoreConnectorUserUpdates() ? getUserName() : "", 
+								isIgnoreConnectorUserUpdates() ? getUserName() : "",
+								isIgnoreConnectorUserUpdates() ? getResyncUserName() : "",
 								artifactHandler,
-								sourceSystemTimezone, isResync,
+								sourceSystemTimezone,
 								technicalRequirementsTypeId,
 								info.lastModifiedBy);
 						// set information about parent artifact
@@ -702,7 +717,7 @@ public class QCReader extends AbstractReader<IConnection> {
 			GenericArtifact emptyGenericArtifact, IConnection connection) {
 
 		emptyGenericArtifact = QCConfigHelper.getSchemaFieldsForDefect(
-				connection, false);
+				connection);
 		emptyGenericArtifact
 				.setArtifactMode(GenericArtifact.ArtifactModeValue.UNKNOWN);
 		emptyGenericArtifact

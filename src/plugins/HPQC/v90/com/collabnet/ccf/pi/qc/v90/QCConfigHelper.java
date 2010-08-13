@@ -511,7 +511,7 @@ public class QCConfigHelper {
 //	}
 
 	public static GenericArtifact getSchemaFieldsForRequirement(IConnection qcc,
-			String technicalReleaseTypeId, boolean isResync) {
+			String technicalReleaseTypeId) {
 
 		// Get all the fields in the project represented
 		// by qcc
@@ -527,9 +527,6 @@ public class QCConfigHelper {
 			genericArtifact = new GenericArtifact();
 			for (int cnt = 0; cnt < rc; cnt++, rs.next()) {
 				String columnName = rs.getFieldValueAsString(sfColumnName);
-				if (isResync && columnName.equals(QC_RQ_DEV_COMMENTS)) {
-					continue;
-				}
 				String columnType = rs.getFieldValueAsString(sfColumnType);
 
 				// we only transport fields that have been configured by the
@@ -600,7 +597,7 @@ public class QCConfigHelper {
 		return genericArtifact;
 	}	
 	
-	public static GenericArtifact getSchemaFieldsForDefect(IConnection qcc, boolean isResync) {
+	public static GenericArtifact getSchemaFieldsForDefect(IConnection qcc) {
 
 		// Get all the fields in the project represented
 		// by qcc
@@ -614,9 +611,6 @@ public class QCConfigHelper {
 			for(int cnt = 0 ; cnt < rc ; cnt++, rs.next())
 			{
 				String columnName = rs.getFieldValueAsString(sfColumnName);
-				if(isResync && columnName.equals(QCConfigHelper.QC_BG_DEV_COMMENTS)) {
-					continue;
-				}
 				String columnType = rs.getFieldValueAsString(sfColumnType);
 				
 				// we only transport fields that have been configured by the user

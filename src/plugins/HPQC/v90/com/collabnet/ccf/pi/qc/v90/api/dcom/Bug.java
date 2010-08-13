@@ -246,17 +246,23 @@ public class Bug extends ActiveXComponent implements IBugActions {
 			Integer retryCount = attachmentRetryCount.get(attachmentKey);
 			retryCount = retryCount == null ? 1 : retryCount + 1;
 			attachmentRetryCount.put(attachmentKey, retryCount);
-			boolean maxRetryCountReached = retryCount >= 10;
 			
+			
+			int size = Dispatch.get(item, "FileSize").getInt();
 			// Dispatch.get(item, "Data");
-			logger.info("Going to load attachment " + attachmentName + " ...");
+			logger.info("Going to load attachment " + attachmentName + ", expected file size: " + size);
+			
+			// treat zero sized files like file not found but only do 3 retries at most in order to avoid
+			// issues with "real" zero sized attachments
+			boolean maxRetryCountReached = retryCount >= (size == 0 ? 3 : 10);
+			
 			Dispatch.call(item, "Load", true, "");
-			logger.info("Attachment " + attachmentName + " has been read.");
+			logger.debug("Attachment " + attachmentName + " has been read.");
 			File attachmentFile = new File(fileName);
 
-			int size = Dispatch.get(item, "FileSize").getInt();
-			logger.info("expected file size: " + size);
-			if (!attachmentFile.exists()) {
+			
+			logger.debug("expected file size: " + size);
+			if (!attachmentFile.exists() || (attachmentFile.length() == 0 && !maxRetryCountReached)) {
 				/*
 				 * If an attachment is still being uploaded when CCF tries to retrieve it,
 				 * the QC 9.2 COM-API seems to succeed, but the file doesn't exist after the
@@ -265,10 +271,10 @@ public class Bug extends ActiveXComponent implements IBugActions {
 				 * QCReader.handleException() unwraps the AttachmentUploadStillInProgressException and
 				 * causes the artifact to be retried.
 				 */
-				String message = String.format("The attachment file %s does not exist yet, ",
+				String message = String.format("The attachment file %s does not exist yet or is zero bytes long, ",
 						fileName);
 				if (!maxRetryCountReached) {
-					throw new AttachmentUploadStillInProgressException(message + "retrying.");
+					throw new AttachmentUploadStillInProgressException(message + "retrying ...");
 				} else {
 					// give up on this attachment but don't stop other attachments
 					// from being added with the same name later.
@@ -278,7 +284,7 @@ public class Bug extends ActiveXComponent implements IBugActions {
 			}
 			if (size != attachmentFile.length() &&
 				// retry, because QC10 may report an incorrect size but still loads correctly.
-				attachmentFile.length() != reloadAttachmentSize(filter.getNewList(), attachmentName)) {
+				attachmentFile.length() != reloadAttachmentSize(filter, attachmentName)) {
 				String message = "Downloaded file size ("
 						+ attachmentFile.length()
 						+ ") and expected file size (" + size
@@ -299,7 +305,8 @@ public class Bug extends ActiveXComponent implements IBugActions {
 						+ attachmentName);
 	}
 
-	private long reloadAttachmentSize(IFactoryList attachments, String attachmentName) {
+	private long reloadAttachmentSize(IFilter filter, String attachmentName) {
+		IFactoryList attachments = filter.getNewList();
 		String fileName = null;
 		for (int n = 1; n <= attachments.getCount(); ++n) {
 			Dispatch item = attachments.getItem(n);

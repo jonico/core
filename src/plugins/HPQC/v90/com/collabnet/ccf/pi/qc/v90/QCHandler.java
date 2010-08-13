@@ -65,7 +65,6 @@ public class QCHandler {
 	private static final String LAST_TAGS = "</body></html>";
 	private static final Log log = LogFactory.getLog(QCHandler.class);
 	// private QCAttachmentHandler attachmentHandler;
-	private QCGAHelper qcGAHelper = new QCGAHelper();
 	private final static String QC_BUG_ID = "BG_BUG_ID";
 	private final static String QC_REQ_ID = "RQ_REQ_ID";
 	private final static String QC_BUG_VER_STAMP = "BG_BUG_VER_STAMP";
@@ -1151,16 +1150,19 @@ public class QCHandler {
 	}
 
 	public List<String> getTransactionIdsInRangeForDefects(IConnection qcc,
-			int entityId, int syncInfoTxnId, int actionId, String connectorUser) {
+			int entityId, int syncInfoTxnId, int actionId, String connectorUser, String resyncUser) {
 
 		List<String> listOfTxnIds = new ArrayList<String>();
-
+		connectorUser = connectorUser == null ? "" : connectorUser;
+		resyncUser = resyncUser == null ? "" : resyncUser;
 		String sql = "SELECT AU_ACTION_ID FROM AUDIT_LOG WHERE AU_ACTION_ID > '"
 				+ syncInfoTxnId
 				+ "' AND AU_ACTION_ID <= '"
 				+ actionId
 				+ "' AND AU_ACTION!='DELETE' AND AU_ENTITY_TYPE='BUG' AND AU_USER!='"
 				+ connectorUser
+				+ "' AND AU_USER!='"
+				+ resyncUser
 				+ "' AND AU_FATHER_ID='-1' AND AU_ENTITY_ID='"
 				+ entityId + "'";
 		IRecordSet newRs = null;
@@ -1185,16 +1187,19 @@ public class QCHandler {
 
 	public List<String> getTransactionIdsInRangeForRequirements(
 			IConnection qcc, int entityId, int syncInfoTxnId, int actionId,
-			String connectorUser) {
+			String connectorUser, String resyncUser) {
 
 		List<String> listOfTxnIds = new ArrayList<String>();
-
+		connectorUser = connectorUser == null ? "" : connectorUser;
+		resyncUser = resyncUser == null ? "" : resyncUser;
 		String sql = "SELECT AU_ACTION_ID FROM AUDIT_LOG WHERE AU_ACTION_ID > '"
 				+ syncInfoTxnId
 				+ "' AND AU_ACTION_ID <= '"
 				+ actionId
 				+ "' AND AU_ACTION!='DELETE' AND AU_ENTITY_TYPE='REQ' AND AU_USER!='"
 				+ connectorUser
+				+ "' AND AU_USER!='"
+				+ resyncUser
 				+ "' AND AU_FATHER_ID='-1' AND AU_ENTITY_ID='"
 				+ entityId + "'";
 		IRecordSet newRs = null;
@@ -1525,7 +1530,7 @@ public class QCHandler {
 			List<String> allFieldNames = new ArrayList<String>();
 			String fieldValue = null;
 			
-			// make sure the requirement type is known - ccf395
+			// make sure requirement type is set early, to avoid unknown req type - ccf395
 			req.setTypeId(informalRequirementsType);
 
 			for (int cnt = 0; cnt < allFields.size(); cnt++) {
