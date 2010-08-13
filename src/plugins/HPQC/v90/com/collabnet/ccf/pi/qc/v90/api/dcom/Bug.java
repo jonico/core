@@ -252,16 +252,14 @@ public class Bug extends ActiveXComponent implements IBugActions {
 			// Dispatch.get(item, "Data");
 			logger.info("Going to load attachment " + attachmentName + ", expected file size: " + size);
 			
-			// treat zero sized files like file not found but only do 3 retries at most in order to avoid
+			// treat zero sized files like file not found but only do 7 retries at most in order to avoid
 			// issues with "real" zero sized attachments
-			boolean maxRetryCountReached = retryCount >= (size == 0 ? 3 : 10);
+			boolean maxRetryCountReached = retryCount >= (size == 0 ? 7 : 10);
 			
 			Dispatch.call(item, "Load", true, "");
 			logger.debug("Attachment " + attachmentName + " has been read.");
 			File attachmentFile = new File(fileName);
 
-			
-			logger.debug("expected file size: " + size);
 			if (!attachmentFile.exists() || (attachmentFile.length() == 0 && !maxRetryCountReached)) {
 				/*
 				 * If an attachment is still being uploaded when CCF tries to retrieve it,
