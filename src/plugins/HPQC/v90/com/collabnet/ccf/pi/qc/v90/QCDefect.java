@@ -252,6 +252,9 @@ public class QCDefect extends Bug implements IQCDefect {
 			}
 		}
 		// If this is a resync request do not ship comments
+		// FIXME: this might cause some comments to not be shipped if they are created after
+		// the artifact creation, but before another incoming update by CCF and before
+		// the resync.
 		if (!isResync) {
 			IRecordSet auditPropertiesRS = null;
 			String deltaComment = null;

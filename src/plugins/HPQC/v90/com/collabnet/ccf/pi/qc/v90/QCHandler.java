@@ -1524,6 +1524,10 @@ public class QCHandler {
 
 			List<String> allFieldNames = new ArrayList<String>();
 			String fieldValue = null;
+			
+			// make sure the requirement type is known - ccf395
+			req.setTypeId(informalRequirementsType);
+
 			for (int cnt = 0; cnt < allFields.size(); cnt++) {
 
 				GenericArtifactField thisField = allFields.get(cnt);
@@ -1583,6 +1587,7 @@ public class QCHandler {
 				if (!fieldName.equals(QCConfigHelper.QC_RQ_DEV_COMMENTS))
 					allFieldNames.add(fieldName);
 			}
+			// set the requirement type again here (why?)
 			req.setTypeId(informalRequirementsType);
 			req.post();
 		} catch (Exception e) {

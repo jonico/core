@@ -172,7 +172,7 @@ public class TFToGenericArtifactConverter {
 					createdDate, genericArtifact, fieldsMap,
 					includeFieldMetaData);
 			if (createdDate.after(lastReadDate)) {
-				genericArtifact.setArtifactAction(ArtifactActionValue.CREATE);
+			genericArtifact.setArtifactAction(ArtifactActionValue.CREATE);
 			} else {
 				genericArtifact.setArtifactAction(ArtifactActionValue.UPDATE);
 			}

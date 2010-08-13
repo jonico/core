@@ -40,10 +40,12 @@ import com.collabnet.ccf.core.eis.connection.ConnectionManager;
 import com.collabnet.ccf.core.eis.connection.MaxConnectionsReachedException;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
+import com.collabnet.ccf.core.ga.GenericArtifact.ArtifactActionValue;
 import com.collabnet.teamforge.api.Connection;
 import com.collabnet.teamforge.api.planning.PlanningFolderDO;
 import com.collabnet.teamforge.api.tracker.ArtifactDO;
 import com.collabnet.teamforge.api.tracker.ArtifactDependencyRow;
+import com.collabnet.teamforge.api.tracker.ArtifactDetailRow;
 import com.collabnet.teamforge.api.tracker.TrackerFieldDO;
 
 /**
@@ -394,6 +396,10 @@ public class TFReader extends AbstractReader<Connection> {
 		}
 		GenericArtifact genericArtifact = null;
 		String lastModifiedBy = null;
+
+		boolean isResync = false;
+		boolean isIgnore = false;
+		
 		try {
 			if (TFConnectionFactory.isTrackerRepository(sourceRepositoryId)) {
 				TrackerFieldDO[] trackerFields = null;
@@ -409,22 +415,47 @@ public class TFReader extends AbstractReader<Connection> {
 				} else {
 					artifact = trackerHandler.getTrackerItemFull(connection, artifactId);
 				}
-	
-				TFAppHandler appHandler = new TFAppHandler(connection);
-				appHandler.addComments(artifact, lastModifiedDate,
-						isIgnoreConnectorUserUpdates() ? this.getUsername() : "",
-						isIgnoreConnectorUserUpdates() ? this.getResyncUserName()
-								: "");
-				if (this.translateTechnicalReleaseIds) {
-					trackerHandler.convertReleaseIds(connection,
-							artifact);
+				lastModifiedBy = artifact.getLastModifiedBy();
+				Date creationDate = artifact.getCreatedDate();
+				if (lastModifiedBy.equalsIgnoreCase(getUsername()) && isIgnoreConnectorUserUpdates()) {
+					if (creationDate.after(lastModifiedDate)) {
+						log.info(String.format(
+								"resync is necessary, despite the artifact %s last being updated by the connector user",
+								artifactId));
+						isResync = true;
+					} else {
+						log.info(String.format(
+								"artifact %s is an ordinary connector update, ignore it.",
+								artifactId));
+						isIgnore = true;
+					}
+				}
+				
+				if (!isIgnore) {
+					// we're interested in the comments.
+					TFAppHandler appHandler = new TFAppHandler(connection);
+					appHandler.addComments(artifact, lastModifiedDate,
+							isIgnoreConnectorUserUpdates() ? this.getUsername() : "",
+							isIgnoreConnectorUserUpdates() ? this.getResyncUserName()
+									: "");
+					if (this.translateTechnicalReleaseIds) {
+						trackerHandler.convertReleaseIds(connection,
+								artifact);
+					}
 				}
 				genericArtifact = TFToGenericArtifactConverter.convertArtifact(connection.supports53(), artifact, fieldsMap,
 						lastModifiedDate, this.isIncludeFieldMetaData(),
 						sourceSystemTimezone);
+				if (isIgnore) {
+					// overwrite the artifact action.
+					genericArtifact.setArtifactAction(ArtifactActionValue.IGNORE);
+				} else if (isResync) {
+					genericArtifact.setArtifactAction(ArtifactActionValue.RESYNC);
+				}
 				// now care about parent artifacts/planning folders
 				// first we find out whether we have a parent artifact or not
-				if (isRetrieveParentInfoForTrackerItems()) {
+				// but only if we don't ignore this shipment anyway
+				if (!isIgnore && isRetrieveParentInfoForTrackerItems()) {
 					ArtifactDependencyRow[] parents = trackerHandler.getArtifactParentDependencies(connection, artifactId);
 					if (parents.length == 0) {
 						// we do not have any parent, so maybe we set a planning folder as our parent
@@ -449,16 +480,33 @@ public class TFReader extends AbstractReader<Connection> {
 					}
 				}
 				
-				lastModifiedBy = artifact.getLastModifiedBy();
 			} else {
+				
+				
 				// we retrieve planning folder data now
 				PlanningFolderDO planningFolder = connection.getPlanningClient().getPlanningFolderData(artifactId);
+				lastModifiedBy = planningFolder.getLastModifiedBy();
+				Date creationDate = planningFolder.getCreatedDate();
+				if (lastModifiedBy.equalsIgnoreCase(getUsername()) && isIgnoreConnectorUserUpdates()) {
+					if (creationDate.after(lastModifiedDate)) {
+						log.info(String.format(
+								"resync is necessary, despite the planning folder %s last being updated by the connector user",
+								artifactId));
+						isResync = true;
+					} else {
+						log.info(String.format(
+								"artifact %s is an ordinary connector update, ignore it.",
+								artifactId));
+						isIgnore = true;
+					}
+				}
 				genericArtifact = TFToGenericArtifactConverter.convertPlanningFolder(planningFolder,
 						lastModifiedDate, this.isIncludeFieldMetaData(),
 						sourceSystemTimezone);
 				
-				// finally, we have to set some info about the parent
-				if (isRetrieveParentInfoForPlanningFolders()) {
+				// finally, we have to set some info about the parent,
+				// but only if we don't ignore this shipment anyway
+				if (!isIgnore && isRetrieveParentInfoForPlanningFolders()) {
 					genericArtifact.setDepParentSourceRepositoryId(sourceRepositoryId);
 					if (planningFolder.getParentFolderId().startsWith("PlanningApp")) {
 						genericArtifact.setDepParentSourceArtifactId(GenericArtifact.VALUE_NONE);
@@ -469,11 +517,11 @@ public class TFReader extends AbstractReader<Connection> {
 				
 				lastModifiedBy = planningFolder.getLastModifiedBy();
 			}
-			
-			if (lastModifiedBy.equals(this.getResyncUserName())
-					&& isIgnoreConnectorUserUpdates()) {
-				genericArtifact
-						.setArtifactAction(GenericArtifact.ArtifactActionValue.RESYNC);
+			if (isIgnore) {
+				genericArtifact.setArtifactAction(GenericArtifact.ArtifactActionValue.IGNORE);
+			} else if (isResync 
+					|| (lastModifiedBy.equals(this.getResyncUserName()) && isIgnoreConnectorUserUpdates())) {
+				genericArtifact.setArtifactAction(GenericArtifact.ArtifactActionValue.RESYNC);
 			}
 			
 			populateSrcAndDest(syncInfo, genericArtifact);
@@ -551,18 +599,17 @@ public class TFReader extends AbstractReader<Connection> {
 			ArrayList<ArtifactState> artifactStates = new ArrayList<ArtifactState>();
 			
 			if (TFConnectionFactory.isTrackerRepository(sourceRepositoryId)) {
-				List<ArtifactDO> artifactRows = null;
+				List<ArtifactDetailRow> artifactRows = null;
 				try {
 					artifactRows = trackerHandler.getChangedTrackerItems(connection, sourceRepositoryId, lastModifiedDate,
-							lastSynchronizedArtifactId, version,
-							isIgnoreConnectorUserUpdates() ? this.getUsername() : "");
+							lastSynchronizedArtifactId, version);
 				} catch (RemoteException e) {
 					String cause = "During the changed artifacts retrieval process from TF, an exception occured";
 					log.error(cause, e);
 					throw new CCFRuntimeException(cause, e);
 				}
 				if (artifactRows != null) {
-					for (ArtifactDO artifact : artifactRows) {
+					for (ArtifactDetailRow artifact : artifactRows) {
 						String artifactId = artifact.getId();
 						ArtifactState artifactState = new ArtifactState();
 						artifactState.setArtifactId(artifactId);
@@ -582,8 +629,7 @@ public class TFReader extends AbstractReader<Connection> {
 					List<PlanningFolderDO> artifactRows = null;
 					try {
 						artifactRows = trackerHandler.getChangedPlanningFolders(connection, sourceRepositoryId, lastModifiedDate,
-								lastSynchronizedArtifactId, version,
-								isIgnoreConnectorUserUpdates() ? this.getUsername() : "", project);
+								lastSynchronizedArtifactId, version, project);
 					} catch (RemoteException e) {
 						String cause = "During the changed planning folder retrieval process from TF, an exception occured";
 						log.error(cause, e);
