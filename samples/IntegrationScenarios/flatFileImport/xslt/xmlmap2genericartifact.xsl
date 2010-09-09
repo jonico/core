@@ -52,6 +52,14 @@
 			<xsl:attribute name="sourceSystemTimezone">unknown</xsl:attribute>
 			<!--						<xsl:attribute name="sourceSystemEncoding">unknown</xsl:attribute>-->
 			<xsl:attribute name="targetSystemTimezone">unknown</xsl:attribute>
+			<xsl:attribute name="sourceArtifactLastModifiedDate">unknown</xsl:attribute>
+			<xsl:attribute name="depParentSourceArtifactId">unknown</xsl:attribute>
+			<xsl:attribute name="depParentSourceRepositoryId">unknown</xsl:attribute>
+			<xsl:attribute name="depParentSourceRepositoryKind">unknown</xsl:attribute>
+			<xsl:attribute name="depParentTargetArtifactId">unknown</xsl:attribute>
+			<xsl:attribute name="depParentTargetRepositoryId">unknown</xsl:attribute>
+			<xsl:attribute name="depParentTargetRepositoryKind">unknown</xsl:attribute>
+			
 			<!--						<xsl:attribute name="targetSystemEncoding">unknown</xsl:attribute>-->
 			<!-- Constant fields -->
 			<!--<field>
