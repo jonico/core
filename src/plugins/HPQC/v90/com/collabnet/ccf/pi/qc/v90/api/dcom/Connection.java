@@ -22,6 +22,7 @@ import com.collabnet.ccf.pi.qc.v90.api.IBugFactory;
 import com.collabnet.ccf.pi.qc.v90.api.ICommand;
 import com.collabnet.ccf.pi.qc.v90.api.IConnection;
 import com.collabnet.ccf.pi.qc.v90.api.IHistory;
+import com.collabnet.ccf.pi.qc.v90.api.IRecordSet;
 import com.collabnet.ccf.pi.qc.v90.api.IRequirementsFactory;
 import com.jacob.activeX.ActiveXComponent;
 import com.jacob.com.Dispatch;
@@ -151,4 +152,70 @@ public class Connection extends ActiveXComponent implements IConnection
 			return userName;
 		}
 	}
+
+	private Boolean likeStatementStandardsCompliant = null;
+	/**
+	 * Determines whether SQL LIKE-statements are handled according to the SQL standard.
+	 * 
+	 * MS SQL (and MySQL) interprets square brackets in SQL like statements much like a shell.
+	 * Standard-compliant DBs (including Oracle and PostgreSQL) just treat them like regular
+	 * characters.
+	 * 
+	 * We rely on the table AUDIT_LOG being present and not empty,
+	 * because oracle would need "from dual" and mssql would need a query without a
+	 * from clause otherwise.
+	 */
+	@Override
+	public boolean isLikeStatementStandardsCompliant() {
+		if(likeStatementStandardsCompliant != null) {
+			return likeStatementStandardsCompliant.booleanValue();
+		}
+		IRecordSet rs = executeSQL("select 1 from audit_log where 'a' like '[abc]'");
+		likeStatementStandardsCompliant =  (rs != null && rs.getRecordCount() == 0);
+		return likeStatementStandardsCompliant.booleanValue();
+	}
+
+	//	if (log.isDebugEnabled()) {
+	//		log.debug("Going to execute SQL statement " + sql);
+	//	}
+		public IRecordSet executeSQL(String sql) {
+			ICommand command = null;
+			try {
+				command = getCommand();
+				command.setCommandText(sql);
+				IRecordSet rs = command.execute();
+				return rs;
+			} finally {
+				command = null;
+			}
+		}
+
+		/**
+		 * This functions modifies a string that still contains special characters
+		 * in a format that it can be put into an SQL LIKE query
+		 * This method is necessary because we cannot use prepared statements for the
+		 * HP QC COM API.
+		 *
+		 * Security: The method must escape dangerous characters to prevent SQL injection attacks.
+		 * Unfortunately, we do not know the underlying data base so that we can only
+		 * guess all dangerous characters.
+		 *
+		 * @param unsanitizedString String that still contains special character
+		 * that may conflict with our SQL statement
+		 * @param escapeCharacter character that should be used to escape dangerous characters
+		 * @return sanitized string ready to use within an SQL LIKE statement
+		 */
+		public String sanitizeStringForSQLLikeQuery(String unsanitizedString, String escapeCharacter) {
+			// TODO Find a more performant way for string substitution
+			unsanitizedString=unsanitizedString.replace(escapeCharacter,escapeCharacter+escapeCharacter);
+			unsanitizedString=unsanitizedString.replace("'","''");
+			String[] escapeStrings = isLikeStatementStandardsCompliant() ?
+				new String[]{"%", "_"} :
+				new String[]{"%", "_", "[", "]"};
+			for (String s: escapeStrings) {
+				unsanitizedString = unsanitizedString.replace(s, escapeCharacter + s);
+			}
+			return unsanitizedString;
+		}
+
 }

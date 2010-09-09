@@ -34,4 +34,7 @@ public interface IConnection extends ILifeCycle {
     public IHistory getHistory();
 	void disconnect();
 	public String getUsername();
+	public boolean isLikeStatementStandardsCompliant();
+	public IRecordSet executeSQL(String sql);
+	public String sanitizeStringForSQLLikeQuery(String unsanitizedString, String escapeCharacter);
 }

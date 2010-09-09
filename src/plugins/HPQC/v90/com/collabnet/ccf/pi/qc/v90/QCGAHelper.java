@@ -36,8 +36,8 @@ import org.apache.commons.logging.LogFactory;
 import com.collabnet.ccf.core.CCFRuntimeException;
 import com.collabnet.ccf.core.utils.DateUtil;
 import com.collabnet.ccf.pi.qc.v90.api.IBug;
-import com.collabnet.ccf.pi.qc.v90.api.IConnection;
 import com.collabnet.ccf.pi.qc.v90.api.IBugFactory;
+import com.collabnet.ccf.pi.qc.v90.api.IConnection;
 import com.collabnet.ccf.pi.qc.v90.api.IFactoryList;
 import com.collabnet.ccf.pi.qc.v90.api.IFilter;
 import com.collabnet.ccf.pi.qc.v90.api.IRecordSet;
@@ -243,7 +243,7 @@ public class QCGAHelper {
 		String fieldValue = null;
 		Date createdOn = new Date();
 		try {
-			rs = QCHandler.executeSQL(qcc, sql);
+			rs = qcc.executeSQL( sql);
 			int rc = rs.getRecordCount();
 
 			for (int cnt = 0; cnt < rc; cnt++, rs.next()) {
@@ -280,7 +280,7 @@ public class QCGAHelper {
 				+ "' AND AU_ACTION!='DELETE' AND AU_ENTITY_ID='" + entityId + "'";
 		IRecordSet newRs = null;
 		try {
-			newRs = QCHandler.executeSQL(qcc, sql);
+			newRs = qcc.executeSQL( sql);
 			String auTime = newRs.getFieldValueAsString("AU_TIME");
 			return auTime;
 		}
@@ -306,10 +306,10 @@ public class QCGAHelper {
 
 		List<String> attachmentDetails = null;
 		String sql = "SELECT CR_REF_ID, CR_REF_TYPE, CR_DESCRIPTION FROM CROS_REF WHERE CR_KEY_1='"
-				+ entityId + "' AND CR_REFERENCE like '%" + sanitizeStringForSQLLikeQuery(attachmentName,"\\") + "%' ESCAPE '\\'";
+				+ entityId + "' AND CR_REFERENCE like '%" + qcc.sanitizeStringForSQLLikeQuery(attachmentName,"\\") + "%' ESCAPE '\\'";
 		IRecordSet newRs = null;
 		try {
-			newRs = QCHandler.executeSQL(qcc, sql);
+			newRs = qcc.executeSQL( sql);
 			if (newRs != null && newRs.getRecordCount() != 0) {
 				attachmentDetails = new ArrayList<String>();
 				String crRefId = newRs.getFieldValueAsString("CR_REF_ID");
@@ -329,38 +329,14 @@ public class QCGAHelper {
 		return attachmentDetails;
 	}
 
-	/**
-	 * This functions modifies a string that still contains special characters
-	 * in a format that it can be put into an SQL LIKE query
-	 * This method is necessary because we cannot use prepared statements for the
-	 * HP QC COM API.
-	 *
-	 * Security: The method must escape dangerous characters to prevent SQL injection attacks.
-	 * Unfortunately, we do not know the underlying data base so that we can only
-	 * guess all dangerous characters.
-	 *
-	 * @param unsanitizedString String that still contains special character
-	 * that may conflict with our SQL statement
-	 * @param escapeCharacter character that should be used to escape dangerous characters
-	 * @return sanitized string ready to use within an SQL LIKE statement
-	 */
-	public static String sanitizeStringForSQLLikeQuery(String unsanitizedString, String escapeCharacter) {
-		// TODO Find a more performant way for string substitution
-		unsanitizedString=unsanitizedString.replace(escapeCharacter,escapeCharacter+escapeCharacter);
-		unsanitizedString=unsanitizedString.replace("%",escapeCharacter+"%");
-		unsanitizedString=unsanitizedString.replace("_",escapeCharacter+"_");
-		unsanitizedString=unsanitizedString.replace("'","''");
-		return unsanitizedString;
-	}
-
 	public String getDeletedAttachmentId(IConnection qcc, String entityId,
 			String attachmentName, String deleteTransactionId) {
 
 		String attachmentId = null;
-		String sql = "SELECT AU_ENTITY_ID FROM AUDIT_LOG WHERE AU_FATHER_ID="+ deleteTransactionId +" AND AU_ENTITY_TYPE='CROS_REF' AND AU_DESCRIPTION LIKE '%"+sanitizeStringForSQLLikeQuery(attachmentName,"\\")+"' ESCAPE '\\'";
+		String sql = "SELECT AU_ENTITY_ID FROM AUDIT_LOG WHERE AU_FATHER_ID="+ deleteTransactionId +" AND AU_ENTITY_TYPE='CROS_REF' AND AU_DESCRIPTION LIKE '%"+qcc.sanitizeStringForSQLLikeQuery(attachmentName,"\\")+"' ESCAPE '\\'";
 		IRecordSet newRs = null;
 		try {
-			newRs = QCHandler.executeSQL(qcc, sql);
+			newRs = qcc.executeSQL( sql);
 			if (newRs != null && newRs.getRecordCount() != 0) {
 				attachmentId = newRs.getFieldValueAsString("AU_ENTITY_ID");
 			}
@@ -407,7 +383,7 @@ public class QCGAHelper {
 				+ txnId + "' order by au_action_id desc";
 		IRecordSet newRs = null;
 		try {
-			newRs = QCHandler.executeSQL(qcc, sql);
+			newRs = qcc.executeSQL( sql);
 			int newRc = newRs.getRecordCount();
 			log.debug("In QCHandler.getTxnIdAndAuDescriptionForDefect, sql=" + sql);
 			if(newRc>0) {
@@ -490,7 +466,7 @@ public class QCGAHelper {
 				+ txnId + "' order by au_action_id desc";
 		IRecordSet newRs = null;
 		try {
-			newRs = QCHandler.executeSQL(qcc, sql);
+			newRs = qcc.executeSQL( sql);
 			int newRc = newRs.getRecordCount();
 			log.debug("In QCHandler.getTxnIdAndAuDescriptionForRequirement, sql=" + sql);
 			if(newRc>0) {
