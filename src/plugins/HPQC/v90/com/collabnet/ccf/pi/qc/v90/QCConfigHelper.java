@@ -37,6 +37,7 @@ import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactField.FieldValueTypeValue;
 import com.collabnet.ccf.pi.qc.v90.api.IConnection;
 import com.collabnet.ccf.pi.qc.v90.api.IRecordSet;
+import com.collabnet.ccf.pi.qc.v90.api.dcom.Connection;
 
 /**
  * @author madan@collab.net
@@ -169,7 +170,7 @@ public class QCConfigHelper {
 			joinedFields = new ArrayList<JoinedField>();
 			IRecordSet rs = null;
 			try {
-				rs = QCHandler.executeSQL(qcc, sql);
+				rs = qcc.executeSQL( sql);
 				int rc = rs.getRecordCount();
 				for (int cnt = 0; cnt < rc; cnt++, rs.next()) {
 					String colName = rs.getFieldValueAsString(sfColumnName);
@@ -213,7 +214,7 @@ public class QCConfigHelper {
 
 			String sql = "SELECT " + f.childDisplayCol() + " FROM "
 					+ f.childTable();
-			rs = QCHandler.executeSQL(qcc, sql);
+			rs = qcc.executeSQL( sql);
 			//String id = rs.getFieldValueAsString(f.childIdCol());
 			if (rs != null)  {
 				int count = rs.getRecordCount();
@@ -266,7 +267,7 @@ public class QCConfigHelper {
 				String sql = "SELECT " + f.childIdCol() + " FROM "
 						+ f.childTable() + " WHERE " + f.childDisplayCol()
 						+ " = '" + displayValue + "'";
-				rs = QCHandler.executeSQL(qcc, sql);
+				rs = qcc.executeSQL( sql);
 				id = rs.getFieldValueAsString(f.childIdCol());
 			} finally {
 				if (rs != null)
@@ -356,7 +357,7 @@ public class QCConfigHelper {
 				fieldValueType);
 		IRecordSet rs = null;
 		try {
-			rs = QCHandler.executeSQL(connection, sql);
+			rs = connection.executeSQL( sql);
 			int rc = rs.getRecordCount();
 			for (int cnt = 0; cnt < rc; cnt++, rs.next()) {
 				String columnName = rs.getFieldValueAsString(sfColumnName);
@@ -522,7 +523,7 @@ public class QCConfigHelper {
 		GenericArtifact genericArtifact = null;
 		IRecordSet rs = null;
 		try {
-			rs = QCHandler.executeSQL(qcc, sql);
+			rs = qcc.executeSQL( sql);
 			int rc = rs.getRecordCount();
 			genericArtifact = new GenericArtifact();
 			for (int cnt = 0; cnt < rc; cnt++, rs.next()) {
@@ -605,7 +606,7 @@ public class QCConfigHelper {
 		GenericArtifact genericArtifact = null;
 		IRecordSet rs = null;
 		try {
-			rs = QCHandler.executeSQL(qcc, sql);
+			rs = qcc.executeSQL( sql);
 			int rc = rs.getRecordCount();
 			genericArtifact = new GenericArtifact();
 			for(int cnt = 0 ; cnt < rc ; cnt++, rs.next())

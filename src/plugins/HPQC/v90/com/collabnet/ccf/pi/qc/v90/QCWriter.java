@@ -334,7 +334,7 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 				sql = "select AU_TIME, AU_ACTION_ID from audit_log where au_entity_id = '"
 						+ defectId
 						+ "' and au_entity_type='CROS_REF' and au_description like '%"
-						+ QCGAHelper.sanitizeStringForSQLLikeQuery(
+						+ qcc.sanitizeStringForSQLLikeQuery(
 								attachmentName, "\\")
 						+ "' ESCAPE '\\' and au_father_id != '-1' order by au_action_id desc";
 			}
@@ -342,7 +342,7 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 
 		IRecordSet newRs = null;
 		try {
-			newRs = QCHandler.executeSQL(qcc, sql);
+			newRs = qcc.executeSQL( sql);
 			int newRc = newRs.getRecordCount();
 			log
 					.debug("In QCDefectHandler.getTxnIdAndAuDescription, sql="
@@ -403,10 +403,11 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 						+ requirementId
 						+ "' and au_entity_type='CROS_REF' and au_father_id != '-1' order by au_action_id desc";
 			} else {
+				//List<String>stringsToEscape = qcc.isLikeStatementStandardsCompliant() ? Arrays.asList("%", "_");
 				sql = "select AU_TIME, AU_ACTION_ID from audit_log where au_entity_id = '"
 						+ requirementId
 						+ "' and au_entity_type='CROS_REF' and au_description like '%"
-						+ QCGAHelper.sanitizeStringForSQLLikeQuery(
+						+ qcc.sanitizeStringForSQLLikeQuery(
 								attachmentName, "\\")
 						+ "' ESCAPE '\\' and au_father_id != '-1' order by au_action_id desc";
 			}
@@ -414,7 +415,7 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 
 		IRecordSet newRs = null;
 		try {
-			newRs = QCHandler.executeSQL(qcc, sql);
+			newRs = qcc.executeSQL( sql);
 			int newRc = newRs.getRecordCount();
 			log
 					.debug("In QCDefectHandler.getTxnIdAndAuDescription, sql="

@@ -42,9 +42,8 @@ import com.collabnet.ccf.core.utils.DateUtil;
 import com.collabnet.ccf.core.utils.GATransformerUtil;
 import com.collabnet.ccf.pi.qc.v90.api.DefectAlreadyLockedException;
 import com.collabnet.ccf.pi.qc.v90.api.IBug;
-import com.collabnet.ccf.pi.qc.v90.api.ICommand;
-import com.collabnet.ccf.pi.qc.v90.api.IConnection;
 import com.collabnet.ccf.pi.qc.v90.api.IBugFactory;
+import com.collabnet.ccf.pi.qc.v90.api.IConnection;
 import com.collabnet.ccf.pi.qc.v90.api.IFactoryList;
 import com.collabnet.ccf.pi.qc.v90.api.IFilter;
 import com.collabnet.ccf.pi.qc.v90.api.IRecordSet;
@@ -74,26 +73,11 @@ public class QCHandler {
 	private final static String QC_RQ_VTS = "RQ_VTS";
 	private final static String UNDERSCORE_STRING = "<font color=\"#000080\"><b>________________________________________</b></font>";
 
-	public static IRecordSet executeSQL(IConnection qcc, String sql) {
-		ICommand command = null;
-		if (log.isDebugEnabled()) {
-			log.debug("Going to execute SQL statement " + sql);
-		}
-		try {
-			command = qcc.getCommand();
-			command.setCommandText(sql);
-			IRecordSet rs = command.execute();
-			return rs;
-		} finally {
-			command = null;
-		}
-	}
-
-	public static String getRequirementTypeTechnicalId(IConnection qcc,
+public static String getRequirementTypeTechnicalId(IConnection qcc,
 			String requirementTypeName) {
 		IRecordSet rs = null;
 		try {
-			rs = executeSQL(qcc,
+			rs = qcc.executeSQL(
 					"SELECT TPR_TYPE_ID FROM REQ_TYPE WHERE TPR_NAME = '"
 							+ requirementTypeName + "'");
 			if (rs.getRecordCount() != 1) {
@@ -596,7 +580,7 @@ public class QCHandler {
 				artifactTypeString(isDefect));
 		IRecordSet rs = null;
 		try {
-			rs = executeSQL(qcc, sql);
+			rs = qcc.executeSQL(sql);
 		} finally {
 			if (rs != null) {
 				rs.safeRelease();
@@ -614,7 +598,7 @@ public class QCHandler {
 				artifactTypeString(isDefect));
 		IRecordSet rs = null;
 		try {
-			rs = executeSQL(qcc, sql);
+			rs = qcc.executeSQL( sql);
 		} catch (Exception e) {
 			deleteStaleMovedLock(qcc, artifactId, isDefect);
 		} finally {
@@ -637,7 +621,7 @@ public class QCHandler {
 				artifactTypeString(isDefect));
 		IRecordSet rs = null;
 		try {
-			rs = executeSQL(qcc, sql);
+			rs = qcc.executeSQL( sql);
 		} finally {
 			if (rs != null) {
 				rs.safeRelease();
@@ -651,7 +635,7 @@ public class QCHandler {
 		// retrieving user who locked the bug
 		IRecordSet rs = null;
 		try {
-			rs = executeSQL(qcc, String.format(
+			rs = qcc.executeSQL( String.format(
 					"SELECT LK_USER FROM LOCKS WHERE LK_OBJECT_KEY = '%s' AND LK_OBJECT_TYPE = '%s'",
 					artifactId,
 					artifactTypeString(isDefect)));
@@ -860,7 +844,7 @@ public class QCHandler {
 		HashMap<String, ArtifactState> artifactIdStateMap = new HashMap<String, ArtifactState>();
 		IRecordSet rs = null;
 		try {
-			rs = executeSQL(qcc, sql);
+			rs = qcc.executeSQL( sql);
 			if (rs != null)
 				rc = rs.getRecordCount();
 
@@ -1167,7 +1151,7 @@ public class QCHandler {
 				+ entityId + "'";
 		IRecordSet newRs = null;
 		try {
-			newRs = executeSQL(qcc, sql);
+			newRs = qcc.executeSQL( sql);
 			log.debug("The SQL query in getTransactionIdsInRangeForDefects::"
 					+ sql);
 			int newRc = newRs.getRecordCount();
@@ -1204,7 +1188,7 @@ public class QCHandler {
 				+ entityId + "'";
 		IRecordSet newRs = null;
 		try {
-			newRs = executeSQL(qcc, sql);
+			newRs = qcc.executeSQL( sql);
 			log
 					.debug("The SQL query in getTransactionIdsInRangeForRequirements::"
 							+ sql);
@@ -1236,7 +1220,7 @@ public class QCHandler {
 		}
 		sql.append(")");
 		log.debug("New SQL in getDeltaOfComment is:" + sql);
-		IRecordSet newRs = executeSQL(qcc, sql.toString());
+		IRecordSet newRs = qcc.executeSQL( sql.toString());
 		return newRs;
 	}
 
@@ -1469,7 +1453,7 @@ public class QCHandler {
 		HashMap<String, ArtifactState> artifactIdStateMap = new HashMap<String, ArtifactState>();
 		IRecordSet rs = null;
 		try {
-			rs = executeSQL(qcc, sql);
+			rs = qcc.executeSQL( sql);
 			if (rs != null)
 				rc = rs.getRecordCount();
 
