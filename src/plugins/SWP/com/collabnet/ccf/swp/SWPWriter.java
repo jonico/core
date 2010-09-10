@@ -20,6 +20,7 @@ import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
+import com.collabnet.ccf.core.utils.Obfuscator;
 import com.collabnet.ccf.core.utils.XPathUtils;
 import com.collabnet.ccf.swp.SWPMetaData.PBIFields;
 import com.collabnet.ccf.swp.SWPMetaData.SWPType;
@@ -527,7 +528,7 @@ public class SWPWriter extends AbstractWriter<Connection> implements
 	 * @param password
 	 */
 	public void setPassword(String password) {
-		this.password = password;
+		this.password = Obfuscator.deObfuscatePassword(password);
 	}
 
 	/**
@@ -581,7 +582,7 @@ public class SWPWriter extends AbstractWriter<Connection> implements
 	 * @param resyncPassword
 	 */
 	public void setResyncPassword(String resyncPassword) {
-		this.resyncPassword = resyncPassword;
+		this.resyncPassword = Obfuscator.deObfuscatePassword(resyncPassword);
 	}
 
 	/**

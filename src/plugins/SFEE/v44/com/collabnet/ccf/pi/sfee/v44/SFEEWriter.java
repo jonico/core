@@ -45,6 +45,7 @@ import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
 import com.collabnet.ccf.core.ga.GenericArtifactField.FieldValueTypeValue;
 import com.collabnet.ccf.core.utils.DateUtil;
+import com.collabnet.ccf.core.utils.Obfuscator;
 import com.collabnet.ccf.core.utils.XPathUtils;
 import com.collabnet.ccf.pi.sfee.v44.meta.ArtifactMetaData;
 import com.vasoftware.sf.soap44.webservices.sfmain.TrackerFieldSoapDO;
@@ -935,7 +936,7 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 	 *            the resyncPassword to set
 	 */
 	public void setResyncPassword(String resyncPassword) {
-		this.resyncPassword = resyncPassword;
+		this.resyncPassword = Obfuscator.deObfuscatePassword(resyncPassword);
 	}
 
 	/**
@@ -963,7 +964,7 @@ public class SFEEWriter extends AbstractWriter<Connection> implements
 	 *            the password to set
 	 */
 	public void setPassword(String password) {
-		this.password = password;
+		this.password = Obfuscator.deObfuscatePassword(password);
 	}
 
 	/**

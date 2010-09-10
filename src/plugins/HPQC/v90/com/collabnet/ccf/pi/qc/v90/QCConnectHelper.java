@@ -26,6 +26,7 @@ import org.openadaptor.core.exception.ValidationException;
 import org.openadaptor.core.lifecycle.LifecycleComponent;
 
 import com.collabnet.ccf.core.eis.connection.ConnectionException;
+import com.collabnet.ccf.core.utils.Obfuscator;
 import com.collabnet.ccf.pi.qc.v90.api.ConnectionFactory;
 import com.collabnet.ccf.pi.qc.v90.api.IConnection;
 
@@ -197,7 +198,7 @@ public abstract class QCConnectHelper extends LifecycleComponent {
 	}
 
 	public void setPassword(String password) {
-		this.password = password;
+		this.password = Obfuscator.deObfuscatePassword(password);
 	}
 
 	public String getPassword() {

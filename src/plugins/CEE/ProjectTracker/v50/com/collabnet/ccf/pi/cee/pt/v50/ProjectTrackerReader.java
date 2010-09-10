@@ -54,6 +54,7 @@ import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.utils.CollectionUtils;
 import com.collabnet.ccf.core.utils.DateUtil;
+import com.collabnet.ccf.core.utils.Obfuscator;
 import com.collabnet.core.ws.exception.WSException;
 import com.collabnet.tracker.common.ClientArtifact;
 import com.collabnet.tracker.common.ClientArtifactAttachment;
@@ -1520,7 +1521,7 @@ public class ProjectTrackerReader extends
 	 *            the password to set
 	 */
 	public void setPassword(String password) {
-		this.password = password;
+		this.password = Obfuscator.deObfuscatePassword(password);
 	}
 
 	/**
