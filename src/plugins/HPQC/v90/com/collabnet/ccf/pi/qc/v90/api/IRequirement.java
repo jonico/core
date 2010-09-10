@@ -29,7 +29,7 @@ public interface IRequirement extends ILifeCycle {
 	public void createNewAttachment(String fileName, int type);
 	public void createNewAttachment(String filename, String description, int type);
 	public IAttachmentFactory getAttachmentFactory();
-	public File retrieveAttachmentData(String attachmentName);
+	public File retrieveAttachmentData(String attachmentName, long delayBeforeAttachmentDownload);
 	boolean hasAttachments();
 	
 	public String getFieldAsString(String field);

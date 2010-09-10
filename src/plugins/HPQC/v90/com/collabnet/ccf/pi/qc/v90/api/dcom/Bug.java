@@ -31,7 +31,7 @@ import com.collabnet.ccf.pi.qc.v90.api.AttachmentUploadStillInProgressException;
 import com.collabnet.ccf.pi.qc.v90.api.DefectAlreadyLockedException;
 import com.collabnet.ccf.pi.qc.v90.api.IAttachment;
 import com.collabnet.ccf.pi.qc.v90.api.IAttachmentFactory;
-import com.collabnet.ccf.pi.qc.v90.api.IBugActions;
+import com.collabnet.ccf.pi.qc.v90.api.IBug;
 import com.collabnet.ccf.pi.qc.v90.api.IFactoryList;
 import com.collabnet.ccf.pi.qc.v90.api.IFilter;
 import com.jacob.activeX.ActiveXComponent;
@@ -39,13 +39,15 @@ import com.jacob.com.DateUtilities;
 import com.jacob.com.Dispatch;
 import com.jacob.com.Variant;
 
-public class Bug extends ActiveXComponent implements IBugActions {
+public class Bug extends ActiveXComponent implements IBug {
 	/**
 	 *
 	 */
 	private static final long serialVersionUID = 1L;
 	public static Logger logger = Logger.getLogger(Bug.class);
 	public static ConcurrentHashMap<String, Integer> attachmentRetryCount = new ConcurrentHashMap<String, Integer>();
+	
+	private boolean alwaysReloadAttachmentSize = false;
 
 	public Bug(Dispatch arg0) {
 		super(arg0);
@@ -232,7 +234,7 @@ public class Bug extends ActiveXComponent implements IBugActions {
 		return att;
 	}
 
-	public File retrieveAttachmentData(String attachmentName) {
+	public File retrieveAttachmentData(String attachmentName, long delayBeforeDownloadingAttachment) {
 		// int maxAttachmentUploadWaitCount = 10;
 		// int waitCount = 0;
 		IFilter filter = new AttachmentFactory(getPropertyAsComponent("Attachments")).getFilter();
@@ -248,18 +250,21 @@ public class Bug extends ActiveXComponent implements IBugActions {
 			attachmentRetryCount.put(attachmentKey, retryCount);
 			
 			
-			int size = Dispatch.get(item, "FileSize").getInt();
+			int size = Dispatch.get(item, "FileSize").getInt(); // FIXME: should this be getLong?
 			// Dispatch.get(item, "Data");
+			try {
+				logger.debug("waiting for "+delayBeforeDownloadingAttachment+"ms before downloading "+attachmentName+".");
+				Thread.sleep(delayBeforeDownloadingAttachment);
+			} catch (InterruptedException e) {
+			}
 			logger.info("Going to load attachment " + attachmentName + ", expected file size: " + size);
-			
-			// treat zero sized files like file not found but only do 7 retries at most in order to avoid
-			// issues with "real" zero sized attachments
-			boolean maxRetryCountReached = retryCount >= (size == 0 ? 7 : 10);
-			
 			Dispatch.call(item, "Load", true, "");
 			logger.debug("Attachment " + attachmentName + " has been read.");
 			File attachmentFile = new File(fileName);
 
+			// treat zero sized files like file not found but only do 7 retries at most in order to avoid
+			// issues with "real" zero sized attachments
+			boolean maxRetryCountReached = retryCount >= (size == 0 ? 7 : 10);
 			if (!attachmentFile.exists() || (attachmentFile.length() == 0 && !maxRetryCountReached)) {
 				/*
 				 * If an attachment is still being uploaded when CCF tries to retrieve it,
@@ -423,6 +428,14 @@ public class Bug extends ActiveXComponent implements IBugActions {
 		}
         return val;
     }
+
+	public void setAlwaysReloadAttachmentSize(boolean alwaysReloadAttachmentSize) {
+		this.alwaysReloadAttachmentSize = alwaysReloadAttachmentSize;
+	}
+
+	public boolean isAlwaysReloadAttachmentSize() {
+		return alwaysReloadAttachmentSize;
+	}
 
     
 	// public List<AttachmentData> getAttachmentData() {

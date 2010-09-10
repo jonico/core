@@ -66,6 +66,14 @@ public class QCReader extends AbstractReader<IConnection> {
 
 	private boolean comInitialized = false;
 
+	/**
+	 * Because QC sometimes reports incorrect attachment sizes if the attachment
+	 * upload is still in progress, this property introduces a delay (in
+	 * milliseconds, zero by default) before the attachment is downloaded. If
+	 * you experience partial attachment downloads, please increase this value.
+	 */
+	private long delayBeforeAttachmentDownload = 0;
+	
 	public QCReader() {
 		super();
 		// register clean up routine
@@ -709,6 +717,7 @@ public class QCReader extends AbstractReader<IConnection> {
 		if (exceptions.size() == 0) {
 			defectHandler = new QCHandler();
 			attachmentHandler = new QCAttachmentHandler();
+			attachmentHandler.setDelayBeforeAttachmentDownload(getDelayBeforeAttachmentDownload());
 			qcGAHelper = new QCGAHelper();
 		}
 	}
@@ -965,6 +974,27 @@ public class QCReader extends AbstractReader<IConnection> {
 	 */
 	public int getCountBeforeCOMReinitialization() {
 		return countBeforeCOMReinitialization;
+	}
+
+	/**
+	 * Because QC sometimes reports incorrect attachment sizes if the attachment
+	 * upload is still in progress, this property introduces a delay (in
+	 * milliseconds, zero by default) before the attachment is downloaded. If
+	 * you experience partial attachment downloads, please increase this value.
+	 */
+	public void setDelayBeforeAttachmentDownload(
+			long delayBeforeAttachmentDownload) {
+		this.delayBeforeAttachmentDownload = delayBeforeAttachmentDownload;
+	}
+
+	/**
+	 * Because QC sometimes reports incorrect attachment sizes if the attachment
+	 * upload is still in progress, this property introduces a delay (in
+	 * milliseconds, zero by default) before the attachment is downloaded. If
+	 * you experience partial attachment downloads, please increase this value.
+	 */
+	public long getDelayBeforeAttachmentDownload() {
+		return delayBeforeAttachmentDownload;
 	}
 
 	private boolean ignoreConnectorUserUpdates = true;

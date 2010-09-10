@@ -18,7 +18,6 @@
 package com.collabnet.ccf.pi.qc.v90;
 
 import com.collabnet.ccf.core.ga.GenericArtifact;
-import com.collabnet.ccf.pi.qc.v90.api.IBug;
 import com.collabnet.ccf.pi.qc.v90.api.IConnection;
 import com.collabnet.ccf.pi.qc.v90.api.IRequirement;
 
