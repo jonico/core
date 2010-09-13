@@ -307,7 +307,7 @@
 		</property>
 	</bean>
 	
-	<bean id="HospitalJdbcConnection" class="org.openadaptor.auxil.connector.jdbc.JDBCConnection" scope="prototype">
+	<bean id="HospitalJdbcConnection" class="com.collabnet.ccf.core.db.JDBCConnection" scope="prototype">
     	<description>This defines the jdbc connection for the hospital.</description>
     	<property name="driver" value="${ccf.db.driver}" />
 		<property name="url" value="${ccf.db.url}" />
@@ -502,7 +502,7 @@
 	the identity mapping and synchronization status tables
 	 -->
 	<bean id="JDBCConnection"
-		class="org.openadaptor.auxil.connector.jdbc.JDBCConnection" scope="prototype">
+		class="com.collabnet.ccf.core.db.JDBCConnection" scope="prototype">
 		<description>
 			This defines jdbc connection that will be used by
 			the components on the main processing pipeline

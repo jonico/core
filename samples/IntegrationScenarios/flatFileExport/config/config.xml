@@ -112,7 +112,7 @@ $HeadURL$
 	</bean>
 	
 	<bean id="HospitalJDBCConnection"
-		class="org.openadaptor.auxil.connector.jdbc.JDBCConnection" scope="prototype">
+		class="com.collabnet.ccf.core.db.JDBCConnection" scope="prototype">
 		<description>
 			This defines jdbc connection that will be used by the
 			HospitalWriter
@@ -157,7 +157,7 @@ $HeadURL$
 		</property>
 	</bean>
 	<bean id="JDBCConnection"
-		class="org.openadaptor.auxil.connector.jdbc.JDBCConnection" scope="prototype">
+		class="com.collabnet.ccf.core.db.JDBCConnection" scope="prototype">
 		<description>
 			This defines jdbc connection that will be used by the
 			SynchronizationStatusPollingReader

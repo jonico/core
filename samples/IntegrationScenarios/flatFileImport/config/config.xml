@@ -238,7 +238,7 @@ artifacts data from a CSV file into an TF tracker.
   	</bean>
   	
   	-->
-  	<bean id="jdbcConnection" class="org.openadaptor.auxil.connector.jdbc.JDBCConnection" scope="prototype">
+  	<bean id="jdbcConnection" class="com.collabnet.ccf.core.db.JDBCConnection" scope="prototype">
     <description>This defines the jdbc connection for the hospital.</description>
     <property name="driver" value="${ccf.db.driver}" />
 	<property name="url" value="${ccf.db.url}" />

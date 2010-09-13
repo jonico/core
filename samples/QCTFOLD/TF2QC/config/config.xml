@@ -132,7 +132,7 @@
 	</bean>
 
     <bean id="HospitalJDBCConnection"
-		class="org.openadaptor.auxil.connector.jdbc.JDBCConnection" scope="prototype">
+		class="com.collabnet.ccf.core.db.JDBCConnection" scope="prototype">
 		<description>
 			This defines jdbc connection that will be used by the
 			HospitalWriter
@@ -258,7 +258,7 @@
 	</bean>
 
 	<bean id="JdbcConnectionTF2QC"
-		class="org.openadaptor.auxil.connector.jdbc.JDBCConnection" scope="prototype">
+		class="com.collabnet.ccf.core.db.JDBCConnection" scope="prototype">
 		<description>
 			This defines a jdbc connection that will be used
 			by all components that read from QC and write to TF

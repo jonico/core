@@ -118,7 +118,7 @@
 			</bean>
 		</property>
 	</bean>
-	<bean id="HospitalJDBCConnection" class="org.openadaptor.auxil.connector.jdbc.JDBCConnection"
+	<bean id="HospitalJDBCConnection" class="com.collabnet.ccf.core.db.JDBCConnection"
 		scope="prototype">
 		<description>
 			This defines jdbc connection that will be used by the
@@ -351,7 +351,7 @@
 			<value>SELECT ID, SOURCE_LAST_MODIFICATION_TIME, SOURCE_ARTIFACT_VERSION FROM HOSPITAL WHERE SOURCE_SYSTEM_ID='?' AND SOURCE_REPOSITORY_ID='?' AND TARGET_SYSTEM_ID='?' AND TARGET_REPOSITORY_ID='?' AND SOURCE_ARTIFACT_ID='?' AND ARTIFACT_TYPE='?' AND REPROCESSED != TRUE AND FIXED != TRUE AND ERROR_CODE IS NOT NULL</value>
 		</property>
 	</bean>
-	<bean id="JdbcConnectionQC2TF" class="org.openadaptor.auxil.connector.jdbc.JDBCConnection"
+	<bean id="JdbcConnectionQC2TF" class="com.collabnet.ccf.core.db.JDBCConnection"
 		scope="prototype">
 		<description>
 			This defines a jdbc connection that will be used
