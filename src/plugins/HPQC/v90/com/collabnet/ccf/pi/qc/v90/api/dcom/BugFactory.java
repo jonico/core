@@ -55,12 +55,14 @@ public class BugFactory extends ActiveXComponent implements IBugFactory
 
     public IBug getItem(String key) {
         Variant res = Dispatch.call(this, "Item", key);
-        return new Bug(res.getDispatch());
+        Bug bug = new Bug(res.getDispatch());
+        return bug;
 	}
     
     public IBug addItem(String item) {
         Variant res = Dispatch.call(this, "AddItem", item);
-        return new Bug(res.getDispatch());
+        Bug bug = new Bug(res.getDispatch());
+        return bug;
     }
     
     public void removeItem(String item) {

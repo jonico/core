@@ -34,7 +34,7 @@ import com.collabnet.ccf.pi.qc.v90.api.IAttachment;
 import com.collabnet.ccf.pi.qc.v90.api.IAttachmentFactory;
 import com.collabnet.ccf.pi.qc.v90.api.IFactoryList;
 import com.collabnet.ccf.pi.qc.v90.api.IFilter;
-import com.collabnet.ccf.pi.qc.v90.api.IRequirementsActions;
+import com.collabnet.ccf.pi.qc.v90.api.IRequirement;
 import com.collabnet.ccf.pi.qc.v90.api.IVersionControl;
 import com.jacob.activeX.ActiveXComponent;
 import com.jacob.com.DateUtilities;
@@ -42,7 +42,7 @@ import com.jacob.com.Dispatch;
 import com.jacob.com.Variant;
 
 public class Requirement extends ActiveXComponent implements
-		IRequirementsActions {
+		IRequirement {
 	/**
 	 *
 	 */
@@ -242,7 +242,7 @@ public class Requirement extends ActiveXComponent implements
 		return att;
 	}
 
-	public File retrieveAttachmentData(String attachmentName) {
+	public File retrieveAttachmentData(String attachmentName, long delayBeforeDownloadingAttachment) {
 		//int maxAttachmentUploadWaitCount = 10;
 		//int waitCount = 0;
 		IFilter filter = new AttachmentFactory(getPropertyAsComponent("Attachments")).getFilter();
@@ -259,15 +259,21 @@ public class Requirement extends ActiveXComponent implements
 			attachmentRetryCount.put(attachmentKey, retryCount);
 			int size = Dispatch.get(item, "FileSize").getInt();
 
+			try {
+				logger.debug("waiting for "+delayBeforeDownloadingAttachment+"ms before downloading "+attachmentName+".");
+				Thread.sleep(delayBeforeDownloadingAttachment);
+			} catch (InterruptedException e) {
+			}
 			logger.info("Going to load attachment " + attachmentName + " , expected file size: " + size);
-			// treat zero sized files like file not found but only do 7 retries at most in order to avoid
-			// issues with "real" zero sized attachments
-			boolean maxRetryCountReached = retryCount >= (size == 0 ? 7 : 10);
+
 			Dispatch.call(item, "Load", true, "");
 			// Dispatch.get(item, "Data");
 			logger.debug("Attachment " + attachmentName + " has been read.");
 			File attachmentFile = new File(fileName);
 			
+			// treat zero sized files like file not found but only do 7 retries at most in order to avoid
+			// issues with "real" zero sized attachments
+			boolean maxRetryCountReached = retryCount >= (size == 0 ? 7 : 10);
 			if (!attachmentFile.exists() || (attachmentFile.length() == 0 && !maxRetryCountReached)) {
 				/*
 				 * If an attachment is still being uploaded when CCF tries to retrieve it,
