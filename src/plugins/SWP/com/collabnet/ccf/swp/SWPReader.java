@@ -23,6 +23,7 @@ import com.collabnet.ccf.core.eis.connection.MaxConnectionsReachedException;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifact.ArtifactModeValue;
 import com.collabnet.ccf.core.ga.GenericArtifact.ArtifactTypeValue;
+import com.collabnet.ccf.core.utils.Obfuscator;
 import com.collabnet.ccf.swp.SWPMetaData.SWPType;
 import com.danube.scrumworks.api2.client.RevisionInfo;
 
@@ -716,7 +717,7 @@ public class SWPReader extends AbstractReader<Connection> {
 	 * @param password
 	 */
 	public void setPassword(String password) {
-		this.password = password;
+		this.password = Obfuscator.deObfuscatePassword(password);
 	}
 
 	/**

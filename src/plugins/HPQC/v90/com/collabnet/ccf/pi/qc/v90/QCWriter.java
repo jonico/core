@@ -42,6 +42,7 @@ import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
 import com.collabnet.ccf.core.utils.DateUtil;
+import com.collabnet.ccf.core.utils.Obfuscator;
 import com.collabnet.ccf.pi.qc.v90.api.DefectAlreadyLockedException;
 import com.collabnet.ccf.pi.qc.v90.api.IConnection;
 import com.collabnet.ccf.pi.qc.v90.api.IRecordSet;
@@ -1310,7 +1311,7 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 	 *            the password to set
 	 */
 	public void setPassword(String password) {
-		this.password = password;
+		this.password = Obfuscator.deObfuscatePassword(password);
 	}
 
 	/**
@@ -1375,7 +1376,7 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 	 *            the resyncPassword to set
 	 */
 	public void setResyncPassword(String resyncPassword) {
-		this.resyncPassword = resyncPassword;
+		this.resyncPassword = Obfuscator.deObfuscatePassword(resyncPassword);
 	}
 
 	/**

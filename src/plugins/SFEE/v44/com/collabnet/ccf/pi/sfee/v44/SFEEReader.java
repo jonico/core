@@ -40,6 +40,7 @@ import com.collabnet.ccf.core.eis.connection.ConnectionManager;
 import com.collabnet.ccf.core.eis.connection.MaxConnectionsReachedException;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
+import com.collabnet.ccf.core.utils.Obfuscator;
 import com.vasoftware.sf.soap44.webservices.sfmain.TrackerFieldSoapDO;
 import com.vasoftware.sf.soap44.webservices.tracker.ArtifactSoapDO;
 
@@ -559,7 +560,7 @@ public class SFEEReader extends AbstractReader<Connection> {
 	 *            the password to set
 	 */
 	public void setPassword(String password) {
-		this.password = password;
+		this.password = Obfuscator.deObfuscatePassword(password);
 	}
 
 	/**

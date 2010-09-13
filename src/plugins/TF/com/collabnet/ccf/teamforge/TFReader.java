@@ -40,6 +40,7 @@ import com.collabnet.ccf.core.eis.connection.ConnectionManager;
 import com.collabnet.ccf.core.eis.connection.MaxConnectionsReachedException;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
+import com.collabnet.ccf.core.utils.Obfuscator;
 import com.collabnet.teamforge.api.Connection;
 import com.collabnet.teamforge.api.planning.PlanningFolderDO;
 import com.collabnet.teamforge.api.tracker.ArtifactDO;
@@ -687,7 +688,7 @@ public class TFReader extends AbstractReader<Connection> {
 	 *            the password to set
 	 */
 	public void setPassword(String password) {
-		this.password = password;
+		this.password = Obfuscator.deObfuscatePassword(password);
 	}
 
 	/**

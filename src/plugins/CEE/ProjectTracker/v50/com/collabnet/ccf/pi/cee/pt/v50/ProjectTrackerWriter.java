@@ -53,6 +53,7 @@ import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
 import com.collabnet.ccf.core.ga.GenericArtifactField.FieldValueTypeValue;
 import com.collabnet.ccf.core.utils.DateUtil;
+import com.collabnet.ccf.core.utils.Obfuscator;
 import com.collabnet.core.ws.exception.WSException;
 import com.collabnet.tracker.common.ClientArtifact;
 import com.collabnet.tracker.common.ClientArtifactComment;
@@ -1340,7 +1341,7 @@ public class ProjectTrackerWriter extends
 	 *            the resyncPassword to set
 	 */
 	public void setResyncPassword(String resyncPassword) {
-		this.resyncPassword = resyncPassword;
+		this.resyncPassword = Obfuscator.deObfuscatePassword(resyncPassword);
 	}
 
 	/**
@@ -1368,7 +1369,7 @@ public class ProjectTrackerWriter extends
 	 *            the password to set
 	 */
 	public void setPassword(String password) {
-		this.password = password;
+		this.password = Obfuscator.deObfuscatePassword(password);
 	}
 
 	/**
