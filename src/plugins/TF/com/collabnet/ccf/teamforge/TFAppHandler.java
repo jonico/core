@@ -72,19 +72,10 @@ public class TFAppHandler {
 	 * @param connectorUser -
 	 *            The username that is configured to log into the TF to
 	 *            retrieve the artifact data.
+	 * @param resyncUser - 
+	 * 			  The resync user for CCF
 	 */
 	public void addComments(ArtifactDO artifact, Date lastModifiedDate,
-			String connectorUser, String resyncUser) {
-		List<ArtifactDO> artifactList = new ArrayList<ArtifactDO>();
-		artifactList.add(artifact);
-		this.addComments(artifactList, artifact, lastModifiedDate,
-				connectorUser, resyncUser);
-	}
-
-	// FIXME Is a comment a flex field or could we transport it using another
-	// field type
-	private void addComments(List<ArtifactDO> artifactHistory,
-			ArtifactDO artifact, Date lastModifiedDate,
 			String connectorUser, String resyncUser) {
 		try {
 			CommentList commentList = connection.getTeamForgeClient().getCommentList(artifact.getId());
@@ -104,24 +95,8 @@ public class TFAppHandler {
 					String description = comment.getDescription();
 					description = "\nOriginal commenter: " + createdBy + "\n"
 							+ description;
-					boolean commentSet = false;
-					for (ArtifactDO artifactDO : artifactHistory) {
-						// TODO If nothing is matching what will happen?
-						// if(artifactDO.getLastModifiedDate().after(createdDate)
-						// ||
-						// artifactDO.getLastModifiedDate().equals(createdDate)){
-						// TODO If more than one comment is added, How this will
-						// behave?
-						this.addComment(TFArtifactMetaData.TFFields.commentText
-								.getFieldName(), artifactDO, description);
-						commentSet = true;
-						break;
-						// }
-					}
-					if (!commentSet) {
-						log.error("Comment " + description
-								+ " Could not be set " + createdDate);
-					}
+					this.addComment(TFArtifactMetaData.TFFields.commentText
+							.getFieldName(), artifact, description);
 				}
 			}
 		} catch (RemoteException e) {

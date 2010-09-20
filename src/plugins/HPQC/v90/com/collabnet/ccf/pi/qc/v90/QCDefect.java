@@ -109,14 +109,10 @@ public class QCDefect extends Bug implements IQCDefect {
 	public GenericArtifact getGenericArtifactObject(IConnection qcc,
 			String actionId, String entityId, int commentDescriber,
 			int commentQualifier, List<String> attachmentNames,
-			String syncInfoTransactionId, String connectorUser,
+			String syncInfoTransactionId, String connectorUser, String resyncUser,
 			QCHandler defectHandler, String sourceSystemTimezone,
-			boolean isResync, String lastModifiedBy) {
-		genericArtifact = QCConfigHelper.getSchemaFieldsForDefect(qcc, isResync);
-		List<String> txnIds = defectHandler.getTransactionIdsInRangeForDefects(qcc,
-				Integer.parseInt(entityId), Integer
-						.parseInt(syncInfoTransactionId), Integer
-						.parseInt(actionId), connectorUser);
+			String lastModifiedBy) {
+		genericArtifact = QCConfigHelper.getSchemaFieldsForDefect(qcc);
 
 		List<GenericArtifactField> allFields = genericArtifact
 				.getAllGenericArtifactFields();
@@ -256,24 +252,27 @@ public class QCDefect extends Bug implements IQCDefect {
 			}
 		}
 		// If this is a resync request do not ship comments
-		if (!isResync) {
-			IRecordSet auditPropertiesRS = null;
-			String deltaComment = null;
-			try {
+		IRecordSet auditPropertiesRS = null;
+		String deltaComment = "";
+		try {
+			List<String> txnIds = defectHandler.getTransactionIdsInRangeForDefects(qcc,
+				Integer.parseInt(entityId), Integer
+				.parseInt(syncInfoTransactionId), Integer
+				.parseInt(actionId), connectorUser, resyncUser);
+
+			if (!txnIds.isEmpty()) {
 				auditPropertiesRS = defectHandler.getAuditPropertiesRecordSet(
 						qcc, txnIds);
 				deltaComment = defectHandler
 						.getDeltaOfCommentForDefects(auditPropertiesRS);
-			} finally {
-				if (auditPropertiesRS != null) {
-					auditPropertiesRS.safeRelease();
-				}
 			}
-			if (deltaComment != null) {
-				genericArtifact.getAllGenericArtifactFieldsWithSameFieldName(
-						QCConfigHelper.QC_BG_DEV_COMMENTS).get(0).setFieldValue(deltaComment);
+		} finally {
+			if (auditPropertiesRS != null) {
+				auditPropertiesRS.safeRelease();
 			}
 		}
+		genericArtifact.getAllGenericArtifactFieldsWithSameFieldName(
+				QCConfigHelper.QC_BG_DEV_COMMENTS).get(0).setFieldValue(deltaComment);
 
 		// add last modified user as a mappable field
 		GenericArtifactField field;

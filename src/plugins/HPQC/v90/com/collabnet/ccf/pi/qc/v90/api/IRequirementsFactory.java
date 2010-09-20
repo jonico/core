@@ -17,7 +17,6 @@
 
 package com.collabnet.ccf.pi.qc.v90.api;
 
-import java.util.List;
 
 public interface IRequirementsFactory extends ILifeCycle {
 	/*IFilter getFilter();

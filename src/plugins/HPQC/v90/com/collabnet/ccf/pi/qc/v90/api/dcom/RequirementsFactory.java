@@ -19,8 +19,6 @@ package com.collabnet.ccf.pi.qc.v90.api.dcom;
 
 import java.util.List;
 
-import com.collabnet.ccf.pi.qc.v90.api.IBug;
-import com.collabnet.ccf.pi.qc.v90.api.IBugFactory;
 import com.collabnet.ccf.pi.qc.v90.api.IField;
 import com.collabnet.ccf.pi.qc.v90.api.IFilter;
 import com.collabnet.ccf.pi.qc.v90.api.IRequirement;

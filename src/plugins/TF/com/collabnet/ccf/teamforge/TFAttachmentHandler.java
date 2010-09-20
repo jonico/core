@@ -405,6 +405,7 @@ public class TFAttachmentHandler {
 				String attachmentSizeStr = row.getFileSize();
 				// String attachmentId = row.getStoredFileId();
 				long attachmentSize = Long.parseLong(attachmentSizeStr);
+				// FIXME: why not username.equalsIgnoreCase(row.getCreatedBy()) ?
 				if (fileName.startsWith(username + "_")) {
 					continue;
 				}

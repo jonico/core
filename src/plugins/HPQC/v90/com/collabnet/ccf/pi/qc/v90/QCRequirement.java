@@ -105,14 +105,11 @@ public class QCRequirement extends Requirement implements IQCRequirement {
 	public GenericArtifact getGenericArtifactObject(IConnection qcc,
 			String actionId, String entityId, int commentDescriber,
 			int commentQualifier, List<String> attachmentNames,
-			String syncInfoTransactionId, String connectorUser,
-			QCHandler defectHandler, String sourceSystemTimezone,
-			boolean isResync, String technicalRequirementsTypeID, String lastModifiedBy) {
-		genericArtifact = QCConfigHelper.getSchemaFieldsForRequirement(qcc, technicalRequirementsTypeID, isResync);
-		List<String> txnIds = defectHandler.getTransactionIdsInRangeForRequirements(qcc,
-				Integer.parseInt(entityId), Integer
-						.parseInt(syncInfoTransactionId), Integer
-						.parseInt(actionId), connectorUser);
+			String syncInfoTransactionId, String connectorUser, String resyncUser,
+			QCHandler artifactHandler, String sourceSystemTimezone,
+			String technicalRequirementsTypeID, String lastModifiedBy) {
+		// FIXME: remove need for isResync
+		genericArtifact = QCConfigHelper.getSchemaFieldsForRequirement(qcc, technicalRequirementsTypeID);
 
 		List<GenericArtifactField> allFields = genericArtifact
 				.getAllGenericArtifactFields();
@@ -256,7 +253,6 @@ public class QCRequirement extends Requirement implements IQCRequirement {
 					if (fieldName.equals("RQ_VTS")) {
 						Date dateFieldValue = getFieldAsDate(fieldName);
 						thisField.setFieldValue(dateFieldValue);
-						// thisField.setFieldValue(DateUtil.formatQCDate(dateFieldValue));
 						thisField
 								.setFieldValueType(GenericArtifactField.FieldValueTypeValue.DATETIME);
 					} else {
@@ -267,25 +263,32 @@ public class QCRequirement extends Requirement implements IQCRequirement {
 
 			}
 		}
-		// If this is a resync request do not ship comments
-		if (!isResync) {
-			IRecordSet auditPropertiesRS = null;
-			String deltaComment = null;
-			try {
-				auditPropertiesRS = defectHandler.getAuditPropertiesRecordSet(
-						qcc, txnIds);
-				deltaComment = defectHandler
+
+		IRecordSet auditPropertiesRS = null;
+		String deltaComment = "";
+		try {
+			List<String> txnIds = artifactHandler.getTransactionIdsInRangeForRequirements(
+				qcc,
+				Integer.parseInt(entityId), 
+				Integer.parseInt(syncInfoTransactionId),
+				Integer.parseInt(actionId),
+				connectorUser,
+				resyncUser);
+
+			if (!txnIds.isEmpty()) {
+				auditPropertiesRS = artifactHandler
+						.getAuditPropertiesRecordSet(qcc, txnIds);
+				deltaComment = artifactHandler
 						.getDeltaOfCommentForRequirements(auditPropertiesRS);
-			} finally {
-				if (auditPropertiesRS != null) {
-					auditPropertiesRS.safeRelease();
-				}
 			}
-			if (deltaComment != null) {
-				genericArtifact.getAllGenericArtifactFieldsWithSameFieldName(
-						QCConfigHelper.QC_RQ_DEV_COMMENTS).get(0).setFieldValue(deltaComment);
+		} finally {
+			if (auditPropertiesRS != null) {
+				auditPropertiesRS.safeRelease();
 			}
 		}
+		genericArtifact.getAllGenericArtifactFieldsWithSameFieldName(
+				QCConfigHelper.QC_RQ_DEV_COMMENTS).get(0).setFieldValue(deltaComment);
+
 		
 		// add last modified user as a mappable field
 		GenericArtifactField field;

@@ -118,9 +118,9 @@ public class TFTrackerHandler {
 	 *         tracker items
 	 * @throws RemoteException
 	 */
-	public List<ArtifactDO> getChangedTrackerItems(Connection connection,
+	public List<ArtifactDetailRow> getChangedTrackerItems(Connection connection,
 			String trackerId, Date lastModifiedDate, String lastArtifactId,
-			int lastArtifactVersion, String connectorUser)
+			int lastArtifactVersion)
 			throws RemoteException {
 		log.debug("Getting the changed artifacts from " + lastModifiedDate);
 		// only select ID of row because we have to get the details in any case
@@ -140,8 +140,8 @@ public class TFTrackerHandler {
 		if (rows != null) {
 			log.debug("There were " + rows.length + " artifacts changed");
 		}
-		ArrayList<ArtifactDO> detailRowsFull = new ArrayList<ArtifactDO>();
-		ArrayList<ArtifactDO> detailRowsNew = new ArrayList<ArtifactDO>();
+		ArrayList<ArtifactDetailRow> detailRowsFull = new ArrayList<ArtifactDetailRow>();
+		ArrayList<ArtifactDetailRow> detailRowsNew = new ArrayList<ArtifactDetailRow>();
 		// retrieve artifact details
 		log.debug("Getting the details of the changed artifacts");
 		boolean duplicateFound = false;
@@ -152,29 +152,10 @@ public class TFTrackerHandler {
 						&& lastArtifactVersion == rows[i].getVersion()) {
 					duplicateFound = true;
 				} else {
-					try {
-						ArtifactDO artifactData = connection.getTrackerClient()
-								.getArtifactData(id);
-						// if the version number has changed again in the mean
-						// time ignore the artifact
-						// since it will show up again in the next query
-						if (rows[i].getVersion() == artifactData.getVersion()
-								&& !artifactData.getLastModifiedBy().equals(
-										connectorUser)) {
-							if (duplicateFound) {
-								detailRowsNew.add(artifactData);
-							}
-							detailRowsFull.add(artifactData);
-						}
-					} catch (AxisFault e) {
-						javax.xml.namespace.QName faultCode = e.getFaultCode();
-						if (!faultCode.getLocalPart().equals(
-								"NoSuchObjectFault")) {
-							throw e;
-						}
-						log.debug("Artifact " + id
-								+ " has been deleted in the mean time ...:", e);
+					if (duplicateFound) {
+						detailRowsNew.add(rows[i]);
 					}
+					detailRowsFull.add(rows[i]);
 				}
 			}
 		}
@@ -837,7 +818,7 @@ public class TFTrackerHandler {
 	public List<PlanningFolderDO> getChangedPlanningFolders(
 			Connection connection, String sourceRepositoryId,
 			Date lastModifiedDate, String lastSynchronizedArtifactId,
-			int version, String connectorUser, String project)
+			int version, String project)
 			throws RemoteException {
 		log.debug("Getting the changed planning folders from "
 				+ lastModifiedDate);
@@ -851,9 +832,6 @@ public class TFTrackerHandler {
 		boolean duplicateFound = false;
 		if (rows != null) {
 			for (int i = 0; i < rows.length; ++i) {
-				if (rows[i].getLastModifiedBy().equals(connectorUser)) {
-					continue;
-				}
 				if (!rows[i].getLastModifiedOn().after(lastModifiedDate)) {
 					continue;
 				}

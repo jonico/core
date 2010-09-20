@@ -284,7 +284,7 @@ public class QCAttachmentHandler {
 	 *            attachments as GenericArtifacts and returned
 	 * @param qcc
 	 * @param connectorUser
-	 * @param transactionId
+	 * @param lowerTransactionId
 	 * @param lastReadTime
 	 * @param sourceArtifactId
 	 * @param sourceRepositoryId
@@ -303,23 +303,24 @@ public class QCAttachmentHandler {
 	@SuppressWarnings("unchecked")
 	public List<GenericArtifact> getLatestChangedAttachments(
 			List<GenericArtifact> modifiedAttachmentArtifacts, IConnection qcc,
-			String connectorUser, String resyncUser, String transactionId, String lastReadTime,
+			String connectorUser, String resyncUser, String lowerTransactionId, String lastReadTime,
 			String sourceArtifactId, String sourceRepositoryId,
 			String sourceRepositoryKind, String sourceSystemId,
 			String sourceSystemKind, String targetRepositoryId,
 			String targetRepositoryKind, String targetSystemId,
 			String targetSystemKind, long maxAttachmentSizePerArtifact,
-			boolean shouldShipAttachmentsWithArtifact, boolean isDefectRepository)
+			boolean shouldShipAttachmentsWithArtifact, boolean isDefectRepository,
+			String upperTransactionId)
 			throws Exception {
-
+		// FIXME: make sure we don't ship attachments created after sourceArtifactVersion.
 		String artifactId = sourceArtifactId;
 		List<Object> transactionIdAndAttachOperation = null;
 		if (isDefectRepository) {
 			transactionIdAndAttachOperation = qcGAHelper.getTxnIdAndAuDescriptionForDefect(
-					artifactId, transactionId, qcc, connectorUser, resyncUser == null?"":resyncUser);
+					artifactId, lowerTransactionId, upperTransactionId, qcc, connectorUser, resyncUser == null?"":resyncUser);
 		} else {
 			transactionIdAndAttachOperation = qcGAHelper.getTxnIdAndAuDescriptionForRequirement(
-					artifactId, transactionId, qcc, connectorUser, resyncUser == null?"":resyncUser);
+					artifactId, lowerTransactionId, upperTransactionId, qcc, connectorUser, resyncUser == null?"":resyncUser);
 		}
 		if (transactionIdAndAttachOperation == null)
 			return modifiedAttachmentArtifacts;
@@ -712,7 +713,7 @@ public class QCAttachmentHandler {
 		if (attachmentName != null) {
 			List<String> attachmentIdAndType = null;
 			if(!deletedAttachments){
-				attachmentIdAndType = qcGAHelper.getFromTable(qcc, entityId,
+				attachmentIdAndType = QCGAHelper.getFromTable(qcc, entityId,
 						attachmentName);
 				if (attachmentIdAndType != null) {
 					String attachmentId = attachmentIdAndType.get(0); // CR_REF_ID

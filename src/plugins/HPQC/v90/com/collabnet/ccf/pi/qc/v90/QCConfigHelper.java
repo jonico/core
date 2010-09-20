@@ -104,18 +104,21 @@ public class QCConfigHelper {
 			m_childIdCol = childIdCol;
 			m_childDisplayCol = childDisplayCol;
 
-			// only log an error here, so we don't stop CCF from working when
-			// customers don't use joined fields at all.
 			if (m_parentTable == null)
-				log.error("Parent table name for joined field can't be null");
+				throw new IllegalArgumentException(
+						"Parent table name for joined field can't be null");
 			if (m_parentCol == null)
-				log.error("Parent column name for joined field can't be null");
+				throw new IllegalArgumentException(
+						"Parent column name for joined field can't be null");
 			if (m_childTable == null)
-				log.error("Child table name of joined field can't be null");
+				throw new IllegalArgumentException(
+						"Child table name of joined field can't be null");
 			if (m_childIdCol == null)
-				log.error("ID column of joined field can't be null");
+				throw new IllegalArgumentException(
+						"ID column of joined field can't be null");
 			if (m_childDisplayCol == null)
-				log.error("Display column of joined field can't be null");
+				throw new IllegalArgumentException(
+						"Display column of joined field can't be null");
 		}
 
 		String parentTable() {
@@ -509,7 +512,7 @@ public class QCConfigHelper {
 //	}
 
 	public static GenericArtifact getSchemaFieldsForRequirement(IConnection qcc,
-			String technicalReleaseTypeId, boolean isResync) {
+			String technicalReleaseTypeId) {
 
 		// Get all the fields in the project represented
 		// by qcc
@@ -525,9 +528,6 @@ public class QCConfigHelper {
 			genericArtifact = new GenericArtifact();
 			for (int cnt = 0; cnt < rc; cnt++, rs.next()) {
 				String columnName = rs.getFieldValueAsString(sfColumnName);
-				if (isResync && columnName.equals(QC_RQ_DEV_COMMENTS)) {
-					continue;
-				}
 				String columnType = rs.getFieldValueAsString(sfColumnType);
 
 				// we only transport fields that have been configured by the
@@ -598,7 +598,7 @@ public class QCConfigHelper {
 		return genericArtifact;
 	}	
 	
-	public static GenericArtifact getSchemaFieldsForDefect(IConnection qcc, boolean isResync) {
+	public static GenericArtifact getSchemaFieldsForDefect(IConnection qcc) {
 
 		// Get all the fields in the project represented
 		// by qcc
@@ -612,9 +612,6 @@ public class QCConfigHelper {
 			for(int cnt = 0 ; cnt < rc ; cnt++, rs.next())
 			{
 				String columnName = rs.getFieldValueAsString(sfColumnName);
-				if(isResync && columnName.equals(QCConfigHelper.QC_BG_DEV_COMMENTS)) {
-					continue;
-				}
 				String columnType = rs.getFieldValueAsString(sfColumnType);
 				
 				// we only transport fields that have been configured by the user

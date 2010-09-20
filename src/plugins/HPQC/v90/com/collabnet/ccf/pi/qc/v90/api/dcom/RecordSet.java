@@ -114,4 +114,14 @@ public class RecordSet extends ActiveXComponent implements IRecordSet
     public void next() {
     	Dispatch.call(this, "Next");
     }
+    public void first() {
+    	Dispatch.call(this, "First");
+    }
+    public void last() {
+    	Dispatch.call(this, "Last");
+    }
+
+	public int getCacheSize() {
+		return getPropertyAsInt("CacheSize");
+	}
 }
