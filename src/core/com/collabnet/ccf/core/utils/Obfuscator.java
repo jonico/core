@@ -47,6 +47,9 @@ public class Obfuscator {
 	}
 	
 	public static String deObfuscatePassword(String password) {
+		if(password == null) {
+			return "";
+		}
 		if(!password.startsWith(OBFUSCATED_PASSWORD_PREFIX)) {
 			return password;
 		}
@@ -54,7 +57,7 @@ public class Obfuscator {
 	}
 	
 	public static String obfuscatePassword(String password) {
-		return OBFUSCATED_PASSWORD_PREFIX + obfuscateString(password);
+		return OBFUSCATED_PASSWORD_PREFIX + obfuscateString((password == null) ? "" : password);
 	}
 	
 	private static void usage() {
