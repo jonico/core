@@ -1,5 +1,5 @@
 CollabNet Connector Framework
-Version 1.2.1
+Version 1.4.2
                  
 Introduction:
 -------------             
@@ -34,7 +34,7 @@ System Requirements
     JDK 1.6 or above is required
     
 6. User interface requirements
-    Eclipse 3.4 version which includes the XML editor (e. g. all downloads on eclipse.org that contain the Java IDE)
+    Eclipse 3.4 version which includes the XML editor (e.g. all downloads on eclipse.org that contain the Java IDE)
 
 7. Requirement for graphical field mapping feature
     Standard edition of Altova MapForce version 2008 (rel 2) or 2009
