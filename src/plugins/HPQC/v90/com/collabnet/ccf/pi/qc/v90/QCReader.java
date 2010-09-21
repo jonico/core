@@ -809,7 +809,7 @@ public class QCReader extends AbstractReader<IConnection> {
 	 *            the password to set
 	 */
 	public void setPassword(String password) {
-		this.password = password;
+		this.password = Obfuscator.deObfuscatePassword(password);
 	}
 
 	/**
