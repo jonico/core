@@ -288,6 +288,9 @@
 			<fileset dir="config">
 				<include name="log4j.*" />
 			</fileset>
+			<fileset dir="src/core/lib">
+			    <include name="obfuscate.*"/>
+			</fileset>
 		</copy>
 		<mkdir dir="build/package/lib/extlib" />
 		<copy todir="build/package/lib/extlib">
