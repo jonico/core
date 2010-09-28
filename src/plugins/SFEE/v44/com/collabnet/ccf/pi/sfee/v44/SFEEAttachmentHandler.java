@@ -316,7 +316,7 @@ public class SFEEAttachmentHandler {
 				AttachmentMetaData.ATTACHMENT_MIME_TYPE, att);
 		String attachmentName = GenericArtifactHelper.getStringFlexGAField(
 				AttachmentMetaData.ATTACHMENT_NAME, att);
-		// attachmentName = userName + "_" + attachmentName;
+		attachmentName = userName + "_" + attachmentName;
 		String attachmentURL = GenericArtifactHelper.getStringFlexGAField(
 				AttachmentMetaData.ATTACHMENT_SOURCE_URL, att);
 		GenericArtifact.ArtifactActionValue attAction = att.getArtifactAction();

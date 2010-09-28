@@ -406,6 +406,7 @@ public class TFAttachmentHandler {
 				// String attachmentId = row.getStoredFileId();
 				long attachmentSize = Long.parseLong(attachmentSizeStr);
 				// FIXME: why not username.equalsIgnoreCase(row.getCreatedBy()) ?
+				// Because this only works for TF >= 5.3
 				if (fileName.startsWith(username + "_")) {
 					continue;
 				}
