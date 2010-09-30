@@ -37,10 +37,15 @@ public class TFSWPAdhocIntegration {
 		BacklogItemWSO[] pbis = endpoint.getActiveBacklogItems(product);
 		
 		for (BacklogItemWSO pbi : pbis) {
-			trackerClient.createArtifact("tracker2119", pbi.getTitle(), pbi
-					.getDescription(), null, null, "Open", null, 2, pbi
-					.getEstimate() == null?0:pbi.getEstimate(), pbi.getEstimate() == null?0:pbi.getEstimate(), false, null, null, null,
-							new FieldValues(), null, null, null);
+			trackerClient.createArtifact(
+					"tracker2119", pbi.getTitle(), pbi.getDescription(),
+					null, null, "Open", null, 2,
+					pbi.getEstimate() == null ? 0 : pbi.getEstimate(),
+					pbi.getEstimate() == null ? 0 : pbi.getEstimate(),
+					false, 
+					null, null, null,
+					new FieldValues(), null, null, null
+					);
 		}
 	}
 
