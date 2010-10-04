@@ -43,6 +43,7 @@ public class TFSWPAdhocIntegration {
 					pbi.getEstimate() == null ? 0 : pbi.getEstimate(),
 					pbi.getEstimate() == null ? 0 : pbi.getEstimate(),
 					false, 
+					0,
 					null, null, null,
 					new FieldValues(), null, null, null
 					);

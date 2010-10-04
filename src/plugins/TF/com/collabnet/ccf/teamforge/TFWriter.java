@@ -374,12 +374,24 @@ public class TFWriter extends AbstractWriter<Connection> implements
 			}
 		}
 
+		int capacity = 0;
+		String status = null;
+		String releaseId = null;
+		if (connection.supports54()) {
+			capacity = GenericArtifactHelper.getIntMandatoryGAField(TFArtifactMetaData.TFFields.capacity.getFieldName(), ga);
+			status = GenericArtifactHelper.getStringMandatoryGAField(TFArtifactMetaData.TFFields.status.getFieldName(), ga);
+			releaseId = GenericArtifactHelper.getStringMandatoryGAField(TFArtifactMetaData.TFFields.releaseId.getFieldName(), ga);
+		}
 		PlanningFolderDO planningFolder = null;
 
 		try {
+			if (translateTechnicalReleaseIds) {
+				releaseId = TFTrackerHandler.convertReleaseIdForProject(connection, releaseId, project);
+			}
 			planningFolder = connection.getPlanningClient()
 					.createPlanningFolder(parentId, title, description,
-							startDate, endDate);
+							startDate, endDate,
+							status, capacity, releaseId);
 		} catch (RemoteException e) {
 			String cause = "Could not create planning folder: "
 					+ e.getMessage();
@@ -510,6 +522,20 @@ public class TFWriter extends AbstractWriter<Connection> implements
 
 		GenericArtifactField title = GenericArtifactHelper.getMandatoryGAField(
 				TFArtifactMetaData.TFFields.title.getFieldName(), ga);
+		
+		GenericArtifactField statusField = null;
+		GenericArtifactField releaseIdField = null;
+		GenericArtifactField capacityField = null;
+		if (connection.supports54()) {
+			statusField = GenericArtifactHelper.getMandatoryGAField(
+					TFArtifactMetaData.TFFields.status.getFieldName(), ga);
+			releaseIdField = GenericArtifactHelper.getMandatoryGAField(
+					TFArtifactMetaData.TFFields.releaseId.getFieldName(), ga);
+			capacityField = GenericArtifactHelper.getMandatoryGAField(
+					TFArtifactMetaData.TFFields.capacity.getFieldName(), ga);
+		}
+		
+		
 
 		GenericArtifactField startDateField = GenericArtifactHelper
 				.getMandatoryGAField(TFArtifactMetaData.TFFields.startDate
@@ -581,7 +607,39 @@ public class TFWriter extends AbstractWriter<Connection> implements
 					planningFolder.setEndDate((Date) endDateField
 							.getFieldValue());
 				}
+				
+				if (statusField != null && statusField.getFieldValueHasChanged()) {
+					planningFolder.setStatus((String)statusField.getFieldValue());
+				}
+				
+				if (releaseIdField != null && releaseIdField.getFieldValueHasChanged()) {
+					String releaseId = (String) releaseIdField.getFieldValue();
+					if (translateTechnicalReleaseIds) {
+						releaseId = TFTrackerHandler.convertReleaseIdForProject(connection, releaseId, project);
+					}
 
+					planningFolder.setReleaseId(releaseId);
+				}
+
+				if (capacityField != null && capacityField.getFieldValueHasChanged()) {
+					Object fieldValueObj = capacityField.getFieldValue();
+					int fieldValue = 0;
+					if (fieldValueObj instanceof String) {
+						String fieldValueString = (String) fieldValueObj;
+						try {
+							fieldValue = Integer.parseInt(fieldValueString);
+						} catch (NumberFormatException e) {
+							throw new CCFRuntimeException(
+									"Could not parse value of mandatory field capacity: "
+											+ e.getMessage(), e);
+						}
+					} else if (fieldValueObj instanceof Integer) {
+						fieldValue = ((Integer) fieldValueObj).intValue();
+					}
+					planningFolder.setCapacity(fieldValue);
+
+				}
+				
 				connection.getPlanningClient().setPlanningFolderData(
 						planningFolder);
 			} catch (AxisFault e) {
@@ -794,19 +852,12 @@ public class TFWriter extends AbstractWriter<Connection> implements
 		String planningFolder = null;
 		Boolean autosumming = false;
 
-		if (!connection.supports53()) {
-			estimatedEffort = GenericArtifactHelper.getIntMandatoryGAField(
-					TFArtifactMetaData.TFFields.estimatedHours.getFieldName(),
-					ga);
-			actualEffort = GenericArtifactHelper.getIntMandatoryGAField(
-					TFArtifactMetaData.TFFields.actualHours.getFieldName(), ga);
-		} else {
-			estimatedEffort = GenericArtifactHelper.getIntMandatoryGAField(
-					TFArtifactMetaData.TFFields.estimatedHours.getFieldName(),
-					ga);
-			actualEffort = GenericArtifactHelper.getIntMandatoryGAField(
-					TFArtifactMetaData.TFFields.actualHours.getFieldName(), ga);
-
+		estimatedEffort = GenericArtifactHelper.getIntMandatoryGAField(
+				TFArtifactMetaData.TFFields.estimatedHours.getFieldName(),
+				ga);
+		actualEffort = GenericArtifactHelper.getIntMandatoryGAField(
+				TFArtifactMetaData.TFFields.actualHours.getFieldName(), ga);
+		if (connection.supports53()) {
 			remainingEffort = GenericArtifactHelper.getIntMandatoryGAField(
 					TFArtifactMetaData.TFFields.remainingEffort.getFieldName(),
 					ga);
@@ -817,6 +868,13 @@ public class TFWriter extends AbstractWriter<Connection> implements
 
 			autosumming = GenericArtifactHelper.getBooleanMandatoryGAField(
 					TFArtifactMetaData.TFFields.autosumming.getFieldName(), ga);
+		}
+		
+		int points = 0;
+		if (connection.supports54()) {
+			points = GenericArtifactHelper.getIntMandatoryGAField(
+					TFArtifactMetaData.TFFields.points.getFieldName(), ga);
+
 		}
 
 		Date closeDate = GenericArtifactHelper.getDateMandatoryGAField(
@@ -837,9 +895,9 @@ public class TFWriter extends AbstractWriter<Connection> implements
 		ArtifactDO result = null;
 		try {
 			if (this.translateTechnicalReleaseIds) {
-				reportedReleaseId = trackerHandler.convertReleaseId(connection,
+				reportedReleaseId = TFTrackerHandler.convertReleaseId(connection,
 						reportedReleaseId, folderId);
-				resolvedReleaseId = trackerHandler.convertReleaseId(connection,
+				resolvedReleaseId = TFTrackerHandler.convertReleaseId(connection,
 						resolvedReleaseId, folderId);
 			}
 
@@ -869,7 +927,7 @@ public class TFWriter extends AbstractWriter<Connection> implements
 					closeDate, assignedTo, reportedReleaseId,
 					resolvedReleaseId, flexFieldNames, flexFieldValues,
 					flexFieldTypes, title, comments, remainingEffort,
-					autosumming, planningFolder);
+					autosumming, planningFolder, points);
 
 			// now create parent dependency
 			if (associateWithParent) {
@@ -1016,19 +1074,13 @@ public class TFWriter extends AbstractWriter<Connection> implements
 		GenericArtifactField planningFolder = null;
 		GenericArtifactField autosumming = null;
 
-		if (!connection.supports53()) {
-			estimatedEffort = GenericArtifactHelper.getMandatoryGAField(
-					TFArtifactMetaData.TFFields.estimatedHours.getFieldName(),
-					ga);
-			actualEffort = GenericArtifactHelper.getMandatoryGAField(
-					TFArtifactMetaData.TFFields.actualHours.getFieldName(), ga);
+		estimatedEffort = GenericArtifactHelper.getMandatoryGAField(
+				TFArtifactMetaData.TFFields.estimatedHours.getFieldName(),
+				ga);
+		actualEffort = GenericArtifactHelper.getMandatoryGAField(
+				TFArtifactMetaData.TFFields.actualHours.getFieldName(), ga);
 
-		} else {
-			estimatedEffort = GenericArtifactHelper.getMandatoryGAField(
-					TFArtifactMetaData.TFFields.estimatedHours.getFieldName(),
-					ga);
-			actualEffort = GenericArtifactHelper.getMandatoryGAField(
-					TFArtifactMetaData.TFFields.actualHours.getFieldName(), ga);
+		if (connection.supports53()) {
 			remainingEffort = GenericArtifactHelper.getMandatoryGAField(
 					TFArtifactMetaData.TFFields.remainingEffort.getFieldName(),
 					ga);
@@ -1037,7 +1089,12 @@ public class TFWriter extends AbstractWriter<Connection> implements
 					ga);
 			autosumming = GenericArtifactHelper.getMandatoryGAField(
 					TFArtifactMetaData.TFFields.autosumming.getFieldName(), ga);
-
+		}
+		
+		GenericArtifactField storyPoints = null;
+		if (connection.supports54()) {
+			storyPoints = GenericArtifactHelper.getMandatoryGAField(
+					TFArtifactMetaData.TFFields.points.getFieldName(), ga);
 		}
 
 		GenericArtifactField closeDate = GenericArtifactHelper
@@ -1133,6 +1190,7 @@ public class TFWriter extends AbstractWriter<Connection> implements
 					resolvedReleaseId, flexFieldNames, flexFieldValues,
 					flexFieldTypes, overriddenFlexFields, title, id, comments,
 					translateTechnicalReleaseIds, remainingEffort, autosumming,
+					storyPoints,
 					planningFolder, deleteOldParentAssociation,
 					currentParentId, associateWithParent, newParentId);
 

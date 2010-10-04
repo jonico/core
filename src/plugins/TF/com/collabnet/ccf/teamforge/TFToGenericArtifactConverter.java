@@ -55,7 +55,7 @@ public class TFToGenericArtifactConverter {
 	 * @param includeFieldMetaData
 	 * @return - The converted GenericArtifact object
 	 */
-	public static GenericArtifact convertArtifact(boolean supports53,
+	public static GenericArtifact convertArtifact(boolean supports53, boolean supports54,
 			ArtifactDO dataObject,
 			HashMap<String, List<TrackerFieldDO>> fieldsMap, Date lastReadDate,
 			boolean includeFieldMetaData, String sourceSystemTimezone) {
@@ -75,26 +75,17 @@ public class TFToGenericArtifactConverter {
 						.setIncludesFieldMetaData(GenericArtifact.IncludesFieldMetaDataValue.FALSE);
 			}
 
-			// FIXME These fields will never change, why not add the fields
-			// directly?
 			int actualEffort = artifactRow.getActualEffort();
 			int estimatedEffort = artifactRow.getEstimatedEffort();
-			if (!supports53) {
-				createGenericArtifactField(
-						TFArtifactMetaData.TFFields.actualHours, actualEffort,
-						genericArtifact, fieldsMap, includeFieldMetaData);
-				createGenericArtifactField(
-						TFArtifactMetaData.TFFields.estimatedHours,
-						estimatedEffort, genericArtifact, fieldsMap,
-						includeFieldMetaData);
-			} else {
-				createGenericArtifactField(
-						TFArtifactMetaData.TFFields.actualHours, actualEffort,
-						genericArtifact, fieldsMap, includeFieldMetaData);
-				createGenericArtifactField(
-						TFArtifactMetaData.TFFields.estimatedHours,
-						estimatedEffort, genericArtifact, fieldsMap,
-						includeFieldMetaData);
+			createGenericArtifactField(
+					TFArtifactMetaData.TFFields.actualHours, actualEffort,
+					genericArtifact, fieldsMap, includeFieldMetaData);
+			createGenericArtifactField(
+					TFArtifactMetaData.TFFields.estimatedHours,
+					estimatedEffort, genericArtifact, fieldsMap,
+					includeFieldMetaData);
+
+			if (supports53) {
 
 				int remainingEffort = artifactRow.getRemainingEffort();
 				createGenericArtifactField(
@@ -111,6 +102,14 @@ public class TFToGenericArtifactConverter {
 				createGenericArtifactField(
 						TFArtifactMetaData.TFFields.planningFolder,
 						planningFolderId, genericArtifact, fieldsMap,
+						includeFieldMetaData);
+			}
+			
+			if (supports54) {
+				int storyPoints = artifactRow.getPoints();
+				createGenericArtifactField(
+						TFArtifactMetaData.TFFields.points,
+						storyPoints, genericArtifact, fieldsMap,
 						includeFieldMetaData);
 			}
 
@@ -317,7 +316,7 @@ public class TFToGenericArtifactConverter {
 		return field;
 	}
 
-	public static GenericArtifact convertPlanningFolder(
+	public static GenericArtifact convertPlanningFolder(boolean supports54,
 			PlanningFolderDO planningFolder, Date lastReadDate,
 			boolean includeFieldMetaData, String sourceSystemTimezone) {
 		if (planningFolder != null) {
@@ -399,6 +398,17 @@ public class TFToGenericArtifactConverter {
 			GenericArtifactField endDateField = createGenericArtifactField(TFArtifactMetaData.TFFields.endDate,
 					endDate, genericArtifact, null, includeFieldMetaData);
 			TFArtifactMetaData.setPFDateFieldValue(endDate, sourceSystemTimezone, endDateField);
+			
+			if (supports54) {
+				int capacity = planningRow.getCapacity();
+				createGenericArtifactField(TFArtifactMetaData.TFFields.capacity, capacity, genericArtifact, null, includeFieldMetaData);
+				String status = planningRow.getStatus();
+				createGenericArtifactField(TFArtifactMetaData.TFFields.status, status, genericArtifact, null, includeFieldMetaData);
+				String statusClass = planningRow.getStatusClass();
+				createGenericArtifactField(TFArtifactMetaData.TFFields.statusClass, statusClass, genericArtifact, null, includeFieldMetaData);
+				String releaseId = planningRow.getReleaseId();
+				createGenericArtifactField(TFArtifactMetaData.TFFields.releaseId, releaseId, genericArtifact, null, includeFieldMetaData);				
+			}
 
 			return genericArtifact;
 		}

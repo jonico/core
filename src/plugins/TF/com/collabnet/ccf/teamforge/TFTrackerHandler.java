@@ -46,7 +46,6 @@ import com.collabnet.teamforge.api.PlanningFolderRuleViolationException;
 import com.collabnet.teamforge.api.SortKey;
 import com.collabnet.teamforge.api.frs.PackageList;
 import com.collabnet.teamforge.api.frs.PackageRow;
-import com.collabnet.teamforge.api.frs.ReleaseDO;
 import com.collabnet.teamforge.api.frs.ReleaseList;
 import com.collabnet.teamforge.api.frs.ReleaseRow;
 import com.collabnet.teamforge.api.planning.PlanningFolderDO;
@@ -244,7 +243,7 @@ public class TFTrackerHandler {
 			String resolvedReleaseId, List<String> flexFieldNames,
 			List<Object> flexFieldValues, List<String> flexFieldTypes,
 			String title, String[] comments, int remainingEfforts,
-			boolean autosumming, String planningFolderId)
+			boolean autosumming, String planningFolderId, int points)
 			throws RemoteException, PlanningFolderRuleViolationException {
 
 		FieldValues flexFields = new FieldValues();
@@ -261,6 +260,7 @@ public class TFTrackerHandler {
 				autosumming ? 0 : estimatedEfforts, // estimated efforts
 				autosumming ? 0 : remainingEfforts, // remaining efforts
 				autosumming,
+				points, // story points
 				assignedTo, // assigned user name
 				reportedReleaseId, planningFolderId, flexFields, null, null,
 				null);
@@ -391,6 +391,7 @@ public class TFTrackerHandler {
 			boolean translateTechnicalReleaseIds,
 			GenericArtifactField remainingEfforts,
 			GenericArtifactField autosumming,
+			GenericArtifactField storyPoints,
 			GenericArtifactField planningFolderId,
 			boolean deleteOldParentAssociation, String currentParentId,
 			boolean associateWithParent, String newParentId)
@@ -627,6 +628,24 @@ public class TFTrackerHandler {
 					artifactData.setResolvedReleaseId(resolvedReleaseIdString);
 				}
 
+				if (storyPoints != null && storyPoints.getFieldValueHasChanged()) {
+					Object fieldValueObj = storyPoints.getFieldValue();
+					int fieldValue = 0;
+					if (fieldValueObj instanceof String) {
+						String fieldValueString = (String) fieldValueObj;
+						try {
+							fieldValue = Integer.parseInt(fieldValueString);
+						} catch (NumberFormatException e) {
+							throw new CCFRuntimeException(
+									"Could not parse value of mandatory field points: "
+											+ e.getMessage(), e);
+						}
+					} else if (fieldValueObj instanceof Integer) {
+						fieldValue = ((Integer) fieldValueObj).intValue();
+					}
+					artifactData.setPoints(fieldValue);
+				}
+				
 				artifactData.setFlexFields(flexFields);
 
 				connection.getTrackerClient().setArtifactData(artifactData,
@@ -763,48 +782,38 @@ public class TFTrackerHandler {
 	 * ga; }
 	 */
 
-	public void convertReleaseIds(Connection connection, ArtifactDO artifact)
-			throws RemoteException {
-		String reportedReleaseId = artifact.getReportedReleaseId();
-		String resolvedReleaseId = artifact.getResolvedReleaseId();
-		if (!StringUtils.isEmpty(reportedReleaseId)) {
-			ReleaseDO releaseDO = connection.getFrsClient().getReleaseData(
-					reportedReleaseId);
-			String title = releaseDO.getTitle();
-			artifact.setReportedReleaseId(title);
-		}
-		if (!StringUtils.isEmpty(resolvedReleaseId)) {
-			ReleaseDO releaseDO = connection.getFrsClient().getReleaseData(
-					resolvedReleaseId);
-			String title = releaseDO.getTitle();
-			artifact.setResolvedReleaseId(title);
-		}
-
-	}
-
-	public String convertReleaseId(Connection connection, String releaseId,
+	public static String convertReleaseId(Connection connection, String releaseId,
 			String trackerId) throws RemoteException {
 		if (!StringUtils.isEmpty(releaseId) && !StringUtils.isEmpty(trackerId)) {
 			TrackerDO trackerDO = connection.getTrackerClient().getTrackerData(
 					trackerId);
 			String projectId = trackerDO.getProjectId();
-			PackageList packageList = connection.getFrsClient().getPackageList(
-					projectId);
-			if (packageList != null) {
-				PackageRow[] packages = packageList.getDataRows();
-				if (packages != null && packages.length > 0) {
-					for (PackageRow packageRow : packages) {
-						String packageId = packageRow.getId();
-						ReleaseList releasesList = connection.getFrsClient()
-								.getReleaseList(packageId);
-						if (releasesList != null) {
-							ReleaseRow[] releases = releasesList.getDataRows();
-							if (releases != null && releases.length > 0) {
-								for (ReleaseRow release : releases) {
-									String title = release.getTitle();
-									if (title.equals(releaseId)) {
-										return release.getId();
-									}
+			return convertReleaseIdForProject(connection, releaseId, projectId);
+		}
+		return null;
+	}
+
+	public static String convertReleaseIdForProject(Connection connection,
+			String releaseId, String projectId) throws RemoteException {
+		if (StringUtils.isEmpty(releaseId) || StringUtils.isEmpty(projectId)) {
+			return null;
+		}
+		PackageList packageList = connection.getFrsClient().getPackageList(
+				projectId);
+		if (packageList != null) {
+			PackageRow[] packages = packageList.getDataRows();
+			if (packages != null) {
+				for (PackageRow packageRow : packages) {
+					String packageId = packageRow.getId();
+					ReleaseList releasesList = connection.getFrsClient()
+							.getReleaseList(packageId);
+					if (releasesList != null) {
+						ReleaseRow[] releases = releasesList.getDataRows();
+						if (releases != null) {
+							for (ReleaseRow release : releases) {
+								String title = release.getTitle();
+								if (title.equals(releaseId)) {
+									return release.getId();
 								}
 							}
 						}
@@ -812,7 +821,7 @@ public class TFTrackerHandler {
 				}
 			}
 		}
-		return releaseId;
+		return null;
 	}
 
 	public List<PlanningFolderDO> getChangedPlanningFolders(

@@ -42,6 +42,7 @@ import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.utils.Obfuscator;
 import com.collabnet.teamforge.api.Connection;
+import com.collabnet.teamforge.api.frs.ReleaseDO;
 import com.collabnet.teamforge.api.planning.PlanningFolderDO;
 import com.collabnet.teamforge.api.tracker.ArtifactDO;
 import com.collabnet.teamforge.api.tracker.ArtifactDependencyRow;
@@ -439,11 +440,13 @@ public class TFReader extends AbstractReader<Connection> {
 							isIgnoreConnectorUserUpdates() ? this.getResyncUserName()
 									: "");
 					if (this.translateTechnicalReleaseIds) {
-						trackerHandler.convertReleaseIds(connection,
-								artifact);
+						convertReleaseIds(connection, artifact);
 					}
 				}
-				genericArtifact = TFToGenericArtifactConverter.convertArtifact(connection.supports53(), artifact, fieldsMap,
+				genericArtifact = TFToGenericArtifactConverter.convertArtifact(
+						connection.supports53(),
+						connection.supports54(),
+						artifact, fieldsMap,
 						lastModifiedDate, this.isIncludeFieldMetaData(),
 						sourceSystemTimezone);
 
@@ -495,7 +498,14 @@ public class TFReader extends AbstractReader<Connection> {
 						isIgnore = true;
 					}
 				}
-				genericArtifact = TFToGenericArtifactConverter.convertPlanningFolder(planningFolder,
+				
+				if (!isIgnore && isTranslateTechnicalReleaseIds()) {
+					convertReleaseIds(connection, planningFolder);
+				}
+				
+				genericArtifact = TFToGenericArtifactConverter.convertPlanningFolder(
+						connection.supports54(),
+						planningFolder,
 						lastModifiedDate, this.isIncludeFieldMetaData(),
 						sourceSystemTimezone);
 				
@@ -849,5 +859,33 @@ public class TFReader extends AbstractReader<Connection> {
 	 */
 	public boolean isRetrieveParentInfoForPlanningFolders() {
 		return retrieveParentInfoForPlanningFolders;
+	}
+
+	public static void convertReleaseIds(Connection connection, ArtifactDO artifact)
+			throws RemoteException {
+		String reportedReleaseId = artifact.getReportedReleaseId();
+		String resolvedReleaseId = artifact.getResolvedReleaseId();
+		if (!StringUtils.isEmpty(reportedReleaseId)) {
+			ReleaseDO releaseDO = connection.getFrsClient().getReleaseData(
+					reportedReleaseId);
+			String title = releaseDO.getTitle();
+			artifact.setReportedReleaseId(title);
+		}
+		if (!StringUtils.isEmpty(resolvedReleaseId)) {
+			ReleaseDO releaseDO = connection.getFrsClient().getReleaseData(
+					resolvedReleaseId);
+			String title = releaseDO.getTitle();
+			artifact.setResolvedReleaseId(title);
+		}
+	}
+	
+	public static void convertReleaseIds(Connection connection, PlanningFolderDO artifact) throws RemoteException {
+		String releaseId = artifact.getReleaseId();
+		if (!StringUtils.isEmpty(releaseId)) {
+			ReleaseDO releaseDO = connection.getFrsClient().getReleaseData(
+					releaseId);
+			String title = releaseDO.getTitle();
+			artifact.setReleaseId(title);
+		}
 	}
 }
