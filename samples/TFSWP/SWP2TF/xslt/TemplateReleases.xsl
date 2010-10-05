@@ -56,5 +56,17 @@
 			<xsl:value-of select="." />
 		</field>
 	</xsl:template>
+	<xsl:template match="ccf:field[@fieldName='archived']">
+		<field>
+			<xsl:copy-of select="@*" />
+			<xsl:attribute name="fieldName">status</xsl:attribute>
+			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
+			<xsl:attribute name="fieldValueType">String</xsl:attribute>
+			<xsl:choose>
+				<xsl:when test="text() = 'true'">Closed</xsl:when>
+				<xsl:otherwise>In progress</xsl:otherwise>
+			</xsl:choose>
+		</field>
+	</xsl:template>
 	<xsl:template match="text()" />
 </xsl:stylesheet>
