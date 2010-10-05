@@ -73,6 +73,17 @@
 			<xsl:value-of select="." />
 		</field>
 	</xsl:template>
+	<xsl:template match='ccf:field[@fieldName="points"]'>
+		<xsl:if test="not(../ccf:field[@fieldName='Backlog Effort'])">
+			<field>
+				<xsl:copy-of select="@*" />
+				<xsl:attribute name="fieldName">estimate</xsl:attribute>
+				<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
+				<xsl:attribute name="fieldValueType">Integer</xsl:attribute>
+				<xsl:value-of select="." />
+			</field>
+		</xsl:if>
+	</xsl:template>
 	<xsl:template match='ccf:field[@fieldName="Themes"]'>
 		<field>
 			<xsl:copy-of select="@*" />

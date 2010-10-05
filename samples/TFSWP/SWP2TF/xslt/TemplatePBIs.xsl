@@ -131,12 +131,30 @@
 			<xsl:value-of select="." />
 		</field>
 	</xsl:template>
+	<!-- 
 	<xsl:template match='ccf:field[@fieldName="estimate"]'>
 		<field>
 			<xsl:copy-of select="@*" />
 			<xsl:attribute name="fieldName">Backlog Effort</xsl:attribute>
 			<xsl:attribute name="fieldType">flexField</xsl:attribute>
 			<xsl:attribute name="fieldValueType">String</xsl:attribute>
+			<xsl:value-of select="." />
+		</field>
+	</xsl:template>
+	-->
+	<xsl:template match='ccf:field[@fieldName="estimate"]'>
+		<field>
+			<xsl:copy-of select="@*" />
+			<xsl:attribute name="fieldName">Backlog Effort</xsl:attribute>
+			<xsl:attribute name="fieldType">flexField</xsl:attribute>
+			<xsl:attribute name="fieldValueType">String</xsl:attribute>
+			<xsl:value-of select="." />
+		</field>
+		<field>
+			<xsl:copy-of select="@*" />
+			<xsl:attribute name="fieldName">points</xsl:attribute>
+			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
+			<xsl:attribute name="fieldValueType">Integer</xsl:attribute>
 			<xsl:value-of select="." />
 		</field>
 	</xsl:template>
