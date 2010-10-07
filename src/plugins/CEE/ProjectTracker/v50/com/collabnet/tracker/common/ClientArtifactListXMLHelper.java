@@ -277,7 +277,11 @@ public class ClientArtifactListXMLHelper {
 					commentDate = n.getNodeValue();
 				} else if (child.getLocalName().equals(TEXT_TAG) && child.getNamespaceURI().equals(NAMESPACE)) {
 					Node n = child.getFirstChild();
-					commentText = n.getNodeValue();
+					if (n == null) {
+						commentText = "";
+					} else {
+						commentText = n.getNodeValue();
+					}
 				}
 			}
 			child = child.getNextSibling();
