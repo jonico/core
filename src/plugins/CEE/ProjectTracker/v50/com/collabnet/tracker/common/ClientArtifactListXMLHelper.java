@@ -277,6 +277,7 @@ public class ClientArtifactListXMLHelper {
 					commentDate = n.getNodeValue();
 				} else if (child.getLocalName().equals(TEXT_TAG) && child.getNamespaceURI().equals(NAMESPACE)) {
 					Node n = child.getFirstChild();
+					// This can only occur if the comment has been edited afterwards
 					if (n == null) {
 						commentText = "";
 					} else {
