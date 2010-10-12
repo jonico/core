@@ -86,6 +86,13 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 	private boolean alwaysPassPartialArtifacts = false;
 
 	/**
+	 * If this property is set to true (false by default), attachments whose parent plain artifact
+	 * could not be found, will only be quarantined if the parent in question is still in the hospital.
+	 * Use this option if you only map a subset of source artifacts to the target repository.
+	 */
+	private boolean onlyQuarantineAttachmentIfParentInHospital = false;
+
+	/**
 	 * openAdaptor Method to process all input and puts out the results This
 	 * method will only handle Dom4J documents encoded in the generic XML schema
 	 */
@@ -187,7 +194,7 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 							sourceSystemId, sourceRepositoryId, targetSystemId,
 							targetRepositoryId, artifactType,
 							sourceArtifactLastModifiedDate,
-							sourceArtifactVersionLong)) {
+							sourceArtifactVersionLong, false)) {
 				XPathUtils.addAttribute(element,
 						GenericArtifactHelper.ARTIFACT_ACTION,
 						GenericArtifactHelper.ARTIFACT_ACTION_IGNORE);
@@ -315,7 +322,8 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 								GenericArtifactHelper.ARTIFACT_ACTION_IGNORE);
 						return new Object[] { data };
 					}
-					String cause = "Parent artifact "
+					if (!isOnlyQuarantineAttachmentIfParentInHospital() || skipQuarantinedArtifact(null, sourceParentArtifactId, sourceSystemId, sourceParentRepositoryId, targetSystemId, targetParentRepositoryId, GenericArtifactHelper.ARTIFACT_TYPE_PLAIN_ARTIFACT, null, 0, true)) {
+						String cause = "Parent artifact "
 							+ sourceParentArtifactId
 							+ " for attachment "
 							+ sourceArtifactId
@@ -323,11 +331,23 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 							+ sourceArtifactId + "-" + sourceRepositoryId + "-"
 							+ sourceSystemId + "-" + targetRepositoryId + "-"
 							+ targetSystemId;
-					log.error(cause);
-					XPathUtils.addAttribute(element,
-							GenericArtifactHelper.ERROR_CODE,
-							GenericArtifact.ERROR_PARENT_ARTIFACT_NOT_PRESENT);
-					throw new CCFRuntimeException(cause);
+						log.error(cause);
+						XPathUtils.addAttribute(element,
+								GenericArtifactHelper.ERROR_CODE,
+								GenericArtifact.ERROR_PARENT_ARTIFACT_NOT_PRESENT);
+						throw new CCFRuntimeException(cause);	
+					} else {
+						String cause = "Parent artifact "
+							+ sourceParentArtifactId
+							+ " for attachment "
+							+ sourceArtifactId
+							+ " is not created on the target system for combination "
+							+ sourceArtifactId + "-" + sourceRepositoryId + "-"
+							+ sourceSystemId + "-" + targetRepositoryId + "-"
+							+ targetSystemId + ". Do not quarantine attachment since parent could not be found in hospital.";
+						log.warn(cause);
+						return null;
+					}
 				} else {
 					XPathUtils
 							.addAttribute(
@@ -925,7 +945,8 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 			String sourceArtifactId, String sourceSystemId,
 			String sourceRepositoryId, String targetSystemId,
 			String targetRepositoryId, String artifactType,
-			Date sourceArtifactLastModifiedDate, long sourceArtifactVersionLong) {
+			Date sourceArtifactLastModifiedDate, long sourceArtifactVersionLong,
+			boolean onlyCheckIfQuarantinedArtifactExists) {
 
 		// only if a connection to the hospital table is possible we can skip
 		// artifacts
@@ -950,6 +971,8 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 		if (resultSet == null || resultSet.length == 0) {
 			// artifact is not in the hospital
 			return false;
+		} else if (onlyCheckIfQuarantinedArtifactExists) {
+			return true;
 		} else if (isSkipNewerVersionsOfQuarantinedArtifacts()) {
 			// we do not have to compare version numbers since we skip every
 			// version of the artifact
@@ -1268,5 +1291,24 @@ public class EntityService extends LifecycleComponent implements IDataProcessor 
 	 */
 	public boolean isAlwaysPassPartialArtifacts() {
 		return alwaysPassPartialArtifacts;
+	}
+
+	/**
+	 * If this property is set to true (false by default), attachments whose parent plain artifact
+	 * could not be found, will only be quarantined if the parent in question is still in the hospital.
+	 * Use this option if you only map a subset of source artifacts to the target repository.
+	 */
+	public void setOnlyQuarantineAttachmentIfParentInHospital(
+			boolean onlyQuarantineAttachmentIfParentInHospital) {
+		this.onlyQuarantineAttachmentIfParentInHospital = onlyQuarantineAttachmentIfParentInHospital;
+	}
+
+	/**
+	 * If this property is set to true (false by default), attachments whose parent plain artifact
+	 * could not be found, will only be quarantined if the parent in question is still in the hospital.
+	 * Use this option if you only map a subset of source artifacts to the target repository.
+	 */
+	public boolean isOnlyQuarantineAttachmentIfParentInHospital() {
+		return onlyQuarantineAttachmentIfParentInHospital;
 	}
 }

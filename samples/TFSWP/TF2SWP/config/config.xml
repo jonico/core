@@ -390,6 +390,7 @@
 		<property name="skipNewerVersionsOfQuarantinedArtifacts" value="false"/><property name="alwaysPassResynchedArtifacts" value="false"/>
 		<property name="identityMapEventWaitCount" value="8"></property>
 		<property name="identityMapEventWaitTime" value="500"></property>
+		<property name="onlyQuarantineAttachmentIfParentInHospital" value="true"></property>
 	</bean>
 
 	<bean id="HospitalDatabaseReaderTF2SWP"
