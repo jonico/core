@@ -170,9 +170,17 @@ public class Connection extends ActiveXComponent implements IConnection
 		if(likeStatementStandardsCompliant != null) {
 			return likeStatementStandardsCompliant.booleanValue();
 		}
-		IRecordSet rs = executeSQL("select 1 from audit_log where 'a' like '[abc]'");
-		likeStatementStandardsCompliant =  (rs != null && rs.getRecordCount() == 0);
-		return likeStatementStandardsCompliant.booleanValue();
+		IRecordSet rs = null;
+		try {
+			rs = executeSQL("select distinct 1 from audit_log where 'a' like '[abc]'");
+			likeStatementStandardsCompliant =  (rs != null && rs.getRecordCount() == 0);
+			return likeStatementStandardsCompliant.booleanValue();
+		} finally {
+			if (rs != null) {
+				rs.safeRelease();
+				rs = null;
+			}
+		}
 	}
 
 	//	if (log.isDebugEnabled()) {
