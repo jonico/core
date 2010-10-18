@@ -631,9 +631,15 @@ public class QCAttachmentHandler {
 				if (thisField.getFieldName().equals(
 						AttachmentMetaData.getAttachmentName())) {
 					if (contentType.equals("DATA")) {
+						// For defects and requirements, QC adds a prefix consisting of the
+						// artifact type and ID to the file name. Images inserted into
+						// requirement rich text fields do not have a prefix, but are named
+						// RichContentImage_<randomID>.<extension>
+						// We remove the prefix if it exists.
 						String prefix = (isDefectRepository ? "BUG_":"REQ_")+entityId+"_";
-						String tmpAttachmentName =
-							attachmentName.substring(attachmentName.indexOf(prefix)+prefix.length());
+						String tmpAttachmentName = attachmentName.startsWith(prefix) ?
+							attachmentName.substring(prefix.length()) :
+							attachmentName;
 						thisField.setFieldValue(tmpAttachmentName);
 					}
 					else

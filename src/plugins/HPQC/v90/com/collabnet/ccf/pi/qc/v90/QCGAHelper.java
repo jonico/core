@@ -701,7 +701,7 @@ public class QCGAHelper {
 	public static List<String> getAttachmentOperation(String auDescription) {
 
 		List<String> attachDescription = new ArrayList<String>();
-		if (auDescription != null) {
+		if (auDescription != null && auDescription.startsWith("Attachment")) {
 			int colonPosition = auDescription.indexOf(": ");
 			String attachLabelAndOperation = auDescription.substring(0,
 					colonPosition);

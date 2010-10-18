@@ -1386,10 +1386,11 @@ public class QCHandler {
 		if (StringUtils.isEmpty(newFieldValue))
 			return emptyString;
 		else {
+			// (?i) == use case-insensitive matching
+			// QC11 introduces a <span> element after the <font> element.
 			deltaComment = deltaComment
-					.replaceAll(
-							"<[fF][oO][Nn][Tt]\\s*[cC][oO][lL][oO][rR]=[\"']#[0-9]{6,6}[\"']><b>_+</b></[fF][oO][Nn][Tt]>",
-							emptyString);
+					.replaceFirst("(?i)<font[^>]*>\\(?<span[^>]*>\\)?<b>_+</b>\\(?</span>\\)?</font>", "")
+					.replaceFirst("<br[^>]*>", "");
 			deltaComment = FIRST_TAGS + deltaComment + LAST_TAGS;
 			return deltaComment;
 		}
@@ -1399,13 +1400,7 @@ public class QCHandler {
 		if (StringUtils.isEmpty(fieldValue)) {
 			return "";
 		}
-		int startTagsIndex = FIRST_TAGS.length();
-		int endTagsLength = LAST_TAGS.length();
-		String strippedOldValue = fieldValue.substring(startTagsIndex);
-		strippedOldValue = strippedOldValue.substring(0, strippedOldValue
-				.length()
-				- endTagsLength);
-		return strippedOldValue;
+		return fieldValue.replaceAll("^\\s*<html>\\s*<body>\\s*", "").replaceAll("\\s*</body>\\s*</html>\\s*$", "");
 	}
 
 	public String getOldFieldValue(IRecordSet newRs, String fieldName) {
