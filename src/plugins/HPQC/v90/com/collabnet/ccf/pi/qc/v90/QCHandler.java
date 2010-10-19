@@ -1330,14 +1330,28 @@ public class QCHandler {
 		if (StringUtils.isEmpty(newFieldValue))
 			return emptyString;
 		else {
-			// (?i) == use case-insensitive matching
-			// QC11 introduces a <span> element after the <font> element.
-			deltaComment = deltaComment
-					.replaceFirst("(?i)<font[^>]*>(?:<span[^>]*>)?<b>_+</b>(?:</span>)?</font>", "")
-					.replaceFirst("<br[^>]*>", "");
-			deltaComment = FIRST_TAGS + deltaComment + LAST_TAGS;
-			return deltaComment;
+			return cleanUpComment(deltaComment);
 		}
+	}
+
+	/**
+	 * @param commentHTML
+	 * @return
+	 */
+	private String cleanUpComment(String commentHTML) {
+		return FIRST_TAGS + commentHTML
+			// remove the first comment separator.
+			// QC11 introduces a <span> element after the <font> element.
+			// (?i) == use case-insensitive matching
+			.replaceFirst("(?i)<font[^>]*>(?:<span[^>]*>)?<b>_+</b>(?:</span>)?</font>", "")
+			// remove the first <br/> to avoid "hanging comments" after Jericho conversion
+			.replaceFirst("<br[^>]*>", "")
+			// replace empty lines by lines containing a non-breaking space
+			// to prevent Jericho from removing the first empty line.
+			// this applies only to QC11, QC10 uses different HTML that
+			// doesn't exhibit this problem in the first place.
+			.replaceAll("</span></font></div>\\s*<div align=\"left\"><font face=\"Arial\"><span style=\"font-size:8pt\"><br />", "<br />&nbsp;")
+			+ LAST_TAGS;
 	}
 
 	/**
@@ -1387,13 +1401,7 @@ public class QCHandler {
 		if (StringUtils.isEmpty(newFieldValue))
 			return emptyString;
 		else {
-			// (?i) == use case-insensitive matching
-			// QC11 introduces a <span> element after the <font> element.
-			deltaComment = deltaComment
-					.replaceFirst("(?i)<font[^>]*>(?:<span[^>]*>)?<b>_+</b>(?:</span>)?</font>", "")
-					.replaceFirst("<br[^>]*>", "");
-			deltaComment = FIRST_TAGS + deltaComment + LAST_TAGS;
-			return deltaComment;
+			return cleanUpComment(deltaComment);
 		}
 	}
 
