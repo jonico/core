@@ -26,6 +26,7 @@ import com.collabnet.ccf.pi.qc.v90.api.IRecordSet;
 import com.collabnet.ccf.pi.qc.v90.api.IRequirementsFactory;
 import com.jacob.activeX.ActiveXComponent;
 import com.jacob.com.Dispatch;
+import com.jacob.com.Variant;
 
 public class Connection extends ActiveXComponent implements IConnection
 {
@@ -33,6 +34,8 @@ public class Connection extends ActiveXComponent implements IConnection
 	private IRequirementsFactory requirementsFactory = null;
 	private ICommand command = null;
 	private String userName = null;
+	private String majorVersion;
+	private String minorVersion;
 	
     /**
 	 *
@@ -42,9 +45,24 @@ public class Connection extends ActiveXComponent implements IConnection
         super("TDApiOle80.TDConnection");
         initConnectionEx(server);
         login(user, pass);
+        populateVersions();
         connect(domain, project);
     }
 
+	private void populateVersions() {
+		Variant majorRef = new Variant("defaultMajor", true);
+		Variant minorRef = new Variant("defaultMinor", true);
+		try {
+			Dispatch.callSub(this, "GetTDVersion", majorRef, minorRef);
+			majorVersion = majorRef.getStringRef();
+			minorVersion = minorRef.getStringRef();
+		} finally {
+			majorRef.safeRelease();
+			minorRef.safeRelease();
+		}
+	}
+
+	
     boolean loggedIn = false;
     public void login(String user, String pass)
     {
@@ -224,6 +242,14 @@ public class Connection extends ActiveXComponent implements IConnection
 				unsanitizedString = unsanitizedString.replace(s, escapeCharacter + s);
 			}
 			return unsanitizedString;
+		}
+
+		public String getMajorVersion() {
+			return majorVersion;
+		}
+
+		public String getMinorVersion() {
+			return minorVersion;
 		}
 
 }

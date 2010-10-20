@@ -37,4 +37,6 @@ public interface IConnection extends ILifeCycle {
 	public boolean isLikeStatementStandardsCompliant();
 	public IRecordSet executeSQL(String sql);
 	public String sanitizeStringForSQLLikeQuery(String unsanitizedString, String escapeCharacter);
+	public String getMajorVersion();
+	public String getMinorVersion();
 }

@@ -1339,19 +1339,28 @@ public class QCHandler {
 	 * @return
 	 */
 	private String cleanUpComment(String commentHTML) {
-		return FIRST_TAGS + commentHTML
-			// remove the first comment separator.
-			// QC11 introduces a <span> element after the <font> element.
-			// (?i) == use case-insensitive matching
-			.replaceFirst("(?i)<font[^>]*>(?:<span[^>]*>)?<b>_+</b>(?:</span>)?</font>", "")
+		// remove the first comment separator.
+		// QC11 introduces a <span> element after the <font> element.
+		// (?i) == use case-insensitive matching
+		String res = commentHTML.replaceFirst("(?i)<font[^>]*>(?:<span[^>]*>)?<b>_+</b>(?:</span>)?</font>", "");
+
+		// remove gunk that causes Jericho to insert a newline as the first
+		// char in the comment, causing "hanging comments" in TF. 
+		// Unlike previous versions, the first comment of an artifact in QC11 doesn't 
+		// start with a <br/> element, but with an "almost empty" div:
+		final String FIRST_COMMENT_PREFIX = "<div align=\"left\"><font face=\"Arial\"><span style=\"font-size:8pt\">&nbsp;&nbsp;</span></font></div>";
+		if (res.startsWith(FIRST_COMMENT_PREFIX)) {
+			res = res.substring(FIRST_COMMENT_PREFIX.length());
+		} else {
 			// remove the first <br/> to avoid "hanging comments" after Jericho conversion
-			.replaceFirst("<br[^>]*>", "")
-			// replace empty lines by lines containing a non-breaking space
-			// to prevent Jericho from removing the first empty line.
-			// this applies only to QC11, QC10 uses different HTML that
-			// doesn't exhibit this problem in the first place.
-			.replaceAll("</span></font></div>\\s*<div align=\"left\"><font face=\"Arial\"><span style=\"font-size:8pt\"><br />", "<br />&nbsp;")
-			+ LAST_TAGS;
+			res = res.replaceFirst("<br[^>]*>", "");
+		}
+		// replace empty lines by lines containing a non-breaking space
+		// to prevent Jericho from removing the first empty line.
+		// this applies only to QC11, QC10 uses different HTML that
+		// doesn't exhibit this problem in the first place.
+		res = res.replaceAll("</span></font></div>\\s*<div align=\"left\"><font face=\"Arial\"><span style=\"font-size:8pt\"><br />", "<br />&nbsp;");
+		return FIRST_TAGS + res + LAST_TAGS;
 	}
 
 	/**
