@@ -279,7 +279,7 @@ public class QCRequirement extends Requirement implements IQCRequirement {
 				auditPropertiesRS = artifactHandler
 						.getAuditPropertiesRecordSet(qcc, txnIds);
 				deltaComment = artifactHandler
-						.getDeltaOfCommentForRequirements(auditPropertiesRS);
+						.getDeltaOfCommentForRequirements(auditPropertiesRS, qcc);
 			}
 		} finally {
 			if (auditPropertiesRS != null) {

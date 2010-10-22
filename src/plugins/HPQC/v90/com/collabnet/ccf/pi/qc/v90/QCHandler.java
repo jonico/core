@@ -60,6 +60,8 @@ import com.jacob.com.ComFailException;
  */
 public class QCHandler {
 
+	private static final String QC11_LAST_TAGS = "\r\n</body>\r\n</html>";
+	private static final String QC11_FIRST_TAGS = "<html>\r\n<body>\r\n";
 	private static final String FIRST_TAGS = "<html><body>";
 	private static final String LAST_TAGS = "</body></html>";
 	private static final Log log = LogFactory.getLog(QCHandler.class);
@@ -219,7 +221,7 @@ public class QCHandler {
 								|| (StringUtils.isEmpty(oldFieldValue) && !StringUtils
 										.isEmpty(fieldValue))) {
 							fieldValue = getConcatinatedCommentValue(
-									oldFieldValue, fieldValue, connectorUser);
+									oldFieldValue, fieldValue, connectorUser, qcc);
 						}
 						if (!movedLock) {
 							req.setField(fieldName, fieldValue);
@@ -511,7 +513,7 @@ public class QCHandler {
 								|| (StringUtils.isEmpty(oldFieldValue) && !StringUtils
 										.isEmpty(fieldValue))) {
 							fieldValue = getConcatinatedCommentValue(
-									oldFieldValue, fieldValue, connectorUser);
+									oldFieldValue, fieldValue, connectorUser, qcc);
 						}
 						if (!movedLock) {
 							bug.setField(fieldName, fieldValue);
@@ -762,7 +764,7 @@ public class QCHandler {
 							|| (StringUtils.isEmpty(oldFieldValue) && !StringUtils
 									.isEmpty(fieldValue))) {
 						fieldValue = getConcatinatedCommentValue(oldFieldValue,
-								fieldValue, connectorUser);
+								fieldValue, connectorUser, qcc);
 					}
 				}
 				/*
@@ -817,7 +819,7 @@ public class QCHandler {
 	}
 
 	public String getConcatinatedCommentValue(String oldFieldValue,
-			String fieldValue, String connectorUser) {
+			String fieldValue, String connectorUser, IConnection qcc) {
 
 		String concatinatedFieldValue = null;
 		java.util.Date date = new java.util.Date();
@@ -825,15 +827,39 @@ public class QCHandler {
 		fieldValue = fieldValue.replaceAll("\t", "        ");
 		if (!StringUtils.isEmpty(oldFieldValue)) {
 			oldFieldValue = this.stripStartAndEndTags(oldFieldValue);
-			concatinatedFieldValue = FIRST_TAGS + oldFieldValue + "<br>"
-					+ UNDERSCORE_STRING + "<br>"
-					+ "<font color=\"#000080\"><b>" + connectorUser + ", "
-					+ currentDateString + ": " + "</b></font>" + fieldValue
-					+ LAST_TAGS;
+			if ("11".equals(qcc.getMajorVersion())) {
+				concatinatedFieldValue =
+					QC11_FIRST_TAGS + oldFieldValue +
+					String.format(
+							"<div align=\"left\"><font face=\"Arial\"><span style=\"font-size:8pt\"><br />\n" +
+							"</span></font><font face=\"Arial\" color=\"#000080\" size=\"+0\"><span style=\"font-size:10pt\"><b>________________________________________</b></span></font><font \r\nface=\"Arial\"><span style=\"font-size:8pt\"><br />\r\n" +
+							"</span></font><font face=\"Arial\" color=\"#000080\"><span style=\"font-size:8pt\"><b>%s, %s:</b></span></font><font face=\"Arial\"><span style=\"font-size:8pt\">%s</span></font></div>",
+							connectorUser,
+							currentDateString,
+							fieldValue.replace("<br>", "<br />\r\n")) +
+					QC11_LAST_TAGS;
+			} else {
+				concatinatedFieldValue = FIRST_TAGS + oldFieldValue + "<br>"
+						+ UNDERSCORE_STRING + "<br>"
+						+ "<font color=\"#000080\"><b>" + connectorUser + ", "
+						+ currentDateString + ": " + "</b></font>" + fieldValue
+						+ LAST_TAGS;
+			}
 		} else {
-			concatinatedFieldValue = FIRST_TAGS + "<font color=\"#000080\"><b>"
-					+ connectorUser + ", " + currentDateString + ": "
-					+ "</b></font>" + fieldValue + LAST_TAGS;
+			if ("11".equals(qcc.getMajorVersion())) {
+				concatinatedFieldValue =
+					QC11_FIRST_TAGS +
+					String.format(
+							"<div align=\"left\"><font face=\"Arial\" color=\"#000080\"><span style=\"font-size:8pt\"><b>%s, %s:</b></span></font><font face=\"Arial\"><span style=\"font-size:8pt\">%s</span></font></div>",
+							connectorUser,
+							currentDateString,
+							fieldValue.replaceAll("<br>", "<br />\r\n")) +
+					QC11_LAST_TAGS;
+			} else {
+				concatinatedFieldValue = FIRST_TAGS + "<font color=\"#000080\"><b>"
+						+ connectorUser + ", " + currentDateString + ": "
+						+ "</b></font>" + fieldValue + LAST_TAGS;
+			}
 		}
 
 		return concatinatedFieldValue;
@@ -973,123 +999,6 @@ public class QCHandler {
 		return orderedDefectList;
 	}
 
-	// /**
-	// * Finds the state of the defect at a particular defectId and
-	// transactionId.
-	// * This is used while finding a bunch of history artifacts for a defectId
-	// * after a particular state represented by the transactionId.
-	// *
-	// * @param entityId
-	// * The defectId for which the search has to be made in QC
-	// * @param actionId
-	// * The transactionId starting from which the search has to be
-	// * made for a particular defectId in QC
-	// * @param transactionId
-	// * The transactionId starting from which the search has to be
-	// * made for a particular defectId in QC
-	// * @param qcc
-	// * The Connection object
-	// * @param latestDefectArtifact
-	// * The GenericArtifact into which the latest state information of
-	// * the defect identified by entityId is captured.
-	// * @return GenericArtifact The resultant GenericArtifact which has the
-	// * latest state of the defect information in it.
-	// */
-	// public GenericArtifact getStateOfDefectAtActionID(IConnection qcc,
-	// int entityId, int actionId, String transactionId,
-	// GenericArtifact latestDefectArtifact) {
-	//
-	// String sql = "SELECT AU_ACTION_ID FROM AUDIT_LOG WHERE AU_ENTITY_TYPE =
-	// 'BUG' AND AU_ACTION_ID > '"
-	// + actionId
-	// + "' AND AU_ACTION!='DELETE' AND AU_ENTITY_TYPE= 'BUG' AND AU_ENTITY_ID =
-	// '"
-	// + entityId + "'";
-	// if (transactionId != null && !transactionId.equals(""))
-	// sql += " AND AU_ACTION_ID >= '" + transactionId + "'";
-	// sql += " ORDER BY AU_ACTION_ID DESC";
-	// log.debug(sql);
-	//
-	// IRecordSet rs = executeSQL(qcc, sql);
-	// int rc = rs.getRecordCount();
-	// int txnId = 0;
-	// for (int cnt = 0; cnt < rc; cnt++, rs.next()) {
-	//
-	// txnId = Integer.parseInt(rs.getFieldValue("AU_ACTION_ID"));
-	// sql = "SELECT * FROM AUDIT_PROPERTIES WHERE AP_ACTION_ID= '"
-	// + txnId + "'";
-	// IRecordSet newRs = executeSQL(qcc, sql);
-	// int newRc = newRs.getRecordCount();
-	//
-	// for (int newCnt = 0; newCnt < newRc; newCnt++, newRs.next()) {
-	// String fieldName = newRs.getFieldValue("AP_FIELD_NAME");
-	// String oldFieldValue = null;
-	// if (!(fieldName.equals("BG_DESCRIPTION")))
-	// oldFieldValue = newRs.getFieldValue("AP_OLD_VALUE");
-	// else
-	// oldFieldValue = newRs.getFieldValue("AP_OLD_LONG_VALUE");
-	//
-	// List<GenericArtifactField> genArtifactFields = latestDefectArtifact
-	// .getAllGenericArtifactFieldsWithSameFieldName(fieldName);
-	// if (genArtifactFields != null
-	// && genArtifactFields.get(0) != null)
-	// genArtifactFields.get(0).setFieldValue(oldFieldValue);
-	// // genArtifactFields.get(0).setFieldValueHasChanged(true);
-	// }
-	//
-	// }
-	// List<String> txnIds = getTransactionIdsInRange(qcc, entityId, actionId,
-	// actionId, null);
-	// IRecordSet newRs = getAuditPropertiesRecordSet(qcc, txnIds);
-	// String deltaComment = getDeltaOfComment(newRs);
-	// if (deltaComment != null) {
-	// List<GenericArtifactField> genArtifactFieldsForComments =
-	// latestDefectArtifact
-	// .getAllGenericArtifactFieldsWithSameFieldName("BG_DEV_COMMENTS");
-	// genArtifactFieldsForComments.get(0).setFieldValue(deltaComment);
-	// }
-	//
-	// List<GenericArtifactField> genArtifactFields = latestDefectArtifact
-	// .getAllGenericArtifactFieldsWithSameFieldName("BG_VTS");
-	//
-	// if (genArtifactFields != null && genArtifactFields.get(0) != null
-	// && genArtifactFields.get(0).getFieldValue() != null
-	// && !(genArtifactFields.get(0).getFieldValue().equals(""))) {
-	// Date newBgVts = DateUtil.parseQCDate((String) genArtifactFields
-	// .get(0).getFieldValue());
-	// latestDefectArtifact.setSourceArtifactLastModifiedDate(DateUtil
-	// .format(newBgVts));
-	// return latestDefectArtifact;
-	// } else {
-	// // This means the BG_VTS field is null. So, find it, populate it &
-	// // ArtifactLastModifiedDate
-	// String bgVts = qcGAHelper.findBgVtsFromQC(qcc, actionId, entityId);
-	// genArtifactFields.get(0).setFieldValue((String) bgVts);
-	// Date newBgVts = DateUtil.parseQCDate(bgVts);
-	// String lastModifiedDate = DateUtil.format(newBgVts);
-	// latestDefectArtifact
-	// .setSourceArtifactLastModifiedDate(lastModifiedDate);
-	// }
-	//
-	// // The ArtifactActionValue IGNORE and DELETE needs to be done.
-	// //
-	// latestDefectArtifact.setArtifactAction(GenericArtifact.ArtifactActionValue.UNKNOWN);
-	// return latestDefectArtifact;
-	//
-	// }
-	//
-	// /**
-	// * Given an action id (id for the AUDIT_LOG table
-	// *
-	// * @param actionId
-	// * @return the defect at the time of the actionId
-	// */
-	// public QCDefect getArtifactStateFromActionId(int actionId) {
-	// // return the state of the given defect at transaction actionId
-	//
-	// QCDefect defect = null;
-	// return defect;
-	// }
 
 	/**
 	 * Assigns values of the incoming parameters to the incoming genericArtifact
@@ -1291,8 +1200,16 @@ public class QCHandler {
 	 * @param actionId
 	 * @return
 	 */
-	public String getDeltaOfCommentForDefects(IRecordSet newRs) {
+	public String getDeltaOfCommentForDefects(IRecordSet newRs, IConnection qcc) {
+		return getDeltaOfComment(newRs, QCConfigHelper.QC_BG_DEV_COMMENTS, qcc);
+	}
 
+	/**
+	 * @param newRs
+	 * @param filterFieldName
+	 * @return
+	 */
+	private String getDeltaOfComment(IRecordSet newRs, String filterFieldName, IConnection qcc) {
 		String deltaComment = "";
 		String newFieldValue = null;
 		String emptyString = "";
@@ -1301,7 +1218,7 @@ public class QCHandler {
 
 		for (int newCnt = 0; newCnt < newRc; newCnt++, newRs.next()) {
 			String fieldName = newRs.getFieldValueAsString("AP_FIELD_NAME");
-			if (fieldName.equals(QCConfigHelper.QC_BG_DEV_COMMENTS)) {
+			if (fieldName.equals(filterFieldName)) {
 				String oldFieldValue = newRs
 						.getFieldValueAsString("AP_OLD_LONG_VALUE");
 				newFieldValue = newRs
@@ -1309,12 +1226,33 @@ public class QCHandler {
 				if (!StringUtils.isEmpty(newFieldValue)
 						&& !StringUtils.isEmpty(oldFieldValue)) {
 					if (newFieldValue.length() > oldFieldValue.length()) {
-						String strippedOldValue = this
-								.stripStartAndEndTags(oldFieldValue);
-						String strippedNewValue = this
-								.stripStartAndEndTags(newFieldValue);
-						deltaComment += (strippedNewValue
-								.substring(strippedOldValue.length()));
+						String strippedOldValue = stripStartAndEndTags(oldFieldValue);
+						String strippedNewValue = stripStartAndEndTags(newFieldValue);
+						String delta = strippedNewValue.substring(strippedOldValue.length());
+						if ("11".equals(qcc.getMajorVersion())) {
+							/*
+							 * QC11 inserts line breaks into the comment values,
+							 * which causes the new value to be too long after a
+							 * comment was synched e.g. from TF. Thus, the delta
+							 * contains some characters at the beginning which
+							 * belong to the previous comment. Here, we cut
+							 * these off in order to prevent the extraneous
+							 * chars from being synched back to the other
+							 * system.
+							 * 
+							 * XXX: this will break if a very long comment or
+							 * very many comments are synched, so that the start
+							 * of the delta moves so far back that the
+							 * "extraneous chars" contain the entire previous
+							 * comment.
+							 */
+							final String commentStart = "<div align=";
+							final int offset = delta.indexOf(commentStart); 
+							if (offset > 0) {
+								delta = delta.substring(offset);
+							}
+						}
+						deltaComment += delta;
 					} else if (newFieldValue.length() == oldFieldValue.length()) {
 						log.warn("QC comments not changed");
 					} else {
@@ -1322,7 +1260,7 @@ public class QCHandler {
 					}
 				} else {
 					if (!StringUtils.isEmpty(newFieldValue)) {
-						deltaComment = newFieldValue;
+						deltaComment = stripStartAndEndTags(newFieldValue);
 					}
 				}
 			}
@@ -1371,47 +1309,8 @@ public class QCHandler {
 	 * @param actionId
 	 * @return
 	 */
-	public String getDeltaOfCommentForRequirements(IRecordSet newRs) {
-
-		String deltaComment = "";
-		String newFieldValue = null;
-		String emptyString = "";
-
-		int newRc = newRs.getRecordCount();
-
-		for (int newCnt = 0; newCnt < newRc; newCnt++, newRs.next()) {
-			String fieldName = newRs.getFieldValueAsString("AP_FIELD_NAME");
-			if (fieldName.equals(QCConfigHelper.QC_RQ_DEV_COMMENTS)) {
-				String oldFieldValue = newRs
-						.getFieldValueAsString("AP_OLD_LONG_VALUE");
-				newFieldValue = newRs
-						.getFieldValueAsString("AP_NEW_LONG_VALUE");
-				if (!StringUtils.isEmpty(newFieldValue)
-						&& !StringUtils.isEmpty(oldFieldValue)) {
-					if (newFieldValue.length() > oldFieldValue.length()) {
-						String strippedOldValue = this
-								.stripStartAndEndTags(oldFieldValue);
-						String strippedNewValue = this
-								.stripStartAndEndTags(newFieldValue);
-						deltaComment += (strippedNewValue
-								.substring(strippedOldValue.length()));
-					} else if (newFieldValue.length() == oldFieldValue.length()) {
-						log.warn("QC comments not changed");
-					} else {
-						log.warn("New comment is smaller than old comment");
-					}
-				} else {
-					if (!StringUtils.isEmpty(newFieldValue)) {
-						deltaComment = newFieldValue;
-					}
-				}
-			}
-		}
-		if (StringUtils.isEmpty(newFieldValue))
-			return emptyString;
-		else {
-			return cleanUpComment(deltaComment);
-		}
+	public String getDeltaOfCommentForRequirements(IRecordSet newRs, IConnection qcc) {
+		return getDeltaOfComment(newRs, QCConfigHelper.QC_RQ_DEV_COMMENTS, qcc);
 	}
 
 	private String stripStartAndEndTags(String fieldValue) {
@@ -1612,7 +1511,7 @@ public class QCHandler {
 							|| (StringUtils.isEmpty(oldFieldValue) && !StringUtils
 									.isEmpty(fieldValue))) {
 						fieldValue = getConcatinatedCommentValue(oldFieldValue,
-								fieldValue, connectorUser);
+								fieldValue, connectorUser, qcc);
 					}
 				}
 

@@ -264,7 +264,7 @@ public class QCDefect extends Bug implements IQCDefect {
 				auditPropertiesRS = defectHandler.getAuditPropertiesRecordSet(
 						qcc, txnIds);
 				deltaComment = defectHandler
-						.getDeltaOfCommentForDefects(auditPropertiesRS);
+						.getDeltaOfCommentForDefects(auditPropertiesRS, qcc);
 			}
 		} finally {
 			if (auditPropertiesRS != null) {
