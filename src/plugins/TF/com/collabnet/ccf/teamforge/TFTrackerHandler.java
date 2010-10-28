@@ -647,9 +647,9 @@ public class TFTrackerHandler {
 				}
 				
 				artifactData.setFlexFields(flexFields);
-
+				String firstComment = comments.length > 0 ? comments[0] : null;
 				connection.getTrackerClient().setArtifactData(artifactData,
-						null, null, null, null);
+						firstComment, null, null, null);
 			} catch (AxisFault e) {
 				javax.xml.namespace.QName faultCode = e.getFaultCode();
 				if (!faultCode.getLocalPart().equals("VersionMismatchFault")) {
@@ -666,7 +666,13 @@ public class TFTrackerHandler {
 			artifactData.setVersion(artifactData.getVersion() + 1);
 		}
 
+		boolean first = true;
 		for (String comment : comments) {
+			if (first) {
+				// we already processed the first comment above.
+				first = false;
+				continue;
+			}
 			boolean commentNotUpdated = true;
 			while (commentNotUpdated) {
 				try {
