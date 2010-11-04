@@ -54,10 +54,10 @@ public class QCConnectionFactory implements ConnectionFactory<IConnection> {
 	/**
 	 * Connection Factory implementation for the QC adaptor.
 	 * 1. connectionInfo contains the server URL.
-	 * 2. credentialInfo contains the user name and password delimited by ':'
+	 * 2. credentialInfo contains the user name and password delimited by '-'
 	 *
 	 *  The Repository ID contains the QC domain name and QC project name
-	 *  delimited by a ':'
+	 *  delimited by a '-'
 	 * @throws ConnectionException
 	 */
 	public IConnection createConnection(String systemId, String systemKind,
@@ -95,7 +95,10 @@ public class QCConnectionFactory implements ConnectionFactory<IConnection> {
 					username = splitCredentials[0];
 					password = splitCredentials[1];
 				}
-				else {
+				else if (splitCredentials.length > 2){
+					username = splitCredentials[0];
+					password = credentialInfo.substring(credentialInfo.indexOf(PARAM_DELIMITER) + 1);
+				} else {
 					throw new IllegalArgumentException("Credentials info is not valid.");
 				}
 			}
