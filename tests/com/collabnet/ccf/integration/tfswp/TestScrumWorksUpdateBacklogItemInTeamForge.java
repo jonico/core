@@ -101,9 +101,10 @@ public class TestScrumWorksUpdateBacklogItemInTeamForge extends
 		assertEquals(TeamForgeTester.NONE, teamForgePbi.getAssignedToFullname());
 		assertTrue(teamForgePbi.getAutosumming());
 		assertEquals(0, teamForgePbi.getRemainingEffort());
+		assertEquals(Integer.valueOf(effort), (Integer) teamForgePbi.getPoints()); 
 
 		final String artifactId = teamForgePbi.getId();
-		assertEquals(Arrays.asList(benefit, penalty, effort,
+		assertEquals(Arrays.asList(benefit, penalty, 
 				scrumWorksPbiFromUpdate.getKey(), SWPMetaData
 						.getTeamSprintStringRepresentation(sprint.getName(),
 								sprint.getStartDateAsTwoDigitMonthAndDate(), 
@@ -112,7 +113,6 @@ public class TestScrumWorksUpdateBacklogItemInTeamForge extends
 				sprint.getEndDate(), theme1, theme2), getTeamForgeTester()
 				.getFieldValues(artifactId, TeamForgeTester.FIELD_BENEFIT,
 						TeamForgeTester.FIELD_PENALTY,
-						TeamForgeTester.FIELD_EFFORT,
 						TeamForgeTester.FIELD_KEY,
 						TeamForgeTester.FIELD_TEAM_SPRINT_NAME,
 						TeamForgeTester.FIELD_SPRINT_START,
