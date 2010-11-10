@@ -33,12 +33,14 @@ Themes:
     DB
     Documentation
     GUI                                            
-Users: 
+Users - password for each user is 'password*1': 
     a
     b
     Stephen
     Kelley
     Luke
-    Johannes            
+    Johannes          
+    CCFUser
+    CCFResync  
     
          
