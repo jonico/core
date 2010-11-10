@@ -8,6 +8,7 @@ import java.util.Arrays;
 import org.junit.Test;
 
 import com.collabnet.ccf.swp.SWPMetaData;
+import com.collabnet.teamforge.api.tracker.ArtifactDO;
 import com.collabnet.teamforge.api.tracker.ArtifactRow;
 import com.danube.scrumworks.api2.client.BacklogItem;
 
@@ -64,16 +65,17 @@ public class TestScrumWorksCreateAndDeleteBacklogItemInTeamForge extends
 				.getAssignedToFullname());
 		assertTrue(pbiInTeamForge.getAutosumming());
 		assertEquals(0, pbiInTeamForge.getRemainingEffort());
-
+		assertEquals(Integer.valueOf(effort), (Integer) pbiInTeamForge.getPoints()); 
+		
 		final String artifactId = pbiInTeamForge.getId();
-		assertEquals(Arrays.asList(benefit, penalty, effort, pbiInScrumWorks
+		assertEquals(Arrays.asList(benefit, penalty, pbiInScrumWorks
 				.getKey(), SWPMetaData.getTeamSprintStringRepresentation(sprint
 				.getName(), sprint.getStartDateAsTwoDigitMonthAndDate(), 
 				sprint.getEndDateAsTwoDigitMonthAndDate(), sprint
 				.getTeam()), sprint.getStartDate(), sprint.getEndDate(),
 				theme1, theme2), getTeamForgeTester().getFieldValues(
 				artifactId, TeamForgeTester.FIELD_BENEFIT,
-				TeamForgeTester.FIELD_PENALTY, TeamForgeTester.FIELD_EFFORT,
+				TeamForgeTester.FIELD_PENALTY, 
 				TeamForgeTester.FIELD_KEY,
 				TeamForgeTester.FIELD_TEAM_SPRINT_NAME,
 				TeamForgeTester.FIELD_SPRINT_START,
