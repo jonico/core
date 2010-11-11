@@ -21,8 +21,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -55,6 +57,7 @@ public class ConnectionPool<T> {
 	public long scavengerInterval = 2*60*1000;
 	private int maxConnectionsPerPool = 5;
 	private long scavengerLastRun = 0;
+	private List<String> suppliedCredentials = Collections.synchronizedList(new ArrayList<String>()); 
 
 	public ConnectionPool(){
 		// we currently do not use the scavenger thread due to its inefficient synchronization model
@@ -303,11 +306,26 @@ public class ConnectionPool<T> {
 	private String generateKey(String systemId, String systemKind,
 			String repositoryId, String repositoryKind, String connectionInfo,
 			String credentialInfo) {
+		// get rid of credential info if key should ever be displayed in the log file
 		return systemId + KEY_DELIMITER + systemKind + KEY_DELIMITER +
 				repositoryId + KEY_DELIMITER + repositoryKind + KEY_DELIMITER +
-				connectionInfo + KEY_DELIMITER + credentialInfo;
+				connectionInfo + KEY_DELIMITER + getUniqueNumberForSuppliedCredentials(credentialInfo);
 	}
 
+	/**
+	 * Since multiple connections can exist between the same source and target repository which only differ in the supplied credentials,
+	 * we have to differentiate those without exposing the credential info in the key itself
+	 * This method keeps track of all supplied credentials in a list and returnes their position in the list. 
+	 * If not yet included in the list, the credentials will be added.
+	 * @param credentialInfo credentials that should be searched/inserted in the list
+	 * @return index of the credentials in the list
+	 */
+	private int getUniqueNumberForSuppliedCredentials(String credentialInfo) {
+		if (!suppliedCredentials.contains(credentialInfo)) {
+			suppliedCredentials.add(credentialInfo);
+		}
+		return suppliedCredentials.indexOf(credentialInfo);
+	}
 	/**
 	 * Returns the ConnectionFactory object that is used by the ConnectionPool
 	 * to create and close connections for a particular system.
