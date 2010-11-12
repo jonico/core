@@ -93,7 +93,8 @@ public class QCConnectionFactory implements ConnectionFactory<IConnection> {
 				}
 				else if(splitCredentials.length == 2){
 					username = splitCredentials[0];
-					password = splitCredentials[1];
+					// this will also work if password ends with hyphen(s)
+					password = credentialInfo.substring(credentialInfo.indexOf(PARAM_DELIMITER) + 1);
 				}
 				else if (splitCredentials.length > 2){
 					username = splitCredentials[0];
