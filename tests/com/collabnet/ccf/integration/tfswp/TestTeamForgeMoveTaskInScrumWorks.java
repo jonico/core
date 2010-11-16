@@ -62,7 +62,7 @@ public class TestTeamForgeMoveTaskInScrumWorks extends TFSWPIntegrationTest {
 		flexFields.setTypes(new String[] {});
 		flexFields.setValues(new String[] {});
 		ArtifactDO secondTFPBI = getTeamForgeTester().createBacklogItem("SecondPBI", "Second task parent", null,
-				flexFields);
+				flexFields, 0);
 		
 		// wait until second pbi got created
 		pbisSWP = getSWPTester().waitForBacklogItemsToAppear(2);

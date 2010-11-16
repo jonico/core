@@ -39,7 +39,7 @@ public class TestTeamForgeCreateBacklogItemInScrumWorks extends
 		final String release = SWPTester.RELEASE_1;
 		final String benefit = "10";
 		final String penalty = "20";
-		final String effort = "30";
+		final Integer effort = 30;
 		final String theme1 = SWPTester.THEME_CORE;
 		final String theme2 = SWPTester.THEME_GUI;
 		// and now some bogus values that should be ignored
@@ -49,15 +49,14 @@ public class TestTeamForgeCreateBacklogItemInScrumWorks extends
 		final FieldValues flexFields = getTeamForgeTester().convertToFlexField(
 				new String[] { TeamForgeTester.FIELD_BENEFIT,
 						TeamForgeTester.FIELD_PENALTY,
-						TeamForgeTester.FIELD_EFFORT,
 						TeamForgeTester.FIELD_THEME,
 						TeamForgeTester.FIELD_THEME, 
 						TeamForgeTester.FIELD_KEY},
-				new String[] { benefit, penalty, effort, theme1, theme2,
+				new String[] { benefit, penalty, theme1, theme2,
 						bogusKey});
 
 		getTeamForgeTester().createBacklogItem(title, description, release,
-				flexFields);
+				flexFields, effort);
 
 		// verify
 		List<BacklogItem> pbis = getSWPTester().waitForBacklogItemsToAppear(1);
@@ -68,7 +67,7 @@ public class TestTeamForgeCreateBacklogItemInScrumWorks extends
 		assertEquals(description, pbi.getDescription());
 		assertEquals(benefit, pbi.getBusinessWeight().getBenefit().toString());
 		assertEquals(penalty, pbi.getBusinessWeight().getPenalty().toString());
-		assertEquals(effort, pbi.getEstimate().toString());
+		assertEquals(effort, pbi.getEstimate());
 
 		// check whether bogus values have been transported
 		assertNotSame(bogusKey, pbi.getKey());

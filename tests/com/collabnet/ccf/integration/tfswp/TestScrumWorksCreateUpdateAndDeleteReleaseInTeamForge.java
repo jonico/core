@@ -8,9 +8,7 @@ import java.rmi.RemoteException;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
-
-import javax.xml.datatype.DatatypeFactory;
-import javax.xml.datatype.XMLGregorianCalendar;
+import java.util.TimeZone;
 
 import org.junit.After;
 import org.junit.Before;
@@ -102,9 +100,10 @@ public class TestScrumWorksCreateUpdateAndDeleteReleaseInTeamForge extends TFSWP
 		String newReleaseDescription = "Renamed Release automatically created by a unit test";
 		Calendar today = new GregorianCalendar();
 		GregorianCalendar newStartDate = new GregorianCalendar(today.get(Calendar.YEAR), today.get(Calendar.MONTH) ,today.get(Calendar.DAY_OF_MONTH));
+		newStartDate.setTimeZone(TimeZone.getTimeZone("US/Pacific"));
 		GregorianCalendar newReleaseDate = (GregorianCalendar) newStartDate.clone(); 
 		newReleaseDate.add(Calendar.DAY_OF_MONTH, 1);
-		Date xmlNewStartDate = newStartDate.getTime(); 
+		Date xmlNewStartDate = newStartDate.getTime();
 		Date xmlNewReleaseDate = newReleaseDate.getTime();  
 		
 		swpRelease.setName(newReleaseTitle);

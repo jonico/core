@@ -24,8 +24,7 @@ import com.danube.scrumworks.api2.client.Comment;
  */
 public class TestTeamForgeUpdateBacklogItemInScrumWorks extends TFSWPIntegrationTest {
 	private static final String[] names = new String[] {TeamForgeTester.FIELD_BENEFIT, 
-		TeamForgeTester.FIELD_PENALTY, 
-		TeamForgeTester.FIELD_EFFORT, 
+		TeamForgeTester.FIELD_PENALTY,  
 		TeamForgeTester.FIELD_THEME, 
 		TeamForgeTester.FIELD_THEME,
 		TeamForgeTester.FIELD_KEY,
@@ -43,7 +42,7 @@ public class TestTeamForgeUpdateBacklogItemInScrumWorks extends TFSWPIntegration
 		final String release = SWPTester.RELEASE_1;
 		final String benefit = "10";
 		final String penalty = "20";
-		final String effort = "30";
+		final Integer effort = 30;
 		final String theme1 = SWPTester.THEME_CORE;
 		final String theme2 = SWPTester.THEME_GUI;
 		
@@ -51,9 +50,9 @@ public class TestTeamForgeUpdateBacklogItemInScrumWorks extends TFSWPIntegration
 
 		// execute, do not set bogus values here
 		final FieldValues flexFields = getTeamForgeTester().convertToFlexField(names, 
-				new String[] {benefit, penalty, effort, theme1, theme2, null, null}); 
+				new String[] {benefit, penalty, theme1, theme2, null, null}); 
 		
-		backlogItemDO = getTeamForgeTester().createBacklogItem(title, description, release, flexFields);
+		backlogItemDO = getTeamForgeTester().createBacklogItem(title, description, release, flexFields, effort);
 	}
 	
 	/**
@@ -71,16 +70,16 @@ public class TestTeamForgeUpdateBacklogItemInScrumWorks extends TFSWPIntegration
 		final String release = SWPTester.RELEASE_2;
 		final String benefit = "100";
 		final String penalty = "200";
-		final String effort = "300";
+		final Integer effort = 300;
 		final String theme1 = SWPTester.THEME_DB;
 		final String theme2 = SWPTester.THEME_DOCUMENTATION;
 		// and now some bogus values that should be ignored
 		String bogusKey = "bogusKey";
 		
 		final FieldValues flexFields = getTeamForgeTester().convertToFlexField(names, 
-				new String[] {benefit, penalty, effort, theme1, theme2, bogusKey, null});
+				new String[] {benefit, penalty, theme1, theme2, bogusKey, null});
 		
-		getTeamForgeTester().updateBacklogItem(backlogItemDO.getId(), title, description, release, null, flexFields); 
+		getTeamForgeTester().updateBacklogItem(backlogItemDO.getId(), title, description, release, null, flexFields, effort); 
 		
 		// verify 
 		BacklogItem updatedPbi = getSWPTester().waitForBacklogItemToUpdate(title); 
@@ -90,7 +89,7 @@ public class TestTeamForgeUpdateBacklogItemInScrumWorks extends TFSWPIntegration
 		assertEquals(description, updatedPbi.getDescription());
 		assertEquals(benefit, updatedPbi.getBusinessWeight().getBenefit().toString()); 
 		assertEquals(penalty, updatedPbi.getBusinessWeight().getPenalty().toString());
-		assertEquals(effort, updatedPbi.getEstimate().toString());
+		assertEquals(effort, updatedPbi.getEstimate());
 		final List<String> themeNames = getSWPTester().getThemeNames(updatedPbi.getThemes()); 
 		assertEquals(2, themeNames.size()); 
 		assertTrue(themeNames.contains(theme1)); 
@@ -116,7 +115,7 @@ public class TestTeamForgeUpdateBacklogItemInScrumWorks extends TFSWPIntegration
 		
 		// execute
 		final String revisedTitle = "done PBI"; 
-		getTeamForgeTester().updateBacklogItem(backlogItemDO.getId(), revisedTitle, description, release, TeamForgeTester.STATUS_DONE, flexFields); 
+		getTeamForgeTester().updateBacklogItem(backlogItemDO.getId(), revisedTitle, description, release, TeamForgeTester.STATUS_DONE, flexFields, effort); 
 
 		// verify 
 		BacklogItem doneDateUpdatedPbi = getSWPTester().waitForBacklogItemToUpdate(revisedTitle); 

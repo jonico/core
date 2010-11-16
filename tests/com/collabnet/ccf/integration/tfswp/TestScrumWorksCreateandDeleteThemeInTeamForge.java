@@ -1,24 +1,12 @@
 package com.collabnet.ccf.integration.tfswp;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-
 import java.rmi.RemoteException;
-import java.util.Calendar;
-import java.util.GregorianCalendar;
-
-import javax.xml.datatype.DatatypeFactory;
-import javax.xml.datatype.XMLGregorianCalendar;
 
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.collabnet.teamforge.api.planning.PlanningFolderDO;
-import com.collabnet.teamforge.api.planning.PlanningFolderRow;
 import com.danube.scrumworks.api2.client.Product;
-import com.danube.scrumworks.api2.client.Release;
 import com.danube.scrumworks.api2.client.ScrumWorksException;
 import com.danube.scrumworks.api2.client.Theme;
 

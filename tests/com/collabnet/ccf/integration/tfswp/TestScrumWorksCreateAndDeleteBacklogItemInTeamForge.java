@@ -8,7 +8,6 @@ import java.util.Arrays;
 import org.junit.Test;
 
 import com.collabnet.ccf.swp.SWPMetaData;
-import com.collabnet.teamforge.api.tracker.ArtifactDO;
 import com.collabnet.teamforge.api.tracker.ArtifactRow;
 import com.danube.scrumworks.api2.client.BacklogItem;
 

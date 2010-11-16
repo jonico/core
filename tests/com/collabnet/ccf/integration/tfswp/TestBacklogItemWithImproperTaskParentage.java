@@ -3,8 +3,6 @@ package com.collabnet.ccf.integration.tfswp;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
-import java.util.List;
-
 import org.junit.Before;
 import org.junit.Test;
 
@@ -179,7 +177,7 @@ public class TestBacklogItemWithImproperTaskParentage extends TFSWPIntegrationTe
 				updatedTitle, 
 				teamForgeBacklogItem.getDescription(), 
 				release, 
-				null, getTeamForgeTester().getFlexFields(teamForgeBacklogItem.getId())); 
+				null, getTeamForgeTester().getFlexFields(teamForgeBacklogItem.getId()), null); 
 		
 		// verify
 		BacklogItem updatedScrumWorksBacklogItem = getSWPTester().waitForBacklogItemToUpdate(updatedTitle); 

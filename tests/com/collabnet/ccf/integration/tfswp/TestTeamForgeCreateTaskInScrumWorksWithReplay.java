@@ -42,7 +42,7 @@ public class TestTeamForgeCreateTaskInScrumWorksWithReplay extends TFSWPIntegrat
 		int originalEstimate = 0;
 		String assignedToUser = getTeamForgeTester().getUserName();
 
-		String taskId = getTeamForgeTester().createTaskAndPBI(title, description,
+		getTeamForgeTester().createTaskAndPBI(title, description,
 				status, assignedToUser, remainingEffort, originalEstimate).getId();
 
 		// verify

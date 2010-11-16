@@ -90,11 +90,11 @@ public class TestBacklogItemWithImproperParentage extends TFSWPIntegrationTest {
 		getTeamForgeTester().createBacklogItem(backlogItemTitle, 
 				null, 
 				null, 
-				new FieldValues());
+				new FieldValues(), 0);
 		
 		// verify 
 		BacklogItem scrumWorksBacklogItem = getSWPTester().waitForBacklogItemToUpdate(backlogItemTitle); 
-		assertEquals(SWPTester.RELEASE_3, getSWPTester().getReleaseName(scrumWorksBacklogItem.getReleaseId())); 
+		assertEquals(SWPTester.RELEASE_2, getSWPTester().getReleaseName(scrumWorksBacklogItem.getReleaseId())); 
 	}
 
 	/**
@@ -108,7 +108,7 @@ public class TestBacklogItemWithImproperParentage extends TFSWPIntegrationTest {
 		ArtifactDO teamForgeCreatedBacklogItem = getTeamForgeTester().createBacklogItem("teamForge created child PBI", 
 				null, 
 				release, 
-				new FieldValues()); 
+				new FieldValues(), 0); 
 		getTeamForgeTester().createArtifactDependency(teamForgeParentBacklogItem.getId(), 
 				teamForgeCreatedBacklogItem.getId(), 
 				"created backlog item is child of another backlog item");
@@ -201,7 +201,7 @@ public class TestBacklogItemWithImproperParentage extends TFSWPIntegrationTest {
 				updatedTitle, 
 				teamForgeBacklogItem.getDescription(), 
 				release, 
-				null, getTeamForgeTester().getFlexFields(teamForgeBacklogItem.getId())); 
+				null, getTeamForgeTester().getFlexFields(teamForgeBacklogItem.getId()), null); 
 		
 		// verify
 		BacklogItem updatedScrumWorksBacklogItem = getSWPTester().waitForBacklogItemToUpdate(updatedTitle); 

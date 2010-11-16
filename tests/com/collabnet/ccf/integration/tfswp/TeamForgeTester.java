@@ -212,13 +212,13 @@ public class TeamForgeTester {
 	 */
 	public ArtifactDO createBacklogItem(final String title,
 			final String description, final String release,
-			final FieldValues flexFields) throws RemoteException {
+			final FieldValues flexFields, Integer effort) throws RemoteException {
 		Validate.notNull(title, "null title");
 		Validate.notNull(flexFields, "null flex fields");
 
 		return connection.getTrackerClient().createArtifact(getPbiTracker(), title,
 				formatDescription(description), null, null, STATUS_OPEN, null,
-				0, 0, 0, false, 0, null, null, getPlanningFolderId(release),
+				0, 0, 0, false, effort, null, null, getPlanningFolderId(release),
 				flexFields, null, null, null);
 	}
 
@@ -254,7 +254,7 @@ public class TeamForgeTester {
 		flexFields.setTypes(new String[] {});
 		flexFields.setValues(new String[] {});
 		ArtifactDO pbi = createBacklogItem("TestTitle", "TestDescription",
-				null, flexFields);
+				null, flexFields, 0);
 		ArtifactDO task = createTask(title, description, status,
 				assignedUsername, remainingEffort, originalEstimate);
 		createArtifactDependency(pbi.getId(), task.getId(), "Parent-child relationship created by unit test");
@@ -343,12 +343,15 @@ public class TeamForgeTester {
 	 */
 	public ArtifactDO updateBacklogItem(final String backlogItemId,
 			final String title, final String description, final String release,
-			String status, final FieldValues flexFields) throws RemoteException,
+			String status, final FieldValues flexFields, final Integer effort) throws RemoteException,
 			PlanningFolderRuleViolationException {
 		ArtifactDO pbi = retrieveAndUpdateArtifactTitleAndDescription(
 				backlogItemId, title, description);
 		pbi.setPlanningFolderId(getPlanningFolderId(release));
 		pbi.setFlexFields(flexFields);
+		if (effort != null) {
+			pbi.setPoints(effort);
+		}
 		if (status != null) {
 			pbi.setStatus(status); 
 		}
