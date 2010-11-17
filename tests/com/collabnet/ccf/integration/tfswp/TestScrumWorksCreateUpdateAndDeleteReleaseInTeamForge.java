@@ -99,26 +99,30 @@ public class TestScrumWorksCreateUpdateAndDeleteReleaseInTeamForge extends TFSWP
 		String newReleaseTitle = "RenamedRelease" + System.currentTimeMillis();
 		String newReleaseDescription = "Renamed Release automatically created by a unit test";
 		Calendar today = new GregorianCalendar();
-		GregorianCalendar newStartDate = new GregorianCalendar(today.get(Calendar.YEAR), today.get(Calendar.MONTH) ,today.get(Calendar.DAY_OF_MONTH));
-		newStartDate.setTimeZone(TimeZone.getTimeZone("US/Pacific"));
-		GregorianCalendar newReleaseDate = (GregorianCalendar) newStartDate.clone(); 
-		newReleaseDate.add(Calendar.DAY_OF_MONTH, 1);
-		Date xmlNewStartDate = newStartDate.getTime();
-		Date xmlNewReleaseDate = newReleaseDate.getTime();  
+		GregorianCalendar newStartDateCalendar = new GregorianCalendar(today.get(Calendar.YEAR), today.get(Calendar.MONTH) ,today.get(Calendar.DAY_OF_MONTH));
+		newStartDateCalendar.setTimeZone(TimeZone.getTimeZone("US/Pacific"));
+		GregorianCalendar newReleaseDateCalendar = (GregorianCalendar) newStartDateCalendar.clone(); 
+		newReleaseDateCalendar.add(Calendar.DAY_OF_MONTH, 1);
+		Date newStartDate = newStartDateCalendar.getTime();
+		Date newReleaseDate = newReleaseDateCalendar.getTime();  
 		
 		swpRelease.setName(newReleaseTitle);
 		swpRelease.setDescription(newReleaseDescription);
-		swpRelease.setStartDate(xmlNewStartDate); 
-		swpRelease.setEndDate(xmlNewReleaseDate);
+		swpRelease.setStartDate(newStartDate); 
+		swpRelease.setEndDate(newReleaseDate);
 		swpRelease = getSWPTester().getSWPEndpoint().updateRelease(swpRelease);
+		
+		// retrieve the start and end data again since it turned out this is not always the date we set
+		newStartDate = swpRelease.getStartDate();
+		newReleaseDate = swpRelease.getEndDate();
 		
 		// now we have to wait until the change went through
 		PlanningFolderDO updatedTFRelease = getTeamForgeTester().waitForPFTitleToChange(tfRelease);
 		
 		assertEquals(newReleaseTitle, updatedTFRelease.getTitle());
 		assertEquals(newReleaseDescription, updatedTFRelease.getDescription());
-		assertEquals(newStartDate.getTime(), updatedTFRelease.getStartDate());
-		assertEquals(newReleaseDate.getTime(), updatedTFRelease.getEndDate());
+		assertEquals(newStartDate, updatedTFRelease.getStartDate());
+		assertEquals(newReleaseDate, updatedTFRelease.getEndDate());
 		
 		// now delete release in SWP
 		getSWPTester().getSWPEndpoint().deleteEmptyRelease(swpRelease.getId());
