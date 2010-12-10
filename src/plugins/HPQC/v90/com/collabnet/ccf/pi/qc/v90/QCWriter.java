@@ -1264,6 +1264,9 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 			}  else if (message.contains("You do not have the required permissions to execute this action.")) {
 				connectionErrorOccured = true;
 				this.reInitCOM();
+			} else if (message.contains("Failed to Run Query")) {
+				connectionErrorOccured = true;
+				this.reInitCOM();
 			} else if (message.contains("Failed to Check Out") 
 					|| message.contains("Failed to lock REQ entity")) {
 				// set new error code
