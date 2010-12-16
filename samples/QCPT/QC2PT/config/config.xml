@@ -176,7 +176,7 @@
             or an EntityService component depending on the target PT tracker needs the data
             to be translated to fit into its fields or not.
         </description>
-        <property name="resyncUserName" value="${qc.system.1.resync.username}"></property>
+<!--        <property name="resyncUserName" value="${qc.system.1.resync.username}"></property>-->
         <property name="serverUrl" value="${qc.system.1.url}" />
         <property name="userName" value="${qc.system.1.username}" />
         <property name="password" value="${qc.system.1.password}" />
@@ -267,8 +267,8 @@
             ref="CEEConnectionManager">
         </property>
         <property name="provideReason" value="false"/>
-        <property name="resyncUserName" value="${cee.server.1.resync.username}"></property>
-        <property name="resyncPassword" value="${cee.server.1.resync.password}"></property>
+<!--        <property name="resyncUserName" value="${cee.server.1.resync.username}"></property>-->
+<!--        <property name="resyncPassword" value="${cee.server.1.resync.password}"></property>-->
     </bean>
 
     <bean id="CEEConnectionManager"

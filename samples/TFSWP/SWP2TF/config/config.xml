@@ -311,8 +311,8 @@
 		</description>
 		<property name="username" value="${sfee.server.1.username}" />
 		<property name="password" value="${sfee.server.1.password}" />
-		<property name="resyncUserName" value="${sfee.server.1.resync.username}"></property>
-		<property name="resyncPassword" value="${sfee.server.1.resync.password}"></property>
+<!--		<property name="resyncUserName" value="${sfee.server.1.resync.username}"></property>-->
+<!--		<property name="resyncPassword" value="${sfee.server.1.resync.password}"></property>-->
 		<property name="serverUrl" value="${sfee.server.1.url}" />
 		<property name="updateComment" value="Synchronized by Connector user" />
 		<property name="connectionManager" ref="TFConnectionManager"></property>

@@ -211,7 +211,7 @@
 		</description>
 		<property name="username" value="${sfee.server.1.username}" />
 		<property name="password" value="${sfee.server.1.password}" />
-		<property name="resyncUserName" value="${sfee.server.1.resync.username}"></property>
+<!--		<property name="resyncUserName" value="${sfee.server.1.resync.username}"></property>-->
 		<property name="serverUrl"
 			value="${sfee.server.1.url}" />
 		<property name="connectionManager" ref="TFConnectionManager"></property>

@@ -1282,10 +1282,10 @@ public class TFWriter extends AbstractWriter<Connection> implements
 	public void validate(List exceptions) {
 		super.validate(exceptions);
 
-		if (getResyncUserName() == null) {
+		/*if (getResyncUserName() == null) {
 			log
 					.warn("resyncUserName-property has not been set, so that initial resyncs after artifact creation are not possible.");
-		}
+		}*/
 
 		if (getUpdateComment() == null) {
 			log.error("updateComment-property not set");

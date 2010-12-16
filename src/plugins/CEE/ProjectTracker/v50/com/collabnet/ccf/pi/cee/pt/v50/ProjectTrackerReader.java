@@ -1578,8 +1578,8 @@ public class ProjectTrackerReader extends
 		super.validate(exceptions);
 
 		if (getResyncUserName() == null) {
-			log
-					.warn("resyncUserName-property has not been set, so that initial resyncs after artifact creation are not possible.");
+//			log
+//					.warn("resyncUserName-property has not been set, so that initial resyncs after artifact creation are not possible.");
 		} else {
 			if (getResyncUserDisplayName() == null) {
 				log.error("resyncUserDisplayName-property not set");

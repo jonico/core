@@ -257,10 +257,10 @@ public class TFReader extends AbstractReader<Connection> {
 	public void validate(List exceptions) {
 		super.validate(exceptions);
 
-		if (getResyncUserName() == null) {
+		/*if (getResyncUserName() == null) {
 			log
 					.warn("resyncUserName-property has not been set, so that initial resyncs after artifact creation are not possible.");
-		}
+		}*/
 
 		if (StringUtils.isEmpty(getServerUrl())) {
 			exceptions.add(new ValidationException(
