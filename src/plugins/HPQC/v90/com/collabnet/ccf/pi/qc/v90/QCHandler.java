@@ -1107,8 +1107,9 @@ public class QCHandler {
 			String connectorUser, String resyncUser) {
 
 		List<String> listOfTxnIds = new ArrayList<String>();
-		connectorUser = connectorUser == null ? "" : connectorUser;
-		resyncUser = resyncUser == null ? "" : resyncUser;
+		connectorUser = connectorUser == null ? " " : connectorUser;
+		// had to change this line because MS SQL does not accept empty strings in SQL queries
+		resyncUser = resyncUser == null ? connectorUser : resyncUser;
 		String sql = "SELECT AU_ACTION_ID FROM AUDIT_LOG WHERE AU_ACTION_ID > '"
 				+ syncInfoTxnId
 				+ "' AND AU_ACTION_ID <= '"
@@ -1143,8 +1144,9 @@ public class QCHandler {
 			String connectorUser, String resyncUser) {
 
 		List<String> listOfTxnIds = new ArrayList<String>();
-		connectorUser = connectorUser == null ? "" : connectorUser;
-		resyncUser = resyncUser == null ? "" : resyncUser;
+		connectorUser = connectorUser == null ? " " : connectorUser;
+		// had to change this line because MS SQL does not accept empty strings in SQL queries
+		resyncUser = resyncUser == null ? connectorUser : resyncUser;
 		String sql = "SELECT AU_ACTION_ID FROM AUDIT_LOG WHERE AU_ACTION_ID > '"
 				+ syncInfoTxnId
 				+ "' AND AU_ACTION_ID <= '"
