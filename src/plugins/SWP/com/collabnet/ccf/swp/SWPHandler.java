@@ -1308,9 +1308,13 @@ public class SWPHandler {
 		// now we add the comments
 		if (comments != null) {
 			for (GenericArtifactField comment : comments) {
-				if (comment.getFieldValue() != null) {
-					endpoint.createCommentForBacklogItem(pbi.getId(), comment
-							.getFieldValue().toString());
+				if (comment.getFieldValue() != null)  {
+					String commentValue = comment.getFieldValue().toString();
+					// only update if field value is not empty because SWP
+					// does not accept empty values
+					if (!commentValue.isEmpty()) {
+						endpoint.createCommentForBacklogItem(pbi.getId(), commentValue);
+					}
 				}
 			}
 		}
@@ -1565,9 +1569,13 @@ public class SWPHandler {
 		// now we add the comments
 		if (comments != null) {
 			for (GenericArtifactField comment : comments) {
-				if (comment.getFieldValue() != null) {
-					endpoint.createCommentForTask(task.getId(), comment
-							.getFieldValue().toString());
+				if (comment.getFieldValue() != null)  {
+					String commentValue = comment.getFieldValue().toString();
+					// only update if field value is not empty because SWP
+					// does not accept empty values
+					if (!commentValue.isEmpty()) {
+						endpoint.createCommentForTask(task.getId(), commentValue);
+					}
 				}
 			}
 		}
@@ -1843,9 +1851,13 @@ public class SWPHandler {
 		// now we add the comments
 		if (comments != null) {
 			for (GenericArtifactField comment : comments) {
-				if (comment.getFieldValue() != null) {
-					endpoint.createCommentForBacklogItem(pbiId, comment
-							.getFieldValue().toString());
+				if (comment.getFieldValue() != null)  {
+					String commentValue = comment.getFieldValue().toString();
+					// only update if field value is not empty because SWP
+					// does not accept empty values
+					if (!commentValue.isEmpty()) {
+						endpoint.createCommentForBacklogItem(pbi.getId(), commentValue);
+					}
 				}
 			}
 		}
@@ -2031,9 +2043,13 @@ public class SWPHandler {
 		// now we add the comments
 		if (comments != null) {
 			for (GenericArtifactField comment : comments) {
-				if (comment.getFieldValue() != null) {
-					endpoint.createCommentForTask(taskId, comment
-							.getFieldValue().toString());
+				if (comment.getFieldValue() != null)  {
+					String commentValue = comment.getFieldValue().toString();
+					// only update if field value is not empty because SWP
+					// does not accept empty values
+					if (!commentValue.isEmpty()) {
+						endpoint.createCommentForTask(task.getId(), commentValue);
+					}
 				}
 			}
 		}
