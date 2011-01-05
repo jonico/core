@@ -37,7 +37,9 @@
 			<xsl:copy-of select="@*" />
 			<xsl:attribute name="fieldName">RQ_REQ_COMMENT</xsl:attribute>
 			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
-			<xsl:value-of select="." />
+			<xsl:text>&lt;html&gt;&lt;body&gt;</xsl:text>
+			<xsl:value-of select="stringutil:encodeHTMLToEntityReferences(string(.))"/>
+			<xsl:text>&lt;/body&gt;&lt;/html&gt;</xsl:text>
 		</field>
 	</xsl:template>
 	<!--<xsl:template match='ccf:field[@fieldName="startDate"]'>
