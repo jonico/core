@@ -42,40 +42,26 @@
 			<xsl:text>&lt;/body&gt;&lt;/html&gt;</xsl:text>
 		</field>
 	</xsl:template>
-	<!--<xsl:template match='ccf:field[@fieldName="estimatedHours"]'>
+	<xsl:template match='ccf:field[@fieldName="estimatedHours"]'>
 		<field>
 			<xsl:copy-of select="@*" />
-			<xsl:attribute name="fieldName">remainingEffort</xsl:attribute>
+			<xsl:attribute name="fieldName">RQ_USER_01</xsl:attribute>
 			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
-			<xsl:choose>
-				<xsl:when test="string(.)=''">
-					<xsl:value-of select="0" />
-				</xsl:when>
-				<xsl:otherwise>
-					<xsl:value-of select="." />
-				</xsl:otherwise>
-			</xsl:choose>
+			<xsl:value-of select="." />
 		</field>
 	</xsl:template>
 	<xsl:template match='ccf:field[@fieldName="originalEstimate"]'>
 		<field>
 			<xsl:copy-of select="@*" />
-			<xsl:attribute name="fieldName">estimatedHours</xsl:attribute>
+			<xsl:attribute name="fieldName">RQ_USER_02</xsl:attribute>
 			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
-			<xsl:choose>
-				<xsl:when test="string(.)=''">
-					<xsl:value-of select="0" />
-				</xsl:when>
-				<xsl:otherwise>
-					<xsl:value-of select="." />
-				</xsl:otherwise>
-			</xsl:choose>
+			<xsl:value-of select="." />
 		</field>
 	</xsl:template>
 	<xsl:template match='ccf:field[@fieldName="status"]'>
 		<field>
 			<xsl:copy-of select="@*" />
-			<xsl:attribute name="fieldName">status</xsl:attribute>
+			<xsl:attribute name="fieldName">RQ_USER_04</xsl:attribute>
 			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
 			<xsl:value-of select="." />
 		</field>
@@ -83,11 +69,11 @@
 	<xsl:template match='ccf:field[@fieldName="pointPerson"]'>
 		<field>
 			<xsl:copy-of select="@*" />
-			<xsl:attribute name="fieldName">Point Person</xsl:attribute>
+			<xsl:attribute name="fieldName">RQ_USER_03</xsl:attribute>
 			<xsl:attribute name="fieldType">flexField</xsl:attribute>
 			<xsl:attribute name="fieldValueType">String</xsl:attribute>
 			<xsl:value-of select="." />
 		</field>
 	</xsl:template>
-	--><xsl:template match="text()" />
+	<xsl:template match="text()" />
 </xsl:stylesheet>

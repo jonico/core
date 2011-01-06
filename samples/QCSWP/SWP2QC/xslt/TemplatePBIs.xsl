@@ -42,10 +42,10 @@
 			<xsl:text>&lt;/body&gt;&lt;/html&gt;</xsl:text>
 		</field>
 	</xsl:template>
-	<!--<xsl:template match='ccf:field[@fieldName="benefit"]'>
+	<xsl:template match='ccf:field[@fieldName="benefit"]'>
 		<field>
 			<xsl:copy-of select="@*" />
-			<xsl:attribute name="fieldName">Benefit</xsl:attribute>
+			<xsl:attribute name="fieldName">RQ_USER_11</xsl:attribute>
 			<xsl:attribute name="fieldType">flexField</xsl:attribute>
 			<xsl:attribute name="fieldValueType">String</xsl:attribute>
 			<xsl:value-of select="." />
@@ -54,7 +54,7 @@
 	<xsl:template match='ccf:field[@fieldName="penalty"]'>
 		<field>
 			<xsl:copy-of select="@*" />
-			<xsl:attribute name="fieldName">Penalty</xsl:attribute>
+			<xsl:attribute name="fieldName">RQ_USER_12</xsl:attribute>
 			<xsl:attribute name="fieldType">flexField</xsl:attribute>
 			<xsl:attribute name="fieldValueType">String</xsl:attribute>
 			<xsl:value-of select="." />
@@ -63,7 +63,7 @@
 	<xsl:template match='ccf:field[@fieldName="key"]'>
 		<field>
 			<xsl:copy-of select="@*" />
-			<xsl:attribute name="fieldName">SWP-Key</xsl:attribute>
+			<xsl:attribute name="fieldName">RQ_USER_09</xsl:attribute>
 			<xsl:attribute name="fieldType">flexField</xsl:attribute>
 			<xsl:attribute name="fieldValueType">String</xsl:attribute>
 			<xsl:value-of select="." />
@@ -72,7 +72,7 @@
 	<xsl:template match='ccf:field[@fieldName="sprint"]'>
 		<field>
 			<xsl:copy-of select="@*" />
-			<xsl:attribute name="fieldName">Sprint</xsl:attribute>
+			<xsl:attribute name="fieldName">RQ_USER_07</xsl:attribute>
 			<xsl:attribute name="fieldType">flexField</xsl:attribute>
 			<xsl:attribute name="fieldValueType">String</xsl:attribute>
 			<xsl:value-of select="." />
@@ -81,32 +81,33 @@
 	<xsl:template match='ccf:field[@fieldName="team"]'>
 		<field>
 			<xsl:copy-of select="@*" />
-			<xsl:attribute name="fieldName">Team</xsl:attribute>
+			<xsl:attribute name="fieldName">RQ_USER_10</xsl:attribute>
 			<xsl:attribute name="fieldType">flexField</xsl:attribute>
 			<xsl:attribute name="fieldValueType">String</xsl:attribute>
 			<xsl:value-of select="." />
 		</field>
 	</xsl:template>
 	
-	<xsl:template match='ccf:field[@fieldName="teamSprint"]'>
+	<!-- <xsl:template match='ccf:field[@fieldName="teamSprint"]'>
 		<field>
 			<xsl:copy-of select="@*" />
-			<xsl:attribute name="fieldName">Team/Sprint</xsl:attribute>
+			<xsl:attribute name="fieldName">RQ_USER_10</xsl:attribute>
 			<xsl:attribute name="fieldType">flexField</xsl:attribute>
 			<xsl:attribute name="fieldValueType">String</xsl:attribute>
 			<xsl:value-of select="." />
 		</field>
 	</xsl:template>
+	-->
 	<xsl:template match='ccf:field[@fieldName="theme"]'>
 		<field>
 			<xsl:copy-of select="@*" />
-			<xsl:attribute name="fieldName">Themes</xsl:attribute>
+			<xsl:attribute name="fieldName">RQ_USER_06</xsl:attribute>
 			<xsl:attribute name="fieldType">flexField</xsl:attribute>
 			<xsl:attribute name="fieldValueType">String</xsl:attribute>
 			<xsl:value-of select="." />
 		</field>
 	</xsl:template>
-	<xsl:template match='ccf:field[@fieldName="sprintStart"]'>
+	<!--<xsl:template match='ccf:field[@fieldName="sprintStart"]'>
 		<field>
 			<xsl:copy-of select="@*" />
 			<xsl:attribute name="fieldName">Sprint Start</xsl:attribute>
@@ -125,41 +126,27 @@
 		</field>
 	</xsl:template>
 	 
+	-->
+	
 	<xsl:template match='ccf:field[@fieldName="estimate"]'>
 		<field>
 			<xsl:copy-of select="@*" />
-			<xsl:attribute name="fieldName">Backlog Effort</xsl:attribute>
+			<xsl:attribute name="fieldName">RQ_USER_08</xsl:attribute>
 			<xsl:attribute name="fieldType">flexField</xsl:attribute>
 			<xsl:attribute name="fieldValueType">String</xsl:attribute>
 			<xsl:value-of select="." />
 		</field>
 	</xsl:template>
 	
-	<xsl:template match='ccf:field[@fieldName="estimate"]'>
-		<field>
-			<xsl:copy-of select="@*" />
-			<xsl:attribute name="fieldName">Backlog Effort</xsl:attribute>
-			<xsl:attribute name="fieldType">flexField</xsl:attribute>
-			<xsl:attribute name="fieldValueType">String</xsl:attribute>
-			<xsl:value-of select="." />
-		</field>
-		<field>
-			<xsl:copy-of select="@*" />
-			<xsl:attribute name="fieldName">points</xsl:attribute>
-			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
-			<xsl:attribute name="fieldValueType">Integer</xsl:attribute>
-			<xsl:value-of select="." />
-		</field>
-	</xsl:template>
 	<xsl:template match='ccf:field[@fieldName="completedDate"]'>
 		<xsl:choose>
 				<xsl:when test="string(.)=''">
-					<field><xsl:attribute name="fieldName">status</xsl:attribute><xsl:attribute name="fieldAction">replace</xsl:attribute><xsl:attribute name="fieldType">mandatoryField</xsl:attribute><xsl:attribute name="fieldValueHasChanged">true</xsl:attribute><xsl:attribute name="fieldValueType">String</xsl:attribute><xsl:attribute name="fieldValueIsNull">false</xsl:attribute>Open</field>
+					<field><xsl:attribute name="fieldName">RQ_USER_05</xsl:attribute><xsl:attribute name="fieldAction">replace</xsl:attribute><xsl:attribute name="fieldType">mandatoryField</xsl:attribute><xsl:attribute name="fieldValueHasChanged">true</xsl:attribute><xsl:attribute name="fieldValueType">String</xsl:attribute><xsl:attribute name="fieldValueIsNull">false</xsl:attribute>Open</field>
 				</xsl:when>
 				<xsl:otherwise>
-					<field><xsl:attribute name="fieldName">status</xsl:attribute><xsl:attribute name="fieldAction">replace</xsl:attribute><xsl:attribute name="fieldType">mandatoryField</xsl:attribute><xsl:attribute name="fieldValueHasChanged">true</xsl:attribute><xsl:attribute name="fieldValueType">String</xsl:attribute><xsl:attribute name="fieldValueIsNull">false</xsl:attribute>Done</field>
+					<field><xsl:attribute name="fieldName">RQ_USER_05</xsl:attribute><xsl:attribute name="fieldAction">replace</xsl:attribute><xsl:attribute name="fieldType">mandatoryField</xsl:attribute><xsl:attribute name="fieldValueHasChanged">true</xsl:attribute><xsl:attribute name="fieldValueType">String</xsl:attribute><xsl:attribute name="fieldValueIsNull">false</xsl:attribute>Done</field>
 				</xsl:otherwise>
 		</xsl:choose>
 	</xsl:template>
-	--><xsl:template match="text()" />
+	<xsl:template match="text()" />
 </xsl:stylesheet>
