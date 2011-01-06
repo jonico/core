@@ -20,7 +20,6 @@
 		<artifact xmlns="http://ccf.open.collab.net/GenericArtifactV1.0">
 			<xsl:copy-of select="@*" />
 			<field><xsl:attribute name="fieldName">active</xsl:attribute><xsl:attribute name="fieldAction">replace</xsl:attribute><xsl:attribute name="fieldType">mandatoryField</xsl:attribute><xsl:attribute name="fieldValueHasChanged">true</xsl:attribute><xsl:attribute name="fieldValueType">Boolean</xsl:attribute><xsl:attribute name="fieldValueIsNull">false</xsl:attribute>true</field>
-			<field><xsl:attribute name="fieldName">status</xsl:attribute><xsl:attribute name="fieldAction">replace</xsl:attribute><xsl:attribute name="fieldType">mandatoryField</xsl:attribute><xsl:attribute name="fieldValueHasChanged">true</xsl:attribute><xsl:attribute name="fieldValueType">String</xsl:attribute><xsl:attribute name="fieldValueIsNull">false</xsl:attribute>Not Started</field>
 			<xsl:apply-templates />
 		</artifact>
 	</xsl:template>
@@ -50,7 +49,7 @@
 			</xsl:choose>
 		</field>
 	</xsl:template>
-	<!--<xsl:template match='ccf:field[@fieldName="status"]'>
+	<xsl:template match='ccf:field[@fieldName="RQ_USER_04"]'>
 		<field>
 			<xsl:copy-of select="@*" />
 			<xsl:attribute name="fieldName">status</xsl:attribute>
@@ -58,39 +57,24 @@
 			<xsl:value-of select="." />
 		</field>
 	</xsl:template>
-	<xsl:template match='ccf:field[@fieldName="assignedTo"]'>
+	<xsl:template match='ccf:field[@fieldName="RQ_USER_03"]'>
 		<field>
 			<xsl:copy-of select="@*" />
 			<xsl:attribute name="fieldName">pointPerson</xsl:attribute>
 			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
-			<xsl:choose>
-				<xsl:when test="string(.)='nobody'">
-					<xsl:attribute name="fieldValueIsNull">true</xsl:attribute>
-					<xsl:value-of select="''" />
-				</xsl:when>
-				<xsl:otherwise>
-					<xsl:value-of select="."/>
-				</xsl:otherwise>
-			</xsl:choose>
+			<xsl:value-of select="substring-before(substring-after(.,'('),')')" />
 		</field>
 	</xsl:template>
-	<xsl:template match='ccf:field[@fieldName="remainingEffort"]'>
+	<xsl:template match='ccf:field[@fieldName="RQ_USER_01"]'>
 		<field>
 			<xsl:copy-of select="@*" />
 			<xsl:attribute name="fieldName">estimatedHours</xsl:attribute>
 			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
-			<xsl:attribute name="fieldValueType">Integer</xsl:attribute>
-			<xsl:choose>
-				<xsl:when test="string(.)='0' and $artifactAction = 'create' ">
-					<xsl:attribute name="fieldValueIsNull">true</xsl:attribute>
-				</xsl:when>
-				<xsl:otherwise>
-					<xsl:value-of select="." />
-				</xsl:otherwise>
-			</xsl:choose>
+			<xsl:value-of select="." />
 		</field>
 	</xsl:template>
-	<xsl:template match='ccf:field[@fieldName="estimatedHours"]'>
+	<!-- 
+	<xsl:template match='ccf:field[@fieldName="RQ_USER_02"]'>
 		<field>
 			<xsl:copy-of select="@*" />
 			<xsl:attribute name="fieldName">originalEstimate</xsl:attribute>

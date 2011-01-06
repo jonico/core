@@ -48,7 +48,7 @@
 			</xsl:choose>
 		</field>
 	</xsl:template>
-	<!--<xsl:template match='ccf:field[@fieldName="Benefit"]'>
+	<xsl:template match='ccf:field[@fieldName="RQ_USER_11"]'>
 		<field>
 			<xsl:copy-of select="@*" />
 			<xsl:attribute name="fieldName">benefit</xsl:attribute>
@@ -56,7 +56,7 @@
 			<xsl:value-of select="." />
 		</field>
 	</xsl:template>
-	<xsl:template match='ccf:field[@fieldName="Penalty"]'>
+	<xsl:template match='ccf:field[@fieldName="RQ_USER_12"]'>
 		<field>
 			<xsl:copy-of select="@*" />
 			<xsl:attribute name="fieldName">penalty</xsl:attribute>
@@ -64,7 +64,7 @@
 			<xsl:value-of select="." />
 		</field>
 	</xsl:template>
-	<xsl:template match='ccf:field[@fieldName="Backlog Effort"]'>
+	<xsl:template match='ccf:field[@fieldName="RQ_USER_08"]'>
 		<field>
 			<xsl:copy-of select="@*" />
 			<xsl:attribute name="fieldName">estimate</xsl:attribute>
@@ -73,18 +73,8 @@
 			<xsl:value-of select="." />
 		</field>
 	</xsl:template>
-	<xsl:template match='ccf:field[@fieldName="points"]'>
-		<xsl:if test="not(../ccf:field[@fieldName='Backlog Effort'])">
-			<field>
-				<xsl:copy-of select="@*" />
-				<xsl:attribute name="fieldName">estimate</xsl:attribute>
-				<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
-				<xsl:attribute name="fieldValueType">Integer</xsl:attribute>
-				<xsl:value-of select="." />
-			</field>
-		</xsl:if>
-	</xsl:template>
-	<xsl:template match='ccf:field[@fieldName="Themes"]'>
+	<!-- 
+	<xsl:template match='ccf:field[@fieldName="RQ_USER_06"]'>
 		<field>
 			<xsl:copy-of select="@*" />
 			<xsl:attribute name="fieldName">theme</xsl:attribute>
@@ -93,7 +83,8 @@
 			<xsl:value-of select="." />
 		</field>
 	</xsl:template>
-	--><xsl:template match='ccf:field[@fieldName="RQ_DEV_COMMENTS"]'>
+	 -->
+	<xsl:template match='ccf:field[@fieldName="RQ_DEV_COMMENTS"]'>
 		<field>
 			<xsl:copy-of select="@*" />
 			<xsl:attribute name="fieldName">Comment Text</xsl:attribute>
@@ -109,7 +100,7 @@
 			</xsl:choose>
 		</field>
 	</xsl:template>
-	<!--<xsl:template match='ccf:field[@fieldName="status"]'>
+	<!--<xsl:template match='ccf:field[@fieldName="RQ_USER_05"]'>
 		<field>
 			<xsl:copy-of select="@*" />
 			<xsl:attribute name="fieldValueType">Date</xsl:attribute>
