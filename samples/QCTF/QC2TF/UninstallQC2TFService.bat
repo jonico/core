@@ -44,8 +44,8 @@ rem
 rem Uninstall the Wrapper as an NT service.
 rem
 :startup
-rem "%_WRAPPER_EXE%" -r %_WRAPPER_CONF%
-runas /user:Administrator "\"%_WRAPPER_EXE%\" -r \"%_WRAPPER_CONF%\""
+"%_WRAPPER_EXE%" -r %_WRAPPER_CONF%
+rem runas /user:Administrator "\"%_WRAPPER_EXE%\" -r \"%_WRAPPER_CONF%\""
 if not errorlevel 1 goto :eof
 pause
 
