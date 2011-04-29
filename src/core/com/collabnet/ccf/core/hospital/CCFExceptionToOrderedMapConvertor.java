@@ -287,7 +287,7 @@ public class CCFExceptionToOrderedMapConvertor extends
 					map.put(SOURCE_ARTIFACT_VERSION, sourceArtifactVersion);
 					map.put(TARGET_ARTIFACT_VERSION, targetArtifactVersion);
 					map.put(ARTIFACT_TYPE, artifactType);
-					map.put(GENERICARTIFACT, dataDoc.asXML());
+					map.put(GENERICARTIFACT, removeInvalidXmlCharacters(dataDoc.asXML()));
 				} catch (GenericArtifactParsingException e) {
 					// log
 					// .warn(
@@ -421,6 +421,28 @@ public class CCFExceptionToOrderedMapConvertor extends
 	 */
 	public boolean isOnlyQuarantineGenericArtifacts() {
 		return onlyQuarantineGenericArtifacts;
+	}
+	
+	public static final String removeInvalidXmlCharacters(String input) {
+        if (input == null) {
+                return input;
+        }
+        char character;
+        StringBuffer sb = new StringBuffer();
+        for (int i =0; i<input.length(); i++) {
+                character = input.charAt(i);
+                //see http://www.w3.org/TR/2000/REC-xml-20001006#NT-Char for valid XML character list.
+                if ((character == 0x9)
+                                || (character == 0xA)
+                                || (character == 0xD)
+                                || ((character >= 0x20) && (character <= 0xD7FF))
+                                || ((character >= 0xE000) && (character <= 0xFFFD))
+                                || ((character >= 0x10000) && (character <= 0x10FFFF))
+                                ) {
+                sb.append(character);
+                }
+        }
+        return sb.toString();
 	}
 
 	/**
