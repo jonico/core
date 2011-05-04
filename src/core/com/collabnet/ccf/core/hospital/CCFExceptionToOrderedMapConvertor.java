@@ -287,6 +287,7 @@ public class CCFExceptionToOrderedMapConvertor extends
 					map.put(SOURCE_ARTIFACT_VERSION, sourceArtifactVersion);
 					map.put(TARGET_ARTIFACT_VERSION, targetArtifactVersion);
 					map.put(ARTIFACT_TYPE, artifactType);
+					log.info("Removing invalid XML characters if any before we proceed ...");
 					map.put(GENERICARTIFACT, removeInvalidXmlCharacters(dataDoc.asXML()));
 				} catch (GenericArtifactParsingException e) {
 					// log
@@ -306,7 +307,8 @@ public class CCFExceptionToOrderedMapConvertor extends
 					map.put(TARGET_REPOSITORY_KIND, null);
 					map.put(SOURCE_ARTIFACT_ID, null);
 					map.put(TARGET_ARTIFACT_ID, null);
-					map.put(GENERICARTIFACT, dataDoc.asXML());
+					log.info("Removing invalid XML characters if any before we proceed ...");
+					map.put(GENERICARTIFACT, removeInvalidXmlCharacters(dataDoc.asXML()));
 					map.put(ERROR_CODE, null);
 					map.put(SOURCE_LAST_MODIFICATION_TIME, null);
 					map.put(TARGET_LAST_MODIFICATION_TIME, null);
