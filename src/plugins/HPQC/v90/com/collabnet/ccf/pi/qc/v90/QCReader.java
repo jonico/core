@@ -206,6 +206,9 @@ public class QCReader extends AbstractReader<IConnection> {
 			} else if (message.contains("The server threw an exception.")) {
 				connectionErrorOccured = true;
 				this.reInitCOM();
+			} else if (message.contains("Invalid field name")) {
+				connectionErrorOccured = true;
+				this.reInitCOM();
 			} else if (message.contains("Session authenticity broken")) {
 				connectionErrorOccured = true;
 				this.reInitCOM();
