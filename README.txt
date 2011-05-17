@@ -1,5 +1,5 @@
 CollabNet Connector Framework (HP Quality Center and CollabNet ScrumworksPro Integrations with CollabNet TeamForge)
-Version 1.5.0
+Version 1.5.1
 
 Introduction:
 -------------             
