@@ -329,7 +329,7 @@
 				<include name="QCTF/**/*" />
 				<include name="QCPT/**/*" />
 				<include name="TFSWP/**/*" />
-				<include name="QCSWP/**/*" />
+				<!-- <include name="QCSWP/**/*" /> -->
 			</fileset>
 		</copy>
 		<copy todir="build/package">
