@@ -70,23 +70,6 @@ public class TFTrackerHandler {
 	private static final Log log = LogFactory.getLog(TFTrackerHandler.class);
 	private static final Log logConflictResolutor = LogFactory
 			.getLog("com.collabnet.ccf.core.conflict.resolution");
-	
-	/**
-	 * Defines the preferred number of artifacts per project mapping/repository mapping that are queried in one rush when polling
-	 * for artifacts that have been changed since the last synch operation.
-	 *
-	 * If you should encounter any CCF core memory problems or TF server timeout issues when querying for artifact changes,
-	 * please consider setting this property to a smaller value.
-	 *
-	 * The property name starts with "preferred" because under certain conditions (namely if more artifacts than the prefetch limit value
-	 * have been lastly modified in the very same second), more artifacts have to be fetched in one rush to ensure that no artifact update will
-	 * be missed. In this case, the prefetch limit will be doubled until this condition is no longer true. For subsequent polls, it will be
-	 * reset to its original value. 
-	 * 
-	 * The special value "-1" indicates that CCF should fetch as many artifacts as possible. For performance (reduced round trip time) 
-	 * and backward compatibility reasons, this is also the default value of this property if not overridden in the application context.
-	 */
-	private int preferredArtifactPrefetchLimit = -1;
 
 	/**
 	 * Class constructor.
@@ -149,10 +132,8 @@ public class TFTrackerHandler {
 		Filter[] filter = { new Filter("modifiedAfter", Filter.DATE_FORMAT
 				.format(lastModifiedDate)) };
 		ArtifactDetailRow[] rows = null;
-		
-		// first we try to retrieve only as many artifacts in one rush as configured by the user
 		rows = connection.getTrackerClient().getArtifactDetailList(trackerId,
-				selectedColumns, filter, sortKeys, 0, preferredArtifactPrefetchLimit , false, true)
+				selectedColumns, filter, sortKeys, 0, -1, false, true)
 				.getDataRows();
 
 		if (rows != null) {
