@@ -209,6 +209,9 @@ public class QCReader extends AbstractReader<IConnection> {
 			} else if (message.contains("Invalid field name")) {
 				connectionErrorOccured = true;
 				this.reInitCOM();
+			} else if (message.contains("cannot be used with type")) {
+				connectionErrorOccured = true;
+				this.reInitCOM();
 			} else if (message.contains("Session authenticity broken")) {
 				connectionErrorOccured = true;
 				this.reInitCOM();
