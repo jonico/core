@@ -253,7 +253,7 @@ public class Bug extends ActiveXComponent implements IBug {
 			int size = Dispatch.get(item, "FileSize").getInt(); // FIXME: should this be getLong?
 			// Dispatch.get(item, "Data");
 			try {
-				logger.debug("waiting for "+delayBeforeDownloadingAttachment+"ms before downloading "+attachmentName+".");
+				logger.debug("waiting for "+delayBeforeDownloadingAttachment+" ms before downloading "+attachmentName+".");
 				Thread.sleep(delayBeforeDownloadingAttachment);
 			} catch (InterruptedException e) {
 			}
@@ -287,7 +287,7 @@ public class Bug extends ActiveXComponent implements IBug {
 			}
 			if (size != attachmentFile.length() &&
 				// retry, because QC10 may report an incorrect size but still loads correctly.
-				attachmentFile.length() != reloadAttachmentSize(filter, attachmentName)) {
+				attachmentFile.length() != reloadAttachmentSize(filter, attachmentName, delayBeforeDownloadingAttachment)) {
 				String message = "Downloaded file size ("
 						+ attachmentFile.length()
 						+ ") and expected file size (" + size
@@ -308,7 +308,12 @@ public class Bug extends ActiveXComponent implements IBug {
 						+ attachmentName);
 	}
 
-	private long reloadAttachmentSize(IFilter filter, String attachmentName) {
+	private long reloadAttachmentSize(IFilter filter, String attachmentName, long delay) {
+		try {
+			logger.debug("waiting for "+delay+" ms before reloading meta data for "+attachmentName+".");
+			Thread.sleep(delay);
+		} catch (InterruptedException e) {
+		}
 		IFactoryList attachments = filter.getNewList();
 		String fileName = null;
 		for (int n = 1; n <= attachments.getCount(); ++n) {
