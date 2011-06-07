@@ -318,6 +318,9 @@ public class QCConfigHelper {
 	 */
 	static boolean isJoinedField(IConnection qcc, String tableName,
 			String fieldName) {
+		if ("9".equals(qcc.getMajorVersion()) && qcc.getMinorVersion().startsWith("0")) {
+			return false;
+		}
 		boolean isRField = false;
 		if (fieldName != null && tableName != null) {
 			JoinedField jf = getJoinedField(qcc, tableName, fieldName);
