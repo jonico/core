@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beansProjectDescription>
+	<version>1</version>
+	<pluginVersion><![CDATA[2.5.2.201101081000-RELEASE]]></pluginVersion>
+	<configSuffixes>
+		<configSuffix><![CDATA[xml]]></configSuffix>
+	</configSuffixes>
+	<enableImports><![CDATA[false]]></enableImports>
+	<configs>
+		<config>samples/IntegrationScenarios/bidirectionalMirroring/config/config.xml</config>
+		<config>samples/IntegrationScenarios/combinedBidirectionalMirroringWithUnidirectionalTransformation/config/config.xml</config>
+		<config>samples/IntegrationScenarios/customReader/config/config.xml</config>
+		<config>samples/IntegrationScenarios/databaseTableExport/config/config.xml</config>
+		<config>samples/IntegrationScenarios/databaseTableImport/config/config.xml</config>
+		<config>samples/IntegrationScenarios/flatFileExport/config/config.xml</config>
+		<config>samples/IntegrationScenarios/flatFileImport/config/config.xml</config>
+		<config>samples/IntegrationScenarios/genericArtifactExport/config/config.xml</config>
+		<config>samples/IntegrationScenarios/unidirectionalTransformation/config/config.xml</config>
+		<config>samples/IntegrationScenarios/replayScenario/config/config.xml</config>
+		<config>samples/IntegrationScenarios/CEE2TF/config/config.xml</config>
+		<config>samples/IntegrationScenarios/TF2CEE/config/config.xml</config>
+		<config>samples/HospitalReplay/replayScenario/config/config.xml</config>
+		<config>samples/QC2QC/config/config.xml</config>
+		<config>samples/QCPT/PT2QC/config/config.xml</config>
+		<config>samples/QCPT/QC2PT/config/config.xml</config>
+		<config>samples/IntegrationScenarios/genericArtifactImport/config/config.xml</config>
+		<config>samples/QCTF/QC2TF/config/config.xml</config>
+		<config>samples/QCTF/TF2QC/config/config.xml</config>
+		<config>samples/TFSWP/SWP2TF/config/config.xml</config>
+		<config>samples/TFSWP/TF2SWP/config/config.xml</config>
+		<config>samples/QCSWP/QC2SWP/config/config.xml</config>
+		<config>samples/QCSWP/SWP2QC/config/config.xml</config>
+		<config>samples/TFSWP/SWP2TF/config/config2.xml</config>
+		<config>samples/QCTF/QC2TF/config/config2.xml</config>
+		<config>samples/QCTF/TF2QC/config/config2.xml</config>
+		<config>samples/TFSWP/TF2SWP/config/config2.xml</config>
+	</configs>
+	<configSets>
+	</configSets>
+</beansProjectDescription>
