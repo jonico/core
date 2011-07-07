@@ -316,14 +316,17 @@ public class Bug extends ActiveXComponent implements IBug {
 		}
 		IFactoryList attachments = filter.getNewList();
 		String fileName = null;
+		long fileSize = -1L;
 		for (int n = 1; n <= attachments.getCount(); ++n) {
 			Dispatch item = attachments.getItem(n);
 			fileName = Dispatch.get(item, "FileName").toString();
 			if (!fileName.endsWith(attachmentName))
 				continue;
+			fileSize = Dispatch.get(item, "FileSize").getInt();
 		}
 		if (fileName != null) {
-			return new File(fileName).length();
+			long currentDownloadedFileLenght = new File(fileName).length(); 
+			return (currentDownloadedFileLenght > fileSize) ? currentDownloadedFileLenght:fileSize;
 		} else {
 			return -1L;
 		}
