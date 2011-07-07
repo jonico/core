@@ -286,7 +286,7 @@ public class Bug extends ActiveXComponent implements IBug {
 				}
 			}
 			logger.info("actual file size downloaded: " + attachmentFile.length());
-			if (attachmentFile.length() != reloadAttachmentSize(filter, attachmentName, delayBeforeDownloadingAttachment)) {
+			if (size != attachmentFile.length() || attachmentFile.length() != reloadAttachmentSize(filter, attachmentName, delayBeforeDownloadingAttachment)) {
 				String message = "Downloaded file size ("
 						+ attachmentFile.length()
 						+ ") and expected file size (" + size
