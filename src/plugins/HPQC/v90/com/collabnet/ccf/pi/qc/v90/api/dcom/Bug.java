@@ -313,6 +313,7 @@ public class Bug extends ActiveXComponent implements IBug {
 			Thread.sleep(delay);
 		} catch (InterruptedException e) {
 		}
+		filter.refresh();
 		IFactoryList attachments = filter.getNewList();
 		String fileName = null;
 		long fileSize = -1L;
