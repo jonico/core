@@ -1,0 +1,428 @@
+
+
+                 
+ 
+ 
+  /*  */
+ 
+ 
+ 
+ 
+
+
+ 
+ 
+  
+             
+ 
+  
+ 
+    /*  */
+ 
+   
+ 
+                  
+ 
+  
+ 
+ 
+               
+ 
+ 
+ 
+ 
+                                                    
+         
+    
+ 
+ 
+ 
+ 
+
+
+
+ 
+
+
+
+
+	
+
+	
+/* 
+		 
+
+
+ 
+
+
+	{padding-top:1px;
+	padding-right:1px;
+	padding-left:1px;
+	border:none;
+	mso-rotate:0;}
+.x1Border
+	{mso-style-parent:style0;
+	border:1pt solid navy;}
+-->
+
+ 
+
+ 
+ 
+
+ 
+ 
+  
+ 
+ 
+ 
+ 
+
+ 
+CollabNet
+ 
+ 
+ OpenCollabnet
+	
+
+ 
+ 
+ 
+ 
+ 
+
+
+
+
+   
+	 
+	      
+             Login
+           |    Register      
+   	
+	
+  
+
+
+
+
+
+
+
+
+
+     Home 
+
+CollabNet Products
+
+ALM
+
+Integration 
+
+Collaborative Development
+
+Partners
+
+Downloads
+
+
+ 
+
+
+Site Map
+
+
+
+
+
+
+
+
+ 
+ 
+
+
+
+ 
+ 
+ 
+
+
+
+    
+ 
+ Community Support 
+    
+      
+         Subversion
+         Subversion migration
+        Administration
+         CollabNet APIs
+         Connectors
+         Discussion services
+        Eclipse integration
+         On Site installation
+         Project tracker
+         Reporting
+	  
+	
+	
+Conversations 
+
+
+  Discussion forums
+  Subversion blog
+  Newsletter archive
+
+
+
+Projects 
+
+
+  AnkhSVN
+  Subversion 1.5 Beta
+  Subversion binaries
+
+
+
+    
+	
+	
+	
+
+
+
+
+
+
+ 
+  
+      Search
+  
+   
+      
+   
+     
+     
+    
+   
+   
+       Advanced search   
+  
+
+ 
+
+
+
+
+
+ 
+ 
+&nbsp;
+
+
+ 
+
+
+
+
+ 
+ 
+ 
+
+
+
+
+        
+                 
+                 
+           
+    
+  
+
+
+ 
+ 
+
+
+
+
+
+
+
+
+
+			
+    
+      
+        
+        	
+            
+            
+            
+            
+            
+            
+            
+            
+              
+                
+
+		Welcome to openCollabNet, the online community extension to CollabNet products and Subversion. Here you can download free products, interact in our discussion forums, learn about CollabNet partners, and much more.
+		
+		
+				
+	openCollabNet Spotlight
+
+
+					
+           
+             
+               Subversion 1.5 Beta1 Released
+             
+           
+           
+             
+                The Subversion project has issued the beta1release on the path to Subversion 1.5. CollabNet  created binaries for Linux, Windows  and Solaris and we updated the CollabNet Merge Client (compatible binaries of Subclipse and TortoiseSVN are available as well). Read Mark Phippard's blog post about beta1   and start testing SVN 1.5, the more people test and provide feedback, the better  SVN 1.5 will be.
+               
+           
+              	
+				
+		
+		   
+		   
+		
+		
+					
+		
+	What's new on openCollabNet
+	
+	  
+	  March openCollabNet Technical Newsletter posted 
+		  View the webinar replay of "What's new in Subversion 1.5".
+		  Get the SourceForge Enterprise Edition 4.4 download, free for up to 15 users.
+		  Test Subversion 1.5, join the Subversion Merge Tracking Early Adopter Program.
+		  
+    		  
+		
+		
+		
+		
+		
+					
+		
+	Selected Blog Posts
+	
+	  Subversion 1.5 Beta1 Released
+		  Branching Strategy Questioned
+		  Subversion command line changes from 1.4 to 1.5 
+		  What about branching and merging?
+		  Subversion 1.5 WebDAV Write-Thru Proxies
+		  Subversion 1.5 Merge Tracking and svnmerge.py
+		  Change Set Based Merges in Subversion
+		  Subversion merge made easy 
+		  Subversion Merge Tracking &ndash; The Basics
+		  A list of all our blog posts
+		  
+    		  
+		
+		
+		
+			
+					
+	Webcasts and replays 
+	
+	  
+	    Using Subversion, What's New in Subclipse. April 1
+		  CollabNet Live! CUBiT - April 15 
+		  All CollabNet online demos and industry webinars
+	  
+		
+		  
+		
+		
+
+    
+      
+        
+          
+
+            
+More Blogs  ~~>
+							
+ -->
+          
+        
+                
+              
+
+            
+            
+            
+            
+            
+        
+        
+        
+            
+            
+            
+
+	
+	
+     
+
+
+	
+	
+
+	    
+               
+	              
+            
+        
+	    
+		
+			
+	
+		 
+	        
+	    
+	
+	
+     showImage(); 
+
+
+
+    
+      
+    
+   
+
+
+
+
+ 
+ 
+ 
+ 
+ 
+
+
+ 
+ 
+ 
+  Powered by CollabNet
+  Site Support |
+  Site FAQ |
+  Feedback |
+  Terms of service | 
+  Privacy policy
+  
+  &#169; 2008 CollabNet. CollabNet is a registered trademark of CollabNet, Inc.
+  
+ 
+ 
+
+ 

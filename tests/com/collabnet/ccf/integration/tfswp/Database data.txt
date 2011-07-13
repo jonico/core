@@ -1,0 +1,46 @@
+Database data needed in order to run the tests
+Product name: 
+    AutomatedTest
+Teams:
+    AutomatedTestTeam
+        Johannes (Johannes)
+        Kelley (Kelley)
+        TestUser (TestUser)
+    OneTeam 
+        TestUser (TestUser)
+        a (a)
+        b (b)
+Releases:
+    Release 2.0
+    Release 1.0
+Sprints:
+    Automated Test Team
+        Initial test sprint for AutomatedTestTeam
+            4/15/2010
+            5/12/2010
+        Second test sprint
+            4/15/2010
+            6/18/2010
+    OneTeam
+        Initial sprint for OneTeam
+            4/15/2010
+            6/11/2010
+        Second sprint for OneTeam
+            4/15/2010
+            6/9/2010                                       
+Themes:
+    Core
+    DB
+    Documentation
+    GUI                                            
+Users - password for each user is 'password*1': 
+    a
+    b
+    Stephen
+    Kelley
+    Luke
+    Johannes          
+    CCFUser
+    CCFResync  
+    
+         
