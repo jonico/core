@@ -262,9 +262,9 @@ public class Bug extends ActiveXComponent implements IBug {
 			logger.debug("Attachment " + attachmentName + " has been read.");
 			File attachmentFile = new File(fileName);
 
-			// treat zero sized files like file not found but only do 7 retries at most in order to avoid
+			// treat zero sized files like file not found but only do 3 retries at most in order to avoid
 			// issues with "real" zero sized attachments
-			boolean maxRetryCountReached = retryCount >= (size == 0 ? 7 : 10);
+			boolean maxRetryCountReached = retryCount >= (size == 0 ? 3 : 10);
 			if (!attachmentFile.exists() || (attachmentFile.length() == 0 && !maxRetryCountReached)) {
 				/*
 				 * If an attachment is still being uploaded when CCF tries to retrieve it,
@@ -286,10 +286,13 @@ public class Bug extends ActiveXComponent implements IBug {
 				}
 			}
 			logger.info("actual file size downloaded: " + attachmentFile.length());
-			if (size != attachmentFile.length() || attachmentFile.length() != reloadAttachmentSize(filter, attachmentName, delayBeforeDownloadingAttachment)) {
+			// now reload attachment size from meta data
+			long reloadedAttachmentSize = reloadAttachmentSize(filter, attachmentName, delayBeforeDownloadingAttachment);
+			logger.info("Expected file size after having reloaded attachment meta data: " + reloadedAttachmentSize);
+			if (attachmentFile.length() != reloadedAttachmentSize) {
 				String message = "Downloaded file size ("
 						+ attachmentFile.length()
-						+ ") and expected file size (" + size
+						+ ") and expected file size (" + reloadedAttachmentSize
 						+ ") do not match for attachment "
 						+ attachmentFile.getAbsolutePath();
 				if (!maxRetryCountReached) {
@@ -313,6 +316,7 @@ public class Bug extends ActiveXComponent implements IBug {
 			Thread.sleep(delay);
 		} catch (InterruptedException e) {
 		}
+		// that is the key line which will refresh our filter
 		filter.refresh();
 		IFactoryList attachments = filter.getNewList();
 		String fileName = null;
