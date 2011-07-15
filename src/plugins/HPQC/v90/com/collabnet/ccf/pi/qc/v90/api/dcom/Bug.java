@@ -262,9 +262,9 @@ public class Bug extends ActiveXComponent implements IBug {
 			logger.debug("Attachment " + attachmentName + " has been read.");
 			File attachmentFile = new File(fileName);
 
-			// treat zero sized files like file not found but only do 3 retries at most in order to avoid
+			// treat zero sized files like file not found but only do 5 retries at most in order to avoid
 			// issues with "real" zero sized attachments
-			boolean maxRetryCountReached = retryCount >= (size == 0 ? 3 : 10);
+			boolean maxRetryCountReached = retryCount >= (size == 0 ? 5 : 10);
 			if (!attachmentFile.exists() || (attachmentFile.length() == 0 && !maxRetryCountReached)) {
 				/*
 				 * If an attachment is still being uploaded when CCF tries to retrieve it,
