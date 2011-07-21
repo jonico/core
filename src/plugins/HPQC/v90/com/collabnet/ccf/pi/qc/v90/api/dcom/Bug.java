@@ -45,7 +45,7 @@ public class Bug extends ActiveXComponent implements IBug {
 	 */
 	private static final long serialVersionUID = 1L;
 	public static Logger logger = Logger.getLogger(Bug.class);
-	public static ConcurrentHashMap<String, Integer> attachmentRetryCount = new ConcurrentHashMap<String, Integer>();
+	public static final ConcurrentHashMap<String, Integer> attachmentRetryCount = new ConcurrentHashMap<String, Integer>();
 	
 	private boolean alwaysReloadAttachmentSize = false;
 
@@ -244,10 +244,11 @@ public class Bug extends ActiveXComponent implements IBug {
 			String fileName = Dispatch.get(item, "FileName").toString();
 			if (!fileName.endsWith(attachmentName))
 				continue;
-			String attachmentKey = attachmentName + getId();
+			String attachmentKey = fileName + "_" + getId();
 			Integer retryCount = attachmentRetryCount.get(attachmentKey);
 			retryCount = retryCount == null ? 1 : retryCount + 1;
 			attachmentRetryCount.put(attachmentKey, retryCount);
+			logger.info("This is try number "  + retryCount + " for attachment key " + attachmentKey);
 			
 			
 			int size = Dispatch.get(item, "FileSize").getInt(); // FIXME: should this be getLong?
@@ -264,7 +265,7 @@ public class Bug extends ActiveXComponent implements IBug {
 
 			// treat zero sized files like file not found but only do 5 retries at most in order to avoid
 			// issues with "real" zero sized attachments
-			boolean maxRetryCountReached = retryCount >= (size == 0 ? 5 : 10);
+			boolean maxRetryCountReached = retryCount >= (size == 0 ? 5 : 5);
 			if (!attachmentFile.exists() || (attachmentFile.length() == 0 && !maxRetryCountReached)) {
 				/*
 				 * If an attachment is still being uploaded when CCF tries to retrieve it,
@@ -282,6 +283,7 @@ public class Bug extends ActiveXComponent implements IBug {
 					// give up on this attachment but don't stop other attachments
 					// from being added with the same name later.
 					attachmentRetryCount.remove(attachmentKey);
+					logger.error("Could not ship attachment " + attachmentKey + " of bug " + getId());
 					throw new CCFRuntimeException(message + "giving up.");
 				}
 			}
@@ -298,6 +300,7 @@ public class Bug extends ActiveXComponent implements IBug {
 				if (!maxRetryCountReached) {
 					throw new AttachmentUploadStillInProgressException(message);
 				} else {
+					logger.error("Could not ship complete attachment " + attachmentKey + " of bug " + getId());
 					logger.warn(message + ". Shipping what we've got so far.");
 				}
 			}
