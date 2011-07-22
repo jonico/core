@@ -330,6 +330,7 @@ public class Bug extends ActiveXComponent implements IBug {
 			if (!fileName.endsWith(attachmentName))
 				continue;
 			fileSize = Dispatch.get(item, "FileSize").getInt();
+			break;
 		}
 		if (fileName != null) {
 			long currentDownloadedFileLenght = new File(fileName).length(); 
