@@ -284,7 +284,7 @@ public class Bug extends ActiveXComponent implements IBug {
 					// from being added with the same name later.
 					attachmentRetryCount.remove(attachmentKey);
 					logger.error("Could not ship attachment " + attachmentKey + " of bug " + getId());
-					throw new CCFRuntimeException(message + "giving up.");
+					throw new CCFRuntimeException(message + " ... giving up.");
 				}
 			}
 			logger.info("actual file size downloaded: " + attachmentFile.length());
@@ -301,7 +301,8 @@ public class Bug extends ActiveXComponent implements IBug {
 					throw new AttachmentUploadStillInProgressException(message);
 				} else {
 					logger.error("Could not ship complete attachment " + attachmentKey + " of bug " + getId());
-					logger.warn(message + ". Shipping what we've got so far.");
+					// if we do not give up but ship what we got so far, this might trigger an infinite loop if another attachment is damaged 
+					throw new CCFRuntimeException(message + " ... giving up.");
 				}
 			}
 			attachmentRetryCount.remove(attachmentKey);
