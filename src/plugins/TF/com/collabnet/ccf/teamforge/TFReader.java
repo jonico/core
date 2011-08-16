@@ -77,6 +77,14 @@ public class TFReader extends AbstractReader<Connection> {
 	private boolean ignoreConnectorUserUpdates = true;
 
 	private boolean translateTechnicalReleaseIds = false;
+	
+	private boolean shipReleaseHumanReadableName = false;
+	
+	private boolean shipPlanningFolderHumanReadableName = false;
+	
+	private String planningFolderSeparatorString = " > ";
+	
+	private String packageReleaseSeparatorString = " > ";
 
 	/**
 	 * This variable indicates whether no web services introduced in SFEE 4.4
@@ -432,6 +440,10 @@ public class TFReader extends AbstractReader<Connection> {
 					}
 				}
 				
+				String planningFolderHumanReadableName = null;
+				String reportedInRelaseHumanReadableName = null;
+				String resolvedInReleaseHumanReadableName = null;
+				
 				if (!isIgnore) {
 					// we're interested in the comments.
 					TFAppHandler appHandler = new TFAppHandler(connection);
@@ -439,6 +451,13 @@ public class TFReader extends AbstractReader<Connection> {
 							isIgnoreConnectorUserUpdates() ? this.getUsername() : "",
 							isIgnoreConnectorUserUpdates() ? this.getResyncUserName()
 									: "");
+					if (this.shipReleaseHumanReadableName) {
+						reportedInRelaseHumanReadableName = getHumanReadableReleaseName(connection, artifact.getReportedReleaseId());
+						resolvedInReleaseHumanReadableName = getHumanReadableReleaseName(connection, artifact.getResolvedReleaseId());
+					}
+					if (this.shipPlanningFolderHumanReadableName) {
+						planningFolderHumanReadableName = getHumanReadablePlanningFolderName(connection, artifact.getPlanningFolderId());
+					}
 					if (this.translateTechnicalReleaseIds) {
 						convertReleaseIds(connection, artifact);
 					}
@@ -448,7 +467,7 @@ public class TFReader extends AbstractReader<Connection> {
 						connection.supports54(),
 						artifact, fieldsMap,
 						lastModifiedDate, this.isIncludeFieldMetaData(),
-						sourceSystemTimezone);
+						sourceSystemTimezone, reportedInRelaseHumanReadableName, resolvedInReleaseHumanReadableName, planningFolderHumanReadableName);
 
 				// now care about parent artifacts/planning folders
 				// first we find out whether we have a parent artifact or not
@@ -499,6 +518,12 @@ public class TFReader extends AbstractReader<Connection> {
 					}
 				}
 				
+				String releaseHumandReadableName = null;
+				
+				if (!isIgnore && shipReleaseHumanReadableName) {
+					releaseHumandReadableName = getHumanReadableReleaseName(connection, planningFolder.getReleaseId());
+				}
+				
 				if (!isIgnore && isTranslateTechnicalReleaseIds()) {
 					convertReleaseIds(connection, planningFolder);
 				}
@@ -507,7 +532,7 @@ public class TFReader extends AbstractReader<Connection> {
 						connection.supports54(),
 						planningFolder,
 						lastModifiedDate, this.isIncludeFieldMetaData(),
-						sourceSystemTimezone);
+						sourceSystemTimezone, releaseHumandReadableName);
 				
 				// finally, we have to set some info about the parent,
 				// but only if we don't ignore this shipment anyway
@@ -887,5 +912,104 @@ public class TFReader extends AbstractReader<Connection> {
 			String title = releaseDO.getTitle();
 			artifact.setReleaseId(title);
 		}
+	}
+	
+	private String getHumanReadableReleaseName(Connection connection, String releaseId)  throws RemoteException {
+		if (!StringUtils.isEmpty(releaseId)) {
+			ReleaseDO releaseDO = connection.getFrsClient().getReleaseData(releaseId);
+			String title = releaseDO.getTitle();
+			String packageTitle = connection.getFrsClient().getPackageData(releaseDO.getParentFolderId()).getTitle();
+			return packageTitle + getPackageReleaseSeparatorString() + title;
+		} else {
+			return "";
+		}
+	}
+	
+	private String getHumanReadablePlanningFolderName(Connection connection, String planningFolderId)  throws RemoteException {
+		if (!StringUtils.isEmpty(planningFolderId)) {
+			PlanningFolderDO pf = connection.getPlanningClient().getPlanningFolderData(planningFolderId);
+			if (StringUtils.isEmpty(pf.getParentFolderId())) {
+				return pf.getTitle();
+			} else {
+				return getHumanReadablePlanningFolderName(connection, pf.getParentFolderId()) + getPlanningFolderSeparatorString() + pf.getTitle();
+			}
+		} else {
+			return "";
+		}
+	}
+
+	/**
+	 * Determines whether the human readable display names of releases associated with tracker items or planning folders should be shipped in separate fields of the generic artifact produced
+	 * For performance reason, the default value is false.
+	 * @param shipReleaseHumanReadableName
+	 */
+	public void setShipReleaseHumanReadableName(boolean shipReleaseHumanReadableName) {
+		this.shipReleaseHumanReadableName = shipReleaseHumanReadableName;
+	}
+
+	
+	/**
+	 * Returns whether the human readable display names of releases associated with tracker items or planning folders are shipped in separate fields of the generic artifact produced
+	 * For performance reason, the default value is false.
+	 */
+	public boolean isShipReleaseHumanReadableName() {
+		return shipReleaseHumanReadableName;
+	}
+
+	/**
+	 * Determines whether the human readable display names of planning folders associated with tracker items should be shipped in separate fields of the generic artifact produced
+	 * For performance reason, the default value is false.
+	 * @param shipPlanningFolderHumanReadableName
+	 */
+	public void setShipPlanningFolderHumanReadableName(
+			boolean shipPlanningFolderHumanReadableName) {
+		this.shipPlanningFolderHumanReadableName = shipPlanningFolderHumanReadableName;
+	}
+
+	/**
+	 * Returns whether the human readable display names of planning folders associated with tracker items are shipped in separate fields of the generic artifact produced
+	 * For performance reason, the default value is false.
+	 * @param shipPlanningFolderHumanReadableName
+	 */
+	public boolean getShipPlanningFolderHumanReadableName() {
+		return shipPlanningFolderHumanReadableName;
+	}
+
+	/**
+	 * Determines the separator used to compute the human readable name of planning folders
+	 * The default value is " > "
+	 * @param planningFolderSeparatorString
+	 */
+	public void setPlanningFolderSeparatorString(
+			String planningFolderSeparatorString) {
+		this.planningFolderSeparatorString = planningFolderSeparatorString;
+	}
+
+	/**
+	 * Returns the separator used to compute the human readable name of planning folders
+	 * The default value is " > "
+	 * @return
+	 */
+	public String getPlanningFolderSeparatorString() {
+		return planningFolderSeparatorString;
+	}
+
+	/**
+	 * Determines the separator used to compute the human readable name of releases
+	 * The default value is " > "
+	 * @param planningFolderSeparatorString
+	 */
+	public void setPackageReleaseSeparatorString(
+			String packageReleaseSeparatorString) {
+		this.packageReleaseSeparatorString = packageReleaseSeparatorString;
+	}
+
+	/**
+	 * Returns the separator used to compute the human readable name of releases
+	 * The default value is " > "
+	 * @return
+	 */
+	public String getPackageReleaseSeparatorString() {
+		return packageReleaseSeparatorString;
 	}
 }

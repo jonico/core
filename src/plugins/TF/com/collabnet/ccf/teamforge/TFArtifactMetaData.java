@@ -111,6 +111,10 @@ public class TFArtifactMetaData {
 		points("points", "Story Points", FIELD_TYPE.CONFIGURABLE, GenericArtifactField.FieldValueTypeValue.INTEGER, false,""),
 		capacity("capacity", "Capacity", FIELD_TYPE.SYSTEM_DEFINED, GenericArtifactField.FieldValueTypeValue.INTEGER, false,""),
 		releaseId("releaseId", "Release ID", FIELD_TYPE.SYSTEM_DEFINED, GenericArtifactField.FieldValueTypeValue.STRING, false, ""),
+		planningFolderHumanReadableName("planningFolderHumandReadableName", "Planning Folder Human Readable Name", FIELD_TYPE.CONFIGURABLE, GenericArtifactField.FieldValueTypeValue.STRING, false,""),
+		reportedReleaseHumanReadableName("reportedReleaseHumanReadableName", "Reported Release Human Readable Name", FIELD_TYPE.CONFIGURABLE, GenericArtifactField.FieldValueTypeValue.STRING, false,""),
+		resolvedReleaseHumanReadableName("resolvedReleaseHumanReadableName", "Resolved Release Human Readable Name", FIELD_TYPE.CONFIGURABLE, GenericArtifactField.FieldValueTypeValue.STRING, false,""),
+		releaseHumanReadableName("releaseHumanReadableName", "Release Human Readable Name", FIELD_TYPE.CONFIGURABLE, GenericArtifactField.FieldValueTypeValue.STRING, false,"")
 		;
 
 		private String fieldName;
