@@ -455,7 +455,7 @@ public class TFReader extends AbstractReader<Connection> {
 						reportedInRelaseHumanReadableName = getHumanReadableReleaseName(connection, artifact.getReportedReleaseId());
 						resolvedInReleaseHumanReadableName = getHumanReadableReleaseName(connection, artifact.getResolvedReleaseId());
 					}
-					if (this.shipPlanningFolderHumanReadableName) {
+					if (this.shipPlanningFolderHumanReadableName && connection.supports53()) {
 						planningFolderHumanReadableName = getHumanReadablePlanningFolderName(connection, artifact.getPlanningFolderId());
 					}
 					if (this.translateTechnicalReleaseIds) {
@@ -520,12 +520,13 @@ public class TFReader extends AbstractReader<Connection> {
 				
 				String releaseHumandReadableName = null;
 				
-				if (!isIgnore && shipReleaseHumanReadableName) {
-					releaseHumandReadableName = getHumanReadableReleaseName(connection, planningFolder.getReleaseId());
-				}
-				
-				if (!isIgnore && isTranslateTechnicalReleaseIds()) {
-					convertReleaseIds(connection, planningFolder);
+				if (!isIgnore && connection.supports54()) {
+					if (shipReleaseHumanReadableName) {
+						releaseHumandReadableName = getHumanReadableReleaseName(connection, planningFolder.getReleaseId());
+					}
+					if (isTranslateTechnicalReleaseIds()) {
+						convertReleaseIds(connection, planningFolder);
+					}
 				}
 				
 				genericArtifact = TFToGenericArtifactConverter.convertPlanningFolder(
