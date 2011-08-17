@@ -94,6 +94,10 @@ public class TFWriter extends AbstractWriter<Connection> implements
 	private String serverUrl;
 
 	private boolean translateTechnicalReleaseIds = false;
+	
+	private boolean releaseIdFieldsContainFileReleasePackageName = false;
+	
+	private String packageReleaseSeparatorString = " > ";
 
 	/**
 	 * Password that is used to login into the TF/CSFE instance in combination
@@ -386,7 +390,7 @@ public class TFWriter extends AbstractWriter<Connection> implements
 
 		try {
 			if (translateTechnicalReleaseIds) {
-				releaseId = TFTrackerHandler.convertReleaseIdForProject(connection, releaseId, project);
+				releaseId = TFTrackerHandler.convertReleaseIdForProject(connection, releaseId, project, isReleaseIdFieldsContainFileReleasePackageName()?getPackageReleaseSeparatorString():null);
 			}
 			planningFolder = connection.getPlanningClient()
 					.createPlanningFolder(parentId, title, description,
@@ -615,7 +619,7 @@ public class TFWriter extends AbstractWriter<Connection> implements
 				if (releaseIdField != null && releaseIdField.getFieldValueHasChanged()) {
 					String releaseId = (String) releaseIdField.getFieldValue();
 					if (translateTechnicalReleaseIds) {
-						releaseId = TFTrackerHandler.convertReleaseIdForProject(connection, releaseId, project);
+						releaseId = TFTrackerHandler.convertReleaseIdForProject(connection, releaseId, project, isReleaseIdFieldsContainFileReleasePackageName()?getPackageReleaseSeparatorString():null);
 					}
 
 					planningFolder.setReleaseId(releaseId);
@@ -896,9 +900,9 @@ public class TFWriter extends AbstractWriter<Connection> implements
 		try {
 			if (this.translateTechnicalReleaseIds) {
 				reportedReleaseId = TFTrackerHandler.convertReleaseId(connection,
-						reportedReleaseId, folderId);
+						reportedReleaseId, folderId, isReleaseIdFieldsContainFileReleasePackageName()?getPackageReleaseSeparatorString():null);
 				resolvedReleaseId = TFTrackerHandler.convertReleaseId(connection,
-						resolvedReleaseId, folderId);
+						resolvedReleaseId, folderId, isReleaseIdFieldsContainFileReleasePackageName()?getPackageReleaseSeparatorString():null);
 			}
 
 			// now we have to deal with the parent dependencies
@@ -1192,7 +1196,7 @@ public class TFWriter extends AbstractWriter<Connection> implements
 					translateTechnicalReleaseIds, remainingEffort, autosumming,
 					storyPoints,
 					planningFolder, deleteOldParentAssociation,
-					currentParentId, associateWithParent, newParentId);
+					currentParentId, associateWithParent, newParentId, isReleaseIdFieldsContainFileReleasePackageName()?getPackageReleaseSeparatorString():null);
 
 			if (result != null) {
 				log.info("Artifact " + id + " is updated successfully");
@@ -1784,6 +1788,47 @@ public class TFWriter extends AbstractWriter<Connection> implements
 	public void setTranslateTechnicalReleaseIds(
 			boolean translateTechnicalReleaseIds) {
 		this.translateTechnicalReleaseIds = translateTechnicalReleaseIds;
+	}
+	
+	/**
+	 * Determines the separator used to compute the human readable name of releases
+	 * The default value is " > "
+	 * @param planningFolderSeparatorString
+	 */
+	public void setPackageReleaseSeparatorString(
+			String packageReleaseSeparatorString) {
+		this.packageReleaseSeparatorString = packageReleaseSeparatorString;
+	}
+
+	/**
+	 * Returns the separator used to compute the human readable name of releases
+	 * The default value is " > "
+	 * @return
+	 */
+	public String getPackageReleaseSeparatorString() {
+		return packageReleaseSeparatorString;
+	}
+
+	/**
+	 * This property (false by default), determines whether the human readable release name that should be translated into a technical release id
+	 * is prepended by the file release package title.
+	 * Only used if translateTechnicalReleaseIds property is set to true 
+	 * 
+	 * @param releaseIdFieldsContainFileReleasePackageName
+	 */
+	public void setReleaseIdFieldsContainFileReleasePackageName(
+			boolean releaseIdFieldsContainFileReleasePackageName) {
+		this.releaseIdFieldsContainFileReleasePackageName = releaseIdFieldsContainFileReleasePackageName;
+	}
+
+	/**
+	 * This property (false by default), determines whether the human readable release name that should be translated into a technical release id
+	 * is prepended by the file release package title.
+	 * Only used if translateTechnicalReleaseIds property is set to true 
+	 * 
+	 */
+	public boolean isReleaseIdFieldsContainFileReleasePackageName() {
+		return releaseIdFieldsContainFileReleasePackageName;
 	}
 
 }

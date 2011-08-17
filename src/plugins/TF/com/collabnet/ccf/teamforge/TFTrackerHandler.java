@@ -369,6 +369,7 @@ public class TFTrackerHandler {
 	 * @param associateWithParent
 	 * @param currentParentId
 	 * @param deleteOldParentAssociation
+	 * @param packageReleaseSeparatorString 
 	 * @param conflictResolutionPriority
 	 * @return updated artifact or null if conflict resolution has decided not
 	 *         to update the artifact
@@ -394,7 +395,7 @@ public class TFTrackerHandler {
 			GenericArtifactField storyPoints,
 			GenericArtifactField planningFolderId,
 			boolean deleteOldParentAssociation, String currentParentId,
-			boolean associateWithParent, String newParentId)
+			boolean associateWithParent, String newParentId, String packageReleaseSeparatorString)
 			throws RemoteException, PlanningFolderRuleViolationException {
 
 		boolean mainArtifactNotUpdated = true;
@@ -612,7 +613,7 @@ public class TFTrackerHandler {
 							.getFieldValue();
 					if (translateTechnicalReleaseIds) {
 						reportedReleaseIdString = convertReleaseId(connection,
-								reportedReleaseIdString, folderIdString);
+								reportedReleaseIdString, folderIdString, packageReleaseSeparatorString);
 					}
 					artifactData.setReportedReleaseId(reportedReleaseIdString);
 				}
@@ -623,7 +624,7 @@ public class TFTrackerHandler {
 							.getFieldValue();
 					if (translateTechnicalReleaseIds) {
 						resolvedReleaseIdString = convertReleaseId(connection,
-								resolvedReleaseIdString, folderIdString);
+								resolvedReleaseIdString, folderIdString, packageReleaseSeparatorString);
 					}
 					artifactData.setResolvedReleaseId(resolvedReleaseIdString);
 				}
@@ -789,20 +790,32 @@ public class TFTrackerHandler {
 	 */
 
 	public static String convertReleaseId(Connection connection, String releaseId,
-			String trackerId) throws RemoteException {
+			String trackerId, String packageReleaseSeparatorString) throws RemoteException {
 		if (!StringUtils.isEmpty(releaseId) && !StringUtils.isEmpty(trackerId)) {
 			TrackerDO trackerDO = connection.getTrackerClient().getTrackerData(
 					trackerId);
 			String projectId = trackerDO.getProjectId();
-			return convertReleaseIdForProject(connection, releaseId, projectId);
+			return convertReleaseIdForProject(connection, releaseId, projectId, packageReleaseSeparatorString);
 		}
 		return null;
 	}
-
+	
 	public static String convertReleaseIdForProject(Connection connection,
-			String releaseId, String projectId) throws RemoteException {
+			String releaseId, String projectId, String packageReleaseSeparatorString) throws RemoteException {
 		if (StringUtils.isEmpty(releaseId) || StringUtils.isEmpty(projectId)) {
 			return null;
+		}
+		String packageTitle = null;
+		if (packageReleaseSeparatorString != null) {
+			// we have to extract the package title from the releaseId string
+			int packageDelimiter = releaseId.indexOf(packageReleaseSeparatorString);
+			if (packageDelimiter != -1) {
+				// found separator, now extract package and release title
+				packageTitle  = releaseId.substring(0, packageDelimiter);
+				releaseId = releaseId.substring(packageDelimiter + packageReleaseSeparatorString.length());
+			} else {
+				log.warn("Passed release string '"+ releaseId + "' does not contain package / release separator '" + packageReleaseSeparatorString + "', treating whole string as release title ...");
+			}
 		}
 		PackageList packageList = connection.getFrsClient().getPackageList(
 				projectId);
@@ -810,6 +823,10 @@ public class TFTrackerHandler {
 			PackageRow[] packages = packageList.getDataRows();
 			if (packages != null) {
 				for (PackageRow packageRow : packages) {
+					if (packageTitle != null && !packageTitle.equals(packageRow.getTitle())) {
+						// this is not the package we are looking for, proceed
+						continue;
+					}
 					String packageId = packageRow.getId();
 					ReleaseList releasesList = connection.getFrsClient()
 							.getReleaseList(packageId);
