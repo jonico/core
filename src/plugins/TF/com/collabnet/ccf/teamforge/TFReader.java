@@ -929,7 +929,7 @@ public class TFReader extends AbstractReader<Connection> {
 	private String getHumanReadablePlanningFolderName(Connection connection, String planningFolderId)  throws RemoteException {
 		if (!StringUtils.isEmpty(planningFolderId)) {
 			PlanningFolderDO pf = connection.getPlanningClient().getPlanningFolderData(planningFolderId);
-			if (StringUtils.isEmpty(pf.getParentFolderId())) {
+			if (StringUtils.isEmpty(pf.getParentFolderId()) || pf.getParentFolderId().startsWith("PlanningApp")) {
 				return pf.getTitle();
 			} else {
 				return getHumanReadablePlanningFolderName(connection, pf.getParentFolderId()) + getPlanningFolderSeparatorString() + pf.getTitle();
