@@ -48,7 +48,7 @@ public class Requirement extends ActiveXComponent implements
 	 */
 	private static final long serialVersionUID = 1L;
 	public static Logger logger = Logger.getLogger(Requirement.class);
-	public static ConcurrentHashMap<String, Integer> attachmentRetryCount = new ConcurrentHashMap<String, Integer>();
+	public final static ConcurrentHashMap<String, Integer> attachmentRetryCount = new ConcurrentHashMap<String, Integer>();
 
 
 	public Requirement(Dispatch arg0) {
@@ -253,14 +253,16 @@ public class Requirement extends ActiveXComponent implements
 			if (!fileName.endsWith(attachmentName))
 				continue;
 			
-			String attachmentKey = attachmentName + getId();
+			String attachmentKey = fileName + "_" + getId();
 			Integer retryCount = attachmentRetryCount.get(attachmentKey);
 			retryCount = retryCount == null ? 1 : retryCount + 1;
 			attachmentRetryCount.put(attachmentKey, retryCount);
+			logger.info("This is try number "  + retryCount + " for attachment key " + attachmentKey);
+			
 			int size = Dispatch.get(item, "FileSize").getInt();
 
 			try {
-				logger.debug("waiting for "+delayBeforeDownloadingAttachment+"ms before downloading "+attachmentName+".");
+				logger.info("waiting for "+delayBeforeDownloadingAttachment+" ms before downloading "+attachmentName+".");
 				Thread.sleep(delayBeforeDownloadingAttachment);
 			} catch (InterruptedException e) {
 			}
@@ -271,9 +273,9 @@ public class Requirement extends ActiveXComponent implements
 			logger.debug("Attachment " + attachmentName + " has been read.");
 			File attachmentFile = new File(fileName);
 			
-			// treat zero sized files like file not found but only do 7 retries at most in order to avoid
+			// treat zero sized files like file not found but only do 5 retries at most in order to avoid
 			// issues with "real" zero sized attachments
-			boolean maxRetryCountReached = retryCount >= (size == 0 ? 7 : 10);
+			boolean maxRetryCountReached = retryCount >= (size == 0 ? 5 : 5);
 			if (!attachmentFile.exists() || (attachmentFile.length() == 0 && !maxRetryCountReached)) {
 				/*
 				 * If an attachment is still being uploaded when CCF tries to retrieve it,
@@ -291,23 +293,27 @@ public class Requirement extends ActiveXComponent implements
 					// give up on this attachment but don't stop other attachments
 					// from being added with the same name later.
 					attachmentRetryCount.remove(attachmentKey);
-					throw new CCFRuntimeException(message + "giving up.");
+					logger.error("Could not ship attachment " + attachmentKey + " of requirement " + getId());
+					throw new CCFRuntimeException(message + " ... giving up.");
 				}
 			}
 			
-			
-			if (size != attachmentFile.length() &&
-				// retry, because QC10 may report an incorrect size but still loads correctly.
-				attachmentFile.length() != reloadAttachmentSize(filter, attachmentName)) {
+			logger.info("actual file size downloaded: " + attachmentFile.length());
+			// now reload attachment size from meta data
+			long reloadedAttachmentSize = reloadAttachmentSize(filter, attachmentName, delayBeforeDownloadingAttachment);
+			logger.info("Expected file size after having reloaded attachment meta data: " + reloadedAttachmentSize);
+			if (attachmentFile.length() != reloadedAttachmentSize) {
 				String message = "Downloaded file size ("
 						+ attachmentFile.length()
-						+ ") and expected file size (" + size
+						+ ") and expected file size (" + reloadedAttachmentSize
 						+ ") do not match for attachment "
 						+ attachmentFile.getAbsolutePath();
 				if (!maxRetryCountReached) {
 					throw new AttachmentUploadStillInProgressException(message);
 				} else {
-					logger.warn(message + ". Shipping what we've got so far.");
+					logger.error("Could not ship complete attachment " + attachmentKey + " of requirement " + getId());
+					// if we do not give up but ship what we got so far, this might trigger an infinite loop if another attachment is damaged 
+					throw new CCFRuntimeException(message + " ... giving up.");
 				}
 			}
 			attachmentRetryCount.remove(attachmentKey);
@@ -317,17 +323,28 @@ public class Requirement extends ActiveXComponent implements
 		throw new IllegalArgumentException("No attachment with matching file name found: "+attachmentName);
 	}
 
-	private long reloadAttachmentSize(IFilter filter, String attachmentName) {
+	private long reloadAttachmentSize(IFilter filter, String attachmentName, long delay) {
+		try {
+			logger.info("waiting for "+delay+" ms before reloading meta data for "+attachmentName+".");
+			Thread.sleep(delay);
+		} catch (InterruptedException e) {
+		}
+		// that is the key line which will refresh our filter
+		filter.refresh();
 		IFactoryList attachments = filter.getNewList();
 		String fileName = null;
+		long fileSize = -1L;
 		for (int n = 1; n <= attachments.getCount(); ++n) {
 			Dispatch item = attachments.getItem(n);
 			fileName = Dispatch.get(item, "FileName").toString();
 			if (!fileName.endsWith(attachmentName))
 				continue;
+			fileSize = Dispatch.get(item, "FileSize").getInt();
+			break;
 		}
 		if (fileName != null) {
-			return new File(fileName).length();
+			long currentDownloadedFileLenght = new File(fileName).length(); 
+			return (currentDownloadedFileLenght > fileSize) ? currentDownloadedFileLenght:fileSize;
 		} else {
 			return -1L;
 		}
