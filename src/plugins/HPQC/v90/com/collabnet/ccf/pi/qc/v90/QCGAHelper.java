@@ -306,7 +306,7 @@ public class QCGAHelper {
 
 		List<String> attachmentDetails = null;
 		String sql = "SELECT CR_REF_ID, CR_REF_TYPE, CR_DESCRIPTION FROM CROS_REF WHERE CR_KEY_1='"
-				+ entityId + "' AND CR_REFERENCE like '%" + qcc.sanitizeStringForSQLLikeQuery(attachmentName,"\\") + "%' ESCAPE '\\'";
+				+ entityId + "' AND CR_REFERENCE like '%" + qcc.sanitizeStringForSQLLikeQuery(attachmentName,"\\") + "%' ESCAPE '\\' ORDER BY CR_REF_ID DESC";
 		IRecordSet newRs = null;
 		try {
 			newRs = qcc.executeSQL( sql);
@@ -333,7 +333,7 @@ public class QCGAHelper {
 			String attachmentName, String deleteTransactionId) {
 
 		String attachmentId = null;
-		String sql = "SELECT AU_ENTITY_ID FROM AUDIT_LOG WHERE AU_FATHER_ID="+ deleteTransactionId +" AND AU_ENTITY_TYPE='CROS_REF' AND AU_DESCRIPTION LIKE '%"+qcc.sanitizeStringForSQLLikeQuery(attachmentName,"\\")+"' ESCAPE '\\'";
+		String sql = "SELECT AU_ENTITY_ID FROM AUDIT_LOG WHERE AU_FATHER_ID="+ deleteTransactionId +" AND AU_ENTITY_TYPE='CROS_REF' AND AU_DESCRIPTION LIKE '%"+qcc.sanitizeStringForSQLLikeQuery(attachmentName,"\\")+"' ESCAPE '\\' ORDER BY AU_ACTION_ID DESC";
 		IRecordSet newRs = null;
 		try {
 			newRs = qcc.executeSQL( sql);
