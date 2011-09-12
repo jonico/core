@@ -53,5 +53,9 @@ public class Attachment extends ActiveXComponent implements IAttachment {
     public void post() {
         Dispatch.call(this, "Post");
     }
+    
+    public String getId() {
+		return Integer.toString(getPropertyAsInt("ID"));
+	}
 
 }

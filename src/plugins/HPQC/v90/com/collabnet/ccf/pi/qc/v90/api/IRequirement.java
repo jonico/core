@@ -26,8 +26,8 @@ public interface IRequirement extends ILifeCycle {
 	public void move(int newParentId, int position);
 	public void lockObject() throws DefectAlreadyLockedException;
 	public void unlockObject();
-	public void createNewAttachment(String fileName, int type);
-	public void createNewAttachment(String filename, String description, int type);
+	public String createNewAttachment(String fileName, int type);
+	public String createNewAttachment(String filename, String description, int type);
 	public IAttachmentFactory getAttachmentFactory();
 	public File retrieveAttachmentData(String attachmentName, long delayBeforeAttachmentDownload);
 	boolean hasAttachments();

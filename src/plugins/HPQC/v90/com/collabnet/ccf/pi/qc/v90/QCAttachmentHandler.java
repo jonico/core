@@ -88,7 +88,7 @@ public class QCAttachmentHandler {
 	 *
 	 *
 	 */
-	public void createAttachmentForDefect(IConnection qcc, String entityId,
+	public String createAttachmentForDefect(IConnection qcc, String entityId,
 			String attachmentName, String contentTypeValue, File attachmentFile,
 			String attachmentSourceUrl, String description){
 		IBugFactory bugFactory = null;
@@ -102,10 +102,10 @@ public class QCAttachmentHandler {
 				type = 1;
 				try {
 					if(StringUtils.isEmpty(description)) {
-						bug.createNewAttachment(attachmentFile.getAbsolutePath(), type);
+						return bug.createNewAttachment(attachmentFile.getAbsolutePath(), type);
 					}
 					else {
-						bug.createNewAttachment(attachmentFile.getAbsolutePath(), description, type);
+						return bug.createNewAttachment(attachmentFile.getAbsolutePath(), description, type);
 					}
 				} catch (Exception e) {
 					String message = "Exception while attaching the file "+
@@ -116,10 +116,10 @@ public class QCAttachmentHandler {
 			} else {
 				type = 2;
 				if(StringUtils.isEmpty(description)) {
-					bug.createNewAttachment(attachmentSourceUrl, type);
+					return bug.createNewAttachment(attachmentSourceUrl, type);
 				}
 				else {
-					bug.createNewAttachment(attachmentSourceUrl, description, type);
+					return bug.createNewAttachment(attachmentSourceUrl, description, type);
 				}
 			}
 		}
@@ -129,8 +129,6 @@ public class QCAttachmentHandler {
 				bug = null;
 			}
 		}
-
-		return;
 	}
 	
 	
@@ -156,7 +154,7 @@ public class QCAttachmentHandler {
 	 *
 	 *
 	 */
-	public void createAttachmentForRequirement(IConnection qcc, String entityId,
+	public String createAttachmentForRequirement(IConnection qcc, String entityId,
 			String attachmentName, String contentTypeValue, File attachmentFile,
 			String attachmentSourceUrl, String description){
 		IRequirementsFactory reqFactory = null;
@@ -189,10 +187,10 @@ public class QCAttachmentHandler {
 				type = 1;
 				try {
 					if(StringUtils.isEmpty(description)) {
-						req.createNewAttachment(attachmentFile.getAbsolutePath(), type);
+						return req.createNewAttachment(attachmentFile.getAbsolutePath(), type);
 					}
 					else {
-						req.createNewAttachment(attachmentFile.getAbsolutePath(), description, type);
+						return req.createNewAttachment(attachmentFile.getAbsolutePath(), description, type);
 					}
 				} catch (Exception e) {
 					String message = "Exception while attaching the file "+
@@ -203,10 +201,10 @@ public class QCAttachmentHandler {
 			} else {
 				type = 2;
 				if(StringUtils.isEmpty(description)) {
-					req.createNewAttachment(attachmentSourceUrl, type);
+					return req.createNewAttachment(attachmentSourceUrl, type);
 				}
 				else {
-					req.createNewAttachment(attachmentSourceUrl, description, type);
+					return req.createNewAttachment(attachmentSourceUrl, description, type);
 				}
 			}
 		}
@@ -227,8 +225,6 @@ public class QCAttachmentHandler {
 				req = null;
 			}
 		}
-
-		return;
 	}
 
 	/**

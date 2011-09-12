@@ -912,16 +912,10 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 		try {
 			connection = this.connect(genericArtifact);
 			if (QCConnectionFactory.isDefectRepository(targetRepositoryId)) {
-				attachmentHandler.createAttachmentForDefect(connection, parentArtifactId,
+				String attachmentId = attachmentHandler.createAttachmentForDefect(connection, parentArtifactId,
 						attachmentName, contentTypeValue, attachmentFile,
 						attachmentSourceUrl, attachmentDescription);
-				List<String> attachmentIdAndType = QCGAHelper.getFromTable(
-						connection, parentArtifactId, attachmentName);
-				String attachmentId = null;
-				if (attachmentIdAndType != null) {
-					attachmentId = attachmentIdAndType.get(0);
-					genericArtifact.setTargetArtifactId(attachmentId);
-				}
+				genericArtifact.setTargetArtifactId(attachmentId);
 				log.info("Attachment " + attachmentName + " is created with id "
 						+ attachmentId + " for defect " + parentArtifactId + " on "
 						+ genericArtifact.getTargetRepositoryId());
@@ -937,16 +931,10 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 						ARTIFACT_TYPE_PLAINARTIFACT);
 			} else {
 				// we have to attach to a requirement
-				attachmentHandler.createAttachmentForRequirement(connection, parentArtifactId,
+				String attachmentId = attachmentHandler.createAttachmentForRequirement(connection, parentArtifactId,
 						attachmentName, contentTypeValue, attachmentFile,
 						attachmentSourceUrl, attachmentDescription);
-				List<String> attachmentIdAndType = QCGAHelper.getFromTable(
-						connection, parentArtifactId, attachmentName);
-				String attachmentId = null;
-				if (attachmentIdAndType != null) {
-					attachmentId = attachmentIdAndType.get(0);
-					genericArtifact.setTargetArtifactId(attachmentId);
-				}
+				genericArtifact.setTargetArtifactId(attachmentId);
 				log.info("Attachment " + attachmentName + " is created with id "
 						+ attachmentId + " for requirement " + parentArtifactId + " on "
 						+ genericArtifact.getTargetRepositoryId());

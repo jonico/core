@@ -350,7 +350,7 @@ public class Requirement extends ActiveXComponent implements
 		}
 	}
 	
-	public void createNewAttachment(String fileName, String description,
+	public String createNewAttachment(String fileName, String description,
 			int type) {
 		IAttachmentFactory attachmentFactory = null;
 		IAttachment attachment = null;
@@ -365,6 +365,7 @@ public class Requirement extends ActiveXComponent implements
 				attachment.putDescription(description);
 			}
 			attachment.post();
+			return attachment.getId();
 		} finally {
 			if (attachment != null) {
 				attachment.safeRelease();
@@ -375,13 +376,10 @@ public class Requirement extends ActiveXComponent implements
 				attachmentFactory = null;
 			}
 		}
-
-		return;
 	}
 
-	public void createNewAttachment(String fileName, int type) {
-		this.createNewAttachment(fileName, null, type);
-		return;
+	public String createNewAttachment(String fileName, int type) {
+		return this.createNewAttachment(fileName, null, type);
 	}
 
 	public IAttachmentFactory getAttachmentFactory() {

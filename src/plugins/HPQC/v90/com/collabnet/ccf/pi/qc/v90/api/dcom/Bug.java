@@ -341,7 +341,7 @@ public class Bug extends ActiveXComponent implements IBug {
 		}
 	}
 
-	public void createNewAttachment(String fileName, String description,
+	public String createNewAttachment(String fileName, String description,
 			int type) {
 		IAttachmentFactory attachmentFactory = null;
 		IAttachment attachment = null;
@@ -356,6 +356,7 @@ public class Bug extends ActiveXComponent implements IBug {
 				attachment.putDescription(description);
 			}
 			attachment.post();
+			return attachment.getId();
 		} finally {
 			if (attachment != null) {
 				attachment.safeRelease();
@@ -366,12 +367,10 @@ public class Bug extends ActiveXComponent implements IBug {
 				attachmentFactory = null;
 			}
 		}
-		return;
 	}
 
-	public void createNewAttachment(String fileName, int type) {
-		this.createNewAttachment(fileName, null, type);
-		return;
+	public String createNewAttachment(String fileName, int type) {
+		return this.createNewAttachment(fileName, null, type);
 	}
 
 	public IAttachmentFactory getAttachmentFactory() {

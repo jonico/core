@@ -23,4 +23,5 @@ public interface IAttachment extends ILifeCycle {
     public void putType(int type);
     public void putDescription(String description);
     public void post();
+    public String getId();
 }
