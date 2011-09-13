@@ -190,8 +190,8 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 		String targetSystemTimezone = genericArtifact.getTargetSystemTimezone();
 
 		// retrieve version to update
-		List<String> targetAutimeAndTxnIdBeforeUpdate = getAutimeAndTxnIdForDefect(
-				connection, targetArtifactId, null, ARTIFACT_TYPE_PLAINARTIFACT);
+		List<String> targetAutimeAndTxnIdBeforeUpdate = getAuTimeAndTxnIdForDefect(
+				connection, targetArtifactId);
 		String targetTransactionIdBeforeUpdate = targetAutimeAndTxnIdBeforeUpdate
 				.get(0);
 		int targetTransactionIdBeforeUpdateInt = Integer
@@ -225,8 +225,8 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 				+ genericArtifact.getSourceRepositoryId());
 		genericArtifact.setTargetArtifactId(targetArtifactId);
 		// FIXME This is not atomic
-		List<String> targetAutimeAndTxnId = getAutimeAndTxnIdForDefect(connection,
-				targetArtifactId, null, ARTIFACT_TYPE_PLAINARTIFACT);
+		List<String> targetAutimeAndTxnId = getAuTimeAndTxnIdForDefect(connection,
+				targetArtifactId);
 		genericArtifact.setTargetArtifactVersion(targetAutimeAndTxnId.get(0));
 		genericArtifact.setTargetArtifactLastModifiedDate(DateUtil
 				.format(DateUtil.parseQCDate(targetAutimeAndTxnId.get(1))));
@@ -247,8 +247,8 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 		String targetSystemTimezone = genericArtifact.getTargetSystemTimezone();
 
 		// retrieve version to update
-		List<String> targetAutimeAndTxnIdBeforeUpdate = getAutimeAndTxnIdForRequirement(
-				connection, targetArtifactId, null, ARTIFACT_TYPE_PLAINARTIFACT);
+		List<String> targetAutimeAndTxnIdBeforeUpdate = getAuTimeAndTxnIdForRequirement(
+				connection, targetArtifactId);
 		String targetTransactionIdBeforeUpdate = targetAutimeAndTxnIdBeforeUpdate
 				.get(0);
 		int targetTransactionIdBeforeUpdateInt = Integer
@@ -282,8 +282,8 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 		}
 		genericArtifact.setTargetArtifactId(targetArtifactId);
 		// FIXME This is not atomic
-		List<String> targetAutimeAndTxnId = getAutimeAndTxnIdForRequirement(connection,
-				targetArtifactId, null, ARTIFACT_TYPE_PLAINARTIFACT);
+		List<String> targetAutimeAndTxnId = getAuTimeAndTxnIdForRequirement(connection,
+				targetArtifactId);
 		genericArtifact.setTargetArtifactVersion(targetAutimeAndTxnId.get(0));
 		genericArtifact.setTargetArtifactLastModifiedDate(DateUtil
 				.format(DateUtil.parseQCDate(targetAutimeAndTxnId.get(1))));
@@ -314,62 +314,45 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 		return genericArtifact;
 	}
 
-	public List<String> getAutimeAndTxnIdForDefect(IConnection qcc, String defectId,
-			String attachmentName, String identifier) {
+	public List<String> getAuTimeAndTxnIdForDefect(IConnection qcc, String defectId) {
 
 		List<String> txnIdAndAutime = new ArrayList<String>();
 		String transactionId = null;
 		String auTime = null;
 		String sql = null;
 
-		if (identifier.equals(ARTIFACT_TYPE_PLAINARTIFACT))
-			sql = "select AU_TIME, AU_ACTION_ID, AU_DESCRIPTION from audit_log where au_entity_id = '"
+		sql = "select AU_TIME, AU_ACTION_ID, AU_DESCRIPTION from audit_log where au_entity_id = '"
 					+ defectId
 					+ "' and au_entity_type='BUG' and au_father_id='-1' order by au_action_id desc";
-		else if (identifier.equals(ARTIFACT_TYPE_ATTACHMENT)) {
-			if (attachmentName == null) {
-				sql = "select AU_TIME, AU_ACTION_ID from audit_log where au_entity_id = '"
-						+ defectId
-						+ "' and au_entity_type='CROS_REF' and au_father_id != '-1' order by au_action_id desc";
-			} else {
-				sql = "select AU_TIME, AU_ACTION_ID from audit_log where au_entity_id = '"
-						+ defectId
-						+ "' and au_entity_type='CROS_REF' and au_description like '%"
-						+ qcc.sanitizeStringForSQLLikeQuery(
-								attachmentName, "\\")
-						+ "' ESCAPE '\\' and au_father_id != '-1' order by au_action_id desc";
-			}
-		}
 
 		IRecordSet newRs = null;
 		try {
 			newRs = qcc.executeSQL( sql);
-			int newRc = newRs.getRecordCount();
 			log
-					.debug("In QCDefectHandler.getTxnIdAndAuDescription, sql="
-							+ sql);
+			.debug("In QCWriter.getAuTimeAndTxnIdForDefect, sql="
+					+ sql);
+			int newRc = newRs.getRecordCount();
 			for (int newCnt = 0; newCnt < newRc; newCnt++, newRs.next()) {
 				if (newCnt == 0) {
 					transactionId = newRs.getFieldValueAsString("AU_ACTION_ID");
 					auTime = newRs.getFieldValueAsString("AU_TIME");
-					if (identifier.equals(ARTIFACT_TYPE_PLAINARTIFACT)) {
-						String transactionDesc = newRs
-								.getFieldValueAsString("AU_DESCRIPTION");
-						if (transactionDesc != null) {
-							if (transactionDesc.contains("Attachment added:")) {
-								int transactionIdInt = Integer
-										.parseInt(transactionId);
-								transactionIdInt -= 2;
-								transactionId = Integer
-										.toString(transactionIdInt);
-							} else if (transactionDesc
-									.contains("Attachment deleted:")) {
-								int transactionIdInt = Integer
-										.parseInt(transactionId);
-								transactionIdInt -= 1;
-								transactionId = Integer
-										.toString(transactionIdInt);
-							}
+					
+					String transactionDesc = newRs
+							.getFieldValueAsString("AU_DESCRIPTION");
+					if (transactionDesc != null) {
+						if (transactionDesc.contains("Attachment added:")) {
+							int transactionIdInt = Integer
+									.parseInt(transactionId);
+							transactionIdInt -= 2;
+							transactionId = Integer
+									.toString(transactionIdInt);
+						} else if (transactionDesc
+								.contains("Attachment deleted:")) {
+							int transactionIdInt = Integer
+									.parseInt(transactionId);
+							transactionIdInt -= 1;
+							transactionId = Integer
+									.toString(transactionIdInt);
 						}
 					}
 					break;
@@ -386,63 +369,79 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 		return txnIdAndAutime;
 	}
 	
-	public List<String> getAutimeAndTxnIdForRequirement(IConnection qcc, String requirementId,
-			String attachmentName, String identifier) {
+	public List<String> getAuTimeAndTxnIdForAttachment(IConnection qcc, String attachmentId) {
 
 		List<String> txnIdAndAutime = new ArrayList<String>();
 		String transactionId = null;
 		String auTime = null;
 		String sql = null;
 
-		if (identifier.equals(ARTIFACT_TYPE_PLAINARTIFACT))
-			sql = "select AU_TIME, AU_ACTION_ID, AU_DESCRIPTION from audit_log where au_entity_id = '"
-					+ requirementId
-					+ "' and au_entity_type='REQ' and au_father_id='-1' order by au_action_id desc";
-		else if (identifier.equals(ARTIFACT_TYPE_ATTACHMENT)) {
-			if (attachmentName == null) {
-				sql = "select AU_TIME, AU_ACTION_ID from audit_log where au_entity_id = '"
-						+ requirementId
-						+ "' and au_entity_type='CROS_REF' and au_father_id != '-1' order by au_action_id desc";
-			} else {
-				//List<String>stringsToEscape = qcc.isLikeStatementStandardsCompliant() ? Arrays.asList("%", "_");
-				sql = "select AU_TIME, AU_ACTION_ID from audit_log where au_entity_id = '"
-						+ requirementId
-						+ "' and au_entity_type='CROS_REF' and au_description like '%"
-						+ qcc.sanitizeStringForSQLLikeQuery(
-								attachmentName, "\\")
-						+ "' ESCAPE '\\' and au_father_id != '-1' order by au_action_id desc";
-			}
-		}
+		sql = "select AU_TIME, AU_ACTION_ID from audit_log where au_entity_id = '"
+					+ attachmentId + "' and au_entity_type='CROS_REF' order by au_action_id desc";
 
 		IRecordSet newRs = null;
 		try {
-			newRs = qcc.executeSQL( sql);
-			int newRc = newRs.getRecordCount();
 			log
-					.debug("In QCDefectHandler.getTxnIdAndAuDescription, sql="
-							+ sql);
+			.debug("In QCDefectHandler.getAuTimeAndTxnIdForAttachment, sql="
+					+ sql);
+			newRs = qcc.executeSQL(sql);
+			int newRc = newRs.getRecordCount();
 			for (int newCnt = 0; newCnt < newRc; newCnt++, newRs.next()) {
 				if (newCnt == 0) {
 					transactionId = newRs.getFieldValueAsString("AU_ACTION_ID");
 					auTime = newRs.getFieldValueAsString("AU_TIME");
-					if (identifier.equals(ARTIFACT_TYPE_PLAINARTIFACT)) {
-						String transactionDesc = newRs
-								.getFieldValueAsString("AU_DESCRIPTION");
-						if (transactionDesc != null) {
-							if (transactionDesc.contains("Attachment added:")) {
-								int transactionIdInt = Integer
-										.parseInt(transactionId);
-								transactionIdInt -= 2;
-								transactionId = Integer
-										.toString(transactionIdInt);
-							} else if (transactionDesc
-									.contains("Attachment deleted:")) {
-								int transactionIdInt = Integer
-										.parseInt(transactionId);
-								transactionIdInt -= 1;
-								transactionId = Integer
-										.toString(transactionIdInt);
-							}
+					break;
+				}
+			}
+		} finally {
+			if (newRs != null) {
+				newRs.safeRelease();
+			}
+		}
+		txnIdAndAutime.add(transactionId);
+		txnIdAndAutime.add(auTime);
+
+		return txnIdAndAutime;
+	}
+	
+	public List<String> getAuTimeAndTxnIdForRequirement(IConnection qcc, String requirementId) {
+
+		List<String> txnIdAndAutime = new ArrayList<String>();
+		String transactionId = null;
+		String auTime = null;
+		String sql = null;
+
+		sql = "select AU_TIME, AU_ACTION_ID, AU_DESCRIPTION from audit_log where au_entity_id = '"
+					+ requirementId
+					+ "' and au_entity_type='REQ' and au_father_id='-1' order by au_action_id desc";
+
+		IRecordSet newRs = null;
+		try {
+			log
+			.debug("In QCWriter.getAuTimeAndTxnIdForRequirement, sql="
+					+ sql);
+			newRs = qcc.executeSQL( sql);
+			int newRc = newRs.getRecordCount();
+			for (int newCnt = 0; newCnt < newRc; newCnt++, newRs.next()) {
+				if (newCnt == 0) {
+					transactionId = newRs.getFieldValueAsString("AU_ACTION_ID");
+					auTime = newRs.getFieldValueAsString("AU_TIME");
+					String transactionDesc = newRs
+							.getFieldValueAsString("AU_DESCRIPTION");
+					if (transactionDesc != null) {
+						if (transactionDesc.contains("Attachment added:")) {
+							int transactionIdInt = Integer
+									.parseInt(transactionId);
+							transactionIdInt -= 2;
+							transactionId = Integer
+									.toString(transactionIdInt);
+						} else if (transactionDesc
+								.contains("Attachment deleted:")) {
+							int transactionIdInt = Integer
+									.parseInt(transactionId);
+							transactionIdInt -= 1;
+							transactionId = Integer
+									.toString(transactionIdInt);
 						}
 					}
 					break;
@@ -757,9 +756,8 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 						// send this artifact to RCDU (Read Connector Database Updater)
 						// indicating a success in creating the artifact
 		
-						List<String> targetAutimeAndTxnId = getAutimeAndTxnIdForDefect(
-								connection, targetArtifactIdAfterCreation, null,
-								ARTIFACT_TYPE_PLAINARTIFACT);
+						List<String> targetAutimeAndTxnId = getAuTimeAndTxnIdForDefect(
+								connection, targetArtifactIdAfterCreation);
 						genericArtifact.setTargetArtifactVersion(targetAutimeAndTxnId
 								.get(0));
 						genericArtifact.setTargetArtifactLastModifiedDate(DateUtil
@@ -792,9 +790,8 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 						genericArtifact
 								.setTargetArtifactId(targetArtifactIdAfterCreation);
 						
-						List<String> targetAutimeAndTxnId = getAutimeAndTxnIdForRequirement(
-								connection, targetArtifactIdAfterCreation, null,
-								ARTIFACT_TYPE_PLAINARTIFACT);
+						List<String> targetAutimeAndTxnId = getAuTimeAndTxnIdForRequirement(
+								connection, targetArtifactIdAfterCreation);
 						genericArtifact.setTargetArtifactVersion(targetAutimeAndTxnId
 								.get(0));
 						genericArtifact.setTargetArtifactLastModifiedDate(DateUtil
@@ -919,16 +916,14 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 				log.info("Attachment " + attachmentName + " is created with id "
 						+ attachmentId + " for defect " + parentArtifactId + " on "
 						+ genericArtifact.getTargetRepositoryId());
-				targetAutimeAndTxnId = getAutimeAndTxnIdForDefect(connection,
-						attachmentId, attachmentName, ARTIFACT_TYPE_ATTACHMENT);
+				targetAutimeAndTxnId = getAuTimeAndTxnIdForAttachment(connection, attachmentId);
 				genericArtifact.setTargetArtifactVersion(targetAutimeAndTxnId
 						.get(0));
 				genericArtifact.setTargetArtifactLastModifiedDate(DateUtil
 						.format(DateUtil.parseQCDate(targetAutimeAndTxnId.get(1))));
 	
-				targetAutimeAndTxnIdParent = getAutimeAndTxnIdForDefect(
-						connection, parentArtifactId, null,
-						ARTIFACT_TYPE_PLAINARTIFACT);
+				targetAutimeAndTxnIdParent = getAuTimeAndTxnIdForDefect(
+						connection, parentArtifactId);
 			} else {
 				// we have to attach to a requirement
 				String attachmentId = attachmentHandler.createAttachmentForRequirement(connection, parentArtifactId,
@@ -938,16 +933,14 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 				log.info("Attachment " + attachmentName + " is created with id "
 						+ attachmentId + " for requirement " + parentArtifactId + " on "
 						+ genericArtifact.getTargetRepositoryId());
-				targetAutimeAndTxnId = getAutimeAndTxnIdForRequirement(connection,
-						attachmentId, attachmentName, ARTIFACT_TYPE_ATTACHMENT);
+				targetAutimeAndTxnId = getAuTimeAndTxnIdForAttachment(connection, attachmentId);
 				genericArtifact.setTargetArtifactVersion(targetAutimeAndTxnId
 						.get(0));
 				genericArtifact.setTargetArtifactLastModifiedDate(DateUtil
 						.format(DateUtil.parseQCDate(targetAutimeAndTxnId.get(1))));
 	
-				targetAutimeAndTxnIdParent = getAutimeAndTxnIdForRequirement(
-						connection, parentArtifactId, null,
-						ARTIFACT_TYPE_PLAINARTIFACT);
+				targetAutimeAndTxnIdParent = getAuTimeAndTxnIdForRequirement(
+						connection, parentArtifactId);
 			}
 			
 			parentArtifact = new GenericArtifact();
@@ -1041,11 +1034,11 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 				log.info("Attachment " + targetArtifactId
 						+ " is deleted from defect " + parentArtifactId + " on "
 						+ genericArtifact.getTargetRepositoryId());
-				targetAutimeAndTxnId = getAutimeAndTxnIdForDefect(connection,
-						targetArtifactId, attachmentName, ARTIFACT_TYPE_ATTACHMENT);
+				targetAutimeAndTxnId = getAuTimeAndTxnIdForAttachment(connection,
+						targetArtifactId);
 				
-				targetAutimeAndTxnIdParent = getAutimeAndTxnIdForDefect(
-						connection, parentArtifactId, null, ARTIFACT_TYPE_PLAINARTIFACT);
+				targetAutimeAndTxnIdParent = getAuTimeAndTxnIdForDefect(
+						connection, parentArtifactId);
 			}
 			else {
 				attachmentHandler.deleteAttachmentForRequirement(connection, parentArtifactId,
@@ -1055,11 +1048,11 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 				log.info("Attachment " + targetArtifactId
 						+ " is deleted from defect " + parentArtifactId + " on "
 						+ genericArtifact.getTargetRepositoryId());
-				targetAutimeAndTxnId = getAutimeAndTxnIdForRequirement(connection,
-						targetArtifactId, attachmentName, ARTIFACT_TYPE_ATTACHMENT);
+				targetAutimeAndTxnId = getAuTimeAndTxnIdForAttachment(connection,
+						targetArtifactId);
 				
-				targetAutimeAndTxnIdParent = getAutimeAndTxnIdForRequirement(
-						connection, parentArtifactId, null, ARTIFACT_TYPE_PLAINARTIFACT);
+				targetAutimeAndTxnIdParent = getAuTimeAndTxnIdForRequirement(
+						connection, parentArtifactId);
 			}
 			genericArtifact.setTargetArtifactVersion(targetAutimeAndTxnId
 					.get(0));
@@ -1115,7 +1108,7 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 					.getTargetSystemTimezone());
 		} catch (Exception e) {
 			String cause = "Exception while trying to delete attachment with id "
-					+ targetArtifactId + "from bug " + parentArtifactId;
+					+ targetArtifactId + "from artifact " + parentArtifactId;
 			log.error(cause, e);
 			throw new CCFRuntimeException(cause, e);
 		} finally {
