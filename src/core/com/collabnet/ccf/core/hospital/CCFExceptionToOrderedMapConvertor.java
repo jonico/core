@@ -192,51 +192,26 @@ public class CCFExceptionToOrderedMapConvertor extends
 			}
 			if (element != null) {
 				try {
-					String sourceArtifactId = XPathUtils.getAttributeValue(
-							element, GenericArtifactHelper.SOURCE_ARTIFACT_ID);
-					String sourceSystemId = XPathUtils.getAttributeValue(
-							element, GenericArtifactHelper.SOURCE_SYSTEM_ID);
-					String sourceSystemKind = XPathUtils.getAttributeValue(
-							element, GenericArtifactHelper.SOURCE_SYSTEM_KIND);
-					String sourceRepositoryId = XPathUtils
-							.getAttributeValue(element,
-									GenericArtifactHelper.SOURCE_REPOSITORY_ID);
-					String sourceRepositoryKind = XPathUtils.getAttributeValue(
-							element,
-							GenericArtifactHelper.SOURCE_REPOSITORY_KIND);
+					GenericArtifact ga = GenericArtifactHelper.createGenericArtifactJavaObject(dataDoc);
+					
+					String sourceArtifactId = ga.getSourceArtifactId();
+					String sourceSystemId = ga.getSourceSystemId();
+					String sourceSystemKind = ga.getSourceSystemKind();
+					String sourceRepositoryId = ga.getSourceRepositoryId();
+					String sourceRepositoryKind = ga.getSourceRepositoryKind();
 
-					String targetArtifactId = XPathUtils.getAttributeValue(
-							element, GenericArtifactHelper.TARGET_ARTIFACT_ID);
-					String targetSystemId = XPathUtils.getAttributeValue(
-							element, GenericArtifactHelper.TARGET_SYSTEM_ID);
-					String targetSystemKind = XPathUtils.getAttributeValue(
-							element, GenericArtifactHelper.TARGET_SYSTEM_KIND);
-					String targetRepositoryId = XPathUtils
-							.getAttributeValue(element,
-									GenericArtifactHelper.TARGET_REPOSITORY_ID);
-					String targetRepositoryKind = XPathUtils.getAttributeValue(
-							element,
-							GenericArtifactHelper.TARGET_REPOSITORY_KIND);
+					String targetArtifactId = ga.getTargetArtifactId();
+					String targetSystemId = ga.getTargetSystemId();
+					String targetSystemKind = ga.getTargetSystemKind();
+					String targetRepositoryId = ga.getTargetRepositoryId();
+					String targetRepositoryKind = ga.getTargetRepositoryKind();
 
-					String artifactErrorCode = XPathUtils.getAttributeValue(
-							element, GenericArtifactHelper.ERROR_CODE);
+					String artifactErrorCode = ga.getErrorCode();
 
-					String sourceArtifactLastModifiedDateString = XPathUtils
-							.getAttributeValue(
-									element,
-									GenericArtifactHelper.SOURCE_ARTIFACT_LAST_MODIFICATION_DATE);
-					String targetArtifactLastModifiedDateString = XPathUtils
-							.getAttributeValue(
-									element,
-									GenericArtifactHelper.TARGET_ARTIFACT_LAST_MODIFICATION_DATE);
-					String sourceArtifactVersion = XPathUtils
-							.getAttributeValue(
-									element,
-									GenericArtifactHelper.SOURCE_ARTIFACT_VERSION);
-					String targetArtifactVersion = XPathUtils
-							.getAttributeValue(
-									element,
-									GenericArtifactHelper.TARGET_ARTIFACT_VERSION);
+					String sourceArtifactLastModifiedDateString = ga.getSourceArtifactLastModifiedDate();
+					String targetArtifactLastModifiedDateString = ga.getTargetArtifactLastModifiedDate();
+					String sourceArtifactVersion = ga.getSourceArtifactVersion();
+					String targetArtifactVersion = ga.getTargetArtifactVersion();
 
 					String artifactType = XPathUtils.getAttributeValue(element,
 							GenericArtifactHelper.ARTIFACT_TYPE);
