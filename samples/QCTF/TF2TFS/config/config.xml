@@ -25,8 +25,8 @@
 	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
 
 	<description><![CDATA[
-   This wiring synchronizes an TF/CSFE system with a QC system
-   To get a bidirectional synchronization, just start the QC To TF/CSFE scenario as well.
+   This wiring synchronizes an TF/CSFE system with a TFS system
+   To get a bidirectional synchronization, just start the TFS To TF/CSFE scenario as well.
   ]]></description>
 
 	<bean class="org.openadaptor.core.jmx.MBeanServer">
@@ -62,7 +62,7 @@
 				Properties configured in these property files will be imported into the wiring file.
 				The file ccf.properties contains the properties for the CCF core components.
 				sfee.properties file contains the properties for the TF plugin classes and
-				qc.properties file contains the properties for the QC plugin classes.
+				qc.properties file contains the properties for the TFS plugin classes.
 			</description>
 			<list>
 				<value>classpath:ccf.properties</value>
@@ -71,7 +71,7 @@
 			</list>
 		</property>
 	</bean>
-	<bean id="TF2QC" class="org.openadaptor.core.adaptor.Adaptor">
+	<bean id="TF2TFS" class="org.openadaptor.core.adaptor.Adaptor">
 		<property name="messageProcessor" ref="Router" />
 	</bean>
 
@@ -83,24 +83,24 @@
 		</description>
 		<property name="processMap">
 			<map>
-				<entry key-ref="TF2QCSynchronizationStatusPollingReader"
+				<entry key-ref="TF2TFSSynchronizationStatusPollingReader"
 					value-ref="TFReader" />
 				
 				<!-- This plugs in the polling hospital -->
 				<entry key-ref="TFReader">
 					<list>
 						<ref bean="HospitalUpdatorSQLConverterReprocessed" />
-						<ref bean="QCEntityService" />
+						<ref bean="TFSEntityService" />
 					</list>
 				</entry>
 				
-				<entry key-ref="QCEntityService"
-					value-ref="QCTransformer" />
-				<entry key-ref="QCTransformer" value-ref="QCWriter" />
-				<entry key-ref="QCWriter" value-ref="SynchronizationStatusAndIdentityMappingTableUpdaterTF2QC" />
+				<entry key-ref="TFSEntityService"
+					value-ref="TFSTransformer" />
+				<entry key-ref="TFSTransformer" value-ref="TFSWriter" />
+				<entry key-ref="TFSWriter" value-ref="SynchronizationStatusAndIdentityMappingTableUpdaterTF2TFS" />
 				
 				<!-- This plugs in the polling hospital -->
-				<entry key-ref="SynchronizationStatusAndIdentityMappingTableUpdaterTF2QC">
+				<entry key-ref="SynchronizationStatusAndIdentityMappingTableUpdaterTF2TFS">
 					<list>
 						<ref bean="HospitalUpdatorSQLConverterFixed"/>
 						<ref bean="PartialUpdateHospitalWriter" />
@@ -131,11 +131,11 @@
 			errorCode != "objectLocked";
 			</value>
 		</property>
-		<property name="exceptionMessage" value="Artifact has been locked in QC, so CCF only partially updated it and moved unprocessed comments to the hospital for later re-processing." />
+		<property name="exceptionMessage" value="Artifact has been locked in TFS, so CCF only partially updated it and moved unprocessed comments to the hospital for later re-processing." />
 	</bean>
 
 	<bean id="ExceptionConvertor" class="com.collabnet.ccf.core.hospital.CCFExceptionToOrderedMapConvertor"><property name="logMessageTemplate" value="${ccf.logMessageTemplate}" /><property name="timestampFormat" value="yyyy-MM-dd HH:mm:ss zzz"/><property name="onlyQuarantineGenericArtifacts" value="true"/>
-		<property name="adaptor" ref="TF2QC"/>
+		<property name="adaptor" ref="TF2TFS"/>
 	</bean>
 
 	<bean id="HospitalWriter" class="org.openadaptor.auxil.connector.jdbc.writer.JDBCWriteConnector">
@@ -160,7 +160,7 @@
 		<property name="password" value="${ccf.db.password}" />
 	</bean>
 
-	<bean id="TF2QCSynchronizationStatusPollingReader"
+	<bean id="TF2TFSSynchronizationStatusPollingReader"
 		class="com.collabnet.ccf.core.test.plugins.SimpleLoopingPollingReadConnector">
 		<description>
 			This polling connector polls the CCF database tables that contain the repository
@@ -175,17 +175,17 @@
 			read from the database read connector continuously without and pauses in between.
 		</description>
 		<property name="pollLimit" value="-1" />
-		<property name="delegate" ref="TF2QCSynchronizationStatusPollingReaderJdbcConnection" />
+		<property name="delegate" ref="TF2TFSSynchronizationStatusPollingReaderJdbcConnection" />
 		<property name="pollIntervalSecs" value="0" /><property name="reconnectDelegateBetweenPolls" value="false"/>
 	</bean>
 
-	<bean id="TF2QCSynchronizationStatusPollingReaderJdbcConnection"
+	<bean id="TF2TFSSynchronizationStatusPollingReaderJdbcConnection"
 		class="org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector">
 		<description>
 			This is the JDBC read connector used by the SynchronizationStatusPollingReader to read the
 			repository mapping and the synchronization info.
 		</description>
-		<property name="jdbcConnection" ref="JdbcConnectionTF2QC" />
+		<property name="jdbcConnection" ref="JdbcConnectionTF2TFS" />
 		<!-- batch size of 0 or less means process all rows in one message batch. -->
 		<!-- batch size of one means process one row per message and so on -->
 		<property name="batchSize" value="1" />
@@ -195,24 +195,24 @@
 		</property>
 	</bean>
 
-  	<bean id="TF2QCGenericArtifactSchemaValidator" class="com.collabnet.ccf.core.utils.XmlValidator">
+  	<bean id="TF2TFSGenericArtifactSchemaValidator" class="com.collabnet.ccf.core.utils.XmlValidator">
     	<description>This processor validates whether the artifacts produced by the TF reader are generic artifact schema compliant.</description>
     	<property name="schemaURL" value="config/genericartifactschema.xsd"/>
   	</bean>
 
-	<bean id="QCConnectionManager"
+	<bean id="TFSConnectionManager"
 		class="com.collabnet.ccf.core.eis.connection.ConnectionManager">
 		<!-- Please set the number of connections to the number of project mappings you have -->
 		<property name="maxConnectionsPerPool" value="10"></property>
 		<property name="maxIdleTimeForConnection" value="600000" />
 		<property name="scavengerInterval" value="120000"></property>
-		<property name="connectionFactory" ref="QCConnectionFactory"></property>
+		<property name="connectionFactory" ref="TFSConnectionFactory"></property>
 		<property name="useStandardTimeoutHandlingCode" value="true"/>
         <property name="enableReloginAfterSessionTimeout" value="true"/>
         <property name="enableRetryAfterNetworkTimeout" value="true"/>
 	</bean>
-	<bean id="QCConnectionFactory"
-		class="com.collabnet.ccf.pi.qc.v90.QCConnectionFactory">
+	<bean id="TFSConnectionFactory"
+		class="com.collabnet.ccf.tfs.TFSConnectionFactory">
 	</bean>
 
 	<bean id="TFReader"
@@ -241,7 +241,7 @@
 		
 		<!-- This plugs in in the polling hospital -->
 		<property name="hospitalDatabaseReader" ref="HospitalDatabaseExtractor"/>
-		<property name="nameOfEntityService" value="QCEntityService" />
+		<property name="nameOfEntityService" value="TFSEntityService" />
 		<property name="retrieveParentInfoForPlanningFolders" value="true" />
 		<property name="retrieveParentInfoForTrackerItems" value="true" />
 	</bean>
@@ -276,11 +276,11 @@
 		</description>
 	</bean>
 
-	<bean id="JdbcConnectionTF2QC"
+	<bean id="JdbcConnectionTF2TFS"
 		class="com.collabnet.ccf.core.db.JDBCConnection" scope="prototype">
 		<description>
 			This defines a jdbc connection that will be used
-			by all components that read from QC and write to TF
+			by all components that read from TFS and write to TF
 		</description>
 		<property name="driver" value="${ccf.db.driver}" />
 		<property name="url" value="${ccf.db.url}" />
@@ -288,7 +288,7 @@
 		<property name="password" value="${ccf.db.password}" />
 	</bean>
 
-	<bean id="SynchronizationStatusAndIdentityMappingTableUpdaterTF2QC"
+	<bean id="SynchronizationStatusAndIdentityMappingTableUpdaterTF2TFS"
 		class="com.collabnet.ccf.core.config.MappingDBUpdater">
 		<description>
 			This component is responsible for creating the identity mapping for newly created
@@ -302,11 +302,11 @@
 			The SynchronizationStatusAndIdentityMappingTableUpdater then takes the target artifact
 			id and creates an identity mapping entry for the source and target artifact ids.
 		</description>
-		<property name="synchronizationStatusDatabaseUpdater" ref="SynchronizationStatusDatabaseUpdaterTF2QC"></property>
-		<property name="identityMappingDatabaseReader" ref="IndentityMappingDatabaseReaderTF2QC" />
-		<property name="identityMappingDatabaseUpdater" ref="IdentityMappingDatabaseUpdaterTF2QC" />
+		<property name="synchronizationStatusDatabaseUpdater" ref="SynchronizationStatusDatabaseUpdaterTF2TFS"></property>
+		<property name="identityMappingDatabaseReader" ref="IndentityMappingDatabaseReaderTF2TFS" />
+		<property name="identityMappingDatabaseUpdater" ref="IdentityMappingDatabaseUpdaterTF2TFS" />
 		<property name="identityMappingDatabaseInserter"
-			ref="IdentityMappingDatabaseInserterTF2QC">
+			ref="IdentityMappingDatabaseInserterTF2TFS">
 		</property>
 	</bean>
 
@@ -316,18 +316,18 @@
 		<property name="rootElement" value="EmptySyncInf" />
 	</bean>
 
-	<bean id="IdentityMappingDatabaseInserterTF2QC"
+	<bean id="IdentityMappingDatabaseInserterTF2TFS"
 		class="org.openadaptor.auxil.connector.jdbc.writer.JDBCWriteConnector">
 		<description>
 			This component updates the synchronization status for the current artifact.
 		</description>
 		<property name="writer" ref="IdentityMappingTableInserter"></property>
 		<property name="jdbcConnection"
-			ref="JdbcConnectionTF2QC">
+			ref="JdbcConnectionTF2TFS">
 		</property>
 	</bean>
 
-	<bean id="QCTransformer" class="com.collabnet.ccf.core.transformer.DynamicXsltProcessor">
+	<bean id="TFSTransformer" class="com.collabnet.ccf.core.transformer.DynamicXsltProcessor">
 		<description>The xsltDir specifies the directory in which the xsl files are contained. The naming conventions
 		for the xsl files need to be followed.
 		Name of an xsl file should be: sourceSystem+sourceRepository+targetSystem+targetRepository.xsl
@@ -388,20 +388,20 @@
 		</property>
 	</bean>
 
-	<bean id="QCEntityService"
+	<bean id="TFSEntityService"
 		class="com.collabnet.ccf.core.EntityService">
 		<description>
 			This component is responsible for determining if the current artifact that is being
-			shipped is to be created or updated in the target QC system. It determines the artifact
+			shipped is to be created or updated in the target TFS system. It determines the artifact
 			action by checking if the artifact has an identity mapping already.
 			If the identity mapping does not exist then the EntityService marks this artifact
 			action as create otherwise update. Please refer the SynchronizationStatusAndIdentityMappingTableUpdater
 			component.
 		</description>
-		<property name="identityMappingDatabaseReader" ref="IndentityMappingDatabaseReaderTF2QC" />
-		<property name="parentIdentityMappingDatabaseReader" ref="ParentIndentityMappingDatabaseReaderTF2QC" />
-		<property name="projectMappingDatabaseReader" ref="ProjectMappingDatabaseReaderTF2QC" />
-		<property name="hospitalDatabaseReader" ref="HospitalDatabaseReaderTF2QC"/>
+		<property name="identityMappingDatabaseReader" ref="IndentityMappingDatabaseReaderTF2TFS" />
+		<property name="parentIdentityMappingDatabaseReader" ref="ParentIndentityMappingDatabaseReaderTF2TFS" />
+		<property name="projectMappingDatabaseReader" ref="ProjectMappingDatabaseReaderTF2TFS" />
+		<property name="hospitalDatabaseReader" ref="HospitalDatabaseReaderTF2TFS"/>
 		<property name="skipNewerVersionsOfQuarantinedArtifacts" value="false"/><property name="alwaysPassResynchedArtifacts" value="false"/>
 		<property name="identityMapEventWaitCount" value="8"></property>
 		<property name="identityMapEventWaitTime" value="500"></property>
@@ -409,13 +409,13 @@
 		<property name="onlyQuarantineAttachmentIfParentInHospital" value="true"></property>
 	</bean>
 
-	<bean id="HospitalDatabaseReaderTF2QC"
+	<bean id="HospitalDatabaseReaderTF2TFS"
 		class="org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector">
 		<description>
 			This database reader component finds out whether an artifact has been
 			quarantined in the hospital
 		</description>
-		<property name="jdbcConnection" ref="JdbcConnectionTF2QC" />
+		<property name="jdbcConnection" ref="JdbcConnectionTF2TFS" />
 		<!-- batch size of 0 or less means process all rows in one message batch. -->
 		<!-- batch size of one means process one row per message and so on -->
 		<property name="batchSize" value="0" />
@@ -424,17 +424,17 @@
 		</property>
 	</bean>
 
-	<bean id="QCWriter" class="com.collabnet.ccf.pi.qc.v90.QCWriter">
+	<bean id="TFSWriter" class="com.collabnet.ccf.tfs.TFSWriter">
 		<description>
-			This QCWriter will write the data contained in the incoming
-			document to QC.
+			This TFSWriter will write the data contained in the incoming
+			document to TFS.
 		</description>
 		<property name="serverUrl" value="${qc.system.1.url}" />
 		<property name="userName" value="${qc.system.1.username}" />
 		<property name="password" value="${qc.system.1.password}" />
 <!--		<property name="resyncUserName" value="${qc.system.1.resync.username}"></property>-->
 <!--        <property name="resyncPassword" value="${qc.system.1.resync.password}"></property>-->
-		<property name="connectionManager" ref="QCConnectionManager"></property>
+		<property name="connectionManager" ref="TFSConnectionManager"></property>
 		<property name="immediatelyQuarantineLockedDefects" value="true"/>
 		<property name="preserveSemanticallyUnchangedHTMLFieldValues" value="true"/>
 	</bean>
@@ -479,14 +479,14 @@
 		</property>
 	</bean>
 
-	<bean id="IndentityMappingDatabaseReaderTF2QC"
+	<bean id="IndentityMappingDatabaseReaderTF2TFS"
 		class="org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector">
 		<description>
 			This database reader component reads the target artifact id from the databse
 			for a given source artifact id and the target repository and system information.
 		</description>
 		<property name="jdbcConnection"
-			ref="JdbcConnectionTF2QC" />
+			ref="JdbcConnectionTF2TFS" />
 		<!-- batch size of 0 or less means process all rows in one message batch. -->
 		<!-- batch size of one means process one row per message and so on -->
 		<property name="batchSize" value="0" />
@@ -495,14 +495,14 @@
 		</property>
 	</bean>
 	
-	<bean id="ParentIndentityMappingDatabaseReaderTF2QC"
+	<bean id="ParentIndentityMappingDatabaseReaderTF2TFS"
 		class="org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector">
 		<description>
 			This database reader component reads the target artifact id from the databse
 			for a given source artifact id and the target repository and system information.
 		</description>
 		<property name="jdbcConnection"
-			ref="JdbcConnectionTF2QC" />
+			ref="JdbcConnectionTF2TFS" />
 		<!-- batch size of 0 or less means process all rows in one message batch. -->
 		<!-- batch size of one means process one row per message and so on -->
 		<property name="batchSize" value="0" />
@@ -511,13 +511,13 @@
 		</property>
 	</bean>
 	
-	<bean id="ProjectMappingDatabaseReaderTF2QC"
+	<bean id="ProjectMappingDatabaseReaderTF2TFS"
 		class="org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector">
 		<description>
 			This database reader component reads the project mappings for the parent artifact's repository id
 		</description>
 		<property name="jdbcConnection"
-			ref="JdbcConnectionTF2QC" />
+			ref="JdbcConnectionTF2TFS" />
 		<!-- batch size of 0 or less means process all rows in one message batch. -->
 		<!-- batch size of one means process one row per message and so on -->
 		<property name="batchSize" value="0" />
@@ -526,11 +526,11 @@
 		</property>
 	</bean>
 
-	<bean id="IdentityMappingDatabaseUpdaterTF2QC"
+	<bean id="IdentityMappingDatabaseUpdaterTF2TFS"
 		class="org.openadaptor.auxil.connector.jdbc.writer.JDBCWriteConnector">
 		<property name="writer" ref="IdentityMappingTableUpdater"></property>
 		<property name="jdbcConnection"
-			ref="JdbcConnectionTF2QC">
+			ref="JdbcConnectionTF2TFS">
 		</property>
 	</bean>
 
@@ -558,11 +558,11 @@
 		</property>
 	</bean>
 
-	<bean id="SynchronizationStatusDatabaseUpdaterTF2QC"
+	<bean id="SynchronizationStatusDatabaseUpdaterTF2TFS"
 		class="org.openadaptor.auxil.connector.jdbc.writer.JDBCWriteConnector">
 		<property name="writer" ref="SynchronizationStatusTableUpdater"></property>
 		<property name="jdbcConnection"
-			ref="JdbcConnectionTF2QC">
+			ref="JdbcConnectionTF2TFS">
 		</property>
 	</bean>
 
