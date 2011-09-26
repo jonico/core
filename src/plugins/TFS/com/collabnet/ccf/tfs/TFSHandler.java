@@ -17,9 +17,11 @@ import com.microsoft.tfs.core.clients.workitem.CoreFieldReferenceNames;
 import com.microsoft.tfs.core.clients.workitem.WorkItem;
 import com.microsoft.tfs.core.clients.workitem.WorkItemClient;
 import com.microsoft.tfs.core.clients.workitem.fields.Field;
+import com.microsoft.tfs.core.clients.workitem.fields.FieldDefinition;
 import com.microsoft.tfs.core.clients.workitem.project.Project;
 import com.microsoft.tfs.core.clients.workitem.project.ProjectCollection;
 import com.microsoft.tfs.core.clients.workitem.query.WorkItemCollection;
+import com.microsoft.tfs.core.clients.workitem.wittype.WorkItemType;
 
 public class TFSHandler {
 	
@@ -172,6 +174,49 @@ public class TFSHandler {
 		gaField.setFieldValueType(TFSMetaData.translateTFSFieldValueTypeToCCFFieldValueType(field.getFieldDefinition().getFieldType()));
 		gaField.setFieldAction(FieldActionValue.REPLACE);
 		gaField.setFieldValue(field.getValue());
+	}
+
+	public WorkItem createWorkItem(GenericArtifact ga, String collectionName, String projectName,
+			String workItemTypeString, TFSConnection connection) {
+
+
+		Project project = connection.getTpc().getWorkItemClient().getProjects().get(projectName);
+        WorkItemType workItemType = project.getWorkItemTypes().get(workItemTypeString);
+        
+        WorkItem newWorkItem = project.getWorkItemClient().newWorkItem(workItemType);
+        
+        
+//        newWorkItem.setTitle("Example Work Item");
+//        newWorkItem.getFields().getField(CoreFieldReferenceNames.HISTORY).setValue(
+//            "<p>Created automatically by a sample</p>");
+        
+        Iterator<FieldDefinition> it = workItemType.getFieldDefinitions().iterator();
+        
+        Object state = null;
+        while (it.hasNext()){
+        	
+        	FieldDefinition fieldDef = it.next();
+        	
+        	List<GenericArtifactField> gaFields = ga.getAllGenericArtifactFieldsWithSameFieldName(fieldDef.getName());
+        	if (gaFields != null) {
+        		Object fieldValue = gaFields.get(0).getFieldValue();
+        		if (fieldDef.getName().equals("State")) {
+        			state = fieldValue;
+        		} else {
+        			newWorkItem.getFields().getField(fieldDef.getName()).setValue(fieldValue);
+        		}	
+        	}
+        	
+        }
+        
+        newWorkItem.save();
+        if (state != null) {
+        	newWorkItem.getFields().getField(CoreFieldReferenceNames.STATE).setValue(state);
+        	newWorkItem.save();
+        }
+        
+		
+		return newWorkItem;
 	}
 
 }
