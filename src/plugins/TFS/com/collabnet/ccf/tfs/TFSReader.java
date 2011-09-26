@@ -16,6 +16,8 @@ import com.collabnet.ccf.core.CCFRuntimeException;
 import com.collabnet.ccf.core.eis.connection.ConnectionException;
 import com.collabnet.ccf.core.eis.connection.MaxConnectionsReachedException;
 import com.collabnet.ccf.core.ga.GenericArtifact;
+import com.collabnet.ccf.core.ga.GenericArtifact.ArtifactModeValue;
+import com.collabnet.ccf.core.ga.GenericArtifact.ArtifactTypeValue;
 import com.collabnet.ccf.tfs.TFSMetaData.TFSType;
 
 public class TFSReader extends AbstractReader<TFSConnection> {
@@ -45,9 +47,97 @@ public class TFSReader extends AbstractReader<TFSConnection> {
 		String sourceRepositoryId = this.getSourceRepositoryId(syncInfo);
 		String sourceRepositoryKind = this.getSourceRepositoryKind(syncInfo);
 		String lastSynchronizedVersion = this.getLastSourceVersion(syncInfo);
+		Date lastModifiedDate = this.getLastModifiedDate(syncInfo);
+		String lastSynchedArtifactId = this.getLastSourceArtifactId(syncInfo);
 
-		return null;
+		// find out what to extract
+		TFSType tfsType = TFSMetaData
+				.retrieveTFSTypeFromRepositoryId(sourceRepositoryId);
+
+		if (tfsType.equals(TFSMetaData.TFSType.UNKNOWN)) {
+			String cause = "Invalid repository format: " + sourceRepositoryId;
+			log.error(cause);
+			throw new CCFRuntimeException(cause);
+		}
+
+		TFSConnection connection;
+		String collectionName = TFSMetaData.extractCollectionNameFromRepositoryId(sourceRepositoryId);
+		try {
+			connection = connect(sourceSystemId, sourceSystemKind,
+					sourceRepositoryId, sourceRepositoryKind, serverUrl + "/" + collectionName,
+					getUserName() + TFSConnectionFactory.PARAM_DELIMITER
+							+ getPassword());
+		} catch (MaxConnectionsReachedException e) {
+			String cause = "Could not create connection to the TFS system. Max connections reached for "
+					+ serverUrl;
+			log.error(cause, e);
+			throw new CCFRuntimeException(cause, e);
+		} catch (ConnectionException e) {
+			String cause = "Could not create connection to the TFS system "
+					+ serverUrl;
+			log.error(cause, e);
+			throw new CCFRuntimeException(cause, e);
+		}
+
+		GenericArtifact genericArtifact = new GenericArtifact();
+		try {
+			/**
+			 * Create a new generic artifact data structure
+			 */
+			populateSrcAndDest(syncInfo, genericArtifact);
+			genericArtifact.setSourceArtifactId(artifactId);
+			genericArtifact.setArtifactMode(ArtifactModeValue.COMPLETE);
+			genericArtifact.setArtifactType(ArtifactTypeValue.PLAINARTIFACT);
+			
+			
+			if (tfsType.equals(TFSType.WORKITEM)) {
+				String projectName = TFSMetaData.extractProjectNameFromRepositoryId(sourceRepositoryId);
+				String workItemType = TFSMetaData.extractWorkItemTypeFromRepositoryId(sourceRepositoryId);
+				tfsHandler.getWorkItem(connection,
+						collectionName, projectName, workItemType, lastModifiedDate, lastSynchronizedVersion, lastSynchedArtifactId, artifactId, getUserName(),
+						isIgnoreConnectorUserUpdates(), genericArtifact);
+			}
+
+		} catch (Exception e) {
+			String cause = "During the artifact retrieval process from TFS, an error occured";
+			log.error(cause, e);
+			throw new CCFRuntimeException(cause, e);
+		} finally {
+			disconnect(connection);
+		}
+		return genericArtifact;
 	}
+	
+	private void populateSrcAndDest(Document syncInfo, GenericArtifact ga) {
+		String sourceRepositoryId = this.getSourceRepositoryId(syncInfo);
+		String sourceRepositoryKind = this.getSourceRepositoryKind(syncInfo);
+		String sourceSystemId = this.getSourceSystemId(syncInfo);
+		String sourceSystemKind = this.getSourceSystemKind(syncInfo);
+		String conflictResolutionPriority = this
+				.getConflictResolutionPriority(syncInfo);
+		
+		String sourceSystemTimezone = this.getSourceSystemTimezone(syncInfo);
+		String targetSystemTimezone = this.getTargetSystemTimezone(syncInfo);
+
+		String targetRepositoryId = this.getTargetRepositoryId(syncInfo);
+		String targetRepositoryKind = this.getTargetRepositoryKind(syncInfo);
+		String targetSystemId = this.getTargetSystemId(syncInfo);
+		String targetSystemKind = this.getTargetSystemKind(syncInfo);
+
+		ga.setSourceRepositoryId(sourceRepositoryId);
+		ga.setSourceRepositoryKind(sourceRepositoryKind);
+		ga.setSourceSystemId(sourceSystemId);
+		ga.setSourceSystemKind(sourceSystemKind);
+		ga.setConflictResolutionPriority(conflictResolutionPriority);
+		ga.setSourceSystemTimezone(sourceSystemTimezone);
+
+		ga.setTargetRepositoryId(targetRepositoryId);
+		ga.setTargetRepositoryKind(targetRepositoryKind);
+		ga.setTargetSystemId(targetSystemId);
+		ga.setTargetSystemKind(targetSystemKind);
+		ga.setTargetSystemTimezone(targetSystemTimezone);
+	}
+
 
 	@Override
 	public List<ArtifactState> getChangedArtifacts(Document syncInfo) {
@@ -56,19 +146,8 @@ public class TFSReader extends AbstractReader<TFSConnection> {
 		String sourceRepositoryId = this.getSourceRepositoryId(syncInfo);
 		String sourceRepositoryKind = this.getSourceRepositoryKind(syncInfo);
 		String lastSynchronizedVersion = this.getLastSourceVersion(syncInfo);
-		String targetSystemId = this.getTargetSystemId(syncInfo);
-		String targetRepositoryId = this.getTargetRepositoryId(syncInfo);
 		Date lastModifiedDate = this.getLastModifiedDate(syncInfo);
 		String lastSynchedArtifactId = this.getLastSourceArtifactId(syncInfo);
-
-		// System.out.println("sourceSystemId: " + sourceSystemId);
-		// System.out.println("sourceSystemKind: " + sourceSystemKind);
-		// System.out.println("sourceRepositoryId: " + sourceRepositoryId);
-		// System.out.println("sourceRepositoryKind: " + sourceRepositoryKind);
-		// System.out.println("lastSynchronizedVersion: " +
-		// lastSynchronizedVersion);
-		// System.out.println("targetSystemId: " + targetSystemId);
-		// System.out.println("targetRepositoryId: " + targetRepositoryId);
 
 		// find out what to extract
 		TFSType tfsType = TFSMetaData

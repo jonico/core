@@ -7,8 +7,6 @@ import com.collabnet.ccf.core.eis.connection.ConnectionManager;
 public class TFSConnectionFactory implements ConnectionFactory<TFSConnection> {
 
 	public static final String PARAM_DELIMITER = ":";
-	public static final String DOMAIM_DELIMETER = "\\\\";
-
 	/**
 	 * Closes SWP connection
 	 */

@@ -29,8 +29,8 @@ public class TFSConnection {
 			}
 		}
 		
-		String realUserName = username.split(TFSConnectionFactory.DOMAIM_DELIMETER)[1];
-		String domain = username.split(TFSConnectionFactory.DOMAIM_DELIMETER)[0];;
+		String realUserName = TFSMetaData.extractUserNameFromFullUserName(username);
+		String domain = TFSMetaData.extractDomainFromFullUserName(username);
 
 		setTpc(new TFSTeamProjectCollection(
 				connectionInfo, realUserName,
