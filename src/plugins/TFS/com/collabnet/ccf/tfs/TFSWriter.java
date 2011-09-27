@@ -1,6 +1,7 @@
 package com.collabnet.ccf.tfs;
 
 import java.rmi.RemoteException;
+import java.sql.SQLException;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
@@ -19,6 +20,7 @@ import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
 import com.collabnet.ccf.core.utils.XPathUtils;
 import com.collabnet.ccf.tfs.TFSMetaData.TFSType;
 import com.microsoft.tfs.core.clients.workitem.WorkItem;
+import com.microsoft.tfs.core.exceptions.TECoreException;
 
 public class TFSWriter extends AbstractWriter<TFSConnection> {
 
@@ -247,7 +249,18 @@ public class TFSWriter extends AbstractWriter<TFSConnection> {
 		} else if (cause instanceof CCFRuntimeException) {
 			Throwable innerCause = cause.getCause();
 			return handleException(innerCause, connectionManager, ga);
-		}
+		} else if (cause instanceof TECoreException) {
+			if (cause.getMessage().contains("Unknown host")) {
+				return true;
+			}
+		}  else if (cause instanceof RuntimeException) {
+			Throwable innerCause = cause.getCause();
+			return handleException(innerCause, connectionManager, ga);
+		} else if (cause instanceof SQLException) {
+			if (cause.getMessage().contains("Unexpected token UNIQUE, requires COLLATION in statement")) {
+				return true;
+			}
+		} 
 		return false;
 	}
 	

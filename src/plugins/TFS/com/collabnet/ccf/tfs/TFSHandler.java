@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.ListIterator;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
@@ -26,7 +27,6 @@ import com.microsoft.tfs.core.clients.workitem.project.ProjectCollection;
 import com.microsoft.tfs.core.clients.workitem.query.WorkItemCollection;
 import com.microsoft.tfs.core.clients.workitem.revision.Revision;
 import com.microsoft.tfs.core.clients.workitem.revision.RevisionCollection;
-import com.microsoft.tfs.core.clients.workitem.revision.RevisionField;
 import com.microsoft.tfs.core.clients.workitem.wittype.WorkItemType;
 import com.microsoft.tfs.core.exceptions.TECoreException;
 
@@ -277,10 +277,17 @@ public class TFSHandler {
 		while (it.hasNext()) {
 
 			FieldDefinition fieldDef = it.next();
-
+			
+String fieldName = fieldDef.getReferenceName();
+			
+			if (fieldName.equals(CoreFieldReferenceNames.HISTORY)){
+				continue;
+			}
+			
 			List<GenericArtifactField> gaFields = ga
-					.getAllGenericArtifactFieldsWithSameFieldName(fieldDef
-							.getReferenceName());
+					.getAllGenericArtifactFieldsWithSameFieldName(fieldName);
+
+			
 			if (gaFields != null) {
 				Object fieldValue = gaFields.get(0).getFieldValue(); // If there
 																		// more
@@ -315,6 +322,32 @@ public class TFSHandler {
 					.setValue(state);
 			newWorkItem.save();
 		}
+		
+		List<GenericArtifactField> comments = ga.getAllGenericArtifactFieldsWithSameFieldName(CoreFieldReferenceNames.HISTORY);
+		if (comments != null) {
+
+			for (ListIterator<GenericArtifactField> iterator = comments.listIterator(comments.size()); iterator.hasPrevious();){
+				
+				GenericArtifactField comment = iterator.previous();
+				
+				String commentValue = (String) comment.getFieldValue();
+				if (StringUtils.isEmpty(commentValue)) {
+					continue;
+				}
+				newWorkItem.getFields().getField(CoreFieldReferenceNames.HISTORY).setValue(commentValue);
+				
+				try {
+					// FIXME Handle midair conflicts
+					newWorkItem.save();
+				} catch (TECoreException e) {
+					if (!e.getMessage().contains("TF51650")) {
+						throw e;
+					}
+				}
+			}
+		}
+		
+		
 		ga.setTargetArtifactVersion(newWorkItem.getFields()
 				.getField(CoreFieldReferenceNames.REVISION).getOriginalValue()
 				.toString());
@@ -358,14 +391,19 @@ public class TFSHandler {
 
 			FieldDefinition fieldDef = it.next();
 
+			String fieldName = fieldDef.getReferenceName();
+			
+			if (fieldName.equals(CoreFieldReferenceNames.HISTORY)){
+				continue;
+			}
+			
 			List<GenericArtifactField> gaFields = ga
-					.getAllGenericArtifactFieldsWithSameFieldName(fieldDef
-							.getReferenceName());
+					.getAllGenericArtifactFieldsWithSameFieldName(fieldName);
+			
 			if (gaFields != null && gaFields.get(0).getFieldValueHasChanged()) {
 				// If there more than 1, it's a multi select field
 				Object fieldValue = gaFields.get(0).getFieldValue();
 				// FIXME Date conversion
-				// FIXME Multiple field values
 				// FIXME HTML conversion (preserve semantically unchanged
 				// content)
 				// FIXME More complicated data types (like TreePath)
@@ -376,12 +414,44 @@ public class TFSHandler {
 
 		}
 
+		
+		List<GenericArtifactField> comments = ga.getAllGenericArtifactFieldsWithSameFieldName(CoreFieldReferenceNames.HISTORY);
+		
+		
+		boolean calledSaveAtLeastOnce = false;
+		if (comments != null) {
+
+			for (ListIterator<GenericArtifactField> iterator = comments.listIterator(comments.size()); iterator.hasPrevious();){
+				
+				GenericArtifactField comment = iterator.previous();
+				
+				String commentValue = (String) comment.getFieldValue();
+				if (StringUtils.isEmpty(commentValue)) {
+					continue;
+				}
+				workItem.getFields().getField(CoreFieldReferenceNames.HISTORY).setValue(commentValue);
+				
+				try {
+					// FIXME Handle midair conflicts
+					calledSaveAtLeastOnce = true;
+					workItem.save();
+				} catch (TECoreException e) {
+					if (!e.getMessage().contains("TF51650")) {
+						throw e;
+					}
+				}
+			}
+		}
+		
+		if (!calledSaveAtLeastOnce) {
 		// update history field
-		try {
-			workItem.save();
-		} catch (TECoreException e) {
-			if (!e.getMessage().contains("TF51650")) {
-				throw e;
+			try {
+				// FIXME Handle midair conflicts
+				workItem.save();
+			} catch (TECoreException e) {
+				if (!e.getMessage().contains("TF51650")) {
+					throw e;
+				}
 			}
 		}
 		ga.setTargetArtifactVersion(workItem.getFields()
