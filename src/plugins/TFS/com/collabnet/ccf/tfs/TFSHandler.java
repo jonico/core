@@ -23,6 +23,7 @@ import com.microsoft.tfs.core.clients.workitem.project.Project;
 import com.microsoft.tfs.core.clients.workitem.project.ProjectCollection;
 import com.microsoft.tfs.core.clients.workitem.query.WorkItemCollection;
 import com.microsoft.tfs.core.clients.workitem.wittype.WorkItemType;
+import com.microsoft.tfs.core.exceptions.TECoreException;
 
 public class TFSHandler {
 
@@ -316,7 +317,14 @@ public class TFSHandler {
 
 		}
 
-		workItem.save();
+		// update history field
+		try {
+			workItem.save();
+		} catch (TECoreException e) {
+			if (!e.getMessage().contains("TF51650")) {
+				throw e;
+			}
+		}
 		ga.setTargetArtifactVersion(workItem.getFields()
 				.getField(CoreFieldReferenceNames.REVISION).getValue()
 				.toString());
