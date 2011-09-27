@@ -5,6 +5,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -13,6 +14,7 @@ import com.collabnet.ccf.core.ArtifactState;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactField.FieldActionValue;
+import com.collabnet.ccf.core.ga.GenericArtifactField.FieldValueTypeValue;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.microsoft.tfs.core.clients.workitem.CoreFieldReferenceNames;
 import com.microsoft.tfs.core.clients.workitem.WorkItem;
@@ -22,6 +24,9 @@ import com.microsoft.tfs.core.clients.workitem.fields.FieldDefinition;
 import com.microsoft.tfs.core.clients.workitem.project.Project;
 import com.microsoft.tfs.core.clients.workitem.project.ProjectCollection;
 import com.microsoft.tfs.core.clients.workitem.query.WorkItemCollection;
+import com.microsoft.tfs.core.clients.workitem.revision.Revision;
+import com.microsoft.tfs.core.clients.workitem.revision.RevisionCollection;
+import com.microsoft.tfs.core.clients.workitem.revision.RevisionField;
 import com.microsoft.tfs.core.clients.workitem.wittype.WorkItemType;
 import com.microsoft.tfs.core.exceptions.TECoreException;
 
@@ -46,11 +51,13 @@ public class TFSHandler {
 			if (project.getName().equals(projectName)) {
 
 				WorkItemClient workItemClient = project.getWorkItemClient();
-				
-				String finalQuery = all_wi_query.replace("?1", workItemType).replace("?2", TFSMetaData.formatDate(lastModifiedDate));
-				
-				WorkItemCollection tasksQueryResults = workItemClient
-						.query(finalQuery, null, false);
+
+				String finalQuery = all_wi_query
+						.replace("?1", workItemType)
+						.replace("?2", TFSMetaData.formatDate(lastModifiedDate));
+
+				WorkItemCollection tasksQueryResults = workItemClient.query(
+						finalQuery, null, false);
 
 				ArrayList<WorkItem> detailRowsFull = new ArrayList<WorkItem>();
 				ArrayList<WorkItem> detailRowsNew = new ArrayList<WorkItem>();
@@ -125,12 +132,14 @@ public class TFSHandler {
 				.getWorkItemByID(Integer.parseInt(artifactId));
 
 		String lastModifiedBy = workItem.getFields()
-				.getField(CoreFieldReferenceNames.CHANGED_BY).getOriginalValue()
-				.toString();
+				.getField(CoreFieldReferenceNames.CHANGED_BY)
+				.getOriginalValue().toString();
 		Date creationDate = (Date) workItem.getFields()
-				.getField(CoreFieldReferenceNames.CREATED_DATE).getOriginalValue();
+				.getField(CoreFieldReferenceNames.CREATED_DATE)
+				.getOriginalValue();
 		Date lasWorkItemtModifiedDate = (Date) workItem.getFields()
-				.getField(CoreFieldReferenceNames.CHANGED_DATE).getOriginalValue();
+				.getField(CoreFieldReferenceNames.CHANGED_DATE)
+				.getOriginalValue();
 		String revisionNumber = workItem.getFields()
 				.getField(CoreFieldReferenceNames.REVISION).getOriginalValue()
 				.toString();
@@ -167,15 +176,51 @@ public class TFSHandler {
 			 * Filter changes done by the connector user Break separate comments
 			 * down into multiple versions of the same GA field element
 			 */
+			if (field.getReferenceName().equals(CoreFieldReferenceNames.HISTORY)) {
+				continue;
+			}
 			addWorkItemField(genericArtifact, field);
 		}
 
 		if (isIgnore) {
 			genericArtifact
 					.setArtifactAction(GenericArtifact.ArtifactActionValue.IGNORE);
-		} else if (isResync) {
-			genericArtifact
-					.setArtifactAction(GenericArtifact.ArtifactActionValue.RESYNC);
+		} else {
+			if (isResync) {
+				genericArtifact
+						.setArtifactAction(GenericArtifact.ArtifactActionValue.RESYNC);
+			}
+			// now fetch the comments
+			RevisionCollection revs = workItem.getRevisions();
+			Iterator<Revision> revIt = revs.iterator();
+			while (revIt.hasNext()) {
+
+				Revision rev = revIt.next();
+
+				String changedBy = rev
+						.getField(CoreFieldReferenceNames.CHANGED_BY)
+						.getValue().toString();
+				if (changedBy.equalsIgnoreCase(TFSMetaData
+						.extractUserNameFromFullUserName(userName))
+						&& ignoreConnectorUserUpdates) {
+					continue;
+				}
+				
+				Date changedDate = (Date) rev.getField(
+						CoreFieldReferenceNames.CHANGED_DATE).getValue();
+				if (lastModifiedDate.compareTo(changedDate) >= 0) {
+					continue;
+				}
+
+				String history = (String) rev.getField(CoreFieldReferenceNames.HISTORY)
+						.getValue();
+				if (StringUtils.isEmpty(history)) {
+					continue;
+				}
+				
+				addComment(genericArtifact, history, changedDate, changedBy);
+				
+			}
 		}
 
 		genericArtifact
@@ -183,6 +228,16 @@ public class TFSHandler {
 						.format(lasWorkItemtModifiedDate));
 		genericArtifact.setSourceArtifactVersion(revisionNumber);
 
+	}
+
+	private void addComment(GenericArtifact genericArtifact, String history,
+			Date changedDate, String changedBy) {
+		GenericArtifactField gaField = genericArtifact.addNewField(
+				CoreFieldReferenceNames.HISTORY, "mandatoryField");
+		// FIXME Use Date instead of DateTime in case of dates
+		gaField.setFieldValueType(FieldValueTypeValue.HTMLSTRING);
+		gaField.setFieldAction(FieldActionValue.APPEND);
+		gaField.setFieldValue("User \"" + changedBy + "\" commented on " + changedDate + ":<br> " + history);
 	}
 
 	private void addWorkItemField(GenericArtifact genericArtifact, Field field) {
@@ -274,7 +329,8 @@ public class TFSHandler {
 	}
 
 	public WorkItem updateWorkItem(GenericArtifact ga, String collectionName,
-			String projectName, String workItemTypeString, TFSConnection connection) {
+			String projectName, String workItemTypeString,
+			TFSConnection connection) {
 
 		String workItemId = ga.getTargetArtifactId();
 
@@ -294,7 +350,7 @@ public class TFSHandler {
 				.get(projectName);
 		WorkItemType workItemType = project.getWorkItemTypes().get(
 				workItemTypeString);
-		
+
 		Iterator<FieldDefinition> it = workItemType.getFieldDefinitions()
 				.iterator();
 
@@ -336,7 +392,7 @@ public class TFSHandler {
 				.format(workItem.getFields()
 						.getField(CoreFieldReferenceNames.CHANGED_DATE)
 						.getOriginalValue()));
-		
+
 		return workItem;
 	}
 

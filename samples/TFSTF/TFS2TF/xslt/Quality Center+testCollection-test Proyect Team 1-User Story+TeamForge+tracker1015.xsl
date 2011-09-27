@@ -197,19 +197,12 @@
 			<xsl:value-of select="." />
 		</field>
 	</xsl:template>
-	<xsl:template match='ccf:field[@fieldName="BG_DEV_COMMENTS"]'>
+	<xsl:template match='ccf:field[@fieldName="System.History"]'>
 		<field>
 			<xsl:copy-of select="@*" />
 			<xsl:attribute name="fieldName">Comment Text</xsl:attribute>
 			<xsl:attribute name="fieldType">flexField</xsl:attribute>
-			<xsl:choose>
-				<xsl:when test="@fieldValueType='HTMLString'">
-<!-- 					<xsl:value-of select="stringutil:stripHTML(string(.))" /> -->
-				</xsl:when>
-				<xsl:otherwise>
-					<xsl:value-of select="." />
-				</xsl:otherwise>
-			</xsl:choose>
+ 			<xsl:value-of select="stringutil:stripHTML(string(.))" />
 		</field>
 	</xsl:template>
 	<xsl:template match="text()" />
