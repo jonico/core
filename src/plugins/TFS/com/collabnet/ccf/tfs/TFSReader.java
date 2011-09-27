@@ -27,7 +27,7 @@ public class TFSReader extends AbstractReader<TFSConnection> {
 	private String userName;
 	private String password;
 	private String serverUrl;
-	private boolean ignoreConnectorUserUpdates;
+	private boolean ignoreConnectorUserUpdates = true;
 
 	public List<GenericArtifact> getArtifactDependencies(Document syncInfo,
 			String artifactId) {

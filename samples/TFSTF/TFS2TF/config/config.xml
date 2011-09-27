@@ -230,7 +230,7 @@
 		</list>
 		</property>
 	</bean>
-	<bean id="TFSReader" class="com.collabnet.tfs.TFSReader">
+	<bean id="TFSReader" class="com.collabnet.ccf.tfs.TFSReader">
 		<description>
 			This reader reads the modified artifacts in the TFS system's tracker configured in the
 			${qc.server.1.url} and the sync info tables. It reads all the related dependent artifact details
@@ -255,7 +255,7 @@
 		<property name="nameOfEntityService" value="TFEntityService" />
 		
 	</bean>
-	<bean id="TFSConnectionManager" class="com.collabnet.ccf.tfs.ConnectionManager">
+	<bean id="TFSConnectionManager" class="com.collabnet.ccf.core.eis.connection.ConnectionManager">
 		<!-- Please set the number of connections to the number of project mappings you have -->
 		<property name="maxConnectionsPerPool" value="5"></property>
 		<property name="maxIdleTimeForConnection" value="600000" />
@@ -516,7 +516,7 @@
 			information into the database table.
 		</description>
 		<property name="tableName" value="SYNCHRONIZATION_STATUS"></property>
-        <property name="sql" value="UPDATE SYNCHRONIZATION_STATUS SET LAST_SOURCE_ARTIFACT_MODIFICATION_DATE=?, LAST_SOURCE_ARTIFACT_VERSION=?, LAST_SOURCE_ARTIFACT_ID=? WHERE SOURCE_SYSTEM_ID=? AND SOURCE_REPOSITORY_ID=? AND TARGET_SYSTEM_ID=? AND TARGET_REPOSITORY_ID=? AND CONVERT(LAST_SOURCE_ARTIFACT_VERSION,BIGINT) &lt;= CONVERT(?,BIGINT)"></property>
+        <property name="sql" value="UPDATE SYNCHRONIZATION_STATUS SET LAST_SOURCE_ARTIFACT_MODIFICATION_DATE=?, LAST_SOURCE_ARTIFACT_VERSION=?, LAST_SOURCE_ARTIFACT_ID=? WHERE SOURCE_SYSTEM_ID=? AND SOURCE_REPOSITORY_ID=? AND TARGET_SYSTEM_ID=? AND TARGET_REPOSITORY_ID=?"></property>
         <property name="outputColumns">
             <list>
                 <value>LAST_SOURCE_ARTIFACT_MODIFICATION_DATE</value>
@@ -526,7 +526,6 @@
                 <value>SOURCE_REPOSITORY_ID</value>
                 <value>TARGET_SYSTEM_ID</value>
                 <value>TARGET_REPOSITORY_ID</value>
-                <value>LAST_SOURCE_ARTIFACT_VERSION</value>
             </list>
         </property>
 	</bean>

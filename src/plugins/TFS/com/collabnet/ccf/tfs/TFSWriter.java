@@ -3,8 +3,6 @@ package com.collabnet.ccf.tfs;
 import java.rmi.RemoteException;
 import java.util.List;
 
-import javax.xml.datatype.DatatypeConfigurationException;
-
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dom4j.Document;
@@ -47,8 +45,69 @@ public class TFSWriter extends AbstractWriter<TFSConnection> {
 
 	@Override
 	public Document updateArtifact(Document gaDocument) {
-		// TODO Auto-generated method stub
-		return null;
+		
+		GenericArtifact ga = null;
+		try {
+			ga = GenericArtifactHelper
+					.createGenericArtifactJavaObject(gaDocument);
+		} catch (GenericArtifactParsingException e) {
+			String cause = "Problem occured while parsing the GenericArtifact into Document";
+			log.error(cause, e);
+			XPathUtils.addAttribute(gaDocument.getRootElement(),
+					GenericArtifactHelper.ERROR_CODE,
+					GenericArtifact.ERROR_GENERIC_ARTIFACT_PARSING);
+			throw new CCFRuntimeException(cause, e);
+		}
+
+		// find out what to update
+		String targetRepositoryId = ga.getTargetRepositoryId();
+		TFSType tfsType = TFSMetaData
+				.retrieveTFSTypeFromRepositoryId(targetRepositoryId);
+		
+		if (tfsType.equals(TFSMetaData.TFSType.UNKNOWN)) {
+			String cause = "Invalid repository format: " + targetRepositoryId;
+			log.error(cause);
+			throw new CCFRuntimeException(cause);
+		}
+		
+		TFSConnection connection;
+		String collectionName = TFSMetaData.extractCollectionNameFromRepositoryId(targetRepositoryId);
+		
+		connection = connect(ga, collectionName);
+		try {
+			
+			if (tfsType.equals(TFSType.WORKITEM)) {
+				
+				String projectName = TFSMetaData.extractProjectNameFromRepositoryId(targetRepositoryId);
+				String workItemType = TFSMetaData.extractWorkItemTypeFromRepositoryId(targetRepositoryId);
+				
+				WorkItem result = updateWorkItem(ga, collectionName, projectName, workItemType, connection);
+				if (result != null) {
+					log.info("Updated work item " + result.getID() + " with data from "
+							+ ga.getSourceArtifactId());
+				}
+			} else {
+				String cause = "Unsupported repository format: "
+						+ targetRepositoryId;
+				log.error(cause);
+				throw new CCFRuntimeException(cause);
+			}
+		} catch (Exception e) {
+			String cause = "During the artifact update process in TFS, an error occured";
+			log.error(cause, e);
+			throw new CCFRuntimeException(cause, e);
+		} finally {
+			disconnect(connection);
+		}
+
+		return returnDocument(ga);	
+	}
+
+	private WorkItem updateWorkItem(GenericArtifact ga, String collectionName,
+			String projectName, String workItemType, TFSConnection connection) {
+
+		
+		return tfsHandler.updateWorkItem(ga, collectionName, projectName, workItemType, connection);
 	}
 
 	@Override
@@ -90,7 +149,7 @@ public class TFSWriter extends AbstractWriter<TFSConnection> {
 				
 				WorkItem result = createWorkItem(ga, collectionName, projectName, workItemType, connection);
 				if (result != null) {
-					log.info("Created work item" + result.getID() + " with data from "
+					log.info("Created work item " + result.getID() + " with data from "
 							+ ga.getSourceArtifactId());
 				}
 			} else {

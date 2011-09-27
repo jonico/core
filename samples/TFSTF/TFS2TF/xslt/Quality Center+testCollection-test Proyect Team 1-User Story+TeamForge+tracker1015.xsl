@@ -25,7 +25,7 @@
 	<xsl:template match="/ccf:artifact[@artifactType = 'attachment']">
 		<xsl:copy-of select="." />
 	</xsl:template>
-	<xsl:template match='ccf:field[@fieldName="Title"]'>
+	<xsl:template match='ccf:field[@fieldName="System.Title"]'>
 		<field>
 			<xsl:copy-of select="@*" />
 			<xsl:attribute name="fieldName">title</xsl:attribute>
@@ -33,7 +33,7 @@
 			<xsl:value-of select="." />
 		</field>
 	</xsl:template>
-	<xsl:template match='ccf:field[@fieldName="Description"]'>
+	<xsl:template match='ccf:field[@fieldName="System.Description"]'>
 		<field>
 			<xsl:copy-of select="@*" />
 			<xsl:attribute name="fieldName">description</xsl:attribute>
@@ -73,7 +73,7 @@
 			</xsl:choose>
 		</field>
 	</xsl:template>
-	<xsl:template match='ccf:field[@fieldName="State"]'>
+	<xsl:template match='ccf:field[@fieldName="System.State"]'>
 		<xsl:variable name="statusValue" as="xs:string" select="." />
 		<field>
 			<xsl:copy-of select="@*" />
