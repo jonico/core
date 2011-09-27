@@ -29,7 +29,7 @@ public class TFSHandler {
 
 	private static final Log log = LogFactory.getLog(TFSHandler.class);
 
-	public String all_wi_query = "Select [Id] From WorkItems Where [Work Item Type] = '?' Order By [Changed Date] Asc";
+	public String all_wi_query = "Select [Id] From WorkItems Where [Work Item Type] = '?1' and [Changed Date] >= '?2' Order By [Changed Date] Asc";
 
 	public void getChangedWorkItems(TFSConnection connection,
 			String collectionName, String projectName, String workItemType,
@@ -46,8 +46,11 @@ public class TFSHandler {
 			if (project.getName().equals(projectName)) {
 
 				WorkItemClient workItemClient = project.getWorkItemClient();
+				
+				String finalQuery = all_wi_query.replace("?1", workItemType).replace("?2", TFSMetaData.formatDate(lastModifiedDate));
+				
 				WorkItemCollection tasksQueryResults = workItemClient
-						.query(all_wi_query.replace("?", workItemType));
+						.query(finalQuery, null, false);
 
 				ArrayList<WorkItem> detailRowsFull = new ArrayList<WorkItem>();
 				ArrayList<WorkItem> detailRowsNew = new ArrayList<WorkItem>();
@@ -61,7 +64,7 @@ public class TFSHandler {
 
 					Date workItemTimeStamp = (Date) workItem.getFields()
 							.getField(CoreFieldReferenceNames.CHANGED_DATE)
-							.getValue();
+							.getOriginalValue();
 
 					Date artifactLastModifiedDate = new Date(0);
 
@@ -74,7 +77,7 @@ public class TFSHandler {
 
 						String workItemRevisionNumber = workItem.getFields()
 								.getField(CoreFieldReferenceNames.REVISION)
-								.getValue().toString();
+								.getOriginalValue().toString();
 						String id = String.valueOf(workItem.getID());
 						if (id.equals(lastSynchedArtifactId)
 								&& workItemRevisionNumber
@@ -98,12 +101,12 @@ public class TFSHandler {
 					artifactState.setArtifactLastModifiedDate((Date) wit
 							.getFields()
 							.getField(CoreFieldReferenceNames.CHANGED_DATE)
-							.getValue());
+							.getOriginalValue());
 
 					artifactState.setArtifactVersion(Long.parseLong(wit
 							.getFields()
 							.getField(CoreFieldReferenceNames.REVISION)
-							.getValue().toString()));
+							.getOriginalValue().toString()));
 					artifactStates.add(artifactState);
 				}
 			}
@@ -122,14 +125,14 @@ public class TFSHandler {
 				.getWorkItemByID(Integer.parseInt(artifactId));
 
 		String lastModifiedBy = workItem.getFields()
-				.getField(CoreFieldReferenceNames.CHANGED_BY).getValue()
+				.getField(CoreFieldReferenceNames.CHANGED_BY).getOriginalValue()
 				.toString();
 		Date creationDate = (Date) workItem.getFields()
-				.getField(CoreFieldReferenceNames.CREATED_DATE).getValue();
+				.getField(CoreFieldReferenceNames.CREATED_DATE).getOriginalValue();
 		Date lasWorkItemtModifiedDate = (Date) workItem.getFields()
-				.getField(CoreFieldReferenceNames.CHANGED_DATE).getValue();
+				.getField(CoreFieldReferenceNames.CHANGED_DATE).getOriginalValue();
 		String revisionNumber = workItem.getFields()
-				.getField(CoreFieldReferenceNames.REVISION).getValue()
+				.getField(CoreFieldReferenceNames.REVISION).getOriginalValue()
 				.toString();
 
 		boolean isResync = false;
@@ -193,7 +196,7 @@ public class TFSHandler {
 				.translateTFSFieldValueTypeToCCFFieldValueType(field
 						.getFieldDefinition().getFieldType()));
 		gaField.setFieldAction(FieldActionValue.REPLACE);
-		gaField.setFieldValue(field.getValue());
+		gaField.setFieldValue(field.getOriginalValue());
 	}
 
 	public WorkItem createWorkItem(GenericArtifact ga, String collectionName,
@@ -258,13 +261,13 @@ public class TFSHandler {
 			newWorkItem.save();
 		}
 		ga.setTargetArtifactVersion(newWorkItem.getFields()
-				.getField(CoreFieldReferenceNames.REVISION).getValue()
+				.getField(CoreFieldReferenceNames.REVISION).getOriginalValue()
 				.toString());
 		// FIXME: Validate date null value
 		ga.setTargetArtifactLastModifiedDate(GenericArtifactHelper.df
 				.format(newWorkItem.getFields()
 						.getField(CoreFieldReferenceNames.CHANGED_DATE)
-						.getValue()));
+						.getOriginalValue()));
 		ga.setTargetArtifactId(String.valueOf(newWorkItem.getID()));
 
 		return newWorkItem;
@@ -280,7 +283,7 @@ public class TFSHandler {
 				.getWorkItemByID(Integer.parseInt(workItemId));
 
 		Long workItemRvision = Long.valueOf(workItem.getFields()
-				.getField(CoreFieldReferenceNames.REVISION).getValue()
+				.getField(CoreFieldReferenceNames.REVISION).getOriginalValue()
 				.toString());
 
 		if (!AbstractWriter.handleConflicts(workItemRvision, ga)) {
@@ -326,13 +329,13 @@ public class TFSHandler {
 			}
 		}
 		ga.setTargetArtifactVersion(workItem.getFields()
-				.getField(CoreFieldReferenceNames.REVISION).getValue()
+				.getField(CoreFieldReferenceNames.REVISION).getOriginalValue()
 				.toString());
 		// FIXME: Validate date null value
 		ga.setTargetArtifactLastModifiedDate(GenericArtifactHelper.df
 				.format(workItem.getFields()
 						.getField(CoreFieldReferenceNames.CHANGED_DATE)
-						.getValue()));
+						.getOriginalValue()));
 		
 		return workItem;
 	}

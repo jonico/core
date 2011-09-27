@@ -65,7 +65,7 @@
 			<xsl:copy-of select="@*"/>
 			<xsl:attribute name="fieldName">System.State</xsl:attribute>
 			<xsl:choose>
-				<xsl:when test="$statusValue ='In Development'">Open</xsl:when>
+				<xsl:when test="$statusValue ='In Development'">Active</xsl:when>
 				<xsl:when test="$statusValue ='Completed'">Resolved</xsl:when>
 				<xsl:otherwise>Closed</xsl:otherwise>
 		</xsl:choose>

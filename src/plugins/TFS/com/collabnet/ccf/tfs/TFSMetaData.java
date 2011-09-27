@@ -1,5 +1,8 @@
 package com.collabnet.ccf.tfs;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -102,6 +105,16 @@ public class TFSMetaData {
 	}
 
 	public static final String DOMAIM_DELIMETER = "\\\\";
+
+	private static final SimpleDateFormat isoLocal = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SS");
 	
+	public static String formatDate(Date date) {
+		  String formattedDate = null;
+		  if (date != null) {
+		   String dateString = isoLocal.format(date);
+		   formattedDate = dateString.substring(0,dateString.length()-1);
+		  }
+		  return formattedDate;
+	}
 	
 }
