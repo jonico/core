@@ -36,7 +36,7 @@ public class TFSConnectionFactory implements ConnectionFactory<TFSConnection> {
 	 * Call method to check whether SWP connection still works
 	 */
 	public boolean isAlive(TFSConnection connection) {
-		// FIXME
+		// FIXME Do a real check, for instance item types and if getting an exception, return false
 		return true;
 	}
 
