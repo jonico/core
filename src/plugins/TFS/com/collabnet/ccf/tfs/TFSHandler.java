@@ -79,7 +79,6 @@ public class TFSHandler {
 						artifactLastModifiedDate = workItemTimeStamp;
 					}
 
-					// FIXME should be part of the query
 					if (artifactLastModifiedDate.compareTo(lastModifiedDate) >= 0) {
 
 						String workItemRevisionNumber = workItem.getFields()
@@ -169,13 +168,6 @@ public class TFSHandler {
 
 			Field field = it.next();
 			// FIXME Do time conversion in case of dates
-			// FIXME Comments
-			/**
-			 * Comment handling: Figure out what has changed since the last
-			 * synch date and only transport that part of the history field
-			 * Filter changes done by the connector user Break separate comments
-			 * down into multiple versions of the same GA field element
-			 */
 			if (field.getReferenceName().equals(CoreFieldReferenceNames.HISTORY)) {
 				continue;
 			}
@@ -303,7 +295,6 @@ String fieldName = fieldDef.getReferenceName();
 					state = fieldValue;
 				} else {
 					// FIXME Date conversion
-					// FIXME Multiple field values
 					// FIXME HTML conversion (preserve semantically unchanged
 					// content)
 					// FIXME More complicated data types (like TreePath)
@@ -407,7 +398,6 @@ String fieldName = fieldDef.getReferenceName();
 				// FIXME HTML conversion (preserve semantically unchanged
 				// content)
 				// FIXME More complicated data types (like TreePath)
-				// FIXME Comments
 				workItem.getFields().getField(fieldDef.getReferenceName())
 						.setValue(fieldValue);
 			}
