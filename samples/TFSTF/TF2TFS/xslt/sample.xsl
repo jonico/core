@@ -182,11 +182,7 @@
 		</field>
 	</xsl:template>
 	<xsl:template match='ccf:field[@fieldName="Comment Text"]'>
-		<field>
-			<xsl:copy-of select="@*"/>
-			<xsl:attribute name="fieldName">BG_DEV_COMMENTS</xsl:attribute>
-<!-- 			<xsl:value-of select="stringutil:encodeHTMLToEntityReferences(string(.))"/> -->
-		</field>
+		<field><xsl:copy-of select="@*"/><xsl:attribute name="fieldName">System.History</xsl:attribute><xsl:value-of select="stringutil:encodeHTMLToEntityReferences(string(.))"/></field>
 	</xsl:template>
 	<xsl:template match="text()"/>
 </xsl:stylesheet>
