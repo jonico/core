@@ -30,6 +30,7 @@ public class TFSReader extends AbstractReader<TFSConnection> {
 	private String password;
 	private String serverUrl;
 	private boolean ignoreConnectorUserUpdates = true;
+	private TFSAttachmentHandler attachmentHandler = null;
 
 	public List<GenericArtifact> getArtifactDependencies(Document syncInfo,
 			String artifactId) {
@@ -41,8 +42,88 @@ public class TFSReader extends AbstractReader<TFSConnection> {
 	public List<GenericArtifact> getArtifactAttachments(Document syncInfo,
 			GenericArtifact artifactData) {
 
-		return new ArrayList<GenericArtifact>();
+		String artifactId = artifactData.getSourceArtifactId();
+		String sourceSystemId = this.getSourceSystemId(syncInfo);
+		String sourceSystemKind = this.getSourceSystemKind(syncInfo);
+		String sourceRepositoryId = this.getSourceRepositoryId(syncInfo);
+		String sourceRepositoryKind = this.getSourceRepositoryKind(syncInfo);
+		Date lastModifiedDate = this.getLastModifiedDate(syncInfo);
+		
+		TFSConnection connection;
+		String collectionName = TFSMetaData.extractCollectionNameFromRepositoryId(sourceRepositoryId);
+		try {
+			connection = connect(sourceSystemId, sourceSystemKind,
+					sourceRepositoryId, sourceRepositoryKind, serverUrl + "/" + collectionName,
+					getUserName() + TFSConnectionFactory.PARAM_DELIMITER
+							+ getPassword());
+		} catch (MaxConnectionsReachedException e) {
+			String cause = "Could not create connection to the TFS system. Max connections reached for "
+					+ serverUrl;
+			log.error(cause, e);
+			throw new CCFRuntimeException(cause, e);
+		} catch (ConnectionException e) {
+			String cause = "Could not create connection to the TFS system "
+					+ serverUrl;
+			log.error(cause, e);
+			throw new CCFRuntimeException(cause, e);
+		}
+		
+		List<String> artifactIds = new ArrayList<String>();
+		artifactIds.add(artifactId);
+		List<GenericArtifact> attachments = null;
+		try {
+			
+			attachments = attachmentHandler.listAttachments(connection, lastModifiedDate,
+					isIgnoreConnectorUserUpdates() ? getUserName() : "",
+					artifactIds, this
+							.getMaxAttachmentSizePerArtifact(), this
+							.isShipAttachmentsWithArtifact(), artifactData);
+			for (GenericArtifact attachment : attachments) {
+				populateSrcAndDestForAttachment(syncInfo, attachment);
+			}
+			
+			
+		} catch (RemoteException e) {
+			String cause = "During the attachment retrieval process from TF, an error occured";
+			log.error(cause, e);
+			throw new CCFRuntimeException(cause, e);
+		} finally {
+			this.disconnect(connection);
+		}
+		return attachments;
 	}
+	
+	private void populateSrcAndDestForAttachment(Document syncInfo,
+			GenericArtifact ga) {
+		
+		String sourceRepositoryId = this.getSourceRepositoryId(syncInfo);
+		String sourceRepositoryKind = this.getSourceRepositoryKind(syncInfo);
+		String sourceSystemId = this.getSourceSystemId(syncInfo);
+		String sourceSystemKind = this.getSourceSystemKind(syncInfo);
+
+		String targetRepositoryId = this.getTargetRepositoryId(syncInfo);
+		String targetRepositoryKind = this.getTargetRepositoryKind(syncInfo);
+		String targetSystemId = this.getTargetSystemId(syncInfo);
+		String targetSystemKind = this.getTargetSystemKind(syncInfo);
+
+		ga.setSourceRepositoryId(sourceRepositoryId);
+		ga.setSourceRepositoryKind(sourceRepositoryKind);
+		ga.setSourceSystemId(sourceSystemId);
+		ga.setSourceSystemKind(sourceSystemKind);
+
+		ga.setDepParentSourceRepositoryId(sourceRepositoryId);
+		ga.setDepParentSourceRepositoryKind(sourceRepositoryKind);
+
+		ga.setTargetRepositoryId(targetRepositoryId);
+		ga.setTargetRepositoryKind(targetRepositoryKind);
+		ga.setTargetSystemId(targetSystemId);
+		ga.setTargetSystemKind(targetSystemKind);
+
+		ga.setDepParentTargetRepositoryId(targetRepositoryId);
+		ga.setDepParentTargetRepositoryKind(targetRepositoryKind);
+		
+	}
+
 
 	@Override
 	public GenericArtifact getArtifactData(Document syncInfo, String artifactId) {
@@ -218,9 +299,6 @@ public class TFSReader extends AbstractReader<TFSConnection> {
 	public boolean isIgnoreConnectorUserUpdates() {
 		return ignoreConnectorUserUpdates;
 	}
-	
-	
-
 
 	public String getUserName() {
 		return userName;
@@ -288,6 +366,14 @@ public class TFSReader extends AbstractReader<TFSConnection> {
 			exceptions.add(new ValidationException(
 					"Could not initialize TFSHandler", this));
 		}
+		try {
+			attachmentHandler = new TFSAttachmentHandler(serverUrl, getConnectionManager());
+		} catch (Exception e) {
+			log.error("Could not initialize TFSAttachmentHandler");
+			exceptions.add(new ValidationException(
+					"Could not initialize TFSAttachmentHandler", this));
+		}
+		
 	}
 
 	public void setIgnoreConnectorUserUpdates(boolean ignoreConnectorUserUpdates) {
@@ -325,4 +411,14 @@ public class TFSReader extends AbstractReader<TFSConnection> {
 		} 
 		return false;
 	}
+
+	public TFSAttachmentHandler getAttachmentHandler() {
+		return attachmentHandler;
+	}
+
+	public void setAttachmentHandler(TFSAttachmentHandler attachmentHandler) {
+		this.attachmentHandler = attachmentHandler;
+	}
+	
+	
 }
