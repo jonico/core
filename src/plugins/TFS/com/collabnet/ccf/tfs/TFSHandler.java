@@ -22,6 +22,7 @@ import com.microsoft.tfs.core.clients.workitem.WorkItem;
 import com.microsoft.tfs.core.clients.workitem.WorkItemClient;
 import com.microsoft.tfs.core.clients.workitem.fields.Field;
 import com.microsoft.tfs.core.clients.workitem.fields.FieldDefinition;
+import com.microsoft.tfs.core.clients.workitem.fields.FieldType;
 import com.microsoft.tfs.core.clients.workitem.project.Project;
 import com.microsoft.tfs.core.clients.workitem.project.ProjectCollection;
 import com.microsoft.tfs.core.clients.workitem.query.WorkItemCollection;
@@ -168,7 +169,8 @@ public class TFSHandler {
 
 			Field field = it.next();
 			// FIXME Do time conversion in case of dates
-			if (field.getReferenceName().equals(CoreFieldReferenceNames.HISTORY)) {
+			if (field.getReferenceName()
+					.equals(CoreFieldReferenceNames.HISTORY)) {
 				continue;
 			}
 			addWorkItemField(genericArtifact, field);
@@ -197,21 +199,21 @@ public class TFSHandler {
 						&& ignoreConnectorUserUpdates) {
 					continue;
 				}
-				
+
 				Date changedDate = (Date) rev.getField(
 						CoreFieldReferenceNames.CHANGED_DATE).getValue();
 				if (lastModifiedDate.compareTo(changedDate) >= 0) {
 					continue;
 				}
 
-				String history = (String) rev.getField(CoreFieldReferenceNames.HISTORY)
-						.getValue();
+				String history = (String) rev.getField(
+						CoreFieldReferenceNames.HISTORY).getValue();
 				if (StringUtils.isEmpty(history)) {
 					continue;
 				}
-				
+
 				addComment(genericArtifact, history, changedDate, changedBy);
-				
+
 			}
 		}
 
@@ -229,7 +231,8 @@ public class TFSHandler {
 		// FIXME Use Date instead of DateTime in case of dates
 		gaField.setFieldValueType(FieldValueTypeValue.HTMLSTRING);
 		gaField.setFieldAction(FieldActionValue.APPEND);
-		gaField.setFieldValue("User \"" + changedBy + "\" commented on " + changedDate + ":<br> " + history);
+		gaField.setFieldValue("User \"" + changedBy + "\" commented on "
+				+ changedDate + ":<br> " + history);
 	}
 
 	private void addWorkItemField(GenericArtifact genericArtifact, Field field) {
@@ -269,17 +272,16 @@ public class TFSHandler {
 		while (it.hasNext()) {
 
 			FieldDefinition fieldDef = it.next();
-			
-String fieldName = fieldDef.getReferenceName();
-			
-			if (fieldName.equals(CoreFieldReferenceNames.HISTORY)){
+
+			String fieldName = fieldDef.getReferenceName();
+
+			if (fieldName.equals(CoreFieldReferenceNames.HISTORY)) {
 				continue;
 			}
-			
+
 			List<GenericArtifactField> gaFields = ga
 					.getAllGenericArtifactFieldsWithSameFieldName(fieldName);
 
-			
 			if (gaFields != null) {
 				Object fieldValue = gaFields.get(0).getFieldValue(); // If there
 																		// more
@@ -311,22 +313,32 @@ String fieldName = fieldDef.getReferenceName();
 		if (state != null) {
 			newWorkItem.getFields().getField(CoreFieldReferenceNames.STATE)
 					.setValue(state);
-			newWorkItem.save();
+			try {
+				newWorkItem.save();
+			} catch (TECoreException e) {
+				if (!e.getMessage().contains("TF51650")) {
+					throw e;
+				}
+			}
 		}
-		
-		List<GenericArtifactField> comments = ga.getAllGenericArtifactFieldsWithSameFieldName(CoreFieldReferenceNames.HISTORY);
+
+		List<GenericArtifactField> comments = ga
+				.getAllGenericArtifactFieldsWithSameFieldName(CoreFieldReferenceNames.HISTORY);
 		if (comments != null) {
 
-			for (ListIterator<GenericArtifactField> iterator = comments.listIterator(comments.size()); iterator.hasPrevious();){
-				
+			for (ListIterator<GenericArtifactField> iterator = comments
+					.listIterator(comments.size()); iterator.hasPrevious();) {
+
 				GenericArtifactField comment = iterator.previous();
-				
+
 				String commentValue = (String) comment.getFieldValue();
 				if (StringUtils.isEmpty(commentValue)) {
 					continue;
 				}
-				newWorkItem.getFields().getField(CoreFieldReferenceNames.HISTORY).setValue(commentValue);
-				
+				newWorkItem.getFields()
+						.getField(CoreFieldReferenceNames.HISTORY)
+						.setValue(commentValue);
+
 				try {
 					// FIXME Handle midair conflicts
 					newWorkItem.save();
@@ -337,8 +349,7 @@ String fieldName = fieldDef.getReferenceName();
 				}
 			}
 		}
-		
-		
+
 		ga.setTargetArtifactVersion(newWorkItem.getFields()
 				.getField(CoreFieldReferenceNames.REVISION).getOriginalValue()
 				.toString());
@@ -383,44 +394,63 @@ String fieldName = fieldDef.getReferenceName();
 			FieldDefinition fieldDef = it.next();
 
 			String fieldName = fieldDef.getReferenceName();
-			
-			if (fieldName.equals(CoreFieldReferenceNames.HISTORY)){
+
+			if (fieldName.equals(CoreFieldReferenceNames.HISTORY)) {
 				continue;
 			}
-			
+
 			List<GenericArtifactField> gaFields = ga
 					.getAllGenericArtifactFieldsWithSameFieldName(fieldName);
-			
+
 			if (gaFields != null && gaFields.get(0).getFieldValueHasChanged()) {
+
+				boolean shouldBeOverwritten = true;
+
 				// If there more than 1, it's a multi select field
 				Object fieldValue = gaFields.get(0).getFieldValue();
+
 				// FIXME Date conversion
-				// FIXME HTML conversion (preserve semantically unchanged
-				// content)
 				// FIXME More complicated data types (like TreePath)
-				workItem.getFields().getField(fieldDef.getReferenceName())
-						.setValue(fieldValue);
+
+				if (fieldDef.getFieldType().equals(FieldType.HTML)) {
+
+					String originalValue = com.collabnet.ccf.core.utils.StringUtils
+							.convertHTML(workItem.getFields()
+									.getField(fieldDef.getReferenceName())
+									.getOriginalValue().toString());
+					String newValue = com.collabnet.ccf.core.utils.StringUtils
+							.convertHTML(fieldValue.toString());
+					shouldBeOverwritten = !originalValue.equals(newValue);
+
+				}
+
+				if (shouldBeOverwritten) {
+					workItem.getFields().getField(fieldDef.getReferenceName())
+							.setValue(fieldValue);
+				}
+
 			}
 
 		}
 
-		
-		List<GenericArtifactField> comments = ga.getAllGenericArtifactFieldsWithSameFieldName(CoreFieldReferenceNames.HISTORY);
-		
-		
+		List<GenericArtifactField> comments = ga
+				.getAllGenericArtifactFieldsWithSameFieldName(CoreFieldReferenceNames.HISTORY);
+
 		boolean calledSaveAtLeastOnce = false;
 		if (comments != null) {
 
-			for (ListIterator<GenericArtifactField> iterator = comments.listIterator(comments.size()); iterator.hasPrevious();){
-				
+			for (ListIterator<GenericArtifactField> iterator = comments
+					.listIterator(comments.size()); iterator.hasPrevious();) {
+
 				GenericArtifactField comment = iterator.previous();
-				
+
 				String commentValue = (String) comment.getFieldValue();
 				if (StringUtils.isEmpty(commentValue)) {
 					continue;
 				}
-				workItem.getFields().getField(CoreFieldReferenceNames.HISTORY).setValue(commentValue);
-				
+				workItem.getFields().getField(CoreFieldReferenceNames.HISTORY)
+						.setValue(commentValue);
+
 				try {
 					// FIXME Handle midair conflicts
 					calledSaveAtLeastOnce = true;
@@ -432,9 +462,9 @@ String fieldName = fieldDef.getReferenceName();
 				}
 			}
 		}
-		
+
 		if (!calledSaveAtLeastOnce) {
-		// update history field
+			// update history field
 			try {
 				// FIXME Handle midair conflicts
 				workItem.save();
