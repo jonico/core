@@ -46,8 +46,8 @@
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/jericho-html-3.1.jar"/>
 	<classpathentry kind="lib" path="src/plugins/SWP/lib/ScrumWorks-soap.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
-	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/openadaptor.jar" sourcepath="C:/Documents and Settings/jnicolai/My Documents/openAdaptorSourceCode/src"/>
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/openadaptor-spring.jar"/>
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/hsqldb.jar"/>
+	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/openadaptor.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
