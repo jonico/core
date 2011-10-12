@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beansProjectDescription>
 	<version>1</version>
-	<pluginVersion><![CDATA[2.7.2.201109122348-RELEASE]]></pluginVersion>
+	<pluginVersion><![CDATA[2.3.0.200912170948-RELEASE]]></pluginVersion>
 	<configSuffixes>
 		<configSuffix><![CDATA[xml]]></configSuffix>
 	</configSuffixes>
@@ -32,6 +32,8 @@
 		<config>samples/QCSWP/SWP2QC/config/config.xml</config>
 		<config>samples/TFSTF/TF2TFS/config/config.xml</config>
 		<config>samples/TFSTF/TFS2TF/config/config.xml</config>
+		<config>samples/RCQTF/RCQ2TF/config/config.xml</config>
+		<config>samples/RCQTF/TF2RCQ/config/config.xml</config>
 	</configs>
 	<configSets>
 	</configSets>
