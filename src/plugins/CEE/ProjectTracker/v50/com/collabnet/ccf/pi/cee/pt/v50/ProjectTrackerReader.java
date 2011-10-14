@@ -201,7 +201,7 @@ public class ProjectTrackerReader extends
 				for (History history : historyList) {
 					HistoryTransaction[] transactions = history
 							.getHistoryTransaction();
-					int transactionsCount = transactions.length;
+					int transactionsCount = transactions == null ? 0 :transactions.length;
 					for (int i = 0; i < transactionsCount; i++) {
 						HistoryTransaction ht = transactions[i];
 						String modifiedBy = ht.getModifiedBy();
