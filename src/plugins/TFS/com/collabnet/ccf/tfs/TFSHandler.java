@@ -23,9 +23,14 @@ import com.microsoft.tfs.core.clients.workitem.WorkItemClient;
 import com.microsoft.tfs.core.clients.workitem.fields.Field;
 import com.microsoft.tfs.core.clients.workitem.fields.FieldDefinition;
 import com.microsoft.tfs.core.clients.workitem.fields.FieldType;
+import com.microsoft.tfs.core.clients.workitem.internal.link.RelatedLinkImpl;
+import com.microsoft.tfs.core.clients.workitem.link.Link;
+import com.microsoft.tfs.core.clients.workitem.link.RelatedLink;
 import com.microsoft.tfs.core.clients.workitem.project.Project;
 import com.microsoft.tfs.core.clients.workitem.project.ProjectCollection;
+import com.microsoft.tfs.core.clients.workitem.query.Query;
 import com.microsoft.tfs.core.clients.workitem.query.WorkItemCollection;
+import com.microsoft.tfs.core.clients.workitem.query.WorkItemLinkInfo;
 import com.microsoft.tfs.core.clients.workitem.revision.Revision;
 import com.microsoft.tfs.core.clients.workitem.revision.RevisionCollection;
 import com.microsoft.tfs.core.clients.workitem.wittype.WorkItemType;
@@ -35,7 +40,7 @@ public class TFSHandler {
 
 	private static final Log log = LogFactory.getLog(TFSHandler.class);
 
-	public String all_wi_query = "Select [Id] From WorkItems Where [Work Item Type] = '?1' and [Changed Date] >= '?2' Order By [Changed Date] Asc";
+	public String get_all_wi_query = "Select [Id] From WorkItems Where [Work Item Type] = '?1' and [Changed Date] >= '?2' Order By [Changed Date] Asc";
 
 	public void getChangedWorkItems(TFSConnection connection,
 			String collectionName, String projectName, String workItemType,
@@ -53,9 +58,9 @@ public class TFSHandler {
 
 				WorkItemClient workItemClient = project.getWorkItemClient();
 
-				String finalQuery = all_wi_query
-						.replace("?1", workItemType)
-						.replace("?2", TFSMetaData.formatDate(lastModifiedDate));
+				String finalQuery = get_all_wi_query
+						.replace("?1", workItemType).replace("?2",
+								TFSMetaData.formatDate(lastModifiedDate));
 
 				WorkItemCollection tasksQueryResults = workItemClient.query(
 						finalQuery, null, false);
@@ -126,7 +131,8 @@ public class TFSHandler {
 			String projectName, String workItemType, Date lastModifiedDate,
 			String lastSynchronizedVersion, String lastSynchedArtifactId,
 			String artifactId, String userName,
-			boolean ignoreConnectorUserUpdates, GenericArtifact genericArtifact) {
+			boolean ignoreConnectorUserUpdates,
+			GenericArtifact genericArtifact, String sourceRepositoryId) {
 
 		WorkItem workItem = connection.getTpc().getWorkItemClient()
 				.getWorkItemByID(Integer.parseInt(artifactId));
@@ -213,7 +219,6 @@ public class TFSHandler {
 				}
 
 				addComment(genericArtifact, history, changedDate, changedBy);
-
 			}
 		}
 
@@ -221,6 +226,43 @@ public class TFSHandler {
 				.setSourceArtifactLastModifiedDate(GenericArtifactHelper.df
 						.format(lasWorkItemtModifiedDate));
 		genericArtifact.setSourceArtifactVersion(revisionNumber);
+
+		// looking for a parent-child relationship
+		if (workItem.getLinks().size() > 0) {
+
+			workItem.getLinks().iterator().next();
+			Iterator<Link> linkIterator = workItem.getLinks().iterator();
+
+			while (linkIterator.hasNext()) {
+
+				Link link = linkIterator.next();
+
+				// it looks for a Related relationship
+				if (link.getLinkID() == -1) {
+
+					RelatedLinkImpl relatedLink = (RelatedLinkImpl) link;
+
+					// it looks for a Parent relationship
+					if (relatedLink.getWorkItemLinkTypeID() == -2) {
+
+						WorkItem fatherWorkItem = connection
+								.getTpc()
+								.getWorkItemClient()
+								.getWorkItemByID(
+										relatedLink.getTargetWorkItemID());
+						String parentSourceRepositoryId = sourceRepositoryId
+								.substring(0,
+										sourceRepositoryId.lastIndexOf("-"))
+								+ "-" + fatherWorkItem.getType().getName();
+
+						genericArtifact
+								.setDepParentSourceRepositoryId(parentSourceRepositoryId);
+						genericArtifact.setDepParentSourceArtifactId(String
+								.valueOf(fatherWorkItem.getID()));
+					}
+				}
+			}
+		}
 
 	}
 
@@ -252,7 +294,7 @@ public class TFSHandler {
 	public WorkItem createWorkItem(GenericArtifact ga, String collectionName,
 			String projectName, String workItemTypeString,
 			TFSConnection connection) {
-
+		// TODO: see whats happend with without comments
 		Project project = connection.getTpc().getWorkItemClient().getProjects()
 				.get(projectName);
 		WorkItemType workItemType = project.getWorkItemTypes().get(

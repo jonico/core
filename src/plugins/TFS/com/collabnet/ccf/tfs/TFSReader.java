@@ -180,7 +180,7 @@ public class TFSReader extends AbstractReader<TFSConnection> {
 				String workItemType = TFSMetaData.extractWorkItemTypeFromRepositoryId(sourceRepositoryId);
 				tfsHandler.getWorkItem(connection,
 						collectionName, projectName, workItemType, lastModifiedDate, lastSynchronizedVersion, lastSynchedArtifactId, artifactId, getUserName(),
-						isIgnoreConnectorUserUpdates(), genericArtifact);
+						isIgnoreConnectorUserUpdates(), genericArtifact, this.getSourceRepositoryId(syncInfo));
 			}
 
 		} catch (Exception e) {
@@ -200,7 +200,7 @@ public class TFSReader extends AbstractReader<TFSConnection> {
 		String sourceSystemKind = this.getSourceSystemKind(syncInfo);
 		String conflictResolutionPriority = this
 				.getConflictResolutionPriority(syncInfo);
-		
+
 		String sourceSystemTimezone = this.getSourceSystemTimezone(syncInfo);
 		String targetSystemTimezone = this.getTargetSystemTimezone(syncInfo);
 

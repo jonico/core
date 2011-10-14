@@ -352,7 +352,7 @@ public class TFSAttachmentHandler {
 		}
 
 		Attachment attachment = AttachmentFactory.newAttachment(attachedFile,
-				attachDescription);
+				"Originally attached by a CTF user");
 
 		workItem.getAttachments().add(attachment);
 		workItem.getFields()
