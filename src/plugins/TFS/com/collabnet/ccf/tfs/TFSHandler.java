@@ -17,6 +17,7 @@ import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactField.FieldActionValue;
 import com.collabnet.ccf.core.ga.GenericArtifactField.FieldValueTypeValue;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
+import com.collabnet.ccf.teamforge.TFArtifactMetaData.FIELD_TYPE;
 import com.microsoft.tfs.core.clients.workitem.CoreFieldReferenceNames;
 import com.microsoft.tfs.core.clients.workitem.WorkItem;
 import com.microsoft.tfs.core.clients.workitem.WorkItemClient;
@@ -25,6 +26,7 @@ import com.microsoft.tfs.core.clients.workitem.fields.FieldDefinition;
 import com.microsoft.tfs.core.clients.workitem.fields.FieldType;
 import com.microsoft.tfs.core.clients.workitem.internal.link.RelatedLinkImpl;
 import com.microsoft.tfs.core.clients.workitem.link.Link;
+import com.microsoft.tfs.core.clients.workitem.link.LinkFactory;
 import com.microsoft.tfs.core.clients.workitem.link.RelatedLink;
 import com.microsoft.tfs.core.clients.workitem.project.Project;
 import com.microsoft.tfs.core.clients.workitem.project.ProjectCollection;
@@ -350,6 +352,13 @@ public class TFSHandler {
 			}
 
 		}
+		
+		// FIXME: Another update is needed because the new dependencio it's not shipped
+		if (ga.getDepParentSourceArtifactId() != GenericArtifact.VALUE_UNKNOWN){ 
+			WorkItem fatherWorkItem = connection.getTpc().getWorkItemClient().getWorkItemByID(Integer.valueOf(ga.getDepParentTargetArtifactId()));
+			RelatedLink newRelatedLink = LinkFactory.newRelatedLink(newWorkItem, fatherWorkItem, -2, "Original linked by TeamForge User" , false);
+			newWorkItem.getLinks().add(newRelatedLink);
+		}
 
 		newWorkItem.save();
 		if (state != null) {
@@ -475,6 +484,48 @@ public class TFSHandler {
 
 		}
 
+		// FIXME: Another update is needed because the new dependencio it's not shipped
+		if (ga.getDepParentSourceArtifactId() != GenericArtifact.VALUE_UNKNOWN){
+			
+			if (workItem.getLinks().size() > 0) {
+				
+				workItem.getLinks().iterator().next();
+				Iterator<Link> linkIterator = workItem.getLinks().iterator();
+				
+				while (linkIterator.hasNext()) {
+					
+					Link link = linkIterator.next();
+					
+					// it looks for a Related relationship
+					if (link.getLinkID() == -1) {
+						
+						RelatedLinkImpl relatedLink = (RelatedLinkImpl) link;
+						
+						// it looks for a Parent relationship
+						WorkItem fatherWorkItem = connection.getTpc().getWorkItemClient().getWorkItemByID(Integer.valueOf(ga.getDepParentTargetArtifactId()));
+						
+						if (relatedLink.getWorkItemLinkTypeID() == -2) {
+							
+							relatedLink.setWorkItem(fatherWorkItem);
+							
+						} else {
+							
+							RelatedLink newRelatedLink = LinkFactory.newRelatedLink(workItem, fatherWorkItem, -2, "Original linked by TeamForge User" , false);
+							workItem.getLinks().add(newRelatedLink);
+						}
+					} 
+				}
+			} else {
+			
+				// it looks for a Parent relationship
+				WorkItem fatherWorkItem = connection.getTpc().getWorkItemClient().getWorkItemByID(Integer.valueOf(ga.getDepParentTargetArtifactId()));
+				RelatedLink newRelatedLink = LinkFactory.newRelatedLink(workItem, fatherWorkItem, -2, "Original linked by TeamForge User" , false);
+				workItem.getLinks().add(newRelatedLink);
+				
+			}
+			
+		}
+		
 		List<GenericArtifactField> comments = ga
 				.getAllGenericArtifactFieldsWithSameFieldName(CoreFieldReferenceNames.HISTORY);
 
