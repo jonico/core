@@ -34,43 +34,14 @@
 		</field>
 	</xsl:template>
 	<xsl:template match='ccf:field[@fieldName="System.Description"]'>
+		<xsl:variable name="descriptionValue" as="xs:string" select="." />
 		<field>
 			<xsl:copy-of select="@*" />
 			<xsl:attribute name="fieldName">description</xsl:attribute>
 			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
-			<xsl:value-of select="." />
-		</field>
-	</xsl:template>
-	<xsl:template match='ccf:field[@fieldName="BG_BUG_ID"]'>
-		<field>
-			<xsl:copy-of select="@*" />
-			<xsl:attribute name="fieldName">QC-Id</xsl:attribute>
-			<xsl:attribute name="fieldType">flexField</xsl:attribute>
-			<xsl:attribute name="fieldValueType">String</xsl:attribute>
-			<xsl:value-of select="." />
-		</field>
-	</xsl:template>
-	<xsl:template match='ccf:field[@fieldName="BG_SUMMARY"]'>
-		<field>
-			<xsl:copy-of select="@*" />
-			<xsl:attribute name="fieldName">title</xsl:attribute>
-			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
-			<xsl:value-of select="." />
-		</field>
-	</xsl:template>
-	<xsl:template match='ccf:field[@fieldName="BG_DESCRIPTION"]'>
-		<field>
-			<xsl:copy-of select="@*" />
-			<xsl:attribute name="fieldName">description</xsl:attribute>
-			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
-			<xsl:choose>
-				<xsl:when test="@fieldValueType='HTMLString'">
-<!-- 					<xsl:value-of select="stringutil:stripHTML(string(.))" /> -->
-				</xsl:when>
-				<xsl:otherwise>
-					<xsl:value-of select="." />
-				</xsl:otherwise>
-			</xsl:choose>
+			<xsl:if test="$descriptionValue = ''">
+				<xsl:text> </xsl:text>
+			</xsl:if>
 		</field>
 	</xsl:template>
 	<xsl:template match='ccf:field[@fieldName="System.State"]'>
@@ -87,113 +58,6 @@
 			</xsl:if>
 		</field>
 	</xsl:template>
-	<xsl:template match='ccf:field[@fieldName="BG_USER_02"]'>
-		<xsl:variable name="typeValue" as="xs:string" select="." />
-		<field>
-			<xsl:copy-of select="@*" />
-			<xsl:attribute name="fieldName">category</xsl:attribute>
-			<xsl:attribute name="fieldDisplayName">Category</xsl:attribute>
-			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
-			<xsl:if test="$typeValue = 'DefectCat'">
-				<xsl:text>DefectCat</xsl:text>
-			</xsl:if>
-			<xsl:if test="$typeValue = 'PatchCat'">
-				<xsl:text>PatchCat</xsl:text>
-			</xsl:if>
-			<xsl:if test="$typeValue = 'TaskCat'">
-				<xsl:text>TaskCat</xsl:text>
-			</xsl:if>
-			<xsl:if test="$typeValue = 'EnhancementCat'">
-				<xsl:text>EnhancementCat</xsl:text>
-			</xsl:if>
-			<xsl:if test="$typeValue = 'FeatureCat'">
-				<xsl:text>FeatureCat</xsl:text>
-			</xsl:if>
-		</field>
-	</xsl:template>
-	<xsl:template match='ccf:field[@fieldName="BG_PRIORITY"]'>
-		<xsl:variable name="priorityValue" as="xs:string" select="." />
-		<field>
-			<xsl:copy-of select="@*" />
-			<xsl:attribute name="fieldName">priority</xsl:attribute>
-			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
-			<xsl:if test="$priorityValue = '1-Low'">
-				<xsl:text>5</xsl:text>
-			</xsl:if>
-			<xsl:if test="$priorityValue = '2-Medium'">
-				<xsl:text>4</xsl:text>
-			</xsl:if>
-			<xsl:if test="$priorityValue = '3-High'">
-				<xsl:text>3</xsl:text>
-			</xsl:if>
-			<xsl:if test="$priorityValue = '4-Very High'">
-				<xsl:text>2</xsl:text>
-			</xsl:if>
-			<xsl:if test="$priorityValue = '5-Urgent'">
-				<xsl:text>1</xsl:text>
-			</xsl:if>
-		</field>
-	</xsl:template>
-	<xsl:template match='ccf:field[@fieldName="BG_RESPONSIBLE"]'>
-		<field>
-			<xsl:copy-of select="@*" />
-			<xsl:attribute name="fieldName">assignedTo</xsl:attribute>
-			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
-			<xsl:value-of select="." />
-		</field>
-	</xsl:template>
-	<xsl:template match='ccf:field[@fieldName="BG_DETECTED_BY"]'>
-		<field>
-			<xsl:copy-of select="@*" />
-			<xsl:attribute name="fieldName">Detected By</xsl:attribute>
-			<xsl:attribute name="fieldType">flexField</xsl:attribute>
-			<xsl:value-of select="." />
-		</field>
-	</xsl:template>
-	<xsl:template match='ccf:field[@fieldName="BG_DETECTION_VERSION"]'>
-		<xsl:variable name="detectedIn" as="xs:string" select="." />
-		<field>
-			<xsl:copy-of select="@*" />
-			<xsl:attribute name="fieldName">Detected in Version</xsl:attribute>
-			<xsl:attribute name="fieldType">flexField</xsl:attribute>
-			<xsl:if test="$detectedIn = '1.0'">
-				<xsl:text>1.0</xsl:text>
-			</xsl:if>
-			<xsl:if test="$detectedIn = '1.1'">
-				<xsl:text>1.1</xsl:text>
-			</xsl:if>
-			<xsl:if test="$detectedIn = '1.2'">
-				<xsl:text>1.2</xsl:text>
-			</xsl:if>
-			<xsl:if test="$detectedIn = '2.0'">
-				<xsl:text>2.0</xsl:text>
-			</xsl:if>
-		</field>
-	</xsl:template>
-	<xsl:template match='ccf:field[@fieldName="BG_SEVERITY"]'>
-		<field>
-			<xsl:copy-of select="@*" />
-			<xsl:attribute name="fieldName">Severity</xsl:attribute>
-			<xsl:attribute name="fieldType">flexField</xsl:attribute>
-			<xsl:value-of select="." />
-		</field>
-	</xsl:template>
-	<xsl:template match='ccf:field[@fieldName="BG_USER_03"]'>
-		<field>
-			<xsl:copy-of select="@*" />
-			<xsl:attribute name="fieldName">Test Date</xsl:attribute>
-			<xsl:attribute name="fieldType">flexField</xsl:attribute>
-			<xsl:value-of select="." />
-		</field>
-	</xsl:template>
-	<xsl:template match='ccf:field[@fieldName="BG_DETECTION_DATE"]'>
-		<field>
-			<xsl:copy-of select="@*" />
-			<xsl:attribute name="fieldName">Detected On</xsl:attribute>
-			<xsl:attribute name="fieldType">flexField</xsl:attribute>
-			<xsl:value-of select="." />
-		</field>
-	</xsl:template>
 	<xsl:template match='ccf:field[@fieldName="System.History"]'>
 		<field>
 			<xsl:copy-of select="@*" />
@@ -203,4 +67,89 @@
 		</field>
 	</xsl:template>
 	<xsl:template match="text()" />
+	
+<!-- 	<xsl:template match='ccf:field[@fieldName="System.AssignedTo"]'> -->
+<!-- 		<field> -->
+<!-- 			<xsl:copy-of select="@*" /> -->
+<!-- 			<xsl:attribute name="fieldName"></xsl:attribute> -->
+<!-- 			<xsl:attribute name="fieldType"></xsl:attribute> -->
+<!-- 			<xsl:value-of select="." /> -->
+<!-- 		</field> -->
+<!-- 	</xsl:template> -->
+<!-- 	<xsl:template match='ccf:field[@fieldName="Microsoft.VSTS.Common.ResolvedReason"]'> -->
+<!-- 		<field> -->
+<!-- 			<xsl:copy-of select="@*" /> -->
+<!-- 			<xsl:attribute name="fieldName"></xsl:attribute> -->
+<!-- 			<xsl:attribute name="fieldType"></xsl:attribute> -->
+<!-- 			<xsl:value-of select="." /> -->
+<!-- 		</field> -->
+<!-- 	</xsl:template> -->
+<!-- 	<xsl:template match='ccf:field[@fieldName="System.AreaPath"]'> -->
+<!-- 		<field> -->
+<!-- 			<xsl:copy-of select="@*" /> -->
+<!-- 			<xsl:attribute name="fieldName"></xsl:attribute> -->
+<!-- 			<xsl:attribute name="fieldType"></xsl:attribute> -->
+<!-- 			<xsl:value-of select="." /> -->
+<!-- 		</field> -->
+<!-- 	</xsl:template> -->
+<!-- 	<xsl:template match='ccf:field[@fieldName="System.IterationPath"]'> -->
+<!-- 		<field> -->
+<!-- 			<xsl:copy-of select="@*" /> -->
+<!-- 			<xsl:attribute name="fieldName"></xsl:attribute> -->
+<!-- 			<xsl:attribute name="fieldType"></xsl:attribute> -->
+<!-- 			<xsl:value-of select="." /> -->
+<!-- 		</field> -->
+<!-- 	</xsl:template> -->
+<!-- 	<xsl:template match='ccf:field[@fieldName="Microsoft.VSTS.Common.Risk"]'> -->
+<!-- 		<field> -->
+<!-- 			<xsl:copy-of select="@*" /> -->
+<!-- 			<xsl:attribute name="fieldName"></xsl:attribute> -->
+<!-- 			<xsl:attribute name="fieldType"></xsl:attribute> -->
+<!-- 			<xsl:value-of select="." /> -->
+<!-- 		</field> -->
+<!-- 	</xsl:template> -->
+<!-- 	<xsl:template match='ccf:field[@fieldName="Microsoft.VSTS.Common.StackRank"]'> -->
+<!-- 		<field> -->
+<!-- 			<xsl:copy-of select="@*" /> -->
+<!-- 			<xsl:attribute name="fieldName"></xsl:attribute> -->
+<!-- 			<xsl:attribute name="fieldType"></xsl:attribute> -->
+<!-- 			<xsl:value-of select="." /> -->
+<!-- 		</field> -->
+<!-- 	</xsl:template> -->
+<!-- 	<xsl:template match='ccf:field[@fieldName="Microsoft.VSTS.Common.Priority"]'> -->
+<!-- 		<field> -->
+<!-- 			<xsl:copy-of select="@*" /> -->
+<!-- 			<xsl:attribute name="fieldName"></xsl:attribute> -->
+<!-- 			<xsl:attribute name="fieldType"></xsl:attribute> -->
+<!-- 			<xsl:value-of select="." /> -->
+<!-- 		</field> -->
+<!-- 	</xsl:template> -->
+<!-- 	<xsl:template match='ccf:field[@fieldName="Microsoft.VSTS.Common.Severity"]'> -->
+<!-- 		<field> -->
+<!-- 			<xsl:copy-of select="@*" /> -->
+<!-- 			<xsl:attribute name="fieldName"></xsl:attribute> -->
+<!-- 			<xsl:attribute name="fieldType"></xsl:attribute> -->
+<!-- 			<xsl:value-of select="." /> -->
+<!-- 		</field> -->
+<!-- 	</xsl:template> -->
+<!-- 	<xsl:template match='ccf:field[@fieldName="Microsoft.VSTS.Build.IntegrationBuild"]'> -->
+<!-- 		<field> -->
+<!-- 			<xsl:copy-of select="@*" /> -->
+<!-- 			<xsl:attribute name="fieldName"></xsl:attribute> -->
+<!-- 			<xsl:attribute name="fieldType"></xsl:attribute> -->
+<!-- 			<xsl:value-of select="." /> -->
+<!-- 		</field> -->
+<!-- 	</xsl:template> -->
+<!-- 	<xsl:template match='ccf:field[@fieldName="Microsoft.VSTS.Build.FoundIn"]'> -->
+<!-- 		<field> -->
+<!-- 			<xsl:copy-of select="@*" /> -->
+<!-- 			<xsl:attribute name="fieldName"></xsl:attribute> -->
+<!-- 			<xsl:attribute name="fieldType"></xsl:attribute> -->
+<!-- 			<xsl:value-of select="." /> -->
+<!-- 		</field> -->
+<!-- 	</xsl:template> -->
+
+
+
+
 </xsl:stylesheet>
