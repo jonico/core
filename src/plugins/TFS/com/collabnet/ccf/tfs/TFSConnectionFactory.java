@@ -36,8 +36,14 @@ public class TFSConnectionFactory implements ConnectionFactory<TFSConnection> {
 	 * Call method to check whether SWP connection still works
 	 */
 	public boolean isAlive(TFSConnection connection) {
-		// FIXME Do a real check, for instance item types and if getting an exception, return false
-		return true;
+		try {
+			
+			String wiqlQuery = "Select ID from WorkItems where (State = 'Active')";
+	        connection.getTpc().getWorkItemClient().query(wiqlQuery);
+			return true;
+		} catch (Exception e){
+			return false;
+		}
 	}
 
 }
