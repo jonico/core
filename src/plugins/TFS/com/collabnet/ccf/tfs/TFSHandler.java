@@ -17,7 +17,7 @@ import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactField.FieldActionValue;
 import com.collabnet.ccf.core.ga.GenericArtifactField.FieldValueTypeValue;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
-import com.collabnet.ccf.teamforge.TFArtifactMetaData.FIELD_TYPE;
+import com.collabnet.ccf.core.utils.DateUtil;
 import com.microsoft.tfs.core.clients.workitem.CoreFieldReferenceNames;
 import com.microsoft.tfs.core.clients.workitem.WorkItem;
 import com.microsoft.tfs.core.clients.workitem.WorkItemClient;
@@ -30,9 +30,7 @@ import com.microsoft.tfs.core.clients.workitem.link.LinkFactory;
 import com.microsoft.tfs.core.clients.workitem.link.RelatedLink;
 import com.microsoft.tfs.core.clients.workitem.project.Project;
 import com.microsoft.tfs.core.clients.workitem.project.ProjectCollection;
-import com.microsoft.tfs.core.clients.workitem.query.Query;
 import com.microsoft.tfs.core.clients.workitem.query.WorkItemCollection;
-import com.microsoft.tfs.core.clients.workitem.query.WorkItemLinkInfo;
 import com.microsoft.tfs.core.clients.workitem.revision.Revision;
 import com.microsoft.tfs.core.clients.workitem.revision.RevisionCollection;
 import com.microsoft.tfs.core.clients.workitem.wittype.WorkItemType;
@@ -176,11 +174,38 @@ public class TFSHandler {
 		while (it.hasNext()) {
 
 			Field field = it.next();
-			// FIXME Do time conversion in case of dates
 			if (field.getReferenceName()
 					.equals(CoreFieldReferenceNames.HISTORY)) {
 				continue;
 			}
+			
+			// date fix: If date time does not contain hours, minutes and
+			// seconds, transform into GMT (without hours/minutes/seconds) and
+			// use DATE instead of DATETIME.
+			if (field.getReferenceName().equals(CoreFieldReferenceNames.CHANGED_DATE)
+					|| field.getReferenceName().equals(CoreFieldReferenceNames.CHANGED_DATE)){
+
+				Date convertedDate = null;
+				Date dateValue = (Date)field.getOriginalValue();
+				
+				if (DateUtil.isAbsoluteDateInTimezone(dateValue, "GMT")) {
+				convertedDate = DateUtil.convertGMTToTimezoneAbsoluteDate(
+				      dateValue, genericArtifact.getTargetSystemTimezone());
+				} else {
+					convertedDate = dateValue;
+				}
+				
+				// updating the field
+				GenericArtifactField gaField = genericArtifact.addNewField(
+						field.getReferenceName(), "mandatoryField");
+				gaField.setFieldValueType(TFSMetaData
+						.translateTFSFieldValueTypeToCCFFieldValueType(field
+								.getFieldDefinition().getFieldType()));
+				gaField.setFieldAction(FieldActionValue.REPLACE);
+				gaField.setFieldValue(convertedDate);
+				continue;
+			}
+			
 			addWorkItemField(genericArtifact, field);
 		}
 
@@ -280,7 +305,7 @@ public class TFSHandler {
 	}
 
 	private void addWorkItemField(GenericArtifact genericArtifact, Field field) {
-
+		
 		// in the moment we find out that TFS supports more than one field with
 		// the same name, we have to use the field type to differentiate them
 		GenericArtifactField gaField = genericArtifact.addNewField(
@@ -296,7 +321,7 @@ public class TFSHandler {
 	public WorkItem createWorkItem(GenericArtifact ga, String collectionName,
 			String projectName, String workItemTypeString,
 			TFSConnection connection) {
-		// TODO: see whats happend with without comments
+
 		Project project = connection.getTpc().getWorkItemClient().getProjects()
 				.get(projectName);
 		WorkItemType workItemType = project.getWorkItemTypes().get(
@@ -327,24 +352,23 @@ public class TFSHandler {
 					.getAllGenericArtifactFieldsWithSameFieldName(fieldName);
 
 			if (gaFields != null) {
-				Object fieldValue = gaFields.get(0).getFieldValue(); // If there
-																		// more
-																		// than
-																		// 1,
-																		// it's
-																		// a
-																		// multi
-																		// select
-																		// field
+				Object fieldValue = gaFields.get(0).getFieldValue(); 
+				
 				if (fieldDef.getReferenceName().equals(
 						CoreFieldReferenceNames.STATE)) {
 					state = fieldValue;
 				} else {
-					// FIXME Date conversion
-					// FIXME HTML conversion (preserve semantically unchanged
-					// content)
+					
+					// date fix: If field value type is date, transform in
+					// correct time zone (to avoid off by one date)
+					if (fieldDef.getFieldType().equals( FieldType.DATETIME )){
+						
+						if(DateUtil.isAbsoluteDateInTimezone((Date)fieldValue, ga.getSourceSystemTimezone())){
+			                  fieldValue = DateUtil.convertToGMTAbsoluteDate((Date)fieldValue, ga.getSourceSystemTimezone());
+						}
+					}
+					
 					// FIXME More complicated data types (like TreePath)
-					// FIXME Comments
 					newWorkItem.getFields()
 							.getField(fieldDef.getReferenceName())
 							.setValue(fieldValue);
@@ -353,8 +377,7 @@ public class TFSHandler {
 
 		}
 		
-		// FIXME: Another update is needed because the new dependencio it's not shipped
-		if (ga.getDepParentSourceArtifactId() != GenericArtifact.VALUE_UNKNOWN){ 
+		if (ga.getDepParentSourceArtifactId() != GenericArtifact.VALUE_UNKNOWN && ga.getDepParentSourceArtifactId() != GenericArtifact.VALUE_NONE){ 
 			WorkItem fatherWorkItem = connection.getTpc().getWorkItemClient().getWorkItemByID(Integer.valueOf(ga.getDepParentTargetArtifactId()));
 			RelatedLink newRelatedLink = LinkFactory.newRelatedLink(newWorkItem, fatherWorkItem, -2, "Original linked by TeamForge User" , false);
 			newWorkItem.getLinks().add(newRelatedLink);
@@ -460,9 +483,16 @@ public class TFSHandler {
 				// If there more than 1, it's a multi select field
 				Object fieldValue = gaFields.get(0).getFieldValue();
 
-				// FIXME Date conversion
 				// FIXME More complicated data types (like TreePath)
 
+				// date fix: If field value type is date, transform in
+				// correct time zone (to avoid off by one date)
+				if (fieldDef.getFieldType().equals( FieldType.DATETIME )){
+					if(DateUtil.isAbsoluteDateInTimezone((Date)fieldValue, ga.getSourceSystemTimezone())){
+		                  fieldValue = DateUtil.convertToGMTAbsoluteDate((Date)fieldValue, ga.getSourceSystemTimezone());
+					}
+				}
+					
 				if (fieldDef.getFieldType().equals(FieldType.HTML)) {
 
 					String originalValue = com.collabnet.ccf.core.utils.StringUtils
@@ -479,13 +509,10 @@ public class TFSHandler {
 					workItem.getFields().getField(fieldDef.getReferenceName())
 							.setValue(fieldValue);
 				}
-
 			}
-
 		}
 
-		// FIXME: Another update is needed because the new dependencio it's not shipped
-		if (ga.getDepParentSourceArtifactId() != GenericArtifact.VALUE_UNKNOWN){
+		if (ga.getDepParentSourceArtifactId() != GenericArtifact.VALUE_UNKNOWN && ga.getDepParentSourceArtifactId() != GenericArtifact.VALUE_NONE){
 			
 			if (workItem.getLinks().size() > 0) {
 				
