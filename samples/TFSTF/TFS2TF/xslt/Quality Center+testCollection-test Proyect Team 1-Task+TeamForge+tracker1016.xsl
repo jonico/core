@@ -39,6 +39,7 @@
 			<xsl:copy-of select="@*" />
 			<xsl:attribute name="fieldName">description</xsl:attribute>
 			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
+			<xsl:value-of select="stringutil:stripHTML(string(.))" />
 			<xsl:if test="$descriptionValue = ''">
 				<xsl:text> </xsl:text>
 			</xsl:if>
@@ -67,15 +68,15 @@
 		</field>
 	</xsl:template>
 	<xsl:template match="text()" />
-	
-<!-- 	<xsl:template match='ccf:field[@fieldName="System.AssignedTo"]'> -->
-<!-- 		<field> -->
-<!-- 			<xsl:copy-of select="@*" /> -->
-<!-- 			<xsl:attribute name="fieldName"></xsl:attribute> -->
-<!-- 			<xsl:attribute name="fieldType"></xsl:attribute> -->
-<!-- 			<xsl:value-of select="." /> -->
-<!-- 		</field> -->
-<!-- 	</xsl:template> -->
+	<xsl:template match='ccf:field[@fieldName="System.AssignedTo"]'>
+		<field>
+			<xsl:copy-of select="@*" />
+			<xsl:attribute name="fieldName">assignedTo</xsl:attribute>
+			<xsl:attribute name="fieldType">flexField</xsl:attribute>
+			<xsl:value-of select="." />
+		</field>
+	</xsl:template>
+
 <!-- 	<xsl:template match='ccf:field[@fieldName="Microsoft.VSTS.Common.ResolvedReason"]'> -->
 <!-- 		<field> -->
 <!-- 			<xsl:copy-of select="@*" /> -->
