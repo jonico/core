@@ -12,12 +12,15 @@ import org.apache.commons.logging.LogFactory;
 
 import com.collabnet.ccf.core.AbstractWriter;
 import com.collabnet.ccf.core.ArtifactState;
+import com.collabnet.ccf.core.CCFRuntimeException;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactField.FieldActionValue;
 import com.collabnet.ccf.core.ga.GenericArtifactField.FieldValueTypeValue;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.utils.DateUtil;
+import com.microsoft.tfs.core.clients.commonstructure.internal.ProjectInfoHelper;
+import com.microsoft.tfs.core.clients.versioncontrol.TeamProject;
 import com.microsoft.tfs.core.clients.workitem.CoreFieldReferenceNames;
 import com.microsoft.tfs.core.clients.workitem.WorkItem;
 import com.microsoft.tfs.core.clients.workitem.WorkItemClient;
@@ -40,7 +43,7 @@ public class TFSHandler {
 
 	private static final Log log = LogFactory.getLog(TFSHandler.class);
 
-	public String get_all_wi_query = "Select [Id] From WorkItems Where [Work Item Type] = '?1' and [Changed Date] >= '?2' Order By [Changed Date] Asc";
+	public String get_all_wi_query = "Select [Id] From WorkItems Where [Team Project] = '?3' and [Work Item Type] = '?1' and [Changed Date] >= '?2' Order By [Changed Date] Asc";
 
 	public void getChangedWorkItems(TFSConnection connection,
 			String collectionName, String projectName, String workItemType,
@@ -48,83 +51,72 @@ public class TFSHandler {
 			String lastSynchedArtifactId,
 			ArrayList<ArtifactState> artifactStates, String userName,
 			boolean ignoreConnectorUserUpdates) {
-		// FIXME try to get only the ONE project (performance issue)
-		ProjectCollection projectCollection = connection.getTpc()
-				.getWorkItemClient().getProjects();
 
-		for (Project project : projectCollection) {
+			WorkItemClient workItemClient = connection.getTpc().getWorkItemClient();
 
-			if (project.getName().equals(projectName)) {
+			String finalQuery = get_all_wi_query
+					.replace("?1", workItemType).replace("?2",
+							TFSMetaData.formatDate(lastModifiedDate)).replace("?3", projectName);
 
-				WorkItemClient workItemClient = project.getWorkItemClient();
+			WorkItemCollection tasksQueryResults = workItemClient.query(
+					finalQuery, null, false);
 
-				String finalQuery = get_all_wi_query
-						.replace("?1", workItemType).replace("?2",
-								TFSMetaData.formatDate(lastModifiedDate));
+			ArrayList<WorkItem> detailRowsFull = new ArrayList<WorkItem>();
+			ArrayList<WorkItem> detailRowsNew = new ArrayList<WorkItem>();
+			boolean duplicateFound = false;
 
-				WorkItemCollection tasksQueryResults = workItemClient.query(
-						finalQuery, null, false);
+			for (int i = 0; i < tasksQueryResults.size(); i++) {
 
-				ArrayList<WorkItem> detailRowsFull = new ArrayList<WorkItem>();
-				ArrayList<WorkItem> detailRowsNew = new ArrayList<WorkItem>();
-				boolean duplicateFound = false;
+				WorkItem workItem = tasksQueryResults.getWorkItem(i);
 
-				for (int i = 0; i < tasksQueryResults.size(); i++) {
+				// check last date sync
 
-					WorkItem workItem = tasksQueryResults.getWorkItem(i);
+				Date workItemTimeStamp = (Date) workItem.getFields()
+						.getField(CoreFieldReferenceNames.CHANGED_DATE)
+						.getOriginalValue();
 
-					// check last date sync
+				Date artifactLastModifiedDate = new Date(0);
 
-					Date workItemTimeStamp = (Date) workItem.getFields()
-							.getField(CoreFieldReferenceNames.CHANGED_DATE)
-							.getOriginalValue();
-
-					Date artifactLastModifiedDate = new Date(0);
-
-					if (workItemTimeStamp != null) {
-						artifactLastModifiedDate = workItemTimeStamp;
-					}
-
-					if (artifactLastModifiedDate.compareTo(lastModifiedDate) >= 0) {
-
-						String workItemRevisionNumber = workItem.getFields()
-								.getField(CoreFieldReferenceNames.REVISION)
-								.getOriginalValue().toString();
-						String id = String.valueOf(workItem.getID());
-						if (id.equals(lastSynchedArtifactId)
-								&& workItemRevisionNumber
-										.equals(lastSynchronizedVersion)) {
-							duplicateFound = true;
-						} else {
-							if (duplicateFound) {
-								detailRowsNew.add(workItem);
-							}
-							detailRowsFull.add(workItem);
-						}
-					}
+				if (workItemTimeStamp != null) {
+					artifactLastModifiedDate = workItemTimeStamp;
 				}
 
-				List<WorkItem> workItems = duplicateFound ? detailRowsNew
-						: detailRowsFull;
-				for (WorkItem wit : workItems) {
-					ArtifactState artifactState = new ArtifactState();
-					artifactState.setArtifactId(String.valueOf(wit.getID()));
+				if (artifactLastModifiedDate.compareTo(lastModifiedDate) >= 0) {
 
-					artifactState.setArtifactLastModifiedDate((Date) wit
-							.getFields()
-							.getField(CoreFieldReferenceNames.CHANGED_DATE)
-							.getOriginalValue());
-
-					artifactState.setArtifactVersion(Long.parseLong(wit
-							.getFields()
+					String workItemRevisionNumber = workItem.getFields()
 							.getField(CoreFieldReferenceNames.REVISION)
-							.getOriginalValue().toString()));
-					artifactStates.add(artifactState);
+							.getOriginalValue().toString();
+					String id = String.valueOf(workItem.getID());
+					if (id.equals(lastSynchedArtifactId)
+							&& workItemRevisionNumber
+									.equals(lastSynchronizedVersion)) {
+						duplicateFound = true;
+					} else {
+						if (duplicateFound) {
+							detailRowsNew.add(workItem);
+						}
+						detailRowsFull.add(workItem);
+					}
 				}
 			}
 
-		}
+			List<WorkItem> workItems = duplicateFound ? detailRowsNew
+					: detailRowsFull;
+			for (WorkItem wit : workItems) {
+				ArtifactState artifactState = new ArtifactState();
+				artifactState.setArtifactId(String.valueOf(wit.getID()));
 
+				artifactState.setArtifactLastModifiedDate((Date) wit
+						.getFields()
+						.getField(CoreFieldReferenceNames.CHANGED_DATE)
+						.getOriginalValue());
+
+				artifactState.setArtifactVersion(Long.parseLong(wit
+						.getFields()
+						.getField(CoreFieldReferenceNames.REVISION)
+						.getOriginalValue().toString()));
+				artifactStates.add(artifactState);
+			}
 	}
 
 	public void getWorkItem(TFSConnection connection, String collectionName,
@@ -297,7 +289,6 @@ public class TFSHandler {
 			Date changedDate, String changedBy) {
 		GenericArtifactField gaField = genericArtifact.addNewField(
 				CoreFieldReferenceNames.HISTORY, "mandatoryField");
-		// FIXME Use Date instead of DateTime in case of dates
 		gaField.setFieldValueType(FieldValueTypeValue.HTMLSTRING);
 		gaField.setFieldAction(FieldActionValue.APPEND);
 		gaField.setFieldValue("User \"" + changedBy + "\" commented on "
@@ -310,7 +301,6 @@ public class TFSHandler {
 		// the same name, we have to use the field type to differentiate them
 		GenericArtifactField gaField = genericArtifact.addNewField(
 				field.getReferenceName(), "mandatoryField");
-		// FIXME Use Date instead of DateTime in case of dates
 		gaField.setFieldValueType(TFSMetaData
 				.translateTFSFieldValueTypeToCCFFieldValueType(field
 						.getFieldDefinition().getFieldType()));
@@ -427,11 +417,19 @@ public class TFSHandler {
 		ga.setTargetArtifactVersion(newWorkItem.getFields()
 				.getField(CoreFieldReferenceNames.REVISION).getOriginalValue()
 				.toString());
-		// FIXME: Validate date null value
+		
+	try{	
 		ga.setTargetArtifactLastModifiedDate(GenericArtifactHelper.df
 				.format(newWorkItem.getFields()
 						.getField(CoreFieldReferenceNames.CHANGED_DATE)
 						.getOriginalValue()));
+		
+	} catch (NullPointerException e){
+		
+		String message = "Null pointer setting the new workItem changedDate";
+		throw new CCFRuntimeException(message);
+	}
+		
 		ga.setTargetArtifactId(String.valueOf(newWorkItem.getID()));
 
 		return newWorkItem;
@@ -443,7 +441,6 @@ public class TFSHandler {
 
 		String workItemId = ga.getTargetArtifactId();
 
-		// FIXME see cast validation
 		WorkItem workItem = connection.getTpc().getWorkItemClient()
 				.getWorkItemByID(Integer.parseInt(workItemId));
 
@@ -597,11 +594,17 @@ public class TFSHandler {
 		ga.setTargetArtifactVersion(workItem.getFields()
 				.getField(CoreFieldReferenceNames.REVISION).getOriginalValue()
 				.toString());
-		// FIXME: Validate date null value
-		ga.setTargetArtifactLastModifiedDate(GenericArtifactHelper.df
-				.format(workItem.getFields()
-						.getField(CoreFieldReferenceNames.CHANGED_DATE)
-						.getOriginalValue()));
+		
+		try {
+			ga.setTargetArtifactLastModifiedDate(GenericArtifactHelper.df
+					.format(workItem.getFields()
+							.getField(CoreFieldReferenceNames.CHANGED_DATE)
+							.getOriginalValue()));
+		} catch (NullPointerException e){
+			
+			String message = "Null pointer getting the workItem changedDate in workItem (" + workItemId +")";
+			throw new CCFRuntimeException(message);
+		}
 
 		return workItem;
 	}
