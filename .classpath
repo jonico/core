@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry excluding="lib/**" kind="src" path="src/plugins/SFEE/v44"/>
+	<classpathentry kind="src" path="src/plugins/SWP"/>
+	<classpathentry kind="src" path="src/plugins/TF"/>
+	<classpathentry kind="src" path="src/plugins/HPQC/v90"/>
+	<classpathentry excluding="Test/|lib/**" kind="src" path="src/plugins/CEE/ProjectTracker/v50"/>
+	<classpathentry kind="src" path="samples/IntegrationScenarios/customReader/src"/>
+	<classpathentry kind="src" path="tests"/>
+	<classpathentry excluding="lib/**" kind="src" path="src/core"/>
+	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/openadaptor.jar" sourcepath="C:/Documents and Settings/jnicolai/My Documents/openAdaptorSourceCode/src"/>
+	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/openadaptor-spring.jar"/>
+	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/activation.jar"/>
+	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/axis_1.4.jar"/>
+	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/commons-discovery_0.2.jar"/>
+	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/commons-logging.jar"/>
+	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/dom4j_1.6.1.jar"/>
+	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/hsqldb.jar"/>
+	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/jaxen_1.1-beta-9.jar"/>
+	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/jaxrpc.jar"/>
+	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/log4j-1.2.15.jar"/>
+	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/mail.jar"/>
+	<classpathentry kind="lib" path="src/plugins/SFEE/v44/lib/sf_soap44_sdk.jar"/>
+	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/commons-codec_1.3.jar"/>
+	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/spring_2.0.2.jar"/>
+	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/junit.jar"/>
+	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/jmock-core-1.2.0.jar"/>
+	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/xercesImpl_2.9.0.jar"/>
+	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/commons-lang_2.0.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
+	<classpathentry kind="lib" path="config"/>
+	<classpathentry kind="lib" path="src/plugins/CEE/ProjectTracker/v50/lib/cee-5.0.jar"/>
+	<classpathentry kind="lib" path="src/plugins/CEE/ProjectTracker/v50/lib/wss4j-1.5.1.jar"/>
+	<classpathentry kind="lib" path="src/plugins/CEE/ProjectTracker/v50/lib/xmlsec-1.4.0.jar"/>
+	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/saaj.jar"/>
+	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/commons-httpclient_3.0.1.jar"/>
+	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/js_1_6R5.jar"/>
+	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/wsdl4j_1.6.2.jar"/>
+	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/joda-time-1.5.2.jar"/>
+	<classpathentry kind="lib" path="src/plugins/HPQC/lib/jacob/jacob.jar"/>
+	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/commons-collections_3.2.jar"/>
+	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/jdom.jar"/>
+	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/jmxtools.jar"/>
+	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/commons-vfs-1.0.jar"/>
+	<classpathentry kind="lib" path="src/plugins/TF/lib/sf_soap50_sdk.jar"/>
+	<classpathentry kind="lib" path="src/plugins/TF/lib/tfapi.jar" sourcepath="C:/Documents and Settings/jnicolai/workspace/com.collabnet.teamforge.api/src"/>
+	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/jericho-html-3.1.jar"/>
+	<classpathentry kind="lib" path="src/plugins/SWP/lib/ScrumWorks-soap.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
+	<classpathentry kind="lib" path="src/core/lib/servicewrapper/wrapper.jar"/>
+	<classpathentry kind="output" path="bin"/>
+</classpath>
