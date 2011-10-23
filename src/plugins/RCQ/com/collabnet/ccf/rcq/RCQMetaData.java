@@ -1,41 +1,63 @@
 package com.collabnet.ccf.rcq;
 
+import com.collabnet.ccf.core.ga.GenericArtifactField;
+import com.collabnet.ccf.core.ga.GenericArtifactField.FieldValueTypeValue;
 
 public class RCQMetaData {
 
-	public static final String RCQ_REPOSITORY_DELIMITER = "-";
-
-	public enum RCQType {
-		WORKITEM, UNKNOWN
-	}
-
-	public static RCQType retrieveRCQTypeFromRepositoryId(String repositoryId) {
+	public static GenericArtifactField.FieldValueTypeValue getFieldType ( long n ) {
+		/*
+		possible fieldType values from cQ online docs:
+		http://publib.boulder.ibm.com/infocenter/cqhelp/v7r0m1/topic/com.ibm.rational.clearquest.apiref.doc/r_entity_getfieldtype.htm
 		
-		if (repositoryId == null) {
-			return RCQType.UNKNOWN;
+		Constant	Value	Description
+		_SHORT_STRING		1	Simple text field (255 character limit)
+		_MULTILINE_STRING	2	Arbitrarily long text
+		_INT				3	Integer
+		_DATE_TIME			4	Timestamp information
+		_REFERENCE			5	A pointer to a stateless record type.
+		_REFERENCE_LIST		6	A list of references
+		_ATTACHMENT_LIST	7	A list of attached files
+		_ID					8	A string ID for records (Entity objects)
+		_STATE				9	The current state of a state-based record (that is, a request entity).
+		_JOURNAL			10	A list of rows in a subtable that belongs exclusively to this record (Entity)
+		_DBID				11	An internal numeric ID
+		_STATETYPE			12	State type of record (entity). State types are defined by schema packages and are assigned to states within your schema. For example, UCM uses state types to determine when hooks should run. For more information about state types, see Administering Rational ClearQuest or Developing Schemas topics in the online help.
+		_RECORDTYPE			13	The name of the record type (EntityDef) of the current record (Entity). For example, "Defect" or "Customer".
+		
+		Possible vaules for CCF are:
+		INTEGER, DOUBLE, DATETIME, DATE, STRING, HTMLSTRING, BASE64STRING, BOOLEAN, USER
+		*/
+		
+		switch ( (int) n ) {
+		case 1:
+			return FieldValueTypeValue.STRING;
+		case 2:
+			return FieldValueTypeValue.STRING;
+		case 3:
+			return FieldValueTypeValue.INTEGER;
+		case 4:
+			return FieldValueTypeValue.DATETIME;
+		case 5:
+			return FieldValueTypeValue.USER;
+		case 6:
+			return FieldValueTypeValue.USER;
+		case 7:
+			return FieldValueTypeValue.USER;
+		case 8:
+			return FieldValueTypeValue.STRING;
+		case 9:
+			return FieldValueTypeValue.STRING;
+		case 10:
+			return FieldValueTypeValue.USER;
+		case 11:
+			return FieldValueTypeValue.DOUBLE;
+		case 12:
+			return FieldValueTypeValue.STRING;
+		case 13:
+			return FieldValueTypeValue.STRING;
 		}
-
-		int delimiterCounter = repositoryId.split(RCQ_REPOSITORY_DELIMITER).length;
-
-		if (delimiterCounter != 3) {
-			return RCQType.UNKNOWN;
-		} else {
-			return RCQType.WORKITEM;
-		}
-		
+		return FieldValueTypeValue.STRING;
 	}
 	
-	public static String extractCollectionNameFromRepositoryId(String repositoryId){
-		return repositoryId.split(RCQ_REPOSITORY_DELIMITER)[0];
-		
-	}
-	
-	public static String extractProjectNameFromRepositoryId(String repositoryId){
-		return repositoryId.split(RCQ_REPOSITORY_DELIMITER)[1];
-	}
-	
-	public static String extractWorkItemTypeFromRepositoryId(String repositoryId){
-		return repositoryId.split(RCQ_REPOSITORY_DELIMITER)[2];
-		
-	}
 }

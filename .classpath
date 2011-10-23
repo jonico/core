@@ -51,5 +51,6 @@
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/hsqldb.jar"/>
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/openadaptor.jar"/>
 	<classpathentry kind="lib" path="src/plugins/RCQ/lib/cqjni.jar"/>
+	<classpathentry kind="lib" path="src/plugins/RCQ/lib/stpcq.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

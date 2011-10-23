@@ -18,9 +18,8 @@ import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
 import com.collabnet.ccf.core.utils.XPathUtils;
-import com.collabnet.ccf.rcq.RCQMetaData.RCQType;
-import com.microsoft.tfs.core.clients.workitem.WorkItem;
-import com.microsoft.tfs.core.exceptions.TECoreException;
+
+import com.rational.clearquest.cqjni.CQEntity;
 
 public class RCQWriter extends AbstractWriter<RCQConnection> {
 
@@ -31,7 +30,7 @@ public class RCQWriter extends AbstractWriter<RCQConnection> {
 	private String serverUrl;
 	private boolean preserveSemanticallyUnchangedHTMLFieldValues;
 
-	private RCQHandler tfsHandler;
+	private RCQHandler rcqHandler;
 	
 	@Override
 	public Document updateDependency(Document gaDocument) {
@@ -63,36 +62,15 @@ public class RCQWriter extends AbstractWriter<RCQConnection> {
 
 		// find out what to update
 		String targetRepositoryId = ga.getTargetRepositoryId();
-		RCQType tfsType = RCQMetaData
-				.retrieveRCQTypeFromRepositoryId(targetRepositoryId);
-		
-		if (tfsType.equals(RCQMetaData.RCQType.UNKNOWN)) {
-			String cause = "Invalid repository format: " + targetRepositoryId;
-			log.error(cause);
-			throw new CCFRuntimeException(cause);
-		}
 		
 		RCQConnection connection;
-		String collectionName = RCQMetaData.extractCollectionNameFromRepositoryId(targetRepositoryId);
 		
-		connection = connect(ga, collectionName);
+		connection = connect(ga);
 		try {
-			
-			if (tfsType.equals(RCQType.WORKITEM)) {
-				
-				String projectName = RCQMetaData.extractProjectNameFromRepositoryId(targetRepositoryId);
-				String workItemType = RCQMetaData.extractWorkItemTypeFromRepositoryId(targetRepositoryId);
-				
-				WorkItem result = updateWorkItem(ga, collectionName, projectName, workItemType, connection);
-				if (result != null) {
-					log.info("Updated work item " + result.getID() + " with data from "
-							+ ga.getSourceArtifactId());
-				}
-			} else {
-				String cause = "Unsupported repository format: "
-						+ targetRepositoryId;
-				log.error(cause);
-				throw new CCFRuntimeException(cause);
+			CQEntity result = rcqHandler.updateRecord(ga, connection);
+			if (result != null) {
+				log.info("Updated work item " + result.GetFieldValue("id").GetValue() + " with data from "
+						+ ga.getSourceArtifactId());
 			}
 		} catch (Exception e) {
 			String cause = "During the artifact update process in RCQ, an error occured";
@@ -103,13 +81,6 @@ public class RCQWriter extends AbstractWriter<RCQConnection> {
 		}
 
 		return returnDocument(ga);	
-	}
-
-	private WorkItem updateWorkItem(GenericArtifact ga, String collectionName,
-			String projectName, String workItemType, RCQConnection connection) {
-
-		
-		return tfsHandler.updateWorkItem(ga, collectionName, projectName, workItemType, connection);
 	}
 
 	@Override
@@ -127,38 +98,14 @@ public class RCQWriter extends AbstractWriter<RCQConnection> {
 			throw new CCFRuntimeException(cause, e);
 		}
 
-		// find out what to create
-		String targetRepositoryId = ga.getTargetRepositoryId();
-		RCQType tfsType = RCQMetaData
-				.retrieveRCQTypeFromRepositoryId(targetRepositoryId);
-		
-		if (tfsType.equals(RCQMetaData.RCQType.UNKNOWN)) {
-			String cause = "Invalid repository format: " + targetRepositoryId;
-			log.error(cause);
-			throw new CCFRuntimeException(cause);
-		}
-		
+	
 		RCQConnection connection;
-		String collectionName = RCQMetaData.extractCollectionNameFromRepositoryId(targetRepositoryId);
-		
-		connection = connect(ga, collectionName);
+		connection = connect(ga);
 		try {
-			
-			if (tfsType.equals(RCQType.WORKITEM)) {
-				
-				String projectName = RCQMetaData.extractProjectNameFromRepositoryId(targetRepositoryId);
-				String workItemType = RCQMetaData.extractWorkItemTypeFromRepositoryId(targetRepositoryId);
-				
-				WorkItem result = createWorkItem(ga, collectionName, projectName, workItemType, connection);
-				if (result != null) {
-					log.info("Created work item " + result.getID() + " with data from "
-							+ ga.getSourceArtifactId());
-				}
-			} else {
-				String cause = "Unsupported repository format: "
-						+ targetRepositoryId;
-				log.error(cause);
-				throw new CCFRuntimeException(cause);
+			CQEntity result = rcqHandler.updateRecord(ga, connection);
+			if (result != null) {
+				log.info("Created record item " + result.GetFieldValue("id").GetValue() + " with data from "
+						+ ga.getSourceArtifactId());
 			}
 		} catch (Exception e) {
 			String cause = "During the artifact update process in RCQ, an error occured";
@@ -169,14 +116,6 @@ public class RCQWriter extends AbstractWriter<RCQConnection> {
 		}
 
 		return returnDocument(ga);		
-	}
-	
-	private WorkItem createWorkItem(GenericArtifact ga, String collectionName, String projectName,
-			String workItemType, RCQConnection connection) {
-
-		return tfsHandler.createWorkItem(ga, collectionName, projectName,
-				workItemType, connection);
-		
 	}
 
 	public void disconnect(RCQConnection connection) {
@@ -249,10 +188,6 @@ public class RCQWriter extends AbstractWriter<RCQConnection> {
 		} else if (cause instanceof CCFRuntimeException) {
 			Throwable innerCause = cause.getCause();
 			return handleException(innerCause, connectionManager, ga);
-		} else if (cause instanceof TECoreException) {
-			if (cause.getMessage().contains("Unknown host")) {
-				return true;
-			}
 		}  else if (cause instanceof RuntimeException) {
 			Throwable innerCause = cause.getCause();
 			return handleException(innerCause, connectionManager, ga);
@@ -297,7 +232,7 @@ public class RCQWriter extends AbstractWriter<RCQConnection> {
 		this.preserveSemanticallyUnchangedHTMLFieldValues = preserveSemanticallyUnchangedHTMLFieldValues;
 	}
 
-	public RCQConnection connect(GenericArtifact ga, String collectionName) {
+	public RCQConnection connect(GenericArtifact ga) {
 		String targetSystemId = ga.getTargetSystemId();
 		String targetSystemKind = ga.getTargetSystemKind();
 		String targetRepositoryId = ga.getTargetRepositoryId();
@@ -306,7 +241,7 @@ public class RCQWriter extends AbstractWriter<RCQConnection> {
 		
 		try {
 			connection = connect(targetSystemId, targetSystemKind,
-					targetRepositoryId, targetRepositoryKind, serverUrl + "/" + collectionName,
+					targetRepositoryId, targetRepositoryKind, serverUrl ,
 					getUserName() + RCQConnectionFactory.PARAM_DELIMITER
 							+ getPassword());
 		} catch (MaxConnectionsReachedException e) {
@@ -362,7 +297,7 @@ public class RCQWriter extends AbstractWriter<RCQConnection> {
 					"serverUrl-property not set", this));
 		}
 
-		tfsHandler = new RCQHandler();
+		rcqHandler = new RCQHandler();
 		
 	}
 }

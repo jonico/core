@@ -16,7 +16,8 @@ import com.collabnet.ccf.core.CCFRuntimeException;
 import com.collabnet.ccf.core.eis.connection.ConnectionException;
 import com.collabnet.ccf.core.eis.connection.MaxConnectionsReachedException;
 import com.collabnet.ccf.core.ga.GenericArtifact;
-import com.collabnet.ccf.rcq.RCQMetaData.RCQType;
+import com.collabnet.ccf.core.ga.GenericArtifact.ArtifactModeValue;
+import com.collabnet.ccf.core.ga.GenericArtifact.ArtifactTypeValue;
 
 public class RCQReader extends AbstractReader<RCQConnection> {
 
@@ -45,10 +46,109 @@ public class RCQReader extends AbstractReader<RCQConnection> {
 		String sourceRepositoryId = this.getSourceRepositoryId(syncInfo);
 		String sourceRepositoryKind = this.getSourceRepositoryKind(syncInfo);
 		String lastSynchronizedVersion = this.getLastSourceVersion(syncInfo);
-
-		return null;
+		Date lastModifiedDate = this.getLastModifiedDate(syncInfo);
+		String lastSynchronizedArtifactId = this.getLastSourceArtifactId(syncInfo);
+		
+		RCQConnection connection = null;
+		
+		try {
+			connection = connect(sourceSystemId , sourceSystemKind , 
+					sourceRepositoryId , sourceRepositoryKind, serverUrl ,
+					getUserName() + RCQConnectionFactory.PARAM_DELIMITER
+					+ getPassword());
+		} catch (MaxConnectionsReachedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ConnectionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+		GenericArtifact ga = new GenericArtifact();
+		
+		try {
+			populateSrcAndDest(syncInfo, ga);
+			ga.setSourceArtifactId(artifactId);
+			ga.setArtifactMode(ArtifactModeValue.COMPLETE);
+			ga.setArtifactType(ArtifactTypeValue.PLAINARTIFACT);
+			rcqHandler.getRecordData(connection, artifactId, isIgnoreConnectorUserUpdates(), userName , ga);
+		} catch (Exception e) {
+			String cause = "During the artifact retrieval process from ClearQuest, an error occured";
+			log.error(cause, e);
+			throw new CCFRuntimeException(cause, e);
+		} finally {
+			disconnect(connection);
+		}
+		
+		return	ga;
+		
 	}
 
+	private void populateSrcAndDest(Document syncInfo, GenericArtifact ga) {
+		String sourceRepositoryId = this.getSourceRepositoryId(syncInfo);
+		String sourceRepositoryKind = this.getSourceRepositoryKind(syncInfo);
+		String sourceSystemId = this.getSourceSystemId(syncInfo);
+		String sourceSystemKind = this.getSourceSystemKind(syncInfo);
+		String conflictResolutionPriority = this
+				.getConflictResolutionPriority(syncInfo);
+		
+		String sourceSystemTimezone = this.getSourceSystemTimezone(syncInfo);
+		String targetSystemTimezone = this.getTargetSystemTimezone(syncInfo);
+
+		String targetRepositoryId = this.getTargetRepositoryId(syncInfo);
+		String targetRepositoryKind = this.getTargetRepositoryKind(syncInfo);
+		String targetSystemId = this.getTargetSystemId(syncInfo);
+		String targetSystemKind = this.getTargetSystemKind(syncInfo);
+
+		ga.setSourceRepositoryId(sourceRepositoryId);
+		ga.setSourceRepositoryKind(sourceRepositoryKind);
+		ga.setSourceSystemId(sourceSystemId);
+		ga.setSourceSystemKind(sourceSystemKind);
+		ga.setConflictResolutionPriority(conflictResolutionPriority);
+		ga.setSourceSystemTimezone(sourceSystemTimezone);
+
+		ga.setTargetRepositoryId(targetRepositoryId);
+		ga.setTargetRepositoryKind(targetRepositoryKind);
+		ga.setTargetSystemId(targetSystemId);
+		ga.setTargetSystemKind(targetSystemKind);
+		ga.setTargetSystemTimezone(targetSystemTimezone);
+	}
+
+
+	private void logme(Document syncInfo ) {
+		
+		String sourceSystemId = this.getSourceSystemId(syncInfo);
+		String sourceSystemKind = this.getSourceSystemKind(syncInfo);
+		String sourceRepositoryId = this.getSourceRepositoryId(syncInfo);
+		String sourceRepositoryKind = this.getSourceRepositoryKind(syncInfo);
+		String lastSynchronizedVersion = this.getLastSourceVersion(syncInfo);
+		String targetSystemId = this.getTargetSystemId(syncInfo);
+		String targetRepositoryId = this.getTargetRepositoryId(syncInfo);
+		Date lastModifiedDate = this.getLastModifiedDate(syncInfo);
+		String lastSynchedArtifactId = this.getLastSourceArtifactId(syncInfo);
+
+		log.debug("----> member vars");
+		log.debug("ignoreConnectorUserUpdates : " + this.isIgnoreConnectorUserUpdates());
+		log.debug("password                   : " + this.password);
+		log.debug("serverUrl                  : " + this.serverUrl);
+		log.debug("userName                   : " + this.userName);
+		log.debug("----> syncInfo");
+		log.debug("sourceSystemId          : " + sourceSystemId);
+		log.debug("sourceSystemKind        : " + sourceSystemKind);
+		log.debug("sourceRepositoryId      : " + sourceRepositoryId);
+		log.debug("sourceRepositoryKind    : " + sourceRepositoryKind);
+		log.debug("lastSynchronizedVersion : " + lastSynchronizedVersion);
+		log.debug("targetSystemId          : " + targetSystemId );
+		log.debug("targetRepositoryId      : " + targetRepositoryId);
+		log.debug("lastModifiedDate        : " + lastModifiedDate.toGMTString());
+		log.debug("lastSynchedArtifactId   : " + lastSynchedArtifactId);
+		
+		log.debug("-----> syncInfo String dump");
+		log.debug(syncInfo.toString() );
+		
+	}
+	
+	
 	@Override
 	public List<ArtifactState> getChangedArtifacts(Document syncInfo) {
 		String sourceSystemId = this.getSourceSystemId(syncInfo);
@@ -60,62 +160,46 @@ public class RCQReader extends AbstractReader<RCQConnection> {
 		String targetRepositoryId = this.getTargetRepositoryId(syncInfo);
 		Date lastModifiedDate = this.getLastModifiedDate(syncInfo);
 		String lastSynchedArtifactId = this.getLastSourceArtifactId(syncInfo);
-
-		// System.out.println("sourceSystemId: " + sourceSystemId);
-		// System.out.println("sourceSystemKind: " + sourceSystemKind);
-		// System.out.println("sourceRepositoryId: " + sourceRepositoryId);
-		// System.out.println("sourceRepositoryKind: " + sourceRepositoryKind);
-		// System.out.println("lastSynchronizedVersion: " +
-		// lastSynchronizedVersion);
-		// System.out.println("targetSystemId: " + targetSystemId);
-		// System.out.println("targetRepositoryId: " + targetRepositoryId);
-
-		// find out what to extract
-		RCQType rcqType = RCQMetaData.retrieveRCQTypeFromRepositoryId(sourceRepositoryId);
-
-		if (rcqType.equals(RCQMetaData.RCQType.UNKNOWN)) {
-			String cause = "Invalid repository format: " + sourceRepositoryId;
-			log.error(cause);
-			throw new CCFRuntimeException(cause);
-		}
-
+		
 		RCQConnection connection;
-		String collectionName = RCQMetaData.extractCollectionNameFromRepositoryId(sourceRepositoryId);
 		try {
 			connection = connect(sourceSystemId, sourceSystemKind,
-					sourceRepositoryId, sourceRepositoryKind, serverUrl + "/" + collectionName,
+					sourceRepositoryId, sourceRepositoryKind, serverUrl ,
 					getUserName() + RCQConnectionFactory.PARAM_DELIMITER
 							+ getPassword());
 		} catch (MaxConnectionsReachedException e) {
-			String cause = "Could not create connection to the TFS system. Max connections reached for "
-					+ serverUrl;
+			String cause = "Could not create connection to the ClearQuest system (maxConnections). ";
 			log.error(cause, e);
 			throw new CCFRuntimeException(cause, e);
 		} catch (ConnectionException e) {
-			String cause = "Could not create connection to the TFS system "
-					+ serverUrl;
+			String cause = "Could not create connection to the ClearQuest system.";
 			log.error(cause, e);
 			throw new CCFRuntimeException(cause, e);
 		}
 
 		ArrayList<ArtifactState> artifactStates = new ArrayList<ArtifactState>();
 		try {
-			if (rcqType.equals(RCQType.WORKITEM)) {
-				String projectName = RCQMetaData.extractProjectNameFromRepositoryId(sourceRepositoryId);
-				String workItemType = RCQMetaData.extractWorkItemTypeFromRepositoryId(sourceRepositoryId);
-				tfsHandler.getChangedWorkItems(connection,
-						collectionName, projectName, workItemType, lastModifiedDate, lastSynchronizedVersion, lastSynchedArtifactId, artifactStates, getUserName(),
-						isIgnoreConnectorUserUpdates());
-			}
+			rcqHandler.getChangedRecords(
+					connection, 
+					lastModifiedDate, 
+					lastSynchronizedVersion, 
+					lastSynchedArtifactId, 
+					artifactStates,
+					isIgnoreConnectorUserUpdates());
 
 		} catch (Exception e) {
-			String cause = "During the artifact retrieval process from TFS, an error occured";
+			String cause = "During the artifact retrieval process from ClearQuest, an error occured";
 			log.error(cause, e);
 			throw new CCFRuntimeException(cause, e);
 		} finally {
 			disconnect(connection);
 		}
+		
+		this.logme(syncInfo);
+		
 		return artifactStates;
+		
+		
 	}
 	
 	public void disconnect(RCQConnection connection) {
@@ -175,7 +259,7 @@ public class RCQReader extends AbstractReader<RCQConnection> {
 		return connection;
 	}
 	
-	private RCQHandler tfsHandler = null;
+	private RCQHandler rcqHandler = null;
 
 	private static final Log log = LogFactory.getLog(RCQReader.class);
 	
@@ -198,11 +282,11 @@ public class RCQReader extends AbstractReader<RCQConnection> {
 					this));
 		}
 		try {
-			tfsHandler = new RCQHandler();
+			rcqHandler = new RCQHandler();
 		} catch (Exception e) {
-			log.error("Could not initialize TFSHandler");
+			log.error("Could not initialize RCQHandler");
 			exceptions.add(new ValidationException(
-					"Could not initialize TFSHandler", this));
+					"Could not initialize RCQHandler", this));
 		}
 	}
 
