@@ -62,6 +62,7 @@
 		<pathelement location="src/plugins/CEE/ProjectTracker/v50/lib/xmlsec-1.4.0.jar" />
 		<pathelement location="src/plugins/HPQC/lib/jacob/jacob.jar" />
 		<pathelement location="src/plugins/SWP/lib/ScrumWorks-soap.jar" />
+		<pathelement location="src/plugins/TFS/lib/com.microsoft.tfs.sdk-10.1.0.jar" />
 	</path>
 
 	<target name="init">
@@ -76,8 +77,8 @@
 		<mkdir dir="build/classes" />
 	</target>
 	<target depends="clean" name="cleanall" />
-	<target depends="init, create.manifest, build.core, build.sfee.plugin, build.cee.plugin, build.qc.plugin, build.tf.plugin, build.swp.plugin, build.sample, package" name="build" />
-	<target depends="init, create.manifestHudson, build.core, build.sfee.plugin, build.cee.plugin, build.qc.plugin, build.tf.plugin, build.swp.plugin, build.sample, package" name="buildHudson" />
+	<target depends="init, create.manifest, build.core, build.sfee.plugin, build.cee.plugin, build.qc.plugin, build.tf.plugin, build.swp.plugin, build.tfs.plugin, build.sample, package" name="build" />
+	<target depends="init, create.manifestHudson, build.core, build.sfee.plugin, build.cee.plugin, build.qc.plugin, build.tf.plugin, build.swp.plugin, build.tfs.plugin, build.sample, package" name="buildHudson" />
 	<target name="create.manifest">
 		<property file="default.properties" />
 		<manifest file="build/MANIFEST.MF">
@@ -168,7 +169,6 @@
 						<include name="CCFCoreV10.jar" />
 					</fileset>
 				</classpath>
-
 			</javac>
 			<jar destfile="build/jars/CCFSWPPlugin.jar" manifest="build/MANIFEST.MF">
 				<fileset dir="build/classes">
@@ -177,6 +177,25 @@
 			</jar>
 	</target>
 
+	<target name="build.tfs.plugin">
+				<antcall target="clean">
+				</antcall>
+				<javac debug="true" debuglevel="${debuglevel}" destdir="build/classes" source="${source}" target="${target}">
+					<src path="src/plugins/TFS/" />
+					<classpath refid="CCFJ.classpath" />
+					<classpath>
+						<fileset dir="build/jars">
+							<include name="CCFCoreV10.jar" />
+						</fileset>
+					</classpath>
+				</javac>
+				<jar destfile="build/jars/CCFTFSPlugin.jar" manifest="build/MANIFEST.MF">
+					<fileset dir="build/classes">
+						<include name="**/*.class" />
+					</fileset>
+				</jar>
+		</target>
+	
 	<target name="build.qc.plugin">
 		<antcall target="clean">
 		</antcall>
@@ -320,6 +339,9 @@
 			<fileset dir="src/plugins/SWP/lib">
 				<include name="*.jar" />
 			</fileset>
+			<fileset dir="src/plugins/TFS/lib">
+				<include name="*.jar" />
+			</fileset>
 		</copy>
 		<mkdir dir="build/package/samples" />
 		<copy todir="build/package/samples">
@@ -329,6 +351,7 @@
 				<include name="QCTF/**/*" />
 				<include name="QCPT/**/*" />
 				<include name="TFSWP/**/*" />
+				<include name="TFSTF/**/*" />
 				<!-- <include name="QCSWP/**/*" /> -->
 			</fileset>
 		</copy>
