@@ -98,6 +98,7 @@
 				<xsl:attribute name="fieldValueType">String</xsl:attribute>
 				<xsl:choose>
 					<xsl:when test="$stackRankValue = ''"><xsl:value-of select="." /></xsl:when>
+					<xsl:when test="contains($stackRankValue, '.')"><xsl:value-of select="." /></xsl:when>
 					<xsl:otherwise><xsl:value-of select="floor(.)" /></xsl:otherwise>
 				</xsl:choose>
 			</field>
