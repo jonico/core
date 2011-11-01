@@ -170,6 +170,8 @@ public class TFSAttachmentHandler {
 					}
 					attachmentGAs.add(ga);
 
+				} else {
+					log.warn("The attachment creation date is before the sync date, ingnoring it");
 				}
 
 			}
