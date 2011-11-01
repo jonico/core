@@ -143,7 +143,7 @@
 		<xsl:variable name="originalEffortValue" as="xs:string" select="." />
 			<field>
 				<xsl:copy-of select="@*" />
-				<xsl:attribute name="fieldName">estimatedHours</xsl:attribute>
+				<xsl:attribute name="fieldName">estimatedhours</xsl:attribute>
 				<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
 				<xsl:attribute name="fieldValueType">String</xsl:attribute>
 				<xsl:choose>
