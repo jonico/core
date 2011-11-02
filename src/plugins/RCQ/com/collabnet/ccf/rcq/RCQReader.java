@@ -1,5 +1,6 @@
 package com.collabnet.ccf.rcq;
 
+import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -25,6 +26,7 @@ public class RCQReader extends AbstractReader<RCQConnection> {
 	private String password;
 	private String serverUrl;
 	private boolean ignoreConnectorUserUpdates;
+	private RCQAttachmentHandler attachee = new RCQAttachmentHandler();
 
 	public List<GenericArtifact> getArtifactDependencies(Document syncInfo,
 			String artifactId) {
@@ -35,8 +37,50 @@ public class RCQReader extends AbstractReader<RCQConnection> {
 	@Override
 	public List<GenericArtifact> getArtifactAttachments(Document syncInfo,
 			GenericArtifact artifactData) {
+		String artifactId = artifactData.getSourceArtifactId();
+		String sourceSystemId = this.getSourceSystemId(syncInfo);
+		String sourceSystemKind = this.getSourceSystemKind(syncInfo);
+		String sourceRepositoryKind = this.getSourceRepositoryKind(syncInfo);
+		String sourceRepositoryId = this.getSourceRepositoryId(syncInfo);
+		Date lastModifiedDate = this.getLastModifiedDate(syncInfo);
+		
 
-		return new ArrayList<GenericArtifact>();
+		log.debug("Getting attachments for artifact " + artifactId );
+		
+		RCQConnection connection;
+		try {
+			connection = connect(sourceSystemId, sourceSystemKind,
+					sourceRepositoryId, sourceRepositoryKind, serverUrl ,
+					getUserName() + RCQConnectionFactory.PARAM_DELIMITER
+							+ getPassword());
+		} catch (MaxConnectionsReachedException e) {
+			String cause = "Could not create connection to the ClearQuest system (maxConnections). ";
+			log.error(cause, e);
+			throw new CCFRuntimeException(cause, e);
+		} catch (ConnectionException e) {
+			String cause = "Could not create connection to the ClearQuest system.";
+			log.error(cause, e);
+			throw new CCFRuntimeException(cause, e);
+		}
+	
+		
+		List<String> artifactIds = new ArrayList<String>();
+		artifactIds.add(artifactId);
+		
+		List<GenericArtifact> attachments = null;
+		attachments = attachee.listAttachments(connection, 
+				lastModifiedDate, 
+				getUserName(), 
+				artifactIds, 
+				this.getMaxAttachmentSizePerArtifact() , 
+				this.isShipAttachmentsWithArtifact() , 
+				artifactData);
+//		} catch (RemoteException e) {
+//			log.error("Error getting attachments for record id " + artifactId, e);
+//		}
+		
+		// currently disabled
+		return attachments;
 	}
 
 	@Override
@@ -56,12 +100,11 @@ public class RCQReader extends AbstractReader<RCQConnection> {
 					sourceRepositoryId , sourceRepositoryKind, serverUrl ,
 					getUserName() + RCQConnectionFactory.PARAM_DELIMITER
 					+ getPassword());
-		} catch (MaxConnectionsReachedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
 		} catch (ConnectionException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			log.error("Cannot connect to clearquest! SeverUrl=" + serverUrl + ". Dumping syncInfo...");
+			logme(syncInfo);
+		} catch (MaxConnectionsReachedException e) {
+			log.error("maximum connections opened. Wait and try again");
 		}
 		
 		GenericArtifact ga = new GenericArtifact();
@@ -71,7 +114,7 @@ public class RCQReader extends AbstractReader<RCQConnection> {
 			ga.setSourceArtifactId(artifactId);
 			ga.setArtifactMode(ArtifactModeValue.COMPLETE);
 			ga.setArtifactType(ArtifactTypeValue.PLAINARTIFACT);
-			rcqHandler.getRecordData(connection, artifactId, isIgnoreConnectorUserUpdates(), userName , ga);
+			rcqHandler.getRecordData(connection, artifactId, isIgnoreConnectorUserUpdates(), this.getLastModifiedDate(syncInfo) , userName , ga);
 		} catch (Exception e) {
 			String cause = "During the artifact retrieval process from ClearQuest, an error occured";
 			log.error(cause, e);
@@ -79,7 +122,6 @@ public class RCQReader extends AbstractReader<RCQConnection> {
 		} finally {
 			disconnect(connection);
 		}
-		
 		return	ga;
 		
 	}
@@ -195,7 +237,7 @@ public class RCQReader extends AbstractReader<RCQConnection> {
 			disconnect(connection);
 		}
 		
-		this.logme(syncInfo);
+		// this.logme(syncInfo);
 		
 		return artifactStates;
 		

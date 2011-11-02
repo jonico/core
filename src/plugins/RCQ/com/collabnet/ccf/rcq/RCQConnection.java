@@ -61,13 +61,13 @@ public class RCQConnection {
 		
 		setCqs(new CQSession() );
 		
-		log.debug("logging in with username = " + username + " and password ='" + password + "'");
-		log.debug("connection: database '" + database + "' and schema '" + schema + "'");
+//		log.debug("logging in with username = " + username + " and password ='" + password + "'");
+//		log.debug("connection: database '" + database + "' and schema '" + schema + "'");
 		
 		try {
 			cqs.UserLogon( username , password , database , schema );
-			log.debug("succesfully logged in!, FeatureLevel: " + cqs.GetSessionFeatureLevel());
-			log.info("Succesfully connected to Clearquest!");
+//			log.debug("succesfully logged in!, FeatureLevel: " + cqs.GetSessionFeatureLevel());
+			log.info("Succesfully connected to ClearQuest.");
 		} catch (CQException e) {
 			log.debug("problem logging in...", e);		
 		}
@@ -87,7 +87,18 @@ public class RCQConnection {
 		}
 	}
 	
+	public void shutdown() {
+		try {
+			if ( cqs.CheckHeartbeat() ) {
+				cqs.detach();
+			}
+		} catch (CQException e) {
+			log.error("cannot detach clearquest" , e);
+		}
+	}
+	
 	public CQSession getCqs() {
+		// FIXME: after some time, the session gets killed by CQ. Need top check here and re-connect if necessary 
 		return cqs;
 	}
 

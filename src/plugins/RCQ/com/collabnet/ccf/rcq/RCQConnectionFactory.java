@@ -15,6 +15,7 @@ public class RCQConnectionFactory implements ConnectionFactory<RCQConnection> {
 	public void closeConnection(RCQConnection connection)
 			throws ConnectionException {
 		// FIXME Implement
+//		connection.
 	}
 
 	/**
@@ -38,7 +39,7 @@ public class RCQConnectionFactory implements ConnectionFactory<RCQConnection> {
 	 * Call method to check whether SWP connection still works
 	 */
 	public boolean isAlive(RCQConnection connection) {
-		// FIXME
+		// FIXME isAlive check.
 		return true;
 	}
 

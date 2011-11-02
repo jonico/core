@@ -24,17 +24,20 @@ import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifact.ArtifactActionValue;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactField.FieldActionValue;
+import com.collabnet.ccf.core.ga.GenericArtifactField.FieldValueTypeValue;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.hospital.CCFExceptionToOrderedMapConvertor;
 
 import com.rational.clearquest.cqjni.CQEntity;
 import com.rational.clearquest.cqjni.CQException;
 import com.rational.clearquest.cqjni.CQFieldInfos;
+import com.rational.clearquest.cqjni.CQFilterNode;
 import com.rational.clearquest.cqjni.CQHistories;
 import com.rational.clearquest.cqjni.CQHistory;
 import com.rational.clearquest.cqjni.CQHistoryField;
 import com.rational.clearquest.cqjni.CQHistoryFields;
 import com.rational.clearquest.cqjni.CQQueryDef;
+import com.rational.clearquest.cqjni.CQQueryFilterNode;
 import com.rational.clearquest.cqjni.CQResultSet;
 
 public class RCQHandler {
@@ -44,7 +47,11 @@ public class RCQHandler {
 	private static final Log log = LogFactory.getLog(RCQHandler.class);
 	
 	private enum HistoryType {
-		ID , DATE , USER , ACTION , OLDSTATE , NEWSTATE
+		ID , DATE , USER , ACTION , OLDSTATE , NEWSTATE , INDEX
+	}
+	
+	private enum HistoryEnding {
+		FIRST, LAST
 	}
 	
 	private List<String> atrList;
@@ -57,9 +64,10 @@ public class RCQHandler {
 			boolean ignoreConnectorUserUpdates) throws ParseException {
 
 		CQQueryDef myQD = null;
+		DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd H:m:s");
 		
 		//build not exec query.
-		log.debug("building query for record type '" + connection.getRecType() + "'");
+//		log.debug("building query for record type '" + connection.getRecType() + "'");
 		try {
 			myQD = connection.getCqs().BuildQuery(connection.getRecType());
 		} catch (CQException e) {
@@ -67,10 +75,8 @@ public class RCQHandler {
 			throw new CCFRuntimeException("problem creating a clearquest query" , e);
 		}
 		
-		// add some standard built-in fields
 		try {
 			// here we only need the ids, all other necessary info will be pulled via getEntity()
-			log.debug("Adding result fields to query");
 			myQD.BuildField("id");
 
 		} catch (CQException e) {
@@ -78,24 +84,28 @@ public class RCQHandler {
 			throw new CCFRuntimeException("problem building a query for clearquest" , e);
 		}
 		
-		// are we in the first run?
-		if ( lastSynchedArtifactId.equalsIgnoreCase("0") && lastSynchronizedVersion.equalsIgnoreCase("0") ) {
-			// no special query to define
+		try {
+			// TODO add ascending sort on id field.
+			// BOOL_OP_AND = 1
+			CQQueryFilterNode operator = myQD.BuildFilterOperator(1);
+			// COMP_OP_GT = 5, GTE = 6
+			String[] lastDate = new String[1];
+			lastDate[0] =  formatter.format(lastModifiedDate);
+					
+			operator.BuildFilter("history.action_timestamp", 5 , lastDate );
 			
-		} else {
-			// use the last modified date - 10 seconds 
-			// TODO create filter for date last modified
+		} catch (CQException e1) {
+			log.error("Could not create filter for last modified");
 		}
 		
-		
 		// finally, execute the query.
-		log.debug("executing query....");
+//		log.debug("executing query....");
 		CQResultSet results = null;
 		long numResults = 0;
 		try {
 			results = connection.getCqs().BuildResultSet(myQD);
+			results.EnableRecordCount();
 			numResults =  results.ExecuteAndCountRecords();
-			log.info("query returned " + numResults + " records");
 			
 		} catch (CQException e) {
 			log.error("problem running the query" , e);
@@ -104,21 +114,28 @@ public class RCQHandler {
 		
 		// build the result set as array of Artifact State items
 		
-		log.debug("parsing results into artifactStates");
-		int count = 1;
+//		log.debug("parsing results into artifactStates");
+		long count = 1;
+		long updates = 0;
 		try {
 			long status = results.MoveNext();
 			while ( status == 1 ) {
+				
+				String curCQId = getValueFromResultSet( results , "id" );
+				CQEntity record = connection.getCqs().GetEntity( connection.getRecType() ,  curCQId );
+				// updates won't be caught if we do not reload.
+				record.Reload();
+				RCQHistoryHelper myStory = new RCQHistoryHelper(record, connection);
+
+				Date artLastModified = myStory.GetLastModfiedDate();
+				
 				ArtifactState artState = new ArtifactState();
-				artState.setArtifactId(getValueFromResultSet( results , "id"));
-				
-				CQEntity record = connection.getCqs().GetEntity( connection.getRecType() ,  artState.getArtifactId() );
-				Date lastMod = (Date)getLastHistoryInformation(HistoryType.DATE , record, connection);
-				artState.setArtifactLastModifiedDate(lastMod);
-				artState.setArtifactVersion(lastMod.getTime());
-				
+
+				artState.setArtifactId( curCQId );
+				artState.setArtifactLastModifiedDate(artLastModified);
+				artState.setArtifactVersion(myStory.GetLastVersion());
 				artifactStates.add(artState);
-				
+				updates++;
 				// next round
 				count++;
 				status = results.MoveNext();
@@ -127,12 +144,12 @@ public class RCQHandler {
 			log.error("Problem getting data from resultset");
 			throw new CCFRuntimeException("issue getting data", e);
 		}
-		log.info("query fetched " + count + " records from clearquest");
-		log.debug("-----> Fetch Results:");
+		log.info("fetched " + (count - 1) + " records from clearquest, " + updates + " of them are updated after " + lastModifiedDate.toString());
+//		log.debug("-----> Fetch Results:");
 		
-		for ( ArtifactState aS : artifactStates ) {
-			log.debug(aS.getArtifactId() + ": last modified on " + aS.getArtifactLastModifiedDate().toLocaleString() + "; Verion: " + aS.getArtifactVersion() );
-		}
+//		for ( ArtifactState aS : artifactStates ) {
+//			log.debug(aS.getArtifactId() + ": last modified on " + aS.getArtifactLastModifiedDate().toLocaleString() + "; Verion: " + aS.getArtifactVersion() );
+//		}
 		
 		
 	}
@@ -154,89 +171,18 @@ public class RCQHandler {
 		}
 	}
 	
-	private Object getFirstHistoryInformation( HistoryType type, CQEntity record , RCQConnection connection ) throws CQException, ParseException {
-		
-		CQHistoryFields book = record.GetHistoryFields();
-		CQHistoryField story = book.ItemByName( connection.getHistoryFieldName() );
-		CQHistories chapter = story.GetHistories();
-		DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd H:m:s");
-		//FIXME ... in 89 years, this routine will break
-		Date firstModDate = (Date)formatter.parse("2100-01-01 23:59:59");
-		Boolean foundIt = false;
-		String firstUser = null;
-
-		// store info from youngest record
-		for ( int h = 1 ; h < chapter.Count() ; h++ ) {
-			CQHistory paragraph = chapter.Item(h);
-//			log.debug("paragraph: " + paragraph.GetValue() );
-			String[] parts = paragraph.GetValue().split("\t");
-			String sDate = parts[1];
-			Date date = (Date)formatter.parse(sDate);
-			if ( firstModDate.compareTo(date) > 0 ) {
-				firstModDate = date;
-				firstUser = parts[2]; 
-				foundIt = true;
-			}
-		}
-		
-		switch (type) {
-		case DATE :
-			return foundIt ? firstModDate : null;
-		case USER :
-			return foundIt ? firstUser : null;
-		}
-		
-		// supposedly never executed:-)
-		return null;
-		
-
-	}
-	
-	private Object getLastHistoryInformation( HistoryType type, CQEntity record , RCQConnection connection ) throws CQException, ParseException {
-	
-		CQHistoryFields book = record.GetHistoryFields();
-		CQHistoryField story = book.ItemByName( connection.getHistoryFieldName() );
-		CQHistories chapter = story.GetHistories();
-		DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd H:m:s");
-		Date lastModDate = (Date)formatter.parse("1960-01-01 23:59:59");
-		Boolean foundIt = false;
-		String lastUser = null;
-
-		// store info from youngest record
-		for ( int h = 1 ; h < chapter.Count() ; h++ ) {
-			CQHistory paragraph = chapter.Item(h);
-//			log.debug("paragraph: " + paragraph.GetValue() );
-			String[] parts = paragraph.GetValue().split("\t");
-			String sDate = parts[1];
-			Date date = (Date)formatter.parse(sDate);
-			if ( lastModDate.compareTo(date) < 0 ) {
-				lastModDate = date;
-				lastUser = parts[2]; 
-				foundIt = true;
-			}
-		}
-		
-		switch (type) {
-		case DATE :
-			return foundIt ? lastModDate : null;
-		case USER :
-			return foundIt ? lastUser : null;
-		}
-		
-		// supposedly never executed:-)
-		return null;
-		
-
-	}
 	
 	
-	public void getRecordData( RCQConnection connection , String recID , boolean ignoreConnectoreUserUpdates , String ccfUserName , GenericArtifact ga) {
+	public void getRecordData( RCQConnection connection , String recID , boolean ignoreConnectoreUserUpdates , Date lastModifedDate , String ccfUserName , GenericArtifact ga) throws ParseException {
 		try {
 			CQEntity myRec = connection.getCqs().GetEntity(connection.getRecType(), recID);
-			String lastModifedBy = (String)getLastHistoryInformation(HistoryType.USER, myRec, connection);
-			Date creationDate = (Date)getFirstHistoryInformation(HistoryType.DATE, myRec, connection);
-			Date lastModifedDate = (Date)getLastHistoryInformation(HistoryType.DATE, myRec, connection);
-			String revNumber = Long.toString( lastModifedDate.getTime() ); 
+			RCQHistoryHelper myStory = new RCQHistoryHelper(myRec, connection);
+			
+			String lastModifedBy = myStory.GetLastModifiedUser();
+			Date creationDate = myStory.GetCreationDate();
+			Date lastRecordModifedDate = myStory.GetLastModfiedDate();
+			// we're using the index as version
+			String revNumber = Long.toString( myStory.GetLastVersion() ); 
 			
 			boolean isResync = false;
 			boolean isIgnore =false;
@@ -244,77 +190,69 @@ public class RCQHandler {
 			// identify if we|re getting a resync done by our ccf user
 			if ( lastModifedBy.equalsIgnoreCase(ccfUserName) && ignoreConnectoreUserUpdates ) {
 				if (creationDate.after(lastModifedDate)) {
-						// as we fetch BOTH dates from the same pool of histories, 
-						// creationDate will be always BEFORE or EQUAL lastModfiedDate
-						log.debug("I SHOULD NOT BE HERE");
-	//					log.info(String
-	//						.format("resync is necessary, despite the artifact %s last being updated by the connector user",
-	//								artifactId));				
-						isResync = true;
-					} else {
-						log.info(String
-								.format("artifact %s is a connector update, ignore it.",
-										recID));
-						isIgnore = true;
-					}
+					log.info(String
+							.format("resync is necessary, despite the artifact %s last being updated by the connector user",
+									recID));				
+					isResync = true;
+				} else {
+					log.info(String
+							.format("artifact %s is a connector update, ignore it.",
+									recID));
+					isIgnore = true;
+				}
 			}
 			
-			// TODO iterate over all field values
-			// for now, only use title, description (defined in getAtrList() )
-			for ( String f : getAtrList()) {
+			GenericArtifactField gaField = null;
+			String[] allFields = myRec.GetFieldNames();
+			for ( String f : allFields ) {
 				String value =  myRec.GetFieldValue(f).GetValue();
-				GenericArtifactField gaField = ga.addNewField(f , 
+				boolean isEmpty = value.isEmpty();
+				gaField = ga.addNewField(f , 
 						"mandatoryField" );
 				gaField.setFieldValueType( RCQMetaData.getFieldType( myRec.GetFieldType(f) ) );
 				gaField.setFieldAction( FieldActionValue.REPLACE );
-				gaField.setFieldValue(value);
+				if ( isEmpty  ) {
+					// FIXME: this has to be checked by xslt
+					gaField.setFieldValue("EMPTY VALUE OF FIELD '" + f + "'"); 
+				} else {
+					gaField.setFieldValue(value);
+				}
 			}
-
+			
 			if ( isIgnore ) {
 				ga.setArtifactAction( ArtifactActionValue.IGNORE );
+				log.debug("encountered IGNORE for " + recID );
 			} else {
 				if ( isResync ) {
 					// we're not getting here...
 					ga.setArtifactAction(ArtifactActionValue.RESYNC);
+					log.debug("encountered RESYNC for " + recID );
 				}
 				
 				// TODO: fetch the comments 
 			}
 			
-			ga.setSourceArtifactLastModifiedDate(GenericArtifactHelper.df.format(lastModifedDate));
+			ga.setSourceArtifactLastModifiedDate(GenericArtifactHelper.df.format(lastRecordModifedDate));
 			ga.setSourceArtifactVersion(revNumber);
-
+			log.debug("Artifact requested: " + recID);
+			
 			
 		} catch (CQException e) {
 			String cause = "Could not retrieve record with ID = " + recID + " of type " +  connection.getRecType();
 			log.error(cause, e);
 			throw new CCFRuntimeException(cause);
-		} catch (ParseException e) {
-			String cause = "Could not get last modifying user for ID " + recID + " of type " +  connection.getRecType();
-			log.error(cause, e);
-			throw new CCFRuntimeException(cause);
 		}
 		
 	}
-	
 	// workitem is a tfs type, here we need the generic CQ object type
 	public CQEntity createRecord(GenericArtifact ga, RCQConnection connection) {
-		// TODO Auto-generated method stub
+		// TODO Reader: create Record in cq
 		return null;
 	}
 
 	public CQEntity updateRecord(GenericArtifact ga, RCQConnection connection) {
-		// TODO Auto-generated method stub
+		// TODO Reader: update Record in cq
 		return null;
 	}
 
-
-	private List<String> getAtrList() {
-		List<String> l = new ArrayList<String>();
-		l.add("id");
-		l.add("Description");
-		l.add("Headline");
-		return l;
-	}
-	
 }
