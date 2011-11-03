@@ -737,7 +737,7 @@ public class QCHandler {
 		IBug bug = null;
 		try {
 			bugFactory = qcc.getBugFactory();
-			bug = bugFactory.addItem("Defect created by Connector");
+			bug = bugFactory.addItem(null);
 			bug.lockObject();
 			List<String> allFieldNames = new ArrayList<String>();
 			String fieldValue = null;
