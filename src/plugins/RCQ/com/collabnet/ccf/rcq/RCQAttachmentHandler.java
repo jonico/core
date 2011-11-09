@@ -1,14 +1,22 @@
 package com.collabnet.ccf.rcq;
 
+import java.io.File;
+import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import javax.activation.MimetypesFileTypeMap;
+
 import com.rational.clearquest.cqjni.*;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.collabnet.ccf.core.ga.AttachmentMetaData;
 import com.collabnet.ccf.core.ga.GenericArtifact;
+import com.collabnet.ccf.core.ga.GenericArtifactField;
+import com.collabnet.ccf.core.utils.DateUtil;
+import com.collabnet.ccf.pi.qc.v90.api.dcom.Attachment;
 import com.collabnet.ccf.tfs.TFSAttachmentHandler;
 
 public class RCQAttachmentHandler {
@@ -23,7 +31,10 @@ public class RCQAttachmentHandler {
 			long maxAttachmentSizePerArtifact,
 			boolean shouldShipAttachmentsWithArtifact,
 			GenericArtifact artifactData)  {
-		
+
+		// return object
+		List<GenericArtifact> attachmentGAs = new ArrayList<GenericArtifact>();
+
 		// iterate over all artifacts
 		for ( String art : artifactList ) {
 			
@@ -43,6 +54,90 @@ public class RCQAttachmentHandler {
 				for ( long a = 0 ; a < allAttachments.Count() ; a++ ) {
 					CQAttachment attachment = allAttachments.Item(a);
 					log.debug("   #" + a + ": " + attachment.GetFileName());
+					String fileName = attachment.GetFileName();
+					Long fileSize = attachment.GetFileSize();
+					
+					if ( fileSize > maxAttachmentSizePerArtifact ) {
+						log.warn( "attachment size " + fileSize + " exceeds maximum size " + maxAttachmentSizePerArtifact);
+						continue;
+					}
+
+					// TODO: check the user  (if ccfUser, skip it)
+					
+					// TODO: should we and if zes, how can we identify the date of an attachment?
+					GenericArtifact ga = new GenericArtifact();
+					ga.setIncludesFieldMetaData(GenericArtifact.IncludesFieldMetaDataValue.FALSE);
+					ga.setArtifactAction(GenericArtifact.ArtifactActionValue.CREATE);
+					ga.setArtifactMode(GenericArtifact.ArtifactModeValue.CHANGEDFIELDSONLY);
+					ga.setArtifactType(GenericArtifact.ArtifactTypeValue.ATTACHMENT);
+					ga.setDepParentSourceArtifactId(art);
+					// 
+					ga.setSourceArtifactId( art + ":" + attachment.GetFileName() );
+
+					
+					if ( artifactData != null ) {
+						ga.setSourceArtifactVersion( artifactData.getSourceArtifactVersion() );
+						ga.setSourceArtifactLastModifiedDate( artifactData.getSourceArtifactLastModifiedDate() );
+					} else {
+						ga.setSourceArtifactVersion( "1" );
+						// FIXME is this clever??
+						ga.setSourceArtifactLastModifiedDate(DateUtil.format(lastModifiedDate));
+						
+					}
+					
+					// now add field infos
+					
+					GenericArtifactField contentTypeField = ga.addNewField( 
+							AttachmentMetaData.ATTACHMENT_TYPE , 
+							GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD );
+					
+					contentTypeField.setFieldValue( AttachmentMetaData.AttachmentType.DATA );
+					contentTypeField.setFieldAction( GenericArtifactField.FieldActionValue.REPLACE );
+					contentTypeField.setFieldValueType( GenericArtifactField.FieldValueTypeValue.STRING );
+ 
+					GenericArtifactField nameField = ga.addNewField(
+							AttachmentMetaData.ATTACHMENT_NAME,
+							GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
+					nameField.setFieldValue(attachment.GetFileName());
+					nameField.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
+					nameField.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
+
+					GenericArtifactField sizeField = ga.addNewField(
+							AttachmentMetaData.ATTACHMENT_SIZE,
+							GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
+					sizeField.setFieldValue( attachment.GetFileSize() );
+					sizeField.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
+					sizeField.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
+
+					GenericArtifactField mimeTypeField = ga.addNewField(
+							AttachmentMetaData.ATTACHMENT_MIME_TYPE,
+							GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
+					mimeTypeField.setFieldValue( new  MimetypesFileTypeMap().getContentType(attachment.GetFileName()));
+					mimeTypeField.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
+					mimeTypeField.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
+
+
+					byte[] attachmentData = null;
+					
+					// save the file into a temporary directory
+					File tempFile = null;
+					try {
+						tempFile = File.createTempFile( art + "_attachment_" + a + "_" + attachment.GetFileName(),"rcq");
+					} catch (IOException e) {
+						log.error("Could not create temporary attachment file" , e);
+					}
+					String attachmentDataFile = tempFile.getAbsolutePath();
+					// this is the actual file save operation
+					attachment.Load(attachmentDataFile);
+					
+					GenericArtifactField attachmentDataFileField = ga
+							.addNewField(AttachmentMetaData.ATTACHMENT_DATA_FILE , 
+									GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD );
+					attachmentDataFileField.setFieldValueType( GenericArtifactField.FieldValueTypeValue.STRING );
+					attachmentDataFileField.setFieldValue(attachmentDataFile);
+					attachmentDataFileField.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
+		
+					attachmentGAs.add(ga);
 				}
 			} catch (CQException e) {
 				// TODO Auto-generated catch block
@@ -55,7 +150,9 @@ public class RCQAttachmentHandler {
 		}
 	
 		
-		return new ArrayList<GenericArtifact>();
+		return attachmentGAs;
 	}
+	
+	
 	
 }

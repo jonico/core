@@ -75,11 +75,12 @@ public class RCQReader extends AbstractReader<RCQConnection> {
 				this.getMaxAttachmentSizePerArtifact() , 
 				this.isShipAttachmentsWithArtifact() , 
 				artifactData);
-//		} catch (RemoteException e) {
-//			log.error("Error getting attachments for record id " + artifactId, e);
-//		}
+		for ( GenericArtifact attachment : attachments ) {
+			populateSrcAndDestForAttachment(syncInfo, attachment);
+		}
+
 		
-		// currently disabled
+		// TODO close the connection to avoid overflow bug "after a while"
 		return attachments;
 	}
 
@@ -330,6 +331,36 @@ public class RCQReader extends AbstractReader<RCQConnection> {
 			exceptions.add(new ValidationException(
 					"Could not initialize RCQHandler", this));
 		}
+	}
+	private void populateSrcAndDestForAttachment(Document syncInfo,
+			GenericArtifact ga) {
+		
+		String sourceRepositoryId = this.getSourceRepositoryId(syncInfo);
+		String sourceRepositoryKind = this.getSourceRepositoryKind(syncInfo);
+		String sourceSystemId = this.getSourceSystemId(syncInfo);
+		String sourceSystemKind = this.getSourceSystemKind(syncInfo);
+
+		String targetRepositoryId = this.getTargetRepositoryId(syncInfo);
+		String targetRepositoryKind = this.getTargetRepositoryKind(syncInfo);
+		String targetSystemId = this.getTargetSystemId(syncInfo);
+		String targetSystemKind = this.getTargetSystemKind(syncInfo);
+
+		ga.setSourceRepositoryId(sourceRepositoryId);
+		ga.setSourceRepositoryKind(sourceRepositoryKind);
+		ga.setSourceSystemId(sourceSystemId);
+		ga.setSourceSystemKind(sourceSystemKind);
+
+		ga.setDepParentSourceRepositoryId(sourceRepositoryId);
+		ga.setDepParentSourceRepositoryKind(sourceRepositoryKind);
+
+		ga.setTargetRepositoryId(targetRepositoryId);
+		ga.setTargetRepositoryKind(targetRepositoryKind);
+		ga.setTargetSystemId(targetSystemId);
+		ga.setTargetSystemKind(targetSystemKind);
+
+		ga.setDepParentTargetRepositoryId(targetRepositoryId);
+		ga.setDepParentTargetRepositoryKind(targetRepositoryKind);
+		
 	}
 
 	public void setIgnoreConnectorUserUpdates(boolean ignoreConnectorUserUpdates) {
