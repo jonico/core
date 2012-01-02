@@ -96,7 +96,7 @@
 		<manifest file="build/MANIFEST.MF">
 			<section name="CCF">
 				<attribute name="Implementation-Title" value="CollabNet Connector Framework" />
-				<attribute name="Implementation-Version" value="2.0.0-${env.BUILD_NUMBER}" />
+				<attribute name="Implementation-Version" value="2.0.1-${env.BUILD_NUMBER}" />
 				<attribute name="Build-Date" value="${now}" />
 				<attribute name="SVN-Revision" value="${env.SVN_REVISION}" />
 				<attribute name="Implementation-Vendor" value="CollabNet" />
@@ -418,7 +418,7 @@
 	<target name="deployHudson" depends="cleanup,buildHudson">
 		<property environment="env" />
 		<mkdir dir="deploy" />
-		<zip destfile="deploy/CollabNet Connector Framework-2.0.0-${env.BUILD_NUMBER}.zip">
+		<zip destfile="deploy/CollabNet Connector Framework-2.0.1-${env.BUILD_NUMBER}.zip">
 			<zipfileset dir="build/package" filemode="755">
 				<include name="**/*.sh"/>
 				<include name="**/wrapper"/>
@@ -439,6 +439,6 @@
 		<exec executable="${env.NSIS_PATH}\makensis.exe">
 			<arg value="installer\CollabNet Connector Framework.nsi" />
 		</exec>
-		<move file="installer\CollabNet Connector Framework-2.0.0-win32.exe" tofile="production_installer\Collabnet Connector Framework-1.5.1-win32.exe" />
+		<move file="installer\CollabNet Connector Framework-2.0.1-win32.exe" tofile="production_installer\Collabnet Connector Framework-1.5.1-win32.exe" />
 	</target>
 </project>
