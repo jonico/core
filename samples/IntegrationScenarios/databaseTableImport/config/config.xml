@@ -1,0 +1,249 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 
+$Author$
+$HeadURL$
+ -->
+ 
+<!--
+ Copyright 2009 CollabNet, Inc. ("CollabNet")
+
+ Licensed under the Apache License, Version 2.0 (the "License");
+ you may not use this file except in compliance with the License.
+ You may obtain a copy of the License at
+
+ http://www.apache.org/licenses/LICENSE-2.0
+ 
+ Unless required by applicable law or agreed to in writing, software
+ distributed under the License is distributed on an "AS IS" BASIS,
+ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ See the License for the specific language governing permissions and
+ limitations under the License.
+-->
+
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
+	<description><![CDATA[
+  This integration scenario demonstrated the capability of CCF
+  to import artifacts data from a database table into an TF tracker.
+
+1. Configuring the TF tracker information	
+	Change the TF SOAP server URL and password in the config/sfee.properties
+	file as shown below.
+	sfee.server.1.url=<TF SOAP server URL>
+	sfee.server.1.username=<connector user>
+	sfee.server.1.password=<connector user's password>
+
+2. Configuring the ARTIFACTS table
+	The table that contains the artifacts are configured in this file
+	as
+	<bean id="DatabaseTableReader"
+		class="org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector">
+		<description>
+			This is the JDBC read connector used by the SynchronizationStatusPollingReader to read the
+			repository mapping and the synchronization info.
+		</description>
+		<property name="jdbcConnection" ref="JdbcConnection" />
+		<property name="batchSize" value="1" />
+		<property name="resultSetConverter" ref="ResultSetConverter" />
+		<property name="sql">
+			<value>SELECT * FROM ARTIFACTS</value>
+		</property>
+	</bean>
+	
+	This configuration snippet configures the table ARTIFACTS as the source of the
+	artifacts data. If you intend to change the table name edit the sql property
+	as SELECT * FROM <ARTIFACT_TABLE>
+
+3. Mapping database fields to TF tracker fields
+	This is done in the XSLT file xslt/record2GenericArtifact.xsl
+	Change the field names in the template according to the 
+	field names in the database table and the TF tracker.
+
+4. Please note that this integration scenario currently does not support
+	a) importing multi-select field values.
+		Mutiselect field values will not be imported properly if there are
+		more than one field values are configured in the database table.
+	b) attachments import.
+
+5. Limitations
+	a) The COMMENT_TEXT in the database table is configured as CHAR(256)
+	So you may not be able to import larger comments.
+  ]]></description>
+
+	<bean id="SystemPropertyConfigurer"
+		class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+		<property name="ignoreResourceNotFound" value="false" />
+		<property name="systemPropertiesMode">
+			<bean
+				id="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer.SYSTEM_PROPERTIES_MODE_OVERRIDE"
+				class="org.springframework.beans.factory.config.FieldRetrievingFactoryBean" />
+		</property>
+		<property name="locations">
+			<description>
+				Properties configured in these property files will be imported into the wiring file.
+				The file ccf.properties contains the properties for the CCF core components.
+				sfee.properties file contains the properties for the TF plugin classes.
+			</description>
+			<list>
+				<value>classpath:ccf.properties</value>
+				<value>classpath:sfee.properties</value>
+			</list>
+		</property>
+	</bean>
+	<bean id="DatabaseTableImport" class="org.openadaptor.core.adaptor.Adaptor">
+		<property name="messageProcessor" ref="Router" />
+	</bean>
+
+	<bean id="Router" class="org.openadaptor.core.router.Router">
+		<description>
+			The processMap property of this Router bean configures the processors
+			that are wired together to ship the artifacts from the source repository
+			to the target repository.
+		</description>
+		<property name="processMap">
+			<map>
+				<entry key-ref="ExceptionConvertor" value-ref="HospitalWriter"/>
+				<entry key-ref="DatabaseTableReader" value-ref="Transformer" />
+				<entry key-ref="Transformer" value-ref="TFWriter" />
+			</map>
+		</property>
+<!--		<property name="exceptionProcessor" ref="ExceptionHandler" />-->
+			<property name="exceptionProcessor" ref="ExceptionConvertor"/><property name="metricsEnabled" value="true"/>
+	</bean>
+	
+	<bean id="ExceptionConvertor" class="com.collabnet.ccf.core.hospital.CCFExceptionToOrderedMapConvertor"><property name="logMessageTemplate" value="${ccf.logMessageTemplate}" /><property name="timestampFormat" value="yyyy-MM-dd HH:mm:ss zzz"/><property name="onlyQuarantineGenericArtifacts" value="true"/>
+		<property name="adaptor" ref="DatabaseTableImport"/>
+	</bean>
+	
+	<bean id="HospitalWriter" class="org.openadaptor.auxil.connector.jdbc.writer.JDBCWriteConnector">
+		<property name="jdbcConnection" ref="HospitalJDBCConnection" />
+		<property name="writer">
+		<bean
+			class="org.openadaptor.auxil.connector.jdbc.writer.map.MapTableWriter">
+			<property name="tableName" value="HOSPITAL" />
+		</bean>
+		</property>
+	</bean>
+	
+	<bean id="HospitalJDBCConnection"
+		class="com.collabnet.ccf.core.db.JDBCConnection" scope="prototype">
+		<description>
+			This defines jdbc connection that will be used by the
+			HospitalWriter
+		</description>
+		<property name="driver" value="${ccf.db.driver}" />
+		<property name="url" value="${ccf.db.url}" />
+		<property name="username" value="${ccf.db.username}" />
+		<property name="password" value="${ccf.db.password}" />
+	</bean>
+	
+	<bean id="Transformer"
+		class="com.collabnet.ccf.core.transformer.XsltProcessor">
+		<description>
+			This transformer transforms the database xml output records into
+			Generic Artifact xml documents and feeds them to the EntityService.
+		</description>
+		<property name="xsltFile" value="${ccf.xsltFile}" />
+	</bean>
+	<bean id="DatabaseTableReader"
+		class="org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector">
+		<description>
+			This is the JDBC read connector used by the SynchronizationStatusPollingReader to read the
+			repository mapping and the synchronization info.
+		</description>
+		<property name="jdbcConnection" ref="JdbcConnection" />
+		<property name="batchSize" value="1" />
+		<property name="resultSetConverter" ref="SynchronizationStatusXMLConverter" />
+		<property name="sql">
+			<value>SELECT * FROM ARTIFACTS</value>
+		</property>
+	</bean>
+	<bean id="JdbcConnection"
+		class="com.collabnet.ccf.core.db.JDBCConnection" scope="prototype">
+		<description>
+			This defines jdbc connection that will be used by the
+			SynchronizationStatusPollingReader
+		</description>
+		<property name="driver" value="${ccf.db.driver}" />
+		<property name="url" value="${ccf.db.url}" />
+		<property name="username" value="${ccf.db.username}" />
+		<property name="password" value="${ccf.db.password}" />
+	</bean>
+
+	<bean id="SynchronizationStatusXMLConverter"
+		class="org.openadaptor.auxil.connector.jdbc.reader.xml.ResultSetToXMLConverter">
+		<description>
+			Converts the synchronization info in the database into XML sync info
+			document.
+		</description>
+		<property name="convertToString" value="false" />
+		<property name="rootElement" value="record" />
+	</bean>
+	
+	<bean id="TFConnectionManager"
+		class="com.collabnet.ccf.core.eis.connection.ConnectionManager">
+		<description>
+			The connection manager implements a connection pooling mechanism where the 
+			connections to multiple systems are cached for the readers and writers
+			to retrieve when needed. Before returning the connection to the client
+			the connection manager checks if the connection is live and only returns 
+			valid connections.
+			It assigns and manages one pool per repository.
+		</description>
+		<property name="maxConnectionsPerPool" value="5"></property>
+		<property name="maxIdleTimeForConnection" value="600000" />
+		<property name="scavengerInterval" value="120000"></property>
+		<property name="connectionFactory" ref="TFConnectionFactory"></property>
+	</bean>
+	<bean id="TFConnectionFactory"
+		class="com.collabnet.ccf.pi.sfee.v44.SFEEConnectionFactory">
+		<description>
+			This bean is an implementation of the com.collabnet.ccf.core.eis.connection.ConnectionFactory
+			interface. It is responsible to create and close an connection for a given
+			repository.
+			In this case TFConnectionFactory manages com.collabnet.ccf.pi.sfee.v44.Connection
+			objects.
+		</description>
+	</bean>
+	<bean id="TFWriter"
+		class="com.collabnet.ccf.pi.sfee.v44.SFEEWriter">
+		<description>
+			This data processor is responsible for writing the artifacts coming from the
+			EntitySerive into the target TF system.
+			It converts/extracts the data from the Generic Artifact XML and pushes to the
+			target TF system.
+		</description>
+		<property name="username" value="${sfee.server.1.username}" />
+		<property name="password" value="${sfee.server.1.password}" />
+		<property name="serverUrl"
+			value="${sfee.server.1.url}" />
+		<property name="updateComment"
+			value="Synchronized by Connector user" />
+		<property name="connectionManager" ref="TFConnectionManager"></property>
+	</bean>
+	<bean id="JDBCConnection"
+		class="com.collabnet.ccf.core.db.JDBCConnection" scope="prototype">
+		<description>
+			This defines a jdbc connection that will be used by the
+			IndentityMappingDatabaseReader, IdentityMappingDatabaseReader and
+			IdentityMappingDatabaseInserter
+		</description>
+		<property name="driver" value="${ccf.db.driver}" />
+		<property name="url" value="${ccf.db.url}" />
+		<property name="username" value="${ccf.db.username}" />
+		<property name="password" value="${ccf.db.password}" />
+	</bean>
+	<!--<bean id="ExceptionHandler" class="com.collabnet.ccf.core.hospital.Ambulance">
+		<description>
+			The ambulance class catches all the exceptions that are thrown and not caught
+			by any of the components in the pipe and logs the infromation such as the component
+			that threw this exception and the input Generic Artifact xml document or the
+			sync info db xml document.
+		</description>
+  		<property name="hospitalFileName" value="${ccf.hospital.file}"/>
+  		<property name="artifactsDirectory" value="${ccf.hospital.artifacts.directory}"></property>
+  	</bean>
+-->
+</beans>
