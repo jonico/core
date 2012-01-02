@@ -17,6 +17,7 @@
 
 package com.collabnet.ccf.core;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -59,10 +60,13 @@ import com.collabnet.ccf.core.utils.DateUtil;
  * The process method implements the streaming logic.
  * 
  * @author madhusuthanan (madhusuthanan@collab.net)
+ * @author Johannes Nicolai (jnicolai@collab.net)
  * 
  */
 public abstract class AbstractReader<T> extends Component implements
 		IDataProcessor {
+	private static final String FIELD_MAPPING_LANDSCAPE_DIRECTORY = "landscape";
+	private static final String FIELD_MAPPING_CORE_DIRECTORY = "core";
 	private static final String TARGET_SYSTEM_ENCODING = "//TARGET_SYSTEM_ENCODING | //target_system_encoding";
 	private static final String SOURCE_SYSTEM_ENCODING = "//SOURCE_SYSTEM_ENCODING | //source_system_encoding";
 	private static final String TARGET_SYSTEM_TIMEZONE = "//TARGET_SYSTEM_TIMEZONE | //target_system_timezone";
@@ -79,6 +83,14 @@ public abstract class AbstractReader<T> extends Component implements
 	private static final String LAST_SOURCE_ARTIFACT_ID = "//LAST_SOURCE_ARTIFACT_ID | //last_source_artifact_id";
 	private static final String LAST_SOURCE_ARTIFACT_VERSION = "//LAST_SOURCE_ARTIFACT_VERSION | //last_source_artifact_version";
 	private static final String LAST_SOURCE_ARTIFACT_MODIFICATION_DATE = "//LAST_SOURCE_ARTIFACT_MODIFICATION_DATE | //last_source_artifact_modification_date";
+	private static final String FIELD_MAPPING_SCOPE = "//FIELD_MAPPING_SCOPE | //field_mapping_scope";
+	private static final String FIELD_MAPPING_KIND = "//FIELD_MAPPING_KIND | //field_mapping_kind";
+	private static final String FIELD_MAPPING_NAME = "//FIELD_MAPPING_NAME | //field_mapping_name";
+	private static final String REPOSITORY_MAPPING_DIRECTION_ID = "//REPOSITORY_MAPPING_DIRECTION_ID | //repository_mapping_direction_id";
+	private static final String REPOSITORY_MAPPING_ID = "//REPOSITORY_MAPPING_ID | //repository_mapping_id";
+	private static final String EXTERNAL_APP_LINK_ID = "//EXTERNAL_APP_LINK_ID | //external_app_link_id";
+	private static final String REPOSITORY_MAPPING_DIRECTION_DIRECTION = "//REPOSITORY_MAPPING_DIRECTION_DIRECTION | //repository_mapping_direction_direction";
+
 	private static final Log log = LogFactory.getLog(AbstractReader.class);
 	private HashMap<String, RepositoryRecord> repositoryRecordHashMap = null;
 	private ArrayList<RepositoryRecord> repositorySynchronizationWaitingList = null;
@@ -131,6 +143,12 @@ public abstract class AbstractReader<T> extends Component implements
 
 	// used for the polling hospital
 	private JDBCReadConnector hospitalDatabaseReader = null;
+
+	/**
+	 * This field determines whether the reader component is used within a CCF
+	 * 2.x process Defaults to false
+	 */
+	private boolean isCCF2xProcess = false;
 
 	/**
 	 * Gets the (optional) data base reader that is used to poll quarantined
@@ -196,10 +214,10 @@ public abstract class AbstractReader<T> extends Component implements
 			}
 		}
 	}
-	
+
 	/**
-	 * Returns the currently processed sync info of the
-	 * synchronization status record in question
+	 * Returns the currently processed sync info of the synchronization status
+	 * record in question
 	 * 
 	 * @param sourceSystemId
 	 *            source system id
@@ -249,7 +267,8 @@ public abstract class AbstractReader<T> extends Component implements
 					if (list != null) {
 						number += list.size();
 					}
-					List<GenericArtifact> shippedList = record.getArtifactsToBeShippedList();
+					List<GenericArtifact> shippedList = record
+							.getArtifactsToBeShippedList();
 					if (shippedList != null) {
 						number += shippedList.size();
 					}
@@ -373,9 +392,7 @@ public abstract class AbstractReader<T> extends Component implements
 		}
 		if (!repositoryRecordsInRepositorySynchronizationWaitingList
 				.contains(repositoryKey)) {
-			log
-					.debug(repositoryKey
-							+ " is not on the waiting list. Adding....");
+			log.debug(repositoryKey + " is not on the waiting list. Adding....");
 			repositorySynchronizationWaitingList.add(0, record);
 			repositoryRecordsInRepositorySynchronizationWaitingList
 					.add(repositoryKey);
@@ -444,10 +461,9 @@ public abstract class AbstractReader<T> extends Component implements
 							+ " is up to date again ...");
 					return new Object[] {};
 				}
-				log
-						.debug("There are no artifacts to be read. Checking if there are"
-								+ " changed artifacts in repository or in hospital for "
-								+ currentRecord.getRepositoryId());
+				log.debug("There are no artifacts to be read. Checking if there are"
+						+ " changed artifacts in repository or in hospital for "
+						+ currentRecord.getRepositoryId());
 				// all our buffers are flushed, we take new syncInfo now
 				currentRecord.switchToNewSyncInfo();
 				syncInfo = currentRecord.getSyncInfo();
@@ -463,9 +479,8 @@ public abstract class AbstractReader<T> extends Component implements
 							.getMaximumRetryWaitingTime();
 					try {
 						if (log.isDebugEnabled()) {
-							log
-									.debug("Retrieving artifacts that have been changed for sync record "
-											+ syncInfo.asXML());
+							log.debug("Retrieving artifacts that have been changed for sync record "
+									+ syncInfo.asXML());
 						}
 						artifactsToBeRead = this
 								.getChangedArtifactsFromHospitalAndRepository(syncInfo);
@@ -477,9 +492,8 @@ public abstract class AbstractReader<T> extends Component implements
 						if (!connectionException) {
 							retry = false;
 							// remove repository record from list again
-							log
-									.debug("Temporarily removing "
-											+ "from waiting list since an exception occured.");
+							log.debug("Temporarily removing "
+									+ "from waiting list since an exception occured.");
 							removeFromWaitingList(currentRecord);
 							if (e instanceof CCFRuntimeException) {
 								throw (CCFRuntimeException) e;
@@ -493,10 +507,9 @@ public abstract class AbstractReader<T> extends Component implements
 							retry = true;
 							if (numberOfTries == 1) {
 								// first try, long error message
-								log
-										.warn(
-												"Network related problem occurred while connecting to external system. Try operation again",
-												e);
+								log.warn(
+										"Network related problem occurred while connecting to external system. Try operation again",
+										e);
 							} else if (msToSleep < maxMsToSleep) {
 								// error occurred again, short error message, go
 								// to sleep
@@ -505,33 +518,28 @@ public abstract class AbstractReader<T> extends Component implements
 								// have to revisit this decision later
 								// int timeOut = (int) Math.pow(2,
 								// numberOfTries);
-								log
-										.warn("Network related error occurred again ("
-												+ e.getMessage()
-												+ "), incremented timeout, now sleeping for "
-												+ msToSleep + " milliseconds.");
+								log.warn("Network related error occurred again ("
+										+ e.getMessage()
+										+ "), incremented timeout, now sleeping for "
+										+ msToSleep + " milliseconds.");
 								try {
 									Thread.sleep(msToSleep);
 								} catch (InterruptedException e1) {
-									log
-											.error(
-													"Interrupted sleep in timeout method: ",
-													e1);
+									log.error(
+											"Interrupted sleep in timeout method: ",
+											e1);
 								}
 							} else {
-								log
-										.warn("Network related error occurred again, switched to maximum waiting time ("
-												+ e.getMessage()
-												+ "), sleeping for "
-												+ maxMsToSleep
-												+ " milliseconds.");
+								log.warn("Network related error occurred again, switched to maximum waiting time ("
+										+ e.getMessage()
+										+ "), sleeping for "
+										+ maxMsToSleep + " milliseconds.");
 								try {
 									Thread.sleep(maxMsToSleep);
 								} catch (InterruptedException e1) {
-									log
-											.error(
-													"Interrupted sleep in timeout method: ",
-													e1);
+									log.error(
+											"Interrupted sleep in timeout method: ",
+											e1);
 								}
 							}
 						}
@@ -556,17 +564,15 @@ public abstract class AbstractReader<T> extends Component implements
 				List<GenericArtifact> sortedGAs = null;
 				if (artifactState.isReplayedArtifact()) {
 					sortedGAs = new ArrayList<GenericArtifact>();
-					log
-							.debug("Parsing quarantined artifact with transaction id "
-									+ artifactState.getTransactionId());
+					log.debug("Parsing quarantined artifact with transaction id "
+							+ artifactState.getTransactionId());
 					try {
 						GenericArtifact replayedArtifact = GenericArtifactHelper
 								.createGenericArtifactJavaObject(DocumentHelper
 										.parseText(artifactState
 												.getReplayedArtifactData()));
-						log
-								.debug("Successfully parsed quarantined artifact with transaction id "
-										+ artifactState.getTransactionId());
+						log.debug("Successfully parsed quarantined artifact with transaction id "
+								+ artifactState.getTransactionId());
 						// reset error code and transaction id
 						replayedArtifact.setErrorCode(artifactState
 								.getErrorCode());
@@ -598,11 +604,9 @@ public abstract class AbstractReader<T> extends Component implements
 							GenericArtifact artifactData = this
 									.getArtifactData(syncInfo, artifactId);
 							if (artifactData != null) {
-								log
-										.debug("Finding out whether artifact data is stale ...");
+								log.debug("Finding out whether artifact data is stale ...");
 								if (isArtifactStale(artifactState, artifactData)) {
-									log
-											.debug("Artifact data is stale, pick up in next update cycle ...");
+									log.debug("Artifact data is stale, pick up in next update cycle ...");
 									sortedGAs = new ArrayList<GenericArtifact>();
 								} else {
 									List<GenericArtifact> artifactAttachments = new ArrayList<GenericArtifact>();
@@ -619,7 +623,8 @@ public abstract class AbstractReader<T> extends Component implements
 														syncInfo, artifactId);
 									} catch (Exception e) {
 										// if this is a connection exception, we
-										// will retry, otherwise, we will proceed
+										// will retry, otherwise, we will
+										// proceed
 										// with a warning
 										boolean connectionException = connectionManager
 												.isUseStandardTimeoutHandlingCode()
@@ -629,10 +634,9 @@ public abstract class AbstractReader<T> extends Component implements
 											// this will trigger a retry
 											throw e;
 										} else {
-											log
-													.warn("Could not retrieve all attachments/dependencies for artifact "
-															+ artifactId
-															+ ". Only plain artifact is synchronized ...");
+											log.warn("Could not retrieve all attachments/dependencies for artifact "
+													+ artifactId
+													+ ". Only plain artifact is synchronized ...");
 										}
 									}
 
@@ -641,9 +645,8 @@ public abstract class AbstractReader<T> extends Component implements
 											artifactDependencies);
 								}
 							} else {
-								log
-										.debug("No artifact data has been retrieved for id "
-												+ artifactState.getArtifactId());
+								log.debug("No artifact data has been retrieved for id "
+										+ artifactState.getArtifactId());
 								sortedGAs = new ArrayList<GenericArtifact>();
 							}
 							retry = false;
@@ -683,40 +686,33 @@ public abstract class AbstractReader<T> extends Component implements
 									// have to revisit this decision later
 									// int timeOut = (int) Math.pow(2,
 									// numberOfTries);
-									log
-											.warn("Network related error for artifact "
-													+ artifactState
-															.getArtifactId()
-													+ " occurred again ("
-													+ e.getMessage()
-													+ "), incremented timeout, now sleeping for "
-													+ msToSleep
-													+ " milliseconds.");
+									log.warn("Network related error for artifact "
+											+ artifactState.getArtifactId()
+											+ " occurred again ("
+											+ e.getMessage()
+											+ "), incremented timeout, now sleeping for "
+											+ msToSleep + " milliseconds.");
 									try {
 										Thread.sleep(msToSleep);
 									} catch (InterruptedException e1) {
-										log
-												.error(
-														"Interrupted sleep in timeout method: ",
-														e1);
+										log.error(
+												"Interrupted sleep in timeout method: ",
+												e1);
 									}
 								} else {
-									log
-											.warn("Network related error for artifact "
-													+ artifactState
-															.getArtifactId()
-													+ " occurred again, switched to maximum waiting time ("
-													+ e.getMessage()
-													+ "), sleeping for "
-													+ maxMsToSleep
-													+ " milliseconds.");
+									log.warn("Network related error for artifact "
+											+ artifactState.getArtifactId()
+											+ " occurred again, switched to maximum waiting time ("
+											+ e.getMessage()
+											+ "), sleeping for "
+											+ maxMsToSleep
+											+ " milliseconds.");
 									try {
 										Thread.sleep(maxMsToSleep);
 									} catch (InterruptedException e1) {
-										log
-												.error(
-														"Interrupted sleep in timeout method: ",
-														e1);
+										log.error(
+												"Interrupted sleep in timeout method: ",
+												e1);
 									}
 								}
 							}
@@ -765,22 +761,18 @@ public abstract class AbstractReader<T> extends Component implements
 		}
 		try {
 			if (isRestartConnector()) {
-				log
-						.debug("All buffers are flushed now ..., exit with exit code "
-								+ RESTART_EXIT_CODE);
+				log.debug("All buffers are flushed now ..., exit with exit code "
+						+ RESTART_EXIT_CODE);
 				ShutDownCCF.exitCCF(RESTART_EXIT_CODE);
 			} else if (isShutDownConnector()) {
-				log
-						.debug("All buffers are flushed now ..., exit with exit code " + 0);
+				log.debug("All buffers are flushed now ..., exit with exit code " + 0);
 				ShutDownCCF.exitCCF(0);
 			} else if (connectorHasReadAllInitialSynchronizationStatusRecords) {
 				if (isShutdownCCFAfterInitialSync()) {
-					log
-							.info("All repositories are in synch at this time, shutting down");
+					log.info("All repositories are in synch at this time, shutting down");
 					setShutDownConnector(true);
 				} else {
-					log
-							.debug("There are no artifacts to be shipped from any of the repositories. Sleeping");
+					log.debug("There are no artifacts to be shipped from any of the repositories. Sleeping");
 					Thread.sleep(sleepInterval);
 				}
 			}
@@ -821,10 +813,21 @@ public abstract class AbstractReader<T> extends Component implements
 		// quarantined artifacts
 		if (getHospitalDatabaseReader() != null) {
 			IOrderedMap inputParameters = new OrderedHashMap();
-			inputParameters.add(getSourceSystemId(syncInfo));
-			inputParameters.add(getSourceRepositoryId(syncInfo));
-			inputParameters.add(getTargetSystemId(syncInfo));
-			inputParameters.add(getTargetRepositoryId(syncInfo));
+
+			if (!isCCF2xProcess()) {
+				inputParameters.add(getSourceSystemId(syncInfo));
+				inputParameters.add(getSourceRepositoryId(syncInfo));
+				inputParameters.add(getTargetSystemId(syncInfo));
+				inputParameters.add(getTargetRepositoryId(syncInfo));
+			} else {
+				/**
+				 * In CCF 2.x, we only need the repository mapping direction id
+				 * (stored within the source system kind top level attribute) to
+				 * retrieve all matching hospital entries
+				 */
+				inputParameters.add(getSourceSystemKind(syncInfo));
+			}
+
 			hospitalDatabaseReader.connect();
 			Object[] resultSet = hospitalDatabaseReader
 					.next(inputParameters, 1);
@@ -844,14 +847,12 @@ public abstract class AbstractReader<T> extends Component implements
 					if (originatingComponent == null
 							|| !originatingComponent
 									.equals(getNameOfEntityService())) {
-						log
-								.debug("Do not trigger a further transformation of quarantined artifact's payload.");
+						log.debug("Do not trigger a further transformation of quarantined artifact's payload.");
 						artifactState
 								.setErrorCode(GenericArtifact.ERROR_REPLAYED_WITHOUT_TRANSFORMATION);
 					} else {
 						// quarantined artifact should be transformed again
-						log
-								.debug("Trigger a further transformation of quarantined artifact's payload.");
+						log.debug("Trigger a further transformation of quarantined artifact's payload.");
 						artifactState
 								.setErrorCode(GenericArtifact.ERROR_REPLAYED_WITH_TRANSFORMATION);
 					}
@@ -1014,13 +1015,11 @@ public abstract class AbstractReader<T> extends Component implements
 		}
 
 		if (getHospitalDatabaseReader() == null) {
-			log
-					.warn("Reader will not poll hospital for quarantined entries since hospitalDatabaseReader property has not been set.");
+			log.warn("Reader will not poll hospital for quarantined entries since hospitalDatabaseReader property has not been set.");
 		}
 
 		if (getNameOfEntityService() == null) {
-			log
-					.warn("Retransformation of replayed artifacts is not configured since nameOfEntityService property has not been set.");
+			log.warn("Retransformation of replayed artifacts is not configured since nameOfEntityService property has not been set.");
 		}
 	}
 
@@ -1062,6 +1061,56 @@ public abstract class AbstractReader<T> extends Component implements
 		return node.getText();
 	}
 
+	protected String getFieldMappingScope(Document syncInfo) {
+		Node node = syncInfo.selectSingleNode(FIELD_MAPPING_SCOPE);
+		if (node == null)
+			return null;
+		return node.getText();
+	}
+
+	protected String getFieldMappingName(Document syncInfo) {
+		Node node = syncInfo.selectSingleNode(FIELD_MAPPING_NAME);
+		if (node == null)
+			return null;
+		return node.getText();
+	}
+
+	protected String getFieldMappingKind(Document syncInfo) {
+		Node node = syncInfo.selectSingleNode(FIELD_MAPPING_KIND);
+		if (node == null)
+			return null;
+		return node.getText();
+	}
+
+	protected String getRepositoryMappingDirectionId(Document syncInfo) {
+		Node node = syncInfo.selectSingleNode(REPOSITORY_MAPPING_DIRECTION_ID);
+		if (node == null)
+			return null;
+		return node.getText();
+	}
+
+	protected String getRepositoryMappingDirectionDirection(Document syncInfo) {
+		Node node = syncInfo
+				.selectSingleNode(REPOSITORY_MAPPING_DIRECTION_DIRECTION);
+		if (node == null)
+			return null;
+		return node.getText();
+	}
+
+	protected String getRepositoryMappingId(Document syncInfo) {
+		Node node = syncInfo.selectSingleNode(REPOSITORY_MAPPING_ID);
+		if (node == null)
+			return null;
+		return node.getText();
+	}
+
+	protected String getExternalAppLinkId(Document syncInfo) {
+		Node node = syncInfo.selectSingleNode(EXTERNAL_APP_LINK_ID);
+		if (node == null)
+			return null;
+		return node.getText();
+	}
+
 	/**
 	 * Returns the source artifact id that was sync-ed in the last CCF cycle.
 	 * 
@@ -1097,9 +1146,58 @@ public abstract class AbstractReader<T> extends Component implements
 	 * @param syncInfo
 	 *            - The incoming sync info for this repository.
 	 * @return - Returns the repository kind from the incoming sync info of this
-	 *         repository
+	 *         repository If this is a CCF 2.x process, it will return the
+	 *         directory of the XSLT file(s) to be used for the field mapping
 	 */
 	public String getSourceRepositoryKind(Document syncInfo) {
+		if (isCCF2xProcess()) {
+			// first figure out the scope
+			String fieldMappingScopeString = getFieldMappingScope(syncInfo);
+			String xsltDirectory = "";
+			try {
+				FieldMappingScope fieldMappingScope = FieldMappingScope
+						.valueOf(fieldMappingScopeString);
+				Directions direction = Directions.values()[Integer
+						.parseInt(getRepositoryMappingDirectionDirection(syncInfo))];
+				switch (fieldMappingScope) {
+				case CCF_CORE: {
+					xsltDirectory = direction.name() + File.separatorChar
+							+ FIELD_MAPPING_CORE_DIRECTORY + File.separatorChar
+							+ getFieldMappingName(syncInfo)
+							+ File.separatorChar;
+					break;
+				}
+				case EXTERNAL_APP: {
+					xsltDirectory = direction.name() + File.separatorChar
+							+ getExternalAppLinkId(syncInfo)
+							+ File.separatorChar
+							+ getFieldMappingName(syncInfo)
+							+ File.separatorChar;
+					break;
+				}
+				case LANDSCAPE: {
+					xsltDirectory = direction.name() + File.separatorChar
+							+ FIELD_MAPPING_LANDSCAPE_DIRECTORY
+							+ File.separatorChar
+							+ getFieldMappingName(syncInfo)
+							+ File.separatorChar;
+					break;
+				}
+				case REPOSITORY_MAPPING_DIRECTION: {
+					xsltDirectory = direction.name() + File.separatorChar
+							+ getRepositoryMappingDirectionId(syncInfo)
+							+ File.separatorChar
+							+ getFieldMappingName(syncInfo)
+							+ File.separatorChar;
+					break;
+				}
+				}
+			} catch (Exception e) {
+				log.warn("Unknown fieldMappingScope " + fieldMappingScopeString
+						+ " or direction for synch info " + syncInfo.asXML());
+			}
+			return xsltDirectory;
+		}
 		Node node = syncInfo.selectSingleNode(SOURCE_REPOSITORY_KIND);
 		if (node == null)
 			return null;
@@ -1126,8 +1224,14 @@ public abstract class AbstractReader<T> extends Component implements
 	 * @param syncInfo
 	 *            - The incoming sync info for this repository.
 	 * @return - The source system kind for this repository.
+	 * 
+	 *         If this is a CCF 2.x process, this attribute is populated with
+	 *         the repository mapping direction id
 	 */
 	public String getSourceSystemKind(Document syncInfo) {
+		if (isCCF2xProcess()) {
+			return getRepositoryMappingDirectionId(syncInfo);
+		}
 		Node node = syncInfo.selectSingleNode(SOURCE_SYSTEM_KIND);
 		if (node == null)
 			return null;
@@ -1154,8 +1258,14 @@ public abstract class AbstractReader<T> extends Component implements
 	 * @param syncInfo
 	 *            - The incoming sync info for this repository.
 	 * @return - The target repository id extracted from this repository info.
+	 * 
+	 *         If this is a CCF 2.x process, it will return the kind of field
+	 *         mapping to be applied
 	 */
 	public String getTargetRepositoryKind(Document syncInfo) {
+		if (isCCF2xProcess()) {
+			return getFieldMappingKind(syncInfo);
+		}
 		Node node = syncInfo.selectSingleNode(TARGET_REPOSITORY_KIND);
 		if (node == null)
 			return null;
@@ -1182,8 +1292,14 @@ public abstract class AbstractReader<T> extends Component implements
 	 * @param syncInfo
 	 *            - The incoming sync info for this repository.
 	 * @return - the target system kind from this repository sync info.
+	 * 
+	 *         If this is a CCF 2.x process, this method returns the repository
+	 *         mapping id
 	 */
 	public String getTargetSystemKind(Document syncInfo) {
+		if (isCCF2xProcess()) {
+			return getRepositoryMappingId(syncInfo);
+		}
 		Node node = syncInfo.selectSingleNode(TARGET_SYSTEM_KIND);
 		if (node == null)
 			return null;
@@ -1220,14 +1336,19 @@ public abstract class AbstractReader<T> extends Component implements
 		Node node = syncInfo.selectSingleNode(SOURCE_SYSTEM_TIMEZONE);
 		if (node == null)
 			return null;
-		return node.getText();
+		return convertTimeZoneFromCCF2xDataBaseFormat(node.getText());
+	}
+
+	public static String convertTimeZoneFromCCF2xDataBaseFormat(String timezone) {
+		return timezone.replace("_MINUS_", "-").replace("_PLUS_", "+")
+				.replace("_SLASH_", "/");
 	}
 
 	public String getTargetSystemTimezone(Document syncInfo) {
 		Node node = syncInfo.selectSingleNode(TARGET_SYSTEM_TIMEZONE);
 		if (node == null)
 			return null;
-		return node.getText();
+		return convertTimeZoneFromCCF2xDataBaseFormat(node.getText());
 	}
 
 	public String getSourceSystemEncoding(Document syncInfo) {
@@ -1526,5 +1647,25 @@ public abstract class AbstractReader<T> extends Component implements
 	 */
 	public String getNameOfEntityService() {
 		return nameOfEntityService;
+	}
+
+	/**
+	 * Defines whether this reader component is used within a CCF 2.x process
+	 * Defaults to false
+	 * 
+	 * @param isCCF2xProcess
+	 */
+	public void setCCF2xProcess(boolean isCCF2xProcess) {
+		this.isCCF2xProcess = isCCF2xProcess;
+	}
+
+	/**
+	 * Determines whether this reader component is used within a CCF 2.x process
+	 * Defaults to false
+	 * 
+	 * @return
+	 */
+	public boolean isCCF2xProcess() {
+		return isCCF2xProcess;
 	}
 }

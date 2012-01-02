@@ -62,6 +62,9 @@ public class CCFExceptionToOrderedMapConvertor extends
 	private static final String SOURCE_ARTIFACT_VERSION = "SOURCE_ARTIFACT_VERSION";
 	private static final String TARGET_LAST_MODIFICATION_TIME = "TARGET_LAST_MODIFICATION_TIME";
 	private static final String SOURCE_LAST_MODIFICATION_TIME = "SOURCE_LAST_MODIFICATION_TIME";
+	private static final String REPOSITORY_MAPPING_DIRECTION = "REPOSITORY_MAPPING_DIRECTION";
+	private static final String DESCRIPTION = "DESCRIPTION";
+	private static final String VERSION = "VERSION";
 
 	static final String EXCEPTION_MESSAGE = "EXCEPTION_MESSAGE";
 
@@ -264,6 +267,12 @@ public class CCFExceptionToOrderedMapConvertor extends
 					map.put(ARTIFACT_TYPE, artifactType);
 					//log.info("Removing invalid XML characters if any before we proceed ...");
 					map.put(GENERICARTIFACT, removeInvalidXmlCharacters(dataDoc.asXML()));
+					
+					// these attributes will be considered for CCF 2.x only
+					map.put(DESCRIPTION, "This hospital entry has been inserted by CCF Core.");
+					map.put(REPOSITORY_MAPPING_DIRECTION, sourceSystemKind);
+					map.put(VERSION, 0);
+					
 				} catch (GenericArtifactParsingException e) {
 					// log
 					// .warn(

@@ -24,6 +24,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.xml.XMLConstants;
+import javax.xml.transform.ErrorListener;
+import javax.xml.transform.Source;
 import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerConfigurationException;
 import javax.xml.transform.TransformerException;
@@ -42,21 +45,26 @@ import org.apache.commons.vfs.VFS;
 import org.apache.commons.vfs.impl.DefaultFileMonitor;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
+import org.dom4j.DocumentFactory;
 import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
+import org.dom4j.XPath;
 import org.dom4j.io.DocumentResult;
 import org.dom4j.io.DocumentSource;
+import org.dom4j.io.SAXReader;
+import org.jaxen.SimpleNamespaceContext;
+import org.jaxen.SimpleVariableContext;
 import org.openadaptor.auxil.processor.script.ScriptProcessor;
 import org.openadaptor.core.Component;
 import org.openadaptor.core.IDataProcessor;
 import org.openadaptor.core.exception.ProcessingException;
 import org.openadaptor.core.exception.ValidationException;
+import org.openadaptor.thirdparty.dom4j.Dom4jUtils;
 
 import com.collabnet.ccf.core.CCFRuntimeException;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
-import com.collabnet.ccf.core.utils.CCFUtils;
 import com.collabnet.ccf.core.utils.XPathUtils;
 
 /**
@@ -78,12 +86,44 @@ import com.collabnet.ccf.core.utils.XPathUtils;
  * 
  */
 public class DynamicXsltProcessor extends Component implements IDataProcessor {
+
 	/**
-	 *  processors to dynamically derive the file name from the message payload
+	 * This class is used to throw an exception whenever XSLT validation
+	 * encounters any issue It is used by the secure XSLT factory and its
+	 * transformers when only white listed Java function calls should be
+	 * allowed.
+	 * 
+	 * @author jnicolai
+	 * 
+	 */
+	private class XsltValidationErrorListener implements ErrorListener {
+
+		@Override
+		public void warning(TransformerException exception)
+				throws TransformerException {
+			throw exception;
+		}
+
+		@Override
+		public void error(TransformerException exception)
+				throws TransformerException {
+			throw exception;
+		}
+
+		@Override
+		public void fatalError(TransformerException exception)
+				throws TransformerException {
+			throw exception;
+		}
+	}
+
+	/**
+	 * processors to dynamically derive the file name from the message payload
 	 */
 	private List<ScriptProcessor> scriptProcessors = new ArrayList<ScriptProcessor>();
-	
-	private static final Log log = LogFactory.getLog(DynamicXsltProcessor.class);
+
+	private static final Log log = LogFactory
+			.getLog(DynamicXsltProcessor.class);
 	/**
 	 * file name of the XSLT dir
 	 */
@@ -98,16 +138,18 @@ public class DynamicXsltProcessor extends Component implements IDataProcessor {
 	private boolean listenForFileUpdates = true;
 
 	/**
+	 * If this property is set to false (default), the XsltProcessor will
+	 * process arbitrary XSLT documents (including Xalan extensions). If set to
+	 * false, generic artifacts will only pass if they do not trigger other Java
+	 * function calls but the ones specified in the whiteListedJavaFunctionCalls
+	 * property
+	 */
+	private boolean onlyAllowWhiteListedJavaFunctionCalls = false;
+
+	/**
 	 * file name of the XSLT file
 	 */
 	private String xsltFile;
-
-	private static final String SOURCE_SYSTEM_ID = "sourceSystemId";
-	private static final String TARGET_SYSTEM_ID = "targetSystemId";
-	private static final String SOURCE_REPOSITORY_ID = "sourceRepositoryId";
-	private static final String TARGET_REPOSITORY_ID = "targetRepositoryId";
-
-	public static final String PARAM_DELIMITER = "+";
 
 	/**
 	 * This is used to listen for changes on files
@@ -135,7 +177,17 @@ public class DynamicXsltProcessor extends Component implements IDataProcessor {
 		this.xsltFile = xsltFile;
 	}
 
-	private Map<String, Transformer> xsltFileNameTransformerMap = null;
+	private Map<String, List<Transformer>> xsltFileNameTransformerMap = null;
+
+	/**
+	 * List of strings that contain the Java function calls which should be allowed
+	 * if onlyAllowWhiteListedJavaFunctionCalls is on. Those Java function calls can only be used
+	 * in the select attribute of the xsl:value element and the calling convention has to match exactly.
+	 * E. g. stringutil:stripHTML(string(.)) and stringutil:encodeHTMLToEntityReferences(string(.))
+	 * will only match the XSLT elements <xsl:value-of select="stringutil:stripHTML(string(.))"/> 
+	 * and <xsl:value-of select="stringutil:encodeHTMLToEntityReferences(string(.))"/>
+	 */
+	private List<String> whiteListedJavaFunctionCalls = new ArrayList<String>();
 
 	/**
 	 * Hook to perform any validation of the component properties required by
@@ -146,7 +198,7 @@ public class DynamicXsltProcessor extends Component implements IDataProcessor {
 		// we have to make this map thread safe because it will be
 		// updated asynchronously
 		xsltFileNameTransformerMap = Collections
-				.synchronizedMap(new HashMap<String, Transformer>());
+				.synchronizedMap(new HashMap<String, List<Transformer>>());
 		if (isListenForFileUpdates()) {
 			try {
 				fsManager = VFS.getManager();
@@ -183,7 +235,8 @@ public class DynamicXsltProcessor extends Component implements IDataProcessor {
 				if (listenForFileUpdates) {
 					FileObject fileObject = null;
 					try {
-						fileObject = fsManager.resolveFile(xsltDirFile.getAbsolutePath());
+						fileObject = fsManager.resolveFile(xsltDirFile
+								.getAbsolutePath());
 					} catch (FileSystemException e) {
 						exceptions.add(new ValidationException(
 								"xsltDir property " + xsltDir
@@ -210,7 +263,8 @@ public class DynamicXsltProcessor extends Component implements IDataProcessor {
 				if (listenForFileUpdates) {
 					FileObject fileObject = null;
 					try {
-						fileObject = fsManager.resolveFile(xsltFileFile.getAbsolutePath());
+						fileObject = fsManager.resolveFile(xsltFileFile
+								.getAbsolutePath());
 					} catch (FileSystemException e) {
 						exceptions.add(new ValidationException(
 								"xsltFile property " + xsltFile
@@ -224,6 +278,22 @@ public class DynamicXsltProcessor extends Component implements IDataProcessor {
 			} else {
 				exceptions.add(new ValidationException("xsltFile property "
 						+ xsltFile + " is not a valid file...!", this));
+				return;
+			}
+		}
+		factory = TransformerFactory.newInstance();
+		if (isOnlyAllowWhiteListedJavaFunctionCalls()) {
+			try {
+				secureFactory = TransformerFactory.newInstance();
+				secureFactory.setFeature(
+						XMLConstants.FEATURE_SECURE_PROCESSING, true);
+				secureFactory
+						.setErrorListener(new XsltValidationErrorListener());
+			} catch (TransformerConfigurationException e) {
+				exceptions
+						.add(new ValidationException(
+								"Setting secure processing feature on XSLT processor failed, bailing out since this feature is required by onlyAllowWhiteListedJavaFunctions property",
+								this));
 				return;
 			}
 		}
@@ -242,7 +312,8 @@ public class DynamicXsltProcessor extends Component implements IDataProcessor {
 	 *             if the XSLT file is not defined in the properties, the file
 	 *             cannot be found or there was an error parsing it
 	 */
-	private Transformer loadXSLT(File xsltFile, Element element) {
+	private List<Transformer> loadXSLT(File xsltFile, Element element) {
+		List<Transformer> transformerList = new ArrayList<Transformer>();
 		if (xsltFile == null) {
 			String cause = "xsltFile property not set";
 			log.error(cause);
@@ -250,15 +321,38 @@ public class DynamicXsltProcessor extends Component implements IDataProcessor {
 					GenericArtifact.ERROR_TRANSFORMER_FILE);
 			throw new CCFRuntimeException(cause);
 		}
-		Transformer transform = null;
 
-		// load the transform
 		try {
-			TransformerFactory factory = TransformerFactory.newInstance();
-			transform = factory.newTransformer(new StreamSource(xsltFile));
-
-			log.debug("Loaded XSLT [" + xsltFile + "] successfully");
-		} catch (TransformerConfigurationException e) {
+			Source source = null;
+			if (isOnlyAllowWhiteListedJavaFunctionCalls()) {
+				SAXReader reader = new SAXReader();
+				Document originalDocument = reader.read(xsltFile);
+				Document clonedDocument = (Document) originalDocument.clone();
+				Element clonedRootElement = clonedDocument.getRootElement();
+				// replace white listed Java functions in XPath expressions with
+				// "."
+				for (String functionCall : getWhiteListedJavaFunctionCalls()) {
+					List<Element> nodes = findFunctionCalls(clonedRootElement,
+							functionCall);
+					for (Element e : nodes) {
+						e.addAttribute("select", ".");
+					}
+				}
+				Transformer secureTransform = secureFactory
+						.newTransformer(new DocumentSource(clonedDocument));
+				secureTransform
+						.setErrorListener(new XsltValidationErrorListener());
+				log.debug("Loaded sanitized version of XSLT [" + xsltFile
+						+ "] successfully");
+				transformerList.add(secureTransform);
+				source = new DocumentSource(originalDocument);
+			} else {
+				source = new StreamSource(xsltFile);
+			}
+			Transformer transform = factory.newTransformer(source);
+			log.debug("Loaded original XSLT [" + xsltFile + "] successfully");
+			transformerList.add(transform);
+		} catch (Exception e) {
 			String cause = "Failed to load XSLT: [" + xsltFile + " ]"
 					+ e.getMessage();
 			log.error(cause, e);
@@ -266,7 +360,27 @@ public class DynamicXsltProcessor extends Component implements IDataProcessor {
 					GenericArtifact.ERROR_TRANSFORMER_FILE);
 			throw new CCFRuntimeException(cause, e);
 		}
-		return transform;
+
+		return transformerList;
+	}
+
+	static List<Element> findFunctionCalls(Element xslt,
+			final String functionCall) {
+		XPath xpath = buildXpath(xslt, functionCall);
+		@SuppressWarnings("unchecked")
+		// jaxen doesn't do generics
+		List<Element> nodes = xpath.selectNodes(xslt);
+		return nodes;
+	}
+
+	private static XPath buildXpath(Element xslt, final String functionCall) {
+		XPath xpath = xslt.createXPath(String.format(
+				"//xsl:value-of[@select='%s']", functionCall));
+		SimpleNamespaceContext namespaceContext = new SimpleNamespaceContext();
+		namespaceContext.addNamespace("xsl",
+				"http://www.w3.org/1999/XSL/Transform");
+		xpath.setNamespaceContext(namespaceContext);
+		return xpath;
 	}
 
 	/**
@@ -292,23 +406,25 @@ public class DynamicXsltProcessor extends Component implements IDataProcessor {
 			document = (Document) record;
 			element = document.getRootElement();
 			try {
-				String artifactAction = XPathUtils.getAttributeValue(
-						element, GenericArtifactHelper.ARTIFACT_ACTION);
-				String transactionId = XPathUtils.getAttributeValue(
-						element, GenericArtifactHelper.TRANSACTION_ID);
-				String errorCode = XPathUtils.getAttributeValue(
-						element, GenericArtifactHelper.ERROR_CODE);
+				String artifactAction = XPathUtils.getAttributeValue(element,
+						GenericArtifactHelper.ARTIFACT_ACTION);
+				String transactionId = XPathUtils.getAttributeValue(element,
+						GenericArtifactHelper.TRANSACTION_ID);
+				String errorCode = XPathUtils.getAttributeValue(element,
+						GenericArtifactHelper.ERROR_CODE);
 				// pass artifacts with ignore action
 				if (artifactAction != null
 						&& artifactAction
-								.equals(GenericArtifactHelper.ARTIFACT_ACTION_IGNORE) ) {
+								.equals(GenericArtifactHelper.ARTIFACT_ACTION_IGNORE)) {
 					return new Object[] { document };
 				}
-				// do not transform artifacts to be replayed (unless specific error code is set)
+				// do not transform artifacts to be replayed (unless specific
+				// error code is set)
 				if (transactionId != null
-						&& !transactionId
-								.equals(GenericArtifact.VALUE_UNKNOWN) ) {
-					if (errorCode == null || !errorCode.equals(GenericArtifact.ERROR_REPLAYED_WITH_TRANSFORMATION)) {
+						&& !transactionId.equals(GenericArtifact.VALUE_UNKNOWN)) {
+					if (errorCode == null
+							|| !errorCode
+									.equals(GenericArtifact.ERROR_REPLAYED_WITH_TRANSFORMATION)) {
 						return new Object[] { document };
 					}
 				}
@@ -316,11 +432,11 @@ public class DynamicXsltProcessor extends Component implements IDataProcessor {
 				// do nothing, this artifact does not seem to be a generic
 				// artifact
 			}
-			
+
 			// now transform document
 			String fileName = null;
-			Transformer transform = null;
-			
+			List<Transformer> transform = null;
+
 			// only derive file name automatically if xslt dir is set
 			if (!StringUtils.isEmpty(this.xsltDir)) {
 				Document result = document;
@@ -328,22 +444,28 @@ public class DynamicXsltProcessor extends Component implements IDataProcessor {
 					fileName = deriveFilename(element, scriptProcessor);
 					// do not do anything if file name == null
 					if (fileName != null) {
-						transform = lookupTransformer(result.getRootElement(), xsltDir+fileName);
-						result = (Document) transform(result, transform, result.getRootElement())[0];
+						transform = lookupTransformer(result.getRootElement(),
+								xsltDir + fileName);
+						result = (Document) transform(result, transform,
+								result.getRootElement())[0];
 						if (log.isDebugEnabled()) {
-							log.debug("(Intermediate) transformation result: "+result.asXML());
+							log.debug("(Intermediate) transformation result: "
+									+ result.asXML());
 						}
 					}
 				}
-				return new Document[] {result};
-			}
-			else {
-				fileName=xsltFile;
+				// make sure users did not tamper with immutable top level
+				// attributes
+				restoreImmutableTopLevelAttributes(element,
+						result.getRootElement());
+				return new Document[] { result };
+			} else {
+				fileName = xsltFile;
 				transform = lookupTransformer(element, fileName);
-				return transform(document, transform, element); 
+				return transform(document, transform, element);
 			}
 		}
-		
+
 		// if we get this far then we cannot process the record
 		String cause = "Invalid record (type: " + record.getClass().toString()
 				+ "). Cannot apply transform";
@@ -351,82 +473,125 @@ public class DynamicXsltProcessor extends Component implements IDataProcessor {
 		throw new CCFRuntimeException(cause);
 	}
 
-	private Transformer lookupTransformer(Element element, String fileName) {
-		Transformer transform;
+	/**
+	 * These attributes must not be changed by user defined XSLT scripts
+	 */
+	static final String[] immutableAttributes = {
+			GenericArtifactHelper.ARTIFACT_TYPE,
+			GenericArtifactHelper.CONFLICT_RESOLUTION_PRIORITY,
+			GenericArtifactHelper.DEP_CHILD_SOURCE_ARTIFACT_ID,
+			GenericArtifactHelper.DEP_CHILD_SOURCE_REPOSITORY_ID,
+			GenericArtifactHelper.DEP_CHILD_SOURCE_REPOSITORY_KIND,
+			GenericArtifactHelper.DEP_CHILD_TARGET_ARTIFACT_ID,
+			GenericArtifactHelper.DEP_CHILD_TARGET_REPOSITORY_ID,
+			GenericArtifactHelper.DEP_CHILD_TARGET_REPOSITORY_KIND,
+			GenericArtifactHelper.DEP_PARENT_SOURCE_ARTIFACT_ID,
+			GenericArtifactHelper.DEP_PARENT_SOURCE_REPOSITORY_ID,
+			GenericArtifactHelper.DEP_PARENT_SOURCE_REPOSITORY_KIND,
+			GenericArtifactHelper.DEP_PARENT_TARGET_ARTIFACT_ID,
+			GenericArtifactHelper.DEP_PARENT_TARGET_REPOSITORY_ID,
+			GenericArtifactHelper.DEP_PARENT_TARGET_REPOSITORY_KIND,
+			GenericArtifactHelper.ERROR_CODE,
+			GenericArtifactHelper.INCLUDES_FIELD_META_DATA,
+			GenericArtifactHelper.SOURCE_ARTIFACT_ID,
+			GenericArtifactHelper.SOURCE_ARTIFACT_LAST_MODIFICATION_DATE,
+			GenericArtifactHelper.SOURCE_ARTIFACT_VERSION,
+			GenericArtifactHelper.SOURCE_REPOSITORY_ID,
+			GenericArtifactHelper.SOURCE_REPOSITORY_KIND,
+			GenericArtifactHelper.SOURCE_SYSTEM_ID,
+			GenericArtifactHelper.SOURCE_SYSTEM_KIND,
+			GenericArtifactHelper.SOURCE_SYSTEM_TIMEZONE,
+			GenericArtifactHelper.TARGET_ARTIFACT_ID,
+			GenericArtifactHelper.TARGET_ARTIFACT_LAST_MODIFICATION_DATE,
+			GenericArtifactHelper.TARGET_ARTIFACT_VERSION,
+			GenericArtifactHelper.TARGET_REPOSITORY_ID,
+			GenericArtifactHelper.TARGET_REPOSITORY_KIND,
+			GenericArtifactHelper.TARGET_SYSTEM_ID,
+			GenericArtifactHelper.TARGET_SYSTEM_KIND,
+			GenericArtifactHelper.TARGET_SYSTEM_TIMEZONE,
+			GenericArtifactHelper.TRANSACTION_ID };
+
+	private TransformerFactory secureFactory;
+
+	private TransformerFactory factory;
+
+	/**
+	 * This message is used to restore the top level attributes that must not be
+	 * changed by user defined transformations
+	 * 
+	 * @param originalElement
+	 * @param newRootElement
+	 */
+	private static void restoreImmutableTopLevelAttributes(
+			Element originalRootElement, Element newRootElement) {
+		try {
+			for (String immutableAttribute : immutableAttributes) {
+				restoreAttribute(immutableAttribute, originalRootElement,
+						newRootElement);
+			}
+			// special handling for artifact action that is only overridden if
+			// it is not set to ignore
+			String newArtifactAction = XPathUtils.getAttributeValue(
+					newRootElement, GenericArtifactHelper.ARTIFACT_ACTION,
+					false);
+			if (!GenericArtifactHelper.ARTIFACT_ACTION_IGNORE
+					.equals(newArtifactAction)) {
+				restoreAttribute(GenericArtifactHelper.ARTIFACT_ACTION,
+						originalRootElement, newRootElement);
+			}
+		} catch (GenericArtifactParsingException e) {
+			throw new CCFRuntimeException(
+					"While restoring immutable top level attributes after transformation, an error occured: "
+							+ e.getMessage(), e);
+		}
+	}
+
+	/**
+	 * Copies one attribute from the original element to the new element
+	 * 
+	 * @param attributeName
+	 * @param originalElement
+	 * @param newElement
+	 * @throws GenericArtifactParsingException
+	 */
+	private static void restoreAttribute(String attributeName,
+			Element originalElement, Element newElement)
+			throws GenericArtifactParsingException {
+		newElement.addAttribute(attributeName, XPathUtils.getAttributeValue(
+				originalElement, attributeName, false));
+	}
+
+	private List<Transformer> lookupTransformer(Element element, String fileName) {
+		List<Transformer> transform;
 		transform = xsltFileNameTransformerMap.get(fileName);
+
 		if (transform == null) {
 			transform = loadXSLT(new File(fileName), element);
 			xsltFileNameTransformerMap.put(fileName, transform);
 		}
-		return transform;
-	}
-	
-	/**
-	   * Derives a dynamic XSLT filename based on message payload. Uses a standard 
-	   * {@link ScriptProcessor} to execute/evaluate the script.
-	   * 
-	   */
-	  protected String deriveFilename(Element rootElement, ScriptProcessor scriptProcessor){
-	    
-	    Object [] scriptResArray = scriptProcessor.process(rootElement);
-	    String filename=null;
-	    if(null != scriptResArray && scriptResArray.length>0) {
-	      Object dynamicFilename = scriptResArray[0];
-	      if (dynamicFilename!=null) {
-	        filename=dynamicFilename.toString();
-	      }
-	    }
-	    else{
-	      log.debug("Script returns no XSLT file name, skipping this transformation step ...");
-	    }
-	    return filename;
-	  }
 
-	public Transformer constructFileNameAndFetchTransformer(Document record)
-			throws GenericArtifactParsingException {
-		String fileName = null;
-		Transformer transform = null;
-		// this branch is only used if the xslt dir is set, otherwise, the xslt
-		// file will be used
-		if (!StringUtils.isEmpty(this.xsltDir)) {
-			Element element = XPathUtils.getRootElement(record);
-			String sourceSystemId = XPathUtils.getAttributeValue(element,
-					SOURCE_SYSTEM_ID);
-			String targetSystemId = XPathUtils.getAttributeValue(element,
-					TARGET_SYSTEM_ID);
-			String sourceRepositoryId = XPathUtils.getAttributeValue(element,
-					SOURCE_REPOSITORY_ID);
-			String targetRepositoryId = XPathUtils.getAttributeValue(element,
-					TARGET_REPOSITORY_ID);
-			sourceRepositoryId = CCFUtils.getTempFileName(sourceRepositoryId);
-			targetRepositoryId = CCFUtils.getTempFileName(targetRepositoryId);
-			String xsltDir = this.xsltDir;
-			fileName = xsltDir + sourceSystemId + PARAM_DELIMITER
-					+ sourceRepositoryId + PARAM_DELIMITER + targetSystemId
-					+ PARAM_DELIMITER + targetRepositoryId + ".xsl";
-		} else if (!StringUtils.isEmpty(this.xsltFile)) {
-			fileName = this.xsltFile;
-		}
-		transform = xsltFileNameTransformerMap.get(fileName);
-		if (transform == null) {
-			transform = loadXSLT(new File(fileName), record.getRootElement());
-			xsltFileNameTransformerMap.put(fileName, transform);
-		}
 		return transform;
 	}
 
 	/**
-	 * Applies the transform to the XML String
+	 * Derives a dynamic XSLT filename based on message payload. Uses a standard
+	 * {@link ScriptProcessor} to execute/evaluate the script.
 	 * 
-	 * @param s
-	 *            the XML text
-	 * 
-	 * @return an array containing a single XML string representing the
-	 *         transformed XML string supplied
 	 */
-	@SuppressWarnings("unused")
-	private Object[] transform(String s, Transformer transform, Element element) {
-		return transform(createDOMFromString(s, element), transform, element);
+	protected String deriveFilename(Element rootElement,
+			ScriptProcessor scriptProcessor) {
+
+		Object[] scriptResArray = scriptProcessor.process(rootElement);
+		String filename = null;
+		if (null != scriptResArray && scriptResArray.length > 0) {
+			Object dynamicFilename = scriptResArray[0];
+			if (dynamicFilename != null) {
+				filename = dynamicFilename.toString();
+			}
+		} else {
+			log.debug("Script returns no XSLT file name, skipping this transformation step ...");
+		}
+		return filename;
 	}
 
 	/**
@@ -438,7 +603,7 @@ public class DynamicXsltProcessor extends Component implements IDataProcessor {
 	 * @return an array containing a single XML string representing the
 	 *         transformed document
 	 */
-	private Object[] transform(Document d, Transformer transform,
+	private Object[] transform(Document d, List<Transformer> transform,
 			Element element) {
 		try {
 			return new Document[] { transform(transform, d) };
@@ -455,6 +620,9 @@ public class DynamicXsltProcessor extends Component implements IDataProcessor {
 	 * Applies the transform to the Dom4J document
 	 * 
 	 * @param transformer
+	 *            List of transformers to be applied, all transformers have to
+	 *            execute properly, but only the result from latest one is
+	 *            returned
 	 * @param d
 	 *            the document to transform
 	 * 
@@ -463,36 +631,23 @@ public class DynamicXsltProcessor extends Component implements IDataProcessor {
 	 * @throws TransformerException
 	 *             thrown if an XSLT runtime error happens during transformation
 	 */
-	public static Document transform(Transformer transformer, Document d)
+	public static Document transform(List<Transformer> transformer, Document d)
 			throws TransformerException {
-		DocumentSource source = new DocumentSource(d);
-		DocumentResult result = new DocumentResult();
-		// TODO: Allow the user to specify stylesheet parameters?
-		transformer.transform(source, result);
-		return result.getDocument();
-	}
-
-	/**
-	 * Use the XML supplied to create a DOM document
-	 * 
-	 * @param xml
-	 *            valid XML
-	 * 
-	 * @return dom4j document object
-	 * 
-	 * @throws ProcessingException
-	 *             if the supplied XML cannot be parsed
-	 */
-	private Document createDOMFromString(String xml, Element element) {
-		try {
-			return DocumentHelper.parseText(xml);
-		} catch (DocumentException e) {
-			String cause = "Failed to parse XML: " + e.getMessage();
-			log.error(cause, e);
-			XPathUtils.addAttribute(element, GenericArtifactHelper.ERROR_CODE,
-					GenericArtifact.ERROR_TRANSFORMER_TRANSFORMATION);
-			throw new CCFRuntimeException(cause, e);
+		DocumentSource source = null;
+		DocumentResult result = null;
+		/**
+		 * We will run through all transformers, so that we can have specially
+		 * configured transformers that check things like calls to external
+		 * functions Only the result from the last transformer is returned
+		 */
+		for (Transformer trans : transformer) {
+			// TODO: Allow the user to specify stylesheet parameters?
+			source = new DocumentSource(d);
+			result = new DocumentResult();
+			trans.transform(source, result);
 		}
+
+		return result.getDocument();
 	}
 
 	public String getXsltFile() {
@@ -522,20 +677,71 @@ public class DynamicXsltProcessor extends Component implements IDataProcessor {
 	public boolean isListenForFileUpdates() {
 		return listenForFileUpdates;
 	}
-	
+
 	/**
-	   * Sets the script that will derive dynamic XSLT filenames based on message payload.
-	   * 
-	   * @param scripts list with scripts to derive XSLT file names that should be executed in a row
-	   */
-	  @SuppressWarnings("unchecked")
+	 * Sets the script that will derive dynamic XSLT filenames based on message
+	 * payload.
+	 * 
+	 * @param scripts
+	 *            list with scripts to derive XSLT file names that should be
+	 *            executed in a row
+	 */
+	@SuppressWarnings("unchecked")
 	public void setScripts(List<String> scripts) {
-	    for (String script : scripts) {
-	    	ScriptProcessor scriptProcessor = new ScriptProcessor();
-	    	scriptProcessor.setScript(script);
-		    scriptProcessor.validate(new java.util.ArrayList());
-		    scriptProcessors.add(scriptProcessor);
+		for (String script : scripts) {
+			ScriptProcessor scriptProcessor = new ScriptProcessor();
+			scriptProcessor.setScript(script);
+			scriptProcessor.validate(new java.util.ArrayList());
+			scriptProcessors.add(scriptProcessor);
 		}
-	    
-	  }
+
+	}
+
+	/**
+	 * If this property is set to false (default), the XsltProcessor will
+	 * process arbitrary XSLT documents (including Xalan extensions). If set to
+	 * false, generic artifacts will only pass if they do not trigger other Java
+	 * function calls but the ones specified in the whiteListedJavaFunctionCalls
+	 * property
+	 */
+	public void setOnlyAllowWhiteListedJavaFunctionCalls(
+			boolean onlyAllowWhiteListedJavaFunctions) {
+		this.onlyAllowWhiteListedJavaFunctionCalls = onlyAllowWhiteListedJavaFunctions;
+	}
+
+	/**
+	 * If this property is set to false (default), the XsltProcessor will
+	 * process arbitrary XSLT documents (including Xalan extensions). If set to
+	 * false, generic artifacts will only pass if they do not trigger other Java
+	 * function calls but the ones specified in the whiteListedJavaFunctionCalls
+	 * property
+	 */
+	public boolean isOnlyAllowWhiteListedJavaFunctionCalls() {
+		return onlyAllowWhiteListedJavaFunctionCalls;
+	}
+
+	/**
+	 * List of strings that contain the Java function calls which should be allowed
+	 * if onlyAllowWhiteListedJavaFunctionCalls is on. Those Java function calls can only be used
+	 * in the select attribute of the xsl:value element and the calling convention has to match exactly.
+	 * E. g. stringutil:stripHTML(string(.)) and stringutil:encodeHTMLToEntityReferences(string(.))
+	 * will only match the XSLT elements <xsl:value-of select="stringutil:stripHTML(string(.))"/> 
+	 * and <xsl:value-of select="stringutil:encodeHTMLToEntityReferences(string(.))"/>
+	 */
+	public void setWhiteListedJavaFunctionCalls(
+			List<String> whiteListedJavaFunctionCalls) {
+		this.whiteListedJavaFunctionCalls = whiteListedJavaFunctionCalls;
+	}
+
+	/**
+	 * List of strings that contain the Java function calls which should be allowed
+	 * if onlyAllowWhiteListedJavaFunctionCalls is on. Those Java function calls can only be used
+	 * in the select attribute of the xsl:value element and the calling convention has to match exactly.
+	 * E. g. stringutil:stripHTML(string(.)) and stringutil:encodeHTMLToEntityReferences(string(.))
+	 * will only match the XSLT elements <xsl:value-of select="stringutil:stripHTML(string(.))"/> 
+	 * and <xsl:value-of select="stringutil:encodeHTMLToEntityReferences(string(.))"/>
+	 */
+	public List<String> getWhiteListedJavaFunctionCalls() {
+		return whiteListedJavaFunctionCalls;
+	}
 }

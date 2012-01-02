@@ -96,7 +96,7 @@
 		<manifest file="build/MANIFEST.MF">
 			<section name="CCF">
 				<attribute name="Implementation-Title" value="CollabNet Connector Framework" />
-				<attribute name="Implementation-Version" value="1.5.1-${env.BUILD_NUMBER}" />
+				<attribute name="Implementation-Version" value="2.0.0-${env.BUILD_NUMBER}" />
 				<attribute name="Build-Date" value="${now}" />
 				<attribute name="SVN-Revision" value="${env.SVN_REVISION}" />
 				<attribute name="Implementation-Vendor" value="CollabNet" />
@@ -317,9 +317,7 @@
 				<include name="*.jar" />
 			</fileset>
 			<fileset dir="src/core/lib/servicewrapper">
-				<include name="*.jar" />
-				<include name="*.dll" />
-				<include name="*.so" />
+							<include name="*.jar" />
 			</fileset>
 			<fileset dir="src/core/lib/openadaptor-3.4/3rdparty">
 				<include name="*.jar" />
@@ -343,6 +341,34 @@
 				<include name="*.jar" />
 			</fileset>
 		</copy>
+		<!-- windows service wrapper libs: 32-bit only -->
+		<mkdir dir="build/package/lib/extlib/native/windows-x86-32" />
+		<copy todir="build/package/lib/extlib/native/windows-x86-32">
+			<fileset dir="src/core/lib/servicewrapper/windows-x86-32">
+				<include name="*.dll" />
+			</fileset>
+		</copy>
+		<mkdir dir="build/package/lib/extlib/native/windows-x86-64" />
+		<copy todir="build/package/lib/extlib/native/windows-x86-64">
+			<!-- re-use the 32-bit windows binaries. -->
+			<fileset dir="src/core/lib/servicewrapper/windows-x86-32">
+				<include name="*.dll" />
+			</fileset>
+		</copy>
+		<!-- linux service wrapper libs: 32-bit -->
+		<mkdir dir="build/package/lib/extlib/native/linux-x86-32" />
+		<copy todir="build/package/lib/extlib/native/linux-x86-32">
+			<fileset dir="src/core/lib/servicewrapper/linux-x86-32">
+				<include name="*.so" />
+			</fileset>
+		</copy>
+		<!-- linux service wrapper libs: 64-bit -->
+		<mkdir dir="build/package/lib/extlib/native/linux-x86-64" />
+		<copy todir="build/package/lib/extlib/native/linux-x86-64">
+			<fileset dir="src/core/lib/servicewrapper/linux-x86-64">
+				<include name="*.so" />
+			</fileset>
+		</copy>
 		<mkdir dir="build/package/samples" />
 		<copy todir="build/package/samples">
 			<fileset dir="samples">
@@ -355,12 +381,23 @@
 				<!-- <include name="QCSWP/**/*" /> -->
 			</fileset>
 		</copy>
+		<copy todir="build/package/fieldmappings">
+					<fileset dir="fieldmappings">
+						<include name="**/*" />
+					</fileset>
+		</copy>
+		<copy todir="build/package/scripts">
+								<fileset dir="scripts">
+									<include name="**/*" />
+								</fileset>
+		</copy>
 		<copy todir="build/package">
 			<fileset dir=".">
 				<include name="README-PT-PLUGIN.txt" />
 				<include name="README.txt" />
 				<include name="LICENSE" />
 				<include name="NOTICE" />
+				<include name="ccfcoreversion.properties" />
 			</fileset>
 		</copy>
 	</target>
@@ -381,15 +418,17 @@
 	<target name="deployHudson" depends="cleanup,buildHudson">
 		<property environment="env" />
 		<mkdir dir="deploy" />
-		<zip destfile="deploy/CollabNet Connector Framework-1.5.1-${env.BUILD_NUMBER}.zip">
+		<zip destfile="deploy/CollabNet Connector Framework-2.0.0-${env.BUILD_NUMBER}.zip">
 			<zipfileset dir="build/package" filemode="755">
 				<include name="**/*.sh"/>
 				<include name="**/wrapper"/>
+				<include name="**/wrapper-linux*"/>
 			</zipfileset>
 			<zipfileset dir="build/package">
 				<include name="**"/>
 				<exclude name="**/*.sh"/>
 				<exclude name="**/wrapper"/>
+				<exclude name="**/wrapper-linux*"/>
 			</zipfileset>
 		</zip>
 		<delete dir="build/package" />
@@ -400,6 +439,6 @@
 		<exec executable="${env.NSIS_PATH}\makensis.exe">
 			<arg value="installer\CollabNet Connector Framework.nsi" />
 		</exec>
-		<move file="installer\CollabNet Connector Framework-1.5.1-win32.exe" tofile="production_installer\Collabnet Connector Framework-1.5.1-win32.exe" />
+		<move file="installer\CollabNet Connector Framework-2.0.0-win32.exe" tofile="production_installer\Collabnet Connector Framework-1.5.1-win32.exe" />
 	</target>
 </project>

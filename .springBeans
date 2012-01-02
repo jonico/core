@@ -32,6 +32,10 @@
 		<config>samples/QCSWP/SWP2QC/config/config.xml</config>
 		<config>samples/TFSTF/TF2TFS/config/config.xml</config>
 		<config>samples/TFSTF/TFS2TF/config/config.xml</config>
+		<config>samples/TFSWP/SWP2TF/config/config2.xml</config>
+		<config>samples/QCTF/QC2TF/config/config2.xml</config>
+		<config>samples/QCTF/TF2QC/config/config2.xml</config>
+		<config>samples/TFSWP/TF2SWP/config/config2.xml</config>
 	</configs>
 	<configSets>
 	</configSets>

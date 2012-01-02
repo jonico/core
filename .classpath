@@ -49,5 +49,6 @@
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/openadaptor.jar" sourcepath="C:/Documents and Settings/jnicolai/My Documents/openAdaptorSourceCode/src"/>
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/openadaptor-spring.jar"/>
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/hsqldb.jar"/>
+	<classpathentry kind="lib" path="src/core/lib/servicewrapper/wrapper.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
