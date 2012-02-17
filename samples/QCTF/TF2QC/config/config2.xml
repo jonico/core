@@ -354,6 +354,8 @@
 				var fieldMappingKind = oa_data.selectSingleNode("@targetRepositoryKind").getText();
 				if (fieldMappingKind == "MAPFORCE") {
 					oa_data= fieldMappingDirectory + "GenericArtifactFormatToMapForce.xsl";
+				} else if (fieldMappingKind == "MAPPING_RULES") {
+					oa_data= fieldMappingDirectory + "preprocessingrules.xsl";
 				}
 				else {
 					oa_data=null;
@@ -370,6 +372,8 @@
 				var fieldMappingKind = oa_data.selectSingleNode("@targetRepositoryKind").getText();
 				if (fieldMappingKind == "MAPFORCE") {
 					oa_data= fieldMappingDirectory + "MapForceMain.xsl";
+				} else if (fieldMappingKind == "MAPPING_RULES") {
+					oa_data= fieldMappingDirectory + "rules.xsl";
 				}
 				else {
 					oa_data=null;
@@ -388,7 +392,7 @@
 					oa_data= fieldMappingDirectory + "MapForceToGenericArtifactFormat.xsl";
 				}
 				else if (fieldMappingKind == "MAPPING_RULES") {
-					oa_data= fieldMappingDirectory + "rules.xsl";
+					oa_data= fieldMappingDirectory + "postprocessingrules.xsl";
 				}
 				else if (fieldMappingKind == "CUSTOM_XSLT") {
 					oa_data= fieldMappingDirectory + "custom.xsl";
