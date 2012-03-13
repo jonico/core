@@ -398,6 +398,7 @@
 				<include name="LICENSE" />
 				<include name="NOTICE" />
 				<include name="ccfcoreversion.properties" />
+				<include name="ccfcoredefaultconfig.xml"/>
 			</fileset>
 		</copy>
 	</target>
