@@ -15,14 +15,16 @@
 	<!-- QC config properties -->
 	<ccfcoreproperty category="coreSettings" systemKind="QC" value="1000" name="ccf.direction.sleepinterval" labelName="SleepInterval"/>
 	<ccfcoreproperty category="coreSettings" systemKind="QC" value="21600" name="ccf.direction.autorestartperiod" labelName="AutoRestartPeriod"/>
-	<ccfcoreproperty category="coreSettings" systemKind="QC" value="true" name="ccf.direction.ship.attachments" labelName="ShipAttachments"/>	
+	<ccfcoreproperty category="coreSettings" systemKind="QC" value="8" name="ccf.direction.identityMapEventWaitCount" labelName="IdentityMapEventWaitCount"/>
+	<ccfcoreproperty category="coreSettings" systemKind="QC" value="500" name="ccf.direction.identityMapEventWaitTime" labelName="IdentityMapEventWaitTime"/>
+	<ccfcoreproperty category="repoSettings" systemKind="QC" value="true" name="ccf.direction.ship.attachments" labelName="ShipAttachments"/>
+	<ccfcoreproperty category="repoSettings" systemKind="QC" value=" > " name="ccf.direction.package.release.separator" labelName="PackageReleaseSeparatorString" />	
 	<ccfcoreproperty category="repoSettings" systemKind="QC" direction="FORWARD" value="false" name="ccf.direction.tf.translate.technical.releaseids" labelName="TranslateTechnicalReleaseIds" />
-	<ccfcoreproperty category="repoSettings" systemKind="QC" direction="FORWARD" value="true" name="ccf.direction.tf.releaseIdfields.containfilerelease.packagename" labelName="ReleaseIdFieldsPackageName" />
-	<ccfcoreproperty category="repoSettings" systemKind="QC" direction="FORWARD" value="false" name="ccf.direction.tf.retrieve.ship.planningfolder.humanreadablename" labelName="ShipPlanningFolderHumanReadableName" />
-	<ccfcoreproperty category="repoSettings" systemKind="QC" direction="FORWARD" value="false" name="ccf.direction.tf.retrieve.ship.release.humanreadablename" labelName="ShipReleaseHumanReadableName" />
-	<ccfcoreproperty category="repoSettings" systemKind="QC" direction="FORWARD" value=">" name="ccf.direction.tf.retrieve.planningfolder.separator" labelName="PlanningFolderSeparatorString" />
-	<ccfcoreproperty category="repoSettings" systemKind="QC" direction="FORWARD" value=">" name="ccf.direction.tf.retrieve.package.release.separator" labelName="PackageReleaseSeparatorString" />	
+	<ccfcoreproperty category="repoSettings" systemKind="QC" direction="FORWARD" value="false" name="ccf.direction.tf.ship.planningfolder.humanreadablename" labelName="ShipPlanningFolderHumanReadableName" />
+	<ccfcoreproperty category="repoSettings" systemKind="QC" direction="FORWARD" value="false" name="ccf.direction.tf.ship.release.humanreadablename" labelName="ShipReleaseHumanReadableName" />
+	<ccfcoreproperty category="repoSettings" systemKind="QC" direction="FORWARD" value=" > " name="ccf.direction.tf.planningfolder.separator" labelName="PlanningFolderSeparatorString" />	
 	<ccfcoreproperty category="repoSettings" systemKind="QC" direction="REVERSE" value="0"	name="ccf.direction.qc.delaybefore.attachment.download" labelName="DelayBeforeAttachmentDownload" />
+	<ccfcoreproperty category="repoSettings" systemKind="QC" direction="REVERSE" value="true" name="ccf.direction.qc.releaseIdfields.containfilerelease.packagename" labelName="ReleaseIdFieldsContainFileReleasePackageName" />
 	
 	<!-- SWP config properties -->
 	<ccfcoreproperty category="coreSettings" systemKind="SWP" value="8" name="ccf.direction.identityMapEventWaitCount" labelName="IdentityMapEventWaitCount"/>

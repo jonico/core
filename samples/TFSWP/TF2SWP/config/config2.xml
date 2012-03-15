@@ -218,11 +218,11 @@
 		<property name="serverUrl"
 			value="${ccf.participant.tf.url}" />
 		<property name="connectionManager" ref="TFConnectionManager"></property>
-		<property name="sleepInterval" value="1000"></property>
+		<property name="sleepInterval" value="${ccf.direction.tf.sleepinterval}"></property>
 		<property name="translateTechnicalReleaseIds" value="false"></property>
 		<property name="maxAttachmentSizePerArtifact" value="${ccf.direction.tf.max.attachmentsize}" />
 		<!-- Let this restart every 6 hours -->
-		<property name="autoRestartPeriod" value="21600"/>
+		<property name="autoRestartPeriod" value="${ccf.direction.autorestartperiod}"/>
 		<property name="shipAttachments" value="false"/>
 		
 		<!-- This plugs in in the polling hospital -->
@@ -394,8 +394,8 @@
 		<property name="projectMappingDatabaseReader" ref="ProjectMappingDatabaseReaderTF2SWP" />
 		<property name="hospitalDatabaseReader" ref="HospitalDatabaseReaderTF2SWP"/>
 		<property name="skipNewerVersionsOfQuarantinedArtifacts" value="false"/><property name="alwaysPassResynchedArtifacts" value="false"/>
-		<property name="identityMapEventWaitCount" value="8"></property>
-		<property name="identityMapEventWaitTime" value="500"></property>
+		<property name="identityMapEventWaitCount" value="${ccf.direction.identityMapEventWaitCount}"></property>
+		<property name="identityMapEventWaitTime" value="${ccf.direction.identityMapEventWaitTime}"></property>
 		<property name="onlyQuarantineAttachmentIfParentInHospital" value="true"></property>
 	</bean>
 

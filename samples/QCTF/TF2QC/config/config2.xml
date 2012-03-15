@@ -231,22 +231,22 @@
 		<property name="serverUrl"
 			value="${ccf.participant.tf.url}" />
 		<property name="connectionManager" ref="TFConnectionManager"></property>
-		<property name="sleepInterval" value="1000"></property>
-		<property name="translateTechnicalReleaseIds" value="false"></property>
+		<property name="sleepInterval" value="${ccf.direction.sleepinterval}"></property>
+		<property name="translateTechnicalReleaseIds" value="${ccf.direction.tf.translate.technical.releaseids}"></property>
 		<property name="maxAttachmentSizePerArtifact" value="${ccf.direction.tf.max.attachmentsize}" />
 		<!-- Let this restart every 6 hours -->
-		<property name="autoRestartPeriod" value="21600"/>
-		<property name="shipAttachments" value="true"/>
+		<property name="autoRestartPeriod" value="${ccf.direction.autorestartperiod}"/>
+		<property name="shipAttachments" value="${ccf.direction.ship.attachments}"/>
 		
 		<!-- This plugs in in the polling hospital -->
 		<property name="hospitalDatabaseReader" ref="HospitalDatabaseExtractor"/>
 		<property name="nameOfEntityService" value="QCEntityService" />
 		<property name="retrieveParentInfoForPlanningFolders" value="true" />
 		<property name="retrieveParentInfoForTrackerItems" value="true" />
-		<property name="shipPlanningFolderHumanReadableName" value="false" />
-		<property name="planningFolderSeparatorString" value=" > " />
-		<property name="shipReleaseHumanReadableName" value="false" />
-		<property name="packageReleaseSeparatorString" value=" > " />
+		<property name="shipPlanningFolderHumanReadableName" value="${ccf.direction.tf.ship.planningfolder.humanreadablename}" />
+		<property name="planningFolderSeparatorString" value="${ccf.direction.tf.planningfolder.separator}" />
+		<property name="shipReleaseHumanReadableName" value="${ccf.direction.tf.ship.release.humanreadablename}" />
+		<property name="packageReleaseSeparatorString" value="${ccf.direction.package.release.separator}" />
 	</bean>
 	<bean id="TFConnectionManager"
 		class="com.collabnet.ccf.core.eis.connection.ConnectionManager">
@@ -418,8 +418,8 @@
 		<property name="projectMappingDatabaseReader" ref="ProjectMappingDatabaseReaderTF2QC" />
 		<property name="hospitalDatabaseReader" ref="HospitalDatabaseReaderTF2QC"/>
 		<property name="skipNewerVersionsOfQuarantinedArtifacts" value="false"/><property name="alwaysPassResynchedArtifacts" value="false"/>
-		<property name="identityMapEventWaitCount" value="8"></property>
-		<property name="identityMapEventWaitTime" value="500"></property>
+		<property name="identityMapEventWaitCount" value="${ccf.direction.identityMapEventWaitCount}"></property>
+		<property name="identityMapEventWaitTime" value="${ccf.direction.identityMapEventWaitTime}"></property>
 		<property name="alwaysPassPartialArtifacts" value="true"/>
 		<property name="onlyQuarantineAttachmentIfParentInHospital" value="true"></property>
 	</bean>

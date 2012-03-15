@@ -252,10 +252,10 @@
 		<property name="password" value="${ccf.landscape.swp.password}" />
 		<property name="resyncUserName" value="${ccf.landscape.swp.resync.username}"></property>
 		<property name="connectionManager" ref="SWPConnectionManager"></property>
-		<property name="sleepInterval" value="250"></property>
+		<property name="sleepInterval" value="${ccf.direction.swp.sleepinterval}"></property>
 		<property name="maxAttachmentSizePerArtifact" value="${ccf.direction.swp.max.attachmentsize}" />
 		<!-- Let this restart every 6 hours -->
-		<property name="autoRestartPeriod" value="21600" />
+		<property name="autoRestartPeriod" value="${ccf.direction.autorestartperiod}" />
 		<property name="shipAttachments" value="true" />		
 		<property name="serializeArtifactShipments" value="true" />
 		<property name="triggerMetaDataResynchronizationAfterPBIShipment" value="false" />
@@ -337,8 +337,8 @@
 		<property name="parentIdentityMappingDatabaseReader" ref="ParentIndentityMappingDatabaseReaderSWP2TF" />
 		<property name="projectMappingDatabaseReader" ref="ProjectMappingDatabaseReaderSWP2TF" />
 		<property name="skipNewerVersionsOfQuarantinedArtifacts" value="false"/><property name="alwaysPassResynchedArtifacts" value="false"/>
-		<property name="identityMapEventWaitCount" value="8"></property>
-		<property name="identityMapEventWaitTime" value="500"></property>
+		<property name="identityMapEventWaitCount" value="${ccf.direction.identityMapEventWaitCount}"></property>
+		<property name="identityMapEventWaitTime" value="${ccf.direction.identityMapEventWaitTime}"></property>
 		<property name="onlyQuarantineAttachmentIfParentInHospital" value="true"></property>
 	</bean>
 	<bean id="HospitalDatabaseReaderSWP2TF"
