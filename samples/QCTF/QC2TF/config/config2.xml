@@ -45,6 +45,18 @@
 				id="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer.SYSTEM_PROPERTIES_MODE_OVERRIDE"
 				class="org.springframework.beans.factory.config.FieldRetrievingFactoryBean" />
 		</property>
+		<property name="properties">
+			<props>
+				<prop key="ccf.direction.sleepinterval">1000</prop>
+				<prop key="ccf.direction.autorestartperiod">21600</prop>
+				<prop key="ccf.direction.identityMapEventWaitCount">8</prop>
+				<prop key="ccf.direction.identityMapEventWaitTime">500</prop>
+				<prop key="ccf.direction.ship.attachments">true</prop>
+				<prop key="ccf.direction.package.release.separator"> > </prop>
+				<prop key="ccf.direction.qc.delaybefore.attachment.download">0</prop>
+				<prop key="ccf.direction.qc.releaseIdfields.containfilerelease.packagename">true</prop>
+			</props>
+		</property>
 		<property name="locations">
 			<description>
 				Properties configured in these property files will be imported into the wiring file.
