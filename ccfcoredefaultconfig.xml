@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<ccfCoreProperties>
+<ccfCorePropertyList>
 	<!-- 
 		value, name, labelName and systemkind are currently mandatory attribute for ccfcoreproperty element.
 			name and value is key-value for the properties
@@ -38,4 +38,4 @@
 	<ccfcoreproperty category="coreSettings" systemKind="SWP" direction="FORWARD" value="1000" name="ccf.direction.tf.sleepinterval" labelName="SleepInterval" toolTip="Time to sleep (in seconds) before starting a new poll requests if no outstanding artifacts are in the synch queue."/>	
 	<ccfcoreproperty category="coreSettings" systemKind="SWP" direction="REVERSE" value="250" name="ccf.direction.swp.sleepinterval" labelName="SleepInterval" toolTip="Time to sleep (in seconds) before starting a new poll requests if no outstanding artifacts are in the synch queue."/>
 	
-</ccfCoreProperties>
+</ccfCorePropertyList>
