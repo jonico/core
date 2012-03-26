@@ -63,11 +63,11 @@
 				<prop key="ccf.direction.identityMapEventWaitCount">8</prop>
 				<prop key="ccf.direction.identityMapEventWaitTime">500</prop>
 				<prop key="ccf.direction.ship.attachments">true</prop>
-				<prop key="ccf.direction.package.release.separator"> > </prop>
+				<prop key="ccf.direction.package.release.separator">&#160;>&#160;</prop>
 				<prop key="ccf.direction.tf.translate.technical.releaseids">false</prop>
 				<prop key="ccf.direction.tf.ship.planningfolder.humanreadablename">false</prop>
 				<prop key="ccf.direction.tf.ship.release.humanreadablename">false</prop>
-				<prop key="ccf.direction.tf.planningfolder.separator"> > </prop>
+				<prop key="ccf.direction.tf.planningfolder.separator">&#160;>&#160;</prop>
 			</props>
 		</property>
 		<property name="locations">

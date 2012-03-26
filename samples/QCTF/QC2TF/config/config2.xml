@@ -52,7 +52,7 @@
 				<prop key="ccf.direction.identityMapEventWaitCount">8</prop>
 				<prop key="ccf.direction.identityMapEventWaitTime">500</prop>
 				<prop key="ccf.direction.ship.attachments">true</prop>
-				<prop key="ccf.direction.package.release.separator"> > </prop>
+				<prop key="ccf.direction.package.release.separator">&#160;>&#160;</prop>
 				<prop key="ccf.direction.qc.delaybefore.attachment.download">0</prop>
 				<prop key="ccf.direction.qc.releaseIdfields.containfilerelease.packagename">true</prop>
 			</props>
