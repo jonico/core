@@ -51,7 +51,7 @@
 				<prop key="ccf.direction.identityMapEventWaitTime">500</prop>
 				<prop key="ccf.direction.autorestartperiod">21600</prop>
 				<prop key="ccf.direction.swp.sleepinterval">250</prop>
-				<prop key="ccf.direction.max.attachmentsize">10485760</prop>
+				<prop key="ccf.direction.swp.max.attachmentsize">10485760</prop>
 			</props>
 		</property>
 		<property name="locations">
@@ -262,7 +262,7 @@
 		<property name="resyncUserName" value="${ccf.landscape.swp.resync.username}"></property>
 		<property name="connectionManager" ref="SWPConnectionManager"></property>
 		<property name="sleepInterval" value="${ccf.direction.swp.sleepinterval}"></property>
-		<property name="maxAttachmentSizePerArtifact" value="${ccf.direction.max.attachmentsize}" />
+		<property name="maxAttachmentSizePerArtifact" value="${ccf.direction.swp.max.attachmentsize}" />
 		<!-- Let this restart every 6 hours -->
 		<property name="autoRestartPeriod" value="${ccf.direction.autorestartperiod}" />
 		<property name="shipAttachments" value="true" />		
