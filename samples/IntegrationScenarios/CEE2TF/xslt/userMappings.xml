@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CCFMappingStructure>
+	<CEE2SFEEUserMapping>
+		<mapping source="markphip" target="markphip" />
+		<mapping source="karthi" target="karthi" />
+		<mapping source="barathi" target="barathi" />
+		<mapping source="pradeep" target="pradeep" />
+		<mapping source="jonico" target="jonico" />
+		<mapping source="mseethar" target="madhusuthanan" />
+		<mapping source="gomathy" target="gomathy" />
+		<mapping source="karthikeyan_ct" target="karthikeyan" />
+		<mapping source="kavithas" target="kavitha" />
+		<mapping source="rajeswari" target="rajeswari" />
+		<mapping source="vinithra" target="vinithra" />
+		<mapping source="madhu" target="madhu" />
+		<mapping source="default" target="connector" />
+	</CEE2SFEEUserMapping>
+</CCFMappingStructure>

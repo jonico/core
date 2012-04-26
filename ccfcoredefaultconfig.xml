@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<ccfCorePropertyList>
+	<!-- 
+		value, name, labelName and systemkind are currently mandatory attribute for ccfcoreproperty element.
+			name and value is key-value for the properties
+			systemKind currently represents QC/SWP 
+			lableName is the display name for connector properties in JSP
+		 
+		direction attribute is not required; property without direction attribute is considered for both direction- FORWARD/REVERSE   
+			Example :<ccfcoreproperty category="coreSettings" systemKind="QC" value="1000" name="ccf.direction.sleepinterval" labelName="SleepInterval"/>
+			
+		category attribute is not required; property without category is considered by default as Miscellaneous category
+			Example :<ccfcoreproperty systemKind="QC" value="1000" name="ccf.direction.sleepinterval" labelName="SleepInterval"/>
+		
+		toolTip attribute is not required; property without toolTip will not have help info displayed in the UI.
+			Example :<ccfcoreproperty category="coreSettings" systemKind="QC" value="21600" name="ccf.direction.autorestartperiod" labelName="AutoRestartPeriod"
+			toolTip="Time (in seconds) before CCF Core restarts automatically to avoid integration driver memory leak and clear global caches."/>
+		
+		type attribute is not required;value for this attribute represents exact data type expected for the Property defined in Config2.xml.
+		Currently for type attribute supported values are Integer,Long,Boolean and String  
+			Example :<ccfcoreproperty systemKind="QC" type="Long" value="1000" name="ccf.direction.sleepinterval" labelName="SleepInterval"/>
+	-->
+
+	<!-- QC config properties -->
+	<ccfcoreproperty category="coreSettings" systemKind="QC" type="Long" value="1000" name="ccf.direction.sleepinterval" labelName="Sleep Interval" toolTip="Time to sleep (in seconds) before starting a new poll requests if no outstanding artifacts are in the synch queue."/>
+	<ccfcoreproperty category="coreSettings" systemKind="QC" type="Integer" value="21600" name="ccf.direction.autorestartperiod" labelName="Auto RestartPeriod" toolTip="Time (in seconds) before CCF Core restarts automatically to avoid integration driver memory leak and clear global caches."/>
+	<ccfcoreproperty category="coreSettings" systemKind="QC" type="Integer" value="8" name="ccf.direction.identityMapEventWaitCount" labelName="IdentityMapEvent WaitCount" toolTip="Determines how often an artifact is looked up in the identity mapping table before giving up.| Increase this value if you encounter problems with initial artifact resynch."/>
+	<ccfcoreproperty category="coreSettings" systemKind="QC" type="Integer" value="500" name="ccf.direction.identityMapEventWaitTime" labelName="IdentityMapEvent WaitTime" toolTip="Determines how long(in milliseconds) to pause between identity mapping lookup requests| if corresponding artifact could not be found although artifact action was set to resynch.|Increase this value if you encounter problems with initial artifact resynch."/>
+	<ccfcoreproperty category="repoSettings" systemKind="QC" type="Boolean" value="true" name="ccf.direction.ship.attachments" labelName="ShipAttachments"  toolTip="Determines whether attachment should be shipped in that direction."/>
+	<ccfcoreproperty category="repoSettings" systemKind="QC" type="String" value=" > " name="ccf.direction.package.release.separator" labelName="Package Release Separator" toolTip="Separator string used between file release package and file release title for building the package release human readable title, defaults to ' > '" />	
+	<ccfcoreproperty category="repoSettings" systemKind="QC" type="Boolean" direction="FORWARD" value="false" name="ccf.direction.tf.translate.technical.releaseids" labelName="Translate Technical ReleaseIds"  toolTip="If set to true, technical release ids (relxxx) are automatically translated into the human readable form.|Turning this setting on will have an performance impact because further SOAP calls have to be made." />
+	<ccfcoreproperty category="repoSettings" systemKind="QC" type="Boolean" direction="FORWARD" value="false" name="ccf.direction.tf.ship.planningfolder.humanreadablename" labelName="Ship PlanningFolder HumanReadableName"  toolTip="Determines whether to ship the human readable name of the assigned planning folder.|The name will contain the names of all parent planning folders, separated by the corresponding separator string.|Turning this setting on will have an performance impact because further SOAP calls have to be made."/>
+	<ccfcoreproperty category="repoSettings" systemKind="QC" type="Boolean" direction="FORWARD" value="false" name="ccf.direction.tf.ship.release.humanreadablename" labelName="Ship Release HumanReadableName" toolTip="Determines whether to ship the human readable name of the release fields, including the package name, separated by the corresponding separator string." />
+	<ccfcoreproperty category="repoSettings" systemKind="QC" type="String" direction="FORWARD" value=" > " name="ccf.direction.tf.planningfolder.separator" labelName="PlanningFolder Separator" toolTip="Separator string used by building the planning folder human readable title, defaults to ' > '"/>
+	<ccfcoreproperty category="coreSettings" systemKind="QC" type="Long" direction="FORWARD" value="10485760" name="ccf.direction.tf.max.attachmentsize" labelName="Max Attachment Size" toolTip="Maximum attachment size that can be shipped for an artifact"/>	
+	<ccfcoreproperty category="repoSettings" systemKind="QC" type="Long" direction="REVERSE" value="0"	name="ccf.direction.qc.delaybefore.attachment.download" labelName="Delay Before Attachment Download" toolTip="Determines the waiting time in milliseconds before trying to download an attachment from Quality Center.|Increase this value if you encounter partially downloaded attachments." />
+	<ccfcoreproperty category="repoSettings" systemKind="QC" type="Boolean" direction="REVERSE" value="true" name="ccf.direction.qc.releaseIdfields.containfilerelease.packagename" labelName="ReleaseIdFields Contain FileRelease PackageName"  toolTip="Determines whether the human readable release name that should be| translated into a technical release id,prepended by the file release package title.|Only used if translateTechnicalReleaseIds property is set to true."/>
+	<ccfcoreproperty category="coreSettings" systemKind="QC" type="Long" direction="REVERSE" value="10485760" name="ccf.direction.qc.max.attachmentsize" labelName="Max Attachment Size" toolTip="Maximum attachment size that can be shipped for an artifact"/>
+	
+	<!-- SWP config properties -->
+	<ccfcoreproperty category="coreSettings" systemKind="SWP" type="Integer" value="8"  name="ccf.direction.identityMapEventWaitCount" labelName="IdentityMapEvent WaitCount" toolTip="Determines how often an artifact is looked up in the identity mapping table before giving up.| Increase this value if you encounter problems with initial artifact resynch."/>
+	<ccfcoreproperty category="coreSettings" systemKind="SWP" type="Integer" value="500"  name="ccf.direction.identityMapEventWaitTime" labelName="IdentityMapEven tWaitTime" toolTip="Determines how long(in milliseconds) to pause between identity mapping lookup requests | if corresponding artifact could not be found although artifact action was set to resynch.|Increase this value if you encounter problems with initial artifact resynch."/>
+	<ccfcoreproperty category="coreSettings" systemKind="SWP" type="Integer" value="21600"  name="ccf.direction.autorestartperiod" labelName="Auto RestartPeriod" toolTip="Time (in seconds) before CCF Core restarts automatically to avoid integration driver memory leak and clear global caches."/>	
+	<ccfcoreproperty category="coreSettings" systemKind="SWP" type="Long" direction="FORWARD"  value="1000" name="ccf.direction.tf.sleepinterval" labelName="Sleep Interval" toolTip="Time to sleep (in seconds) before starting a new poll requests if no outstanding artifacts are in the synch queue."/>
+	<ccfcoreproperty category="coreSettings" systemKind="SWP" type="Long" direction="FORWARD" value="10485760" name="ccf.direction.tf.max.attachmentsize" labelName="Max Attachment Size" toolTip="Maximum attachment size that can be shipped for an artifact"/>	
+	<ccfcoreproperty category="coreSettings" systemKind="SWP" type="Long" direction="REVERSE"  value="250" name="ccf.direction.swp.sleepinterval" labelName="Sleep Interval" toolTip="Time to sleep (in seconds) before starting a new poll requests if no outstanding artifacts are in the synch queue."/>
+	<ccfcoreproperty category="coreSettings" systemKind="SWP" type="Long" direction="REVERSE" value="10485760" name="ccf.direction.swp.max.attachmentsize" labelName="Max Attachment Size" toolTip="Maximum attachment size that can be shipped for an artifact"/>
+	
+</ccfCorePropertyList>

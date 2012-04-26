@@ -1,0 +1,66 @@
+Requirements for the NSIS installer
+
+source structure
+
+The source code is available at:
+http://ccf.open.collab.net/svn/ccf/trunk
+
+The following files need to be packed
+/CCFDBService                   - /installer/ServiceWrappers/CCFDBService/**
+/CCFDBService/db/CCFDB.script   - /config/db-schema/CCFDB.script
+/lib                            - /build/jars/*.jar
+/lib/extlib                     - /src/core/lib/openadaptor-3.4/*.jar
+                                  /src/core/lib/openadaptor-3.4/3rdparty/*.jar
+                                  /src/plugins/HPQC/lib/jacob/*.jar
+                                  /src/plugins/SFEE/lib/*.jar
+/lib/jni      		            - /src/plugins/HPQC/lib/jacob/jacob.dll
+/samples                        - /samples/**
+/License.html                   - /License.html
+/README.txt                     - /README.txt
+
+1. build using /build.xml
+2. Copy files as above into the installer
+
+On installer run,
+0. Splash screen
+1. Welcome screen
+2. License
+3. Query for the installation directory
+4. Do you want to install the hsql db service? (Y/N radio buttons)
+   NOTE: This db is required for storing CCF related information. You could
+         choose to install a hsql database service, and store the info there
+         (recommended), or you could use your own database, and create the
+         necessary schemas as given in the READMEs in the CCF_INSTALL_DIR/samples
+   [X] Start the hsql db service (enable only on selection of Y above)
+   (If yes, install 1 and 2, Run /CCFDBService/InstallCCFDBService.bat,
+    display errors to the user. Else do nothing)
+5. Install the other files and directories (as above - no questions to the user)
+6. Dependency: CCF requires JRE 1.4 or above to run. Please install, if you havent already done so.
+   JRE 1.4 can be obtained from java.sun.com
+7. Show the /README.txt
+8. On finish, open a browser with open.collab.net
+
+
+
+
+
+Other requirements:
+All installer related files should be checked into \installer
+CCF should be installed as a service - with start, stop capability.
+The CCF service should be installed as manually start-able (because the user has to perform
+configuration before the service can start, so the user should adjust these settings
+to suit his preference.
+
+All paths above that contain a class or jar file must be added to the class-path
+All paths above that contain dlls must be added to the system PATH variable
+
+The Following command line should be invoked to start the CCF service.
+-config \bin\trial2\wirings\Trial2CCFCoreMapping.xml
+-Djava.library.path=\bin\lib\jacob
+
+Future todo for Madan:
+Rename QC and SFEE plugin packages to names with version names.
+move jacob jars to qc\lib
+move/retain other jars in global lib
+move \core\trial2 to \samples
+
