@@ -31,7 +31,7 @@
   Software with other software or hardware.
   ]]
   
-  $HeadURL: https://ctf.open.collab.net/svn/repos/ccf/trunk/core/samples/tools/xslt/oa3toDot.xsl $
+  $HeadURL$
   
   @author Andrew Shire
   @author Eddy Higgins

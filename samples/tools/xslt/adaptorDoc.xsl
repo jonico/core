@@ -31,7 +31,7 @@
   Software with other software or hardware.
   ]]
   
-  $HeadURL: https://ctf.open.collab.net/svn/repos/ccf/trunk/core/samples/tools/xslt/adaptorDoc.xsl $
+  $HeadURL$
   
   @author Andrew Shire
   
