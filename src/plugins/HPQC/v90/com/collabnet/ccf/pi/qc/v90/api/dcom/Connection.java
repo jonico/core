@@ -17,6 +17,9 @@
 
 package com.collabnet.ccf.pi.qc.v90.api.dcom;
 
+// VZK
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import com.collabnet.ccf.pi.qc.v90.api.IBugFactory;
 import com.collabnet.ccf.pi.qc.v90.api.ICommand;
@@ -30,6 +33,9 @@ import com.jacob.com.Variant;
 
 public class Connection extends ActiveXComponent implements IConnection
 {
+	// VZK 
+	private static final Log log = LogFactory.getLog(Connection.class);
+	
 	private IBugFactory bugFactory = null;
 	private IRequirementsFactory requirementsFactory = null;
 	private ICommand command = null;
@@ -207,9 +213,13 @@ public class Connection extends ActiveXComponent implements IConnection
 		public IRecordSet executeSQL(String sql) {
 			ICommand command = null;
 			try {
+				// VZK
+				log.debug("SQLExec: " + sql);
 				command = getCommand();
 				command.setCommandText(sql);
 				IRecordSet rs = command.execute();
+				// VZK
+				log.debug("SQL returned " + rs.getRecordCount() + " records");
 				return rs;
 			} finally {
 				command = null;
