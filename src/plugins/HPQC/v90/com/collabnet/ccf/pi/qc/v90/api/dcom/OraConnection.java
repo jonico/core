@@ -21,7 +21,7 @@ public class OraConnection {
 	private static final Logger log = Logger.getLogger(OraConnection.class);
 	private static String nl = System.getProperty("line.separator");
 
-	private static final String DRIVERKEY     = "oracle.jdbc.driver.OracleDriver";
+	private static final String DRIVERKEY     = "ora.jdbc.driver";
 	private static final String CONNECTIONKEY = "ora.jdbc.connection";
 	private static final String USERNAMEKEY   = "ora.jdbc.user.name";
 	private static final String PASSWORDKEY   = "ora.jdbc.user.password";
