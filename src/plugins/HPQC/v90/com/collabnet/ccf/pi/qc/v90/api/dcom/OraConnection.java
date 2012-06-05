@@ -35,6 +35,13 @@ public class OraConnection {
 	private Statement oraEngine = null;
 	private Properties oraProps = new Properties();
 	
+	private void lErr( String msg , SQLException e ) {
+		log.error( msg + ":" + nl +
+		"Error Code: " + e.getErrorCode() + nl +
+		"Message:    " + e.getMessage() + nl +
+		"SQL State:  " + e.getSQLState() + nl , e );
+	}
+	
 	public OraConnection() {
 
 		// currently not using spring
@@ -72,11 +79,7 @@ public class OraConnection {
 			current = "Engine (Statement)";
 			oraEngine = oraConnection.createStatement();
 		} catch (SQLException e) {
-			log.error("Could not create " + current + " to Oracle DB:");
-			log.error("Error Code: " + e.getErrorCode());
-			log.error("Message:    " + e.getMessage());
-			log.error("SQL State:  " + e.getSQLState());
-			log.error("No " + current , e);
+			lErr( "Could not create " + current , e );
 		}
 	}
 	public IRecordSet executeSql ( String sql ) {
@@ -85,11 +88,7 @@ public class OraConnection {
 		try {
 			rs = this.oraEngine.executeQuery( sql );
 		} catch (SQLException e) {
-			log.error("Could not execute SQL " + sql );
-			log.error("Error Code: " + e.getErrorCode());
-			log.error("Message:    " + e.getMessage());
-			log.error("SQL State:  " + e.getSQLState());
-			log.error("Failed SQL execution", e);
+			lErr("Could not execute SQL " + sql , e );
 		} 
 		
 		return new OracRecordSet( rs );
