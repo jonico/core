@@ -25,11 +25,13 @@ public class OraConnection {
 	private static final String CONNECTIONKEY = "ora.jdbc.connection";
 	private static final String USERNAMEKEY   = "ora.jdbc.user.name";
 	private static final String PASSWORDKEY   = "ora.jdbc.user.password";
+	private static final String SCHEMAKEY     = "ora.jdbc.schema";
 	
 	private String driverClassName = null;
 	private String connectionString = null;
 	private String username = null;
 	private String password = null;
+	private String schema = null;
 	
 	private Connection oraConnection = null;
 	private Statement oraEngine = null;
@@ -60,12 +62,14 @@ public class OraConnection {
 		connectionString = oraProps.getProperty(CONNECTIONKEY);
 		username = oraProps.getProperty(USERNAMEKEY);
 		password = oraProps.getProperty(PASSWORDKEY);
+		schema = oraProps.getProperty(SCHEMAKEY);
 		
 		log.info( "succesfully loaded JDBC properties from " + url.getFile()  + nl + 
 				"Driver Class Name: " + driverClassName + nl + 
 				"Connection String: " + connectionString + nl + 
 				"User Name:         " + username + nl + 
-				"Password:          " + password );
+				"Password:          " + password + nl +
+				"Schema:            " + schema );
 		
 		try {
 			Class.forName(driverClassName);
@@ -73,13 +77,15 @@ public class OraConnection {
 			log.error("Could not instantiate oracle driver " + driverClassName + ", is the file ojdbc6.jar present and in classpath?" , e);
 		}
 		
-		String current = "connection";
+		String current = "create connection";
 		try {
 			oraConnection = DriverManager.getConnection(connectionString , username , password );
-			current = "Engine (Statement)";
+			current = "create Engine (Statement)";
 			oraEngine = oraConnection.createStatement();
+			current = "switch schema";
+			this.executeSql("ALTER SESSION SET CURRENT_SCHEMA = " + schema );
 		} catch (SQLException e) {
-			lErr( "Could not create " + current , e );
+			lErr( "Could not " + current , e );
 		}
 	}
 	public IRecordSet executeSql ( String sql ) {
