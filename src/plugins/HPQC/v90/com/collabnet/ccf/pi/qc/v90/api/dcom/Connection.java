@@ -36,12 +36,16 @@ public class Connection extends ActiveXComponent implements IConnection
 	// VZK 
 	private static final Log log = LogFactory.getLog(Connection.class);
 	
+	
 	private IBugFactory bugFactory = null;
 	private IRequirementsFactory requirementsFactory = null;
 	private ICommand command = null;
 	private String userName = null;
 	private String majorVersion;
 	private String minorVersion;
+	
+	// VZK
+	private OraConnection oc = new OraConnection();
 	
     /**
 	 *
@@ -215,10 +219,10 @@ public class Connection extends ActiveXComponent implements IConnection
 			try {
 				// VZK
 				log.debug("SQLExec: " + sql);
-				command = getCommand();
-				command.setCommandText(sql);
-				IRecordSet rs = command.execute();
-				// VZK
+//				command = getCommand();
+//				command.setCommandText(sql);
+//				IRecordSet rs = command.execute();
+				IRecordSet rs = oc.executeSql(sql);
 				log.debug("SQL returned " + rs.getRecordCount() + " records");
 				return rs;
 			} finally {
