@@ -44,7 +44,7 @@ public class OraConnection {
 		"SQL State:  " + e.getSQLState() + nl , e );
 	}
 	
-	public OraConnection() {
+	public OraConnection( String domain , String project ) {
 
 		// currently not using spring
 		URL url = ClassLoader.getSystemResource("oracle.jdbc.properties");
@@ -62,7 +62,7 @@ public class OraConnection {
 		connectionString = oraProps.getProperty(CONNECTIONKEY);
 		username = oraProps.getProperty(USERNAMEKEY);
 		password = oraProps.getProperty(PASSWORDKEY);
-		schema = oraProps.getProperty(SCHEMAKEY);
+		schema = domain.toUpperCase() + "_" + project.toUpperCase() + "_DB";
 		
 		log.info( "succesfully loaded JDBC properties from " + url.getFile()  + nl + 
 				"Driver Class Name: " + driverClassName + nl + 

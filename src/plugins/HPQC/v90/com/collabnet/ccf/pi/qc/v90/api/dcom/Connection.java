@@ -45,7 +45,7 @@ public class Connection extends ActiveXComponent implements IConnection
 	private String minorVersion;
 	
 	// VZK
-	private OraConnection oc = new OraConnection();
+	private OraConnection oc = null;
 	
     /**
 	 *
@@ -57,6 +57,7 @@ public class Connection extends ActiveXComponent implements IConnection
         login(user, pass);
         populateVersions();
         connect(domain, project);
+        oc = new OraConnection(domain, project);
     }
 
 	private void populateVersions() {
