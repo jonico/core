@@ -83,7 +83,8 @@ public class OraConnection {
 			current = "create Engine (Statement)";
 			oraEngine = oraConnection.createStatement();
 			current = "switch schema";
-			this.executeSql("ALTER SESSION SET CURRENT_SCHEMA = " + schema );
+			this.oraEngine.execute("ALTER SESSION SET CURRENT_SCHEMA = " + schema );
+			log.info( "switched schema to " + schema );
 		} catch (SQLException e) {
 			lErr( "Could not " + current , e );
 		}
@@ -96,7 +97,7 @@ public class OraConnection {
 		} catch (SQLException e) {
 			lErr("Could not execute SQL " + sql , e );
 		} 
-		
+		log.info( "Succesfully executed sql: " + nl + sql );
 		return new OracRecordSet( rs );
 		
 	}
