@@ -18,7 +18,7 @@ public class OracRecordSet implements IRecordSet {
 	
 	public OracRecordSet( ResultSet rsinit ) {
 		rs = rsinit;
-		log.info("instantiaed OraRecordSet");
+		log.debug("instantiaed OraRecordSet");
 	}
 	
 	private void lerr( String msg , SQLException e ) {
@@ -43,9 +43,9 @@ public class OracRecordSet implements IRecordSet {
 		int indexer = 3;
 		StackTraceElement[] stack = Thread.currentThread().getStackTrace();
 		StackTraceElement sElem = stack[stack.length - indexer ];
-		log.info(stack[stack.length - indexer + 1].getMethodName() + " called by " + 
+		log.debug(stack[stack.length - indexer + 1].getMethodName() + " called by " + 
 				sElem.getClassName() + "." + 
-				sElem.getMethodName() + "@" + 
+				sElem.getMethodName() + " @" + 
 				sElem.getLineNumber() );
 	}
 	
