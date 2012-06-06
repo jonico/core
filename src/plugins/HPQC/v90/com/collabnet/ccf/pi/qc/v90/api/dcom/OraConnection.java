@@ -96,7 +96,7 @@ public class OraConnection {
 		try {
 			rs = this.oraEngine.executeQuery( sql );
 			orc = new OracRecordSet(rs);
-			log.info( "Succesfully executed sql to retrieve " + orc.getRecordCount() + " records: " + nl + sql );
+			log.info( "Succesfully executed sql to retrieve " + orc.getRecordCount() + " records: " + nl + sql + nl );
 		} catch (SQLException e) {
 			lErr("Could not execute SQL " + sql , e );
 		} 

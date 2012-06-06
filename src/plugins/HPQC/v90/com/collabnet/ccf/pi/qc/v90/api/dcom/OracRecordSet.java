@@ -18,6 +18,7 @@ public class OracRecordSet implements IRecordSet {
 	
 	public OracRecordSet( ResultSet rsinit ) {
 		rs = rsinit;
+		log.info("instantiaed OraRecordSet");
 	}
 	
 	private void lerr( String msg , SQLException e ) {
