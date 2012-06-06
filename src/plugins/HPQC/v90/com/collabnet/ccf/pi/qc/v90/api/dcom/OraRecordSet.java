@@ -22,6 +22,21 @@ public class OraRecordSet implements IRecordSet {
 		log.debug("instantiaed OraRecordSet");
 	}
 	
+	private void logCaller() {
+		StackTraceElement[] stack = Thread.currentThread().getStackTrace();
+//		String sStack = "Call Stack:" + nl;
+//		for ( int i = 0 ; i < stack.length ; i++ ) {
+//			StackTraceElement el = stack[i];
+//			sStack += i + ": " + el.getClassName() + "." + el.getMethodName() + "@" + el.getLineNumber() + nl;
+//		}
+//		log.debug(sStack);
+		StackTraceElement sElem = stack[ 3 ];
+		log.debug(stack[ 2 ].getMethodName() + " called by " + 
+				sElem.getClassName() + "." + 
+				sElem.getMethodName() + " @" + 
+				sElem.getLineNumber() );
+	}
+	
 	private void lErr( String msg , SQLException e ) {
 		log.error(msg + nl +
 			"Error Code: " + e.getErrorCode() + nl +
@@ -39,14 +54,6 @@ public class OraRecordSet implements IRecordSet {
 		}
 	}
 
-	private void logCaller() {
-		StackTraceElement[] stack = Thread.currentThread().getStackTrace();
-		StackTraceElement sElem = stack[ 3 ];
-		log.debug(stack[ 2 ].getMethodName() + " called by " + 
-				sElem.getClassName() + "." + 
-				sElem.getMethodName() + " @" + 
-				sElem.getLineNumber() );
-	}
 	
 	@Override
 	public int getRecordCount() {
