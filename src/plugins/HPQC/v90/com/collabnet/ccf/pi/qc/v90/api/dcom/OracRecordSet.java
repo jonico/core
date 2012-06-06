@@ -38,9 +38,19 @@ public class OracRecordSet implements IRecordSet {
 		}
 	}
 
+	private void logCaller() {
+		int indexer = 3;
+		StackTraceElement[] stack = Thread.currentThread().getStackTrace();
+		StackTraceElement sElem = stack[stack.length - indexer ];
+		log.info(stack[stack.length - indexer + 1].getMethodName() + " called by " + 
+				sElem.getClassName() + "." + 
+				sElem.getMethodName() + "@" + 
+				sElem.getLineNumber() );
+	}
+	
 	@Override
 	public int getRecordCount() {
-		// PRE: sql is already executed
+		logCaller();
 		int rc = -1;
 		try {
 			rc = rs.last() ? rs.getRow() : 0;
@@ -54,6 +64,7 @@ public class OracRecordSet implements IRecordSet {
 
 	@Override
 	public int getColCount() {
+		logCaller();
 		try {
 			return meta.getColumnCount();
 		} catch (SQLException e) {
@@ -64,7 +75,7 @@ public class OracRecordSet implements IRecordSet {
 
 	@Override
 	public String getFieldValueAsString(String field) {
-		
+		logCaller();
 		boolean found = false;
 		String sret = null;
 		int index = -1;
@@ -92,7 +103,7 @@ public class OracRecordSet implements IRecordSet {
 
 	@Override
 	public String getColNameAsString(int index) {
-
+		logCaller();
 		try {
 			return meta.getColumnName(index);
 		} catch (SQLException e) {
@@ -103,11 +114,13 @@ public class OracRecordSet implements IRecordSet {
 
 	@Override
 	public String getColName(int index) {
+		logCaller();
 		return getColNameAsString(index);
 	}
 
 	@Override
 	public void next() {
+		logCaller();
 		try {
 			rs.next();
 		} catch (SQLException e) {
@@ -117,6 +130,7 @@ public class OracRecordSet implements IRecordSet {
 
 	@Override
 	public void first() {
+		logCaller();
 		try {
 			rs.first();
 		} catch (SQLException e) {
@@ -126,6 +140,7 @@ public class OracRecordSet implements IRecordSet {
 
 	@Override
 	public void last() {
+		logCaller();
 		try {
 			rs.last();
 		} catch (SQLException e) {
@@ -135,6 +150,7 @@ public class OracRecordSet implements IRecordSet {
 
 	@Override
 	public int getCacheSize() {
+		logCaller();
 		// VZK currently not implemented!
 		return 0;
 	}

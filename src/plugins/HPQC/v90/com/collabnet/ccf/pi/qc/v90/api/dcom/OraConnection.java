@@ -92,13 +92,15 @@ public class OraConnection {
 	public IRecordSet executeSql ( String sql ) {
 		
 		ResultSet rs = null;
+		OracRecordSet orc = null;
 		try {
 			rs = this.oraEngine.executeQuery( sql );
+			orc = new OracRecordSet(rs);
+			log.info( "Succesfully executed sql to retrieve " + orc.getRecordCount() + " records: " + nl + sql );
 		} catch (SQLException e) {
 			lErr("Could not execute SQL " + sql , e );
 		} 
-		log.info( "Succesfully executed sql: " + nl + sql );
-		return new OracRecordSet( rs );
+		return orc;
 		
 	}
 }
