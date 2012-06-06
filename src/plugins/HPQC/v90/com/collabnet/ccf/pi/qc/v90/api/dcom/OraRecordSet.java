@@ -6,26 +6,27 @@ import java.sql.SQLException;
 import org.apache.log4j.Logger;
 import com.collabnet.ccf.pi.qc.v90.api.IRecordSet;
 
-public class OracRecordSet implements IRecordSet {
+public class OraRecordSet implements IRecordSet {
 
 	private static final long serialVersionUID = 1L;
 
-	private static final Logger log = Logger.getLogger(OracRecordSet.class);
+	private static final Logger log = Logger.getLogger(OraRecordSet.class);
+	private static String nl = System.getProperty("line.separator");
 
 	private ResultSet rs  = null;
 	private ResultSetMetaData meta = null;
 	
 	
-	public OracRecordSet( ResultSet rsinit ) {
+	public OraRecordSet( ResultSet rsinit ) {
 		rs = rsinit;
 		log.debug("instantiaed OraRecordSet");
 	}
 	
-	private void lerr( String msg , SQLException e ) {
-		log.error(msg);
-		log.error("Error Code: " + e.getErrorCode());
-		log.error("Message:    " + e.getMessage());
-		log.error("SQL State:  " + e.getSQLState());
+	private void lErr( String msg , SQLException e ) {
+		log.error(msg + nl +
+			"Error Code: " + e.getErrorCode() + nl +
+			"Message:    " + e.getMessage() + nl +
+			"SQL State:  " + e.getSQLState());
 	}
 	
 
@@ -34,8 +35,7 @@ public class OracRecordSet implements IRecordSet {
 		try {
 			rs.close();
 		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			lErr("could not release/close recordset" , e);
 		}
 	}
 
@@ -57,7 +57,7 @@ public class OracRecordSet implements IRecordSet {
 			rc = rs.last() ? rs.getRow() : 0;
 		} catch (SQLException e) {
 			// TODO Auto-generated catch block
-			lerr( "Could not get recordcount" , e );
+			lErr( "Could not get recordcount" , e );
 		}
 		return rc;
 	}
@@ -69,7 +69,7 @@ public class OracRecordSet implements IRecordSet {
 		try {
 			return meta.getColumnCount();
 		} catch (SQLException e) {
-			lerr( "Could not get column count" , e );
+			lErr( "Could not get column count" , e );
 		}
 		return 0;
 	}
@@ -88,7 +88,7 @@ public class OracRecordSet implements IRecordSet {
 				try {
 					rowIndex = rs.getRow();
 				} catch (SQLException e) {
-					lerr( "Could not get current row count ", e );
+					lErr( "Could not get current row count ", e );
 				}
 			}
 
@@ -96,7 +96,7 @@ public class OracRecordSet implements IRecordSet {
 			try {
 				sret = rs.getString( index );
 			} catch (SQLException e) {
-				lerr( "Could not retrieve value for column #" + index + " row #" + rowIndex , e );
+				lErr( "Could not retrieve value for column #" + index + " row #" + rowIndex , e );
 			}
 		}
 		return sret;
@@ -108,7 +108,7 @@ public class OracRecordSet implements IRecordSet {
 		try {
 			return meta.getColumnName(index);
 		} catch (SQLException e) {
-			lerr( "Could not retrieve column name at index " + index , e );
+			lErr( "Could not retrieve column name at index " + index , e );
 		}
 		return null;
 	}
@@ -125,7 +125,7 @@ public class OracRecordSet implements IRecordSet {
 		try {
 			rs.next();
 		} catch (SQLException e) {
-			lerr( "Could not move to next recordset item" , e );	
+			lErr( "Could not move to next recordset item" , e );	
 		}
 	}
 
@@ -135,7 +135,7 @@ public class OracRecordSet implements IRecordSet {
 		try {
 			rs.first();
 		} catch (SQLException e) {
-			lerr( "Could not move to first recordset item" , e );	
+			lErr( "Could not move to first recordset item" , e );	
 		}
 	}
 
@@ -145,7 +145,7 @@ public class OracRecordSet implements IRecordSet {
 		try {
 			rs.last();
 		} catch (SQLException e) {
-			lerr( "Could not move to last recordset item" , e );	
+			lErr( "Could not move to last recordset item" , e );	
 		}
 	}
 
