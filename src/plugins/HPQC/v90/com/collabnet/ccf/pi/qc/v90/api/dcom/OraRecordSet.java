@@ -40,10 +40,9 @@ public class OraRecordSet implements IRecordSet {
 	}
 
 	private void logCaller() {
-		int indexer = 3;
 		StackTraceElement[] stack = Thread.currentThread().getStackTrace();
-		StackTraceElement sElem = stack[stack.length - indexer ];
-		log.debug(stack[stack.length - indexer + 1].getMethodName() + " called by " + 
+		StackTraceElement sElem = stack[ 3 ];
+		log.debug(stack[ 2 ].getMethodName() + " called by " + 
 				sElem.getClassName() + "." + 
 				sElem.getMethodName() + " @" + 
 				sElem.getLineNumber() );
