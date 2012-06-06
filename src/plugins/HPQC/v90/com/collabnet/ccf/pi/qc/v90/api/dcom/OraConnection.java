@@ -81,7 +81,7 @@ public class OraConnection {
 		try {
 			oraConnection = DriverManager.getConnection(connectionString , username , password );
 			current = "create Engine (Statement)";
-			oraEngine = oraConnection.createStatement();
+			oraEngine = oraConnection.createStatement( ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY );
 			current = "switch schema";
 			this.oraEngine.execute("ALTER SESSION SET CURRENT_SCHEMA = " + schema );
 			log.info( "switched schema to " + schema );
