@@ -45,19 +45,6 @@
 				id="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer.SYSTEM_PROPERTIES_MODE_OVERRIDE"
 				class="org.springframework.beans.factory.config.FieldRetrievingFactoryBean" />
 		</property>
-		<property name="properties">
-			<props>
-				<prop key="ccf.direction.sleepinterval">1000</prop>
-				<prop key="ccf.direction.autorestartperiod">21600</prop>
-				<prop key="ccf.direction.identityMapEventWaitCount">8</prop>
-				<prop key="ccf.direction.identityMapEventWaitTime">500</prop>
-				<prop key="ccf.direction.ship.attachments">true</prop>
-				<prop key="ccf.direction.package.release.separator">&#160;>&#160;</prop>
-				<prop key="ccf.direction.qc.delaybefore.attachment.download">0</prop>
-				<prop key="ccf.direction.qc.releaseIdfields.containfilerelease.packagename">true</prop>
-				<prop key="ccf.direction.qc.max.attachmentsize">10485760</prop>
-			</props>
-		</property>
 		<property name="locations">
 			<description>
 				Properties configured in these property files will be imported into the wiring file.
@@ -207,8 +194,6 @@
 				var fieldMappingKind = oa_data.selectSingleNode("@targetRepositoryKind").getText();
 				if (fieldMappingKind == "MAPFORCE") {
 					oa_data= fieldMappingDirectory + "GenericArtifactFormatToMapForce.xsl";
-				} else if (fieldMappingKind == "MAPPING_RULES") {
-					oa_data= fieldMappingDirectory + "preprocessingrules.xsl";
 				}
 				else {
 					oa_data=null;
@@ -225,8 +210,6 @@
 				var fieldMappingKind = oa_data.selectSingleNode("@targetRepositoryKind").getText();
 				if (fieldMappingKind == "MAPFORCE") {
 					oa_data= fieldMappingDirectory + "MapForceMain.xsl";
-				} else if (fieldMappingKind == "MAPPING_RULES") {
-					oa_data= fieldMappingDirectory + "rules.xsl";
 				}
 				else {
 					oa_data=null;
@@ -245,7 +228,7 @@
 					oa_data= fieldMappingDirectory + "MapForceToGenericArtifactFormat.xsl";
 				}
 				else if (fieldMappingKind == "MAPPING_RULES") {
-					oa_data= fieldMappingDirectory + "postprocessingrules.xsl";
+					oa_data= fieldMappingDirectory + "rules.xsl";
 				}
 				else if (fieldMappingKind == "CUSTOM_XSLT") {
 					oa_data= fieldMappingDirectory + "custom.xsl";
@@ -270,11 +253,11 @@
 		<property name="userName" value="${ccf.landscape.qc.username}" />
 		<property name="password" value="${ccf.landscape.qc.password}" />
 		<property name="connectionManager" ref="QCConnectionManager"></property>
-		<property name="sleepInterval" value="${ccf.direction.sleepinterval}"></property>
+		<property name="sleepInterval" value="1000"></property>
 		<property name="maxAttachmentSizePerArtifact" value="${ccf.direction.qc.max.attachmentsize}" />
 		<!-- Let this restart every 6 hours -->
-		<property name="autoRestartPeriod" value="${ccf.direction.autorestartperiod}" />
-		<property name="shipAttachments" value="${ccf.direction.ship.attachments}" />		
+		<property name="autoRestartPeriod" value="21600" />
+		<property name="shipAttachments" value="true" />		
 		<!-- This plugs in the polling hospital -->
 		<property name="hospitalDatabaseReader" ref="HospitalDatabaseExtractor" />
 		<property name="nameOfEntityService" value="TFEntityService" />
@@ -285,7 +268,7 @@
 			downloaded. If you experience partial attachment downloads, please
 			increase this value.
 		-->
-		<property name="delayBeforeAttachmentDownload" value="${ccf.direction.qc.delaybefore.attachment.download}" />
+		<property name="delayBeforeAttachmentDownload" value="0" />
 		
 	</bean>
 	<bean id="QCConnectionManager" class="com.collabnet.ccf.core.eis.connection.ConnectionManager">
@@ -340,8 +323,8 @@
 		<property name="updateComment" value="Synchronized by Connector user" />
 		<property name="connectionManager" ref="TFConnectionManager"></property>
 		<property name="translateTechnicalReleaseIds" value="false" />
-		<property name="releaseIdFieldsContainFileReleasePackageName" value="${ccf.direction.qc.releaseIdfields.containfilerelease.packagename}" />
-		<property name="packageReleaseSeparatorString" value="${ccf.direction.package.release.separator}" />
+		<property name="releaseIdFieldsContainFileReleasePackageName" value="true" />
+		<property name="packageReleaseSeparatorString" value=" > " />
 	</bean>
 	<bean id="TFEntityService" class="com.collabnet.ccf.core.EntityService2">
 		<description>
@@ -357,8 +340,8 @@
 		<property name="parentIdentityMappingDatabaseReader" ref="ParentIndentityMappingDatabaseReaderQC2TF" />
 		<property name="projectMappingDatabaseReader" ref="ProjectMappingDatabaseReaderQC2TF" />
 		<property name="skipNewerVersionsOfQuarantinedArtifacts" value="false"/><property name="alwaysPassResynchedArtifacts" value="false"/>
-		<property name="identityMapEventWaitCount" value="${ccf.direction.identityMapEventWaitCount}"></property>
-		<property name="identityMapEventWaitTime" value="${ccf.direction.identityMapEventWaitTime}"></property>
+		<property name="identityMapEventWaitCount" value="8"></property>
+		<property name="identityMapEventWaitTime" value="500"></property>
 		<property name="onlyQuarantineAttachmentIfParentInHospital" value="true"></property>
 	</bean>
 	<bean id="HospitalDatabaseReaderQC2TF"
