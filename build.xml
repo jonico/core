@@ -61,6 +61,7 @@
 		<pathelement location="src/plugins/CEE/ProjectTracker/v50/lib/wss4j-1.5.1.jar" />
 		<pathelement location="src/plugins/CEE/ProjectTracker/v50/lib/xmlsec-1.4.0.jar" />
 		<pathelement location="src/plugins/HPQC/lib/jacob/jacob.jar" />
+		<pathelement location="src/plugins/HPQC/lib/ojdbc6.jar" />
 		<pathelement location="src/plugins/SWP/lib/ScrumWorks-soap.jar" />
 		<pathelement location="src/plugins/TFS/lib/com.microsoft.tfs.sdk-10.1.0.jar" />
 	</path>
