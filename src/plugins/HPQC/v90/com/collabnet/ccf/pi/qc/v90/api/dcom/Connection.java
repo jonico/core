@@ -112,12 +112,15 @@ public class Connection extends ActiveXComponent implements IConnection
     {
     	loggedIn = false;
         Dispatch.call(this, "DisconnectProject");
+        // VZK release jdbc connection
     }
 
     public void releaseConnection()
     {
     	loggedIn = false;
         Dispatch.call(this, "ReleaseConnection");
+        
+        // VZK release jdbc connection
     }
 
     public boolean connected()
@@ -219,12 +222,12 @@ public class Connection extends ActiveXComponent implements IConnection
 			ICommand command = null;
 			try {
 				// VZK
-				log.debug("SQLExec: " + sql);
+//				log.debug("SQLExec: " + sql);
 //				command = getCommand();
 //				command.setCommandText(sql);
 //				IRecordSet rs = command.execute();
 				IRecordSet rs = oc.executeSql(sql);
-				log.debug("SQL returned " + rs.getRecordCount() + " records");
+//				log.debug("SQL returned " + rs.getRecordCount() + " records");
 				return rs;
 			} finally {
 				command = null;
@@ -262,9 +265,18 @@ public class Connection extends ActiveXComponent implements IConnection
 		public String getMajorVersion() {
 			return majorVersion;
 		}
-
+		
+		@Override
+		public void safeRelease() {
+			oc.safeRelease();
+			super.safeRelease();
+			
+		}
+		
 		public String getMinorVersion() {
 			return minorVersion;
 		}
+		
+		
 
 }

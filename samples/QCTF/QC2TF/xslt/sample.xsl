@@ -21,6 +21,60 @@
 			<xsl:apply-templates />
 		</artifact>
 	</xsl:template>
+
+
+	<!-- RELEASE TO PLANING FOLDER START DEFINITIONS -->
+		
+	<!--  This key can be used for every  mapping it defines, which child tag will be used for mapping, in this case <mapping> :) -->
+	<xsl:key name='mappingKey' match='mapping' use='@source' />
+
+	<!-- 
+		Template to substitute Release Name with Planning Folder ID values
+		Will look up the relMappings.xml for a substitute value
+		If not found, it will use a default value
+	-->
+	<xsl:template name="substitutePlanningFolder">
+		<!-- gets the current Release from QC -->
+		<xsl:variable name="qcReleaseName" select="."/>
+
+		<xsl:if test="$qcReleaseName != ''">
+			<!-- iterate the mappings in the xml file   -->
+			<xsl:for-each select="document('relMappings.xml')/ReleasePlanningFolderMappingStructure/ReleasePlanningMapping">
+				<!--  retrieve the planning folder id --> 
+				<xsl:variable name="pFolderLookupResult" as="xs:string"
+					select='key("mappingKey",$qcReleaseName)/@folderid' />
+					
+				<!-- if the release was not found, fall back to default --> 
+				<xsl:choose>
+					<xsl:when test='$pFolderLookupResult!=""'>
+						<xsl:value-of select='$pFolderLookupResult' />
+					</xsl:when>
+					<xsl:otherwise>
+						<xsl:value-of
+							select='key("mappingKey","default")/@folderid' />
+					</xsl:otherwise>
+				</xsl:choose>
+			</xsl:for-each>
+		</xsl:if>
+	</xsl:template>
+	
+	
+	<!-- USING THE MAPPING TO SET THE PLANNING FOLDER -->
+	<!-- Check the BG_... name, probably wrong :) -->
+	<xsl:template match='ccf:field[@fieldName="BG_DETECTED_IN_RELEASE"]'>
+		<field>
+			<xsl:copy-of select="@*" />
+			<xsl:attribute name="fieldName">planningFolder</xsl:attribute>
+			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
+			<xsl:attribute name="fieldContent" select="." />
+			<xsl:call-template name="substitutePlanningFolder"/>
+			
+		</field>
+	</xsl:template>
+
+	<!-- RELEASE TO PLANING FOLDER END -->
+
+	
 	<xsl:template match="/ccf:artifact[@artifactType = 'attachment']">
 		<xsl:copy-of select="." />
 	</xsl:template>

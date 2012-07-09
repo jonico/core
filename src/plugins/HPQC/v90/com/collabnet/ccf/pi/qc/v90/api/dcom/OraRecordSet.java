@@ -15,38 +15,69 @@ public class OraRecordSet implements IRecordSet {
 
 	private ResultSet rs  = null;
 	private ResultSetMetaData meta = null;
+	private int recCount = -1;
+	private int colCount = -1;
+	private String loggedMethods = "";
 	
+	private int uid = 0;
 	
-	public OraRecordSet( ResultSet rsinit ) {
+	public OraRecordSet(ResultSet rsinit , String loggedmethods, int callerHash ) {
 		rs = rsinit;
-		log.debug("instantiaed OraRecordSet");
+		loggedMethods = loggedmethods;
+		try {
+			meta = rs.getMetaData();
+		} catch (SQLException e) {
+			lErr("could not retrieve meta data", e);
+		}
+		
+		String current = "get record count";
+		try {
+			recCount = rs.last() ? rs.getRow() : 0;
+			// mimics COM RecordSet behavior (these don't have a cursor beforeFirst, I assume)
+			 current = "move to first record";
+			 rs.first();
+		} catch (SQLException e) {
+			lErr("Could not " + current, e);
+		}
+		
+		uid = this.hashCode();
+		
+		log.debug( "instantiated OraRecordSet " + uid + " with " + recCount + " records; connectionHash: " + callerHash +"; logging: '" + loggedMethods + "'" );
 	}
 	
-	private void logCaller() {
+	private void logCaller(String args , String appendix ) {
 		StackTraceElement[] stack = Thread.currentThread().getStackTrace();
-//		String sStack = "Call Stack:" + nl;
-//		for ( int i = 0 ; i < stack.length ; i++ ) {
-//			StackTraceElement el = stack[i];
-//			sStack += i + ": " + el.getClassName() + "." + el.getMethodName() + "@" + el.getLineNumber() + nl;
-//		}
-//		log.debug(sStack);
+
 		StackTraceElement sElem = stack[ 3 ];
-		log.debug(stack[ 2 ].getMethodName() + " called by " + 
+		if ( loggedMethods.contains(stack[ 2 ].getMethodName())) 
+			log.debug("[" + uid + "] " + stack[ 2 ].getMethodName() + "(" + args + ") called by " + 
 				sElem.getClassName() + "." + 
 				sElem.getMethodName() + " @" + 
-				sElem.getLineNumber() );
+				sElem.getLineNumber() + appendix );
 	}
 	
 	private void lErr( String msg , SQLException e ) {
-		log.error(msg + nl +
-			"Error Code: " + e.getErrorCode() + nl +
-			"Message:    " + e.getMessage() + nl +
-			"SQL State:  " + e.getSQLState());
+		String appendix = "";
+		if ( rs != null ) {
+			try {
+				appendix = "Cursor @ " + rs.getRow();
+			} catch (SQLException e1) {
+				appendix = "Cursor @ (undefined)" ;
+			}
+		} else {
+			appendix = "Cursor @ (no recordset)" ;
+		}
+		
+		log.error("[" + uid + "] " + msg + nl +
+			"[" + uid + "] Error #: " + e.getErrorCode() + "; " +
+			"SQLState: " + e.getSQLState() + "; " + 
+			"Message: " + e.getMessage() + "; " + appendix);
 	}
 	
 
 	@Override
 	public void safeRelease() {
+		logCaller("", nl);
 		try {
 			rs.close();
 		} catch (SQLException e) {
@@ -57,87 +88,113 @@ public class OraRecordSet implements IRecordSet {
 	
 	@Override
 	public int getRecordCount() {
-		logCaller();
-		int rc = -1;
-		try {
-			rc = rs.last() ? rs.getRow() : 0;
-		} catch (SQLException e) {
-			// TODO Auto-generated catch block
-			lErr( "Could not get recordcount" , e );
-		}
-		return rc;
-	}
+//		if (recCount == -1) {
+//			logCaller("", " --- initial call");
+//			String current = "save active row";
+//			try {
+//				int curRow = rs.getRow();
+//				current = "get record count (base: " + curRow + ")";
+//				recCount = rs.last() ? rs.getRow() : 0;
+//				current = "move back to active row #" + curRow;
+//				if ( curRow == 0 ) {
+//					rs.beforeFirst();
+//				} 
+//				if ( curRow > 0 ) {
+//					rs.absolute(curRow);
+//				}
+//				
+//				log.debug("getRecordCount initially retrieved count of " + recCount + " (base: " + curRow + ")");
+//			} catch (SQLException e) {
+//				lErr("Could not " + current, e);
+//			}
+//		} else {
+//			logCaller("", " ==> " + recCount );
+//		}
+		logCaller("" , " ==> " + recCount);
+		return recCount;
+	}	
 	
-
 	@Override
 	public int getColCount() {
-		logCaller();
-		try {
-			return meta.getColumnCount();
-		} catch (SQLException e) {
-			lErr( "Could not get column count" , e );
+		if ( colCount == -1 ) {
+			logCaller("", " --- initial call");
+			try {
+				colCount = meta.getColumnCount();
+			} catch (SQLException e) {
+				lErr( "Could not get column count" , e );
+			}
+		} else {
+			logCaller("", " ==> " + colCount);
 		}
-		return 0;
+		return colCount;
 	}
 
 	@Override
 	public String getFieldValueAsString(String field) {
-		logCaller();
 		boolean found = false;
 		String sret = null;
 		int index = -1;
-		int rowIndex = 0;
-			for ( index = 1 ; index <= this.getColCount() ; index++ ) {
-				if ( this.getColNameAsString(index).equalsIgnoreCase(field) ) {
-					break;
-				}
+		int cc = this.getColCount();
+		for ( index = 1 ; index <=  cc ; index++ ) {
+			if ( this.getColNameAsString(index).equalsIgnoreCase(field) ) {
 				try {
-					rowIndex = rs.getRow();
+					sret = rs.getString(index);
 				} catch (SQLException e) {
-					lErr( "Could not get current row count ", e );
+					lErr("Could not retrieve value for column #" + index , e);
 				}
-			}
-
-			if ( found ) {
-			try {
-				sret = rs.getString( index );
-			} catch (SQLException e) {
-				lErr( "Could not retrieve value for column #" + index + " row #" + rowIndex , e );
+				found = true;
+				break;
 			}
 		}
+
+		if (!found) {
+			log.error( "getFieldValueAsString did not find a field named '" + field + "'!" );
+		}
+		
+		logCaller("String field = '" + field + "'" , " --> " + sret);
 		return sret;
 	}
 
 	@Override
 	public String getColNameAsString(int index) {
-		logCaller();
+		String sret = ""; 
 		try {
-			return meta.getColumnName(index);
+			sret = meta.getColumnName(index);
 		} catch (SQLException e) {
 			lErr( "Could not retrieve column name at index " + index , e );
 		}
-		return null;
+		logCaller("int index = " + index , " --> " + sret );
+		return sret;
 	}
 
 	@Override
 	public String getColName(int index) {
-		logCaller();
 		return getColNameAsString(index);
 	}
 
 	@Override
 	public void next() {
-		logCaller();
+		String action = "get new row number";
+		int oldRow = -1;
+		String rowInfo = "";
 		try {
+			oldRow = rs.getRow();
+			action = "move to next recordset item";
 			rs.next();
+			if ( !rs.isAfterLast() ) {
+				rowInfo = " moved: " + oldRow + " -> " + rs.getRow();
+			} else {
+				rowInfo = " reached last row at " + oldRow + " ";
+			}
 		} catch (SQLException e) {
-			lErr( "Could not move to next recordset item" , e );	
+			lErr( "Could not " + action , e );	
 		}
+		logCaller("" , rowInfo);
 	}
 
 	@Override
 	public void first() {
-		logCaller();
+		logCaller("" , "");
 		try {
 			rs.first();
 		} catch (SQLException e) {
@@ -147,7 +204,7 @@ public class OraRecordSet implements IRecordSet {
 
 	@Override
 	public void last() {
-		logCaller();
+		logCaller("" , "");
 		try {
 			rs.last();
 		} catch (SQLException e) {
@@ -157,7 +214,7 @@ public class OraRecordSet implements IRecordSet {
 
 	@Override
 	public int getCacheSize() {
-		logCaller();
+		logCaller("" , "");
 		// VZK currently not implemented!
 		return 0;
 	}

@@ -15,7 +15,7 @@
 	xsi:schemaLocation="http://www.w3.org/1999/XSL/Transform http://www.w3.org/2007/schema-for-xslt20.xsd">
 	
 	
-	<!--  This key can be used for every  mapping -->
+	<!--  This key can be used for every  mapping it defines, which child tag will be used for mapping, in this case <mapping> :) -->
 	<xsl:key name='mappingKey' match='mapping' use='@source' />
 
 	<!-- 
