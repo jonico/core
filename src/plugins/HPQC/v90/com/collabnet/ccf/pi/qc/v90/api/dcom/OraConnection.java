@@ -42,7 +42,7 @@ public class OraConnection {
 	private boolean useEncryption = false;
 	private String schemaAppendix = null;
 	
-	private String myVersion = "0.9.1";
+	private String myVersion = "0.9.2";
 	
 	private Connection oraConnection = null;
 	private Statement oraEngine = null;
@@ -79,12 +79,14 @@ public class OraConnection {
 		loggedOraRecordMethods = oraProps.getProperty(LOGGEDRSKEY);
 		useEncryption = !oraProps.getProperty(ENCRYPTKEY).equals("0");
 		
+		String passwordInfo = ( !password.equals("") ) ? "(given)" : "(not given)" ;
+		
 		log.info( "Oracle JDBC Patch version " + myVersion + nl +
 				"succesfully loaded JDBC properties from " + url.getFile()  + nl + 
 				"Driver Class Name: " + driverClassName + nl + 
 				"Connection String: " + connectionString + nl + 
 				"User Name:         " + username + nl + 
-				"Password:          " + password + nl +
+				"Password:          " + passwordInfo + nl +
 				"Use Encryption:    " + useEncryption + nl + 
 				"Schema:            " + schema );
 		
