@@ -472,7 +472,7 @@ public class QCGAHelper {
 		try {
 			newRs = qcc.executeSQL( sql);
 			int newRc = newRs.getRecordCount();
-			log.debug("In QCHandler.getTxnIdAndAuDescriptionForRequirement, sql=" + sql);
+			log.debug("In .getTxnIdAndAuDescriptionForRequirement, sql=" + sql);
 			if(newRc>0) {
 				for (int newCnt = 0; newCnt < newRc; newCnt++, newRs.next()) {
 					if (!shipArtifact){
