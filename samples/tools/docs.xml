@@ -64,10 +64,11 @@
     <!-- Include all of the XML example files, except the ones that are not Spring XML config: -->
   <patternset id="example.xml.config.files">
     <include name="IntegrationScenarios/**/*.xml" />
-    <include name="QCTF/**/config.xml" />
+    <include name="QCTF/**/config*.xml" />
   	<include name="QCTFOLD/**/*.xml" />
     <include name="QCPT/**/*.xml" />
-  	<include name="TFSWP/**/config.xml" />
+  	<include name="TFSWP/**/config*.xml" />
+  	<include name="TFSTF/**/config.xml" />
     <exclude name="**/input/*.xml" />
     <exclude name="**/output/*.xml" />
     <exclude name="**/xslt/*.xml" />
@@ -265,10 +266,11 @@
     <copy todir="${build.examples.docs.dir}" overwrite="true" failonerror="true" flatten="false">
 		<fileset dir="../">		
     		<include name="IntegrationScenarios/**/*.xml" />
-    		<include name="QCTF/**/*.xml" />
+			<include name="QCTF/**/config*.xml" />
 			<include name="QCTFOLD/**/*.xml" />
-    		<include name="QCPT/**/*.xml" />
-      		<include name="SWPTF/**/*.xml" />
+			<include name="QCPT/**/*.xml" />
+			<include name="TFSWP/**/config*.xml" />
+			<include name="TFSTF/**/config.xml" />
     		<exclude name="**/input/*.xml" />
     		<exclude name="**/output/*.xml" />
     		<exclude name="**/xslt/*.xml" />
