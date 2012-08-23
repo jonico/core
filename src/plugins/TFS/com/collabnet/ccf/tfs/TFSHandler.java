@@ -376,7 +376,7 @@ public class TFSHandler {
 		
 				}
 				
-				if (ga.getDepParentSourceArtifactId() != GenericArtifact.VALUE_UNKNOWN && ga.getDepParentSourceArtifactId() != GenericArtifact.VALUE_NONE){ 
+				if (!(GenericArtifact.VALUE_UNKNOWN.equals(ga.getDepParentSourceArtifactId())) && !(GenericArtifact.VALUE_NONE.equals(ga.getDepParentSourceArtifactId()))){ 
 					WorkItem fatherWorkItem = connection.getTpc().getWorkItemClient().getWorkItemByID(Integer.valueOf(ga.getDepParentTargetArtifactId()));
 					RelatedLink newRelatedLink = LinkFactory.newRelatedLink(newWorkItem, fatherWorkItem, -2, "Original linked by a TeamForge User" , false);
 					newWorkItem.getLinks().add(newRelatedLink);
