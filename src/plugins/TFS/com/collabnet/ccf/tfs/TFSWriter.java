@@ -162,7 +162,7 @@ public class TFSWriter extends AbstractWriter<TFSConnection> {
 				throw new CCFRuntimeException(cause);
 			}
 		} catch (Exception e) {
-			String cause = "During the artifact update process in TFS, an error occured";
+			String cause = "During the artifact create process in TFS, an error occured";
 			log.error(cause, e);
 			throw new CCFRuntimeException(cause, e);
 		} finally {
