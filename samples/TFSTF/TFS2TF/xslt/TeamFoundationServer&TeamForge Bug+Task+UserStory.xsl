@@ -262,6 +262,66 @@
 			</field>
 	</xsl:template>
 	<!-- end of templates for task specific fields from TFS to TF -->
+	<!-- begin of templates for user story specific fields from TFS to TF -->
+	<xsl:template match='ccf:field[@fieldName="System.Description"]' mode="userStorySpecificFields-TFS2TF">
+		<xsl:variable name="descriptionValue" as="xs:string" select="." />
+		<field>
+			<xsl:copy-of select="@*" />
+			<xsl:attribute name="fieldName">description</xsl:attribute>
+			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
+			<xsl:value-of select="stringutil:stripHTML(string(.))" />
+			<xsl:if test="$descriptionValue = ''">
+				<xsl:text> </xsl:text>
+			</xsl:if>
+		</field>
+	</xsl:template>
+	<xsl:template match='ccf:field[@fieldName="System.State"]' mode="userStorySpecificFields-TFS2TF">
+		<xsl:variable name="statusValue" as="xs:string" select="." />
+		<field>
+			<xsl:copy-of select="@*" />
+			<xsl:attribute name="fieldName">status</xsl:attribute>
+			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
+			<xsl:if test="$statusValue = 'Active'">
+				<xsl:text>Active</xsl:text>
+			</xsl:if>
+			<xsl:if test="$statusValue = 'Closed'">
+				<xsl:text>Closed</xsl:text>
+			</xsl:if>
+			<xsl:if test="$statusValue = 'Resolved'">
+				<xsl:text>Resolved</xsl:text>
+			</xsl:if>
+		</field>
+	</xsl:template>
+	<xsl:template match='ccf:field[@fieldName="System.Reason"]' mode="userStorySpecificFields-TFS2TF">
+		<field>
+			<xsl:copy-of select="@*" />
+			<xsl:attribute name="fieldName">Reason</xsl:attribute>
+			<xsl:attribute name="fieldType">flexField</xsl:attribute>
+			<xsl:value-of select="." />
+		</field>
+	</xsl:template>
+	<xsl:template match='ccf:field[@fieldName="Microsoft.VSTS.Common.Risk"]' mode="userStorySpecificFields-TFS2TF">
+		<field>
+			<xsl:copy-of select="@*" />
+			<xsl:attribute name="fieldName">Risk</xsl:attribute>
+			<xsl:attribute name="fieldType">flexField</xsl:attribute>
+			<xsl:value-of select="." />
+		</field>
+	</xsl:template>
+	<xsl:template match='ccf:field[@fieldName="Microsoft.VSTS.Scheduling.StoryPoints"]' mode="userStorySpecificFields-TFS2TF">
+		<xsl:variable name="storyPointsValue" as="xs:string" select="." />
+			<field>
+				<xsl:copy-of select="@*" />
+				<xsl:attribute name="fieldName">points</xsl:attribute>
+				<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
+				<xsl:attribute name="fieldValueType">String</xsl:attribute>
+				<xsl:choose>
+					<xsl:when test="$storyPointsValue = ''"><xsl:value-of select="." /></xsl:when>
+					<xsl:otherwise><xsl:value-of select="floor(.)" /></xsl:otherwise>
+				</xsl:choose>
+			</field>
+	</xsl:template>
+	<!-- end of templates for user story specific fields from TFS to TF -->
 	
 	<!-- begin of templates for non specific fields from TF to TFS -->
 	<xsl:template match='ccf:field[@fieldName="title"]' mode="nonSpecificFields-TF2TFS">
