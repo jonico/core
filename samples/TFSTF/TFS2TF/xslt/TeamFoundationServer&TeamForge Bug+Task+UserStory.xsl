@@ -179,6 +179,89 @@
 		</field>
 	</xsl:template>
 	<!-- end of templates for bug specific fields from TFS to TF -->
+	<!-- begin of templates for task specific fields from TFS to TF -->
+		<xsl:template match='ccf:field[@fieldName="System.Description"]' mode="taskSpecificFields-TFS2TF">
+		<xsl:variable name="descriptionValue" as="xs:string" select="." />
+		<field>
+			<xsl:copy-of select="@*" />
+			<xsl:attribute name="fieldName">description</xsl:attribute>
+			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
+			<xsl:value-of select="stringutil:stripHTML(string(.))" />
+			<xsl:if test="$descriptionValue = ''">
+				<xsl:text> </xsl:text>
+			</xsl:if>
+		</field>
+	</xsl:template>
+	<xsl:template match='ccf:field[@fieldName="System.State"]' mode="taskSpecificFields-TFS2TF">
+		<xsl:variable name="statusValue" as="xs:string" select="." />
+		<field>
+			<xsl:copy-of select="@*" />
+			<xsl:attribute name="fieldName">status</xsl:attribute>
+			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
+			<xsl:if test="$statusValue = 'Active'">
+				<xsl:text>Active</xsl:text>
+			</xsl:if>
+			<xsl:if test="$statusValue = 'Closed'">
+				<xsl:text>Closed</xsl:text>
+			</xsl:if>
+		</field>
+	</xsl:template>
+	<xsl:template match='ccf:field[@fieldName="System.Reason"]' mode="taskSpecificFields-TFS2TF">
+		<field>
+			<xsl:copy-of select="@*" />
+			<xsl:attribute name="fieldName">Reason</xsl:attribute>
+			<xsl:attribute name="fieldType">flexField</xsl:attribute>
+			<xsl:value-of select="." />
+		</field>
+	</xsl:template>
+	<xsl:template match='ccf:field[@fieldName="Microsoft.VSTS.Common.Priority"]' mode="taskSpecificFields-TFS2TF">
+		<field>
+			<xsl:copy-of select="@*" />
+			<xsl:attribute name="fieldName">priority</xsl:attribute>
+			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
+			<xsl:value-of select="." />
+		</field>
+	</xsl:template>
+	<xsl:template match='ccf:field[@fieldName="Microsoft.VSTS.Scheduling.OriginalEstimate"]' mode="taskSpecificFields-TFS2TF">
+		<xsl:variable name="originalEffortValue" as="xs:string" select="." />
+			<field>
+				<xsl:copy-of select="@*" />
+				<xsl:attribute name="fieldName">estimatedHours</xsl:attribute>
+				<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
+				<xsl:attribute name="fieldValueType">String</xsl:attribute>
+				<xsl:choose>
+					<xsl:when test="$originalEffortValue = ''"><xsl:value-of select="." /></xsl:when>
+					<xsl:otherwise><xsl:value-of select="floor(.)" /></xsl:otherwise>
+				</xsl:choose>
+			</field>
+	</xsl:template>
+	<xsl:template match='ccf:field[@fieldName="Microsoft.VSTS.Scheduling.RemainingWork"]' mode="taskSpecificFields-TFS2TF">
+		<xsl:variable name="remainningValue" as="xs:string" select="." />
+			<field>
+				<xsl:copy-of select="@*" />
+				<xsl:attribute name="fieldName">remainingEffort</xsl:attribute>
+				<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
+				<xsl:attribute name="fieldValueType">String</xsl:attribute>
+				<xsl:choose>
+					<xsl:when test="$remainningValue = ''"><xsl:value-of select="." /></xsl:when>
+					<xsl:otherwise><xsl:value-of select="floor(.)" /></xsl:otherwise>
+				</xsl:choose>
+			</field>
+	</xsl:template>
+	<xsl:template match='ccf:field[@fieldName="Microsoft.VSTS.Scheduling.CompletedWork"]' mode="taskSpecificFields-TFS2TF">
+		<xsl:variable name="completedWorkValue" as="xs:string" select="." />
+			<field>
+				<xsl:copy-of select="@*" />
+				<xsl:attribute name="fieldName">actualHours</xsl:attribute>
+				<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
+				<xsl:attribute name="fieldValueType">String</xsl:attribute>
+				<xsl:choose>
+					<xsl:when test="$completedWorkValue = ''"><xsl:value-of select="." /></xsl:when>
+					<xsl:otherwise><xsl:value-of select="floor(.)" /></xsl:otherwise>
+				</xsl:choose>
+			</field>
+	</xsl:template>
+	<!-- end of templates for task specific fields from TFS to TF -->
 	
 	<!-- begin of templates for non specific fields from TF to TFS -->
 	<xsl:template match='ccf:field[@fieldName="title"]' mode="nonSpecificFields-TF2TFS">
