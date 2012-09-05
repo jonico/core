@@ -360,6 +360,88 @@
 		</field>
 	</xsl:template>
 	<!-- end of templates for bug specific fields from TF to TFS -->
+	<!-- begin of templates for task specific fields from TF to TFS -->
+	<xsl:template match='ccf:field[@fieldName="description"]' mode="taskSpecificFields-TF2TFS">
+		<field>
+			<xsl:copy-of select="@*" />
+			<xsl:attribute name="fieldName">System.Description</xsl:attribute>
+			<xsl:value-of select="." />
+		</field>
+	</xsl:template>
+	<xsl:template match='ccf:field[@fieldName="status"]' mode="taskSpecificFields-TF2TFS">
+		<xsl:variable name="statusValue" as="xs:string" select="."/>
+		<field>
+			<xsl:copy-of select="@*"/>
+			<xsl:attribute name="fieldName">System.State</xsl:attribute>
+			<xsl:if test="$statusValue = 'Active'">
+				<xsl:text>Active</xsl:text>
+			</xsl:if>
+			<xsl:if test="$statusValue = 'Closed'">
+				<xsl:text>Closed</xsl:text>
+			</xsl:if>
+		</field>
+	</xsl:template>
+	<xsl:template match='ccf:field[@fieldName="Reason"]' mode="taskSpecificFields-TF2TFS">
+		<field>
+			<xsl:copy-of select="@*" />
+			<xsl:attribute name="fieldName">System.Reason</xsl:attribute>
+			<xsl:value-of select="." />
+		</field>
+	</xsl:template>
+	<xsl:template match='ccf:field[@fieldName="priority"]' mode="taskSpecificFields-TF2TFS">
+		<xsl:variable name="priorityValue" as="xs:string" select="."/>
+		<field>
+			<xsl:copy-of select="@*" />
+			<xsl:attribute name="fieldName">Microsoft.VSTS.Common.Priority</xsl:attribute>
+			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
+			<xsl:attribute name="fieldValueType">String</xsl:attribute>
+			<xsl:choose>
+				<!-- If the priority in TF is set to None, the priority in TFS will set to the default value. -->
+				<xsl:when test="$priorityValue = '0'"><xsl:value-of select="2" /></xsl:when>
+				<xsl:when test="$priorityValue = '5'"><xsl:value-of select="4" /></xsl:when>
+				<xsl:otherwise><xsl:value-of select="." /></xsl:otherwise>
+			</xsl:choose>
+		</field>
+	</xsl:template>
+	<xsl:template match='ccf:field[@fieldName="estimatedHours"]' mode="taskSpecificFields-TF2TFS">
+		<xsl:variable name="originalEffortValue" as="xs:string" select="." />
+			<field>
+				<xsl:copy-of select="@*" />
+				<xsl:attribute name="fieldName">Microsoft.VSTS.Scheduling.OriginalEstimate</xsl:attribute>
+				<xsl:attribute name="fieldValueType">String</xsl:attribute>
+				<xsl:choose>
+					<xsl:when test="$originalEffortValue = ''"><xsl:value-of select="." /></xsl:when>
+					<xsl:otherwise><xsl:value-of select="floor(.)" /></xsl:otherwise>
+				</xsl:choose>
+			</field>
+	</xsl:template>
+	<xsl:template match='ccf:field[@fieldName="remainingEffort"]' mode="taskSpecificFields-TF2TFS">
+		<xsl:variable name="remainningValue" as="xs:string" select="." />
+			<field>
+				<xsl:copy-of select="@*" />
+				<xsl:attribute name="fieldName">Microsoft.VSTS.Scheduling.RemainingWork</xsl:attribute>
+				<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
+				<xsl:attribute name="fieldValueType">String</xsl:attribute>
+				<xsl:choose>
+					<xsl:when test="$remainningValue = ''"><xsl:value-of select="." /></xsl:when>
+					<xsl:otherwise><xsl:value-of select="floor(.)" /></xsl:otherwise>
+				</xsl:choose>
+			</field>
+	</xsl:template>
+	<xsl:template match='ccf:field[@fieldName="actualHours"]' mode="taskSpecificFields-TF2TFS">
+		<xsl:variable name="completedWorkValue" as="xs:string" select="." />
+			<field>
+				<xsl:copy-of select="@*" />
+				<xsl:attribute name="fieldName">Microsoft.VSTS.Scheduling.CompletedWork</xsl:attribute>
+				<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
+				<xsl:attribute name="fieldValueType">String</xsl:attribute>
+				<xsl:choose>
+					<xsl:when test="$completedWorkValue = ''"><xsl:value-of select="." /></xsl:when>
+					<xsl:otherwise><xsl:value-of select="floor(.)" /></xsl:otherwise>
+				</xsl:choose>
+			</field>
+	</xsl:template>
+	<!-- end of templates for task specific fields from TF to TFS -->
 	
 	<xsl:template match="text()" />
 </xsl:stylesheet>
