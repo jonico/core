@@ -20,22 +20,18 @@
 			<xsl:copy-of select="@*" />
 			<xsl:apply-templates mode="nonSpecificFields"/> <!-- Apply templates that match for all types. -->
 			
-			<xsl:variable name="artifactType" select="substring-after(substring-after(@targetRepositoryId, '-'), '-')"/>
-			<xsl:variable name="artifactTypeInLowerCase" select="translate($artifactType, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz')"/>
-
-<!-- 			<xsl:variable name="mode" select="concat($artifactTypeInLowerCase,'SpecificFields')"/> -->
-<!-- 			<xsl:apply-templates mode="{$mode}"/> Apply artifact type specific templates, e.g. task-specific templates. -->
-			
+			<xsl:variable name="artifactType" select="substring-after(substring-after(@targetRepositoryId, '-'), '-')"/>			
 			<xsl:choose>
-				<xsl:when test="$artifactTypeInLowerCase = 'bug'">
+				<xsl:when test="$artifactType = 'Bug'">
 					<xsl:apply-templates mode="bugSpecificFields"/>
 				</xsl:when>
-				<xsl:when test="$artifactTypeInLowerCase = 'task'">
+				<xsl:when test="$artifactType = 'Task'">
 					<xsl:apply-templates mode="taskSpecificFields"/>
 				</xsl:when>
-				<xsl:when test="$artifactTypeInLowerCase = 'user story'">
+				<xsl:when test="$artifactType = 'User Story'">
 					<xsl:apply-templates mode="userStorySpecificFields"/>
 				</xsl:when>	
+				<!-- If you want to add another artifact type to be synchronized, you need to add a condition here and you must add the artifact type specific templates with the new mode. -->
 			</xsl:choose>
 		</artifact>
 	</xsl:template>
