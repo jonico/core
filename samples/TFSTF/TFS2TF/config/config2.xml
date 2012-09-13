@@ -502,7 +502,6 @@
                 <value>LAST_SOURCE_ARTIFACT_VERSION</value>
                 <value>LAST_SOURCE_ARTIFACT_ID</value>
                 <value>REPOSITORY_MAPPING_DIRECTION</value>
-                <value>LAST_SOURCE_ARTIFACT_VERSION</value>
             </list>
         </property>
 	</bean>
