@@ -232,7 +232,7 @@
 		<property name="maxAttachmentSizePerArtifact" value="${ccf.direction.tf.max.attachmentsize}" />
 		<!-- Let this restart every 6 hours -->
 		<property name="autoRestartPeriod" value="${ccf.direction.autorestartperiod}"/>
-		<property name="shipAttachments" value="false"/>
+		<property name="shipAttachments" value="true"/>
 		
 		<!-- This plugs in in the polling hospital -->
 		<property name="hospitalDatabaseReader" ref="HospitalDatabaseExtractor"/>
