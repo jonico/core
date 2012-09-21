@@ -202,7 +202,49 @@
 			else {
 				var fieldMappingDirectory = oa_data.selectSingleNode("@sourceRepositoryKind").getText();
 				var fieldMappingKind = oa_data.selectSingleNode("@targetRepositoryKind").getText();
-				if (fieldMappingKind == "CUSTOM_XSLT") {
+				if (fieldMappingKind == "MAPFORCE") {
+					oa_data= fieldMappingDirectory + "GenericArtifactFormatToMapForce.xsl";
+				} else if (fieldMappingKind == "MAPPING_RULES") {
+					oa_data= fieldMappingDirectory + "preprocessingrules.xsl";
+				}
+				else {
+					oa_data=null;
+				}
+			}
+			</value>
+			<value>
+			var artifactType = oa_data.selectSingleNode("@artifactType").getText();
+			if (artifactType != "plainArtifact") {
+				oa_data=null;
+			}
+			else {
+				var fieldMappingDirectory = oa_data.selectSingleNode("@sourceRepositoryKind").getText();
+				var fieldMappingKind = oa_data.selectSingleNode("@targetRepositoryKind").getText();
+				if (fieldMappingKind == "MAPFORCE") {
+					oa_data= fieldMappingDirectory + "MapForceMain.xsl";
+				} else if (fieldMappingKind == "MAPPING_RULES") {
+					oa_data= fieldMappingDirectory + "rules.xsl";
+				}
+				else {
+					oa_data=null;
+				}
+			}
+			</value>
+			<value>
+			var artifactType = oa_data.selectSingleNode("@artifactType").getText();
+			if (artifactType != "plainArtifact") {
+				oa_data=null;
+			}
+			else {
+				var fieldMappingDirectory = oa_data.selectSingleNode("@sourceRepositoryKind").getText();
+				var fieldMappingKind = oa_data.selectSingleNode("@targetRepositoryKind").getText();
+				if (fieldMappingKind == "MAPFORCE") {
+					oa_data= fieldMappingDirectory + "MapForceToGenericArtifactFormat.xsl";
+				}
+				else if (fieldMappingKind == "MAPPING_RULES") {
+					oa_data= fieldMappingDirectory + "postprocessingrules.xsl";
+				}
+				else if (fieldMappingKind == "CUSTOM_XSLT") {
 					oa_data= fieldMappingDirectory + "custom.xsl";
 				}
 			}
@@ -555,7 +597,7 @@
 		<!-- batch size of one means process one row per message and so on -->
 		<property name="batchSize" value="0" />
 		<property name="sql">
-			<value><![CDATA[SELECT ID, GENERIC_ARTIFACT, ORIGINATING_COMPONENT FROM HOSPITAL_ENTRY h1 WHERE h1.REPROCESSED = FALSE AND h1.REPOSITORY_MAPPING_DIRECTION = ? AND (h1.ERROR_CODE = 'replay' OR (h1.ERROR_CODE = 'parentArtifactNotPresentError' AND h1.ORIGINATING_COMPONENT='TFEntityService' AND DATEDIFF('mi', CONVERT(SUBSTRING(h1.TIMESTAMP, 1, 19), TIMESTAMP), NOW) > 2 AND (SELECT COUNT(*) FROM HOSPITAL_ENTRY h2 where h1.SOURCE_ARTIFACT_ID = h2.SOURCE_ARTIFACT_ID AND h1.REPOSITORY_MAPPING_DIRECTION = h2.REPOSITORY_MAPPING_DIRECTION AND h2.FIXED=FALSE AND h2.ORIGINATING_COMPONENT='TFEntityService') < 6)) ORDER BY h1.ID ASC LIMIT 1]]></value>
+			<value>SELECT ID, GENERIC_ARTIFACT, ORIGINATING_COMPONENT FROM HOSPITAL_ENTRY WHERE REPROCESSED = FALSE AND ERROR_CODE = 'replay' AND REPOSITORY_MAPPING_DIRECTION = ? ORDER BY ID ASC LIMIT 1</value>
 		</property>
 	</bean>
 	
