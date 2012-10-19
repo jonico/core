@@ -564,25 +564,31 @@ public class TFSHandler {
 			}
 		}
 		
-		
-		
+				
 		boolean relationWasUpdated = false;
 
 		while (!relationWasUpdated) {
-
 			relationWasUpdated = true;
 		
-			try { 
+			try { 			
+				if (!(GenericArtifact.VALUE_UNKNOWN.equals(ga.getDepParentTargetArtifactId())) 
+					&& !(GenericArtifact.VALUE_NONE.equals(ga.getDepParentTargetArtifactId()))) {
+					
+						WorkItem fatherWorkItem = connection
+								.getTpc()
+								.getWorkItemClient()
+								.getWorkItemByID(
+										Integer.valueOf(ga
+												.getDepParentTargetArtifactId()));
 			
-			
-				if (ga.getDepParentTargetArtifactId() != GenericArtifact.VALUE_UNKNOWN
-							&& ga.getDepParentTargetArtifactId() != GenericArtifact.VALUE_NONE) {
-			
+						// If there is an old parent relationship and the parent changed, the old relationship has to be deleted.
+						boolean parentChanged = true;
+						
 						if (workItem.getLinks().size() > 0) {
 			
 							workItem.getLinks().iterator().next();
 							Iterator<Link> linkIterator = workItem.getLinks().iterator();
-			
+														
 							while (linkIterator.hasNext()) {
 			
 								Link link = linkIterator.next();
@@ -591,52 +597,35 @@ public class TFSHandler {
 								if (link.getLinkID() == -1) {
 			
 									RelatedLinkImpl relatedLink = (RelatedLinkImpl) link;
-			
+											
 									// it looks for a Parent relationship
-									WorkItem fatherWorkItem = connection
-											.getTpc()
-											.getWorkItemClient()
-											.getWorkItemByID(
-													Integer.valueOf(ga
-															.getDepParentTargetArtifactId()));
-			
 									if (relatedLink.getWorkItemLinkTypeID() == -2) {
-			
-										relatedLink.setWorkItem(fatherWorkItem);
-			
-									} else {
-			
-										RelatedLink newRelatedLink = LinkFactory
-												.newRelatedLink(
-														workItem,
-														fatherWorkItem,
-														-2,
-														"Original linked by a TeamForge User",
-														false);
-										workItem.getLinks().add(newRelatedLink);
+										if (relatedLink.getTargetWorkItemID() == fatherWorkItem.getID()) {
+											parentChanged = false;
+											continue;
+										}
+										workItem.getLinks().remove(relatedLink);
 									}
+								
 								}
 							}
-						} else {
-			
-							// it looks for a Parent relationship
-							WorkItem fatherWorkItem = connection
-									.getTpc()
-									.getWorkItemClient()
-									.getWorkItemByID(
-											Integer.valueOf(ga
-													.getDepParentTargetArtifactId()));
-							RelatedLink newRelatedLink = LinkFactory.newRelatedLink(
-									workItem, fatherWorkItem, -2,
-									"Original linked by a TeamForge User", false);
-							workItem.getLinks().add(newRelatedLink);
-			
 						}
-						workItem.save();
+						
+						if (parentChanged) {
+							RelatedLink newRelatedLink = LinkFactory
+									.newRelatedLink(
+											workItem,
+											fatherWorkItem,
+											-2,
+											"Original linked by a TeamForge User",
+											false);
+							workItem.getLinks().add(newRelatedLink);
+							workItem.save();
+						}
+						
 					}
-				
-				
-			}  catch (UnableToSaveException e1) {
+								
+			} catch (UnableToSaveException e1) {
 
 				logConflictResolutor.warn(
 						"Stale relationship update, trying again ...:", e1);
