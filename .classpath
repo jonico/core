@@ -2,6 +2,7 @@
 <classpath>
 	<classpathentry kind="lib" path="src/plugins/TFS/lib/com.microsoft.tfs.sdk-10.1.0.jar"/>
 	<classpathentry excluding="lib/**" kind="src" path="src/plugins/SFEE/v44"/>
+	<classpathentry kind="src" path="src/plugins/JIRA"/>
 	<classpathentry kind="src" path="src/plugins/TFS"/>
 	<classpathentry kind="src" path="src/plugins/SWP"/>
 	<classpathentry kind="src" path="src/plugins/TF"/>
@@ -50,5 +51,15 @@
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/openadaptor-spring.jar"/>
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/hsqldb.jar"/>
 	<classpathentry kind="lib" path="src/core/lib/servicewrapper/wrapper.jar"/>
+	<classpathentry kind="lib" path="src/plugins/JIRA/lib/guava-r09.jar"/>
+	<classpathentry kind="lib" path="src/plugins/JIRA/lib/jaxb-impl-2.2.3.jar"/>
+	<classpathentry kind="lib" path="src/plugins/JIRA/lib/jersey-apache-client-1.5.jar"/>
+	<classpathentry kind="lib" path="src/plugins/JIRA/lib/jersey-client-1.5.jar"/>
+	<classpathentry kind="lib" path="src/plugins/JIRA/lib/jersey-core-1.5.jar"/>
+	<classpathentry kind="lib" path="src/plugins/JIRA/lib/jersey-json-1.5.jar"/>
+	<classpathentry kind="lib" path="src/plugins/JIRA/lib/jersey-multipart-1.5.jar"/>
+	<classpathentry kind="lib" path="src/plugins/JIRA/lib/jira-rest-java-client-1.0.jar"/>
+	<classpathentry kind="lib" path="src/plugins/JIRA/lib/org.codehaus.jettison-jettison-1.1.jar"/>
+	<classpathentry kind="lib" path="src/plugins/JIRA/lib/regexp-1.3.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
