@@ -11,6 +11,7 @@ import org.dom4j.Document;
 import org.openadaptor.core.exception.ValidationException;
 
 import com.atlassian.jira.rest.client.domain.BasicIssue;
+import com.atlassian.jira.rest.client.domain.Issue;
 import com.collabnet.ccf.core.AbstractWriter;
 import com.collabnet.ccf.core.CCFRuntimeException;
 import com.collabnet.ccf.core.eis.connection.ConnectionException;
@@ -82,8 +83,6 @@ public class JIRAWriter extends AbstractWriter<JIRAConnection> {
 		}
 		
 		JIRAConnection connection;
-		String collectionName = JIRAMetaData.extractUnusedFirstPartFromRepositoryId(targetRepositoryId);
-		
 		connection = connect(ga);
 		try {
 			
@@ -92,9 +91,9 @@ public class JIRAWriter extends AbstractWriter<JIRAConnection> {
 				String projectName = JIRAMetaData.extractProjectKeyFromRepositoryId(targetRepositoryId);
 				String workItemType = JIRAMetaData.extractIssueTypeFromRepositoryId(targetRepositoryId);
 				
-				WorkItem result = updateWorkItem(ga, collectionName, projectName, workItemType, connection);
+				Issue result = updateIssue(ga,projectName, workItemType, connection);
 				if (result != null) {
-					log.info("Updated work item " + result.getID() + " with data from "
+					log.info("Updated work item " + result.getKey() + " with data from "
 							+ ga.getSourceArtifactId());
 				}
 			} else {
@@ -104,7 +103,7 @@ public class JIRAWriter extends AbstractWriter<JIRAConnection> {
 				throw new CCFRuntimeException(cause);
 			}
 		} catch (Exception e) {
-			String cause = "During the artifact update process in TFS, an error occured";
+			String cause = "During the artifact update process in JIRA, an error occured";
 			log.error(cause, e);
 			throw new CCFRuntimeException(cause, e);
 		} finally {
@@ -113,10 +112,10 @@ public class JIRAWriter extends AbstractWriter<JIRAConnection> {
 		return returnDocument(ga);	
 	}
 
-	private WorkItem updateWorkItem(GenericArtifact ga, String collectionName,
-			String projectName, String workItemType, JIRAConnection connection) {
+	private Issue updateIssue(GenericArtifact ga,
+			String projectKey, String issueType, JIRAConnection connection) {
 
-		return jiraHandler.updateWorkItem(ga, collectionName, projectName, workItemType, connection);
+		return jiraHandler.updateIssue(ga, projectKey, issueType, connection);
 	}
 
 	@Override

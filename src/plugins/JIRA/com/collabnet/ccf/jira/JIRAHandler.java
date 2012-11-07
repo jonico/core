@@ -5,17 +5,26 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Map.Entry;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.joda.time.DateTime;
 
+import com.atlassian.jira.rest.client.IssueRestClient;
 import com.atlassian.jira.rest.client.JiraRestClient;
 import com.atlassian.jira.rest.client.NullProgressMonitor;
 import com.atlassian.jira.rest.client.domain.BasicIssue;
+import com.atlassian.jira.rest.client.domain.BasicUser;
+import com.atlassian.jira.rest.client.domain.ChangelogGroup;
+import com.atlassian.jira.rest.client.domain.ChangelogItem;
+import com.atlassian.jira.rest.client.domain.CimFieldInfo;
 import com.atlassian.jira.rest.client.domain.CimIssueType;
 import com.atlassian.jira.rest.client.domain.CimProject;
+import com.atlassian.jira.rest.client.domain.Comment;
 import com.atlassian.jira.rest.client.domain.EntityHelper;
+import com.atlassian.jira.rest.client.domain.Issue;
 import com.atlassian.jira.rest.client.domain.Project;
 import com.atlassian.jira.rest.client.domain.input.IssueInputBuilder;
 import com.collabnet.ccf.core.AbstractWriter;
@@ -316,11 +325,20 @@ public class JIRAHandler {
 
 	public BasicIssue createIssue(GenericArtifact ga, String projectKey,
 			String issueTypeString , JIRAConnection connection) {
+		
+		//FIXME implement retry logic for mid-air conflicts
+		//FIXME Adding comments
+		//FIXME Setting all fields
+		//FIXME Creating Parent-Child dependencies
+		//FIXME to find out correct version number
+		//FIXME html to plain text conversion
+		
+		DateTime createdDate=null;
 		 
 		JiraRestClient restClient=connection.getJiraRestClient();
-		//Project project = restClient.getProjectClient().getProject(projectKey, pm);
+		IssueRestClient issueClient = restClient.getIssueClient();
 		
-		final Iterable<CimProject> metadataProjects = restClient.getIssueClient().getCreateIssueMetadata(null, pm);
+		final Iterable<CimProject> metadataProjects = issueClient.getCreateIssueMetadata(null, pm);
 		final CimProject project = metadataProjects.iterator().next();
 		final CimIssueType createIssueType = EntityHelper.findEntityByName(project.getIssueTypes(), issueTypeString);
 		
@@ -329,14 +347,40 @@ public class JIRAHandler {
 		final IssueInputBuilder issueInputBuilder = new IssueInputBuilder(projectKey, createIssueType.getId(), summary)
 		.setDescription(description);
 		
-		final BasicIssue basicCreatedIssue = restClient.getIssueClient().createIssue(issueInputBuilder.build(), pm);
-			
-	
-		ga.setTargetArtifactVersion("100");
+		final BasicIssue basicCreatedIssue = issueClient.createIssue(issueInputBuilder.build(), pm);
+		Issue issue = issueClient.getIssue(basicCreatedIssue.getKey(), pm);
+		
+		issue = addIssueComment(ga, issueClient, basicCreatedIssue.getKey(), issue);
+		
+		if (issue.getComments()!=null) {
+			createdDate=getUpdatedDate(connection, issue);
+		}
+		
+		//TODO Code will be used on Updateissue()
+		/*if (issue.getChangelog() != null) {
+			Iterator<ChangelogGroup> it = issue.getChangelog().iterator();
+			while (it.hasNext()) {
+				// FIXME Find out the change log items order
+				ChangelogGroup changeLogGroup = it.next();
+				BasicUser createdUser = changeLogGroup.getAuthor();
+				if (connection.getUsername().equalsIgnoreCase(
+						createdUser.getName())) {
+					createdDate = changeLogGroup.getCreated();
+					break;
+				}
+			}
+		}*/
+		
+		 createdDate=issue.getCreationDate();
+		 if (createdDate==null) {
+			 throw new CCFRuntimeException("Could not determine creation date for newly created issue "+ issue.getKey());
+		 }
+		ga.setTargetArtifactVersion(String.valueOf(createdDate.getMillis()));
+		
 		
 	try{	
 		ga.setTargetArtifactLastModifiedDate(GenericArtifactHelper.df
-				.format(new Date()));
+				.format(createdDate.toDate()));
 		
 	} catch (NullPointerException e){
 		
@@ -349,280 +393,97 @@ public class JIRAHandler {
 		return basicCreatedIssue;
 	}
 
-	public WorkItem updateWorkItem(GenericArtifact ga, String collectionName,
-			String projectName, String workItemTypeString,
-			JIRAConnection connection) {/*
+	/**
+	 * @param connection
+	 * @param issue
+	 */
+	private DateTime getUpdatedDate(JIRAConnection connection, Issue issue) {
+		DateTime createdDate = null;
+		Iterator<Comment> it = issue.getComments().iterator();
+		while (it.hasNext()) {
+			Comment comment = it.next();
+			if (connection.getUsername().equalsIgnoreCase(
+					comment.getAuthor().getName())) {
+				 createdDate = comment.getCreationDate();
+				continue;
+			}
+		}
+		return createdDate;
+	}
 
-		String workItemId = ga.getTargetArtifactId();
+	/**
+	 * @param ga
+	 * @param issueClient
+	 * @param basicCreatedIssue
+	 * @param issue
+	 * @return
+	 */
+	private Issue addIssueComment(GenericArtifact ga,
+			IssueRestClient issueClient, String key,
+			Issue issue) {
+		List<GenericArtifactField> comments = ga
+				.getAllGenericArtifactFieldsWithSameFieldName("comments");
+		if (comments != null) {
+			for (ListIterator<GenericArtifactField> iterator = comments
+					.listIterator(comments.size()); iterator.hasPrevious();) {
 
-		WorkItem workItem = connection.getTpc().getWorkItemClient()
-				.getWorkItemByID(Integer.parseInt(workItemId));
+				GenericArtifactField comment = iterator.previous();
 
-		Long workItemRvision = Long.valueOf(workItem.getFields()
-				.getField(CoreFieldReferenceNames.REVISION).getOriginalValue()
-				.toString());
+				String commentValue = (String) comment.getFieldValue();
+				if (StringUtils.isEmpty(commentValue)) {
+					continue;
+				}
+				issueClient.addComment(pm, issue.getCommentsUri(),Comment.valueOf(commentValue));
+			}
+			issue = issueClient.getIssue(key, pm);
+		}
+		return issue;
+	}
 
-		if (!AbstractWriter.handleConflicts(workItemRvision, ga)) {
+	public Issue updateIssue(GenericArtifact ga, 
+			String projectKey, String issueTypeString,
+			JIRAConnection connection) {
+		
+		JiraRestClient restClient=connection.getJiraRestClient();
+		IssueRestClient issueClient = restClient.getIssueClient();
+		DateTime updatedDate =null;
+		String issueId = ga.getTargetArtifactId();
+		Issue issue = issueClient.getIssue(issueId, pm);
+		
+		
+		Long issueRevision = issue.getUpdateDate().getMillis();
+
+		if (!AbstractWriter.handleConflicts(issueRevision, ga)) {
 			return null;
 		}
-
-		Project project = connection.getTpc().getWorkItemClient().getProjects()
-				.get(projectName);
-		WorkItemType workItemType = project.getWorkItemTypes().get(
-				workItemTypeString);
-
-		Iterator<FieldDefinition> it = workItemType.getFieldDefinitions()
-				.iterator();
-
-		boolean workItemWasUpdated = false;
 		
-		while (!workItemWasUpdated){
-			
-			workItemWasUpdated = true;
+		String summary = ga.getAllGenericArtifactFieldsWithSameFieldName("summary").get(0).getFieldValue().toString();
+		String description = ga.getAllGenericArtifactFieldsWithSameFieldName("description").get(0).getFieldValue().toString();
 		
-			try {
-			
-				while (it.hasNext()) {
+		IssueInputBuilder issueInputBuilder = new IssueInputBuilder(issue.getProject().getKey(), 1L);
+		issueInputBuilder.setSummary(summary).setDescription(description);
+		issueClient.updateIssue(issue.getKey(), issueInputBuilder.build(), null);
+		issue = issueClient.getIssue(issueId, pm);
 		
-					FieldDefinition fieldDef = it.next();
+		issue = addIssueComment(ga, issueClient, issue.getKey(), issue);
 		
-					String fieldName = fieldDef.getReferenceName();
-		
-					if (fieldName.equals(CoreFieldReferenceNames.HISTORY)) {
-						continue;
-					}
-		
-					List<GenericArtifactField> gaFields = ga
-							.getAllGenericArtifactFieldsWithSameFieldName(fieldName);
-		
-					
-					if (gaFields != null && gaFields.get(0).getFieldValueHasChanged()) {
-		
-						boolean shouldBeOverwritten = true;
-		
-						// If there more than 1, it's a multi select field
-						Object fieldValue = gaFields.get(0).getFieldValue();
-		
-						// FIXME More complicated data types (like TreePath)
-		
-						// date fix: If field value type is date, transform in
-						// correct time zone (to avoid off by one date)
-						if (fieldDef.getFieldType().equals( FieldType.DATETIME )){
-							if(DateUtil.isAbsoluteDateInTimezone((Date)fieldValue, ga.getSourceSystemTimezone())){
-				                  fieldValue = DateUtil.convertToGMTAbsoluteDate((Date)fieldValue, ga.getSourceSystemTimezone());
-							}
-						}
-							
-						if (fieldDef.getFieldType().equals(FieldType.HTML)) {
-		
-							String originalValue = com.collabnet.ccf.core.utils.StringUtils
-									.convertHTML(workItem.getFields()
-											.getField(fieldDef.getReferenceName())
-											.getOriginalValue().toString());
-							String newValue = com.collabnet.ccf.core.utils.StringUtils
-									.convertHTML(fieldValue.toString());
-							shouldBeOverwritten = !originalValue.equals(newValue);
-		
-						}
-		
-						if (shouldBeOverwritten) {
-							workItem.getFields().getField(fieldDef.getReferenceName())
-									.setValue(fieldValue);
-							
-						}
-					}
-				}
-				
-				if (workItem.isDirty()){
-					workItem.save();
-				}
-
-			} catch (UnableToSaveException e1) {
-
-				logConflictResolutor.warn(
-						"Stale workItem update, trying again ...:", e1);
-				workItemWasUpdated = false;
-
-			}
+		if (issue.getComments()!=null) {
+			 updatedDate = getUpdatedDate(connection, issue);
 		}
-		
-				
-		boolean relationWasUpdated = false;
-
-		while (!relationWasUpdated) {
-			relationWasUpdated = true;
-		
-			try { 			
-				if (!(GenericArtifact.VALUE_UNKNOWN.equals(ga.getDepParentTargetArtifactId())) 
-					&& !(GenericArtifact.VALUE_NONE.equals(ga.getDepParentTargetArtifactId()))) {
-
-						// If there is an old parent relationship and the parent changed, the old relationship has to be deleted.
-						boolean parentChanged = true;
-						
-						if (workItem.getLinks().size() > 0) {
-			
-							workItem.getLinks().iterator().next();
-							Iterator<Link> linkIterator = workItem.getLinks().iterator();
-														
-							while (linkIterator.hasNext()) {
-			
-								Link link = linkIterator.next();
-			
-								// it looks for a Related relationship
-								if (link.getLinkID() == -1) {
-			
-									RelatedLinkImpl relatedLink = (RelatedLinkImpl) link;
-											
-									// it looks for a Parent relationship
-									if (relatedLink.getWorkItemLinkTypeID() == -2) {
-										if (relatedLink.getTargetWorkItemID() == Integer.valueOf(ga.getDepParentTargetArtifactId())) {
-											parentChanged = false;
-											continue;
-										}
-										workItem.getLinks().remove(relatedLink);
-									}
-								
-								}
-							}
-						}
-						
-						if (parentChanged) {
-							try {
-								WorkItem fatherWorkItem = connection
-										.getTpc()
-										.getWorkItemClient()
-										.getWorkItemByID(
-												Integer.valueOf(ga
-														.getDepParentTargetArtifactId()));
-							
-								RelatedLink newRelatedLink = LinkFactory
-										.newRelatedLink(
-												workItem,
-												fatherWorkItem,
-												-2,
-												"Original linked by a TeamForge User",
-												false);
-								workItem.getLinks().add(newRelatedLink);				
-							} catch (Exception e) {
-								String message = "Exception while updating the parent-child relationship of work item with id "
-										+ workItem.getID();
-								log.error(message, e);
-								throw new CCFRuntimeException(message + ": " + e.getMessage(), e);
-							}
-							
-							workItem.save();
-						}
-						
-				}
-				else if (GenericArtifact.VALUE_NONE.equals(ga.getDepParentTargetArtifactId())) {
-					// If the work item has no parent, the existing Parent relationship should be removed.
-					if (workItem.getLinks().size() > 0) {	
-						
-						workItem.getLinks().iterator().next();
-						Iterator<Link> linkIterator = workItem.getLinks().iterator();
-													
-						while (linkIterator.hasNext()) {
-		
-							Link link = linkIterator.next();
-		
-							// it looks for a Related relationship
-							if (link.getLinkID() == -1) {
-		
-								RelatedLinkImpl relatedLink = (RelatedLinkImpl) link;
-										
-								// it looks for a Parent relationship
-								if (relatedLink.getWorkItemLinkTypeID() == -2) {
-									workItem.getLinks().remove(relatedLink);
-									workItem.save();
-								}
-							
-							}
-						}
-					}
-				}
-				
-			} catch (UnableToSaveException e1) {
-
-				logConflictResolutor.warn(
-						"Stale relationship update, trying again ...:", e1);
-				relationWasUpdated = false;
-			}
-		}
-		
-		
-		boolean commentNotUpdated = true;
-//		boolean calledSaveAtLeastOnce = false;
-		
-		while (commentNotUpdated) {
-
-			commentNotUpdated = false;
-		
-			List<GenericArtifactField> comments = ga
-					.getAllGenericArtifactFieldsWithSameFieldName(CoreFieldReferenceNames.HISTORY);
-	
-			if (comments != null) {
-	
-				for (ListIterator<GenericArtifactField> iterator = comments
-						.listIterator(comments.size()); iterator.hasPrevious();) {
-	
-					GenericArtifactField comment = iterator.previous();
-	
-					String commentValue = (String) comment.getFieldValue();
-					if (StringUtils.isEmpty(commentValue)) {
-						continue;
-					}
-					workItem.getFields().getField(CoreFieldReferenceNames.HISTORY)
-							.setValue(commentValue);
-	
-					try {
-//						calledSaveAtLeastOnce = true;
-						workItem.save();
-						
-					} catch (UnableToSaveException e1) {
-
-						logConflictResolutor.warn(
-								"Stale comment update, trying again ...:", e1);
-						commentNotUpdated = true;
-						
-					} catch (TECoreException e) {
-						if (!e.getMessage().contains("TF51650")) {
-							throw e;
-						}
-					}
-				}
-			}
-
-//			if (!calledSaveAtLeastOnce) {
-//				// update history field
-//				try {
-//					workItem.save();
-//				} catch (TECoreException e) {
-//					if (!e.getMessage().contains("TF51650")) {
-//						throw e;
-//					}
-//				}
-//			}
-		}
-
-		
-		ga.setTargetArtifactVersion(workItem.getFields()
-				.getField(CoreFieldReferenceNames.REVISION).getOriginalValue()
-				.toString());
+		ga.setTargetArtifactVersion(String.valueOf(updatedDate.getMillis()));
 		
 		try {
 			ga.setTargetArtifactLastModifiedDate(GenericArtifactHelper.df
-					.format(workItem.getFields()
-							.getField(CoreFieldReferenceNames.CHANGED_DATE)
-							.getOriginalValue()));
+					.format(updatedDate.toDate()));
 		} catch (NullPointerException e){
 			
-			String message = "Null pointer getting the workItem changedDate in workItem (" + workItemId +")";
+			String message = "Null pointer getting the workItem changedDate in workItem (" + issueId +")";
 			throw new CCFRuntimeException(message);
 		}
 
-		return workItem;
-	*/
-	return null;	
+		return issue;
+	
+	
 	}
 
 }
