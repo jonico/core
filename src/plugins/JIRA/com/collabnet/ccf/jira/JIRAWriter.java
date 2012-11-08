@@ -2,7 +2,6 @@ package com.collabnet.ccf.jira;
 
 import java.rmi.RemoteException;
 import java.sql.SQLException;
-import java.util.Date;
 import java.util.List;
 
 import org.apache.commons.logging.Log;
@@ -10,6 +9,7 @@ import org.apache.commons.logging.LogFactory;
 import org.dom4j.Document;
 import org.openadaptor.core.exception.ValidationException;
 
+import com.atlassian.jira.rest.client.NullProgressMonitor;
 import com.atlassian.jira.rest.client.domain.BasicIssue;
 import com.atlassian.jira.rest.client.domain.Issue;
 import com.collabnet.ccf.core.AbstractWriter;
@@ -22,14 +22,7 @@ import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
 import com.collabnet.ccf.core.utils.DateUtil;
 import com.collabnet.ccf.core.utils.XPathUtils;
-import com.collabnet.ccf.tfs.TFSAttachmentHandler;
-import com.collabnet.ccf.jira.JIRAConnection;
-import com.collabnet.ccf.jira.JIRAConnectionFactory;
-import com.collabnet.ccf.tfs.TFSHandler;
-import com.collabnet.ccf.jira.JIRAMetaData;
 import com.collabnet.ccf.jira.JIRAMetaData.JIRAType;
-import com.microsoft.tfs.core.clients.workitem.CoreFieldReferenceNames;
-import com.microsoft.tfs.core.clients.workitem.WorkItem;
 import com.microsoft.tfs.core.exceptions.TECoreException;
 
 public class JIRAWriter extends AbstractWriter<JIRAConnection> {
@@ -43,6 +36,7 @@ public class JIRAWriter extends AbstractWriter<JIRAConnection> {
 	private JIRAAttachmentHandler attachmentHandler = null;
 
 	private JIRAHandler jiraHandler;
+	static final NullProgressMonitor pm = new NullProgressMonitor();
 	
 	@Override
 	public Document updateDependency(Document gaDocument) {
@@ -201,7 +195,7 @@ public class JIRAWriter extends AbstractWriter<JIRAConnection> {
 	}
 	
 	@Override
-	public Document[] createAttachment(Document gaDocument) {/*
+	public Document[] createAttachment(Document gaDocument) {
 
 		GenericArtifact ga = null;
 		try {
@@ -214,28 +208,27 @@ public class JIRAWriter extends AbstractWriter<JIRAConnection> {
 		
 		String targetRepositoryId = ga.getTargetRepositoryId();
 		
-		JIRAType tfsType = JIRAMetaData
+		JIRAType jiraType = JIRAMetaData
 				.retrieveJIRATypeFromRepositoryId(targetRepositoryId);
 		
-		if (tfsType.equals(JIRAMetaData.JIRAType.UNKNOWN)) {
+		if (jiraType.equals(JIRAMetaData.JIRAType.UNKNOWN)) {
 			String cause = "Invalid repository format: " + targetRepositoryId;
 			log.error(cause);
 			throw new CCFRuntimeException(cause);
 		}
 		
 		JIRAConnection connection;
-		String collectionName = JIRAMetaData.extractUnusedFirstPartFromRepositoryId(targetRepositoryId);
-		
 		connection = connect(ga);
 		String targetParentArtifactId = ga.getDepParentTargetArtifactId();
 		
 		GenericArtifact parentArtifact = null;
 		try {
-			attachmentHandler.handleAttachment(connection, ga,
+			Issue issue= attachmentHandler.handleAttachment(connection, ga,
 						targetParentArtifactId,this.getUserName());
-			
-			WorkItem wi = connection.getTpc().getWorkItemClient().getWorkItemByID(Integer.valueOf(targetParentArtifactId));
-			
+		
+			if(issue==null){
+				issue=connection.getJiraRestClient().getIssueClient().getIssue(targetParentArtifactId, pm);
+			}
 			parentArtifact = new GenericArtifact();
 			// make sure that we do not update the synchronization status record
 			// for replayed attachments
@@ -264,8 +257,8 @@ public class JIRAWriter extends AbstractWriter<JIRAConnection> {
 
 			parentArtifact.setTargetArtifactId(targetParentArtifactId);
 			parentArtifact.setTargetArtifactLastModifiedDate(DateUtil
-					.format((Date) wi.getFields().getField(CoreFieldReferenceNames.CHANGED_DATE).getValue()));
-			parentArtifact.setTargetArtifactVersion(wi.getFields().getField(CoreFieldReferenceNames.REVISION).getValue().toString());
+					.format(issue.getUpdateDate().toDate()));
+			parentArtifact.setTargetArtifactVersion(String.valueOf(issue.getUpdateDate().getMillis()));
 			parentArtifact.setTargetRepositoryId(ga.getTargetRepositoryId());
 			parentArtifact
 					.setTargetRepositoryKind(ga.getTargetRepositoryKind());
@@ -288,10 +281,6 @@ public class JIRAWriter extends AbstractWriter<JIRAConnection> {
 		Document[] retDocs = new Document[] { attachmentDocument,
 				parentArtifactDoc };
 		return retDocs;
-		
-		
-	*/
-	return null;	
 	}
 
 	@Override

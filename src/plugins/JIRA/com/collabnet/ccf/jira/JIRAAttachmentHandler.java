@@ -7,7 +7,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
+import java.net.URI;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -16,20 +16,22 @@ import java.util.List;
 
 import javax.activation.MimetypesFileTypeMap;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.atlassian.jira.rest.client.IssueRestClient;
+import com.atlassian.jira.rest.client.NullProgressMonitor;
+import com.atlassian.jira.rest.client.domain.Issue;
 import com.collabnet.ccf.core.eis.connection.ConnectionManager;
 import com.collabnet.ccf.core.ga.AttachmentMetaData;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.utils.DateUtil;
-import com.microsoft.tfs.core.clients.workitem.CoreFieldReferenceNames;
 import com.microsoft.tfs.core.clients.workitem.WorkItem;
 import com.microsoft.tfs.core.clients.workitem.files.Attachment;
 import com.microsoft.tfs.core.clients.workitem.files.AttachmentCollection;
-import com.microsoft.tfs.core.clients.workitem.files.AttachmentFactory;
 
 public class JIRAAttachmentHandler {
 
@@ -39,6 +41,8 @@ public class JIRAAttachmentHandler {
 	private static final Log logConflictResolutor = LogFactory
 			.getLog("com.collabnet.ccf.core.conflict.resolution");
 
+	static final NullProgressMonitor pm = new NullProgressMonitor();
+	
 	private ConnectionManager<JIRAConnection> connectionManager = null;
 
 	public JIRAAttachmentHandler(String serverUrl,
@@ -257,10 +261,11 @@ public class JIRAAttachmentHandler {
 		return data;
 	}
 
-	public void handleAttachment(JIRAConnection connection, GenericArtifact ga,
+	public Issue handleAttachment(JIRAConnection connection, GenericArtifact ga,
 			String targetParentArtifactId, String userName)
 			throws RemoteException {
 
+		
 		log.info("An attachment will be created for artifact id "
 				+ targetParentArtifactId);
 		String contentType = GenericArtifactHelper.getStringFlexGAField(
@@ -271,16 +276,16 @@ public class JIRAAttachmentHandler {
 				AttachmentMetaData.ATTACHMENT_MIME_TYPE, ga);
 		String attachmentName = GenericArtifactHelper.getStringFlexGAField(
 				AttachmentMetaData.ATTACHMENT_NAME, ga);
-		attachmentName = userName + "_" + attachmentName;
+		//attachmentName = userName + "_" + attachmentName;
 
 		GenericArtifact.ArtifactActionValue attAction = ga.getArtifactAction();
 
-		WorkItem workItem = null;
+		Issue issue = null;
 
 		if (attAction == GenericArtifact.ArtifactActionValue.CREATE) {
 
 			if (AttachmentMetaData.AttachmentType.valueOf(contentType) == AttachmentMetaData.AttachmentType.DATA) {
-				workItem = this.attachFileToArtifact(connection,
+				issue = this.attachFileToArtifact(connection,
 						targetParentArtifactId, attachDescription,
 						attachmentName, attachmentMimeType, ga, null);
 
@@ -293,19 +298,18 @@ public class JIRAAttachmentHandler {
 			log.error("Attachment action value is unknown");
 		}
 
-		if (workItem != null) {
+		if (issue != null) {
 
-			Date attachmentLastModifiedDate = (Date) workItem.getFields()
-					.getField(CoreFieldReferenceNames.CHANGED_DATE).getValue();
+			Date attachmentLastModifiedDate = issue.getUpdateDate().toDate();
 
-			Attachment attachment = getAttachmentMetaData(connection,
-					attachmentName, attachmentLastModifiedDate,
-					targetParentArtifactId);
+			com.atlassian.jira.rest.client.domain.Attachment attachment = getLastAttachmentAddByConnectorUser(connection, issue);
+			
 			if (attachment != null) {
-				ga.setTargetArtifactLastModifiedDate(DateUtil.format(attachment
-						.getAttachmentAddedDate()));
-				ga.setTargetArtifactVersion("1");
-				ga.setTargetArtifactId(String.valueOf(attachment.getFileID()));
+				ga.setTargetArtifactLastModifiedDate(GenericArtifactHelper.df
+						.format(attachment.getCreationDate().toDate()));
+				ga.setTargetArtifactVersion(String.valueOf(attachment.getCreationDate().getMillis()));
+				URI uri=attachment.getSelf();
+				ga.setTargetArtifactId(String.valueOf(StringUtils.substringAfterLast(uri.getPath(), "/")));
 			} else {
 				ga.setTargetArtifactLastModifiedDate(DateUtil
 						.format(attachmentLastModifiedDate));
@@ -313,75 +317,70 @@ public class JIRAAttachmentHandler {
 				ga.setTargetArtifactId(GenericArtifact.VALUE_UNKNOWN);
 			}
 		}
+		return issue;
 
 	}
+	
+	/**
+	 * @param connection
+	 * @param issue
+	 */
+	private com.atlassian.jira.rest.client.domain.Attachment getLastAttachmentAddByConnectorUser(JIRAConnection connection, Issue issue) {
+		com.atlassian.jira.rest.client.domain.Attachment attachment = null;
+		Iterator<com.atlassian.jira.rest.client.domain.Attachment> it = issue.getAttachments().iterator();
+		while (it.hasNext()) {
+			com.atlassian.jira.rest.client.domain.Attachment currentAttachment = it.next();
+			if (connection.getUsername().equalsIgnoreCase(
+					currentAttachment.getAuthor().getName())) {
+					attachment=currentAttachment;
+				continue;
+			}
+		}
 
-	private WorkItem attachFileToArtifact(JIRAConnection connection,
+		return attachment;
+	}
+
+	private Issue attachFileToArtifact(JIRAConnection connection,
 			String targetParentArtifactId, String attachDescription,
 			String attachmentName, String textPlain, GenericArtifact ga,
 			byte[] bytes) {
 
-		WorkItem workItem = connection.getTpc().getWorkItemClient()
-				.getWorkItemByID(Integer.valueOf(targetParentArtifactId));
+		IssueRestClient issueClient=connection.getJiraRestClient().getIssueClient();
+		Issue issue = issueClient.getIssue(targetParentArtifactId, pm);
+				
 
 		String attachmentDataFileName = GenericArtifactHelper.getStringGAField(
 				AttachmentMetaData.ATTACHMENT_DATA_FILE, ga);
 
 		File file = new File(attachmentDataFileName);
-		File attachedFile = new File(attachmentName);
-
+		InputStream in = null;
 		try {
-
-			InputStream in = new FileInputStream(file);
-			OutputStream out = new FileOutputStream(attachedFile);
-
-			byte[] buf = new byte[1024];
-			int len;
-
-			while ((len = in.read(buf)) > 0) {
-				out.write(buf, 0, len);
-			}
-
-			in.close();
-			out.close();
-
+			in = new FileInputStream(file);
+			
 		} catch (FileNotFoundException e) {
-			log.error("When attaching a the file to the workItem, file not found");
+			log.error("When attaching a the file to the issue, file not found");
 			e.printStackTrace();
 		} catch (IOException e) {
-			log.error("When attaching a the file to the workItem, i/o exception");
+			log.error("When attaching a the file to the issue, i/o exception");
 			e.printStackTrace();
 		}
 
-		Attachment attachment = AttachmentFactory.newAttachment(attachedFile,
-				"Originally attached by a CTF user");
-
-		workItem.getAttachments().add(attachment);
-		workItem.getFields()
-				.getField(CoreFieldReferenceNames.REVISION)
-				.setValue(
-						Integer.valueOf(workItem.getFields()
-								.getField(CoreFieldReferenceNames.REVISION)
-								.getValue().toString()) + 1);
+		issueClient.addAttachment(pm, issue.getAttachmentsUri(),in , attachmentName);
+		issue=issueClient.getIssue(targetParentArtifactId, pm);
 		
-		workItem.save();
-		
-		log.info("file has been attached to the workItem "
+		log.info("file has been attached to the issue "
 				+ targetParentArtifactId);
 		
-		return workItem;
+		return issue;
 
 	}
 
-	private Attachment getAttachmentMetaData(JIRAConnection connection,
+/*	private Attachment getAttachmentMetaData(JIRAConnection connection,
 			String attachmentName, Date attachmentLastModifiedDate,
 			String targetParentArtifactId) {
 
 		Attachment returnedAttachent = null;
-		AttachmentCollection attachments = connection.getTpc()
-				.getWorkItemClient()
-				.getWorkItemByID(Integer.valueOf(targetParentArtifactId))
-				.getAttachments();
+		AttachmentCollection attachments = connection.getJiraRestClient().get
 		
 		Iterator<Attachment> it = attachments.iterator();
 		List<Attachment> attachmentList = new ArrayList<Attachment>();
@@ -413,6 +412,6 @@ public class JIRAAttachmentHandler {
 		}
 
 		return returnedAttachent;
-	}
+	}*/
 
 }

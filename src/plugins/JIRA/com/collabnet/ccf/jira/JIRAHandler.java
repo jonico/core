@@ -5,6 +5,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.commons.lang.StringUtils;
@@ -12,20 +13,17 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.joda.time.DateTime;
 
+import com.atlassian.jira.rest.client.GetCreateIssueMetadataOptionsBuilder;
 import com.atlassian.jira.rest.client.IssueRestClient;
 import com.atlassian.jira.rest.client.JiraRestClient;
 import com.atlassian.jira.rest.client.NullProgressMonitor;
 import com.atlassian.jira.rest.client.domain.BasicIssue;
-import com.atlassian.jira.rest.client.domain.BasicUser;
-import com.atlassian.jira.rest.client.domain.ChangelogGroup;
-import com.atlassian.jira.rest.client.domain.ChangelogItem;
 import com.atlassian.jira.rest.client.domain.CimFieldInfo;
 import com.atlassian.jira.rest.client.domain.CimIssueType;
 import com.atlassian.jira.rest.client.domain.CimProject;
 import com.atlassian.jira.rest.client.domain.Comment;
 import com.atlassian.jira.rest.client.domain.EntityHelper;
 import com.atlassian.jira.rest.client.domain.Issue;
-import com.atlassian.jira.rest.client.domain.Project;
 import com.atlassian.jira.rest.client.domain.input.IssueInputBuilder;
 import com.collabnet.ccf.core.AbstractWriter;
 import com.collabnet.ccf.core.ArtifactState;
@@ -39,20 +37,12 @@ import com.collabnet.ccf.core.utils.DateUtil;
 import com.microsoft.tfs.core.clients.workitem.CoreFieldReferenceNames;
 import com.microsoft.tfs.core.clients.workitem.WorkItem;
 import com.microsoft.tfs.core.clients.workitem.WorkItemClient;
-import com.microsoft.tfs.core.clients.workitem.exceptions.UnableToSaveException;
 import com.microsoft.tfs.core.clients.workitem.fields.Field;
-import com.microsoft.tfs.core.clients.workitem.fields.FieldDefinition;
-import com.microsoft.tfs.core.clients.workitem.fields.FieldType;
 import com.microsoft.tfs.core.clients.workitem.internal.link.RelatedLinkImpl;
 import com.microsoft.tfs.core.clients.workitem.link.Link;
-import com.microsoft.tfs.core.clients.workitem.link.LinkFactory;
-import com.microsoft.tfs.core.clients.workitem.link.RelatedLink;
-
 import com.microsoft.tfs.core.clients.workitem.query.WorkItemCollection;
 import com.microsoft.tfs.core.clients.workitem.revision.Revision;
 import com.microsoft.tfs.core.clients.workitem.revision.RevisionCollection;
-import com.microsoft.tfs.core.clients.workitem.wittype.WorkItemType;
-import com.microsoft.tfs.core.exceptions.TECoreException;
 
 public class JIRAHandler {
 
@@ -332,25 +322,21 @@ public class JIRAHandler {
 		//FIXME Creating Parent-Child dependencies
 		//FIXME to find out correct version number
 		//FIXME html to plain text conversion
+		//FIXME get issue type IDs instead of name
 		
 		DateTime createdDate=null;
 		 
 		JiraRestClient restClient=connection.getJiraRestClient();
 		IssueRestClient issueClient = restClient.getIssueClient();
 		
-		final Iterable<CimProject> metadataProjects = issueClient.getCreateIssueMetadata(null, pm);
-		final CimProject project = metadataProjects.iterator().next();
-		final CimIssueType createIssueType = EntityHelper.findEntityByName(project.getIssueTypes(), issueTypeString);
-		
-		String summary = ga.getAllGenericArtifactFieldsWithSameFieldName("summary").get(0).getFieldValue().toString();
-		String description = ga.getAllGenericArtifactFieldsWithSameFieldName("description").get(0).getFieldValue().toString();
-		final IssueInputBuilder issueInputBuilder = new IssueInputBuilder(projectKey, createIssueType.getId(), summary)
-		.setDescription(description);
-		
+		final IssueInputBuilder issueInputBuilder = getIssueInputBuilder(ga,
+				projectKey, issueTypeString, issueClient);
 		final BasicIssue basicCreatedIssue = issueClient.createIssue(issueInputBuilder.build(), pm);
 		Issue issue = issueClient.getIssue(basicCreatedIssue.getKey(), pm);
 		
+		Iterable<com.atlassian.jira.rest.client.domain.Field> fields= issue.getFields();
 		issue = addIssueComment(ga, issueClient, basicCreatedIssue.getKey(), issue);
+		
 		
 		if (issue.getComments()!=null) {
 			createdDate=getUpdatedDate(connection, issue);
@@ -394,21 +380,51 @@ public class JIRAHandler {
 	}
 
 	/**
+	 * @param ga
+	 * @param projectKey
+	 * @param issueTypeString
+	 * @param issueClient
+	 * @return
+	 */
+	private IssueInputBuilder getIssueInputBuilder(GenericArtifact ga,
+			String projectKey, String issueTypeString,
+			IssueRestClient issueClient) {
+		final Iterable<CimProject> metadataProjects = issueClient.getCreateIssueMetadata(
+				new GetCreateIssueMetadataOptionsBuilder().withProjectKeys(projectKey).withIssueTypeNames(issueTypeString).withExpandedIssueTypesFields().build(), pm);
+		final CimProject project = metadataProjects.iterator().next();
+		final CimIssueType createIssueType = EntityHelper.findEntityByName(project.getIssueTypes(), issueTypeString);
+		
+		final IssueInputBuilder issueInputBuilder = new IssueInputBuilder(projectKey, createIssueType.getId());
+		Map<String, CimFieldInfo> fieldMap=createIssueType.getFields();
+		 Iterator<Entry<String, CimFieldInfo>> fieldsit = fieldMap.entrySet().iterator();
+		while(fieldsit.hasNext()){
+			 Entry<String, CimFieldInfo> field = fieldsit.next();
+			String fieldId=field.getValue().getId();
+			List<GenericArtifactField> gaFields = ga
+					.getAllGenericArtifactFieldsWithSameFieldName(fieldId);
+			if (gaFields != null && gaFields.get(0).getFieldValueHasChanged()) {
+				issueInputBuilder.setFieldValue(fieldId, gaFields.get(0).getFieldValue());
+			}
+		}
+		return issueInputBuilder;
+	}
+
+	/**
 	 * @param connection
 	 * @param issue
 	 */
 	private DateTime getUpdatedDate(JIRAConnection connection, Issue issue) {
-		DateTime createdDate = null;
+		DateTime updatedDate = null;
 		Iterator<Comment> it = issue.getComments().iterator();
 		while (it.hasNext()) {
 			Comment comment = it.next();
 			if (connection.getUsername().equalsIgnoreCase(
 					comment.getAuthor().getName())) {
-				 createdDate = comment.getCreationDate();
+				 updatedDate = comment.getCreationDate();
 				continue;
 			}
 		}
-		return createdDate;
+		return updatedDate;
 	}
 
 	/**
@@ -449,27 +465,21 @@ public class JIRAHandler {
 		DateTime updatedDate =null;
 		String issueId = ga.getTargetArtifactId();
 		Issue issue = issueClient.getIssue(issueId, pm);
-		
-		
 		Long issueRevision = issue.getUpdateDate().getMillis();
 
 		if (!AbstractWriter.handleConflicts(issueRevision, ga)) {
 			return null;
 		}
 		
-		String summary = ga.getAllGenericArtifactFieldsWithSameFieldName("summary").get(0).getFieldValue().toString();
-		String description = ga.getAllGenericArtifactFieldsWithSameFieldName("description").get(0).getFieldValue().toString();
-		
-		IssueInputBuilder issueInputBuilder = new IssueInputBuilder(issue.getProject().getKey(), 1L);
-		issueInputBuilder.setSummary(summary).setDescription(description);
+		final IssueInputBuilder issueInputBuilder = getIssueInputBuilder(ga,
+				projectKey, issueTypeString, issueClient);
 		issueClient.updateIssue(issue.getKey(), issueInputBuilder.build(), null);
 		issue = issueClient.getIssue(issueId, pm);
 		
 		issue = addIssueComment(ga, issueClient, issue.getKey(), issue);
+		updatedDate = issue.getUpdateDate();
+		//FIXME calculate update date based on MAX(latest ccf entry from change log, latest ccf entry from comments,latest know update date)
 		
-		if (issue.getComments()!=null) {
-			 updatedDate = getUpdatedDate(connection, issue);
-		}
 		ga.setTargetArtifactVersion(String.valueOf(updatedDate.getMillis()));
 		
 		try {
