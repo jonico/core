@@ -50,19 +50,19 @@ public class JIRAReader extends AbstractReader<JIRAConnection> {
 		Date lastModifiedDate = this.getLastModifiedDate(syncInfo);
 		
 		JIRAConnection connection;
-		String collectionName = JIRAMetaData.extractUnusedFirstPartFromRepositoryId(sourceRepositoryId);
+	//	String collectionName = JIRAMetaData.extractUnusedFirstPartFromRepositoryId(sourceRepositoryId);
 		try {
 			connection = connect(sourceSystemId, sourceSystemKind,
-					sourceRepositoryId, sourceRepositoryKind, serverUrl + "/" + collectionName,
+					sourceRepositoryId, sourceRepositoryKind, serverUrl ,
 					getUserName() + JIRAConnectionFactory.PARAM_DELIMITER
 							+ getPassword());
 		} catch (MaxConnectionsReachedException e) {
-			String cause = "Could not create connection to the TFS system. Max connections reached for "
+			String cause = "Could not create connection to the JIRA system. Max connections reached for "
 					+ serverUrl;
 			log.error(cause, e);
 			throw new CCFRuntimeException(cause, e);
 		} catch (ConnectionException e) {
-			String cause = "Could not create connection to the TFS system "
+			String cause = "Could not create connection to the JIRA system "
 					+ serverUrl;
 			log.error(cause, e);
 			throw new CCFRuntimeException(cause, e);
@@ -90,7 +90,7 @@ public class JIRAReader extends AbstractReader<JIRAConnection> {
 		} finally {
 			this.disconnect(connection);
 		}
-		return attachments;
+		return attachments ;
 	}
 	
 	private void populateSrcAndDestForAttachment(Document syncInfo,
@@ -149,7 +149,7 @@ public class JIRAReader extends AbstractReader<JIRAConnection> {
 		String collectionName = JIRAMetaData.extractUnusedFirstPartFromRepositoryId(sourceRepositoryId);
 		try {
 			connection = connect(sourceSystemId, sourceSystemKind,
-					sourceRepositoryId, sourceRepositoryKind, serverUrl + "/" + collectionName,
+					sourceRepositoryId, sourceRepositoryKind, serverUrl,
 					getUserName() + JIRAConnectionFactory.PARAM_DELIMITER
 							+ getPassword());
 		} catch (MaxConnectionsReachedException e) {
@@ -176,10 +176,10 @@ public class JIRAReader extends AbstractReader<JIRAConnection> {
 			
 			
 			if (tfsType.equals(JIRAType.ISSUE)) {
-				String projectName = JIRAMetaData.extractProjectKeyFromRepositoryId(sourceRepositoryId);
-				String workItemType = JIRAMetaData.extractIssueTypeFromRepositoryId(sourceRepositoryId);
-				tfsHandler.getWorkItem(connection,
-						collectionName, projectName, workItemType, lastModifiedDate, lastSynchronizedVersion, lastSynchedArtifactId, artifactId, getUserName(),
+				String projectKey = JIRAMetaData.extractProjectKeyFromRepositoryId(sourceRepositoryId);
+				String issueType = JIRAMetaData.extractIssueTypeFromRepositoryId(sourceRepositoryId);
+				jiraHandler.getIssue(connection,
+						 projectKey, issueType, lastModifiedDate, lastSynchronizedVersion, lastSynchedArtifactId, artifactId, getUserName(),
 						isIgnoreConnectorUserUpdates(), genericArtifact, this.getSourceRepositoryId(syncInfo));
 			}
 
@@ -233,31 +233,32 @@ public class JIRAReader extends AbstractReader<JIRAConnection> {
 		String lastSynchronizedVersion = this.getLastSourceVersion(syncInfo);
 		Date lastModifiedDate = this.getLastModifiedDate(syncInfo);
 		String lastSynchedArtifactId = this.getLastSourceArtifactId(syncInfo);
-
+		String sourceTimezone = this.getSourceSystemTimezone(syncInfo);
+		
 		// find out what to extract
-		JIRAType tfsType = JIRAMetaData
+		JIRAType jiraType = JIRAMetaData
 				.retrieveJIRATypeFromRepositoryId(sourceRepositoryId);
 
-		if (tfsType.equals(JIRAMetaData.JIRAType.UNKNOWN)) {
+		if (jiraType.equals(JIRAMetaData.JIRAType.UNKNOWN)) {
 			String cause = "Invalid repository format: " + sourceRepositoryId;
 			log.error(cause);
 			throw new CCFRuntimeException(cause);
 		}
 
 		JIRAConnection connection;
-		String collectionName = JIRAMetaData.extractUnusedFirstPartFromRepositoryId(sourceRepositoryId);
+		//String collectionName = JIRAMetaData.extractUnusedFirstPartFromRepositoryId(sourceRepositoryId);
 		try {
 			connection = connect(sourceSystemId, sourceSystemKind,
-					sourceRepositoryId, sourceRepositoryKind, serverUrl + "/" + collectionName,
+					sourceRepositoryId, sourceRepositoryKind, serverUrl,
 					getUserName() + JIRAConnectionFactory.PARAM_DELIMITER
 							+ getPassword());
 		} catch (MaxConnectionsReachedException e) {
-			String cause = "Could not create connection to the TFS system. Max connections reached for "
+			String cause = "Could not create connection to the JIRA system. Max connections reached for "
 					+ serverUrl;
 			log.error(cause, e);
 			throw new CCFRuntimeException(cause, e);
 		} catch (ConnectionException e) {
-			String cause = "Could not create connection to the TFS system "
+			String cause = "Could not create connection to the JIRA system "
 					+ serverUrl;
 			log.error(cause, e);
 			throw new CCFRuntimeException(cause, e);
@@ -265,13 +266,13 @@ public class JIRAReader extends AbstractReader<JIRAConnection> {
 
 		ArrayList<ArtifactState> artifactStates = new ArrayList<ArtifactState>();
 		try {
-			if (tfsType.equals(JIRAType.ISSUE)) {
+			if (jiraType.equals(JIRAType.ISSUE)) {
 				String projectName = JIRAMetaData.extractProjectKeyFromRepositoryId(sourceRepositoryId);
-				String workItemType = JIRAMetaData.extractIssueTypeFromRepositoryId(sourceRepositoryId);
+				String issueType = JIRAMetaData.extractIssueTypeFromRepositoryId(sourceRepositoryId);
 				//FIXME 
-				/*tfsHandler.getChangedWorkItems(connection,
-						collectionName, projectName, workItemType, lastModifiedDate, lastSynchronizedVersion, lastSynchedArtifactId, artifactStates, getUserName(),
-						isIgnoreConnectorUserUpdates());*/
+				jiraHandler.getChangedWorkItems(connection,
+						 projectName, issueType, lastModifiedDate, lastSynchronizedVersion, lastSynchedArtifactId, artifactStates, getUserName(),
+						isIgnoreConnectorUserUpdates(), sourceTimezone);
 			}
 
 		} catch (Exception e) {
@@ -338,7 +339,7 @@ public class JIRAReader extends AbstractReader<JIRAConnection> {
 		return connection;
 	}
 	
-	private JIRAHandler tfsHandler = null;
+	private JIRAHandler jiraHandler = null;
 
 	private static final Log log = LogFactory.getLog(JIRAReader.class);
 	
@@ -361,7 +362,7 @@ public class JIRAReader extends AbstractReader<JIRAConnection> {
 					this));
 		}
 		try {
-			tfsHandler = new JIRAHandler();
+			jiraHandler = new JIRAHandler();
 		} catch (Exception e) {
 			log.error("Could not initialize TFSHandler");
 			exceptions.add(new ValidationException(

@@ -7,6 +7,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URI;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
@@ -19,6 +20,7 @@ import javax.activation.MimetypesFileTypeMap;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.openadaptor.util.FileUtils;
 
 import com.atlassian.jira.rest.client.IssueRestClient;
 import com.atlassian.jira.rest.client.NullProgressMonitor;
@@ -29,9 +31,8 @@ import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.utils.DateUtil;
-import com.microsoft.tfs.core.clients.workitem.WorkItem;
 import com.microsoft.tfs.core.clients.workitem.files.Attachment;
-import com.microsoft.tfs.core.clients.workitem.files.AttachmentCollection;
+import com.microsoft.tfs.util.IOUtils;
 
 public class JIRAAttachmentHandler {
 
@@ -60,18 +61,17 @@ public class JIRAAttachmentHandler {
 
 		for (String artifactId : artifactIds) {
 
-			WorkItem wi = connection.getTpc().getWorkItemClient()
-					.getWorkItemByID(Integer.valueOf(artifactId));
-			AttachmentCollection attachmentsList = wi.getAttachments();
+			Issue is = connection.getJiraRestClient().getIssueClient().getIssue(artifactId, pm);
+			Iterable<com.atlassian.jira.rest.client.domain.Attachment> attachmentsList = is.getAttachments();
 
-			Iterator<Attachment> it = attachmentsList.iterator();
+			Iterator<com.atlassian.jira.rest.client.domain.Attachment> it = attachmentsList.iterator();
 
 			while (it.hasNext()) {
 
-				Attachment attachment = it.next();
+				com.atlassian.jira.rest.client.domain.Attachment attachment = it.next();
 
-				String fileName = attachment.getFileName();
-				Long attachmentSize = attachment.getFileSize();
+				String fileName = attachment.getFilename();
+				Long attachmentSize = (long) attachment.getSize();
 
 				if (attachmentSize > maxAttachmentSizePerArtifact) {
 					log.warn("attachment size is more than the configured maxAttachmentSizePerArtifact "
@@ -79,12 +79,12 @@ public class JIRAAttachmentHandler {
 					continue;
 				}
 
-				if (fileName.startsWith(username + "_")) {
+				if (username.equalsIgnoreCase(attachment.getAuthor().getName())){
 					log.warn("file attached by ccf user, ignoring it");
 					continue;
 				}
 
-				Date createdDate = attachment.getAttachmentAddedDate();
+				Date createdDate = attachment.getCreationDate().toDate();
 				if (createdDate.after(lastModifiedDate)) {
 
 					GenericArtifact ga = new GenericArtifact();
@@ -94,8 +94,7 @@ public class JIRAAttachmentHandler {
 					ga.setArtifactMode(GenericArtifact.ArtifactModeValue.CHANGEDFIELDSONLY);
 					ga.setArtifactType(GenericArtifact.ArtifactTypeValue.ATTACHMENT);
 					ga.setDepParentSourceArtifactId(artifactId);
-					ga.setSourceArtifactId(String.valueOf(attachment
-							.getFileID()));
+					ga.setSourceArtifactId(StringUtils.substringAfterLast(attachment.getSelf().getPath(), "/"));
 
 					if (artifactData != null) {
 						ga.setSourceArtifactVersion(artifactData
@@ -132,7 +131,7 @@ public class JIRAAttachmentHandler {
 					GenericArtifactField nameField = ga.addNewField(
 							AttachmentMetaData.ATTACHMENT_NAME,
 							GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
-					nameField.setFieldValue(attachment.getFileName());
+					nameField.setFieldValue(attachment.getFilename());
 					nameField
 							.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
 					nameField
@@ -141,7 +140,7 @@ public class JIRAAttachmentHandler {
 					GenericArtifactField sizeField = ga.addNewField(
 							AttachmentMetaData.ATTACHMENT_SIZE,
 							GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
-					sizeField.setFieldValue(attachment.getFileSize());
+					sizeField.setFieldValue(attachment.getSize());
 					sizeField
 							.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
 					sizeField
@@ -151,9 +150,20 @@ public class JIRAAttachmentHandler {
 					GenericArtifactField mimeTypeField = ga.addNewField(
 							AttachmentMetaData.ATTACHMENT_MIME_TYPE,
 							GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
+					
+					File file = null;
+					try {
+						file = FileUtils.createTempFile();
 
-					File file = new File(attachment.getURL().toString());
-
+						InputStream inputStream = connection
+								.getJiraRestClient().getIssueClient()
+								.getAttachment(pm, attachment.getContentUri());
+						OutputStream outputStream = new FileOutputStream(file);
+						IOUtils.copy(inputStream, outputStream);
+						} catch (IOException e) {
+						log.error("Could not create temp file for attachment handling",e);
+						continue;
+					}
 					mimeTypeField.setFieldValue(new MimetypesFileTypeMap()
 							.getContentType(file));
 
@@ -161,17 +171,27 @@ public class JIRAAttachmentHandler {
 							.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
 					mimeTypeField
 							.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
+					
+					GenericArtifactField attachmentDataFileField = ga
+							.addNewField(
+									AttachmentMetaData.ATTACHMENT_DATA_FILE,
+									GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
+					attachmentDataFileField
+							.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
+					attachmentDataFileField.setFieldValue(file.toString());
+					attachmentDataFileField
+							.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
 
-					byte[] attachmentData = null;
-
-					attachmentData = this.getAttachmentData(connection,
-							attachment, shouldShipAttachmentsWithArtifact, ga);
-
-					if (shouldShipAttachmentsWithArtifact) {
+					//FIXME implement in-document sipping of attachment data
+					/*if (shouldShipAttachmentsWithArtifact) {
+						byte[] attachmentData = null;
+						
+						attachmentData = this.getAttachmentData(connection,
+								attachment, shouldShipAttachmentsWithArtifact, ga);
 						if (attachmentData != null) {
 							ga.setRawAttachmentData(attachmentData);
 						}
-					}
+					}*/
 					attachmentGAs.add(ga);
 
 				} else {
