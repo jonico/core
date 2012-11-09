@@ -16,11 +16,11 @@
 	exclude-result-prefixes="xsl xs ccf stringutil" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://www.w3.org/1999/XSL/Transform http://www.w3.org/2007/schema-for-xslt20.xsd">
 	<xsl:template match='/ccf:artifact[@artifactType = "plainArtifact"]'>
-		<artifact xmlns="http://ccf.open.collab.net/GenericArtifactV1.0">	
+		<artifact xmlns="http://ccf.open.collab.net/GenericArtifactV1.0">		
 			<xsl:copy-of select="@*" />
 			<xsl:apply-templates mode="nonSpecificFields"/> <!-- Apply templates that match for all types. -->
 			
-			<xsl:variable name="artifactType" select="substring-after(substring-after(@targetRepositoryId, '-'), '-')"/>			
+			<xsl:variable name="artifactType" select="substring-after(substring-after(@sourceRepositoryId, '-'), '-')"/>			
 			<xsl:choose>
 				<xsl:when test="$artifactType = 'Bug'">
 					<xsl:apply-templates mode="bugSpecificFields"/>
@@ -37,44 +37,46 @@
 	</xsl:template>
 	<xsl:template match="/ccf:artifact[@artifactType = 'attachment']">
 		<xsl:copy-of select="." />
-	</xsl:template> 
+	</xsl:template>
 	
-	<!-- begin of templates for non specific fields from TF to TFS -->
-	<xsl:template match='ccf:field[@fieldName="title"]' mode="nonSpecificFields">
+	<!-- begin of templates for non specific fields from TFS to TF -->
+	<xsl:template match='ccf:field[@fieldName="summary"]' mode="nonSpecificFields">
 		<field>
 			<xsl:copy-of select="@*" />
-			<xsl:attribute name="fieldName">summary</xsl:attribute>
+			<xsl:attribute name="fieldName">title</xsl:attribute>
+			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
 			<xsl:value-of select="." />
 		</field>
 	</xsl:template>
-	<xsl:template match='ccf:field[@fieldName="Comment Text"]' mode="nonSpecificFields">
-		<field>
-			<xsl:copy-of select="@*"/>
-			<xsl:attribute name="fieldName">comments</xsl:attribute>
-			<xsl:value-of select="."/>
-		</field>
-	</xsl:template>
-	<xsl:template match='ccf:field[@fieldName="Area"]' mode="nonSpecificFields">
+	<xsl:template match='ccf:field[@fieldName="System.History"]' mode="nonSpecificFields">
 		<field>
 			<xsl:copy-of select="@*" />
-			<xsl:attribute name="fieldName">System.AreaPath</xsl:attribute>
+			<xsl:attribute name="fieldName">Comment Text</xsl:attribute>
+			<xsl:attribute name="fieldType">flexField</xsl:attribute>
+			<xsl:value-of select="stringutil:stripHTML(string(.))" />
+		</field>
+	</xsl:template>
+	<xsl:template match='ccf:field[@fieldName="System.AreaPath"]' mode="nonSpecificFields">
+		<field>
+			<xsl:copy-of select="@*" />
+			<xsl:attribute name="fieldName">Area</xsl:attribute>
 			<xsl:attribute name="fieldType">flexField</xsl:attribute>
 			<xsl:value-of select="." />
 		</field>
 	</xsl:template>
-	<xsl:template match='ccf:field[@fieldName="Iteration"]' mode="nonSpecificFields">
+	<xsl:template match='ccf:field[@fieldName="System.IterationPath"]' mode="nonSpecificFields">
 		<field>
 			<xsl:copy-of select="@*" />
-			<xsl:attribute name="fieldName">System.IterationPath</xsl:attribute>
+			<xsl:attribute name="fieldName">Iteration</xsl:attribute>
 			<xsl:attribute name="fieldType">flexField</xsl:attribute>
 			<xsl:value-of select="." />
 		</field>
 	</xsl:template>
-	<xsl:template match='ccf:field[@fieldName="Stack Rank"]' mode="nonSpecificFields">
+	<xsl:template match='ccf:field[@fieldName="Microsoft.VSTS.Common.StackRank"]' mode="nonSpecificFields">
 		<xsl:variable name="stackRankValue" as="xs:string" select="." /> 
 			<field>
 				<xsl:copy-of select="@*" />
-				<xsl:attribute name="fieldName">Microsoft.VSTS.Common.StackRank</xsl:attribute>
+				<xsl:attribute name="fieldName">Stack Rank</xsl:attribute>
 				<xsl:attribute name="fieldType">flexField</xsl:attribute>
 				<xsl:attribute name="fieldValueType">String</xsl:attribute>
 				<xsl:choose>
@@ -84,71 +86,97 @@
 				</xsl:choose>
 			</field>
 	</xsl:template>
-	<!-- end of templates for non specific fields from TF to TFS -->	
-	<!-- begin of templates for bug specific fields from TF to TFS -->
+	<xsl:template match='ccf:field[@fieldName="System.AssignedTo"]' mode="nonSpecificFields">
+		<field>
+			<xsl:copy-of select="@*" />
+			<xsl:attribute name="fieldName">assignedTo</xsl:attribute>
+			<xsl:attribute name="fieldType">flexField</xsl:attribute>
+			<xsl:value-of select="." />
+		</field>
+	</xsl:template>
+	<!-- end of templates for non specific fields from TFS to TF -->
+	<!-- begin of templates for bug specific fields from TFS to TF -->
 	<xsl:template match='ccf:field[@fieldName="description"]' mode="bugSpecificFields">
+		<xsl:variable name="descriptionValue" as="xs:string" select="." />
 		<field>
 			<xsl:copy-of select="@*" />
 			<xsl:attribute name="fieldName">description</xsl:attribute>
-			<xsl:value-of select="stringutil:encodeHTMLToEntityReferences(string(.))"/>
+			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
+			<xsl:value-of select="stringutil:stripHTML(string(.))" />
+			<xsl:if test="$descriptionValue = ''">
+				<xsl:text> </xsl:text>
+			</xsl:if>
 		</field>
 	</xsl:template>
-	<xsl:template match='ccf:field[@fieldName="status"]' mode="bugSpecificFields">
-		<xsl:variable name="statusValue" as="xs:string" select="."/>
-		<field>
-			<xsl:copy-of select="@*"/>
-			<xsl:attribute name="fieldName">System.State</xsl:attribute>
-			<xsl:choose>
-				<xsl:when test="$statusValue ='Active'">Active</xsl:when>
-				<xsl:when test="$statusValue ='Resolved'">Resolved</xsl:when>
-				<xsl:when test="$statusValue ='Closed'">Closed</xsl:when>
-			</xsl:choose>
-		</field>
-	</xsl:template>
-	<xsl:template match='ccf:field[@fieldName="priority"]' mode="bugSpecificFields">
-		<xsl:variable name="priorityValue" as="xs:string" select="."/>
-		<field>
-			<xsl:copy-of select="@*"/>
-			<xsl:attribute name="fieldName">Microsoft.VSTS.Common.Priority</xsl:attribute>
-			<xsl:attribute name="fieldValueType">String</xsl:attribute>
-			<xsl:choose>
-				<!-- If the priority in TF is set to None, the priority in TFS will set to the default value. -->
-				<xsl:when test="$priorityValue = '0'"><xsl:value-of select="2" /></xsl:when>
-				<xsl:when test="$priorityValue = '5'"><xsl:value-of select="4" /></xsl:when>
-				<xsl:otherwise><xsl:value-of select="." /></xsl:otherwise>
-			</xsl:choose>
-		</field>
-	</xsl:template>
-	<xsl:template match='ccf:field[@fieldName="reason"]' mode="bugSpecificFields">
+	<xsl:template match='ccf:field[@fieldName="System.State"]' mode="bugSpecificFields">
+		<xsl:variable name="statusValue" as="xs:string" select="." />
 		<field>
 			<xsl:copy-of select="@*" />
-			<xsl:attribute name="fieldName">System.Reason</xsl:attribute>
+			<xsl:attribute name="fieldName">status</xsl:attribute>
+			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
+			<xsl:if test="$statusValue = 'Active'">
+				<xsl:text>Active</xsl:text>
+			</xsl:if>
+			<xsl:if test="$statusValue = 'Resolved'">
+				<xsl:text>Resolved</xsl:text>
+			</xsl:if>
+			<xsl:if test="$statusValue = 'Closed'">
+				<xsl:text>Closed</xsl:text>
+			</xsl:if>
+		</field>
+	</xsl:template>
+	<xsl:template match='ccf:field[@fieldName="Microsoft.VSTS.Common.Priority"]' mode="bugSpecificFields">
+		<field>
+			<xsl:copy-of select="@*" />
+			<xsl:attribute name="fieldName">priority</xsl:attribute>
+			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
+			<xsl:value-of select="." />
+		</field>
+	</xsl:template>
+	<xsl:template match='ccf:field[@fieldName="Microsoft.VSTS.Common.Severity"]' mode="bugSpecificFields">
+		<field>
+			<xsl:copy-of select="@*" />
+			<xsl:attribute name="fieldName">Severity</xsl:attribute>
 			<xsl:attribute name="fieldType">flexField</xsl:attribute>
 			<xsl:value-of select="." />
 		</field>
 	</xsl:template>
-		<xsl:template match='ccf:field[@fieldName="Severity"]' mode="bugSpecificFields">
+	<xsl:template match='ccf:field[@fieldName="System.Reason"]' mode="bugSpecificFields">
 		<field>
 			<xsl:copy-of select="@*" />
-			<xsl:attribute name="fieldName">Microsoft.VSTS.Common.Severity</xsl:attribute>
+			<xsl:attribute name="fieldName">Reason</xsl:attribute>
 			<xsl:attribute name="fieldType">flexField</xsl:attribute>
 			<xsl:value-of select="." />
 		</field>
 	</xsl:template>
-	<!-- end of templates for bug specific fields from TF to TFS -->
-	<!-- begin of templates for task specific fields from TF to TFS -->
-	<xsl:template match='ccf:field[@fieldName="description"]' mode="taskSpecificFields">
+	<xsl:template match='ccf:field[@fieldName="Microsoft.VSTS.Common.ResolvedReason"]' mode="bugSpecificFields">
 		<field>
 			<xsl:copy-of select="@*" />
-			<xsl:attribute name="fieldName">System.Description</xsl:attribute>
+			<xsl:attribute name="fieldName">Resolved Reason</xsl:attribute>
+			<xsl:attribute name="fieldType">flexField</xsl:attribute>
 			<xsl:value-of select="." />
 		</field>
 	</xsl:template>
-	<xsl:template match='ccf:field[@fieldName="status"]' mode="taskSpecificFields">
-		<xsl:variable name="statusValue" as="xs:string" select="."/>
+	<!-- end of templates for bug specific fields from TFS to TF -->
+	<!-- begin of templates for task specific fields from TFS to TF -->
+		<xsl:template match='ccf:field[@fieldName="System.Description"]' mode="taskSpecificFields">
+		<xsl:variable name="descriptionValue" as="xs:string" select="." />
 		<field>
-			<xsl:copy-of select="@*"/>
-			<xsl:attribute name="fieldName">System.State</xsl:attribute>
+			<xsl:copy-of select="@*" />
+			<xsl:attribute name="fieldName">description</xsl:attribute>
+			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
+			<xsl:value-of select="stringutil:stripHTML(string(.))" />
+			<xsl:if test="$descriptionValue = ''">
+				<xsl:text> </xsl:text>
+			</xsl:if>
+		</field>
+	</xsl:template>
+	<xsl:template match='ccf:field[@fieldName="System.State"]' mode="taskSpecificFields">
+		<xsl:variable name="statusValue" as="xs:string" select="." />
+		<field>
+			<xsl:copy-of select="@*" />
+			<xsl:attribute name="fieldName">status</xsl:attribute>
+			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
 			<xsl:if test="$statusValue = 'Active'">
 				<xsl:text>Active</xsl:text>
 			</xsl:if>
@@ -157,33 +185,28 @@
 			</xsl:if>
 		</field>
 	</xsl:template>
-	<xsl:template match='ccf:field[@fieldName="Reason"]' mode="taskSpecificFields">
+	<xsl:template match='ccf:field[@fieldName="System.Reason"]' mode="taskSpecificFields">
 		<field>
 			<xsl:copy-of select="@*" />
-			<xsl:attribute name="fieldName">System.Reason</xsl:attribute>
+			<xsl:attribute name="fieldName">Reason</xsl:attribute>
+			<xsl:attribute name="fieldType">flexField</xsl:attribute>
 			<xsl:value-of select="." />
 		</field>
 	</xsl:template>
-	<xsl:template match='ccf:field[@fieldName="priority"]' mode="taskSpecificFields">
-		<xsl:variable name="priorityValue" as="xs:string" select="."/>
+	<xsl:template match='ccf:field[@fieldName="Microsoft.VSTS.Common.Priority"]' mode="taskSpecificFields">
 		<field>
 			<xsl:copy-of select="@*" />
-			<xsl:attribute name="fieldName">Microsoft.VSTS.Common.Priority</xsl:attribute>
+			<xsl:attribute name="fieldName">priority</xsl:attribute>
 			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
-			<xsl:attribute name="fieldValueType">String</xsl:attribute>
-			<xsl:choose>
-				<!-- If the priority in TF is set to None, the priority in TFS will set to the default value. -->
-				<xsl:when test="$priorityValue = '0'"><xsl:value-of select="2" /></xsl:when>
-				<xsl:when test="$priorityValue = '5'"><xsl:value-of select="4" /></xsl:when>
-				<xsl:otherwise><xsl:value-of select="." /></xsl:otherwise>
-			</xsl:choose>
+			<xsl:value-of select="." />
 		</field>
 	</xsl:template>
-	<xsl:template match='ccf:field[@fieldName="estimatedHours"]' mode="taskSpecificFields">
+	<xsl:template match='ccf:field[@fieldName="Microsoft.VSTS.Scheduling.OriginalEstimate"]' mode="taskSpecificFields">
 		<xsl:variable name="originalEffortValue" as="xs:string" select="." />
 			<field>
 				<xsl:copy-of select="@*" />
-				<xsl:attribute name="fieldName">Microsoft.VSTS.Scheduling.OriginalEstimate</xsl:attribute>
+				<xsl:attribute name="fieldName">estimatedHours</xsl:attribute>
+				<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
 				<xsl:attribute name="fieldValueType">String</xsl:attribute>
 				<xsl:choose>
 					<xsl:when test="$originalEffortValue = ''"><xsl:value-of select="." /></xsl:when>
@@ -191,11 +214,11 @@
 				</xsl:choose>
 			</field>
 	</xsl:template>
-	<xsl:template match='ccf:field[@fieldName="remainingEffort"]' mode="taskSpecificFields">
+	<xsl:template match='ccf:field[@fieldName="Microsoft.VSTS.Scheduling.RemainingWork"]' mode="taskSpecificFields">
 		<xsl:variable name="remainningValue" as="xs:string" select="." />
 			<field>
 				<xsl:copy-of select="@*" />
-				<xsl:attribute name="fieldName">Microsoft.VSTS.Scheduling.RemainingWork</xsl:attribute>
+				<xsl:attribute name="fieldName">remainingEffort</xsl:attribute>
 				<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
 				<xsl:attribute name="fieldValueType">String</xsl:attribute>
 				<xsl:choose>
@@ -204,11 +227,11 @@
 				</xsl:choose>
 			</field>
 	</xsl:template>
-	<xsl:template match='ccf:field[@fieldName="actualHours"]' mode="taskSpecificFields">
+	<xsl:template match='ccf:field[@fieldName="Microsoft.VSTS.Scheduling.CompletedWork"]' mode="taskSpecificFields">
 		<xsl:variable name="completedWorkValue" as="xs:string" select="." />
 			<field>
 				<xsl:copy-of select="@*" />
-				<xsl:attribute name="fieldName">Microsoft.VSTS.Scheduling.CompletedWork</xsl:attribute>
+				<xsl:attribute name="fieldName">actualHours</xsl:attribute>
 				<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
 				<xsl:attribute name="fieldValueType">String</xsl:attribute>
 				<xsl:choose>
@@ -217,20 +240,26 @@
 				</xsl:choose>
 			</field>
 	</xsl:template>
-	<!-- end of templates for task specific fields from TF to TFS -->
-	<!-- begin of templates for user story specific fields from TF to TFS -->
-	<xsl:template match='ccf:field[@fieldName="description"]' mode="userStorySpecificFields">
+	<!-- end of templates for task specific fields from TFS to TF -->
+	<!-- begin of templates for user story specific fields from TFS to TF -->
+	<xsl:template match='ccf:field[@fieldName="System.Description"]' mode="userStorySpecificFields">
+		<xsl:variable name="descriptionValue" as="xs:string" select="." />
 		<field>
 			<xsl:copy-of select="@*" />
-			<xsl:attribute name="fieldName">System.Description</xsl:attribute>
-			<xsl:value-of select="." />
+			<xsl:attribute name="fieldName">description</xsl:attribute>
+			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
+			<xsl:value-of select="stringutil:stripHTML(string(.))" />
+			<xsl:if test="$descriptionValue = ''">
+				<xsl:text> </xsl:text>
+			</xsl:if>
 		</field>
 	</xsl:template>
-	<xsl:template match='ccf:field[@fieldName="status"]' mode="userStorySpecificFields">
-		<xsl:variable name="statusValue" as="xs:string" select="."/>
+	<xsl:template match='ccf:field[@fieldName="System.State"]' mode="userStorySpecificFields">
+		<xsl:variable name="statusValue" as="xs:string" select="." />
 		<field>
-			<xsl:copy-of select="@*"/>
-			<xsl:attribute name="fieldName">System.State</xsl:attribute>
+			<xsl:copy-of select="@*" />
+			<xsl:attribute name="fieldName">status</xsl:attribute>
+			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
 			<xsl:if test="$statusValue = 'Active'">
 				<xsl:text>Active</xsl:text>
 			</xsl:if>
@@ -242,22 +271,36 @@
 			</xsl:if>
 		</field>
 	</xsl:template>
-	<xsl:template match='ccf:field[@fieldName="Risk"]' mode="userStorySpecificFields">
+	<xsl:template match='ccf:field[@fieldName="System.Reason"]' mode="userStorySpecificFields">
 		<field>
 			<xsl:copy-of select="@*" />
-			<xsl:attribute name="fieldName">Microsoft.VSTS.Common.Risk</xsl:attribute>
+			<xsl:attribute name="fieldName">Reason</xsl:attribute>
+			<xsl:attribute name="fieldType">flexField</xsl:attribute>
 			<xsl:value-of select="." />
 		</field>
 	</xsl:template>
-	<xsl:template match='ccf:field[@fieldName="points"]' mode="userStorySpecificFields">
+	<xsl:template match='ccf:field[@fieldName="Microsoft.VSTS.Common.Risk"]' mode="userStorySpecificFields">
 		<field>
 			<xsl:copy-of select="@*" />
-			<xsl:attribute name="fieldName">Microsoft.VSTS.Scheduling.StoryPoints</xsl:attribute>
-			<xsl:attribute name="fieldValueType">String</xsl:attribute>
+			<xsl:attribute name="fieldName">Risk</xsl:attribute>
+			<xsl:attribute name="fieldType">flexField</xsl:attribute>
 			<xsl:value-of select="." />
 		</field>
 	</xsl:template>
-	<!-- end of templates for user story specific fields from TF to TFS -->
-	
+	<xsl:template match='ccf:field[@fieldName="Microsoft.VSTS.Scheduling.StoryPoints"]' mode="userStorySpecificFields">
+		<xsl:variable name="storyPointsValue" as="xs:string" select="." />
+			<field>
+				<xsl:copy-of select="@*" />
+				<xsl:attribute name="fieldName">points</xsl:attribute>
+				<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
+				<xsl:attribute name="fieldValueType">String</xsl:attribute>
+				<xsl:choose>
+					<xsl:when test="$storyPointsValue = ''"><xsl:value-of select="." /></xsl:when>
+					<xsl:otherwise><xsl:value-of select="floor(.)" /></xsl:otherwise>
+				</xsl:choose>
+			</field>
+	</xsl:template>
+	<!-- end of templates for user story specific fields from TFS to TF -->
+		
 	<xsl:template match="text()" />
 </xsl:stylesheet>

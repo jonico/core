@@ -48,7 +48,7 @@
 			<xsl:value-of select="." />
 		</field>
 	</xsl:template>
-	<xsl:template match='ccf:field[@fieldName="System.History"]' mode="nonSpecificFields">
+	<xsl:template match='ccf:field[@fieldName="comment"]' mode="nonSpecificFields">
 		<field>
 			<xsl:copy-of select="@*" />
 			<xsl:attribute name="fieldName">Comment Text</xsl:attribute>
@@ -108,14 +108,14 @@
 			</xsl:if>
 		</field>
 	</xsl:template>
-	<xsl:template match='ccf:field[@fieldName="System.State"]' mode="bugSpecificFields">
+	<xsl:template match='ccf:field[@fieldName="status"]' mode="bugSpecificFields">
 		<xsl:variable name="statusValue" as="xs:string" select="." />
 		<field>
 			<xsl:copy-of select="@*" />
 			<xsl:attribute name="fieldName">status</xsl:attribute>
 			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
-			<xsl:if test="$statusValue = 'Active'">
-				<xsl:text>Active</xsl:text>
+			<xsl:if test="$statusValue = 'Open'">
+				<xsl:text>Open</xsl:text>
 			</xsl:if>
 			<xsl:if test="$statusValue = 'Resolved'">
 				<xsl:text>Resolved</xsl:text>
