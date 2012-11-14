@@ -230,7 +230,8 @@
 		<property name="hospitalDatabaseReader" ref="HospitalDatabaseExtractor"/>
 		<property name="nameOfEntityService" value="JIRAEntityService" />
 		<property name="retrieveParentInfoForPlanningFolders" value="true" />
-		<property name="retrieveParentInfoForTrackerItems" value="true" />
+		<property name="retrieveParentInfoForTrackerItems" value="true" />		
+		<property name="identityMappingDatabaseReader" ref="IndentityMappingDatabaseReaderTF2JIRA" /> 
 	</bean>
 	<bean id="TFConnectionManager"
 		class="com.collabnet.ccf.core.eis.connection.ConnectionManager">
