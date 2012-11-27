@@ -802,10 +802,14 @@ public abstract class AbstractReader<T> extends Component implements
 	private void updateSyncInfoFromIdentityMapping(Document syncInfo, String artifactId,String artifactType) {
 		IOrderedMap inputParameters = new OrderedHashMap();
 		String lastModifiedTime = null,lastModifiedVersion = null;
-		inputParameters.add(this.getSourceSystemId(syncInfo));//sourceSystemId
-		inputParameters.add(this.getSourceRepositoryId(syncInfo));//sourceRepositoryId
-		inputParameters.add(this.getTargetSystemId(syncInfo));//targetSystemId
-		inputParameters.add(this.getTargetRepositoryId(syncInfo));//targetRepositoryId
+		if(!isCCF2xProcess) {
+			inputParameters.add(this.getSourceSystemId(syncInfo));//sourceSystemId
+			inputParameters.add(this.getSourceRepositoryId(syncInfo));//sourceRepositoryId
+			inputParameters.add(this.getTargetSystemId(syncInfo));//targetSystemId
+			inputParameters.add(this.getTargetRepositoryId(syncInfo));//targetRepositoryId
+		}else{
+			inputParameters.add(this.getRepositoryMappingId(syncInfo));//repositorymappingid
+		}
 		inputParameters.add(artifactId);//sourceArtifactId
 		inputParameters.add(artifactType);//artifactType
 		try{
