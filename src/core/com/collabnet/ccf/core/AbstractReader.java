@@ -18,6 +18,7 @@
 package com.collabnet.ccf.core;
 
 import java.io.File;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -149,6 +150,17 @@ public abstract class AbstractReader<T> extends Component implements
 	 * 2.x process Defaults to false
 	 */
 	private boolean isCCF2xProcess = false;
+	
+	private JDBCReadConnector identityMappingDatabaseReader = null;
+
+	public JDBCReadConnector getIdentityMappingDatabaseReader() {
+		return identityMappingDatabaseReader;
+	}
+
+	public void setIdentityMappingDatabaseReader(
+			JDBCReadConnector identityMappingDatabaseReader) {
+		this.identityMappingDatabaseReader = identityMappingDatabaseReader;
+	}
 
 	/**
 	 * Gets the (optional) data base reader that is used to poll quarantined
@@ -601,6 +613,10 @@ public abstract class AbstractReader<T> extends Component implements
 								.getMaximumRetryWaitingTime();
 						try {
 							String artifactId = artifactState.getArtifactId();
+							if(getIdentityMappingDatabaseReader() != null){
+								//FIXME later: artifactType -plainArtifact is hard coded will  need to taken from enum value
+								updateSyncInfoFromIdentityMapping(syncInfo,artifactId,"plainArtifact");
+							}
 							GenericArtifact artifactData = this
 									.getArtifactData(syncInfo, artifactId);
 							if (artifactData != null) {
@@ -781,6 +797,51 @@ public abstract class AbstractReader<T> extends Component implements
 			log.warn(cause, e);
 		}
 		return new Object[] {};
+	}
+
+	private void updateSyncInfoFromIdentityMapping(Document syncInfo, String artifactId,String artifactType) {
+		IOrderedMap inputParameters = new OrderedHashMap();
+		String lastModifiedTime = null,lastModifiedVersion = null;
+		if(!isCCF2xProcess) {
+			inputParameters.add(this.getSourceSystemId(syncInfo));//sourceSystemId
+			inputParameters.add(this.getSourceRepositoryId(syncInfo));//sourceRepositoryId
+			inputParameters.add(this.getTargetSystemId(syncInfo));//targetSystemId
+			inputParameters.add(this.getTargetRepositoryId(syncInfo));//targetRepositoryId
+		}else{
+			inputParameters.add(this.getRepositoryMappingId(syncInfo));//repositorymappingid
+		}
+		inputParameters.add(artifactId);//sourceArtifactId
+		inputParameters.add(artifactType);//artifactType
+		try{
+			identityMappingDatabaseReader.connect();
+			Object[] resultSet = identityMappingDatabaseReader.next(inputParameters,1000);
+			if(resultSet == null || resultSet.length ==0){
+				lastModifiedTime =  new Timestamp(0).toString();
+				lastModifiedVersion = "0";
+			}else{
+				IOrderedMap resultSetMap = (OrderedHashMap) resultSet[0];
+				Timestamp lastModifiedTimestamp = (java.sql.Timestamp) resultSetMap.get(1);
+				lastModifiedVersion = (String)resultSetMap.get(2);
+				lastModifiedTime = lastModifiedTimestamp.toString();
+			}
+			modifySyncInfo(syncInfo, lastModifiedTime, lastModifiedVersion);
+		}catch(Exception e){
+			log.debug("Update syncInfo from IdentityMapping failed due to following exception ",e);
+		}
+	}
+
+	private void modifySyncInfo(Document syncInfo, String lastArtifactModifiedTime,String lastArtifactModifiedVersion) {
+		Node lastModifiedDateNode = syncInfo.selectSingleNode(LAST_SOURCE_ARTIFACT_MODIFICATION_DATE);
+		Node lastModifiedVersionNode = syncInfo.selectSingleNode(LAST_SOURCE_ARTIFACT_VERSION);
+			if (lastModifiedDateNode != null && lastArtifactModifiedTime != null){
+				//lastArtifactModifiedTime - hope it comes in correct formatted string
+				lastModifiedDateNode.setText(lastArtifactModifiedTime);
+			}
+			if(lastModifiedVersionNode != null && lastArtifactModifiedVersion !=null){
+				//lastModifiedVersion - is set to empty string so QC and SWP reader  happy
+				lastModifiedVersionNode.setText(lastArtifactModifiedVersion);
+			}
+		
 	}
 
 	/**
