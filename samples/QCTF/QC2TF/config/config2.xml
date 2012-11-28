@@ -286,6 +286,10 @@
 			increase this value.
 		-->
 		<property name="delayBeforeAttachmentDownload" value="${ccf.direction.qc.delaybefore.attachment.download}" />
+		<!-- Below property -"identityMappingDatabaseReader" makes reader to read all the comments and attachment;
+			 Since CCF Sync is based on Artifact specific last modified timestamp or last modified version
+		 -->		
+		<property name="identityMappingDatabaseReader" ref="IndentityMappingDatabaseReaderQC2TF" /> 
 		
 	</bean>
 	<bean id="QCConnectionManager" class="com.collabnet.ccf.core.eis.connection.ConnectionManager">
