@@ -320,6 +320,9 @@
 			<fileset dir="src/plugins/SWP/lib">
 				<include name="*.jar" />
 			</fileset>
+					<fileset dir="src/plugins/RCQ/lib">
+					<include name="*.jar" />
+			</fileset>
 		</copy>
 		<mkdir dir="build/package/samples" />
 		<copy todir="build/package/samples">
@@ -329,7 +332,7 @@
 				<include name="QCTF/**/*" />
 				<include name="QCPT/**/*" />
 				<include name="TFSWP/**/*" />
-				<include name="RCQ/**/*"/>
+				<include name="RCQTF/**/*"/>
 				<!-- <include name="QCSWP/**/*" /> -->
 			</fileset>
 		</copy>

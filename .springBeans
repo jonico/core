@@ -33,7 +33,6 @@
 		<config>samples/TFSTF/TF2TFS/config/config.xml</config>
 		<config>samples/TFSTF/TFS2TF/config/config.xml</config>
 		<config>samples/RCQTF/RCQ2TF/config/config.xml</config>
-		<config>samples/RCQTF/TF2RCQ/config/config.xml</config>
 	</configs>
 	<configSets>
 	</configSets>

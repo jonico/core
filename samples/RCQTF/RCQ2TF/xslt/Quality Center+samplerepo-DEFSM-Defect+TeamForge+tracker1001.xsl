@@ -100,7 +100,7 @@
 			<xsl:copy-of select="@*" />
 			<xsl:attribute name="fieldName">status</xsl:attribute>
 			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
-	<!-- Open, In Progress , Fixed , Pending , Closed , Re-opened (not fixed) , 
+	<!-- CTF values: Open, In Progress , Fixed , Pending , Closed , Re-opened (not fixed) , 
 	     Can't reproduce , Not a bug , Duplicate -->
 			<xsl:if test="$statusValue = 'Submitted'">
 				<xsl:text>Open</xsl:text>
