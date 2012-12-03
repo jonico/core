@@ -79,14 +79,36 @@ public class XPathUtils {
 	 */
 	public static String getAttributeValue(Element element, String attributeName)
 			throws GenericArtifactParsingException {
+		return getAttributeValue(element, attributeName, true);
+	}
+	
+	/**
+	 * Extracts the value of the supplied attribute
+	 * 
+	 * @param element
+	 *            element with attribute in question
+	 * @param attributeName
+	 *            name of the attribute in question
+	 * @param failIfNotFound determines if exception should be thrown if attribute is not found
+	 * @return value of the attribute in question, null if not found and failIfNotFound is set to false
+	 * @throws GenericArtifactParsingException
+	 *             exception thrown is attribute is missing and failIfNotFound is set to true
+	 */
+	public static String getAttributeValue(Element element, String attributeName, boolean failIfNotFound)
+			throws GenericArtifactParsingException {
 		XPath xpath = new DefaultXPath("@" + attributeName);
 		xpath.setNamespaceURIs(ccfNamespaceMap);
 		Node attributeNode = xpath.selectSingleNode(element);
-		if (attributeNode == null)
-			throw new GenericArtifactParsingException("Missing attribute: "
-					+ attributeName + " in element " + element.getName());
-		else
+		if (attributeNode == null) {
+			if (failIfNotFound) {
+				throw new GenericArtifactParsingException("Missing attribute: "
+						+ attributeName + " in element " + element.getName());
+			} else {
+				return null;
+			}
+		} else {
 			return attributeNode.getText();
+		}
 	}
 
 	/**

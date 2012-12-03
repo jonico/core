@@ -8,15 +8,14 @@ public class TFSConnectionFactory implements ConnectionFactory<TFSConnection> {
 
 	public static final String PARAM_DELIMITER = ":";
 	/**
-	 * Closes SWP connection
+	 * Closes TFS connection
 	 */
 	public void closeConnection(TFSConnection connection)
 			throws ConnectionException {
-		// FIXME Implement
 	}
 
 	/**
-	 * Create an SWP connection object
+	 * Create an TFS connection object
 	 */
 	public TFSConnection createConnection(String systemId, String systemKind,
 			String repositoryId, String repositoryKind, String connectionInfo,
@@ -28,16 +27,22 @@ public class TFSConnectionFactory implements ConnectionFactory<TFSConnection> {
 			return new TFSConnection(repositoryId, repositoryKind, connectionInfo,
 					credentialInfo, connectionManager);
 		} catch (Exception e) {
-			throw new ConnectionException("Could not connect to SWP", e);
+			throw new ConnectionException("Could not connect to TFS", e);
 		}
 	}
 
 	/**
-	 * Call method to check whether SWP connection still works
+	 * Call method to check whether TFS connection still works
 	 */
 	public boolean isAlive(TFSConnection connection) {
-		// FIXME Do a real check, for instance item types and if getting an exception, return false
-		return true;
+		try {
+			
+			String wiqlQuery = "Select ID from WorkItems where (State = 'Active')";
+	        connection.getTpc().getWorkItemClient().query(wiqlQuery);
+			return true;
+		} catch (Exception e){
+			return false;
+		}
 	}
 
 }

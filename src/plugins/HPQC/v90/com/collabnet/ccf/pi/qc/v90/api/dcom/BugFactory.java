@@ -60,7 +60,9 @@ public class BugFactory extends ActiveXComponent implements IBugFactory
 	}
     
     public IBug addItem(String item) {
-        Variant res = Dispatch.call(this, "AddItem", item);
+    	Variant var = new Variant();
+		var.putNull();
+        Variant res = Dispatch.call(this, "AddItem", var);
         Bug bug = new Bug(res.getDispatch());
         return bug;
     }

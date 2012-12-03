@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-	$Author: gonzmar $
-	$HeadURL: https://ctf.open.collab.net/svn/repos/ccf/trunk/core/samples/QCTF/TF2TFS/config/config.xml $
+	$Author$
+	$HeadURL$
 -->
 
 <!--
@@ -62,11 +62,11 @@
 				Properties configured in these property files will be imported into the wiring file.
 				The file ccf.properties contains the properties for the CCF core components.
 				sfee.properties file contains the properties for the TF plugin classes and
-				qc.properties file contains the properties for the TFS plugin classes.
+				tfs.properties file contains the properties for the TFS plugin classes.
 			</description>
 			<list>
 				<value>classpath:ccf.properties</value>
-				<value>classpath:qc.properties</value>
+				<value>classpath:tfs.properties</value>
 				<value>classpath:sfee.properties</value>
 			</list>
 		</property>
@@ -191,7 +191,7 @@
 		<property name="batchSize" value="1" />
 		<property name="resultSetConverter" ref="ResultSetConverter" />
 		<property name="sql">
-			<value>SELECT SOURCE_REPOSITORY_ID, SOURCE_REPOSITORY_KIND, SOURCE_SYSTEM_ID, SOURCE_SYSTEM_KIND, TARGET_REPOSITORY_ID, TARGET_REPOSITORY_KIND, TARGET_SYSTEM_ID, TARGET_SYSTEM_KIND, LAST_SOURCE_ARTIFACT_MODIFICATION_DATE, LAST_SOURCE_ARTIFACT_VERSION, LAST_SOURCE_ARTIFACT_ID, CONFLICT_RESOLUTION_PRIORITY, SOURCE_SYSTEM_TIMEZONE, TARGET_SYSTEM_TIMEZONE, SOURCE_SYSTEM_ENCODING, TARGET_SYSTEM_ENCODING FROM SYNCHRONIZATION_STATUS WHERE SOURCE_SYSTEM_KIND='TF' AND TARGET_SYSTEM_KIND='QC'</value>
+			<value>SELECT SOURCE_REPOSITORY_ID, SOURCE_REPOSITORY_KIND, SOURCE_SYSTEM_ID, SOURCE_SYSTEM_KIND, TARGET_REPOSITORY_ID, TARGET_REPOSITORY_KIND, TARGET_SYSTEM_ID, TARGET_SYSTEM_KIND, LAST_SOURCE_ARTIFACT_MODIFICATION_DATE, LAST_SOURCE_ARTIFACT_VERSION, LAST_SOURCE_ARTIFACT_ID, CONFLICT_RESOLUTION_PRIORITY, SOURCE_SYSTEM_TIMEZONE, TARGET_SYSTEM_TIMEZONE, SOURCE_SYSTEM_ENCODING, TARGET_SYSTEM_ENCODING FROM SYNCHRONIZATION_STATUS WHERE SOURCE_SYSTEM_KIND='TF' AND TARGET_SYSTEM_KIND='TFS'</value>
 		</property>
 	</bean>
 
@@ -429,9 +429,9 @@
 			This TFSWriter will write the data contained in the incoming
 			document to TFS.
 		</description>
-		<property name="serverUrl" value="${qc.system.1.url}" />
-		<property name="userName" value="${qc.system.1.username}" />
-		<property name="password" value="${qc.system.1.password}" />
+		<property name="serverUrl" value="${tfs.system.1.url}" />
+		<property name="userName" value="${tfs.system.1.username}" />
+		<property name="password" value="${tfs.system.1.password}" />
 <!--		<property name="resyncUserName" value="${qc.system.1.resync.username}"></property>-->
 <!--        <property name="resyncPassword" value="${qc.system.1.resync.password}"></property>-->
 		<property name="connectionManager" ref="TFSConnectionManager"></property>

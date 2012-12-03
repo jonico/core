@@ -34,6 +34,9 @@ import com.danube.scrumworks.api2.client.RevisionInfo;
  * 
  */
 public class SWPReader extends AbstractReader<Connection> {
+	// this constant is used to detect exceptions thrown by the internal Sun SOAP implementation which should be treated as temporary problems 
+	private static final String CLIENT_TRANSPORT_EXCEPTION_NAME = "ClientTransportException";
+
 	/**
 	 * This map is used to determine whether a specific entity type is ready for
 	 * transmitting its artifacts. This prevents cases where child artifacts are
@@ -774,6 +777,9 @@ public class SWPReader extends AbstractReader<Connection> {
 				&& connectionManager.isEnableRetryAfterNetworkTimeout()) {
 			return true;
 		} else if (cause instanceof ConnectionException
+				&& connectionManager.isEnableRetryAfterNetworkTimeout()) {
+			return true;
+		} else if (cause.getClass().toString().contains(CLIENT_TRANSPORT_EXCEPTION_NAME)
 				&& connectionManager.isEnableRetryAfterNetworkTimeout()) {
 			return true;
 		} else if (cause instanceof RemoteException) {

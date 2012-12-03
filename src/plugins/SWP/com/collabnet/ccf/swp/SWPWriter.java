@@ -101,7 +101,7 @@ public class SWPWriter extends AbstractWriter<Connection> implements
 				throw new CCFRuntimeException(cause);
 			}
 		} catch (Exception e) {
-			String cause = "During the artifact update process in SWP, an error occured";
+			String cause = "During the artifact creation process in SWP, an error occured";
 			log.error(cause, e);
 			throw new CCFRuntimeException(cause, e);
 		} finally {

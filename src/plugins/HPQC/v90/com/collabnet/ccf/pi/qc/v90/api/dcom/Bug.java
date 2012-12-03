@@ -248,13 +248,13 @@ public class Bug extends ActiveXComponent implements IBug {
 			Integer retryCount = attachmentRetryCount.get(attachmentKey);
 			retryCount = retryCount == null ? 1 : retryCount + 1;
 			attachmentRetryCount.put(attachmentKey, retryCount);
-			logger.info("This is try number "  + retryCount + " for attachment key " + attachmentKey);
+			logger.debug("This is try number "  + retryCount + " for attachment key " + attachmentKey);
 			
 			
 			int size = Dispatch.get(item, "FileSize").getInt(); // FIXME: should this be getLong?
 			// Dispatch.get(item, "Data");
 			try {
-				logger.info("waiting for "+delayBeforeDownloadingAttachment+" ms before downloading "+attachmentName+".");
+				logger.debug("waiting for "+delayBeforeDownloadingAttachment+" ms before downloading "+attachmentName+".");
 				Thread.sleep(delayBeforeDownloadingAttachment);
 			} catch (InterruptedException e) {
 			}
@@ -287,10 +287,10 @@ public class Bug extends ActiveXComponent implements IBug {
 					throw new CCFRuntimeException(message + " ... giving up.");
 				}
 			}
-			logger.info("actual file size downloaded: " + attachmentFile.length());
+			logger.debug("actual file size downloaded: " + attachmentFile.length());
 			// now reload attachment size from meta data
 			long reloadedAttachmentSize = reloadAttachmentSize(filter, attachmentName, delayBeforeDownloadingAttachment);
-			logger.info("Expected file size after having reloaded attachment meta data: " + reloadedAttachmentSize);
+			logger.debug("Expected file size after having reloaded attachment meta data: " + reloadedAttachmentSize);
 			if (attachmentFile.length() != reloadedAttachmentSize) {
 				String message = "Downloaded file size ("
 						+ attachmentFile.length()
@@ -316,7 +316,7 @@ public class Bug extends ActiveXComponent implements IBug {
 
 	private long reloadAttachmentSize(IFilter filter, String attachmentName, long delay) {
 		try {
-			logger.info("waiting for "+delay+" ms before reloading meta data for "+attachmentName+".");
+			logger.debug("waiting for "+delay+" ms before reloading meta data for "+attachmentName+".");
 			Thread.sleep(delay);
 		} catch (InterruptedException e) {
 		}
