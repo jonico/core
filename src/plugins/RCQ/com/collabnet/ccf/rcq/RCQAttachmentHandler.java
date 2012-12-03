@@ -16,8 +16,6 @@ import com.collabnet.ccf.core.ga.AttachmentMetaData;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.utils.DateUtil;
-import com.collabnet.ccf.pi.qc.v90.api.dcom.Attachment;
-import com.collabnet.ccf.tfs.TFSAttachmentHandler;
 
 public class RCQAttachmentHandler {
 

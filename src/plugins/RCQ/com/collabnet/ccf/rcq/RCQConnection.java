@@ -61,12 +61,12 @@ public class RCQConnection {
 		
 		setCqs(new CQSession() );
 		
-//		log.debug("logging in with username = " + username + " and password ='" + password + "'");
-//		log.debug("connection: database '" + database + "' and schema '" + schema + "'");
+		log.debug("logging in with username = " + username + " and password ='" + password + "'");
+		log.debug("connection: database '" + database + "' and schema '" + schema + "'");
 		
 		try {
 			cqs.UserLogon( username , password , database , schema );
-//			log.debug("succesfully logged in!, FeatureLevel: " + cqs.GetSessionFeatureLevel());
+			log.debug("succesfully logged in!, FeatureLevel: " + cqs.GetSessionFeatureLevel());
 			log.info("Succesfully connected to ClearQuest.");
 		} catch (CQException e) {
 			log.debug("problem logging in...", e);		
