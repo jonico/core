@@ -1,25 +1,29 @@
 package com.collabnet.ccf.rcq;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
 import com.collabnet.ccf.core.eis.connection.ConnectionException;
 import com.collabnet.ccf.core.eis.connection.ConnectionFactory;
 import com.collabnet.ccf.core.eis.connection.ConnectionManager;
+import com.rational.clearquest.cqjni.CQException;
 
 public class RCQConnectionFactory implements ConnectionFactory<RCQConnection> {
 
 	public static final String PARAM_DELIMITER = ":";
 	public static final String DOMAIM_DELIMETER = "\\\\";
-
+	private static final Log log = LogFactory.getLog(RCQConnectionFactory.class);
+	
 	/**
-	 * Closes SWP connection
+	 * Closes CQ connection
 	 */
 	public void closeConnection(RCQConnection connection)
 			throws ConnectionException {
-		// FIXME Implement
-//		connection.
+		connection.shutdown();
 	}
 
 	/**
-	 * Create an SWP connection object
+	 * Create a CQ connection object
 	 */
 	public RCQConnection createConnection(String systemId, String systemKind,
 			String repositoryId, String repositoryKind, String connectionInfo,
@@ -36,11 +40,15 @@ public class RCQConnectionFactory implements ConnectionFactory<RCQConnection> {
 	}
 
 	/**
-	 * Call method to check whether SWP connection still works
+	 * Call method to check whether ClearQuest connection still works
 	 */
 	public boolean isAlive(RCQConnection connection) {
-		// FIXME isAlive check.
-		return true;
+		try {
+			return connection.getCqs().CheckHeartbeat();
+		} catch (CQException e) {
+			log.error("Lost connection Session" , e);
+			return false;
+		}
 	}
 
 }

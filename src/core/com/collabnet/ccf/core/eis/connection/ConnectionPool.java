@@ -108,7 +108,10 @@ public class ConnectionPool<T> {
 			log.debug("No free connection... Creating a connection");
 			connection = createConnection(systemId, systemKind, repositoryId,
 					repositoryKind, connectionInfo, credentialInfo,connectionManager);
+		} else {
+			log.debug("Using existing connection: " + generateKey(systemId, systemKind, repositoryId, repositoryKind, connectionInfo, credentialInfo));
 		}
+		
 		return connection;
 	}
 
@@ -155,6 +158,7 @@ public class ConnectionPool<T> {
 		info.setConnection(createdConnection);
 		info.poppedFromPool();
 		addToPool(key, info);
+		log.debug("Created new connection last used at " + info.lastUsed + " in pool " + key);
 		return createdConnection;
 	}
 
@@ -224,8 +228,11 @@ public class ConnectionPool<T> {
 		T connection = null;
 		ArrayList<ConnectionInfo> connectionInfos = connectionPool.get(key);
 		if(connectionInfos != null){
+			log.debug("Found " + connectionInfos.size() + " connections in pool " + key);
 			synchronized(connectionInfos){
+				int cCount = 0;
 				for(ConnectionInfo info: connectionInfos){
+					log.debug(String.format("#%d - Free: %s , lastUsed Stamp: %d", cCount++, info.isFree() , info.lastUsed ));
 					boolean isConnectionFree = info.isFree();
 					if(isConnectionFree){
 						T retrievedConnection = info.getConnection();
@@ -236,7 +243,7 @@ public class ConnectionPool<T> {
 							break;
 						}
 					} else {
-						log.debug("Connection is not free, this is an indication for unclean resource management.");
+						log.warn("Connection is not free, this is an indication for unclean resource management.");
 					}
 				}
 			}

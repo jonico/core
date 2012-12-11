@@ -61,7 +61,7 @@ public class RCQConnection {
 		
 		setCqs(new CQSession() );
 		
-		log.debug("logging in with username = " + username + " and password ='" + password + "'");
+		log.debug("logging in with username = " + username);
 		log.debug("connection: database '" + database + "' and schema '" + schema + "'");
 		
 		try {
