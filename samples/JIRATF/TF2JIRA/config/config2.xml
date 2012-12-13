@@ -68,9 +68,6 @@
 		<property name="locations">
 			<description>
 				Properties configured in these property files will be imported into the wiring file.
-				The file ccf.properties contains the properties for the CCF core components.
-				sfee.properties file contains the properties for the TF plugin classes and
-				tfs.properties file contains the properties for the JIRA plugin classes.
 			</description>
 			<list>
 				<value>classpath:immutableLandscape.properties</value>
@@ -437,11 +434,9 @@
 			This JIRAWriter will write the data contained in the incoming
 			document to JIRA.
 		</description>
-		<property name="serverUrl" value="${ccf.participant.tfs.url}" />
-		<property name="userName" value="${ccf.landscape.tfs.username}" />
-		<property name="password" value="${ccf.landscape.tfs.password}" />
-		<!-- <property name="resyncUserName" value="${ccf.landscape.tfs.resync.username}"></property>
-        <property name="resyncPassword" value="${ccf.landscape.tfs.resync.password}"></property> -->
+		<property name="serverUrl" value="${ccf.participant.jira.url}" />
+		<property name="userName" value="${ccf.landscape.jira.username}" />
+		<property name="password" value="${ccf.landscape.jira.password}" />
 		<property name="connectionManager" ref="JIRAConnectionManager"></property>
 	</bean>
 

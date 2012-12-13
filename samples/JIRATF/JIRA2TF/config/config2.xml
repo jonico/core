@@ -50,16 +50,13 @@
 				<prop key="ccf.direction.identityMapEventWaitCount">8</prop>
 				<prop key="ccf.direction.identityMapEventWaitTime">500</prop>
 				<prop key="ccf.direction.autorestartperiod">21600</prop>
-				<prop key="ccf.direction.tfs.sleepinterval">250</prop>
-				<prop key="ccf.direction.tfs.max.attachmentsize">10485760</prop>
+				<prop key="ccf.direction.jira.sleepinterval">250</prop>
+				<prop key="ccf.direction.jira.max.attachmentsize">10485760</prop>
 			</props>
 		</property>
 		<property name="locations">
 			<description>
 				Properties configured in these property files will be imported into the wiring file.
-				The file ccf.properties contains the properties for the CCF core components.
-				sfee.properties file contains the properties for the TF plugin classes and
-				TFS.properties file contains the properties for the JIRA plugin classes.
 			</description>
 			<list>
 				<value>classpath:immutableLandscape.properties</value>
@@ -263,12 +260,12 @@
 			to be translated to fit into its fields or not.
 		</description>
 		<property name="CCF2xProcess" value="true" />
-		<property name="serverUrl" value="${ccf.participant.tfs.url}" />
-		<property name="userName" value="${ccf.landscape.tfs.username}" />
-		<property name="password" value="${ccf.landscape.tfs.password}" />
+		<property name="serverUrl" value="${ccf.participant.jira.url}" />
+		<property name="userName" value="${ccf.landscape.jira.username}" />
+		<property name="password" value="${ccf.landscape.jira.password}" />
 		<property name="connectionManager" ref="JIRAConnectionManager"></property>
-		<property name="sleepInterval" value="${ccf.direction.tfs.sleepinterval}"></property>
-		<property name="maxAttachmentSizePerArtifact" value="${ccf.direction.tfs.max.attachmentsize}" />
+		<property name="sleepInterval" value="${ccf.direction.jira.sleepinterval}"></property>
+		<property name="maxAttachmentSizePerArtifact" value="${ccf.direction.jira.max.attachmentsize}" />
 		<!-- Let this restart every 6 hours -->
 		<property name="autoRestartPeriod" value="${ccf.direction.autorestartperiod}" />
 		<property name="shipAttachments" value="true" />		
