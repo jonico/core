@@ -69,7 +69,7 @@ public class RCQHandler {
 		//build not exec query.
 //		log.debug("building query for record type '" + connection.getRecType() + "'");
 		try {
-			myQD = connection.getCqs().BuildQuery(connection.getRecType());
+			myQD = connection.getCqSession().BuildQuery(connection.getRecType());
 		} catch (CQException e) {
 			log.error( "Problem building the query" , e);
 			throw new CCFRuntimeException("problem creating a clearquest query" , e);
@@ -99,11 +99,10 @@ public class RCQHandler {
 		}
 		
 		// finally, execute the query.
-//		log.debug("executing query....");
 		CQResultSet results = null;
 		long numResults = 0;
 		try {
-			results = connection.getCqs().BuildResultSet(myQD);
+			results = connection.getCqSession().BuildResultSet(myQD);
 			results.EnableRecordCount();
 			numResults =  results.ExecuteAndCountRecords();
 			
@@ -112,9 +111,7 @@ public class RCQHandler {
 			throw new CCFRuntimeException("problem querying clearquest" , e);
 		}
 		
-		// build the result set as array of Artifact State items
-		
-//		log.debug("parsing results into artifactStates");
+		// build the result set as array of ArtifactState items
 		long count = 1;
 		long updates = 0;
 		try {
@@ -122,7 +119,7 @@ public class RCQHandler {
 			while ( status == 1 ) {
 				
 				String curCQId = getValueFromResultSet( results , "id" );
-				CQEntity record = connection.getCqs().GetEntity( connection.getRecType() ,  curCQId );
+				CQEntity record = connection.getCqSession().GetEntity( connection.getRecType() ,  curCQId );
 				// updates won't be caught if we do not reload.
 				record.Reload();
 				RCQHistoryHelper myStory = new RCQHistoryHelper(record, connection);
@@ -136,7 +133,6 @@ public class RCQHandler {
 				artState.setArtifactVersion(myStory.GetLastVersion());
 				artifactStates.add(artState);
 				updates++;
-				// next round
 				count++;
 				status = results.MoveNext();
 			}
@@ -173,9 +169,11 @@ public class RCQHandler {
 	
 	
 	
-	public void getRecordData( RCQConnection connection , String recID , boolean ignoreConnectoreUserUpdates , Date lastModifedDate , String ccfUserName , GenericArtifact ga) throws ParseException {
+	public void getRecordData( RCQConnection connection , String recID , 
+			boolean ignoreConnectoreUserUpdates , Date lastModifedDate , 
+			String ccfUserName , GenericArtifact genericArtifact) throws ParseException {
 		try {
-			CQEntity myRec = connection.getCqs().GetEntity(connection.getRecType(), recID);
+			CQEntity myRec = connection.getCqSession().GetEntity(connection.getRecType(), recID);
 			RCQHistoryHelper myStory = new RCQHistoryHelper(myRec, connection);
 			
 			String lastModifedBy = myStory.GetLastModifiedUser();
@@ -195,9 +193,9 @@ public class RCQHandler {
 									recID));				
 					isResync = true;
 				} else {
-					log.info(String
-							.format("artifact %s is a connector update, ignore it.",
-									recID));
+//					log.info(String
+//							.format("artifact %s is a connector update, ignoring it.",
+//									recID));
 					isIgnore = true;
 				}
 			}
@@ -205,35 +203,36 @@ public class RCQHandler {
 			GenericArtifactField gaField = null;
 			String[] allFields = myRec.GetFieldNames();
 			for ( String f : allFields ) {
+				// exclude history field
+				if ( f.equals(connection.getHistoryFieldName()) ) {
+					continue;
+				}
+					
+				// notes fields should be included already.
 				String value =  myRec.GetFieldValue(f).GetValue();
 				boolean isEmpty = value.isEmpty();
-				gaField = ga.addNewField(f , 
+				gaField = genericArtifact.addNewField(f , 
 						"mandatoryField" );
 				gaField.setFieldValueType( RCQMetaData.getFieldType( myRec.GetFieldType(f) ) );
 				gaField.setFieldAction( FieldActionValue.REPLACE );
-				if ( isEmpty  ) {
-					// FIXME: this has to be checked by xslt
-					gaField.setFieldValue("EMPTY VALUE OF FIELD '" + f + "'"); 
-				} else {
-					gaField.setFieldValue(value);
-				}
+				gaField.setFieldValue(value);
 			}
 			
 			if ( isIgnore ) {
-				ga.setArtifactAction( ArtifactActionValue.IGNORE );
+				genericArtifact.setArtifactAction( ArtifactActionValue.IGNORE );
 				log.debug("encountered IGNORE for " + recID );
 			} else {
 				if ( isResync ) {
-					// we're not getting here...
-					ga.setArtifactAction(ArtifactActionValue.RESYNC);
+					genericArtifact.setArtifactAction(ArtifactActionValue.RESYNC);
 					log.debug("encountered RESYNC for " + recID );
 				}
 				
-				// TODO: fetch the comments 
+				// TODO: fetching history
+				myStory.addHistoryEntries(genericArtifact);
 			}
 			
-			ga.setSourceArtifactLastModifiedDate(GenericArtifactHelper.df.format(lastRecordModifedDate));
-			ga.setSourceArtifactVersion(revNumber);
+			genericArtifact.setSourceArtifactLastModifiedDate(GenericArtifactHelper.df.format(lastRecordModifedDate));
+			genericArtifact.setSourceArtifactVersion(revNumber);
 			log.debug("Artifact requested: " + recID);
 			
 			

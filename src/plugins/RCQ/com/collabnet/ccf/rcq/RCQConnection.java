@@ -59,7 +59,7 @@ public class RCQConnection {
 		database = repoParts[1];
 		recType = repoParts[2];
 		
-		setCqs(new CQSession() );
+		setCqSession(new CQSession() );
 		
 		log.debug("logging in with username = " + username);
 		log.debug("connection: database '" + database + "' and schema '" + schema + "'");
@@ -97,22 +97,25 @@ public class RCQConnection {
 		}
 	}
 	
-	public CQSession getCqs() {
-		// FIXME: after some time, the session gets killed by CQ. Need top check here and re-connect if necessary 
+	public CQSession getCqSession() {
 		return cqs;
 	}
 
-	public void setCqs( CQSession cqs ) {
+	public void setCqSession( CQSession cqs ) {
 		this.cqs = cqs;
 	}
 	
 	public String getHistoryFieldName() {
-		// FIXME revert after we got the param from the gui
-		// return this.historyName;
+		// FIXME make historyFieldName a parameter for the mapping, i.e. editable in project mapping properties
 		return "history";
 	}
 	
 	public String getRecType() {
 		return recType;
+	}
+
+	public String getNotesLogFieldName() {
+		// FIXME make notesLogFieldName a parameter for the mapping, i.e. editable in project mapping properties
+		return "notes_log";
 	}
 }

@@ -34,12 +34,12 @@ public class RCQAttachmentHandler {
 		List<GenericArtifact> attachmentGAs = new ArrayList<GenericArtifact>();
 
 		// iterate over all artifacts
-		for ( String art : artifactList ) {
+		for ( String recordId : artifactList ) {
 			
 			CQEntity record;
 			try {
 				
-				record = connection.getCqs().GetEntity(connection.getRecType(), art );
+				record = connection.getCqSession().GetEntity(connection.getRecType(), recordId );
 				
 				
 				// FIXME: name of attachment field should be user-configurable!
@@ -47,12 +47,12 @@ public class RCQAttachmentHandler {
 				
 				CQAttachments allAttachments = attachmentField.GetAttachments();
 				
-				log.debug("record " + art + " has " + allAttachments.Count() + " files attached" );
+				log.debug("record " + recordId + " has " + allAttachments.Count() + " files attached" );
 				
 				for ( long a = 0 ; a < allAttachments.Count() ; a++ ) {
 					CQAttachment attachment = allAttachments.Item(a);
-					log.debug("   #" + a + ": " + attachment.GetFileName());
 					String fileName = attachment.GetFileName();
+					log.debug("\t #" + a + ": " + fileName);
 					Long fileSize = attachment.GetFileSize();
 					
 					if ( fileSize > maxAttachmentSizePerArtifact ) {
@@ -68,9 +68,9 @@ public class RCQAttachmentHandler {
 					ga.setArtifactAction(GenericArtifact.ArtifactActionValue.CREATE);
 					ga.setArtifactMode(GenericArtifact.ArtifactModeValue.CHANGEDFIELDSONLY);
 					ga.setArtifactType(GenericArtifact.ArtifactTypeValue.ATTACHMENT);
-					ga.setDepParentSourceArtifactId(art);
+					ga.setDepParentSourceArtifactId(recordId);
 					// 
-					ga.setSourceArtifactId( art + ":" + attachment.GetFileName() );
+					ga.setSourceArtifactId( recordId + ":" + fileName );
 
 					
 					if ( artifactData != null ) {
@@ -96,7 +96,7 @@ public class RCQAttachmentHandler {
 					GenericArtifactField nameField = ga.addNewField(
 							AttachmentMetaData.ATTACHMENT_NAME,
 							GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
-					nameField.setFieldValue(attachment.GetFileName());
+					nameField.setFieldValue(fileName);
 					nameField.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
 					nameField.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
 
@@ -110,7 +110,7 @@ public class RCQAttachmentHandler {
 					GenericArtifactField mimeTypeField = ga.addNewField(
 							AttachmentMetaData.ATTACHMENT_MIME_TYPE,
 							GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
-					mimeTypeField.setFieldValue( new  MimetypesFileTypeMap().getContentType(attachment.GetFileName()));
+					mimeTypeField.setFieldValue( new  MimetypesFileTypeMap().getContentType(fileName));
 					mimeTypeField.setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
 					mimeTypeField.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
 
@@ -120,7 +120,7 @@ public class RCQAttachmentHandler {
 					// save the file into a temporary directory
 					File tempFile = null;
 					try {
-						tempFile = File.createTempFile( art + "_attachment_" + a + "_" + attachment.GetFileName(),"rcq");
+						tempFile = File.createTempFile( recordId + "_attachment_" + a + "_" + fileName,"rcq");
 					} catch (IOException e) {
 						log.error("Could not create temporary attachment file" , e);
 					}

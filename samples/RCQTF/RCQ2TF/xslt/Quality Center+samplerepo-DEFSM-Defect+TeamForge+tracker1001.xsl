@@ -125,6 +125,44 @@
 			</xsl:if>
 		</field>
 	</xsl:template>
+	
+	
+	<xsl:template match='ccf:field[@fieldName="history"]'>
+		<field>
+			<xsl:copy-of select="@*" />
+			<xsl:attribute name="fieldName">Comment Text</xsl:attribute>
+			<xsl:attribute name="fieldType">flexField</xsl:attribute>
+			<xsl:choose>
+				<xsl:when test="@fieldValueType='HTMLString'">
+					<xsl:value-of select="stringutil:stripHTML(string(.))" />
+				</xsl:when>
+				<xsl:otherwise>
+					<xsl:value-of select="." />
+				</xsl:otherwise>
+			</xsl:choose>
+		</field>
+	</xsl:template>
+
+	<!-- append this to the comments target field -->
+	<xsl:template match='ccf:field[@fieldName="Notes_Log"]'>
+		<field>
+			<xsl:copy-of select="@*" />
+			<xsl:attribute name="fieldName">Comment Text</xsl:attribute>
+			<xsl:attribute name="fieldType">flexField</xsl:attribute>
+			<xsl:attribute name="fieldAction">append</xsl:attribute>
+Notes Log:
+			<xsl:choose>
+				<xsl:when test="@fieldValueType='HTMLString'">
+					<xsl:value-of select="stringutil:stripHTML(string(.))" />
+				</xsl:when>
+				<xsl:otherwise>
+					<xsl:value-of select="." />
+				</xsl:otherwise>
+			</xsl:choose>
+		</field>
+	</xsl:template>
+
+
 
 <!--  currently the rest is disabled -->
 <!--  

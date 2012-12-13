@@ -1,6 +1,5 @@
 package com.collabnet.ccf.rcq;
 
-import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -47,7 +46,8 @@ public class RCQReader extends AbstractReader<RCQConnection> {
 
 		log.debug("Getting attachments for artifact " + artifactId );
 		
-		RCQConnection connection;
+		RCQConnection connection = null;
+		
 		try {
 			connection = connect(sourceSystemId, sourceSystemKind,
 					sourceRepositoryId, sourceRepositoryKind, serverUrl ,
@@ -80,7 +80,7 @@ public class RCQReader extends AbstractReader<RCQConnection> {
 		}
 
 		
-		// TODO close the connection to avoid overflow bug "after a while"
+		disconnect(connection);
 		return attachments;
 	}
 
@@ -204,7 +204,7 @@ public class RCQReader extends AbstractReader<RCQConnection> {
 		Date lastModifiedDate = this.getLastModifiedDate(syncInfo);
 		String lastSynchedArtifactId = this.getLastSourceArtifactId(syncInfo);
 		
-		RCQConnection connection;
+		RCQConnection connection = null;
 		try {
 			connection = connect(sourceSystemId, sourceSystemKind,
 					sourceRepositoryId, sourceRepositoryKind, serverUrl ,
@@ -237,8 +237,6 @@ public class RCQReader extends AbstractReader<RCQConnection> {
 		} finally {
 			disconnect(connection);
 		}
-		
-		// this.logme(syncInfo);
 		
 		return artifactStates;
 		

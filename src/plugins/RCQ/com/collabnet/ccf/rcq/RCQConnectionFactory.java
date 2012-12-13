@@ -44,7 +44,7 @@ public class RCQConnectionFactory implements ConnectionFactory<RCQConnection> {
 	 */
 	public boolean isAlive(RCQConnection connection) {
 		try {
-			return connection.getCqs().CheckHeartbeat();
+			return connection.getCqSession().CheckHeartbeat();
 		} catch (CQException e) {
 			log.error("Lost connection Session" , e);
 			return false;
