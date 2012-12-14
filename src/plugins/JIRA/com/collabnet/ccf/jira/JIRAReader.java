@@ -22,7 +22,6 @@ import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifact.ArtifactModeValue;
 import com.collabnet.ccf.core.ga.GenericArtifact.ArtifactTypeValue;
 import com.collabnet.ccf.jira.JIRAMetaData.JIRAType;
-import com.microsoft.tfs.core.exceptions.TECoreException;
 
 public class JIRAReader extends AbstractReader<JIRAConnection> {
 
@@ -184,7 +183,7 @@ public class JIRAReader extends AbstractReader<JIRAConnection> {
 			}
 
 		} catch (Exception e) {
-			String cause = "During the artifact retrieval process from TFS, an error occured";
+			String cause = "During the artifact retrieval process from JIRA, an error occured";
 			log.error(cause, e);
 			throw new CCFRuntimeException(cause, e);
 		} finally {
@@ -276,7 +275,7 @@ public class JIRAReader extends AbstractReader<JIRAConnection> {
 			}
 
 		} catch (Exception e) {
-			String cause = "During the artifact retrieval process from TFS, an error occured";
+			String cause = "During the artifact retrieval process from JIRA, an error occured";
 			log.error(cause, e);
 			throw new CCFRuntimeException(cause, e);
 		} finally {
@@ -399,10 +398,6 @@ public class JIRAReader extends AbstractReader<JIRAConnection> {
 		} else if (cause instanceof CCFRuntimeException) {
 			Throwable innerCause = cause.getCause();
 			return handleException(innerCause, connectionManager);
-		} else if (cause instanceof TECoreException) {
-			if (cause.getMessage().contains("Unknown host")) {
-				return true;
-			}
 		}  else if (cause instanceof RuntimeException) {
 			Throwable innerCause = cause.getCause();
 			return handleException(innerCause, connectionManager);
