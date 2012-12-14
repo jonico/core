@@ -23,7 +23,6 @@ import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
 import com.collabnet.ccf.core.utils.DateUtil;
 import com.collabnet.ccf.core.utils.XPathUtils;
 import com.collabnet.ccf.jira.JIRAMetaData.JIRAType;
-import com.microsoft.tfs.core.exceptions.TECoreException;
 
 public class JIRAWriter extends AbstractWriter<JIRAConnection> {
 
@@ -328,11 +327,7 @@ public class JIRAWriter extends AbstractWriter<JIRAConnection> {
 		} else if (cause instanceof CCFRuntimeException) {
 			Throwable innerCause = cause.getCause();
 			return handleException(innerCause, connectionManager, ga);
-		} else if (cause instanceof TECoreException) {
-			if (cause.getMessage().contains("Unknown host")) {
-				return true;
-			}
-		}  else if (cause instanceof RuntimeException) {
+		} else if (cause instanceof RuntimeException) {
 			Throwable innerCause = cause.getCause();
 			return handleException(innerCause, connectionManager, ga);
 		} else if (cause instanceof SQLException) {
