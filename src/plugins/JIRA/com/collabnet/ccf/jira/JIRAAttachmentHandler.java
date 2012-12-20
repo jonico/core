@@ -17,6 +17,9 @@ import java.util.List;
 
 import javax.activation.MimetypesFileTypeMap;
 
+
+
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -31,8 +34,7 @@ import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.utils.DateUtil;
-import com.microsoft.tfs.core.clients.workitem.files.Attachment;
-import com.microsoft.tfs.util.IOUtils;
+
 
 public class JIRAAttachmentHandler {
 
@@ -204,7 +206,7 @@ public class JIRAAttachmentHandler {
 		return attachmentGAs;
 	}
 
-	public byte[] getAttachmentData(JIRAConnection connection,
+	/*public byte[] getAttachmentData(JIRAConnection connection,
 			Attachment attachment, boolean shouldShipAttachmentsWithArtifact,
 			GenericArtifact ga) throws RemoteException {
 		boolean retryCall = true;
@@ -280,7 +282,7 @@ public class JIRAAttachmentHandler {
 		}
 		return data;
 	}
-
+*/
 	public Issue handleAttachment(JIRAConnection connection, GenericArtifact ga,
 			String targetParentArtifactId, String userName)
 			throws RemoteException {
