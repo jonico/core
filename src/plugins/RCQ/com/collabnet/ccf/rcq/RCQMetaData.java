@@ -5,6 +5,11 @@ import com.collabnet.ccf.core.ga.GenericArtifactField.FieldValueTypeValue;
 
 public class RCQMetaData {
 
+	
+	public static boolean isDateType( long n ) {
+		return n == 4;
+	}
+	
 	public static GenericArtifactField.FieldValueTypeValue getFieldType ( long n ) {
 		/*
 		possible fieldType values from cQ online docs:
@@ -25,7 +30,7 @@ public class RCQMetaData {
 		_STATETYPE			12	State type of record (entity). State types are defined by schema packages and are assigned to states within your schema. For example, UCM uses state types to determine when hooks should run. For more information about state types, see Administering Rational ClearQuest or Developing Schemas topics in the online help.
 		_RECORDTYPE			13	The name of the record type (EntityDef) of the current record (Entity). For example, "Defect" or "Customer".
 		
-		Possible vaules for CCF are:
+		Possible values for CCF are:
 		INTEGER, DOUBLE, DATETIME, DATE, STRING, HTMLSTRING, BASE64STRING, BOOLEAN, USER
 		*/
 		

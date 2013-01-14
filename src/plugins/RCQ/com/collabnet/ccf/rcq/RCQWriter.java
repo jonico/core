@@ -17,9 +17,11 @@ import com.collabnet.ccf.core.eis.connection.MaxConnectionsReachedException;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
+import com.collabnet.ccf.core.hospital.CCFExceptionToOrderedMapConvertor;
 import com.collabnet.ccf.core.utils.XPathUtils;
 
 import com.rational.clearquest.cqjni.CQEntity;
+import com.rational.clearquest.cqjni.CQException;
 
 public class RCQWriter extends AbstractWriter<RCQConnection> {
 
@@ -60,16 +62,11 @@ public class RCQWriter extends AbstractWriter<RCQConnection> {
 			throw new CCFRuntimeException(cause, e);
 		}
 
-		// find out what to update
-		String targetRepositoryId = ga.getTargetRepositoryId();
-		
-		RCQConnection connection;
-		
-		connection = connect(ga);
+		RCQConnection connection = connect(ga);
 		try {
 			CQEntity result = rcqHandler.updateRecord(ga, connection);
 			if (result != null) {
-				log.info("Updated work item " + result.GetFieldValue("id").GetValue() + " with data from "
+				log.info("Updated work item " + result.GetDisplayName() + " with data from "
 						+ ga.getSourceArtifactId());
 			}
 		} catch (Exception e) {
@@ -102,13 +99,13 @@ public class RCQWriter extends AbstractWriter<RCQConnection> {
 		RCQConnection connection;
 		connection = connect(ga);
 		try {
-			CQEntity result = rcqHandler.updateRecord(ga, connection);
+			CQEntity result = rcqHandler.createRecord(ga, connection);
 			if (result != null) {
-				log.info("Created record item " + result.GetFieldValue("id").GetValue() + " with data from "
+				log.info("Created record item " + result.GetDisplayName() + " with data from "
 						+ ga.getSourceArtifactId());
 			}
 		} catch (Exception e) {
-			String cause = "During the artifact update process in RCQ, an error occured";
+			String cause = "During the artifact creation process in RCQ, an error occured";
 			log.error(cause, e);
 			throw new CCFRuntimeException(cause, e);
 		} finally {
@@ -152,9 +149,36 @@ public class RCQWriter extends AbstractWriter<RCQConnection> {
 
 	@Override
 	public Document deleteArtifact(Document gaDocument) {
-		// TODO Implement me?
-		log.warn("deleteArtifact is not implemented...!");
-		return null;
+		GenericArtifact ga = null;
+		try {
+			ga = GenericArtifactHelper
+					.createGenericArtifactJavaObject(gaDocument);
+		} catch (GenericArtifactParsingException e) {
+			String cause = "Problem occured while parsing the GenericArtifact into Document";
+			log.error(cause, e);
+			XPathUtils.addAttribute(gaDocument.getRootElement(),
+					GenericArtifactHelper.ERROR_CODE,
+					GenericArtifact.ERROR_GENERIC_ARTIFACT_PARSING);
+			throw new CCFRuntimeException(cause, e);
+		}
+
+	
+		RCQConnection connection = connect(ga);
+
+		CQEntity record = null;
+		String currentAction = null;
+		try {
+			currentAction = "retrieving entity for deletion: " + ga.getTargetArtifactId();
+			record = connection.getCqSession().GetEntity(connection.getRecType(), ga.getTargetArtifactId() );
+			currentAction = "deleting entity " + record.GetDisplayName();
+			String deleteResult = connection.getCqSession().DeleteEntity(record, "delete");
+			rcqHandler.reportActionResult(deleteResult, currentAction);
+		} catch (CQException e) {
+			log.error("failed at " + currentAction);
+			throw new CCFRuntimeException("failed at " + currentAction);
+		}
+		
+		return returnDocument(ga);
 	}
 
 	@Override
@@ -267,7 +291,6 @@ public class RCQWriter extends AbstractWriter<RCQConnection> {
 			String repositoryId, String repositoryKind, String connectionInfo,
 			String credentialInfo) throws MaxConnectionsReachedException,
 			ConnectionException {
-		// log.info("Before calling the parent connect()");
 		RCQConnection connection = null;
 		connection = getConnectionManager()
 				.getConnectionToUpdateOrExtractArtifact(systemId, systemKind,
@@ -276,6 +299,7 @@ public class RCQWriter extends AbstractWriter<RCQConnection> {
 		return connection;
 	}
 	
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public void validate(List exceptions) {
 		super.validate(exceptions);
 

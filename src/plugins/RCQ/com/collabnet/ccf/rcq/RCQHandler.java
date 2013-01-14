@@ -18,6 +18,7 @@ import org.apache.commons.lang.time.DateFormatUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.collabnet.ccf.core.AbstractWriter;
 import com.collabnet.ccf.core.ArtifactState;
 import com.collabnet.ccf.core.CCFRuntimeException;
 import com.collabnet.ccf.core.ga.GenericArtifact;
@@ -27,9 +28,12 @@ import com.collabnet.ccf.core.ga.GenericArtifactField.FieldActionValue;
 import com.collabnet.ccf.core.ga.GenericArtifactField.FieldValueTypeValue;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.hospital.CCFExceptionToOrderedMapConvertor;
+import com.collabnet.ccf.core.utils.DateUtil;
 
 import com.rational.clearquest.cqjni.CQEntity;
+import com.rational.clearquest.cqjni.CQEntityDef;
 import com.rational.clearquest.cqjni.CQException;
+import com.rational.clearquest.cqjni.CQFieldInfo;
 import com.rational.clearquest.cqjni.CQFieldInfos;
 import com.rational.clearquest.cqjni.CQFilterNode;
 import com.rational.clearquest.cqjni.CQHistories;
@@ -39,6 +43,7 @@ import com.rational.clearquest.cqjni.CQHistoryFields;
 import com.rational.clearquest.cqjni.CQQueryDef;
 import com.rational.clearquest.cqjni.CQQueryFilterNode;
 import com.rational.clearquest.cqjni.CQResultSet;
+import com.rational.clearquest.cqjni.CQSession;
 
 public class RCQHandler {
 
@@ -80,8 +85,8 @@ public class RCQHandler {
 			myQD.BuildField("id");
 
 		} catch (CQException e) {
-			log.error("problem adding fields to result set." , e);
-			throw new CCFRuntimeException("problem building a query for clearquest" , e);
+			log.error("problem adding id field to result set." , e);
+			throw new CCFRuntimeException("problem building getChangedRecords query for clearquest" , e);
 		}
 		
 		try {
@@ -107,7 +112,7 @@ public class RCQHandler {
 			numResults =  results.ExecuteAndCountRecords();
 			
 		} catch (CQException e) {
-			log.error("problem running the query" , e);
+			log.error("could not run getChangedRecords query" , e);
 			throw new CCFRuntimeException("problem querying clearquest" , e);
 		}
 		
@@ -144,7 +149,7 @@ public class RCQHandler {
 //		log.debug("-----> Fetch Results:");
 		
 //		for ( ArtifactState aS : artifactStates ) {
-//			log.debug(aS.getArtifactId() + ": last modified on " + aS.getArtifactLastModifiedDate().toLocaleString() + "; Verion: " + aS.getArtifactVersion() );
+//			log.debug("      " + aS.getArtifactId() + ": last modified on " + aS.getArtifactLastModifiedDate().toLocaleString() + "; Version: " + aS.getArtifactVersion() );
 //		}
 		
 		
@@ -169,7 +174,7 @@ public class RCQHandler {
 	
 	
 	
-	public void getRecordData( RCQConnection connection , String recID , 
+	public void updateGAWithRecordData( RCQConnection connection , String recID , 
 			boolean ignoreConnectoreUserUpdates , Date lastModifedDate , 
 			String ccfUserName , GenericArtifact genericArtifact) throws ParseException {
 		try {
@@ -193,9 +198,6 @@ public class RCQHandler {
 									recID));				
 					isResync = true;
 				} else {
-//					log.info(String
-//							.format("artifact %s is a connector update, ignoring it.",
-//									recID));
 					isIgnore = true;
 				}
 			}
@@ -227,13 +229,12 @@ public class RCQHandler {
 					log.debug("encountered RESYNC for " + recID );
 				}
 				
-				// TODO: fetching history
 				myStory.addHistoryEntries(genericArtifact);
 			}
 			
 			genericArtifact.setSourceArtifactLastModifiedDate(GenericArtifactHelper.df.format(lastRecordModifedDate));
 			genericArtifact.setSourceArtifactVersion(revNumber);
-			log.debug("Artifact requested: " + recID);
+//			log.debug("Artifact requested: " + recID);
 			
 			
 		} catch (CQException e) {
@@ -243,15 +244,381 @@ public class RCQHandler {
 		}
 		
 	}
-	// workitem is a tfs type, here we need the generic CQ object type
+
+	private String getActionName (CQEntity record , GenericArtifact ga) {
+
+		String[] recFieldNames;
+		String currentAction = "getting cq field names (getActionName)";
+		String actionName = null;
+		try {
+			recFieldNames = record.GetFieldNames();
+			for ( String recFieldName : recFieldNames ) { 
+				List<GenericArtifactField> gaFields = ga
+						.getAllGenericArtifactFieldsWithSameFieldName(recFieldName);
+				
+				if (gaFields != null
+						&& gaFields.get(0).getFieldValueHasChanged()) {
+					GenericArtifactField currentField = gaFields.get(0);
+					
+					
+					if ( currentField.getFieldType().equalsIgnoreCase("transitionField") ) {
+						String gaFieldValue = (String) currentField.getFieldValue();
+						
+						CQSession cqs = record.GetSession();
+						CQEntityDef currentEntityDef = cqs.GetEntityDef(record.GetEntityDefName());
+						
+						currentAction = "getting default action info";
+						String defaultAction = record.GetDefaultActionName();
+						if ( defaultAction != null && !defaultAction.equals("") ) {
+							log.debug("Default Action: " + defaultAction);
+							log.debug("Default Target State: " + currentEntityDef.GetActionDestStateName(record.GetDefaultActionName()));
+						} else {
+							log.debug("no default action found for record " + record.GetDisplayName());
+						}
+						
+						String newState = (String) gaFieldValue;
+						currentAction = "getting fieldInfo for transition field " + recFieldName;
+						CQFieldInfo currentStateInfo = record.GetFieldValue(recFieldName);
+						currentAction = "getting current value for transition field " + recFieldName;
+						String oldState = currentStateInfo.GetValue();
+						log.debug("got newState: " + newState);
+						if ( oldState.equals("")) {
+							log.debug("clearquest State is empty");
+						} else {
+							log.debug("clearquest State: " + oldState);
+						}
+
+						currentAction = "getting state/transition names";
+						String[] legalActions = record.GetLegalActionDefNames();
+						log.debug("legal actions/transitions:");
+						List<String> actionCandidates = new ArrayList<String>();
+						for ( String action : legalActions ) {
+							String targetState = currentEntityDef.GetActionDestStateName(action);
+							log.debug("		" + action + " --> " + targetState);
+							if ( newState.equals(targetState)) {
+								actionCandidates.add(action);
+							}
+						}
+
+						
+						if ( ! newState.equals(oldState) ) {
+							if ( actionCandidates.size() == 1 ) {
+								// nice!
+								log.debug("single action '" + actionCandidates.get(0) + "' transitions from state '" + oldState + "' to new state '" + newState + "'");
+								actionName = actionCandidates.get(0);
+							} else {
+								log.warn("found multiple actions from state '" + oldState +
+										"' to state '" + newState + "'");
+								for ( String act : actionCandidates ) {
+									log.warn("	- " + act);
+								}
+							}
+						} else {
+							// updates without state changes
+							actionName = "modify";
+						}
+						break;
+					} 
+				}
+			}
+		} catch (CQException e) {
+			log.error(currentAction);
+			throw new CCFRuntimeException(currentAction, e);
+		}
+		
+		if ( actionName != null && !actionName.equals("") ) {
+			return actionName;
+		} else {
+			// rather hospitalize?
+			log.warn("unable to determine unique action name, using 'modify' action");
+			return "modify";
+		}
+		
+	}
+	
 	public CQEntity createRecord(GenericArtifact ga, RCQConnection connection) {
-		// TODO Reader: create Record in cq
-		return null;
+		String currentAction = null;
+		CQEntity record = null;
+		
+		try {
+			currentAction = "creating new cq entity of type" + connection.getRecType();
+			record = connection.getCqSession().BuildEntity(connection.getRecType());
+			
+			
+			updateRecordFields(ga, connection, record);
+			
+			// validate new values
+			validateAndSaveRecord(record);
+			
+			// update comments
+
+			updateComments(ga, connection, record);
+			currentAction = "retrieving history information for new record " + record.GetDisplayName();
+			RCQHistoryHelper versionInfo = new RCQHistoryHelper(record, connection);
+			
+			
+			// update new artifact information
+			ga.setTargetArtifactVersion(Long.toString(versionInfo.GetLastVersion()));
+			ga.setTargetArtifactId(record.GetDisplayName());
+			ga.setTargetArtifactLastModifiedDate(GenericArtifactHelper.df.format(versionInfo.GetLastModfiedDate()));
+	
+		} catch (CQException e) {
+			log.error("failed at " + currentAction, e);
+			throw new CCFRuntimeException(currentAction);
+		} catch (ParseException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
+		return record;
 	}
 
 	public CQEntity updateRecord(GenericArtifact ga, RCQConnection connection) {
-		// TODO Reader: update Record in cq
-		return null;
+
+		String currentAction = null;
+		String entityDisplayName = null;
+		CQEntity record = null;
+		try {
+			currentAction = "retrieving cq entity " + connection.getRecType() + "::" + ga.getTargetArtifactId();
+			record = connection.getCqSession().GetEntity(connection.getRecType(), ga.getTargetArtifactId() );
+			
+			entityDisplayName = record.GetDisplayName();
+			
+			RCQHistoryHelper myStory = new RCQHistoryHelper(record, connection);
+
+			if (!AbstractWriter.handleConflicts(myStory.GetLastVersion() , ga) ) {
+				return null;
+			}
+			
+			
+			// starting edit session
+			currentAction = "Starting Edit Session for entity " + entityDisplayName;
+			connection.getCqSession().EditEntity(record , getActionName(record, ga) );
+			
+			updateRecordFields(ga, connection, record);
+			
+			// validate new values
+			validateAndSaveRecord(record);
+			
+			// update comments
+			updateComments(ga, connection, record);
+			
+			// update last modified and version 
+			RCQHistoryHelper versionInfo = new RCQHistoryHelper(record, connection);
+			ga.setTargetArtifactLastModifiedDate(GenericArtifactHelper.df.format(versionInfo.GetLastModfiedDate()));
+			ga.setTargetArtifactVersion(Long.toString(versionInfo.GetLastVersion()));
+	
+		} catch (CQException e) {
+			log.error("failed at " + currentAction, e);
+			throw new CCFRuntimeException(currentAction);
+		} catch (ParseException e) {
+			String cause = "Could not retrieve history information for ClearQuest ID " 
+					+ ga.getTargetArtifactId();
+			log.error(cause, e);
+			throw new CCFRuntimeException(cause);
+		}
+		
+		return record;
 	}
 
+	
+	private void updateComments(GenericArtifact ga,
+			RCQConnection connection, CQEntity record) {
+	
+		String currentAction = null;
+		currentAction = "getting fieldnames for entity "
+				+ ga.getTargetArtifactId();
+		String[] recFields;
+
+		try {
+			recFields = record.GetFieldNames();
+			for (String cqFieldName : recFields) {
+				
+				// do not write to the history field
+				if (cqFieldName.equals(connection.getHistoryFieldName())) {
+					continue;
+				}
+				
+				List<GenericArtifactField> gaFields = ga
+						.getAllGenericArtifactFieldsWithSameFieldName(cqFieldName);
+				
+				
+				if ( gaFields != null 
+						&& gaFields.get(0).getFieldType().equalsIgnoreCase("notesField")
+						&& gaFields.get(0).getFieldValueHasChanged() ) {
+					
+					log.debug("adding " + gaFields.size() + " notes using field '" + cqFieldName + "'");
+					
+					for ( GenericArtifactField currentField : gaFields ) {
+						
+						String notesEntryText = (String) currentField.getFieldValue();
+						
+						// start edit
+						connection.getCqSession().EditEntity(record , "modify" );
+						
+						// set comment text value
+						currentAction = "adding notes entry to field " + cqFieldName;
+						String setValueResult = record.SetFieldValue(cqFieldName,
+								notesEntryText);
+
+						reportActionResult(
+								setValueResult,
+								"could not add notes entry for record "
+										+ record.GetDisplayName());
+						
+						// validate and save
+						validateAndSaveRecord(record);
+					}
+					
+				}
+			}
+		} catch (CQException e) {
+			log.error("failed at " + currentAction, e);
+			throw new CCFRuntimeException(currentAction, e);
+		}
+		
+	}
+	
+	
+	
+	private void updateRecordFields(GenericArtifact ga,
+			RCQConnection connection, CQEntity record) {
+		String currentAction = null;
+		currentAction = "getting fieldnames for entity "
+				+ ga.getTargetArtifactId();
+		String[] recFields;
+		try {
+			recFields = record.GetFieldNames();
+			for (String cqFieldName : recFields) {
+				
+				// do not write to the history field
+				if (cqFieldName.equals(connection.getHistoryFieldName())) {
+					continue;
+				}
+
+				List<GenericArtifactField> gaFields = ga
+						.getAllGenericArtifactFieldsWithSameFieldName(cqFieldName);
+
+//				log.debug(">> clearquest field " + cqFieldName);
+
+				if (gaFields != null
+						&& gaFields.get(0).getFieldValueHasChanged()) {
+
+					GenericArtifactField currentField = gaFields.get(0);
+					Object gaFieldValue = currentField.getFieldValue();
+
+
+					// skip status and notes fields
+					if ( currentField.getFieldType().equalsIgnoreCase("transitionField") || currentField.getFieldType().equalsIgnoreCase("notesField") ) {
+						continue;
+					}
+
+					log.debug(">>>>>>>> shipping field " + currentField.getFieldName() + " of type " + currentField.getFieldType());
+										
+					// if it's a date field, set the timezone
+					if (RCQMetaData
+							.isDateType(record.GetFieldType(cqFieldName))) {
+						if (DateUtil.isAbsoluteDateInTimezone(
+								(Date) gaFieldValue,
+								ga.getSourceSystemTimezone())) {
+							gaFieldValue = DateUtil.convertToGMTAbsoluteDate(
+									(Date) gaFieldValue,
+									ga.getSourceSystemTimezone());
+						}
+					}
+					
+					currentAction = "setting " + cqFieldName + " to value '" + (String) gaFieldValue + "'";
+					String setValueResult = record.SetFieldValue(cqFieldName,
+							(String) gaFieldValue);
+
+					reportActionResult(
+							setValueResult,
+							"could not set field value for entity "
+									+ record.GetDisplayName());
+
+					// multi-select field - the previous SetFieldValue
+					// de-selected all values and set the first one already
+					if (gaFields.size() > 1) {
+						for (int i = 1; i < gaFields.size(); i++) {
+							String newValue = (String) gaFields.get(i)
+									.getFieldValue();
+							String addValueResult = record.AddFieldValue(
+									cqFieldName, newValue);
+							reportActionResult(addValueResult,
+									"could not add multi-select FieldValue '"
+											+ newValue + "' to entity "
+											+ record.GetDisplayName());
+						}
+					}
+					
+					// update comments is done one level up as it needs separate edit sessions per comment.
+					
+					
+					// TODO relations&dependencies
+					
+				}
+			} // end for
+		} catch (CQException e) {
+			log.error("failed at " + currentAction, e);
+			throw new CCFRuntimeException(currentAction, e);
+		}
+
+		// TODO update dependencies in CQ
+	}
+
+	
+	private void logStrings(String title, String[] list) {
+		log.debug("--- " + title + " ---");
+		int count = 1;
+		for ( String s : list ) { 
+			log.debug(count++ + " " + s );
+		}
+		log.debug("	total " + list.length);
+	}
+	
+	public void reportActionResult(String actionResult , String causePrefix) {
+		if ( ! actionResult.equals("") ) {
+			log.error(causePrefix + ": " + actionResult);
+			throw new CCFRuntimeException(causePrefix + ": " + actionResult);
+		}
+	}
+
+	
+	
+	private void validateAndSaveRecord(CQEntity record) {	
+		
+		String entityDisplayName = null;
+		String currentAction = null;
+		try {
+			entityDisplayName = record.GetDisplayName();
+			currentAction = "validating entity " + entityDisplayName;
+			String validationResult = record.Validate();
+			
+			if ( validationResult.equals("") ) {
+				currentAction = "committing changes to entity " + entityDisplayName;
+				String commitResult = record.Commit();
+				if ( ! commitResult.equals("") ) {
+					// failed commit, rolling back
+					String cause = "commit of changed " + entityDisplayName + " failed: " + commitResult ;
+					log.error(cause);
+					// cancel changes
+					currentAction = "reverting changes to entity " + entityDisplayName + " (failed commit)";
+					record.Revert();
+					throw new CCFRuntimeException(cause + " [changes not saved]");
+				}
+			} else {
+				String cause = "validation of " + entityDisplayName + " failed: " + validationResult ;
+				log.error(cause);
+				// cancel changes
+				currentAction = "reverting changes to entity " + entityDisplayName;
+				record.Revert();
+				throw new CCFRuntimeException(cause + " [changes not saved]");
+			}
+		} catch (CQException e) {
+			log.error("failed at " + currentAction, e);
+			throw new CCFRuntimeException(currentAction);
+		}
+
+	}
+	
 }

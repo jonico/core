@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- $Author: gonzmar $ $HeadURL: https://ctf.open.collab.net/svn/repos/ccf/trunk/core/samples/QCTF/RCQ2TF/config/config.xml 
+<!-- $Author: gonzmar $ $HeadURL: https://ctf.open.collab.net/svn/repos/ccf/trunk/core/samples/RCQTF/TF2RCQ/config/config.xml 
 	$ -->
+
 <!-- Copyright 2009 CollabNet, Inc. ("CollabNet") Licensed under the Apache 
 	License, Version 2.0 (the "License"); you may not use this file except in 
 	compliance with the License. You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0 
@@ -8,13 +9,16 @@
 	under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES 
 	OR CONDITIONS OF ANY KIND, either express or implied. See the License for 
 	the specific language governing permissions and limitations under the License. -->
+
 <beans xmlns="http://www.springframework.org/schema/beans"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-2.0.xsd">
+
 	<description><![CDATA[
-   This wiring synchronizes a RCQ system with an TF/CSFE system
-   To get a bidirectional synchronization, just start the TF/CSFE To RCQ scenario as well.
+   This wiring synchronizes an TF/CSFE system with a RCQ (Rational ClearQuest) system
+   To get a bidirectional synchronization, just start the RCQ To TF/CSFE scenario as well.
   ]]></description>
+
 	<bean class="org.openadaptor.core.jmx.MBeanServer">
 		<description>
 			Embed this in your config to expose jmx interface via
@@ -23,12 +27,14 @@
 		</description>
 		<constructor-arg value="${ccf.jmxPort}" />
 	</bean>
+
 	<bean id="SystemUtil" class="org.openadaptor.util.SystemUtil">
 		<description>
 			Embed this in your config to expose useful management
 			bean.
 		</description>
 	</bean>
+
 	<bean id="LogAdmin" class="org.openadaptor.thirdparty.log4j.LogAdmin">
 		<description>
 			Embed this in your config to expose log4j management.
@@ -60,9 +66,10 @@
 			</list>
 		</property>
 	</bean>
-	<bean id="RCQ2TF" class="org.openadaptor.core.adaptor.Adaptor">
+	<bean id="TF2RCQ" class="org.openadaptor.core.adaptor.Adaptor">
 		<property name="messageProcessor" ref="Router" />
 	</bean>
+
 	<bean id="Router" class="org.openadaptor.core.router.Router">
 		<description>
 			The processMap property of this Router bean configures
@@ -73,24 +80,29 @@
 		</description>
 		<property name="processMap">
 			<map>
-				<entry key-ref="RCQ2TFSynchronizationStatusPollingReader"
-					value-ref="RCQReader" />
+				<entry key-ref="TF2RCQSynchronizationStatusPollingReader"
+					value-ref="TFReader" />
 
 				<!-- This plugs in the polling hospital -->
-				<entry key-ref="RCQReader">
+				<entry key-ref="TFReader">
 					<list>
 						<ref bean="HospitalUpdatorSQLConverterReprocessed" />
-						<ref bean="TFEntityService" />
+						<ref bean="RCQEntityService" />
 					</list>
 				</entry>
-				<entry key-ref="TFEntityService" value-ref="TFTransformer" />
-				<entry key-ref="TFTransformer" value-ref="TFWriter" />
-				<entry key-ref="TFWriter"
-					value-ref="SynchronizationStatusAndIdentityMappingTableUpdaterRCQ2TF" />
+
+				<entry key-ref="RCQEntityService" value-ref="RCQTransformer" />
+				<entry key-ref="RCQTransformer" value-ref="RCQWriter" />
+				<entry key-ref="RCQWriter"
+					value-ref="SynchronizationStatusAndIdentityMappingTableUpdaterTF2RCQ" />
 
 				<!-- This plugs in the polling hospital -->
-				<entry key-ref="SynchronizationStatusAndIdentityMappingTableUpdaterRCQ2TF"
-					value-ref="HospitalUpdatorSQLConverterFixed" />
+				<entry key-ref="SynchronizationStatusAndIdentityMappingTableUpdaterTF2RCQ">
+					<list>
+						<ref bean="HospitalUpdatorSQLConverterFixed" />
+						<ref bean="PartialUpdateHospitalWriter" />
+					</list>
+				</entry>
 
 				<!-- This plugs in the polling hospital -->
 				<entry key-ref="HospitalUpdatorSQLConverterReprocessed"
@@ -107,13 +119,31 @@
 		<property name="exceptionProcessor" ref="ExceptionConvertor" />
 		<property name="metricsEnabled" value="true" />
 	</bean>
+
+	<bean id="PartialUpdateHospitalWriter" class="com.collabnet.ccf.core.config.HospitalFilter">
+		<description>If we could only perform a partial update,
+			this component will place the artifact in the hospital,
+			so it can be reprocessed later.
+		</description>
+		<property name="script">
+			<value>
+				var errorCode =
+				oa_data.getRootElement().selectSingleNode("@errorCode").getText();
+				errorCode != "objectLocked";
+			</value>
+		</property>
+		<property name="exceptionMessage"
+			value="Artifact has been locked in RCQ, so CCF only partially updated it and moved unprocessed comments to the hospital for later re-processing." />
+	</bean>
+
 	<bean id="ExceptionConvertor"
 		class="com.collabnet.ccf.core.hospital.CCFExceptionToOrderedMapConvertor">
 		<property name="logMessageTemplate" value="${ccf.logMessageTemplate}" />
 		<property name="timestampFormat" value="yyyy-MM-dd HH:mm:ss zzz" />
 		<property name="onlyQuarantineGenericArtifacts" value="true" />
-		<property name="adaptor" ref="RCQ2TF" />
+		<property name="adaptor" ref="TF2RCQ" />
 	</bean>
+
 	<bean id="HospitalWriter"
 		class="org.openadaptor.auxil.connector.jdbc.writer.JDBCWriteConnector">
 		<property name="jdbcConnection" ref="HospitalJDBCConnection" />
@@ -124,6 +154,7 @@
 			</bean>
 		</property>
 	</bean>
+
 	<bean id="HospitalJDBCConnection" class="com.collabnet.ccf.core.db.JDBCConnection"
 		scope="prototype">
 		<description>
@@ -135,7 +166,8 @@
 		<property name="username" value="${ccf.db.username}" />
 		<property name="password" value="${ccf.db.password}" />
 	</bean>
-	<bean id="RCQ2TFSynchronizationStatusPollingReader"
+
+	<bean id="TF2RCQSynchronizationStatusPollingReader"
 		class="com.collabnet.ccf.core.test.plugins.SimpleLoopingPollingReadConnector">
 		<description>
 			This polling connector polls the CCF database tables that
@@ -159,11 +191,12 @@
 		</description>
 		<property name="pollLimit" value="-1" />
 		<property name="delegate"
-			ref="RCQ2TFSynchronizationStatusPollingReaderJdbcConnection" />
+			ref="TF2RCQSynchronizationStatusPollingReaderJdbcConnection" />
 		<property name="pollIntervalSecs" value="0" />
 		<property name="reconnectDelegateBetweenPolls" value="false" />
 	</bean>
-	<bean id="RCQ2TFSynchronizationStatusPollingReaderJdbcConnection"
+
+	<bean id="TF2RCQSynchronizationStatusPollingReaderJdbcConnection"
 		class="org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector">
 		<description>
 			This is the JDBC read connector used by the
@@ -171,7 +204,7 @@
 			repository mapping and
 			the synchronization info.
 		</description>
-		<property name="jdbcConnection" ref="JdbcConnectionRCQ2TF" />
+		<property name="jdbcConnection" ref="JdbcConnectionTF2RCQ" />
 		<!-- batch size of 0 or less means process all rows in one message batch. -->
 		<!-- batch size of one means process one row per message and so on -->
 		<property name="batchSize" value="1" />
@@ -185,15 +218,164 @@
 				CONFLICT_RESOLUTION_PRIORITY, SOURCE_SYSTEM_TIMEZONE,
 				TARGET_SYSTEM_TIMEZONE, SOURCE_SYSTEM_ENCODING,
 				TARGET_SYSTEM_ENCODING FROM SYNCHRONIZATION_STATUS WHERE
-				SOURCE_SYSTEM_KIND='QC' AND TARGET_SYSTEM_KIND='TF'</value>
+				SOURCE_SYSTEM_KIND='TF' AND TARGET_SYSTEM_KIND='QC'</value>
 		</property>
 	</bean>
-	<bean id="RCQ2TFGenericArtifactSchemaValidator" class="com.collabnet.ccf.core.utils.XmlValidator">
+
+	<bean id="TF2RCQGenericArtifactSchemaValidator" class="com.collabnet.ccf.core.utils.XmlValidator">
 		<description>This processor validates whether the artifacts produced
 			by the TF reader are generic artifact schema compliant.</description>
 		<property name="schemaURL" value="config/genericartifactschema.xsd" />
 	</bean>
-	<bean id="TFTransformer" class="com.collabnet.ccf.core.transformer.DynamicXsltProcessor">
+
+	<bean id="RCQConnectionManager" class="com.collabnet.ccf.core.eis.connection.ConnectionManager">
+		<!-- Please set the number of connections to the number of project mappings 
+			you have -->
+		<property name="maxConnectionsPerPool" value="10"></property>
+		<property name="maxIdleTimeForConnection" value="600000" />
+		<property name="scavengerInterval" value="120000"></property>
+		<property name="connectionFactory" ref="RCQConnectionFactory"></property>
+		<property name="useStandardTimeoutHandlingCode" value="true" />
+		<property name="enableReloginAfterSessionTimeout" value="true" />
+		<property name="enableRetryAfterNetworkTimeout" value="true" />
+	</bean>
+	<bean id="RCQConnectionFactory" class="com.collabnet.ccf.rcq.RCQConnectionFactory">
+	</bean>
+
+	<bean id="TFReader" class="com.collabnet.ccf.teamforge.TFReader">
+		<description>
+			This reader reads the modified artifacts in the TF
+			system's tracker configured in the
+			${sfee.server.1.url} and the sync
+			info tables. It also reads all the related dependent artifact details
+			and converts them into Generic Artifact XML document format and sends
+			to the
+			next component in the pipeline. The next component in the piple
+			line may be
+			an XSLT transformer component such as
+			com.collabnet.ccf.core.transformer.XsltProcessor
+			or an EntityService
+			component depending on the target TF tracker needs the data
+			to be
+			translated to fit into its fields or not.
+		</description>
+		<property name="username" value="${sfee.server.1.username}" />
+		<property name="password" value="${sfee.server.1.password}" />
+		<!-- <property name="resyncUserName" value="${sfee.server.1.resync.username}"></property> -->
+		<property name="serverUrl" value="${sfee.server.1.url}" />
+		<property name="connectionManager" ref="TFConnectionManager"></property>
+		<property name="sleepInterval" value="1000"></property>
+		<property name="translateTechnicalReleaseIds" value="false"></property>
+		<property name="maxAttachmentSizePerArtifact" value="${sfee.max.attachmentsize.per.artifact}" />
+		<!-- Let this restart every 6 hours -->
+		<property name="autoRestartPeriod" value="21600" />
+		<property name="shipAttachments" value="true" />
+
+		<!-- This plugs in in the polling hospital -->
+		<property name="hospitalDatabaseReader" ref="HospitalDatabaseExtractor" />
+		<property name="nameOfEntityService" value="RCQEntityService" />
+		<property name="retrieveParentInfoForPlanningFolders" value="true" />
+		<property name="retrieveParentInfoForTrackerItems" value="true" />
+	</bean>
+	<bean id="TFConnectionManager" class="com.collabnet.ccf.core.eis.connection.ConnectionManager">
+		<description>
+			The connection manager implements a connection pooling
+			mechanism where the
+			connections to multiple systems are cached for the
+			readers and writers
+			to retrieve when needed. Before returning the
+			connection to the client
+			the connection manager checks if the
+			connection is live and only returns
+			valid connections.
+			It assigns and
+			manages one pool per repository.
+		</description>
+		<!-- Please set the number of connections to the number of project mappings 
+			you have -->
+		<property name="maxConnectionsPerPool" value="3"></property>
+		<property name="maxIdleTimeForConnection" value="600000" />
+		<property name="scavengerInterval" value="120000"></property>
+		<property name="connectionFactory" ref="TFConnectionFactory"></property>
+		<property name="useStandardTimeoutHandlingCode" value="true" />
+		<property name="enableReloginAfterSessionTimeout" value="true" />
+		<property name="enableRetryAfterNetworkTimeout" value="true" />
+	</bean>
+
+	<bean id="TFConnectionFactory" class="com.collabnet.ccf.teamforge.TFConnectionFactory">
+		<description>
+			This bean is an implementation of the
+			com.collabnet.ccf.core.eis.connection.ConnectionFactory
+			interface. It
+			is responsible to create and close an connection for a given
+			repository.
+			In this case TFConnectionFactory manages TF connections
+			objects.
+		</description>
+	</bean>
+
+	<bean id="JdbcConnectionTF2RCQ" class="com.collabnet.ccf.core.db.JDBCConnection"
+		scope="prototype">
+		<description>
+			This defines a jdbc connection that will be used
+			by all
+			components that read from RCQ and write to TF
+		</description>
+		<property name="driver" value="${ccf.db.driver}" />
+		<property name="url" value="${ccf.db.url}" />
+		<property name="username" value="${ccf.db.username}" />
+		<property name="password" value="${ccf.db.password}" />
+	</bean>
+
+	<bean id="SynchronizationStatusAndIdentityMappingTableUpdaterTF2RCQ"
+		class="com.collabnet.ccf.core.config.MappingDBUpdater">
+		<description>
+			This component is responsible for creating the identity
+			mapping for newly created
+			artifacts in the target system. It also
+			updates the synchronization status for a
+			particular repository. For TF
+			systems the synchronization info is the last
+			modified time of the last
+			shipped artifact.
+			If the EntityService determines the artifact action
+			as create (that is this artifact
+			is a new artifact in the source
+			system and doesn't have its identity mapping filled
+			in the Sync info
+			tables) then the writer component creates the artifact in the target
+			system and populates the target artifact id in the Generic Artifact
+			XML.
+			The SynchronizationStatusAndIdentityMappingTableUpdater then
+			takes the target artifact
+			id and creates an identity mapping entry for
+			the source and target artifact ids.
+		</description>
+		<property name="synchronizationStatusDatabaseUpdater" ref="SynchronizationStatusDatabaseUpdaterTF2RCQ"></property>
+		<property name="identityMappingDatabaseReader" ref="IndentityMappingDatabaseReaderTF2RCQ" />
+		<property name="identityMappingDatabaseUpdater" ref="IdentityMappingDatabaseUpdaterTF2RCQ" />
+		<property name="identityMappingDatabaseInserter" ref="IdentityMappingDatabaseInserterTF2RCQ">
+		</property>
+	</bean>
+
+	<bean id="ResultSetConverter"
+		class="org.openadaptor.auxil.connector.jdbc.reader.xml.ResultSetToXMLConverter">
+		<property name="convertToString" value="false" />
+		<property name="rootElement" value="EmptySyncInf" />
+	</bean>
+
+	<bean id="IdentityMappingDatabaseInserterTF2RCQ"
+		class="org.openadaptor.auxil.connector.jdbc.writer.JDBCWriteConnector">
+		<description>
+			This component updates the synchronization status for the
+			current artifact.
+		</description>
+		<property name="writer" ref="IdentityMappingTableInserter"></property>
+		<property name="jdbcConnection" ref="JdbcConnectionTF2RCQ">
+		</property>
+	</bean>
+
+	<bean id="RCQTransformer" class="com.collabnet.ccf.core.transformer.DynamicXsltProcessor">
 		<description>The xsltDir specifies the directory in which the xsl
 			files are contained. The naming conventions
 			for the xsl files need to be followed.
@@ -265,147 +447,43 @@
 			</list>
 		</property>
 	</bean>
-	<bean id="RCQReader" class="com.collabnet.ccf.rcq.RCQReader">
-		<description>
-			This reader reads the modified artifacts in the RCQ
-			system's tracker configured in the
-			${qc.server.1.url} and the sync
-			info tables. It reads all the related dependent artifact details
-			and
-			converts them into Generic Artifact XML document format and sends to
-			the
-			next component in the pipeline. The next component in the pipeline
-			may be
-			an XSLT transformer component such as
-			com.collabnet.ccf.core.transformer.XsltProcessor
-			or an EntityService
-			component depending on the target TF tracker needs the data
-			to be
-			translated to fit into its fields or not.
-		</description>
-		<!-- <property name="historyFieldName" value="history" /> -->
-		<!-- <property name="historyFormatString" value="History log: on %1$s, 
-			%2$s performed the action: %3$s. %n The state changed from %4$s to %5$s" 
-			/> -->
-		<!-- Format variables: 1$s : DateTime 2$s : user name 3$s : action 4$s 
-			: old state 5$s : new state -->
-		<property name="serverUrl" value="${qc.system.1.url}" />
-		<property name="userName" value="${qc.system.1.username}" />
-		<property name="password" value="${qc.system.1.password}" />
-		<!-- <property name="resyncUserName" value="${qc.system.1.resync.username}"></property> -->
-		<property name="connectionManager" ref="RCQConnectionManager"></property>
-		<property name="sleepInterval" value="1000"></property>
-		<property name="maxAttachmentSizePerArtifact" value="${qc.max.attachmentsize.per.artifact}" />
-		<!-- Let this restart every 6 hours -->
-		<property name="autoRestartPeriod" value="21600" />
-		<property name="shipAttachments" value="true" />
-		<!-- This plugs in the polling hospital -->
-		<property name="hospitalDatabaseReader" ref="HospitalDatabaseExtractor" />
-		<property name="nameOfEntityService" value="TFEntityService" />
 
-	</bean>
-	<bean id="RCQConnectionManager" class="com.collabnet.ccf.core.eis.connection.ConnectionManager">
-		<!-- Please set the number of connections to the number of project mappings 
-			you have -->
-		<property name="maxConnectionsPerPool" value="5"></property>
-		<property name="maxIdleTimeForConnection" value="600000" />
-		<property name="scavengerInterval" value="120000"></property>
-		<property name="connectionFactory" ref="RCQConnectionFactory"></property>
-		<property name="useStandardTimeoutHandlingCode" value="true" />
-		<property name="enableReloginAfterSessionTimeout" value="true" />
-		<property name="enableRetryAfterNetworkTimeout" value="true" />
-	</bean>
-	<bean id="RCQConnectionFactory" class="com.collabnet.ccf.rcq.RCQConnectionFactory">
-	</bean>
-	<bean id="TFConnectionManager" class="com.collabnet.ccf.core.eis.connection.ConnectionManager">
-		<description>
-			The connection manager implements a connection pooling
-			mechanism where the
-			connections to multiple systems are cached for the
-			readers and writers
-			to retrieve when needed. Before returning the
-			connection to the client
-			the connection manager checks if the
-			connection is live and only returns
-			valid connections.
-			It assigns and
-			manages one pool per repository.
-		</description>
-		<!-- Please set the number of connections to the number of project mappings 
-			you have -->
-		<property name="maxConnectionsPerPool" value="3"></property>
-		<property name="maxIdleTimeForConnection" value="600000" />
-		<property name="scavengerInterval" value="120000"></property>
-		<property name="connectionFactory" ref="TFConnectionFactory"></property>
-		<property name="useStandardTimeoutHandlingCode" value="true" />
-		<property name="enableReloginAfterSessionTimeout" value="true" />
-		<property name="enableRetryAfterNetworkTimeout" value="true" />
-	</bean>
-	<bean id="TFConnectionFactory" class="com.collabnet.ccf.teamforge.TFConnectionFactory">
-		<description>
-			This bean is an implementation of the
-			com.collabnet.ccf.core.eis.connection.ConnectionFactory
-			interface. It
-			is responsible to create and close an connection for a given
-			repository.
-			In this case TFConnectionFactory manages TF connections
-			objects.
-		</description>
-	</bean>
-	<bean id="TFWriter" class="com.collabnet.ccf.teamforge.TFWriter">
-		<description>
-			This data processor is responsible for writing the
-			artifacts coming from the
-			EntitySerive into the target TF system.
-			It
-			converts/extracts the data from the Generic Artifact XML and pushes
-			to the
-			target TF system.
-		</description>
-		<property name="username" value="${sfee.server.1.username}" />
-		<property name="password" value="${sfee.server.1.password}" />
-		<!-- <property name="resyncUserName" value="${sfee.server.1.resync.username}"></property> -->
-		<!-- <property name="resyncPassword" value="${sfee.server.1.resync.password}"></property> -->
-		<property name="serverUrl" value="${sfee.server.1.url}" />
-		<property name="updateComment" value="Synchronized by Connector user" />
-		<property name="connectionManager" ref="TFConnectionManager"></property>
-		<property name="translateTechnicalReleaseIds" value="false"></property>
-	</bean>
-	<bean id="TFEntityService" class="com.collabnet.ccf.core.EntityService">
+	<bean id="RCQEntityService" class="com.collabnet.ccf.core.EntityService">
 		<description>
 			This component is responsible for determining if the
 			current artifact that is being
 			shipped is to be created or updated in
-			the target TF system. It determines the artifact
-			action by checking if
-			the artifact has an identity mapping already.
-			If the identity mapping
-			does not exist then the EntityService marks this artifact
-			action as
-			create otherwise update. Please refer the
+			the target RCQ system. It determines the artifact
+			action by checking
+			if the artifact has an identity mapping already.
+			If the identity
+			mapping does not exist then the EntityService marks this artifact
+			action as create otherwise update. Please refer the
 			SynchronizationStatusAndIdentityMappingTableUpdater
 			component.
 		</description>
-		<property name="identityMappingDatabaseReader" ref="IndentityMappingDatabaseReaderRCQ2TF" />
-		<property name="hospitalDatabaseReader" ref="HospitalDatabaseReaderRCQ2TF" />
-		<property name="parentIdentityMappingDatabaseReader" ref="ParentIndentityMappingDatabaseReaderRCQ2TF" />
-		<property name="projectMappingDatabaseReader" ref="ProjectMappingDatabaseReaderRCQ2TF" />
+		<property name="identityMappingDatabaseReader" ref="IndentityMappingDatabaseReaderTF2RCQ" />
+		<property name="parentIdentityMappingDatabaseReader" ref="ParentIndentityMappingDatabaseReaderTF2RCQ" />
+		<property name="projectMappingDatabaseReader" ref="ProjectMappingDatabaseReaderTF2RCQ" />
+		<property name="hospitalDatabaseReader" ref="HospitalDatabaseReaderTF2RCQ" />
 		<property name="skipNewerVersionsOfQuarantinedArtifacts"
 			value="false" />
 		<property name="alwaysPassResynchedArtifacts" value="false" />
 		<property name="identityMapEventWaitCount" value="8"></property>
 		<property name="identityMapEventWaitTime" value="500"></property>
+		<property name="alwaysPassPartialArtifacts" value="true" />
 		<property name="onlyQuarantineAttachmentIfParentInHospital"
 			value="true"></property>
 	</bean>
-	<bean id="HospitalDatabaseReaderRCQ2TF"
+
+	<bean id="HospitalDatabaseReaderTF2RCQ"
 		class="org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector">
 		<description>
 			This database reader component finds out whether an
 			artifact has been
 			quarantined in the hospital
 		</description>
-		<property name="jdbcConnection" ref="JdbcConnectionRCQ2TF" />
+		<property name="jdbcConnection" ref="JdbcConnectionTF2RCQ" />
 		<!-- batch size of 0 or less means process all rows in one message batch. -->
 		<!-- batch size of one means process one row per message and so on -->
 		<property name="batchSize" value="0" />
@@ -418,63 +496,23 @@
 				ERROR_CODE IS NOT NULL</value>
 		</property>
 	</bean>
-	<bean id="JdbcConnectionRCQ2TF" class="com.collabnet.ccf.core.db.JDBCConnection"
-		scope="prototype">
+
+	<bean id="RCQWriter" class="com.collabnet.ccf.rcq.RCQWriter">
 		<description>
-			This defines a jdbc connection that will be used
-			by all
-			components that read from RCQ and write to TF
+			This RCQWriter will write the data contained in the
+			incoming
+			document to Rational ClearQuest.
 		</description>
-		<property name="driver" value="${ccf.db.driver}" />
-		<property name="url" value="${ccf.db.url}" />
-		<property name="username" value="${ccf.db.username}" />
-		<property name="password" value="${ccf.db.password}" />
+		<property name="serverUrl" value="${qc.system.1.url}" />
+		<property name="userName" value="${qc.system.1.username}" />
+		<property name="password" value="${qc.system.1.password}" />
+		<!-- <property name="resyncUserName" value="${qc.system.1.resync.username}"></property> -->
+		<!-- <property name="resyncPassword" value="${qc.system.1.resync.password}"></property> -->
+		<property name="connectionManager" ref="RCQConnectionManager"></property>
+		<property name="preserveSemanticallyUnchangedHTMLFieldValues"
+			value="true" />
 	</bean>
-	<bean id="SynchronizationStatusAndIdentityMappingTableUpdaterRCQ2TF"
-		class="com.collabnet.ccf.core.config.MappingDBUpdater">
-		<description>
-			This component is responsible for creating the identity
-			mapping for newly created
-			artifacts in the target system. It also
-			updates the synchronization status for a
-			particular repository. For TF
-			systems the synchronization info is the last
-			modified time of the last
-			shipped artifact.
-			If the EntityService determines the artifact action
-			as create (that is this artifact
-			is a new artifact in the source
-			system and doesn't have its identity mapping filled
-			in the Sync info
-			tables) then the writer component creates the artifact in the target
-			system and populates the target artifact id in the Generic Artifact
-			XML.
-			The SynchronizationStatusAndIdentityMappingTableUpdater then
-			takes the target artifact
-			id and creates an identity mapping entry for
-			the source and target artifact ids.
-		</description>
-		<property name="synchronizationStatusDatabaseUpdater" ref="SynchronizationStatusDatabaseUpdaterRCQ2TF"></property>
-		<property name="identityMappingDatabaseReader" ref="IndentityMappingDatabaseReaderRCQ2TF" />
-		<property name="identityMappingDatabaseUpdater" ref="IdentityMappingDatabaseUpdaterRCQ2TF" />
-		<property name="identityMappingDatabaseInserter" ref="IdentityMappingDatabaseInserterRCQ2TF">
-		</property>
-	</bean>
-	<bean id="ResultSetConverter"
-		class="org.openadaptor.auxil.connector.jdbc.reader.xml.ResultSetToXMLConverter">
-		<property name="convertToString" value="false" />
-		<property name="rootElement" value="EmptySyncInf" />
-	</bean>
-	<bean id="IdentityMappingDatabaseInserterRCQ2TF"
-		class="org.openadaptor.auxil.connector.jdbc.writer.JDBCWriteConnector">
-		<description>
-			This component updates the synchronization status for the
-			current artifact.
-		</description>
-		<property name="writer" ref="IdentityMappingTableInserter"></property>
-		<property name="jdbcConnection" ref="JdbcConnectionRCQ2TF">
-		</property>
-	</bean>
+
 	<bean id="IdentityMappingTableInserter"
 		class="org.openadaptor.auxil.connector.jdbc.writer.map.MapTableWriter">
 		<description>
@@ -515,7 +553,8 @@
 			</list>
 		</property>
 	</bean>
-	<bean id="IndentityMappingDatabaseReaderRCQ2TF"
+
+	<bean id="IndentityMappingDatabaseReaderTF2RCQ"
 		class="org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector">
 		<description>
 			This database reader component reads the target artifact
@@ -523,7 +562,7 @@
 			for a given source artifact id and the target
 			repository and system information.
 		</description>
-		<property name="jdbcConnection" ref="JdbcConnectionRCQ2TF" />
+		<property name="jdbcConnection" ref="JdbcConnectionTF2RCQ" />
 		<!-- batch size of 0 or less means process all rows in one message batch. -->
 		<!-- batch size of one means process one row per message and so on -->
 		<property name="batchSize" value="0" />
@@ -536,7 +575,8 @@
 				ARTIFACT_TYPE='?'</value>
 		</property>
 	</bean>
-	<bean id="ParentIndentityMappingDatabaseReaderRCQ2TF"
+
+	<bean id="ParentIndentityMappingDatabaseReaderTF2RCQ"
 		class="org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector">
 		<description>
 			This database reader component reads the target artifact
@@ -544,7 +584,7 @@
 			for a given source artifact id and the target
 			repository and system information.
 		</description>
-		<property name="jdbcConnection" ref="JdbcConnectionRCQ2TF" />
+		<property name="jdbcConnection" ref="JdbcConnectionTF2RCQ" />
 		<!-- batch size of 0 or less means process all rows in one message batch. -->
 		<!-- batch size of one means process one row per message and so on -->
 		<property name="batchSize" value="0" />
@@ -561,13 +601,13 @@
 		</property>
 	</bean>
 
-	<bean id="ProjectMappingDatabaseReaderRCQ2TF"
+	<bean id="ProjectMappingDatabaseReaderTF2RCQ"
 		class="org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector">
 		<description>
 			This database reader component reads the project mappings
 			for the parent artifact's repository id
 		</description>
-		<property name="jdbcConnection" ref="JdbcConnectionRCQ2TF" />
+		<property name="jdbcConnection" ref="JdbcConnectionTF2RCQ" />
 		<!-- batch size of 0 or less means process all rows in one message batch. -->
 		<!-- batch size of one means process one row per message and so on -->
 		<property name="batchSize" value="0" />
@@ -578,12 +618,13 @@
 		</property>
 	</bean>
 
-	<bean id="IdentityMappingDatabaseUpdaterRCQ2TF"
+	<bean id="IdentityMappingDatabaseUpdaterTF2RCQ"
 		class="org.openadaptor.auxil.connector.jdbc.writer.JDBCWriteConnector">
 		<property name="writer" ref="IdentityMappingTableUpdater"></property>
-		<property name="jdbcConnection" ref="JdbcConnectionRCQ2TF">
+		<property name="jdbcConnection" ref="JdbcConnectionTF2RCQ">
 		</property>
 	</bean>
+
 	<bean id="IdentityMappingTableUpdater" class="com.collabnet.ccf.core.db.MapTableUpdater">
 		<description>
 			This is the writer object that writes the artifact
@@ -608,12 +649,14 @@
 			</list>
 		</property>
 	</bean>
-	<bean id="SynchronizationStatusDatabaseUpdaterRCQ2TF"
+
+	<bean id="SynchronizationStatusDatabaseUpdaterTF2RCQ"
 		class="org.openadaptor.auxil.connector.jdbc.writer.JDBCWriteConnector">
 		<property name="writer" ref="SynchronizationStatusTableUpdater"></property>
-		<property name="jdbcConnection" ref="JdbcConnectionRCQ2TF">
+		<property name="jdbcConnection" ref="JdbcConnectionTF2RCQ">
 		</property>
 	</bean>
+
 	<bean id="SynchronizationStatusTableUpdater" class="com.collabnet.ccf.core.db.MapTableUpdater">
 		<description>
 			This is the writer object that writes the artifact
@@ -669,6 +712,7 @@
 			</value>
 		</property>
 	</bean>
+
 	<bean id="HospitalUpdator"
 		class="org.openadaptor.auxil.connector.jdbc.writer.JDBCWriteConnector">
 		<description>
@@ -676,6 +720,7 @@
 		</description>
 		<property name="jdbcConnection" ref="HospitalJDBCConnection" />
 	</bean>
+
 	<bean id="HospitalDatabaseExtractor"
 		class="org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector">
 		<description>
@@ -687,18 +732,28 @@
 		<!-- batch size of one means process one row per message and so on -->
 		<property name="batchSize" value="0" />
 		<property name="sql">
-			<value>SELECT ID, GENERIC_ARTIFACT, ORIGINATING_COMPONENT FROM
-				HOSPITAL WHERE REPROCESSED = FALSE AND ERROR_CODE = 'replay' AND
-				SOURCE_SYSTEM_ID = '?' and SOURCE_REPOSITORY_ID = '?' AND
-				TARGET_SYSTEM_ID = '?' and TARGET_REPOSITORY_ID = '?' ORDER BY ID
-				ASC LIMIT 1</value>
+			<value>
+				SELECT ID, GENERIC_ARTIFACT, ORIGINATING_COMPONENT FROM HOSPITAL
+				WHERE REPROCESSED = FALSE AND
+				(ERROR_CODE = 'replay'
+				OR ((ERROR_CODE = 'objectLocked' OR ERROR_CODE =
+				'objectCheckedOutError')
+				AND DATEDIFF('mi', CONVERT(SUBSTRING(TIMESTAMP, 1, 19), TIMESTAMP),
+				NOW) > 5))
+				AND SOURCE_SYSTEM_ID = '?'
+				AND SOURCE_REPOSITORY_ID = '?'
+				AND TARGET_SYSTEM_ID = '?'
+				AND TARGET_REPOSITORY_ID = '?'
+				ORDER BY ID ASC
+				LIMIT 1
+			</value>
 		</property>
 	</bean>
 
 	<bean id="mBeanExporter" class="org.springframework.jmx.export.MBeanExporter">
 		<property name="beans">
 			<map>
-				<entry key="CCF:name=AbstractReader" value-ref="RCQReader" />
+				<entry key="CCF:name=AbstractReader" value-ref="TFReader" />
 			</map>
 		</property>
 		<property name="assembler" ref="assembler" />
@@ -712,4 +767,5 @@
 			</list>
 		</property>
 	</bean>
+
 </beans>

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SchneiderUserMappingStructure>
+	<SchneiderUserMapping>
+		<mapping clearquest="markphip" teamforge="markphip" />
+		<mapping clearquest="karthi" teamforge="karthi" />
+		<mapping clearquest="barathi" teamforge="barathi" />
+		<mapping clearquest="pradeep" teamforge="pradeep" />
+		<mapping clearquest="jonico" teamforge="jonico" />
+		<mapping clearquest="mseethar" teamforge="madhusuthanan" />
+		<mapping clearquest="gomathy" teamforge="gomathy" />
+		<mapping clearquest="karthikeyan_ct" teamforge="karthikeyan" />
+		<mapping clearquest="kavithas" teamforge="kavitha" />
+		<mapping clearquest="rajeswari" teamforge="rajeswari" />
+		<mapping clearquest="vinithra" teamforge="vinithra" />
+		<mapping clearquest="madhu" teamforge="noasde" />
+		<!-- default value if no user is mentioned in CQ -->
+		<mapping clearquest="default" teamforge="volker" />
+		<!-- default value if no user is mentioned by CTF -->
+		<mapping clearquest="lead" teamforge="default" />
+	</SchneiderUserMapping>
+</SchneiderUserMappingStructure>

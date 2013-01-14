@@ -15,7 +15,8 @@ public class RCQConnection {
 	private String schema;
 	private String database;
 	private String recType;
-	private String historyName;
+	private String historyFieldName;
+	private String historyFormatString;
 	
 	private CQSession cqs;
 

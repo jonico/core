@@ -115,7 +115,7 @@ public class RCQReader extends AbstractReader<RCQConnection> {
 			ga.setSourceArtifactId(artifactId);
 			ga.setArtifactMode(ArtifactModeValue.COMPLETE);
 			ga.setArtifactType(ArtifactTypeValue.PLAINARTIFACT);
-			rcqHandler.getRecordData(connection, artifactId, isIgnoreConnectorUserUpdates(), this.getLastModifiedDate(syncInfo) , userName , ga);
+			rcqHandler.updateGAWithRecordData(connection, artifactId, isIgnoreConnectorUserUpdates(), this.getLastModifiedDate(syncInfo) , userName , ga);
 		} catch (Exception e) {
 			String cause = "During the artifact retrieval process from ClearQuest, an error occured";
 			log.error(cause, e);

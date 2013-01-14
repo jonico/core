@@ -59,9 +59,10 @@ public class RCQHistoryHelper {
 	
 	public void addHistoryEntries( GenericArtifact ga ) {
 		try {
-			// travel from youngest to oldest
+			// from youngest to oldest
 			for ( long h = chapter.Count() - 1 ; h >= 0 ; h-- ) {
 				CQHistory hEntry = chapter.Item(h);
+				// Each history entry is delimited list of:
 				// timestamp, dateFormtted, user name, action name, old state, new state
 				String[] hParts = hEntry.GetValue().split(DELIMIT);
 				String history = String.format(
