@@ -1,34 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Use this in the file using userMappings.xml
-	<!--  This key can be used for every  mapping -->
+<!-- Use this in the file using userMappings.xml -->
 	<xsl:key name='mappingKey' match='mapping' use='@source' />
-
-	<!-- 
-		Template to substitute CEE user values
-		Will look up the userMappings.xml for a substitute value
-		If not found, it will use a default value
-	- ->
-	<xsl:template name="substituteCEEUserName">
-		<xsl:variable name="originalUserName" select="."/>
-
-		<xsl:if test="$originalUserName != ''">
-			<xsl:for-each
-				select="document('userMappings.xml')/CCFMappingStructure/CEE2SFEEUserMapping">
-				<xsl:variable name="valueLookUpResult" as="xs:string"
-					select='key("mappingKey",$originalUserName)/@target' />
-				<xsl:choose>
-					<xsl:when test='$valueLookUpResult!=""'>
-						<xsl:value-of select='$valueLookUpResult' />
-					</xsl:when>
-					<xsl:otherwise>
-						<xsl:value-of
-							select='key("mappingKey","default")/@target' />
-					</xsl:otherwise>
-				</xsl:choose>
-			</xsl:for-each>
-		</xsl:if>
-	</xsl:template>
- -->
 
 <CCFMappingStructure>
 	<SFEE2CEEUserMapping>

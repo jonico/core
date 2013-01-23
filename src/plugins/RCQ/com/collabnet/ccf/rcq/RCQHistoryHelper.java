@@ -4,6 +4,7 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Formattable;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -12,6 +13,7 @@ import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactField.FieldActionValue;
 import com.collabnet.ccf.core.ga.GenericArtifactField.FieldValueTypeValue;
+import com.collabnet.ccf.core.utils.CCFUtils;
 import com.rational.clearquest.cqjni.CQEntity;
 import com.rational.clearquest.cqjni.CQException;
 import com.rational.clearquest.cqjni.CQHistories;
@@ -30,7 +32,8 @@ public class RCQHistoryHelper {
 	private String lastUser = null;
 	private String firstUser = null;
 	private String historyFieldName = null;
-	private CQHistories chapter = null;
+	private CQHistories recordCompleteHistory = null;
+	private DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd H:m:s");
 	
 	
 	public RCQHistoryHelper( CQEntity record , RCQConnection connection ) throws CQException, ParseException {
@@ -39,12 +42,11 @@ public class RCQHistoryHelper {
 		
 		CQHistoryFields book = record.GetHistoryFields();
 		CQHistoryField story = book.ItemByName( historyFieldName );
-		chapter = story.GetHistories();
-		DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd H:m:s");
+		recordCompleteHistory = story.GetHistories();
 
-		this.version = chapter.Count();
-		CQHistory lastPara = chapter.Item(this.version - 1);
-		CQHistory firstPara = chapter.Item(0);
+		this.version = recordCompleteHistory.Count();
+		CQHistory lastPara = recordCompleteHistory.Item(this.version - 1);
+		CQHistory firstPara = recordCompleteHistory.Item(0);
 
 		String[] lastParts = lastPara.GetValue().split(DELIMIT);
 		String[] firstParts = firstPara.GetValue().split(DELIMIT);
@@ -57,25 +59,48 @@ public class RCQHistoryHelper {
 		
 	}
 	
-	public void addHistoryEntries( GenericArtifact ga ) {
+	public void addHistoryEntries( GenericArtifact ga , String ccfUserName ) {
+		String dateString = null;
+		Date gaLastModified = null;
+		boolean updateIsFresh = false;
+		boolean entryIsFresh = false;
+
+		if ( ga.getSourceArtifactLastModifiedDate().equalsIgnoreCase("unknown") ) {
+			updateIsFresh = true;
+			log.debug("generic artifact doesn't know source's last modified by date, should be create scenario");
+		}
+		
 		try {
-			// from youngest to oldest
-			for ( long h = chapter.Count() - 1 ; h >= 0 ; h-- ) {
-				CQHistory hEntry = chapter.Item(h);
+			// sorted by age, oldest first (older entries are shown below younger ones in CTF)
+			for ( long h = 0 ; h < this.recordCompleteHistory.Count() ; h++ ) {
+				CQHistory hEntry = this.recordCompleteHistory.Item(h);
 				// Each history entry is delimited list of:
 				// timestamp, dateFormtted, user name, action name, old state, new state
 				String[] hParts = hEntry.GetValue().split(DELIMIT);
 				String history = String.format(
-					"History log: on %1$s, %2$s performed the action: %3$s" + nl + "The state changed from %4$s to %5$s" ,
+					"History log: on %1$s, %2$s performed the action: %3$s. " + nl + "The state changed from %4$s to %5$s" ,
 					hParts[1], hParts[2], hParts[3] , hParts[4] , hParts[5]);
-				// note: the mapping to TF comment field has to happen in the XSL
-				GenericArtifactField gaField = ga.addNewField(historyFieldName, "mandatoryField" );
-				gaField.setFieldValueType(FieldValueTypeValue.HTMLSTRING);
-				gaField.setFieldAction(FieldActionValue.APPEND);
-				gaField.setFieldValue(history);
+				// exclude older entries and ccfUser actions
+				if ( !updateIsFresh ) {
+					// there is a date given in ga, compare it with entryDate
+					dateString = hParts[1];
+					Date entryDate = (Date) formatter.parse(dateString);
+					dateString = ga.getSourceArtifactLastModifiedDate();
+					entryIsFresh = entryDate.after((Date) formatter.parse(dateString));
+					log.debug(String.format("history check entryIsFresh = %3$s. ClearQuest: %1$s, Source: %2$s" , hParts[1] , dateString, entryIsFresh));
+				}
+				if ( entryIsFresh && !ccfUserName.equalsIgnoreCase(hParts[2])) {
+					log.debug("adding history field: " + hEntry.GetValue());
+					GenericArtifactField gaField = ga.addNewField(historyFieldName, "mandatoryField" );
+					gaField.setFieldValueType(FieldValueTypeValue.HTMLSTRING);
+					gaField.setFieldAction(FieldActionValue.APPEND);
+					gaField.setFieldValue(history);
+				}
 			}
 		} catch (CQException e) {
 			log.error("Issue retrieving history entries", e);
+		} catch (ParseException e) {
+			log.error("could not cast Date from String '" + dateString + "'", e );
 		}
 	}
 	

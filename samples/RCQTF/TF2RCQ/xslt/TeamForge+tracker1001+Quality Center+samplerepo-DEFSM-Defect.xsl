@@ -15,7 +15,7 @@
 	xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:stringutil="xalan://com.collabnet.ccf.core.utils.StringUtils"
 	exclude-result-prefixes="xsl xs ccf stringutil" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://www.w3.org/1999/XSL/Transform http://www.w3.org/2007/schema-for-xslt20.xsd">
-
+<!--  happy voko -->
 	<!--  This key can be used for every  mapping -->
 	<xsl:key name='mappingKey' match='mapping' use='@teamforge' />
 
@@ -83,11 +83,15 @@
 	<!-- multiple comments will be inserted separately into the target field using separate edit sesssions -->
 	<!-- This is currently used to create notes?log entries using the 'Note_Entry" field -->
 	<xsl:template match='ccf:field[@fieldName="Comment Text"]'>
+		<xsl:variable name="tfDescription" as="xs:string" select="stringutil:stripHTML(string(.))" />
 		<field>
 			<xsl:copy-of select="@*"/>
 			<xsl:attribute name="fieldName">Note_Entry</xsl:attribute>
 			<xsl:attribute name="fieldType">notesField</xsl:attribute>
-			<xsl:value-of select="stringutil:stripHTML(string(.))"/>
+			<xsl:choose>
+				<xsl:when test="tfDescription='(No description in ClearQuest)'"></xsl:when>
+				<xsl:otherwise><xsl:value-of select="stringutil:stripHTML(string(.))"/></xsl:otherwise>
+			</xsl:choose>
 		</field>
 	</xsl:template>
 

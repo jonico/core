@@ -62,7 +62,7 @@ public class RCQAttachmentHandler {
 
 					// TODO: check the user  (if ccfUser, skip it)
 					
-					// TODO: should we and if zes, how can we identify the date of an attachment?
+					// TODO: should we and if yes, how can we identify the date of an attachment?
 					GenericArtifact ga = new GenericArtifact();
 					ga.setIncludesFieldMetaData(GenericArtifact.IncludesFieldMetaDataValue.FALSE);
 					ga.setArtifactAction(GenericArtifact.ArtifactActionValue.CREATE);

@@ -188,17 +188,19 @@ public class RCQHandler {
 			String revNumber = Long.toString( myStory.GetLastVersion() ); 
 			
 			boolean isResync = false;
-			boolean isIgnore =false;
+			boolean ignoreCCFUserUpdate =false;
 			
-			// identify if we|re getting a resync done by our ccf user
+			// identify if we're getting a resync done by our ccf user
 			if ( lastModifedBy.equalsIgnoreCase(ccfUserName) && ignoreConnectoreUserUpdates ) {
 				if (creationDate.after(lastModifedDate)) {
 					log.info(String
 							.format("resync is necessary, despite the artifact %s last being updated by the connector user",
-									recID));				
+									recID));
+					log.debug("		artifact created on " + creationDate.toString());
+					log.debug("		artfiact lasty modified on " + lastModifedDate.toString());
 					isResync = true;
 				} else {
-					isIgnore = true;
+					ignoreCCFUserUpdate = true;
 				}
 			}
 			
@@ -220,16 +222,16 @@ public class RCQHandler {
 				gaField.setFieldValue(value);
 			}
 			
-			if ( isIgnore ) {
+			if ( ignoreCCFUserUpdate ) {
 				genericArtifact.setArtifactAction( ArtifactActionValue.IGNORE );
-				log.debug("encountered IGNORE for " + recID );
+				log.debug("ignoring ccf user updates on record " + recID );
 			} else {
 				if ( isResync ) {
 					genericArtifact.setArtifactAction(ArtifactActionValue.RESYNC);
 					log.debug("encountered RESYNC for " + recID );
 				}
 				
-				myStory.addHistoryEntries(genericArtifact);
+				myStory.addHistoryEntries(genericArtifact, ccfUserName);
 			}
 			
 			genericArtifact.setSourceArtifactLastModifiedDate(GenericArtifactHelper.df.format(lastRecordModifedDate));
@@ -402,6 +404,10 @@ public class RCQHandler {
 			
 			// update comments
 			updateComments(ga, connection, record);
+			
+			
+			// get latest data from database
+			record.Reload();
 			
 			// update last modified and version 
 			RCQHistoryHelper versionInfo = new RCQHistoryHelper(record, connection);

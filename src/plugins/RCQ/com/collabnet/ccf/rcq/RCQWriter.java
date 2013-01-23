@@ -66,7 +66,7 @@ public class RCQWriter extends AbstractWriter<RCQConnection> {
 		try {
 			CQEntity result = rcqHandler.updateRecord(ga, connection);
 			if (result != null) {
-				log.info("Updated work item " + result.GetDisplayName() + " with data from "
+				log.info("Updated record " + result.GetDisplayName() + " with data from "
 						+ ga.getSourceArtifactId());
 			}
 		} catch (Exception e) {

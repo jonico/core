@@ -49,21 +49,53 @@
 	
 	<!-- Descrioption in cq and tf -->
 	<xsl:template match='ccf:field[@fieldName="Description"]'>
+		<xsl:variable name="cqDescription" as="xs:string" select="." />
 		<field>
 			<xsl:copy-of select="@*" />
 			<xsl:attribute name="fieldName">description</xsl:attribute>
 			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
-			<xsl:choose>
-				<xsl:when test="@fieldValueType='HTMLString'">
-					<xsl:value-of select="stringutil:stripHTML(string(.))" />
-				</xsl:when>
-				<xsl:otherwise>
-					<xsl:value-of select="." />
-				</xsl:otherwise>
-			</xsl:choose>
+					<xsl:choose>
+						<xsl:when test="$cqDescription = ''">(No description in ClearQuest)</xsl:when>
+						<xsl:otherwise>
+							<xsl:choose>
+								<xsl:when test="@fieldValueType='HTMLString'">
+									<xsl:value-of select="stringutil:stripHTML(string(.))" />
+								</xsl:when>
+								<xsl:otherwise>
+									<xsl:value-of select="." />
+								</xsl:otherwise>
+							</xsl:choose>
+						</xsl:otherwise>
+					</xsl:choose>
 		</field>
 	</xsl:template>
 
+	<!-- with the same values on both sides, the if tests are actually not necessary -->
+	<xsl:template match='ccf:field[@fieldName="Severity"]'>
+		<xsl:variable name="severityValue" as="xs:string" select="."/>
+		<field>
+			<xsl:copy-of select="@*"/>
+			<xsl:attribute name="fieldName">Severity</xsl:attribute>
+			<xsl:attribute name="fieldType">flexField</xsl:attribute>
+			<xsl:attribute name="fieldValueType">String</xsl:attribute>
+			<xsl:if test="$severityValue = '1-Critical'">
+				<xsl:text>1-Critical</xsl:text>
+			</xsl:if>
+			<xsl:if test="$severityValue = '2-Major'">
+				<xsl:text>2-Major</xsl:text>
+			</xsl:if>
+			<xsl:if test="$severityValue = '3-Average'">
+				<xsl:text>3-Average</xsl:text>
+			</xsl:if>
+			<xsl:if test="$severityValue = '4-Minor'">
+				<xsl:text>4-Minor</xsl:text>
+			</xsl:if>
+			<xsl:if test="$severityValue = '5-Enhancement'">
+				<xsl:text>5-Enhancement</xsl:text>
+			</xsl:if>
+		</field>
+	</xsl:template>
+	
 	
 	<xsl:template match='ccf:field[@fieldName="Priority"]'>
 		<xsl:variable name="prioValue" as="xs:string" select="." />
@@ -142,13 +174,16 @@
 	</xsl:template>
 
 	<!-- append Notes to the comments target field -->
-	<xsl:template match='ccf:field[@fieldName="Notes_Log"]'>
+	<xsl:template match='ccf:field[@fieldName="Note_Entry"]'>
 		<field>
 			<xsl:copy-of select="@*" />
 			<xsl:attribute name="fieldName">Comment Text</xsl:attribute>
 			<xsl:attribute name="fieldType">flexField</xsl:attribute>
 			<xsl:attribute name="fieldAction">append</xsl:attribute>
-Notes Log:
+			<xsl:variable name="noteEntry" as="xs:string" select="." />
+			<xsl:if test="$noteEntry != ''">
+Notes Log Entry:
+			</xsl:if>
 			<xsl:choose>
 				<xsl:when test="@fieldValueType='HTMLString'">
 					<xsl:value-of select="stringutil:stripHTML(string(.))" />

@@ -3,9 +3,14 @@ setlocal
 
 rem Copyright (c) 1999, 2006 Tanuki Software Inc.
 rem
-rem Java Service Wrapper general NT service uninstall script
+rem Java Service Wrapper general startup script
 rem
 
+rem
+rem Resolve the real path of the wrapper.exe
+rem  For non NT systems, the _REALPATH and _WRAPPER_CONF values
+rem  can be hard-coded below and the following test removed.
+rem
 if "%OS%"=="Windows_NT" goto nt
 echo This script only works with NT-based versions of Windows.
 goto :eof
@@ -38,14 +43,13 @@ rem
 :conf
 set _WRAPPER_CONF="%~f1"
 if not %_WRAPPER_CONF%=="" goto startup
-set _WRAPPER_CONF="%_REALPATH%sfee2qc.conf"
+set _WRAPPER_CONF="%_REALPATH%tf2rcq.conf"
 
 rem
-rem Uninstall the Wrapper as an NT service.
+rem Start the Wrapper
 rem
 :startup
-"%_WRAPPER_EXE%" -r %_WRAPPER_CONF%
-rem runas /user:Administrator "\"%_WRAPPER_EXE%\" -r \"%_WRAPPER_CONF%\""
+"%_WRAPPER_EXE%" -c %_WRAPPER_CONF%
 if not errorlevel 1 goto :eof
 pause
 
