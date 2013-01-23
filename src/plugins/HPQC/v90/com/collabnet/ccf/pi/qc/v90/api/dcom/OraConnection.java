@@ -29,7 +29,7 @@ public class OraConnection {
 	private static final String USERNAMEKEY   = "ora.jdbc.user.name";
 	private static final String PASSWORDKEY   = "ora.jdbc.user.password";
 	private static final String LOGGEDRSKEY   = "ora.jdbc.OraRecordSet.calllog.included";
-	private static final String ENCRYPTKEY    = "ora.jdb.encrypted";
+	private static final String ENCRYPTKEY    = "ora.jdbc.encrypted";
 	private static final String SCHEMAEXTKEY  = "ora.jdbc.schema.extension";
 
 	
@@ -42,7 +42,7 @@ public class OraConnection {
 	private boolean useEncryption = false;
 	private String schemaAppendix = null;
 	
-	private String myVersion = "0.9.2";
+	private String myVersion = "0.9.4";
 	
 	private Connection oraConnection = null;
 	private Statement oraEngine = null;
@@ -54,6 +54,26 @@ public class OraConnection {
 		"Error Code: " + e.getErrorCode() + nl +
 		"Message:    " + e.getMessage() + nl +
 		"SQL State:  " + e.getSQLState() + nl , e );
+	}
+	
+	
+	
+	private String getProp ( String key , String defaultValue ) {
+		String sRet = oraProps.getProperty(key);
+		if ( sRet == null || sRet.equalsIgnoreCase("") ) {
+			if ( defaultValue == null ) {
+				throw new OraPropertySettingException("Required property '" + key + "' not defined, please check property file!");
+			} else {
+				log.info("oracle jdbc setting '" + key + "' not listed. Using default value: '" + defaultValue + "'");
+				sRet = defaultValue;
+			}
+		}
+		return sRet;
+		
+	}
+	
+	private String getProp( String key ) {
+		return getProp ( key , null );
 	}
 	
 	public OraConnection( String domain , String project ) {
@@ -70,18 +90,18 @@ public class OraConnection {
 			log.error("Could not find oracle jdbc config file: is oracle.jdbc.properties present and in classpath?");
 		}
 		
-		driverClassName = oraProps.getProperty(DRIVERKEY);
-		connectionString = oraProps.getProperty(CONNECTIONKEY);
-		username = oraProps.getProperty(USERNAMEKEY);
-		password = oraProps.getProperty(PASSWORDKEY);
-		schemaAppendix = oraProps.getProperty(SCHEMAEXTKEY);
+		driverClassName = getProp(DRIVERKEY);
+		connectionString = getProp(CONNECTIONKEY);
+		username = getProp(USERNAMEKEY);
+		password = getProp(PASSWORDKEY);
+		schemaAppendix = getProp(SCHEMAEXTKEY);
 		schema = domain.toUpperCase() + "_" + project.toUpperCase() + schemaAppendix ;
-		loggedOraRecordMethods = oraProps.getProperty(LOGGEDRSKEY);
-		useEncryption = !oraProps.getProperty(ENCRYPTKEY).equals("0");
+		loggedOraRecordMethods = getProp(LOGGEDRSKEY , ".first.safeRelease" );
+		useEncryption = !getProp(ENCRYPTKEY , "1").equals("0");
 		
 		String passwordInfo = ( !password.equals("") ) ? "(given)" : "(not given)" ;
 		
-		log.info( "Oracle JDBC Patch version " + myVersion + nl +
+		log.info( nl + ">>>>>> Oracle JDBC Patch version " + myVersion + " <<<<<" + nl +
 				"succesfully loaded JDBC properties from " + url.getFile()  + nl + 
 				"Driver Class Name: " + driverClassName + nl + 
 				"Connection String: " + connectionString + nl + 
@@ -175,14 +195,20 @@ public class OraConnection {
 		if ( this.needsReconnect() ) 
 			this.reconnect();
 		
-		try {
-			logCaller("" , nl + "SQL: " + sql );
-			rs = this.oraEngine.executeQuery( sql );
-			log.debug("[" + this.hashCode() + "] successfully executed: " + sql);
-			orc = new OraRecordSet(rs , loggedOraRecordMethods , this.hashCode() );
-		} catch (SQLException e) {
-			lErr("Could not execute SQL " + sql , e );
-		} 
+		// FIX assuming: a second execute command will affect/reset a currently open recordset that was built with the same statement
+		// TODO refactor oraEngine into OraRecordSet, that will create it's own Statement upon init.
+		/**
+		 * current--> Alternative 1
+		 * Statement as private member pf RecordSet.
+		 * orc = new OraRecordSet(oraConnection, callerHash);
+		 * orc.executeSql(sql);
+		 * return orc;
+		 * 
+		 * Alternative 2: 
+		 * Always create a new oraEngine when executing SQL.
+		 * not easier as we'd need to track the Statement for safeRelease()
+		 */
+			orc = new OraRecordSet( oraConnection , schema , loggedOraRecordMethods , this.hashCode() , sql );
 		return orc;
 		
 	}

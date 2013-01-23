@@ -3,6 +3,9 @@ package com.collabnet.ccf.pi.qc.v90.api.dcom;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Connection;
+
 import org.apache.log4j.Logger;
 import com.collabnet.ccf.pi.qc.v90.api.IRecordSet;
 
@@ -11,44 +14,53 @@ public class OraRecordSet implements IRecordSet {
 	private static final long serialVersionUID = 1L;
 
 	private static final Logger log = Logger.getLogger(OraRecordSet.class);
-	private static String nl = System.getProperty("line.separator");
+	private static final String nl = System.getProperty("line.separator");
 
 	private ResultSet rs  = null;
 	private ResultSetMetaData meta = null;
 	private int recCount = -1;
 	private int colCount = -1;
 	private String loggedMethods = "";
+	private Statement myEngine;
 	
 	private int uid = 0;
+	private int rsid = 0;
 	
-	public OraRecordSet(ResultSet rsinit , String loggedmethods, int callerHash ) {
-		rs = rsinit;
+	public OraRecordSet(Connection jdbcConnection , String schema, String loggedmethods, int callerHash , String sql ) {
+		// create Engine
+		// switch schema
+
 		loggedMethods = loggedmethods;
+		
+		String what = "create Engine / Statement";
 		try {
+			myEngine = jdbcConnection.createStatement( ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY );
+			what = "switch to schema " + schema;
+			myEngine.execute( "ALTER SESSION SET CURRENT_SCHEMA = " + schema );
+			what = "execute query " + sql;
+			rs = myEngine.executeQuery(sql);
+			what = "get meta data for recordset";
 			meta = rs.getMetaData();
-		} catch (SQLException e) {
-			lErr("could not retrieve meta data", e);
-		}
-		
-		String current = "get record count";
-		try {
+			what = "get record count";
 			recCount = rs.last() ? rs.getRow() : 0;
+			what = "move to first record";
 			// mimics COM RecordSet behavior (these don't have a cursor beforeFirst, I assume)
-			 current = "move to first record";
-			 rs.first();
-		} catch (SQLException e) {
-			lErr("Could not " + current, e);
+			rs.first();
+
+			uid = this.hashCode();
+			rsid = ( rs == null ) ? 0 : rs.hashCode();
+		} catch ( SQLException e ) {
+			lErr("Could not " + what , e );
 		}
 		
-		uid = this.hashCode();
 		
-		log.debug( "instantiated OraRecordSet " + uid + " with " + recCount + " records; connectionHash: " + callerHash +"; logging: '" + loggedMethods + "'" );
+		log.debug( "instantiated OraRecordSet " + uid + " with " + recCount + " records; connectionHash: " + callerHash +"; result Set Hash: " + rsid + nl + "\t[" + uid + "] " + sql );
 	}
 	
 	private void logCaller(String args , String appendix ) {
 		StackTraceElement[] stack = Thread.currentThread().getStackTrace();
-
 		StackTraceElement sElem = stack[ 3 ];
+
 		if ( loggedMethods.contains(stack[ 2 ].getMethodName())) 
 			log.debug("[" + uid + "] " + stack[ 2 ].getMethodName() + "(" + args + ") called by " + 
 				sElem.getClassName() + "." + 
@@ -78,38 +90,20 @@ public class OraRecordSet implements IRecordSet {
 	@Override
 	public void safeRelease() {
 		logCaller("", nl);
+		String doing = "close recordset";
 		try {
+			
 			rs.close();
+			doing = "close Statement";
+			myEngine.close();
 		} catch (SQLException e) {
-			lErr("could not release/close recordset" , e);
+			lErr("could not " + doing , e);
 		}
 	}
 
 	
 	@Override
 	public int getRecordCount() {
-//		if (recCount == -1) {
-//			logCaller("", " --- initial call");
-//			String current = "save active row";
-//			try {
-//				int curRow = rs.getRow();
-//				current = "get record count (base: " + curRow + ")";
-//				recCount = rs.last() ? rs.getRow() : 0;
-//				current = "move back to active row #" + curRow;
-//				if ( curRow == 0 ) {
-//					rs.beforeFirst();
-//				} 
-//				if ( curRow > 0 ) {
-//					rs.absolute(curRow);
-//				}
-//				
-//				log.debug("getRecordCount initially retrieved count of " + recCount + " (base: " + curRow + ")");
-//			} catch (SQLException e) {
-//				lErr("Could not " + current, e);
-//			}
-//		} else {
-//			logCaller("", " ==> " + recCount );
-//		}
 		logCaller("" , " ==> " + recCount);
 		return recCount;
 	}	

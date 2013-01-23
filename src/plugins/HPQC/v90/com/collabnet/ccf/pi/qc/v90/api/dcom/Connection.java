@@ -221,6 +221,7 @@ public class Connection extends ActiveXComponent implements IConnection
 		public IRecordSet executeSQL(String sql) {
 			ICommand command = null;
 			try {
+				// TODO final version: load oc only if the properties file exists -- or if some setting in config.sys is done
 				// VZK
 //				log.debug("SQLExec: " + sql);
 //				command = getCommand();
