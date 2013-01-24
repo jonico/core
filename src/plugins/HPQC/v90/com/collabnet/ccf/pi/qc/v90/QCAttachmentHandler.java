@@ -65,6 +65,7 @@ public class QCAttachmentHandler {
 	 */
 	private QCGAHelper qcGAHelper = new QCGAHelper();
 	private long delayBeforeAttachmentDownload = 0;
+	private long maximumAttachmentRetryCount=5;
 
 	/**
 	 * Create the attachment for the defect identified by the incoming bugId in
@@ -509,7 +510,7 @@ public class QCAttachmentHandler {
 								try {
 									bugFactory = qcc.getBugFactory();
 									bug = bugFactory.getItem(entityId);
-									qcAttachmentFile = bug.retrieveAttachmentData(attachmentName, delayBeforeAttachmentDownload);
+									qcAttachmentFile = bug.retrieveAttachmentData(attachmentName, delayBeforeAttachmentDownload,maximumAttachmentRetryCount);
 								} catch (AttachmentUploadStillInProgressException e) {
 									throw e;
 								} catch (Exception e) {
@@ -531,7 +532,7 @@ public class QCAttachmentHandler {
 								try {
 									reqFactory = qcc.getRequirementsFactory();
 									req = reqFactory.getItem(entityId);
-									qcAttachmentFile = req.retrieveAttachmentData(attachmentName, delayBeforeAttachmentDownload);
+									qcAttachmentFile = req.retrieveAttachmentData(attachmentName, delayBeforeAttachmentDownload,maximumAttachmentRetryCount);
 								} catch (AttachmentUploadStillInProgressException e) {
 									throw e;
 								} catch (Exception e) {
@@ -859,4 +860,16 @@ public class QCAttachmentHandler {
 	public long getDelayBeforeAttachmentDownload() {
 		return delayBeforeAttachmentDownload;
 	}
+
+
+	public long getMaximumAttachmentRetryCount() {
+		return maximumAttachmentRetryCount;
+	}
+
+
+	public void setMaximumAttachmentRetryCount(long maximumAttachmentRetryCount) {
+		this.maximumAttachmentRetryCount = maximumAttachmentRetryCount;
+	}
+	
+	
 }

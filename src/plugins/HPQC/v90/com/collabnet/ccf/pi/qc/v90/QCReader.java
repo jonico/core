@@ -76,6 +76,16 @@ public class QCReader extends AbstractReader<IConnection> {
 	 */
 	private long delayBeforeAttachmentDownload = 0;
 	
+	/**
+	 * Because QC loops multiple times(until max retry count is reached)
+	 * for the same named multiple zero byte attachments,this property helps to configure 
+	 * the maximum retry count with user defined value in case if the loop needs to be reduced 
+	 * before the attachments are downloaded.
+	 */
+	private long maximumAttachmentRetryCount=5;
+	
+
+	
 	public QCReader() {
 		super();
 		// register clean up routine
@@ -714,6 +724,7 @@ public class QCReader extends AbstractReader<IConnection> {
 			artifactHandler = new QCHandler();
 			attachmentHandler = new QCAttachmentHandler();
 			attachmentHandler.setDelayBeforeAttachmentDownload(getDelayBeforeAttachmentDownload());
+			attachmentHandler.setMaximumAttachmentRetryCount(getMaximumAttachmentRetryCount());
 			qcGAHelper = new QCGAHelper();
 		}
 	}
@@ -966,6 +977,15 @@ public class QCReader extends AbstractReader<IConnection> {
 	 */
 	public long getDelayBeforeAttachmentDownload() {
 		return delayBeforeAttachmentDownload;
+	}
+
+	
+	public long getMaximumAttachmentRetryCount() {
+		return maximumAttachmentRetryCount;
+	}
+
+	public void setMaximumAttachmentRetryCount(long maximumAttachmentRetryCount) {
+		this.maximumAttachmentRetryCount = maximumAttachmentRetryCount;
 	}
 
 	private boolean ignoreConnectorUserUpdates = true;

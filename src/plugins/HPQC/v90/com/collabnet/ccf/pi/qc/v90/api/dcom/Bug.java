@@ -234,7 +234,7 @@ public class Bug extends ActiveXComponent implements IBug {
 		return att;
 	}
 
-	public File retrieveAttachmentData(String attachmentName, long delayBeforeDownloadingAttachment) {
+	public File retrieveAttachmentData(String attachmentName, long delayBeforeDownloadingAttachment,long maximumAttachmentRetryCount) {
 		// int maxAttachmentUploadWaitCount = 10;
 		// int waitCount = 0;
 		IFilter filter = new AttachmentFactory(getPropertyAsComponent("Attachments")).getFilter();
@@ -263,9 +263,10 @@ public class Bug extends ActiveXComponent implements IBug {
 			logger.debug("Attachment " + attachmentName + " has been read.");
 			File attachmentFile = new File(fileName);
 
-			// treat zero sized files like file not found but only do 5 retries at most in order to avoid
-			// issues with "real" zero sized attachments
-			boolean maxRetryCountReached = retryCount >= (size == 0 ? 5 : 5);
+			// treat zero sized files like file not found but only do 5 retries(default) at most in order to avoid
+			// issues with "real" zero sized attachments.Also maximumAttachmentRetryCount property is configurable with 
+			//user defined value to reduce the multiple loops in case of multiple same named zero byte attachments
+			boolean maxRetryCountReached = retryCount >= (size == 0 ? maximumAttachmentRetryCount : maximumAttachmentRetryCount);
 			if (!attachmentFile.exists() || (attachmentFile.length() == 0 && !maxRetryCountReached)) {
 				/*
 				 * If an attachment is still being uploaded when CCF tries to retrieve it,
@@ -305,7 +306,9 @@ public class Bug extends ActiveXComponent implements IBug {
 					throw new CCFRuntimeException(message + " ... giving up.");
 				}
 			}
-			attachmentRetryCount.remove(attachmentKey);
+			//Commenting out the below line to reduce the number of loops in case of multiple same named zero byte attachments download
+			//see artf7698 for more details
+			//attachmentRetryCount.remove(attachmentKey);
 			return attachmentFile;
 		}
 

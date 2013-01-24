@@ -291,6 +291,15 @@
 		 -->		
 		<property name="identityMappingDatabaseReader" ref="IndentityMappingDatabaseReaderQC2TF" /> 
 		
+		<!--
+			Below property use to configure the maximum attachment retry count
+			(count of five(5) by default) before the attachment is downloaded.
+			Configurable with user defined value to reduce the multiple loops 
+			in case of multiple same named zero byte attachments download
+		-->
+		<!-- <property name="maximumAttachmentRetryCount" value="5"></property> -->
+		
+		
 	</bean>
 	<bean id="QCConnectionManager" class="com.collabnet.ccf.core.eis.connection.ConnectionManager">
 		<!-- Please set the number of connections to the number of project mappings you have -->
