@@ -290,6 +290,7 @@
 		<property name="useStandardTimeoutHandlingCode" value="true" />
 		<property name="enableReloginAfterSessionTimeout" value="true" />
 		<property name="enableRetryAfterNetworkTimeout" value="true" />
+		<property name="maximumRetryWaitingTime" value="${ccf.direction.swp.max.retrywaitingtime}"/>
 	</bean>
 	<bean id="SWPConnectionFactory" class="com.collabnet.ccf.swp.SWPConnectionFactory">
 	</bean>
@@ -310,6 +311,7 @@
 		<property name="useStandardTimeoutHandlingCode" value="true" />
 		<property name="enableReloginAfterSessionTimeout" value="true" />
 		<property name="enableRetryAfterNetworkTimeout" value="true" />
+		<property name="maximumRetryWaitingTime" value="${ccf.direction.tf.max.retrywaitingtime}"/>
 	</bean>
 	<bean id="TFConnectionFactory" class="com.collabnet.ccf.teamforge.TFConnectionFactory">
 		<description>

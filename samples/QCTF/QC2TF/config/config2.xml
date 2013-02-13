@@ -191,7 +191,7 @@
 		<property name="whiteListedJavaFunctionCalls">
 			<list>
 				<value>stringutil:encodeHTMLToEntityReferences(string(.))</value>
-				<value>stringutil:stripHTML(string(.))</value>
+				<value>stringutil:stripHTML(string(.))</value>				
 			</list>
 		</property>
 		<property name="xsltDir" value="../../../fieldmappings/" />
@@ -297,9 +297,7 @@
 			Configurable with user defined value to reduce the multiple loops 
 			in case of multiple same named zero byte attachments download
 		-->
-		<!-- <property name="maximumAttachmentRetryCount" value="5"></property> -->
-		
-		
+		 <property name="maximumAttachmentRetryCount" value="${ccf.direction.qc.max.attachmentretrycount}"/> 
 	</bean>
 	<bean id="QCConnectionManager" class="com.collabnet.ccf.core.eis.connection.ConnectionManager">
 		<!-- Please set the number of connections to the number of project mappings you have -->
@@ -310,6 +308,7 @@
 		<property name="useStandardTimeoutHandlingCode" value="true" />
 		<property name="enableReloginAfterSessionTimeout" value="true" />
 		<property name="enableRetryAfterNetworkTimeout" value="true" />
+		<property name="maximumRetryWaitingTime" value="${ccf.direction.qc.max.retrywaitingtime}" />
 	</bean>
 	<bean id="QCConnectionFactory" class="com.collabnet.ccf.pi.qc.v90.QCConnectionFactory">
 	</bean>
@@ -330,6 +329,7 @@
 		<property name="useStandardTimeoutHandlingCode" value="true" />
 		<property name="enableReloginAfterSessionTimeout" value="true" />
 		<property name="enableRetryAfterNetworkTimeout" value="true" />
+		<property name="maximumRetryWaitingTime" value="${ccf.direction.tf.max.retrywaitingtime}"/>
 	</bean>
 	<bean id="TFConnectionFactory" class="com.collabnet.ccf.teamforge.TFConnectionFactory">
 		<description>

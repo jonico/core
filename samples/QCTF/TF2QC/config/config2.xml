@@ -224,7 +224,8 @@
 		<property name="useStandardTimeoutHandlingCode" value="true"/>
         <property name="enableReloginAfterSessionTimeout" value="true"/>
         <property name="enableRetryAfterNetworkTimeout" value="true"/>
-	</bean>
+        <property name="maximumRetryWaitingTime" value="${ccf.direction.qc.max.retrywaitingtime}"/>
+   </bean>
 	<bean id="QCConnectionFactory"
 		class="com.collabnet.ccf.pi.qc.v90.QCConnectionFactory">
 	</bean>
@@ -285,6 +286,7 @@
 		<property name="useStandardTimeoutHandlingCode" value="true"/>
         <property name="enableReloginAfterSessionTimeout" value="true"/>
         <property name="enableRetryAfterNetworkTimeout" value="true"/>
+        <property name="maximumRetryWaitingTime" value="${ccf.direction.tf.max.retrywaitingtime}"/>
 	</bean>
 
 	<bean id="TFConnectionFactory"
