@@ -185,6 +185,9 @@
 		<description>This processor validates whether the artifacts produced by the TF reader are generic artifact schema compliant.</description>
 		<property name="schemaURL" value="config/genericartifactschema.xsd" />
 	</bean>
+	
+	
+	
 	<bean id="TFTransformer" class="com.collabnet.ccf.core.transformer.DynamicXsltProcessor">
 		<description>The xsltDir specifies the directory in which the xsl files are contained. The naming conventions
 		for the xsl files need to be followed.
@@ -194,7 +197,8 @@
 		<property name="whiteListedJavaFunctionCalls">
 			<list>
 				<value>stringutil:encodeHTMLToEntityReferences(string(.))</value>
-				<value>stringutil:stripHTML(string(.))</value>				
+				<value>stringutil:stripHTML(string(.))</value>
+				<value>user:searchUser($user,$defaultuser)</value>			
 			</list>
 		</property>
 		<property name="xsltDir" value="../../../fieldmappings/" />
@@ -359,6 +363,22 @@
 		<property name="releaseIdFieldsContainFileReleasePackageName" value="${ccf.direction.qc.releaseIdfields.containfilerelease.packagename}" />
 		<property name="packageReleaseSeparatorString" value="${ccf.direction.package.release.separator}" />
 	</bean>
+	
+	<bean id="TFUserHandler" class="com.collabnet.ccf.core.utils.TFUserHandler"> 
+	<description>
+			This component verify the existence of TF username in the TF system.This class holds a static method which will be called from
+ 			custom XSLT snippet.Static method that take original username and defaultusername. Verifies the existence of username
+	 		in TF system.If exist;returns the username, else returns the defaultusername.This static method will be
+	 		called from custom xslt snippet from QC2TF and the same is whitelisted in config2.xml.For example ,If the QC assignedto
+	 		user exist in TF system, TF assignedTo field value will have the username, else a defaultusername will be 
+	 		assigned to TF assignedTo field value.
+	</description>
+	<property name="username" value="${ccf.landscape.tf.username}" />
+	<property name="password" value="${ccf.landscape.tf.password}" />
+	<property name="serverUrl" value="${ccf.participant.tf.url}" />
+	<property name="connectionManager" ref="TFConnectionManager" />
+	</bean> 
+	
 	<bean id="TFEntityService" class="com.collabnet.ccf.core.EntityService2">
 		<description>
 			This component is responsible for determining if the current artifact that is being
