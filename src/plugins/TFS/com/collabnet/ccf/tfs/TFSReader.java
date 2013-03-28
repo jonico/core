@@ -21,6 +21,7 @@ import com.collabnet.ccf.core.eis.connection.MaxConnectionsReachedException;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifact.ArtifactModeValue;
 import com.collabnet.ccf.core.ga.GenericArtifact.ArtifactTypeValue;
+import com.collabnet.ccf.core.utils.Obfuscator;
 import com.collabnet.ccf.tfs.TFSMetaData.TFSType;
 import com.microsoft.tfs.core.exceptions.TECoreException;
 
@@ -313,7 +314,7 @@ public class TFSReader extends AbstractReader<TFSConnection> {
 	}
 
 	public void setPassword(String password) {
-		this.password = password;
+		this.password = Obfuscator.deObfuscatePassword(password);
 	}
 
 	public String getServerUrl() {
