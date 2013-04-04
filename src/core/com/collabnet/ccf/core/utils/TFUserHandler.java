@@ -5,7 +5,11 @@ import java.rmi.RemoteException;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
-import com.collabnet.ccf.core.eis.connection.ConnectionManager;
+
+import com.collabnet.ccf.core.eis.connection.ConnectionException;
+import com.collabnet.ccf.core.eis.connection.ConnectionFactory;
+
+
 import com.collabnet.teamforge.api.Connection;
 import com.collabnet.teamforge.api.main.UserDO;
 
@@ -32,7 +36,7 @@ public  class TFUserHandler {
 
 	private static String username;
 	
-	private static ConnectionManager<Connection> connectionManager;
+	private static ConnectionFactory<Connection> connectionFactory;
 	
 	public  final static String PARAM_DELIMITER = ":";
 
@@ -46,39 +50,44 @@ public  class TFUserHandler {
 	 * @param userName
 	 * @param defaultUserName
 	 * @return verifiedUserName
+	 * @throws ConnectionException 
 	 */
 	public static String searchUser(String userName ,String defaultUserName){
-		//If the QC assignedto doesn't have any value,verifiedUserName will be null and this will be mapped to 'None' of the TF assignedTo
+		//If the QC assignedTo doesn't have any value,verifiedUserName will be null and this will be mapped to 'None' of the TF assignedTo
 		String verifiedUserName=null;
+		Connection connection = null;
 		try {
-			Connection connection = getConnection();
+			 connection = getConnection();
 			if(!userName.isEmpty()) {
 				UserDO userDO=connection.getTeamForgeClient().getUserData(userName);
-				if(userName.equals(userDO.getUsername())) {
-					verifiedUserName= userDO.getUsername();
-				}
+				verifiedUserName= userDO.getUsername();
 			}
-			
 		} catch (RemoteException e) {
 			verifiedUserName=defaultUserName;
-			log.error("Could not verify whether the given username exists "
+			log.debug("Username doesnot exist "
 					+ userName + ": " + e.getMessage());
+		}
+		catch (ConnectionException e) {
+			String cause = "Could not create connection to the TF system "
+					+ getServerUrl();
+			log.debug(cause, e);
+		}
+		finally {
+			try {
+				getConnectionFactory().closeConnection(connection);
+			} catch (ConnectionException e) {
+				String cause = "Could not create connection to the TF system "
+						+ getServerUrl();
+				log.debug(cause, e);
+			}	
 		}
 		return verifiedUserName;
 		
 	}
 	
-	public static  Connection getConnection(){
-		Connection connection = null;
-		try{
-			 connection =getConnectionManager().getConnectionFactory().createConnection("TF", "TF", "tracker", "tracker", getServerUrl(), getUsername() + PARAM_DELIMITER
-						+ getPassword(), getConnectionManager());
-		} catch (Exception e) {
-			String cause = "Could not create connection to the TF system "
-					+ getServerUrl();
-			log.error(cause, e);
-		}
-		return connection;
+	public static  Connection getConnection() throws ConnectionException{
+			 return getConnectionFactory().createConnection("TF", "TF", "tracker", "tracker", getServerUrl(), getUsername() + PARAM_DELIMITER
+						+ getPassword(), null);
 	}
 
 	public static String getServerUrl() {
@@ -105,11 +114,12 @@ public  class TFUserHandler {
 		TFUserHandler.username = username;
 	}
 	
-	public static  ConnectionManager<Connection> getConnectionManager() {
-		return connectionManager;
+
+	public static ConnectionFactory<Connection> getConnectionFactory() {
+		return connectionFactory;
 	}
 
-	public void setConnectionManager(ConnectionManager<Connection> connectionManager) {
-		TFUserHandler.connectionManager = connectionManager;
+	public void setConnectionFactory(ConnectionFactory<Connection> connectionFactory) {
+		TFUserHandler.connectionFactory = connectionFactory;
 	}
 }

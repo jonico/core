@@ -345,7 +345,7 @@
 			repository.
 			In this case TFConnectionFactory manages TF connections
 			objects.
-		</description>
+		</description> 
 	</bean>
 	<bean id="TFWriter" class="com.collabnet.ccf.teamforge.TFWriter">
 		<description>
@@ -376,8 +376,8 @@
 	<property name="username" value="${ccf.landscape.tf.username}" />
 	<property name="password" value="${ccf.landscape.tf.password}" />
 	<property name="serverUrl" value="${ccf.participant.tf.url}" />
-	<property name="connectionManager" ref="TFConnectionManager" />
-	</bean> 
+	<property name="connectionFactory" ref="TFConnectionFactory"/> 
+	</bean>  
 	
 	<bean id="TFEntityService" class="com.collabnet.ccf.core.EntityService2">
 		<description>
