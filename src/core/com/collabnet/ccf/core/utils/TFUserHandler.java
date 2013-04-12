@@ -39,6 +39,8 @@ public  class TFUserHandler {
 	private static ConnectionFactory<Connection> connectionFactory;
 	
 	public  final static String PARAM_DELIMITER = ":";
+	
+	private static Connection connection;
 
 	
 	/**
@@ -55,39 +57,45 @@ public  class TFUserHandler {
 	public static String searchUser(String userName ,String defaultUserName){
 		//If the QC assignedTo doesn't have any value,verifiedUserName will be null and this will be mapped to 'None' of the TF assignedTo
 		String verifiedUserName=null;
-		Connection connection = null;
+		
 		try {
-			 connection = getConnection();
+				connection = getConnection();
 			if(!userName.isEmpty()) {
 				UserDO userDO=connection.getTeamForgeClient().getUserData(userName);
 				verifiedUserName= userDO.getUsername();
 			}
 		} catch (RemoteException e) {
 			verifiedUserName=defaultUserName;
-			log.debug("Username doesnot exist "
+			log.debug("Username does not exist "
 					+ userName + ": " + e.getMessage());
 		}
 		catch (ConnectionException e) {
-			String cause = "Could not create connection to the TF system "
+			String cause = "Could not create connection to the TF system"
 					+ getServerUrl();
-			log.debug(cause, e);
-		}
-		finally {
-			try {
-				getConnectionFactory().closeConnection(connection);
-			} catch (ConnectionException e) {
-				String cause = "Could not create connection to the TF system "
-						+ getServerUrl();
-				log.debug(cause, e);
-			}	
+			log.warn(cause, e);
 		}
 		return verifiedUserName;
-		
 	}
 	
+	protected void finalize() throws Throwable{
+		try {
+				getConnectionFactory().closeConnection(connection);
+		} catch (ConnectionException e) {
+			String cause = "An error occured while trying to close the connection for "
+					+ getServerUrl();
+			log.warn(cause, e);
+		}
+	}
+	
+	
 	public static  Connection getConnection() throws ConnectionException{
-			 return getConnectionFactory().createConnection("TF", "TF", "tracker", "tracker", getServerUrl(), getUsername() + PARAM_DELIMITER
-						+ getPassword(), null);
+		Connection connectionVal;
+		if (connection != null && getConnectionFactory().isAlive(connection)) {
+			connectionVal= connection;
+		} else {
+			connectionVal = getConnectionFactory().createConnection("TF", "TF","tracker", "tracker", getServerUrl(),getUsername() + PARAM_DELIMITER + getPassword(), null);
+		}
+		return connectionVal;
 	}
 
 	public static String getServerUrl() {
