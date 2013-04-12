@@ -1,8 +1,10 @@
 package com.collabnet.ccf.rcq;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.SimpleTimeZone;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
@@ -170,6 +172,10 @@ public class RCQReader extends AbstractReader<RCQConnection> {
 		Date lastModifiedDate = this.getLastModifiedDate(syncInfo);
 		String lastSynchedArtifactId = this.getLastSourceArtifactId(syncInfo);
 
+		// replaced deprecated toGMTString()
+		SimpleDateFormat sdf = new SimpleDateFormat();
+		sdf.setTimeZone(new SimpleTimeZone(0, "GMT"));
+		
 		log.debug("----> member vars");
 		log.debug("ignoreConnectorUserUpdates : " + this.isIgnoreConnectorUserUpdates());
 		log.debug("password                   : " + this.password);
@@ -183,7 +189,7 @@ public class RCQReader extends AbstractReader<RCQConnection> {
 		log.debug("lastSynchronizedVersion : " + lastSynchronizedVersion);
 		log.debug("targetSystemId          : " + targetSystemId );
 		log.debug("targetRepositoryId      : " + targetRepositoryId);
-		log.debug("lastModifiedDate        : " + lastModifiedDate.toGMTString());
+		log.debug("lastModifiedDate        : " + sdf.format(lastModifiedDate) );
 		log.debug("lastSynchedArtifactId   : " + lastSynchedArtifactId);
 		
 		log.debug("-----> syncInfo String dump");

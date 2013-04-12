@@ -20,11 +20,18 @@
 	<property environment="env" />
 	<property name="junit.output.dir" value="junit-reports" />
 	<property name="debuglevel" value="source,lines,vars" />
-	<property name="target" value="1.5" />
-	<property name="source" value="1.5" />
+	<property name="target" value="1.7" />
+	<property name="source" value="1.7" />
 	<tstamp>
 		<format property="now" pattern="yyyy.MM.dd G 'at' HH:mm:ss z" locale="en,US" />
 	</tstamp>
+	<presetdef name="ccf.javac">
+		<javac includeantruntime="false" debug="true" debuglevel="${debuglevel}">
+			<compilerarg value="-Xlint:unchecked" /><!-- shows more details about unchecked calls -->
+			<compilerarg value="-Xlint:deprecation" /><!-- shows more details about deprecated calls -->
+		</javac>
+	</presetdef>
+	
 	<path id="CCFJ.classpath">
 		<pathelement location="build/classes" />
 		<pathelement location="src/core/lib/openadaptor-3.4/openadaptor.jar" />
@@ -108,10 +115,10 @@
 	<target name="build.core">
 		<antcall target="clean">
 		</antcall>
-		<javac debug="true" debuglevel="${debuglevel}" destdir="build/classes" source="${source}" target="${target}">
+		<ccf.javac  destdir="build/classes" source="${source}" target="${target}">
 			<src path="src/core" />
 			<classpath refid="CCFJ.classpath" />
-		</javac>
+		</ccf.javac>
 		<jar destfile="build/jars/CCFCoreV10.jar" manifest="build/MANIFEST.MF">
 			<fileset dir="build/classes">
 				<include name="**/*.class" />
@@ -122,7 +129,7 @@
 	<target name="build.sfee.plugin">
 		<antcall target="clean">
 		</antcall>
-		<javac debug="true" debuglevel="${debuglevel}" destdir="build/classes" source="${source}" target="${target}">
+		<ccf.javac  destdir="build/classes" source="${source}" target="${target}">
 			<src path="src/plugins/SFEE/v44" />
 			<classpath refid="CCFJ.classpath" />
 			<classpath>
@@ -131,7 +138,7 @@
 				</fileset>
 			</classpath>
 
-		</javac>
+		</ccf.javac>
 		<jar destfile="build/jars/CCFSFEEPluginV44.jar" manifest="build/MANIFEST.MF">
 			<fileset dir="build/classes">
 				<include name="**/*.class" />
@@ -142,7 +149,7 @@
 	<target name="build.tf.plugin">
 		<antcall target="clean">
 		</antcall>
-		<javac debug="true" debuglevel="${debuglevel}" destdir="build/classes" source="${source}" target="${target}">
+		<ccf.javac  destdir="build/classes" source="${source}" target="${target}">
 			<src path="src/plugins/TF/" />
 			<classpath refid="CCFJ.classpath" />
 			<classpath>
@@ -151,7 +158,7 @@
 				</fileset>
 			</classpath>
 
-		</javac>
+		</ccf.javac>
 		<jar destfile="build/jars/CCFTFPlugin.jar" manifest="build/MANIFEST.MF">
 			<fileset dir="build/classes">
 				<include name="**/*.class" />
@@ -162,7 +169,7 @@
 	<target name="build.swp.plugin">
 			<antcall target="clean">
 			</antcall>
-			<javac debug="true" debuglevel="${debuglevel}" destdir="build/classes" source="${source}" target="${target}">
+			<ccf.javac  destdir="build/classes" source="${source}" target="${target}">
 				<src path="src/plugins/SWP/" />
 				<classpath refid="CCFJ.classpath" />
 				<classpath>
@@ -170,7 +177,7 @@
 						<include name="CCFCoreV10.jar" />
 					</fileset>
 				</classpath>
-			</javac>
+			</ccf.javac>
 			<jar destfile="build/jars/CCFSWPPlugin.jar" manifest="build/MANIFEST.MF">
 				<fileset dir="build/classes">
 					<include name="**/*.class" />
@@ -179,28 +186,49 @@
 	</target>
 
 	<target name="build.tfs.plugin">
-				<antcall target="clean">
-				</antcall>
-				<javac debug="true" debuglevel="${debuglevel}" destdir="build/classes" source="${source}" target="${target}">
-					<src path="src/plugins/TFS/" />
-					<classpath refid="CCFJ.classpath" />
-					<classpath>
-						<fileset dir="build/jars">
-							<include name="CCFCoreV10.jar" />
-						</fileset>
-					</classpath>
-				</javac>
-				<jar destfile="build/jars/CCFTFSPlugin.jar" manifest="build/MANIFEST.MF">
-					<fileset dir="build/classes">
-						<include name="**/*.class" />
-					</fileset>
-				</jar>
-		</target>
+		<antcall target="clean">
+		</antcall>
+		<ccf.javac destdir="build/classes" source="${source}" target="${target}">
+			<src path="src/plugins/TFS/" />
+			<classpath refid="CCFJ.classpath" />
+			<classpath>
+				<fileset dir="build/jars">
+					<include name="CCFCoreV10.jar" />
+				</fileset>
+			</classpath>
+		</ccf.javac>
+		<jar destfile="build/jars/CCFTFSPlugin.jar" manifest="build/MANIFEST.MF">
+			<fileset dir="build/classes">
+				<include name="**/*.class" />
+			</fileset>
+		</jar>
+	</target>
+	<target name="build.rcq.plugin">
+		<antcall target="clean">
+		</antcall>
+		<ccf.javac  destdir="build/classes" source="${source}" target="${target}">
+			<src path="src/plugins/RCQ" />
+			<classpath refid="CCFJ.classpath" />
+			<classpath>
+				<fileset dir="build/jars">
+					<include name="CCFCoreV10.jar" />
+				</fileset>
+				<fileset dir="src/plugins/RCQ/lib">
+					<include name="cqjni.jar" />
+				</fileset>
+			</classpath>
+		</ccf.javac>
+		<jar destfile="build/jars/RCQCCFPlugin.jar" manifest="build/MANIFEST.MF">
+			<fileset dir="build/classes">
+				<include name="**/*.class" />
+			</fileset>
+		</jar>
+	</target>
 	
 	<target name="build.qc.plugin">
 		<antcall target="clean">
 		</antcall>
-		<javac debug="true" debuglevel="${debuglevel}" destdir="build/classes" source="${source}" target="${target}">
+		<ccf.javac  destdir="build/classes" source="${source}" target="${target}">
 			<src path="src/plugins/HPQC/v90" />
 			<classpath refid="CCFJ.classpath" />
 			<classpath>
@@ -211,7 +239,7 @@
 					<include name="jacob.jar" />
 				</fileset>
 			</classpath>
-		</javac>
+		</ccf.javac>
 		<jar destfile="build/jars/CCFQCPluginV90.jar" manifest="build/MANIFEST.MF">
 			<fileset dir="build/classes">
 				<include name="**/*.class" />
@@ -222,7 +250,7 @@
 	<target name="build.cee.plugin">
 		<antcall target="clean">
 		</antcall>
-		<javac debug="true" debuglevel="${debuglevel}" destdir="build/classes" source="${source}" target="${target}">
+		<ccf.javac  destdir="build/classes" source="${source}" target="${target}">
 			<src path="src/plugins/CEE/ProjectTracker/v50" />
 			<classpath refid="CCFJ.classpath" />
 			<classpath>
@@ -231,7 +259,7 @@
 				</fileset>
 			</classpath>
 
-		</javac>
+		</ccf.javac>
 		<jar destfile="build/jars/CCFCEEPluginV50.jar" manifest="build/MANIFEST.MF">
 			<fileset dir="build/classes">
 				<include name="**/*.class" />
@@ -243,7 +271,7 @@
 		<mkdir dir="samples/IntegrationScenarios/customReader/bin" />
 		<antcall target="clean">
 		</antcall>
-		<javac debug="true" debuglevel="${debuglevel}" destdir="samples/IntegrationScenarios/customReader/bin" source="${source}" target="${target}">
+		<ccf.javac  destdir="samples/IntegrationScenarios/customReader/bin" source="${source}" target="${target}">
 			<src path="samples/IntegrationScenarios/customReader/src" />
 			<classpath refid="CCFJ.classpath" />
 			<classpath>
@@ -252,7 +280,7 @@
 				</fileset>
 			</classpath>
 
-		</javac>
+		</ccf.javac>
 	</target>
 	
 	<target name="testHudson" depends="buildHudson,build.junit.tests, junitHudson">
@@ -261,14 +289,14 @@
 	<target name="build.junit.tests">
 		<antcall target="clean">
 		</antcall>
-		<javac debug="true" debuglevel="${debuglevel}" destdir="build/classes" source="${source}" target="${target}" srcdir="tests" excludes="**/QCReader*.java">
+		<ccf.javac  destdir="build/classes" source="${source}" target="${target}" srcdir="tests" excludes="**/QCReader*.java">
 			<classpath refid="CCFJ.classpath" />
 			<classpath>
 				<fileset dir="build/jars">
 					<include name="*.jar" />
 				</fileset>
 			</classpath>
-		</javac>
+		</ccf.javac>
 		<jar destfile="build/jars/CCF-JUnit-V10.jar" manifest="build/MANIFEST.MF">
 			<fileset dir="build/classes">
 				<include name="**/*.class" />
@@ -429,6 +457,32 @@
 		<delete dir="build/package" />
 	</target>
 
+	<target name="deployCCFMaster" depends="cleanup,buildHudson">
+		<property environment="env" />
+		<mkdir dir="deploy" />
+		<zip destfile="deploy/ccfcore.zip">
+			<zipfileset dir="build/package" filemode="755">
+				<include name="**/*.sh"/>
+				<include name="**/wrapper"/>
+				<include name="**/wrapper-linux*"/>
+			</zipfileset>
+			<zipfileset dir="build/package">
+				<include name="**"/>
+				<exclude name="**/*.sh"/>
+				<exclude name="**/wrapper"/>
+				<exclude name="**/wrapper-linux*"/>
+			</zipfileset>
+		</zip>
+		<delete dir="build/package" />
+		<copyfile dest="../CCFMaster/src/main/webapp/WEB-INF/ccfcore/ccfcore.zip" src="deploy/ccfcore.zip"/>
+		<copy todir="../CCFMaster/src/main/webapp/WEB-INF/ccfcore">
+			<fileset dir="deploy">
+				<include name="ccfcore.zip" />
+			</fileset>
+		</copy>
+	</target>
+
+	
 	<target name="create_installer">
 		<mkdir dir="production_installer" />
 		<exec executable="${env.NSIS_PATH}\makensis.exe">
@@ -437,26 +491,4 @@
 		<move file="installer\CollabNet Connector Framework-2.0.1-win32.exe" tofile="production_installer\Collabnet Connector Framework-1.5.1-win32.exe" />
 	</target>
 	
-	<target name="build.rcq.plugin">
-		<antcall target="clean">
-		</antcall>
-		<javac debug="true" debuglevel="${debuglevel}" destdir="build/classes" source="${source}" target="${target}">
-			<src path="src/plugins/RCQ" />
-			<classpath refid="CCFJ.classpath" />
-			<classpath>
-				<fileset dir="build/jars">
-					<include name="CCFCoreV10.jar" />
-				</fileset>
-				<fileset dir="src/plugins/RCQ/lib">
-					<include name="cqjni.jar" />
-				</fileset>
-			</classpath>
-		</javac>
-		<jar destfile="build/jars/RCQCCFPlugin.jar" manifest="build/MANIFEST.MF">
-			<fileset dir="build/classes">
-				<include name="**/*.class" />
-			</fileset>
-		</jar>
-	</target>
-
 </project>
