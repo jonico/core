@@ -51,7 +51,7 @@ public interface IBug extends ILifeCycle {
 	public void undo();
 	public void lockObject() throws DefectAlreadyLockedException;
 	public void unlockObject();
-	public File retrieveAttachmentData(String attachmentName, long delayBeforeAttachmentDownload);
+	public File retrieveAttachmentData(String attachmentName, long delayBeforeAttachmentDownload,long maximumAttachmentRetryCount);
 	public String createNewAttachment(String fileName, int type);
 	public String createNewAttachment(String filename, String description, int type);
 	boolean hasAttachments();

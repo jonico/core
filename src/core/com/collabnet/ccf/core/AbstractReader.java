@@ -104,6 +104,7 @@ public abstract class AbstractReader<T> extends Component implements
 	public static final long DEFAULT_MAX_ATTACHMENT_SIZE_PER_ARTIFACT = 10 * 1024 * 1024;
 	private long maxAttachmentSizePerArtifact = DEFAULT_MAX_ATTACHMENT_SIZE_PER_ARTIFACT;
 	private ConnectionManager<T> connectionManager;
+	private static final String ARTIFACT_TYPE_PLAIN_ARTIFACT = "plainArtifact";
 
 	/**
 	 * This variable is set to false until we get the first reoccuring
@@ -151,12 +152,37 @@ public abstract class AbstractReader<T> extends Component implements
 	 */
 	private boolean isCCF2xProcess = false;
 	
+	
+	/**
+	 * This (optional) property is used to retrieve the source/target artifact information from the 
+	 * identity mapping table.syncinfo of the artifact is updated with the artifact last modified time
+	 * and version fetched from the identity mapping.If this property is not set, no lookup will be
+	 * done in the identity mapping and Sync will be based on repository lastmodifiedtimestamp or version where 
+	 * the leftover comments/attachments are not shipped during stale artifact scenario.If this property is 
+	 * set Sync is based on Artifact last modified timestamp or last modified version and resolves the leftover 
+	 * comments/attachments during stale artifact scenario.
+	 */
 	private JDBCReadConnector identityMappingDatabaseReader = null;
 
+	
+	/**
+	 * Gets the (optional) data base reader that is used to retrieve the source/target artifact information 
+	 * from the identity mapping table.If this property is not set, no lookup will be
+	 * done in the identity mapping.
+	 * 
+	 * @return
+	 */
 	public JDBCReadConnector getIdentityMappingDatabaseReader() {
 		return identityMappingDatabaseReader;
 	}
 
+	/**
+	 * Sets the (optional) data base reader that is used to retrieve the source/target artifact information 
+	 * from the identity mapping table.If this property is not set, no lookup will be
+	 * done in the identity mapping.
+	 * 
+	 * @param identityMappingDatabaseReader
+	 */
 	public void setIdentityMappingDatabaseReader(
 			JDBCReadConnector identityMappingDatabaseReader) {
 		this.identityMappingDatabaseReader = identityMappingDatabaseReader;
@@ -613,9 +639,11 @@ public abstract class AbstractReader<T> extends Component implements
 								.getMaximumRetryWaitingTime();
 						try {
 							String artifactId = artifactState.getArtifactId();
-							if(getIdentityMappingDatabaseReader() != null){
-								//FIXME later: artifactType -plainArtifact is hard coded will  need to taken from enum value
-								updateSyncInfoFromIdentityMapping(syncInfo,artifactId,"plainArtifact");
+							if (getIdentityMappingDatabaseReader() != null) {
+							// Update the syncinfo with the artifact lastmodifiedtime and lastModifiedVersion
+							// fetched from the identity mapping.Modifying the syncinfo does not has any side effects
+							// because artifactsToBeShippedList has already been populated with the artifact data
+								updateSyncInfoFromIdentityMapping(syncInfo,artifactId,ARTIFACT_TYPE_PLAIN_ARTIFACT);
 							}
 							GenericArtifact artifactData = this
 									.getArtifactData(syncInfo, artifactId);
@@ -799,33 +827,44 @@ public abstract class AbstractReader<T> extends Component implements
 		return new Object[] {};
 	}
 
+	/**
+	 * Update the sync info with the artifact lastmodifiedtime and lastModifiedVersion fetched from the identity mapping.
+	 * This will makes reader to sync all the comments and attachment in an artifact, as Sync is based on Artifact last 
+	 * modified timestamp or last modified version as previously it was based on repository lastmodifiedtime or version. This will
+	 * resolve the leftover comments/attachments during stale scenario. 
+	 * 
+	 * @param syncInfo
+	 * @param artifactId
+	 * @param artifactType
+	 */
 	private void updateSyncInfoFromIdentityMapping(Document syncInfo, String artifactId,String artifactType) {
 		IOrderedMap inputParameters = new OrderedHashMap();
 		String lastModifiedTime = null,lastModifiedVersion = null;
-		if(!isCCF2xProcess) {
+		if (!isCCF2xProcess) {
 			inputParameters.add(this.getSourceSystemId(syncInfo));//sourceSystemId
 			inputParameters.add(this.getSourceRepositoryId(syncInfo));//sourceRepositoryId
 			inputParameters.add(this.getTargetSystemId(syncInfo));//targetSystemId
 			inputParameters.add(this.getTargetRepositoryId(syncInfo));//targetRepositoryId
-		}else{
+		} else {
 			inputParameters.add(this.getRepositoryMappingId(syncInfo));//repositorymappingid
 		}
-		inputParameters.add(artifactId);//sourceArtifactId
+		inputParameters.add(artifactId);//artifactId
 		inputParameters.add(artifactType);//artifactType
-		try{
+		try {
 			identityMappingDatabaseReader.connect();
 			Object[] resultSet = identityMappingDatabaseReader.next(inputParameters,1000);
-			if(resultSet == null || resultSet.length ==0){
+			if (resultSet == null || resultSet.length == 0) {
 				lastModifiedTime =  new Timestamp(0).toString();
 				lastModifiedVersion = "0";
-			}else{
+				log.debug("Setting the lastModifiedTime and lastModifiedVersion to default values");
+			} else {
 				IOrderedMap resultSetMap = (OrderedHashMap) resultSet[0];
 				Timestamp lastModifiedTimestamp = (java.sql.Timestamp) resultSetMap.get(1);
 				lastModifiedVersion = (String)resultSetMap.get(2);
 				lastModifiedTime = lastModifiedTimestamp.toString();
 			}
 			modifySyncInfo(syncInfo, lastModifiedTime, lastModifiedVersion);
-		}catch(Exception e){
+		} catch(Exception e) {
 			log.debug("Update syncInfo from IdentityMapping failed due to following exception ",e);
 		}
 	}
@@ -833,15 +872,12 @@ public abstract class AbstractReader<T> extends Component implements
 	private void modifySyncInfo(Document syncInfo, String lastArtifactModifiedTime,String lastArtifactModifiedVersion) {
 		Node lastModifiedDateNode = syncInfo.selectSingleNode(LAST_SOURCE_ARTIFACT_MODIFICATION_DATE);
 		Node lastModifiedVersionNode = syncInfo.selectSingleNode(LAST_SOURCE_ARTIFACT_VERSION);
-			if (lastModifiedDateNode != null && lastArtifactModifiedTime != null){
-				//lastArtifactModifiedTime - hope it comes in correct formatted string
+			if (lastModifiedDateNode != null && lastArtifactModifiedTime != null) {
 				lastModifiedDateNode.setText(lastArtifactModifiedTime);
 			}
-			if(lastModifiedVersionNode != null && lastArtifactModifiedVersion !=null){
-				//lastModifiedVersion - is set to empty string so QC and SWP reader  happy
+			if (lastModifiedVersionNode != null && lastArtifactModifiedVersion !=null) {
 				lastModifiedVersionNode.setText(lastArtifactModifiedVersion);
 			}
-		
 	}
 
 	/**

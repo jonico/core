@@ -56,6 +56,9 @@
 				<prop key="ccf.direction.qc.delaybefore.attachment.download">0</prop>
 				<prop key="ccf.direction.qc.releaseIdfields.containfilerelease.packagename">true</prop>
 				<prop key="ccf.direction.qc.max.attachmentsize">10485760</prop>
+				<prop key="ccf.direction.qc.max.retrywaitingtime">120000</prop>
+				<prop key="ccf.direction.tf.max.retrywaitingtime">120000</prop>
+				<prop key="ccf.direction.qc.max.attachmentretrycount">5</prop>
 			</props>
 		</property>
 		<property name="locations">
@@ -182,6 +185,9 @@
 		<description>This processor validates whether the artifacts produced by the TF reader are generic artifact schema compliant.</description>
 		<property name="schemaURL" value="config/genericartifactschema.xsd" />
 	</bean>
+	
+	
+	
 	<bean id="TFTransformer" class="com.collabnet.ccf.core.transformer.DynamicXsltProcessor">
 		<description>The xsltDir specifies the directory in which the xsl files are contained. The naming conventions
 		for the xsl files need to be followed.
@@ -192,6 +198,7 @@
 			<list>
 				<value>stringutil:encodeHTMLToEntityReferences(string(.))</value>
 				<value>stringutil:stripHTML(string(.))</value>
+				<value>user:searchUser($user,$defaultuser)</value>			
 			</list>
 		</property>
 		<property name="xsltDir" value="../../../fieldmappings/" />
@@ -291,6 +298,13 @@
 		 -->		
 		<property name="identityMappingDatabaseReader" ref="IndentityMappingDatabaseReaderQC2TF" /> 
 		
+		<!--
+			Below property use to configure the maximum attachment retry count
+			(count of five(5) by default) before the attachment is downloaded.
+			Configurable with user defined value to reduce the multiple loops 
+			in case of multiple same named zero byte attachments download
+		-->
+		 <property name="maximumAttachmentRetryCount" value="${ccf.direction.qc.max.attachmentretrycount}"/> 
 	</bean>
 	<bean id="QCConnectionManager" class="com.collabnet.ccf.core.eis.connection.ConnectionManager">
 		<!-- Please set the number of connections to the number of project mappings you have -->
@@ -301,6 +315,7 @@
 		<property name="useStandardTimeoutHandlingCode" value="true" />
 		<property name="enableReloginAfterSessionTimeout" value="true" />
 		<property name="enableRetryAfterNetworkTimeout" value="true" />
+		<property name="maximumRetryWaitingTime" value="${ccf.direction.qc.max.retrywaitingtime}" />
 	</bean>
 	<bean id="QCConnectionFactory" class="com.collabnet.ccf.pi.qc.v90.QCConnectionFactory">
 	</bean>
@@ -321,6 +336,7 @@
 		<property name="useStandardTimeoutHandlingCode" value="true" />
 		<property name="enableReloginAfterSessionTimeout" value="true" />
 		<property name="enableRetryAfterNetworkTimeout" value="true" />
+		<property name="maximumRetryWaitingTime" value="${ccf.direction.tf.max.retrywaitingtime}"/>
 	</bean>
 	<bean id="TFConnectionFactory" class="com.collabnet.ccf.teamforge.TFConnectionFactory">
 		<description>
@@ -329,7 +345,7 @@
 			repository.
 			In this case TFConnectionFactory manages TF connections
 			objects.
-		</description>
+		</description> 
 	</bean>
 	<bean id="TFWriter" class="com.collabnet.ccf.teamforge.TFWriter">
 		<description>
@@ -347,6 +363,22 @@
 		<property name="releaseIdFieldsContainFileReleasePackageName" value="${ccf.direction.qc.releaseIdfields.containfilerelease.packagename}" />
 		<property name="packageReleaseSeparatorString" value="${ccf.direction.package.release.separator}" />
 	</bean>
+	
+	<bean id="TFUserHandler" class="com.collabnet.ccf.core.utils.TFUserHandler"> 
+	<description>
+			This component verify the existence of TF username in the TF system.This class holds a static method which will be called from
+ 			custom XSLT snippet.Static method that take original username and defaultusername. Verifies the existence of username
+	 		in TF system.If exist;returns the username, else returns the defaultusername.This static method will be
+	 		called from custom xslt snippet from QC2TF and the same is whitelisted in config2.xml.For example ,If the QC assignedto
+	 		user exist in TF system, TF assignedTo field value will have the username, else a defaultusername will be 
+	 		assigned to TF assignedTo field value.
+	</description>
+	<property name="username" value="${ccf.landscape.tf.username}" />
+	<property name="password" value="${ccf.landscape.tf.password}" />
+	<property name="serverUrl" value="${ccf.participant.tf.url}" />
+	<property name="connectionFactory" ref="TFConnectionFactory"/> 
+	</bean>  
+	
 	<bean id="TFEntityService" class="com.collabnet.ccf.core.EntityService2">
 		<description>
 			This component is responsible for determining if the current artifact that is being

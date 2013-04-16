@@ -27,8 +27,10 @@
 	</tstamp>
 	<presetdef name="ccf.javac">
 		<javac includeantruntime="false" debug="true" debuglevel="${debuglevel}">
-			<compilerarg value="-Xlint:unchecked" /><!-- shows more details about unchecked calls -->
-			<compilerarg value="-Xlint:deprecation" /><!-- shows more details about deprecated calls -->
+			<!-- shows more details about unchecked calls -->
+			<!-- <compilerarg value="-Xlint:unchecked" /> -->
+			<!-- shows more details about deprecated calls -->
+			<compilerarg value="-Xlint:deprecation" />
 		</javac>
 	</presetdef>
 	
@@ -474,7 +476,7 @@
 			</zipfileset>
 		</zip>
 		<delete dir="build/package" />
-		<copyfile dest="../CCFMaster/src/main/webapp/WEB-INF/ccfcore/ccfcore.zip" src="deploy/ccfcore.zip"/>
+		<!-- <copyfile dest="../CCFMaster/src/main/webapp/WEB-INF/ccfcore/ccfcore.zip" src="deploy/ccfcore.zip"/> -->
 		<copy todir="../CCFMaster/src/main/webapp/WEB-INF/ccfcore">
 			<fileset dir="deploy">
 				<include name="ccfcore.zip" />
