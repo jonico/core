@@ -223,7 +223,7 @@
 	<target name="build.rqp.plugin">
 				<antcall target="clean">
 				</antcall>
-				<javac debug="true" debuglevel="${debuglevel}" destdir="build/package/bin" source="${source}" target="${target}">
+				<javac debug="true" debuglevel="${debuglevel}" destdir="build/classes" source="${source}" target="${target}">
 					<src path="src/plugins/RQP/" />
 					<classpath refid="CCFJ.classpath" />
 					<classpath>

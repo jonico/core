@@ -7,15 +7,11 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
-
 import com.collabnet.ccf.core.eis.connection.ConnectionManager;
 import com.collabnet.ccf.core.ga.AttachmentMetaData;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.utils.DateUtil;
-import com.collabnet.ccf.tfs.TFSAttachmentHandler;
 import com.microsoft.tfs.core.clients.workitem.files.Attachment;
 import com.rational.reqpro.rpx._AttrValue;
 import com.rational.reqpro.rpx._Requirement;
@@ -25,9 +21,6 @@ import com.rational.reqpro.rpx.enumRequirementLookups;
 import com.rational.reqpro.rpx.enumRequirementsWeights;
 
 public class RQPAttachmentHandler {
-
-	private static final Log log = LogFactory
-			.getLog(TFSAttachmentHandler.class);
 
 	@SuppressWarnings("unused")
 	private ConnectionManager<RQPConnection> connectionManager = null;
@@ -58,9 +51,6 @@ public class RQPAttachmentHandler {
 
 		boolean attached = true;
 		
-		log.info("An attachment will be created for artifact id "
-				+ targetParentArtifactId);
-
 		String attachmentName = GenericArtifactHelper.getStringFlexGAField(
 				AttachmentMetaData.ATTACHMENT_NAME, ga);
 		
@@ -90,7 +80,6 @@ public class RQPAttachmentHandler {
 				
 			}
 		} catch (IOException e) {
-			log.error("When attaching the file...", e);
 			e.printStackTrace();
 			attached = false;
 		}
@@ -103,10 +92,8 @@ public class RQPAttachmentHandler {
 				attachmentLastModifiedDate = (new SimpleDateFormat("yyyy-MM-dd hh:mm:ss")).parse(req.getVersionDateTime());
 				
 			} catch (ParseException e) {
-				log.error("When updating requiremnt attaching info...", e);
 				e.printStackTrace();
 			} catch (IOException e) {
-				log.error("When updating requiremnt attaching info...", e);
 				e.printStackTrace();
 			}
 
