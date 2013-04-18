@@ -63,6 +63,8 @@
 		<pathelement location="src/plugins/HPQC/lib/jacob/jacob.jar" />
 		<pathelement location="src/plugins/SWP/lib/ScrumWorks-soap.jar" />
 		<pathelement location="src/plugins/TFS/lib/com.microsoft.tfs.sdk-10.1.0.jar" />
+		<pathelement location="src/plugins/RQP/lib/RJCB.jar" />
+		<pathelement location="src/plugins/RQP/lib/proxies.jar" />
 	</path>
 
 	<target name="init">
@@ -77,8 +79,8 @@
 		<mkdir dir="build/classes" />
 	</target>
 	<target depends="clean" name="cleanall" />
-	<target depends="init, create.manifest, build.core, build.sfee.plugin, build.cee.plugin, build.qc.plugin, build.tf.plugin, build.swp.plugin, build.tfs.plugin, build.sample, package" name="build" />
-	<target depends="init, create.manifestHudson, build.core, build.sfee.plugin, build.cee.plugin, build.qc.plugin, build.tf.plugin, build.swp.plugin, build.tfs.plugin, build.sample, package" name="buildHudson" />
+	<target depends="init, create.manifest, build.core, build.sfee.plugin, build.cee.plugin, build.qc.plugin, build.tf.plugin, build.swp.plugin, build.rqp.plugin, build.tfs.plugin, build.sample, package" name="build" />
+	<target depends="init, create.manifestHudson, build.core, build.sfee.plugin, build.cee.plugin, build.qc.plugin, build.tf.plugin, build.swp.plugin, build.rqp.plugin, build.tfs.plugin, build.sample, package" name="buildHudson" />
 	<target name="create.manifest">
 		<property file="default.properties" />
 		<manifest file="build/MANIFEST.MF">
@@ -217,6 +219,25 @@
 			</fileset>
 		</jar>
 	</target>
+	
+	<target name="build.rqp.plugin">
+				<antcall target="clean">
+				</antcall>
+				<javac debug="true" debuglevel="${debuglevel}" destdir="build/package/bin" source="${source}" target="${target}">
+					<src path="src/plugins/RQP/" />
+					<classpath refid="CCFJ.classpath" />
+					<classpath>
+						<fileset dir="build/jars">
+							<include name="CCFCoreV10.jar" />
+						</fileset>
+					</classpath>
+				</javac>
+				<jar destfile="build/jars/CCFRQPPlugin.jar" manifest="build/MANIFEST.MF">
+					<fileset dir="build/classes">
+						<include name="**/*.class" />
+					</fileset>
+				</jar>
+	</target>	
 
 
 	<target name="build.cee.plugin">
@@ -340,6 +361,9 @@
 			<fileset dir="src/plugins/TFS/lib">
 				<include name="*.jar" />
 			</fileset>
+			<fileset dir="src/plugins/RQP/lib">
+				<include name="*" />
+			</fileset>			
 		</copy>
 		<!-- windows service wrapper libs: 32-bit only -->
 		<mkdir dir="build/package/lib/extlib/native/windows-x86-32" />
@@ -378,7 +402,7 @@
 				<include name="QCPT/**/*" />
 				<include name="TFSWP/**/*" />
 				<include name="TFSTF/**/*" />
-				<!-- <include name="QCSWP/**/*" /> -->
+				<include name="RQPTF/**/*" />
 			</fileset>
 		</copy>
 		<copy todir="build/package/fieldmappings">
