@@ -574,6 +574,7 @@ public class QCConfigHelper {
 
 				field = genericArtifact.addNewField(columnName,
 						GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
+				field.setAlternativeFieldName(fieldDisplayName);
 				field.setFieldValueType(fieldValueType);
 				field
 						.setMaxOccursValue(isMultiSelectField ? GenericArtifactField.UNBOUNDED
@@ -645,6 +646,7 @@ public class QCConfigHelper {
 				}
 				
 				field = genericArtifact.addNewField(columnName, GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
+				field.setAlternativeFieldName(fieldDisplayName);
 				field.setFieldValueType(fieldValueType);
 				field.setMaxOccursValue(isMultiSelectField?GenericArtifactField.UNBOUNDED:"1");
 
