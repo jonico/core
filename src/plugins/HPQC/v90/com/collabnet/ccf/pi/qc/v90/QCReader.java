@@ -307,7 +307,7 @@ public class QCReader extends AbstractReader<IConnection> {
 		try {
 			attachments = attachmentHandler.getLatestChangedAttachments(
 					attachments, connection,
-					isIgnoreConnectorUserUpdates() ? getUserName() : "",
+					isIgnoreConnectorUserUpdates() ? getUserName() : " ",
 					isIgnoreConnectorUserUpdates() ? getResyncUserName() : "",
 					transactionId, fromTimestamp, sourceArtifactId,
 					sourceRepositoryId, sourceRepositoryKind, sourceSystemId,
