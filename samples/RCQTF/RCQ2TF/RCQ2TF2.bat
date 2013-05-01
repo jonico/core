@@ -43,7 +43,7 @@ rem
 :conf
 set _WRAPPER_CONF="%~f1"
 if not %_WRAPPER_CONF%=="" goto startup
-set _WRAPPER_CONF="%_REALPATH%tf2rcq.conf"
+set _WRAPPER_CONF="%_REALPATH%rcq2tf2.conf"
 
 rem
 rem Start the Wrapper
