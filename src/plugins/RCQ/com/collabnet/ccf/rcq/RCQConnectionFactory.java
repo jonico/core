@@ -10,7 +10,7 @@ import com.rational.clearquest.cqjni.CQException;
 
 public class RCQConnectionFactory implements ConnectionFactory<RCQConnection> {
 
-	public static final String PARAM_DELIMITER = ":";
+	public static final String PARAM_DELIMITER = "<RCQDELIM>";
 	public static final String DOMAIM_DELIMETER = "\\\\";
 	private static final Log log = LogFactory.getLog(RCQConnectionFactory.class);
 	
@@ -35,7 +35,7 @@ public class RCQConnectionFactory implements ConnectionFactory<RCQConnection> {
 			return new RCQConnection(repositoryId, repositoryKind, connectionInfo,
 					credentialInfo, connectionManager);
 		} catch (Exception e) {
-			throw new ConnectionException("Could not connect to SWP", e);
+			throw new ConnectionException("Could not connect to RCQ", e);
 		}
 	}
 

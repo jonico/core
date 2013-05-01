@@ -25,7 +25,7 @@ public class RCQReader extends AbstractReader<RCQConnection> {
 
 	private String userName;
 	private String password;
-	private String serverUrl;
+	private String serverUrl = "RCQSERVERNOTUSED";
 	private boolean ignoreConnectorUserUpdates;
 	private RCQAttachmentHandler attachee = new RCQAttachmentHandler();
 
@@ -191,10 +191,6 @@ public class RCQReader extends AbstractReader<RCQConnection> {
 		log.debug("targetRepositoryId      : " + targetRepositoryId);
 		log.debug("lastModifiedDate        : " + sdf.format(lastModifiedDate) );
 		log.debug("lastSynchedArtifactId   : " + lastSynchedArtifactId);
-		
-		log.debug("-----> syncInfo String dump");
-		log.debug(syncInfo.toString() );
-		
 	}
 	
 	
@@ -209,6 +205,8 @@ public class RCQReader extends AbstractReader<RCQConnection> {
 		String targetRepositoryId = this.getTargetRepositoryId(syncInfo);
 		Date lastModifiedDate = this.getLastModifiedDate(syncInfo);
 		String lastSynchedArtifactId = this.getLastSourceArtifactId(syncInfo);
+		
+		logme(syncInfo);
 		
 		RCQConnection connection = null;
 		try {
@@ -289,10 +287,10 @@ public class RCQReader extends AbstractReader<RCQConnection> {
 		return serverUrl;
 	}
 
-	public void setServerUrl(String serverUrl) {
-		this.serverUrl = serverUrl;
-	}
-	
+//	public void setServerUrl(String serverUrl) {
+//		this.serverUrl = serverUrl;
+//	}
+//	
 	public RCQConnection connect(String systemId, String systemKind,
 			String repositoryId, String repositoryKind, String connectionInfo,
 			String credentialInfo) throws MaxConnectionsReachedException,
@@ -316,10 +314,10 @@ public class RCQReader extends AbstractReader<RCQConnection> {
 		super.validate(exceptions);
 
 
-		if (StringUtils.isEmpty(getServerUrl())) {
-			exceptions.add(new ValidationException(
-					"serverUrl-property not set", this));
-		}
+//		if (StringUtils.isEmpty(getServerUrl())) {
+//			exceptions.add(new ValidationException(
+//					"serverUrl-property not set", this));
+//		}
 		if (StringUtils.isEmpty(getUserName())) {
 			exceptions.add(new ValidationException("userName-property not set",
 					this));
@@ -335,6 +333,7 @@ public class RCQReader extends AbstractReader<RCQConnection> {
 			exceptions.add(new ValidationException(
 					"Could not initialize RCQHandler", this));
 		}
+		log.debug("Succesfully validated RCQ Handler");
 	}
 	private void populateSrcAndDestForAttachment(Document syncInfo,
 			GenericArtifact ga) {

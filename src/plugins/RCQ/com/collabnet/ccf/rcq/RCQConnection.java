@@ -2,6 +2,7 @@ package com.collabnet.ccf.rcq;
 
 import com.collabnet.ccf.core.CCFRuntimeException;
 import com.collabnet.ccf.core.eis.connection.ConnectionManager;
+import com.collabnet.ccf.core.utils.Obfuscator;
 import com.rational.clearquest.cqjni.CQException;
 import com.rational.clearquest.cqjni.CQSession;
 import org.apache.commons.lang.StringUtils;
@@ -15,6 +16,7 @@ public class RCQConnection {
 	private String schema;
 	private String database;
 	private String recType;
+	private String statusFieldName;
 	private String historyFieldName;
 	private String historyFormatString;
 	
@@ -44,21 +46,25 @@ public class RCQConnection {
 					password = "";
 				} else if (splitCredentials.length == 2) {
 					username = splitCredentials[0];
-					password = splitCredentials[1];
+					password = Obfuscator.deObfuscatePassword(splitCredentials[1]);
+					 
 				} else {
 					throw new IllegalArgumentException(
-							"Credentials info is not valid.");
+							"Credentials info is not valid: " + credentialInfo);
 				}
 			}
 		}
 
 		
-		// repository is managed in the gui, returning domain-project-reqtype == schema-database-RecordType, e.g. samplerepo-DEFSM-Defect;
+		// before 2.x repository was managed in the gui, returning domain-project-reqtype == schema-database-RecordType, e.g. samplerepo-DEFSM-Defect;
+		// with 2.2 repository ID is now four values: schema-database-issuetype-statusFieldName-HistoryFieldName, e.g samplerepo-DEFSM-Defect-status-history
 		String[] repoParts = parseRepositoryId( repositoryId );
 		
 		schema = repoParts[0];
 		database = repoParts[1];
 		recType = repoParts[2];
+		statusFieldName = repoParts[3];
+		historyFieldName = repoParts[4];
 		
 		setCqSession(new CQSession() );
 		
@@ -77,8 +83,8 @@ public class RCQConnection {
 	private String[] parseRepositoryId( String repositoryId ) {
 		
 		String[] ret = repositoryId.split("-");
-		if ( ret.length != 3 ) {
-			log.error("not enough or too many repository info!");
+		if ( ret.length != 5 ) {
+			log.error("not enough or too many repository info:");
 			for ( int i = 0 ; i < ret.length - 1 ; i++) {
 				log.error(i + ": " + ret[i]);
 			}
@@ -109,6 +115,10 @@ public class RCQConnection {
 	public String getHistoryFieldName() {
 		// FIXME make historyFieldName a parameter for the mapping, i.e. editable in project mapping properties
 		return "history";
+	}
+
+	public String getStatusFieldName() {
+		return statusFieldName;
 	}
 	
 	public String getRecType() {
