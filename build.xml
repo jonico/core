@@ -227,6 +227,14 @@
 		</jar>
 	</target>
 	
+	<target name="inject RCQ to local CCF2.2" depends="build.rcq.plugin">
+		<copy todir="../../../ccf2home/landscape1/lib">
+			<fileset dir="build/jars">
+				<include name="RCQCCFPlugin.jar" />
+			</fileset>
+		</copy>
+	</target>
+	
 	<target name="build.qc.plugin">
 		<antcall target="clean">
 		</antcall>
