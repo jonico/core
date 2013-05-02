@@ -46,7 +46,7 @@ public class RCQReader extends AbstractReader<RCQConnection> {
 		Date lastModifiedDate = this.getLastModifiedDate(syncInfo);
 		
 
-		log.debug("Getting attachments for artifact " + artifactId );
+		//log.debug("Getting attachments for artifact " + artifactId );
 		
 		RCQConnection connection = null;
 		
@@ -104,8 +104,8 @@ public class RCQReader extends AbstractReader<RCQConnection> {
 					getUserName() + RCQConnectionFactory.PARAM_DELIMITER
 					+ getPassword());
 		} catch (ConnectionException e) {
-			log.error("Cannot connect to clearquest! SeverUrl=" + serverUrl + ". Dumping syncInfo...");
 			logme(syncInfo);
+			log.error("Cannot connect to clearquest! SeverUrl=" + serverUrl + ". Dumping syncInfo...");
 		} catch (MaxConnectionsReachedException e) {
 			log.error("maximum connections opened. Wait and try again");
 		}
@@ -205,8 +205,6 @@ public class RCQReader extends AbstractReader<RCQConnection> {
 		String targetRepositoryId = this.getTargetRepositoryId(syncInfo);
 		Date lastModifiedDate = this.getLastModifiedDate(syncInfo);
 		String lastSynchedArtifactId = this.getLastSourceArtifactId(syncInfo);
-		
-		logme(syncInfo);
 		
 		RCQConnection connection = null;
 		try {

@@ -315,11 +315,11 @@ public class RCQWriter extends AbstractWriter<RCQConnection> {
 					this));
 		}
 
-		if (getServerUrl() == null) {
-			log.error("serverUrl-property not set");
-			exceptions.add(new ValidationException(
-					"serverUrl-property not set", this));
-		}
+//		if (getServerUrl() == null) {
+//			log.error("serverUrl-property not set");
+//			exceptions.add(new ValidationException(
+//					"serverUrl-property not set", this));
+//		}
 
 		rcqHandler = new RCQHandler();
 		

@@ -145,7 +145,7 @@ public class RCQHandler {
 			log.error("Problem getting data from resultset");
 			throw new CCFRuntimeException("issue getting data", e);
 		}
-		log.info("fetched " + (count - 1) + " records from clearquest, " + updates + " of them are updated after " + lastModifiedDate.toString());
+		//log.debug("fetched " + (count - 1) + " records from clearquest, " + updates + " of them are updated after " + lastModifiedDate.toString());
 //		log.debug("-----> Fetch Results:");
 		
 //		for ( ArtifactState aS : artifactStates ) {

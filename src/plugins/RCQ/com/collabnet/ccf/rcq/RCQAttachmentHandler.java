@@ -47,7 +47,9 @@ public class RCQAttachmentHandler {
 				
 				CQAttachments allAttachments = attachmentField.GetAttachments();
 				
-				log.debug("record " + recordId + " has " + allAttachments.Count() + " files attached" );
+				if ( allAttachments.Count() > 0 ) {
+					log.debug("record " + recordId + " has " + allAttachments.Count() + " files attached" );
+				}
 				
 				for ( long a = 0 ; a < allAttachments.Count() ; a++ ) {
 					CQAttachment attachment = allAttachments.Item(a);
