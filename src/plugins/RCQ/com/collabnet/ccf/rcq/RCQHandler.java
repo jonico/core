@@ -112,7 +112,21 @@ public class RCQHandler {
 			numResults =  results.ExecuteAndCountRecords();
 			
 		} catch (CQException e) {
-			log.error("could not run getChangedRecords query" , e);
+			if( e.getMessage().contains("\\bugbert.src\\cqobjectmodel\\cqresultset.cpp: line 505-SQLExecDirect: RETCODE=-1, State=S1001, Native Error=-1311") ) {
+				// MS Access too many open tables
+				connection.reconnect();
+				try {
+					results = connection.getCqSession().BuildResultSet(myQD);
+					results.EnableRecordCount();
+					numResults =  results.ExecuteAndCountRecords();
+					log.warn("had to reconnect to ms access!");
+				} catch (CQException e1) {
+					log.error("could not run getChangedRecords query after reconnecting ms access",e);
+					throw new CCFRuntimeException("problem querying clearquest" , e);
+				}
+				
+			}
+			log.error("could not run getChangedRecords query",e);
 			throw new CCFRuntimeException("problem querying clearquest" , e);
 		}
 		

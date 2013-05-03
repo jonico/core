@@ -188,7 +188,7 @@
 	<bean id="TFTransformer" class="com.collabnet.ccf.core.transformer.DynamicXsltProcessor">
 		<description>The xsltDir specifies the directory in which the xsl files are contained.
 		</description>
-		<property name="onlyAllowWhiteListedJavaFunctionCalls" value="true" />
+		<property name="onlyAllowWhiteListedJavaFunctionCalls" value="false" />
 		<property name="whiteListedJavaFunctionCalls">
 			<list></list>
 		</property>

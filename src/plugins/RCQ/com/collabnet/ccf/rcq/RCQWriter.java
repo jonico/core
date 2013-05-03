@@ -323,5 +323,6 @@ public class RCQWriter extends AbstractWriter<RCQConnection> {
 
 		rcqHandler = new RCQHandler();
 		
+		log.debug("Successfully validated RCQ Writer");
 	}
 }

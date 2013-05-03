@@ -66,6 +66,10 @@ public class RCQConnection {
 		statusFieldName = repoParts[3];
 		historyFieldName = repoParts[4];
 		
+		this.connect();
+	}
+
+	private void connect() {
 		setCqSession(new CQSession() );
 		
 		log.debug("logging in with username = " + username);
@@ -74,12 +78,11 @@ public class RCQConnection {
 		try {
 			cqs.UserLogon( username , password , database , schema );
 			log.debug("succesfully logged in!, FeatureLevel: " + cqs.GetSessionFeatureLevel());
-			log.info("Succesfully connected to ClearQuest.");
 		} catch (CQException e) {
 			log.debug("problem logging in...", e);		
 		}
 	}
-
+	
 	private String[] parseRepositoryId( String repositoryId ) {
 		
 		String[] ret = repositoryId.split("-");
@@ -104,11 +107,16 @@ public class RCQConnection {
 		}
 	}
 	
+	public void reconnect() {
+		this.shutdown();
+		this.connect();
+	}
+	
 	public CQSession getCqSession() {
 		return cqs;
 	}
 
-	public void setCqSession( CQSession cqs ) {
+	private void setCqSession( CQSession cqs ) {
 		this.cqs = cqs;
 	}
 	

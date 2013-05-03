@@ -331,7 +331,7 @@ public class RCQReader extends AbstractReader<RCQConnection> {
 			exceptions.add(new ValidationException(
 					"Could not initialize RCQHandler", this));
 		}
-		log.debug("Succesfully validated RCQ Handler");
+		log.debug("Succesfully validated RCQ Reader");
 	}
 	private void populateSrcAndDestForAttachment(Document syncInfo,
 			GenericArtifact ga) {

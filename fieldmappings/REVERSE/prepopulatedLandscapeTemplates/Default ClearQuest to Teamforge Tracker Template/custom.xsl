@@ -9,6 +9,8 @@
 		CONDITIONS OF ANY KIND, either express or implied. See the License for
 		the specific language governing permissions and limitations under the
 		License.
+		
+		ClearQuest -> Teamforge Basic fields
 	-->
 <xsl:stylesheet version="2.0"
 	xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:ccf="http://ccf.open.collab.net/GenericArtifactV1.0"
@@ -24,6 +26,46 @@
 	<xsl:template match="/ccf:artifact[@artifactType = 'attachment']">
 		<xsl:copy-of select="." />
 	</xsl:template>
+	<!--  ID field of clearquest goes in flexfield -->
+	<xsl:template match='ccf:field[@fieldName="id"]'>
+		<field>
+			<xsl:copy-of select="@*" />
+			<xsl:attribute name="fieldName">RCQ-ID</xsl:attribute>
+			<xsl:attribute name="fieldType">flexField</xsl:attribute>
+			<xsl:attribute name="fieldValueType">String</xsl:attribute>
+			<xsl:value-of select="." />
+		</field>
+	</xsl:template>
+
+	<!-- Headline in cq, Title in tf -->
+	<xsl:template match='ccf:field[@fieldName="headline"]'>
+		<field>
+			<xsl:copy-of select="@*" />
+			<xsl:attribute name="fieldName">title</xsl:attribute>
+			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
+			<xsl:value-of select="." />
+		</field>
+	</xsl:template>
+	
+	<!-- Descrioption in cq and tf -->
+	<xsl:template match='ccf:field[@fieldName="description"]'>
+		<field>
+			<xsl:copy-of select="@*" />
+			<xsl:attribute name="fieldName">Description</xsl:attribute>
+			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
+			<xsl:choose>
+				<xsl:when test="@fieldValueType='HTMLString'">
+					<xsl:value-of select="stringutil:stripHTML(string(.))" />
+				</xsl:when>
+				<xsl:otherwise>
+					<xsl:value-of select="." />
+				</xsl:otherwise>
+			</xsl:choose>
+		</field>
+	</xsl:template>
+
+<!--  currentlyl the rest is disabled -->
+<!--  
 	<xsl:template match='ccf:field[@fieldName="BG_ACTUAL_FIX_TIME"]'>
 		<field>
 			<xsl:copy-of select="@*" />
@@ -38,38 +80,6 @@
 			<xsl:attribute name="fieldName">estimatedHours</xsl:attribute>
 			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
 			<xsl:value-of select="." />
-		</field>
-	</xsl:template>
-	<xsl:template match='ccf:field[@fieldName="BG_BUG_ID"]'>
-		<field>
-			<xsl:copy-of select="@*" />
-			<xsl:attribute name="fieldName">QC-Id</xsl:attribute>
-			<xsl:attribute name="fieldType">flexField</xsl:attribute>
-			<xsl:attribute name="fieldValueType">String</xsl:attribute>
-			<xsl:value-of select="." />
-		</field>
-	</xsl:template>
-	<xsl:template match='ccf:field[@fieldName="BG_SUMMARY"]'>
-		<field>
-			<xsl:copy-of select="@*" />
-			<xsl:attribute name="fieldName">title</xsl:attribute>
-			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
-			<xsl:value-of select="." />
-		</field>
-	</xsl:template>
-	<xsl:template match='ccf:field[@fieldName="BG_DESCRIPTION"]'>
-		<field>
-			<xsl:copy-of select="@*" />
-			<xsl:attribute name="fieldName">description</xsl:attribute>
-			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
-			<xsl:choose>
-				<xsl:when test="@fieldValueType='HTMLString'">
-					<xsl:value-of select="stringutil:stripHTML(string(.))" />
-				</xsl:when>
-				<xsl:otherwise>
-					<xsl:value-of select="." />
-				</xsl:otherwise>
-			</xsl:choose>
 		</field>
 	</xsl:template>
 	<xsl:template match='ccf:field[@fieldName="BG_STATUS"]'>
@@ -220,5 +230,6 @@
 			</xsl:choose>
 		</field>
 	</xsl:template>
+	-->
 	<xsl:template match="text()" />
 </xsl:stylesheet>
