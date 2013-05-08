@@ -51,7 +51,7 @@
 				<prop key="ccf.direction.identityMapEventWaitTime">500</prop>
 				<prop key="ccf.direction.autorestartperiod">21600</prop>
 				<prop key="ccf.direction.rcq.sleepinterval">250</prop>
-				<prop key="ccf.direction.rcq.max.attachmentsize">10485760</prop>
+				<prop key="ccf.direction.RCQ.max.attachmentsize">10485760</prop>
 				<prop key="ccf.direction.rcq.max.retrywaitingtime">120000</prop>
 				<prop key="ccf.direction.tf.max.retrywaitingtime">120000</prop>
 			</props>
@@ -68,7 +68,7 @@
 				<value>classpath:landscape.properties</value>
 				<value>classpath:tf-participant.properties</value>
 				<!-- CCFMaster site/wide options -->
-				<value>classpath:generic-participant.properties</value>
+				<!-- <value>classpath:generic-participant.properties</value> -->
 				<!-- other site options, e.g. message template -->
 				<value>classpath:generic2tf.properties</value>
 				<value>classpath:sql.properties</value>
@@ -120,7 +120,7 @@
 		<property name="exceptionProcessor" ref="ExceptionConvertor"/><property name="metricsEnabled" value="true"/>
 	</bean>
 	<bean id="ExceptionConvertor"
-		class="com.collabnet.ccf.core.hospital.CCFExceptionToOrderedMapConvertor"><property name="logMessageTemplate" value="${ccf.direction.rcq.logmessagetemplate}" /><property name="timestampFormat" value="yyyy-MM-dd HH:mm:ss zzz"/><property name="onlyQuarantineGenericArtifacts" value="true"/>
+		class="com.collabnet.ccf.core.hospital.CCFExceptionToOrderedMapConvertor"><property name="logMessageTemplate" value="${ccf.direction.logmessagetemplate}" /><property name="timestampFormat" value="yyyy-MM-dd HH:mm:ss zzz"/><property name="onlyQuarantineGenericArtifacts" value="true"/>
 		<property name="adaptor" ref="RCQ2TF" />
 	</bean>
 	<bean id="HospitalWriter"
@@ -267,7 +267,7 @@
 <!-- 		<property name="resyncUserName" value="${ccf.landscape.rcq.resync.username}"></property> -->
 		<property name="connectionManager" ref="RCQConnectionManager"></property>
 		<property name="sleepInterval" value="${ccf.direction.rcq.sleepinterval}"></property>
-		<property name="maxAttachmentSizePerArtifact" value="${ccf.direction.rcq.max.attachmentsize}" />
+		<property name="maxAttachmentSizePerArtifact" value="${ccf.direction.RCQ.max.attachmentsize}" />
 		<!-- Let this restart every 6 hours -->
 		<property name="autoRestartPeriod" value="${ccf.direction.autorestartperiod}" />
 		<property name="shipAttachments" value="true" />		

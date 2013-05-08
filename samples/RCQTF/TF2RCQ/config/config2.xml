@@ -78,7 +78,7 @@
 				<value>classpath:immutableLandscape.properties</value>
 				<value>classpath:landscape.properties</value>
 				<value>classpath:tf-participant.properties</value>
-				<value>classpath:generic-participant.properties</value>
+				<!-- <value>classpath:generic-participant.properties</value> -->
 				<value>classpath:tf2generic.properties</value>
 				<value>classpath:sql.properties</value>
 			</list>
