@@ -215,6 +215,7 @@ public class QCRequirement extends Requirement implements IQCRequirement {
 								field
 										.setFieldValueType(GenericArtifactField.FieldValueTypeValue.USER);
 								field.setFieldValue(thisFieldValue);
+								field.setAlternativeFieldName(thisField.getAlternativeFieldName());
 							}
 						}
 					}
@@ -246,6 +247,7 @@ public class QCRequirement extends Requirement implements IQCRequirement {
 						field
 								.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
 						field.setFieldValue(fieldValues.get(sizeCnt));
+						field.setAlternativeFieldName(thisField.getAlternativeFieldName());
 					}
 
 				} else {

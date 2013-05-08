@@ -438,6 +438,14 @@ public class GenericArtifactHelper {
 				genericArtifactField.setNullValueSupported(nullValueSupported);
 				genericArtifactField
 						.setAlternativeFieldName(alternativeFieldName);
+			} else {
+				// try to set alternativeFieldName if set
+				String alternativeFieldName = getAttributeValueWithoutException(field,
+						ALTERNATIVE_FIELD_NAME);
+				if (alternativeFieldName != null) {
+					genericArtifactField
+					.setAlternativeFieldName(alternativeFieldName);
+				}
 			}
 
 			try {
@@ -606,6 +614,30 @@ public class GenericArtifactHelper {
 		if (attributeNode == null)
 			throw new GenericArtifactParsingException("Missing attribute: "
 					+ attributeName + " in element " + element.getName());
+		else
+			return attributeNode.getText();
+	}
+	
+	/**
+	 * Extracts the value of the supplied attribute without throwing an exception if missing
+	 * 
+	 * @param element
+	 *            element with attribute in question
+	 * @param attributeName
+	 *            name of the attribute in question
+	 * @return value of the attribute in question, null if attribute is missing
+	 * 
+	 */
+	private static String getAttributeValueWithoutException(Element element,
+			String attributeName)  {
+		// TODO Cash constructed XPath objects?
+		// XPath xpath = new DefaultXPath("@" + CCF_NAMESPACE_PREFIX + ":" +
+		// attributeName);
+		XPath xpath = new DefaultXPath("@" + attributeName);
+		xpath.setNamespaceURIs(ccfNamespaceMap);
+		Node attributeNode = xpath.selectSingleNode(element);
+		if (attributeNode == null)
+			return null;
 		else
 			return attributeNode.getText();
 	}
@@ -871,6 +903,7 @@ public class GenericArtifactHelper {
 					addAttribute(field, FIELD_VALUE_HAS_CHANGED,
 							FIELD_VALUE_HAS_CHANGED_FALSE);
 				}
+				
 
 				if (genericArtifact.getIncludesFieldMetaData().equals(
 						GenericArtifact.IncludesFieldMetaDataValue.TRUE)) {
@@ -880,6 +913,9 @@ public class GenericArtifactHelper {
 							.getMaxOccursValue());
 					addAttribute(field, NULL_VALUE_SUPPORTED,
 							genericArtifactField.getNullValueSupported());
+				} else if (!GenericArtifactField.VALUE_UNKNOWN.equals(genericArtifactField.getAlternativeFieldName())
+						&& genericArtifactField.getAlternativeFieldName() != null) {
+					// if the alternative field name field has been set, we will ship it even if the other meta data has not been populated
 					addAttribute(field, ALTERNATIVE_FIELD_NAME,
 							genericArtifactField.getAlternativeFieldName());
 				}

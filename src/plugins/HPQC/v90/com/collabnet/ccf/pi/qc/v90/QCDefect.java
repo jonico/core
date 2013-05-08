@@ -205,6 +205,7 @@ public class QCDefect extends Bug implements IQCDefect {
 												GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
 								field
 										.setFieldValueType(GenericArtifactField.FieldValueTypeValue.USER);
+								field.setAlternativeFieldName(thisField.getAlternativeFieldName());
 								field.setFieldValue(thisFieldValue);
 							}
 						}
@@ -234,6 +235,7 @@ public class QCDefect extends Bug implements IQCDefect {
 						field
 								.setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
 						field.setFieldValue(fieldValues.get(sizeCnt));
+						field.setAlternativeFieldName(thisField.getAlternativeFieldName());
 					}
 
 				} else {
