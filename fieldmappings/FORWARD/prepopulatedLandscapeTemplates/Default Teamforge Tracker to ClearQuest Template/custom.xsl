@@ -102,28 +102,28 @@
 		</field>
 	</xsl:template>
 	
-	<xsl:template match='ccf:field[@fieldName="priority"]'>
-		<xsl:variable name="priorityValue" as="xs:string" select="."/>
-		<field>
-			<xsl:copy-of select="@*"/>
-			<xsl:attribute name="fieldName">Priority</xsl:attribute>
-			<xsl:if test="$priorityValue = '5'">
-				<xsl:text>4-Low Priority</xsl:text>
-			</xsl:if>
-			<xsl:if test="$priorityValue = '4'">
-				<xsl:text>4-Low Priority</xsl:text>
-			</xsl:if>
-			<xsl:if test="$priorityValue = '3'">
-				<xsl:text>3-Normal Queue</xsl:text>
-			</xsl:if>
-			<xsl:if test="$priorityValue = '2'">
-				<xsl:text>2-Give High Attention</xsl:text>
-			</xsl:if>
-			<xsl:if test="$priorityValue = '1'">
-				<xsl:text>1-Resolve Immediately</xsl:text>
-			</xsl:if>
-		</field>
-	</xsl:template>
+<!-- 	<xsl:template match='ccf:field[@fieldName="priority"]'> -->
+<!-- 		<xsl:variable name="priorityValue" as="xs:string" select="."/> -->
+<!-- 		<field> -->
+<!-- 			<xsl:copy-of select="@*"/> -->
+<!-- 			<xsl:attribute name="fieldName">Priority</xsl:attribute> -->
+<!-- 			<xsl:if test="$priorityValue = '5'"> -->
+<!-- 				<xsl:text>4-Low Priority</xsl:text> -->
+<!-- 			</xsl:if> -->
+<!-- 			<xsl:if test="$priorityValue = '4'"> -->
+<!-- 				<xsl:text>4-Low Priority</xsl:text> -->
+<!-- 			</xsl:if> -->
+<!-- 			<xsl:if test="$priorityValue = '3'"> -->
+<!-- 				<xsl:text>3-Normal Queue</xsl:text> -->
+<!-- 			</xsl:if> -->
+<!-- 			<xsl:if test="$priorityValue = '2'"> -->
+<!-- 				<xsl:text>2-Give High Attention</xsl:text> -->
+<!-- 			</xsl:if> -->
+<!-- 			<xsl:if test="$priorityValue = '1'"> -->
+<!-- 				<xsl:text>1-Resolve Immediately</xsl:text> -->
+<!-- 			</xsl:if> -->
+<!-- 		</field> -->
+<!-- 	</xsl:template> -->
 
 	<!-- with the same values on both sides, the if tests are actually not necessary -->
 	<xsl:template match='ccf:field[@fieldName="Severity"]'>
@@ -162,7 +162,7 @@
 				<xsl:text>Submitted</xsl:text>
 			</xsl:if>
 			<xsl:if test="$statusValue = 'In Progress'">
-				<xsl:text>Assigned</xsl:text>
+				<xsl:text>UnderAnalysis</xsl:text>
 			</xsl:if>
 			<xsl:if test="$statusValue = 'Fixed'">
 				<xsl:text>Resolved</xsl:text>
@@ -187,27 +187,6 @@
 			</xsl:if>
 		</field>
 	</xsl:template>
-	
-<!-- 	<xsl:template match='ccf:field[@fieldName="Test Date"]'> -->
-<!-- 		<field> -->
-<!-- 			<xsl:copy-of select="@*"/> -->
-<!-- 			<xsl:attribute name="fieldName">BG_USER_03</xsl:attribute> -->
-<!-- 			<xsl:value-of select="."/> -->
-<!-- 		</field> -->
-<!-- 	</xsl:template> -->
-
-<!-- 	<xsl:template match='ccf:field[@fieldName="assignedTo"]'> -->
-<!-- 		<xsl:variable name="assignedTo" as="xs:string" select="."/> -->
-<!-- 		<field> -->
-<!-- 			<xsl:copy-of select="@*"/> -->
-<!-- 			<xsl:attribute name="fieldName">BG_RESPONSIBLE</xsl:attribute> -->
-<!-- 			<xsl:choose> -->
-<!-- 				<xsl:when test="$assignedTo != 'nobody'"> -->
-<!-- 					<xsl:value-of select="."/> -->
-<!-- 				</xsl:when> -->
-<!-- 			</xsl:choose> -->
-<!-- 		</field> -->
-<!-- 	</xsl:template> -->
 	
 	<xsl:template match="text()"/>
 	
