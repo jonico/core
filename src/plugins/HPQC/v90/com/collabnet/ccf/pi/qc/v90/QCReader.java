@@ -84,6 +84,8 @@ public class QCReader extends AbstractReader<IConnection> {
 	 */
 	private long maximumAttachmentRetryCount=5;
 	
+	private boolean useAlternativeFieldName = false;
+	
 
 	
 	public QCReader() {
@@ -721,7 +723,7 @@ public class QCReader extends AbstractReader<IConnection> {
 		}
 
 		if (exceptions.size() == 0) {
-			artifactHandler = new QCHandler();
+			artifactHandler = new QCHandler(isUseAlternativeFieldName());
 			attachmentHandler = new QCAttachmentHandler();
 			attachmentHandler.setDelayBeforeAttachmentDownload(getDelayBeforeAttachmentDownload());
 			attachmentHandler.setMaximumAttachmentRetryCount(getMaximumAttachmentRetryCount());
@@ -989,4 +991,14 @@ public class QCReader extends AbstractReader<IConnection> {
 	}
 
 	private boolean ignoreConnectorUserUpdates = true;
+
+
+
+	public boolean isUseAlternativeFieldName() {
+		return useAlternativeFieldName;
+	}
+
+	public void setUseAlternativeFieldName(boolean useAlternativeFieldName) {
+		this.useAlternativeFieldName = useAlternativeFieldName;
+	}
 }

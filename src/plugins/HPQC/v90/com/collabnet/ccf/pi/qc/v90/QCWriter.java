@@ -108,6 +108,8 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 	 * True by default. This can be set to false for backwards compatible behavior.
 	 */
 	private boolean preserveSemanticallyUnchangedHTMLFieldValues = true;
+	
+	private boolean useAlternativeFieldName = false;
 
 	public QCWriter() {
 		super();
@@ -664,7 +666,7 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 		}
 
 		if (exceptions.size() == 0) {
-			artifactHandler = new QCHandler();
+			artifactHandler = new QCHandler(isUseAlternativeFieldName());
 			attachmentHandler = new QCAttachmentHandler();
 			qcGAHelper = new QCGAHelper();
 		}
@@ -1433,6 +1435,14 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 	 */
 	public boolean getPreserveSemanticallyUnchangedHTMLFieldValues() {
 		return preserveSemanticallyUnchangedHTMLFieldValues;
+	}
+
+	public boolean isUseAlternativeFieldName() {
+		return useAlternativeFieldName;
+	}
+
+	public void setUseAlternativeFieldName(boolean useAlternativeFieldName) {
+		this.useAlternativeFieldName = useAlternativeFieldName;
 	}
 
 }

@@ -437,6 +437,7 @@
 		<property name="connectionManager" ref="QCConnectionManager"></property>
 		<property name="immediatelyQuarantineLockedDefects" value="true"/>
 		<property name="preserveSemanticallyUnchangedHTMLFieldValues" value="true"/>
+		<property name="useAlternativeFieldName" value="false"/>
 	</bean>
 
 	<bean id="IdentityMappingTableInserter"

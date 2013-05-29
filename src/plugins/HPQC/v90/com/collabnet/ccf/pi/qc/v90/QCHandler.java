@@ -60,6 +60,7 @@ import com.jacob.com.ComFailException;
  */
 public class QCHandler {
 
+	private boolean useAlternativeFieldName = false;
 	private static final String QC11_LAST_TAGS = "\r\n</body>\r\n</html>";
 	private static final String QC11_FIRST_TAGS = "<html>\r\n<body>\r\n";
 	private static final String FIRST_TAGS = "<html><body>";
@@ -74,6 +75,18 @@ public class QCHandler {
 	private final static String QC_BG_VTS = "BG_VTS";
 	private final static String QC_RQ_VTS = "RQ_VTS";
 	private final static String UNDERSCORE_STRING = "<font color=\"#000080\"><b>________________________________________</b></font>";
+	
+	public QCHandler(boolean useAlternativeFieldName) {
+		setUseAlternativeFieldName(useAlternativeFieldName);
+	}
+
+	public boolean isUseAlternativeFieldName() {
+		return useAlternativeFieldName;
+	}
+
+	public void setUseAlternativeFieldName(boolean useAlternativeFieldName) {
+		this.useAlternativeFieldName = useAlternativeFieldName;
+	}
 
 	public static String getRequirementTypeTechnicalId(IConnection qcc,
 			String requirementTypeName) {
@@ -151,6 +164,12 @@ public class QCHandler {
 		boolean movedLock = false;
 		boolean wasPartialUpdate = false;
 		boolean shouldPerformCompleteUpdate = genericArtifact.getArtifactMode() != GenericArtifact.ArtifactModeValue.CHANGEDFIELDSONLY;
+		Map<String,String> qcRequirementSchemaMetadataCache = null;
+		if(isUseAlternativeFieldName()){
+			String technicalReleaseTypeId = QCConnectionFactory.extractTechnicalRequirementsType(genericArtifact.getTargetRepositoryId(),qcc);
+			GenericArtifact genericArtifactQCSchemaFields = QCConfigHelper.getSchemaFieldsForRequirement(qcc, technicalReleaseTypeId);
+			qcRequirementSchemaMetadataCache = getQCSchemaMetadataMap(genericArtifactQCSchemaFields);
+		}
 
 		IVersionControl versionControl = null;
 		boolean versionControlSupported = false;
@@ -194,6 +213,10 @@ public class QCHandler {
 			for (GenericArtifactField thisField : allFields) {
 
 				String fieldName = thisField.getFieldName();
+				if(isUseAlternativeFieldName()){
+					fieldName = getTechnicalNameForQCField(qcRequirementSchemaMetadataCache, fieldName);
+				}
+				
 				if (!shouldPerformCompleteUpdate
 						&& !QCConfigHelper.QC_RQ_DEV_COMMENTS.equals(fieldName)) {
 					// we already updated the other fields before and are only
@@ -228,8 +251,7 @@ public class QCHandler {
 						} else {
 							wasPartialUpdate = true;
 						}
-					} else if (!(allFieldNames.contains(thisField
-							.getFieldName()))
+					} else if (!(allFieldNames.contains(fieldName))
 							&& !(fieldName.equals(QC_REQ_ID)
 									|| fieldName.equals(QC_RQ_ATTACHMENT)
 									|| fieldName.equals(QC_RQ_VTS) || fieldName
@@ -453,6 +475,11 @@ public class QCHandler {
 		boolean movedLock = false;
 		boolean wasPartialUpdate = false;
 		boolean shouldPerformCompleteUpdate = genericArtifact.getArtifactMode() != GenericArtifact.ArtifactModeValue.CHANGEDFIELDSONLY;
+		Map<String,String> qcDefectSchemaMetadataCache = null;
+		if(isUseAlternativeFieldName()){
+			GenericArtifact genericArtifactQCSchemaFields = QCConfigHelper.getSchemaFieldsForDefect(qcc);
+			qcDefectSchemaMetadataCache = getQCSchemaMetadataMap(genericArtifactQCSchemaFields);
+		}
 		try {
 			bugFactory = qcc.getBugFactory();
 			bug = bugFactory.getItem(bugId);
@@ -486,6 +513,9 @@ public class QCHandler {
 			for (GenericArtifactField thisField : allFields) {
 
 				String fieldName = thisField.getFieldName();
+				if(isUseAlternativeFieldName()){
+					fieldName = getTechnicalNameForQCField(qcDefectSchemaMetadataCache, fieldName);
+				}
 				if (!shouldPerformCompleteUpdate
 						&& !QCConfigHelper.QC_BG_DEV_COMMENTS.equals(fieldName)) {
 					// we already updated the other fields before and are only
@@ -520,8 +550,7 @@ public class QCHandler {
 						} else {
 							wasPartialUpdate = true;
 						}
-					} else if (!(allFieldNames.contains(thisField
-							.getFieldName()))
+					} else if (!(allFieldNames.contains(fieldName))
 							&& !(fieldName.equals(QC_BUG_ID)
 									|| fieldName.equals(QC_BUG_VER_STAMP)
 									|| fieldName.equals(QC_BG_ATTACHMENT)
@@ -735,6 +764,11 @@ public class QCHandler {
 
 		IBugFactory bugFactory = null;
 		IBug bug = null;
+		Map<String,String> qcDefectSchemaMetadataCache = null;
+		if(isUseAlternativeFieldName()){
+			GenericArtifact genericArtifactQCSchemaFields = QCConfigHelper.getSchemaFieldsForDefect(qcc);
+			qcDefectSchemaMetadataCache = getQCSchemaMetadataMap(genericArtifactQCSchemaFields);
+		}		
 		try {
 			bugFactory = qcc.getBugFactory();
 			bug = bugFactory.addItem(null);
@@ -745,6 +779,10 @@ public class QCHandler {
 
 				GenericArtifactField thisField = allFields.get(cnt);
 				String fieldName = thisField.getFieldName();
+				if(isUseAlternativeFieldName()){
+					fieldName = getTechnicalNameForQCField(qcDefectSchemaMetadataCache, fieldName);
+				}
+				
 				if (thisField.getFieldValueType().equals(
 						GenericArtifactField.FieldValueTypeValue.DATE)
 						|| thisField
@@ -773,7 +811,7 @@ public class QCHandler {
 				 * BG_VTS Has some conditions: 1. BG_SUBJECT -> Can be set to a
 				 * Valid value that is present in the list.
 				 */
-				if (!(allFieldNames.contains(allFields.get(cnt).getFieldName()))
+				if (!(allFieldNames.contains(fieldName))
 						&& !(fieldName.equals(QC_BUG_ID)
 								|| fieldName.equals(QC_BUG_VER_STAMP)
 								|| fieldName.equals(QC_BG_ATTACHMENT)
@@ -1466,6 +1504,13 @@ public class QCHandler {
 		IRequirement req = null;
 		IVersionControl versionControl = null;
 		boolean versionControlSupported = false;
+		Map<String,String> qcRequirementSchemaMetadataCache = null;
+		if(isUseAlternativeFieldName()){
+			String technicalReleaseTypeId = QCHandler.getRequirementTypeTechnicalId(qcc, informalRequirementsType);
+			GenericArtifact genericArtifactQCSchemaFields = QCConfigHelper.getSchemaFieldsForRequirement(qcc, technicalReleaseTypeId);
+			qcRequirementSchemaMetadataCache = getQCSchemaMetadataMap(genericArtifactQCSchemaFields);
+		}
+		
 		try {
 			reqFactory = qcc.getRequirementsFactory();
 			if (parentArtifactId != null
@@ -1494,6 +1539,10 @@ public class QCHandler {
 
 				GenericArtifactField thisField = allFields.get(cnt);
 				String fieldName = thisField.getFieldName();
+				if(isUseAlternativeFieldName()){
+					fieldName = getTechnicalNameForQCField(qcRequirementSchemaMetadataCache, fieldName);
+				}
+				
 				if (thisField.getFieldValueType().equals(
 						GenericArtifactField.FieldValueTypeValue.DATE)
 						|| thisField
@@ -1517,7 +1566,7 @@ public class QCHandler {
 					}
 				}
 
-				if (!(allFieldNames.contains(allFields.get(cnt).getFieldName()))
+				if (!(allFieldNames.contains(fieldName))
 						&& !(fieldName.equals(QC_REQ_ID)
 								|| fieldName.equals(QC_RQ_ATTACHMENT)
 								|| fieldName.equals(QC_RQ_VTS) || fieldName
@@ -1584,5 +1633,22 @@ public class QCHandler {
 		}
 
 		return new QCRequirement((Requirement) req);
+	}
+	
+	private Map<String,String> getQCSchemaMetadataMap(GenericArtifact genericArtifactQCSchemaFields){
+		Map<String,String> metadataMap = new HashMap<String,String>();
+		List<GenericArtifactField> allGenericFields = genericArtifactQCSchemaFields.getAllGenericArtifactFields();
+		for(GenericArtifactField field : allGenericFields){
+			metadataMap.put(field.getAlternativeFieldName(), field.getFieldName());
+		}
+		return metadataMap;		
+	}
+
+	private String getTechnicalNameForQCField(Map<String, String> qcDefectSchemaMetadataCache,String fieldName) {
+		String technicalName = qcDefectSchemaMetadataCache.get(fieldName);
+		if(technicalName == null){
+			technicalName = fieldName;
+		}
+		return technicalName;
 	}
 }

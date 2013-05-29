@@ -261,6 +261,7 @@
 			increase this value.
 		-->
 		<property name="delayBeforeAttachmentDownload" value="0" />
+		<property name="useAlternativeFieldName" value="false"/>
 		
 	</bean>
 	<bean id="QCConnectionManager" class="com.collabnet.ccf.core.eis.connection.ConnectionManager">
