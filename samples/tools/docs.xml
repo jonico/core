@@ -68,7 +68,8 @@
   	<include name="QCTFOLD/**/*.xml" />
     <include name="QCPT/**/*.xml" />
   	<include name="TFSWP/**/config*.xml" />
-  	<include name="TFSTF/**/config.xml" />
+  	<include name="JIRATF/**/config*.xml" />
+  	<include name="TFSTF/**/config*.xml" />
     <exclude name="**/input/*.xml" />
     <exclude name="**/output/*.xml" />
     <exclude name="**/xslt/*.xml" />
@@ -270,7 +271,8 @@
 			<include name="QCTFOLD/**/*.xml" />
 			<include name="QCPT/**/*.xml" />
 			<include name="TFSWP/**/config*.xml" />
-			<include name="TFSTF/**/config.xml" />
+			<include name="TFSTF/**/config*.xml" />
+			<include name="JIRATF/**/config*.xml" />
     		<exclude name="**/input/*.xml" />
     		<exclude name="**/output/*.xml" />
     		<exclude name="**/xslt/*.xml" />
