@@ -65,6 +65,7 @@
 				<prop key="ccf.direction.tf.max.attachmentsize">10485760</prop>
 				<prop key="ccf.direction.swp.max.retrywaitingtime">120000</prop>
 				<prop key="ccf.direction.tf.max.retrywaitingtime">120000</prop>
+				<prop key="ccf.direction.tf.ignore.connectorupdates">true</prop>
 			</props>
 		</property>
 		<property name="locations">
@@ -245,7 +246,8 @@
 		<!-- Below property -"identityMappingDatabaseReader" makes reader to read all the comments and attachment;
 			 Since CCF Sync is based on Artifact specific last modified timestamp or last modified version
 		 -->		
-		<property name="identityMappingDatabaseReader" ref="IndentityMappingDatabaseReaderTF2SWP" /> 
+		<property name="identityMappingDatabaseReader" ref="IndentityMappingDatabaseReaderTF2SWP" />
+		<property name="ignoreConnectorUserUpdates" value="${ccf.direction.tf.ignore.connectorupdates}"/>
 	</bean>
 	<bean id="TFConnectionManager"
 		class="com.collabnet.ccf.core.eis.connection.ConnectionManager">

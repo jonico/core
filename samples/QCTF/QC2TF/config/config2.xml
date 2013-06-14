@@ -59,6 +59,8 @@
 				<prop key="ccf.direction.qc.max.retrywaitingtime">120000</prop>
 				<prop key="ccf.direction.tf.max.retrywaitingtime">120000</prop>
 				<prop key="ccf.direction.qc.max.attachmentretrycount">5</prop>
+				<prop key="ccf.direction.usealternativefieldname">false</prop>
+				<prop key="ccf.direction.qc.ignore.connectorupdates">true</prop>
 			</props>
 		</property>
 		<property name="locations">
@@ -305,6 +307,8 @@
 			in case of multiple same named zero byte attachments download
 		-->
 		 <property name="maximumAttachmentRetryCount" value="${ccf.direction.qc.max.attachmentretrycount}"/> 
+		 <property name="useAlternativeFieldName" value="${ccf.direction.usealternativefieldname}"/>
+		 <property name="ignoreConnectorUserUpdates" value="${ccf.direction.qc.ignore.connectorupdates}"/>
 	</bean>
 	<bean id="QCConnectionManager" class="com.collabnet.ccf.core.eis.connection.ConnectionManager">
 		<!-- Please set the number of connections to the number of project mappings you have -->

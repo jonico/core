@@ -71,6 +71,8 @@
 				<prop key="ccf.direction.tf.max.attachmentsize">10485760</prop>
 				<prop key="ccf.direction.qc.max.retrywaitingtime">120000</prop>
 				<prop key="ccf.direction.tf.max.retrywaitingtime">120000</prop>
+				<prop key="ccf.direction.usealternativefieldname">false</prop>
+				<prop key="ccf.direction.tf.ignore.connectorupdates">true</prop>
 			</props>
 		</property>
 		<property name="locations">
@@ -269,6 +271,7 @@
 			 Since CCF Sync is based on Artifact specific last modified timestamp or last modified version
 		 -->		
 		<property name="identityMappingDatabaseReader" ref="IndentityMappingDatabaseReaderTF2QC" /> 
+		<property name="ignoreConnectorUserUpdates" value="${ccf.direction.tf.ignore.connectorupdates}"/>
 	</bean>
 	<bean id="TFConnectionManager"
 		class="com.collabnet.ccf.core.eis.connection.ConnectionManager">
@@ -473,6 +476,7 @@
 		<property name="connectionManager" ref="QCConnectionManager"></property>
 		<property name="immediatelyQuarantineLockedDefects" value="true"/>
 		<property name="preserveSemanticallyUnchangedHTMLFieldValues" value="true"/>
+		<property name="useAlternativeFieldName" value="${ccf.direction.usealternativefieldname}"/>
 	</bean>
 
 	<bean id="IdentityMappingTableInserter"
