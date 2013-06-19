@@ -477,6 +477,7 @@
 		<property name="immediatelyQuarantineLockedDefects" value="true"/>
 		<property name="preserveSemanticallyUnchangedHTMLFieldValues" value="true"/>
 		<property name="useAlternativeFieldName" value="${ccf.direction.usealternativefieldname}"/>
+		<property name="quarantineIfQCReportsPermissionDenied" value="false"/>
 	</bean>
 
 	<bean id="IdentityMappingTableInserter"

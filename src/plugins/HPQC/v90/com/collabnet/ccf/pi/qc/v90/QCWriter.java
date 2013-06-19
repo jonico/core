@@ -110,6 +110,8 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 	private boolean preserveSemanticallyUnchangedHTMLFieldValues = true;
 	
 	private boolean useAlternativeFieldName = false;
+	
+	private boolean quarantineIfQCReportsPermissionDenied = false;
 
 	public QCWriter() {
 		super();
@@ -1244,7 +1246,7 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 			} else if (message.contains("Project is not connected")) {
 				connectionErrorOccured = true;
 				this.reInitCOM();
-			}  else if (message.contains("You do not have the required permissions to execute this action.")) {
+			}  else if (message.contains("You do not have the required permissions to execute this action.") && !isQuarantineIfQCReportsPermissionDenied()) {
 				connectionErrorOccured = true;
 				this.reInitCOM();
 			} else if (message.contains("Failed to Run Query")) {
@@ -1443,6 +1445,15 @@ public class QCWriter extends AbstractWriter<IConnection> implements
 
 	public void setUseAlternativeFieldName(boolean useAlternativeFieldName) {
 		this.useAlternativeFieldName = useAlternativeFieldName;
+	}
+
+	public boolean isQuarantineIfQCReportsPermissionDenied() {
+		return quarantineIfQCReportsPermissionDenied;
+	}
+
+	public void setQuarantineIfQCReportsPermissionDenied(
+			boolean quarantineIfQCReportsPermissionDenied) {
+		this.quarantineIfQCReportsPermissionDenied = quarantineIfQCReportsPermissionDenied;
 	}
 
 }
