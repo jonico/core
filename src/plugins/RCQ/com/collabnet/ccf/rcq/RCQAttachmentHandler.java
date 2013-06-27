@@ -54,6 +54,7 @@ public class RCQAttachmentHandler {
 				for ( long a = 0 ; a < allAttachments.Count() ; a++ ) {
 					CQAttachment attachment = allAttachments.Item(a);
 					String fileName = attachment.GetFileName();
+					
 					log.debug("\t #" + a + ": " + fileName);
 					Long fileSize = attachment.GetFileSize();
 					
@@ -122,7 +123,7 @@ public class RCQAttachmentHandler {
 					// save the file into a temporary directory
 					File tempFile = null;
 					try {
-						tempFile = File.createTempFile( recordId + "_attachment_" + a + "_" + fileName,"rcq");
+						tempFile = File.createTempFile( recordId + "_attachment_" + a + "_" + fileName, "rcq");
 					} catch (IOException e) {
 						log.error("Could not create temporary attachment file" , e);
 					}

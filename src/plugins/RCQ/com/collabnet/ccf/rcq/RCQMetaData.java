@@ -12,10 +12,8 @@ public class RCQMetaData {
 	
 	public static GenericArtifactField.FieldValueTypeValue getFieldType ( long n ) {
 		/*
-		possible fieldType values from cQ online docs:
-		http://publib.boulder.ibm.com/infocenter/cqhelp/v7r0m1/topic/com.ibm.rational.clearquest.apiref.doc/r_entity_getfieldtype.htm
 		
-		Constant	Value	Description
+		Constant			#	Description
 		_SHORT_STRING		1	Simple text field (255 character limit)
 		_MULTILINE_STRING	2	Arbitrarily long text
 		_INT				3	Integer
@@ -64,5 +62,4 @@ public class RCQMetaData {
 		}
 		return FieldValueTypeValue.STRING;
 	}
-	
 }

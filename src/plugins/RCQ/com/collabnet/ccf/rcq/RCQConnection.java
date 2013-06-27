@@ -5,7 +5,6 @@ import com.collabnet.ccf.core.eis.connection.ConnectionManager;
 import com.collabnet.ccf.core.utils.Obfuscator;
 import com.rational.clearquest.cqjni.CQException;
 import com.rational.clearquest.cqjni.CQSession;
-import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -17,7 +16,9 @@ public class RCQConnection {
 	private String database;
 	private String recType;
 	private String statusFieldName;
+	@SuppressWarnings("unused")
 	private String historyFieldName;
+	@SuppressWarnings("unused")
 	private String historyFormatString;
 	
 	private CQSession cqs;

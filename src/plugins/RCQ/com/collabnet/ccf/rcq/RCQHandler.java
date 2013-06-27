@@ -5,16 +5,11 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.Map.Entry;
 
-import org.apache.commons.collections.map.HashedMap;
-import org.apache.commons.lang.time.DateFormatUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
@@ -25,21 +20,14 @@ import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifact.ArtifactActionValue;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactField.FieldActionValue;
-import com.collabnet.ccf.core.ga.GenericArtifactField.FieldValueTypeValue;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
-import com.collabnet.ccf.core.hospital.CCFExceptionToOrderedMapConvertor;
 import com.collabnet.ccf.core.utils.DateUtil;
-
+import com.collabnet.ccf.rcq.enums.RCQBoolOperators;
+import com.collabnet.ccf.rcq.enums.RCQCompOperators;
 import com.rational.clearquest.cqjni.CQEntity;
 import com.rational.clearquest.cqjni.CQEntityDef;
 import com.rational.clearquest.cqjni.CQException;
 import com.rational.clearquest.cqjni.CQFieldInfo;
-import com.rational.clearquest.cqjni.CQFieldInfos;
-import com.rational.clearquest.cqjni.CQFilterNode;
-import com.rational.clearquest.cqjni.CQHistories;
-import com.rational.clearquest.cqjni.CQHistory;
-import com.rational.clearquest.cqjni.CQHistoryField;
-import com.rational.clearquest.cqjni.CQHistoryFields;
 import com.rational.clearquest.cqjni.CQQueryDef;
 import com.rational.clearquest.cqjni.CQQueryFilterNode;
 import com.rational.clearquest.cqjni.CQResultSet;
@@ -47,19 +35,8 @@ import com.rational.clearquest.cqjni.CQSession;
 
 public class RCQHandler {
 
-	public String WI_QUERY = "Select [Id] From WorkItems Where [Work Item Type] = '?' Order By [Changed Date] Desc";
-
 	private static final Log log = LogFactory.getLog(RCQHandler.class);
 	
-	private enum HistoryType {
-		ID , DATE , USER , ACTION , OLDSTATE , NEWSTATE , INDEX
-	}
-	
-	private enum HistoryEnding {
-		FIRST, LAST
-	}
-	
-	private List<String> atrList;
 	
 	public void getChangedRecords(RCQConnection connection,
 			Date lastModifiedDate, 
@@ -71,8 +48,6 @@ public class RCQHandler {
 		CQQueryDef myQD = null;
 		DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd H:m:s");
 		
-		//build not exec query.
-//		log.debug("building query for record type '" + connection.getRecType() + "'");
 		try {
 			myQD = connection.getCqSession().BuildQuery(connection.getRecType());
 		} catch (CQException e) {
@@ -81,7 +56,7 @@ public class RCQHandler {
 		}
 		
 		try {
-			// here we only need the ids, all other necessary info will be pulled via getEntity()
+			// we only need the ids, all other necessary info will be pulled later via getEntity()
 			myQD.BuildField("id");
 
 		} catch (CQException e) {
@@ -90,14 +65,18 @@ public class RCQHandler {
 		}
 		
 		try {
-			// TODO add ascending sort on id field.
-			// BOOL_OP_AND = 1
-			CQQueryFilterNode operator = myQD.BuildFilterOperator(1);
-			// COMP_OP_GT = 5, GTE = 6
-			String[] lastDate = new String[1];
-			lastDate[0] =  formatter.format(lastModifiedDate);
-					
-			operator.BuildFilter("history.action_timestamp", 5 , lastDate );
+			String[] ourLastDate = new String[1];
+			CQQueryFilterNode operator = myQD.BuildFilterOperator(RCQBoolOperators.AND.getValue());
+			Calendar c = Calendar.getInstance();
+			// the Date filter seems not to take hours, minutes or seconds into account
+			// set the date to one day earlier to catch reallz all changed ones
+			// This will break around midnight:
+			// lastModified = 23:59, running at 00:01, will not catch
+			c.setTime(lastModifiedDate);
+			c.add(Calendar.DATE, -1);
+			Date ourLastModifiedDate = c.getTime();
+			ourLastDate[0] =  formatter.format(ourLastModifiedDate);
+			operator.BuildFilter("lastupdatedate", RCQCompOperators.GREATERTHAN.getValue() , ourLastDate );
 			
 		} catch (CQException e1) {
 			log.error("Could not create filter for last modified");
@@ -132,6 +111,7 @@ public class RCQHandler {
 		
 		// build the result set as array of ArtifactState items
 		long count = 1;
+
 		long updates = 0;
 		try {
 			long status = results.MoveNext();
@@ -139,19 +119,23 @@ public class RCQHandler {
 				
 				String curCQId = getValueFromResultSet( results , "id" );
 				CQEntity record = connection.getCqSession().GetEntity( connection.getRecType() ,  curCQId );
-				// updates won't be caught if we do not reload.
-				record.Reload();
+				record.Reload();	// fetch latest changes of the item
 				RCQHistoryHelper myStory = new RCQHistoryHelper(record, connection);
-
+				
 				Date artLastModified = myStory.GetLastModfiedDate();
 				
-				ArtifactState artState = new ArtifactState();
-
-				artState.setArtifactId( curCQId );
-				artState.setArtifactLastModifiedDate(artLastModified);
-				artState.setArtifactVersion(myStory.GetLastVersion());
-				artifactStates.add(artState);
-				updates++;
+				if ( artLastModified.after(lastModifiedDate) ) {
+					ArtifactState artState = new ArtifactState();
+					artState.setArtifactId( curCQId );
+					artState.setArtifactLastModifiedDate(artLastModified);
+					artState.setArtifactVersion(myStory.GetLastVersion());
+					artifactStates.add(artState);
+					updates++;
+				} else {
+					// skip this
+					log.trace("skipping " + curCQId + " as it's modification date " + formatter.format(artLastModified) + 
+							  " is before or on" + formatter.format(lastModifiedDate));
+				}
 				count++;
 				status = results.MoveNext();
 			}
@@ -159,12 +143,28 @@ public class RCQHandler {
 			log.error("Problem getting data from resultset");
 			throw new CCFRuntimeException("issue getting data", e);
 		}
-		//log.debug("fetched " + (count - 1) + " records from clearquest, " + updates + " of them are updated after " + lastModifiedDate.toString());
-//		log.debug("-----> Fetch Results:");
 		
-//		for ( ArtifactState aS : artifactStates ) {
-//			log.debug("      " + aS.getArtifactId() + ": last modified on " + aS.getArtifactLastModifiedDate().toLocaleString() + "; Version: " + aS.getArtifactVersion() );
-//		}
+		Collections.sort(artifactStates , new Comparator<ArtifactState>() {
+			public int compare( ArtifactState o1 , ArtifactState o2) {
+				if (o1.getArtifactLastModifiedDate().before(o2.getArtifactLastModifiedDate()) ) {
+					return -1;
+				} else if (o1.getArtifactLastModifiedDate().after(o2.getArtifactLastModifiedDate()) ) {
+					return 1;
+				} else {
+					return 0;
+				}
+			}
+		});
+		
+		
+		log.debug("Fetched " + numResults + " records from clearquest, " + updates + " of them are updated after " + formatter.format(lastModifiedDate));
+		if ( updates > 0 ) { 
+			log.trace("-----> Fetched Objects:");
+		}
+		
+		for ( ArtifactState as : artifactStates ) {
+			log.trace("      " + as.getArtifactId() + ": last modified on " + formatter.format(as.getArtifactLastModifiedDate()) + "; Version: " + as.getArtifactVersion() );
+		}
 		
 		
 	}
@@ -211,7 +211,7 @@ public class RCQHandler {
 							.format("resync is necessary, despite the artifact %s last being updated by the connector user",
 									recID));
 					log.debug("		artifact created on " + creationDate.toString());
-					log.debug("		artfiact lasty modified on " + lastModifedDate.toString());
+					log.debug("		artfiact last modified on " + lastModifedDate.toString());
 					isResync = true;
 				} else {
 					ignoreCCFUserUpdate = true;
@@ -228,7 +228,6 @@ public class RCQHandler {
 					
 				// notes fields should be included already.
 				String value =  myRec.GetFieldValue(f).GetValue();
-				boolean isEmpty = value.isEmpty();
 				gaField = genericArtifact.addNewField(f , 
 						"mandatoryField" );
 				gaField.setFieldValueType( RCQMetaData.getFieldType( myRec.GetFieldType(f) ) );
@@ -587,6 +586,7 @@ public class RCQHandler {
 	}
 
 	
+	@SuppressWarnings("unused")
 	private void logStrings(String title, String[] list) {
 		log.debug("--- " + title + " ---");
 		int count = 1;

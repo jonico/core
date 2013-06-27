@@ -4,7 +4,6 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.Formattable;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -13,7 +12,6 @@ import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactField.FieldActionValue;
 import com.collabnet.ccf.core.ga.GenericArtifactField.FieldValueTypeValue;
-import com.collabnet.ccf.core.utils.CCFUtils;
 import com.rational.clearquest.cqjni.CQEntity;
 import com.rational.clearquest.cqjni.CQException;
 import com.rational.clearquest.cqjni.CQHistories;

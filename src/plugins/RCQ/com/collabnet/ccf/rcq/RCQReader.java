@@ -1,5 +1,6 @@
 package com.collabnet.ccf.rcq;
 
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -205,6 +206,9 @@ public class RCQReader extends AbstractReader<RCQConnection> {
 		String targetRepositoryId = this.getTargetRepositoryId(syncInfo);
 		Date lastModifiedDate = this.getLastModifiedDate(syncInfo);
 		String lastSynchedArtifactId = this.getLastSourceArtifactId(syncInfo);
+		DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd H:m:s");
+		
+		log.trace("=============================>>>>>>>>>>>>>>> GETTING CHANGED ARTIFACTS SINCE " + formatter.format(lastModifiedDate));
 		
 		RCQConnection connection = null;
 		try {
@@ -224,6 +228,7 @@ public class RCQReader extends AbstractReader<RCQConnection> {
 
 		ArrayList<ArtifactState> artifactStates = new ArrayList<ArtifactState>();
 		try {
+			// results returned in byRef object artifactStates
 			rcqHandler.getChangedRecords(
 					connection, 
 					lastModifiedDate, 
@@ -293,12 +298,17 @@ public class RCQReader extends AbstractReader<RCQConnection> {
 			String repositoryId, String repositoryKind, String connectionInfo,
 			String credentialInfo) throws MaxConnectionsReachedException,
 			ConnectionException {
-		// log.info("Before calling the parent connect()");
 		RCQConnection connection = null;
 		connection = getConnectionManager()
 				.getConnectionToUpdateOrExtractArtifact(systemId, systemKind,
 						repositoryId, repositoryKind, connectionInfo,
 						credentialInfo);
+		Runtime rtInfo = Runtime.getRuntime();
+		int mb = 1024^2;
+		long total = rtInfo.totalMemory() / mb;
+		long free  = rtInfo.freeMemory() / mb;
+		long used  = total - free;
+		log.debug( String.format("Memories:: Used: %d ; Free: %d ; Total: %d", used / mb, free, total));
 		return connection;
 	}
 	
@@ -311,11 +321,6 @@ public class RCQReader extends AbstractReader<RCQConnection> {
 	public void validate(List exceptions) {
 		super.validate(exceptions);
 
-
-//		if (StringUtils.isEmpty(getServerUrl())) {
-//			exceptions.add(new ValidationException(
-//					"serverUrl-property not set", this));
-//		}
 		if (StringUtils.isEmpty(getUserName())) {
 			exceptions.add(new ValidationException("userName-property not set",
 					this));
@@ -331,7 +336,7 @@ public class RCQReader extends AbstractReader<RCQConnection> {
 			exceptions.add(new ValidationException(
 					"Could not initialize RCQHandler", this));
 		}
-		log.debug("Succesfully validated RCQ Reader");
+		log.debug("Started RCQ Reader Version " + RCQPluginVersion.current());
 	}
 	private void populateSrcAndDestForAttachment(Document syncInfo,
 			GenericArtifact ga) {

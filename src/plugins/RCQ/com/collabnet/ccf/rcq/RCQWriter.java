@@ -17,7 +17,6 @@ import com.collabnet.ccf.core.eis.connection.MaxConnectionsReachedException;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
-import com.collabnet.ccf.core.hospital.CCFExceptionToOrderedMapConvertor;
 import com.collabnet.ccf.core.utils.XPathUtils;
 
 import com.rational.clearquest.cqjni.CQEntity;
@@ -315,14 +314,8 @@ public class RCQWriter extends AbstractWriter<RCQConnection> {
 					this));
 		}
 
-//		if (getServerUrl() == null) {
-//			log.error("serverUrl-property not set");
-//			exceptions.add(new ValidationException(
-//					"serverUrl-property not set", this));
-//		}
-
 		rcqHandler = new RCQHandler();
 		
-		log.debug("Successfully validated RCQ Writer");
+		log.debug("Started RCQ Writer version " + RCQPluginVersion.current());
 	}
 }
