@@ -228,7 +228,7 @@
 	</target>
 	
 	<target name="inject RCQ to local CCF2.2" depends="build.rcq.plugin">
-		<copy todir="../../../ccf2home/landscape1/lib">
+		<copy todir="../../../ccf2.home.testbed/landscape1/lib">
 			<fileset dir="build/jars">
 				<include name="RCQCCFPlugin.jar" />
 			</fileset>
