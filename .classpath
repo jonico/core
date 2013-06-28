@@ -1,16 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="lib" path="src/plugins/TFS/lib/com.microsoft.tfs.sdk-10.1.0.jar"/>
-	<classpathentry excluding="lib/**" kind="src" path="src/plugins/SFEE/v44"/>
+	<classpathentry excluding="lib/**" kind="src" path="src/core"/>
+	<classpathentry kind="src" path="src/plugins/TF"/>
 	<classpathentry kind="src" path="src/plugins/RCQ"/>
+	<classpathentry excluding="lib/**" kind="src" path="src/plugins/SFEE/v44"/>
 	<classpathentry kind="src" path="src/plugins/TFS"/>
 	<classpathentry kind="src" path="src/plugins/SWP"/>
-	<classpathentry kind="src" path="src/plugins/TF"/>
 	<classpathentry kind="src" path="src/plugins/HPQC/v90"/>
 	<classpathentry excluding="Test/|lib/**" kind="src" path="src/plugins/CEE/ProjectTracker/v50"/>
 	<classpathentry kind="src" path="samples/IntegrationScenarios/customReader/src"/>
 	<classpathentry kind="src" path="tests"/>
-	<classpathentry excluding="lib/**" kind="src" path="src/core"/>
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/activation.jar"/>
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/axis_1.4.jar"/>
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/commons-discovery_0.2.jar"/>
@@ -43,14 +42,15 @@
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/jmxtools.jar"/>
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/commons-vfs-1.0.jar"/>
 	<classpathentry kind="lib" path="src/plugins/TF/lib/sf_soap50_sdk.jar"/>
-	<classpathentry kind="lib" path="src/plugins/TF/lib/tfapi.jar" sourcepath="C:/Documents and Settings/jnicolai/workspace/com.collabnet.teamforge.api/src"/>
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/jericho-html-3.1.jar"/>
 	<classpathentry kind="lib" path="src/plugins/SWP/lib/ScrumWorks-soap.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/openadaptor-spring.jar"/>
-	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/3rdparty/hsqldb.jar"/>
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/openadaptor.jar"/>
 	<classpathentry kind="lib" path="src/plugins/RCQ/lib/cqjni.jar"/>
 	<classpathentry kind="lib" path="src/core/lib/servicewrapper/wrapper.jar"/>
+	<classpathentry kind="lib" path="E:/ccf2.app.testbed/webapps/CCFMaster/WEB-INF/lib/hsqldb-2.0.0.jar"/>
+	<classpathentry kind="lib" path="src/plugins/TF/lib/tfapi.jar" sourcepath="C:/Documents and Settings/jnicolai/workspace/com.collabnet.teamforge.api/src"/>
+	<classpathentry kind="lib" path="src/plugins/TFS/lib/com.microsoft.tfs.sdk-10.1.0.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
