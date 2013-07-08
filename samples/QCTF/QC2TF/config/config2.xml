@@ -61,6 +61,7 @@
 				<prop key="ccf.direction.qc.max.attachmentretrycount">5</prop>
 				<prop key="ccf.direction.usealternativefieldname">false</prop>
 				<prop key="ccf.direction.qc.ignore.connectorupdates">true</prop>
+				<prop key="ccf.direction.qc.translate.technical.releaseids">false</prop>
 			</props>
 		</property>
 		<property name="locations">
@@ -363,7 +364,7 @@
 		<property name="serverUrl" value="${ccf.participant.tf.url}" />
 		<property name="updateComment" value="Synchronized by Connector user" />
 		<property name="connectionManager" ref="TFConnectionManager"></property>
-		<property name="translateTechnicalReleaseIds" value="false" />
+		<property name="translateTechnicalReleaseIds" value="${ccf.direction.qc.translate.technical.releaseids}" />
 		<property name="releaseIdFieldsContainFileReleasePackageName" value="${ccf.direction.qc.releaseIdfields.containfilerelease.packagename}" />
 		<property name="packageReleaseSeparatorString" value="${ccf.direction.package.release.separator}" />
 	</bean>

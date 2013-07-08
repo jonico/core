@@ -73,6 +73,7 @@
 				<prop key="ccf.direction.tf.max.retrywaitingtime">120000</prop>
 				<prop key="ccf.direction.usealternativefieldname">false</prop>
 				<prop key="ccf.direction.tf.ignore.connectorupdates">true</prop>
+				<prop key="ccf.direction.tf.retrieve.parentInfo.forTrackerItems">true</prop>
 			</props>
 		</property>
 		<property name="locations">
@@ -262,7 +263,7 @@
 		<property name="hospitalDatabaseReader" ref="HospitalDatabaseExtractor"/>
 		<property name="nameOfEntityService" value="QCEntityService" />
 		<property name="retrieveParentInfoForPlanningFolders" value="true" />
-		<property name="retrieveParentInfoForTrackerItems" value="true" />
+		<property name="retrieveParentInfoForTrackerItems" value="${ccf.direction.tf.retrieve.parentInfo.forTrackerItems}" />
 		<property name="shipPlanningFolderHumanReadableName" value="${ccf.direction.tf.ship.planningfolder.humanreadablename}" />
 		<property name="planningFolderSeparatorString" value="${ccf.direction.tf.planningfolder.separator}" />
 		<property name="shipReleaseHumanReadableName" value="${ccf.direction.tf.ship.release.humanreadablename}" />
