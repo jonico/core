@@ -275,10 +275,6 @@
 		<!-- This plugs in the polling hospital -->
 		<property name="hospitalDatabaseReader" ref="HospitalDatabaseExtractor" />
 		<property name="nameOfEntityService" value="TFEntityService" />
-		<!-- Below property -"identityMappingDatabaseReader" makes reader to read all the comments and attachment;
-			 Since CCF Sync is based on Artifact specific last modified timestamp or last modified version
-		 -->		
-		<property name="identityMappingDatabaseReader" ref="IndentityMappingDatabaseReaderSWP2TF" /> 
 		
 		<!-- Just temporary added config values due to missing polling capabilities -->
 		<!--<property name="bulkImport" value="true" />

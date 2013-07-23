@@ -277,8 +277,6 @@
 		<!-- This plugs in the polling hospital -->
 		<property name="hospitalDatabaseReader" ref="HospitalDatabaseExtractor" />
 		<property name="nameOfEntityService" value="TFEntityService" />
-		
-		<property name="identityMappingDatabaseReader" ref="IndentityMappingDatabaseReaderJIRA2TF" />
 		<!-- Just temporary added config values due to missing polling capabilities -->
 		<!--<property name="bulkImport" value="true" />
 		<property name="shutdownCCFAfterInitialSync" value="true"/>
