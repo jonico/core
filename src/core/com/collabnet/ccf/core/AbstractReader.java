@@ -34,6 +34,7 @@ import org.apache.commons.logging.LogFactory;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.DocumentHelper;
+import org.dom4j.Element;
 import org.dom4j.Node;
 import org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector;
 import org.openadaptor.auxil.orderedmap.IOrderedMap;
@@ -91,6 +92,10 @@ public abstract class AbstractReader<T> extends Component implements
 	private static final String REPOSITORY_MAPPING_ID = "//REPOSITORY_MAPPING_ID | //repository_mapping_id";
 	private static final String EXTERNAL_APP_LINK_ID = "//EXTERNAL_APP_LINK_ID | //external_app_link_id";
 	private static final String REPOSITORY_MAPPING_DIRECTION_DIRECTION = "//REPOSITORY_MAPPING_DIRECTION_DIRECTION | //repository_mapping_direction_direction";
+	private static final String ARTIFACT_LAST_MODIFIED_DATE_ELEMENT = "ARTIFACT_LAST_MODIFIED_DATE";
+	private static final String ARTIFACT_LAST_MODIFIED_VERSION_ELEMENT = "ARTIFACT_LAST_MODIFIED_VERSION";
+	private static final String ARTIFACT_LAST_MODIFIED_DATE = "//ARTIFACT_LAST_MODIFIED_DATE | //artifact_last_modified_date";
+	private static final String ARTIFACT_LAST_MODIFIED_VERSION = "//ARTIFACT_LAST_MODIFIED_VERSION | //artifact_last_modified_version";
 
 	private static final Log log = LogFactory.getLog(AbstractReader.class);
 	private HashMap<String, RepositoryRecord> repositoryRecordHashMap = null;
@@ -639,14 +644,17 @@ public abstract class AbstractReader<T> extends Component implements
 								.getMaximumRetryWaitingTime();
 						try {
 							String artifactId = artifactState.getArtifactId();
+							// To avoid tampering SyncInfo object we have created a clone
+							// As per java documentation Document.clone() method provides
+							//detached and deep copy of the Object
+							Document tempSyncInfo = (Document) syncInfo.clone();
 							if (getIdentityMappingDatabaseReader() != null) {
 							// Update the syncinfo with the artifact lastmodifiedtime and lastModifiedVersion
 							// fetched from the identity mapping.Modifying the syncinfo does not has any side effects
 							// because artifactsToBeShippedList has already been populated with the artifact data
-								updateSyncInfoFromIdentityMapping(syncInfo,artifactId,ARTIFACT_TYPE_PLAIN_ARTIFACT);
+								updateSyncInfoFromIdentityMapping(tempSyncInfo,artifactId,ARTIFACT_TYPE_PLAIN_ARTIFACT);
 							}
-							GenericArtifact artifactData = this
-									.getArtifactData(syncInfo, artifactId);
+							GenericArtifact artifactData = this.getArtifactData(tempSyncInfo, artifactId);
 							if (artifactData != null) {
 								log.debug("Finding out whether artifact data is stale ...");
 								if (isArtifactStale(artifactState, artifactData)) {
@@ -659,12 +667,12 @@ public abstract class AbstractReader<T> extends Component implements
 										if (shipAttachments) {
 											artifactAttachments = this
 													.getArtifactAttachments(
-															syncInfo,
+															tempSyncInfo,
 															artifactData);
 										}
 										artifactDependencies = this
 												.getArtifactDependencies(
-														syncInfo, artifactId);
+														tempSyncInfo, artifactId);
 									} catch (Exception e) {
 										// if this is a connection exception, we
 										// will retry, otherwise, we will
@@ -869,15 +877,16 @@ public abstract class AbstractReader<T> extends Component implements
 		}
 	}
 
-	private void modifySyncInfo(Document syncInfo, String lastArtifactModifiedTime,String lastArtifactModifiedVersion) {
-		Node lastModifiedDateNode = syncInfo.selectSingleNode(LAST_SOURCE_ARTIFACT_MODIFICATION_DATE);
-		Node lastModifiedVersionNode = syncInfo.selectSingleNode(LAST_SOURCE_ARTIFACT_VERSION);
-			if (lastModifiedDateNode != null && lastArtifactModifiedTime != null) {
-				lastModifiedDateNode.setText(lastArtifactModifiedTime);
-			}
-			if (lastModifiedVersionNode != null && lastArtifactModifiedVersion !=null) {
-				lastModifiedVersionNode.setText(lastArtifactModifiedVersion);
-			}
+	private void modifySyncInfo(Document syncInfo, String lastArtifactModifiedTime, String lastArtifactModifiedVersion) {
+		if(lastArtifactModifiedTime == null && lastArtifactModifiedVersion == null) {
+			return;
+		}
+		//Cloned syncInfo is used to create two new element - ARTIFACT_LAST_MODIFIED_DATE and ARTIFACT_LAST_MODIFIED_VERSION
+		Element rootElement = syncInfo.getRootElement();
+		Element artifactLastModifiedTimeElement = rootElement.addElement(ARTIFACT_LAST_MODIFIED_DATE_ELEMENT);
+		artifactLastModifiedTimeElement.setText(lastArtifactModifiedTime);
+		Element artifactLastModifiedVersionElement = rootElement.addElement(ARTIFACT_LAST_MODIFIED_VERSION_ELEMENT);
+		artifactLastModifiedVersionElement.setText(lastArtifactModifiedVersion);
 	}
 
 	/**
@@ -1460,6 +1469,38 @@ public abstract class AbstractReader<T> extends Component implements
 		if (node == null)
 			return null;
 		return node.getText();
+	}
+	
+	public String getArtifactLastModifiedTime(Document syncInfo) {
+		Node node = syncInfo.selectSingleNode(ARTIFACT_LAST_MODIFIED_DATE);
+		if (node == null)
+			return null;
+		String dbTime = node.getText();
+		if (!StringUtils.isEmpty(dbTime)) {
+			java.sql.Timestamp ts = java.sql.Timestamp.valueOf(dbTime);
+			long time = ts.getTime();
+			Date date = new Date(time);
+			return DateUtil.format(date);
+		}
+		return null;
+	}
+	
+	public String getArtifactLastModifiedVersion(Document syncInfo) {
+		Node node = syncInfo.selectSingleNode(ARTIFACT_LAST_MODIFIED_VERSION);
+		if (node == null)
+			return null;
+		return node.getText();
+	}
+	
+	protected Date getArtifactLastModifiedDate(Document syncInfo) {
+		String lastModifiedDateString = this.getArtifactLastModifiedTime(syncInfo);
+		Date lastModifiedDate = null;
+		if (!StringUtils.isEmpty(lastModifiedDateString)) {
+			lastModifiedDate = DateUtil.parse(lastModifiedDateString);
+		} else {
+			lastModifiedDate = new Date(0);
+		}
+		return lastModifiedDate;
 	}
 
 	/**

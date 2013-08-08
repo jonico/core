@@ -19,8 +19,6 @@ package com.collabnet.ccf.teamforge;
 
 import java.rmi.RemoteException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -708,10 +706,10 @@ public class TFTrackerHandler {
 		// it looks as if since TF 5.3, not every update call automatically
 		// increases the version number
 		// hence we retrieve the artifact version here again
-		if (comments.length == 0) {
+		//if (comments.length == 0) {
 			// artifactData.setVersion(artifactData.getVersion() + 1);
 			artifactData = connection.getTrackerClient().getArtifactData(Id);
-		}
+		//}
 
 		if (associateWithParent) {
 			createArtifactDependency(connection, newParentId, Id,

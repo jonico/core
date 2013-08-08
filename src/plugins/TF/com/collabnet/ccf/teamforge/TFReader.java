@@ -322,6 +322,7 @@ public class TFReader extends AbstractReader<Connection> {
 		String sourceRepositoryId = this.getSourceRepositoryId(syncInfo);
 		String sourceRepositoryKind = this.getSourceRepositoryKind(syncInfo);
 		Date lastModifiedDate = this.getLastModifiedDate(syncInfo);
+		Date artifactLastModifiedDate = this.getArtifactLastModifiedDate(syncInfo);
 		
 		if (!TFConnectionFactory.isTrackerRepository(sourceRepositoryId)) {
 			// we do not support attachments here
@@ -350,6 +351,9 @@ public class TFReader extends AbstractReader<Connection> {
 		artifactIds.add(artifactId);
 		List<GenericArtifact> attachments = null;
 		try {
+			if (getIdentityMappingDatabaseReader() != null) {
+				lastModifiedDate = artifactLastModifiedDate;
+			}
 			attachments = attachmentHandler.listAttachments(connection, lastModifiedDate,
 					isIgnoreConnectorUserUpdates() ? getUsername() : "",
 					isIgnoreConnectorUserUpdates() ? getResyncUserName() : "",
@@ -385,6 +389,7 @@ public class TFReader extends AbstractReader<Connection> {
 		String sourceRepositoryId = this.getSourceRepositoryId(syncInfo);
 		String sourceRepositoryKind = this.getSourceRepositoryKind(syncInfo);
 		Date lastModifiedDate = this.getLastModifiedDate(syncInfo);
+		Date artifactLastModifiedDate = this.getArtifactLastModifiedDate(syncInfo);
 		String sourceSystemTimezone = this.getSourceSystemTimezone(syncInfo);
 		Connection connection;
 		try {
@@ -446,6 +451,9 @@ public class TFReader extends AbstractReader<Connection> {
 				
 				if (!isIgnore) {
 					// we're interested in the comments.
+					if(getIdentityMappingDatabaseReader() != null) {
+						lastModifiedDate = artifactLastModifiedDate;
+					}
 					TFAppHandler appHandler = new TFAppHandler(connection);
 					appHandler.addComments(artifact, lastModifiedDate,
 							isIgnoreConnectorUserUpdates() ? this.getUsername() : "",

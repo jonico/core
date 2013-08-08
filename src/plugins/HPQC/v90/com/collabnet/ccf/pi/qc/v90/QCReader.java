@@ -284,6 +284,7 @@ public class QCReader extends AbstractReader<IConnection> {
 		String fromTimestamp = getLastSourceArtifactModificationDate(syncInfo);
 		// String fromTime = convertIntoString(fromTimestamp);
 		String transactionId = getLastSourceVersion(syncInfo);
+		String artifactTransactionID = getArtifactLastModifiedVersion(syncInfo);
 		IConnection connection = null;
 		try {
 			connection = connect(sourceSystemId, sourceSystemKind,
@@ -307,6 +308,9 @@ public class QCReader extends AbstractReader<IConnection> {
 		boolean isDefectRepository = QCConnectionFactory
 				.isDefectRepository(sourceRepositoryId);
 		try {
+			if(getIdentityMappingDatabaseReader() != null && artifactTransactionID != null) {
+				transactionId = artifactTransactionID;
+			}
 			attachments = attachmentHandler.getLatestChangedAttachments(
 					attachments, connection,
 					isIgnoreConnectorUserUpdates() ? getUserName() : " ",
@@ -370,6 +374,7 @@ public class QCReader extends AbstractReader<IConnection> {
 
 		// String fromTime = convertIntoString(fromTimestamp);
 		String syncInfoTransactionId = this.getLastSourceVersion(syncInfo);
+		String artifactLastModifiedVersion = this.getArtifactLastModifiedVersion(syncInfo);
 		IConnection connection = null;
 		try {
 			connection = connect(sourceSystemId, sourceSystemKind,
@@ -420,6 +425,9 @@ public class QCReader extends AbstractReader<IConnection> {
 				}
 				QCDefect latestDefect = null;
 				try {
+					if(getIdentityMappingDatabaseReader() != null && artifactLastModifiedVersion != null) {
+						syncInfoTransactionId = artifactLastModifiedVersion;
+					}
 					if (ignoreArtifact) {
 						latestArtifact = new GenericArtifact();
 						latestArtifact.setArtifactAction(GenericArtifact.ArtifactActionValue.IGNORE);
@@ -506,6 +514,9 @@ public class QCReader extends AbstractReader<IConnection> {
 				
 				QCRequirement latestRequirement = null;
 				try {
+					if(getIdentityMappingDatabaseReader() != null && artifactLastModifiedVersion != null) {
+						syncInfoTransactionId = artifactLastModifiedVersion;
+					}
 					// don't retrieve the complete artifact if we'll just ignore it anyway
 					if (ignoreArtifact) {
 						latestArtifact = new GenericArtifact();
