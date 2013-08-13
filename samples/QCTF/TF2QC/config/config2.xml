@@ -269,6 +269,10 @@
 		<property name="shipReleaseHumanReadableName" value="${ccf.direction.tf.ship.release.humanreadablename}" />
 		<property name="packageReleaseSeparatorString" value="${ccf.direction.package.release.separator}" />
 		<property name="ignoreConnectorUserUpdates" value="${ccf.direction.tf.ignore.connectorupdates}"/>
+		<!-- Below property -"identityMappingDatabaseReader" makes reader to read all the comments and attachment;
+			 Since CCF Sync is based on Artifact specific last modified timestamp or last modified version
+		 -->		
+		<property name="identityMappingDatabaseReader" ref="IndentityMappingDatabaseReaderTF2QC" /> 
 	</bean>
 	<bean id="TFConnectionManager"
 		class="com.collabnet.ccf.core.eis.connection.ConnectionManager">

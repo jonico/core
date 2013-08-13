@@ -305,6 +305,10 @@
 		 <property name="maximumAttachmentRetryCount" value="${ccf.direction.qc.max.attachmentretrycount}"/> 
 		 <property name="useAlternativeFieldName" value="${ccf.direction.usealternativefieldname}"/>
 		 <property name="ignoreConnectorUserUpdates" value="${ccf.direction.qc.ignore.connectorupdates}"/>
+		<!-- Below property -"identityMappingDatabaseReader" makes reader to read all the comments and attachment;
+			 Since CCF Sync is based on Artifact specific last modified timestamp or last modified version
+		 -->		
+		<property name="identityMappingDatabaseReader" ref="IndentityMappingDatabaseReaderQC2TF" /> 
 	</bean>
 	<bean id="QCConnectionManager" class="com.collabnet.ccf.core.eis.connection.ConnectionManager">
 		<!-- Please set the number of connections to the number of project mappings you have -->
