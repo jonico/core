@@ -78,7 +78,7 @@ public class RCQConnection {
 		
 		try {
 			cqs.UserLogon( username , password , database , schema );
-			log.debug("succesfully logged in!, FeatureLevel: " + cqs.GetSessionFeatureLevel());
+			log.debug("succesfully logged in. FeatureLevel: " + cqs.GetSessionFeatureLevel());
 		} catch (CQException e) {
 			log.debug("problem logging in...", e);		
 		}

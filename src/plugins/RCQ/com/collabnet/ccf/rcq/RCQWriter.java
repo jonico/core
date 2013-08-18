@@ -316,6 +316,6 @@ public class RCQWriter extends AbstractWriter<RCQConnection> {
 
 		rcqHandler = new RCQHandler();
 		
-		log.debug("Started RCQ Writer version " + RCQPluginVersion.current());
+		log.info("Started RCQ Writer " + RCQPluginVersion.current());
 	}
 }

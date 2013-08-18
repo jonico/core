@@ -10,6 +10,7 @@ import java.util.SimpleTimeZone;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.log4j.LogManager;
 import org.dom4j.Document;
 import org.openadaptor.core.exception.ValidationException;
 
@@ -21,6 +22,8 @@ import com.collabnet.ccf.core.eis.connection.MaxConnectionsReachedException;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifact.ArtifactModeValue;
 import com.collabnet.ccf.core.ga.GenericArtifact.ArtifactTypeValue;
+import com.collabnet.ccf.core.ga.GenericArtifactHelper;
+import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
 
 public class RCQReader extends AbstractReader<RCQConnection> {
 
@@ -125,6 +128,11 @@ public class RCQReader extends AbstractReader<RCQConnection> {
 			throw new CCFRuntimeException(cause, e);
 		} finally {
 			disconnect(connection);
+		}
+		try {
+			log.trace("Retrieved Generic Artifact:\n" + GenericArtifactHelper.createGenericArtifactXMLDocument(ga).asXML() + "\n");
+		} catch (GenericArtifactParsingException e) {
+			log.trace("ERROR: could not get XML structure for GenericArtifact");
 		}
 		return	ga;
 		
@@ -303,12 +311,14 @@ public class RCQReader extends AbstractReader<RCQConnection> {
 				.getConnectionToUpdateOrExtractArtifact(systemId, systemKind,
 						repositoryId, repositoryKind, connectionInfo,
 						credentialInfo);
-		Runtime rtInfo = Runtime.getRuntime();
-		int mb = 1024^2;
-		long total = rtInfo.totalMemory() / mb;
-		long free  = rtInfo.freeMemory() / mb;
-		long used  = total - free;
-		log.debug( String.format("Memories:: Used: %d ; Free: %d ; Total: %d", used / mb, free, total));
+		if (log.isTraceEnabled()) {
+			Runtime rtInfo = Runtime.getRuntime();
+			int mb = 1024^2;
+			long total = rtInfo.totalMemory() / mb;
+			long free  = rtInfo.freeMemory() / mb;
+			long used  = total - free;
+			// log.trace( String.format("Memory(mb) Used: %d ; Free: %d ; Total: %d", used , free, total));
+		}
 		return connection;
 	}
 	
@@ -336,7 +346,7 @@ public class RCQReader extends AbstractReader<RCQConnection> {
 			exceptions.add(new ValidationException(
 					"Could not initialize RCQHandler", this));
 		}
-		log.debug("Started RCQ Reader Version " + RCQPluginVersion.current());
+		log.info("Started RCQ Reader " + RCQPluginVersion.current());
 	}
 	private void populateSrcAndDestForAttachment(Document syncInfo,
 			GenericArtifact ga) {

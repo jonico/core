@@ -20,6 +20,7 @@ import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifact.ArtifactActionValue;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactField.FieldActionValue;
+import com.collabnet.ccf.core.ga.GenericArtifactField.FieldValueTypeValue;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.utils.DateUtil;
 import com.collabnet.ccf.rcq.enums.RCQBoolOperators;
@@ -134,7 +135,7 @@ public class RCQHandler {
 				} else {
 					// skip this
 					log.trace("skipping " + curCQId + " as it's modification date " + formatter.format(artLastModified) + 
-							  " is before or on" + formatter.format(lastModifiedDate));
+							  " is before or on " + formatter.format(lastModifiedDate));
 				}
 				count++;
 				status = results.MoveNext();
@@ -157,7 +158,7 @@ public class RCQHandler {
 		});
 		
 		
-		log.debug("Fetched " + numResults + " records from clearquest, " + updates + " of them are updated after " + formatter.format(lastModifiedDate));
+		log.trace("Fetched " + numResults + " records from clearquest, " + updates + " of them are updated after " + formatter.format(lastModifiedDate));
 		if ( updates > 0 ) { 
 			log.trace("-----> Fetched Objects:");
 		}
@@ -221,17 +222,24 @@ public class RCQHandler {
 			GenericArtifactField gaField = null;
 			String[] allFields = myRec.GetFieldNames();
 			for ( String f : allFields ) {
-				// exclude history field
 				if ( f.equals(connection.getHistoryFieldName()) ) {
+					// exclude history field
 					continue;
 				}
 					
-				// notes fields should be included already.
 				String value =  myRec.GetFieldValue(f).GetValue();
 				gaField = genericArtifact.addNewField(f , 
 						"mandatoryField" );
 				gaField.setFieldValueType( RCQMetaData.getFieldType( myRec.GetFieldType(f) ) );
 				gaField.setFieldAction( FieldActionValue.REPLACE );
+				if ( ( gaField.getFieldValueType() == FieldValueTypeValue.DATETIME ||
+					 gaField.getFieldValueType() == FieldValueTypeValue.DATE ) &&
+					 !value.isEmpty() ) {
+					String newValue = DateUtil.format(DateUtil.parseQCDate(value));
+//					String lInfo = "converted date value: " + value + " ==> ";
+//					log.trace(lInfo + newValue);
+					value = newValue;
+				}
 				gaField.setFieldValue(value);
 			}
 			
@@ -305,11 +313,11 @@ public class RCQHandler {
 
 						currentAction = "getting state/transition names";
 						String[] legalActions = record.GetLegalActionDefNames();
-						log.debug("legal actions/transitions:");
+						log.trace("legal actions/transitions:");
 						List<String> actionCandidates = new ArrayList<String>();
 						for ( String action : legalActions ) {
 							String targetState = currentEntityDef.GetActionDestStateName(action);
-							log.debug("		" + action + " --> " + targetState);
+							log.trace("		" + action + " --> " + targetState);
 							if ( newState.equals(targetState)) {
 								actionCandidates.add(action);
 							}
@@ -330,7 +338,7 @@ public class RCQHandler {
 							}
 						} else {
 							// updates without state changes
-							actionName = "modify";
+							actionName = "Modify";
 						}
 						break;
 					} 
@@ -407,8 +415,9 @@ public class RCQHandler {
 			
 			
 			// starting edit session
-			currentAction = "Starting Edit Session for entity " + entityDisplayName;
-			connection.getCqSession().EditEntity(record , getActionName(record, ga) );
+			String actionName = getActionName(record, ga);
+			currentAction = "Starting '" + actionName + "' Session for entity " + entityDisplayName;
+			connection.getCqSession().EditEntity(record , actionName );
 			
 			updateRecordFields(ga, connection, record);
 			
@@ -429,7 +438,7 @@ public class RCQHandler {
 	
 		} catch (CQException e) {
 			log.error("failed at " + currentAction, e);
-			throw new CCFRuntimeException(currentAction);
+			throw new CCFRuntimeException(currentAction + ":\n" +  e.getMessage());
 		} catch (ParseException e) {
 			String cause = "Could not retrieve history information for ClearQuest ID " 
 					+ ga.getTargetArtifactId();
@@ -532,7 +541,7 @@ public class RCQHandler {
 						continue;
 					}
 
-					log.debug(">>>>>>>> shipping field " + currentField.getFieldName() + " of type " + currentField.getFieldType());
+					log.debug(">>>>>>>> updating field " + currentField.getFieldName() + " of type " + currentField.getFieldType());
 										
 					// if it's a date field, set the timezone
 					if (RCQMetaData
