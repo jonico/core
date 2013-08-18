@@ -10,6 +10,7 @@ import java.util.SimpleTimeZone;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 import org.dom4j.Document;
 import org.openadaptor.core.exception.ValidationException;
@@ -33,6 +34,12 @@ public class RCQReader extends AbstractReader<RCQConnection> {
 	private boolean ignoreConnectorUserUpdates;
 	private RCQAttachmentHandler attachee = new RCQAttachmentHandler();
 
+	private RCQHandler rcqHandler = null;
+
+	private static final Log log = LogFactory.getLog(RCQReader.class);
+	private static final boolean useTraceLogging = LogManager.getRootLogger().getLevel() == Level.TRACE;
+	
+	
 	public List<GenericArtifact> getArtifactDependencies(Document syncInfo,
 			String artifactId) {
 		// no dependencies
@@ -130,11 +137,18 @@ public class RCQReader extends AbstractReader<RCQConnection> {
 			disconnect(connection);
 		}
 		try {
-			log.trace("Retrieved Generic Artifact:\n" + GenericArtifactHelper.createGenericArtifactXMLDocument(ga).asXML() + "\n");
+			if (useTraceLogging) {
+				log.trace("Retrieved Generic Artifact:\n"
+						+ GenericArtifactHelper
+								.createGenericArtifactXMLDocument(ga).asXML()
+						+ "\n");
+			}
 		} catch (GenericArtifactParsingException e) {
-			log.trace("ERROR: could not get XML structure for GenericArtifact");
+			if (useTraceLogging) {
+				log.trace("ERROR: could not get XML structure for GenericArtifact");
+			}
 		}
-		return	ga;
+		return ga;
 		
 	}
 
@@ -216,8 +230,9 @@ public class RCQReader extends AbstractReader<RCQConnection> {
 		String lastSynchedArtifactId = this.getLastSourceArtifactId(syncInfo);
 		DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd H:m:s");
 		
-		log.trace("=============================>>>>>>>>>>>>>>> GETTING CHANGED ARTIFACTS SINCE " + formatter.format(lastModifiedDate));
-		
+		if ( useTraceLogging ) {
+			log.trace("=============================>>>>>>>>>>>>>>> GETTING CHANGED ARTIFACTS SINCE " + formatter.format(lastModifiedDate));
+		}
 		RCQConnection connection = null;
 		try {
 			connection = connect(sourceSystemId, sourceSystemKind,
@@ -317,14 +332,13 @@ public class RCQReader extends AbstractReader<RCQConnection> {
 			long total = rtInfo.totalMemory() / mb;
 			long free  = rtInfo.freeMemory() / mb;
 			long used  = total - free;
-			// log.trace( String.format("Memory(mb) Used: %d ; Free: %d ; Total: %d", used , free, total));
+			// if ( useTraceLogging ) { 
+				// log.trace( String.format("Memory(mb) Used: %d ; Free: %d ; Total: %d", used , free, total));
+			//}
 		}
 		return connection;
 	}
 	
-	private RCQHandler rcqHandler = null;
-
-	private static final Log log = LogFactory.getLog(RCQReader.class);
 	
 	@SuppressWarnings("unchecked")
 	@Override
