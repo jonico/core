@@ -15,7 +15,7 @@
 	xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:stringutil="xalan://com.collabnet.ccf.core.utils.GATransformerUtil"
 	exclude-result-prefixes="xsl xs ccf stringutil" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://www.w3.org/1999/XSL/Transform http://www.w3.org/2007/schema-for-xslt20.xsd">
-	<xsl:variable name="artifactAction" select="/ccf:artifact/@artifactAction"/>
+	<xsl:variable name="artifactAction" select="/ccf:artifact/@artifactAction"/> 
 	<xsl:template match='/ccf:artifact[@artifactType = "plainArtifact"]'>
 		<artifact xmlns="http://ccf.open.collab.net/GenericArtifactV1.0">
 			<xsl:copy-of select="@*" />
