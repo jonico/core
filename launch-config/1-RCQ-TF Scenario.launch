@@ -18,6 +18,6 @@
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="org.openadaptor.spring.SpringAdaptor"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-config file:config/config2.xml -noprops"/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="CCF"/>
-<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Dcom.sun.management.jmxremote.port=10010 -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false"/>
+<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Dcom.sun.management.jmxremote.port=10011 -Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false"/>
 <stringAttribute key="org.eclipse.jdt.launching.WORKING_DIRECTORY" value="E:\ccf2.home.testbed\landscape1\samples\RCQTF\RCQ2TF"/>
 </launchConfiguration>
