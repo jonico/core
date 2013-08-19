@@ -39,7 +39,8 @@ import com.rational.clearquest.cqjni.CQSession;
 public class RCQHandler {
 
 	private static final Log log = LogFactory.getLog(RCQHandler.class);
-	private static final boolean useTraceLogging = LogManager.getRootLogger().getLevel() == Level.TRACE;
+	private static final boolean useTraceLogging = LogManager.getRootLogger()
+			.getLevel() == Level.TRACE;
 
 	public void getChangedRecords(RCQConnection connection,
 			Date lastModifiedDate, String lastSynchronizedVersion,
@@ -149,7 +150,8 @@ public class RCQHandler {
 					artifactStates.add(artState);
 					updates++;
 				} else {
-					// skipping the artifact, it was changed before the lastUpdateTime
+					// skipping the artifact, it was changed before the
+					// lastUpdateTime
 					if (useTraceLogging) {
 						log.trace("skipping " + curCQId
 								+ " as it's modification date "
@@ -164,7 +166,8 @@ public class RCQHandler {
 		} catch (CQException e) {
 			log.error("Problem getting data from resultset");
 			String eMessage = e.getMessage();
-			if (!eMessage.contains("SQLExecDirect: RETCODE=-1, State=S1001, Native Error=-1311")) {
+			if (!eMessage
+					.contains("SQLExecDirect: RETCODE=-1, State=S1001, Native Error=-1311")) {
 				throw new CCFRuntimeException("issue getting data", e);
 			} else {
 				// try to refresh the connection, will be called next cycle
@@ -250,7 +253,9 @@ public class RCQHandler {
 					log.info(String
 							.format("resync is necessary, despite the artifact %s last being updated by the connector user",
 									recID));
-					log.debug("		artifact created on " + creationDate.toString() + "; last modified on " + lastModifedDate.toString());
+					log.debug("		artifact created on "
+							+ creationDate.toString() + "; last modified on "
+							+ lastModifedDate.toString());
 					isResync = true;
 				} else {
 					ignoreCCFUserUpdate = true;
@@ -634,10 +639,9 @@ public class RCQHandler {
 					String setValueResult = record.SetFieldValue(cqFieldName,
 							(String) gaFieldValue);
 
-					reportActionResult(
-							setValueResult,
-							"could not set field value for entity "
-									+ record.GetDisplayName());
+					reportActionResult(setValueResult, "could not set "
+							+ record.GetDisplayName() + "." + cqFieldName
+							+ " = '" + (String) gaFieldValue + "'");
 
 					// multi-select field - the previous SetFieldValue
 					// de-selected all values and set the first one already
@@ -648,9 +652,9 @@ public class RCQHandler {
 							String addValueResult = record.AddFieldValue(
 									cqFieldName, newValue);
 							reportActionResult(addValueResult,
-									"could not add multi-select FieldValue '"
-											+ newValue + "' to entity "
-											+ record.GetDisplayName());
+									"could not add multi-select Item '"
+											+ newValue + "' to "
+											+ record.GetDisplayName() + "." + cqFieldName);
 						}
 					}
 
@@ -681,9 +685,14 @@ public class RCQHandler {
 
 	public void reportActionResult(String actionResult, String causePrefix) {
 		if (!actionResult.equals("")) {
-			log.error(causePrefix + ": " + actionResult);
-			throw new CCFRuntimeException(causePrefix + ": " + actionResult);
+			log.warn(causePrefix + ": " + actionResult);
 		}
+	}
+
+	private void cancelEdit(CQEntity record) throws CQException {
+		record.Revert();
+		record.Reload();
+		log.debug("reverted entity " + record.GetDisplayName());
 	}
 
 	private void validateAndSaveRecord(CQEntity record) {
@@ -703,26 +712,24 @@ public class RCQHandler {
 					// failed commit, rolling back
 					String cause = "commit of changed " + entityDisplayName
 							+ " failed: " + commitResult;
-					log.error(cause);
 					// cancel changes
 					currentAction = "reverting changes to entity "
 							+ entityDisplayName + " (failed commit)";
-					record.Revert();
+					cancelEdit(record);
 					throw new CCFRuntimeException(cause
 							+ " [changes not saved]");
 				}
 			} else {
 				String cause = "validation of " + entityDisplayName
 						+ " failed: " + validationResult;
-				log.error(cause);
 				// cancel changes
 				currentAction = "reverting changes to entity "
 						+ entityDisplayName;
-				record.Revert();
+				cancelEdit(record);
 				throw new CCFRuntimeException(cause + " [changes not saved]");
 			}
 		} catch (CQException e) {
-			log.error("failed at " + currentAction, e);
+			log.error("failed while " + currentAction, e);
 			throw new CCFRuntimeException(currentAction);
 		}
 
