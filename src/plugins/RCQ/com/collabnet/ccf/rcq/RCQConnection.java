@@ -87,13 +87,23 @@ public class RCQConnection {
 	private String[] parseRepositoryId( String repositoryId ) {
 		
 		String[] ret = repositoryId.split("-");
-		if ( ret.length != 5 ) {
-			log.error("not enough or too many repository info:");
-			for ( int i = 0 ; i < ret.length - 1 ; i++) {
+		if ( ret.length != 5 && ret.length != 3 ) {
+			log.error("not enough or too many repository id parts:");
+			for ( int i = 0 ; i < ret.length ; i++) {
 				log.error(i + ": " + ret[i]);
 			}
-			throw new CCFRuntimeException("wrong repository information");
+			throw new CCFRuntimeException("wrong repository information: '" + repositoryId + "'");
 		} else {
+			if ( ret.length == 3 ) {
+				// add missing status, history values
+				String[] tmp = new String[5];
+				tmp[0] = ret[0];
+				tmp[1] = ret[1];
+				tmp[2] = ret[2];
+				tmp[3] = this.getStatusFieldName();
+				tmp[4] = this.getHistoryFieldName();
+				ret = tmp;
+			}
 			return ret;
 		}
 	}
