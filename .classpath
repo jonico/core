@@ -47,10 +47,10 @@
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/openadaptor-spring.jar"/>
 	<classpathentry kind="lib" path="src/core/lib/openadaptor-3.4/openadaptor.jar"/>
-	<classpathentry kind="lib" path="src/plugins/RCQ/lib/cqjni.jar"/>
 	<classpathentry kind="lib" path="src/core/lib/servicewrapper/wrapper.jar"/>
 	<classpathentry kind="lib" path="E:/ccf2.app.testbed/webapps/CCFMaster/WEB-INF/lib/hsqldb-2.0.0.jar"/>
 	<classpathentry kind="lib" path="src/plugins/TF/lib/tfapi.jar" sourcepath="C:/Documents and Settings/jnicolai/workspace/com.collabnet.teamforge.api/src"/>
 	<classpathentry kind="lib" path="src/plugins/TFS/lib/com.microsoft.tfs.sdk-10.1.0.jar"/>
+	<classpathentry kind="lib" path="C:/Program Files/IBM/RationalSDLC/ClearQuest/cqjni.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
