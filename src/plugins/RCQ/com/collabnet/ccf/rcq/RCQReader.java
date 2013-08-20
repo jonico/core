@@ -37,7 +37,6 @@ public class RCQReader extends AbstractReader<RCQConnection> {
 	private RCQHandler rcqHandler = null;
 
 	private static final Log log = LogFactory.getLog(RCQReader.class);
-	private static final boolean useTraceLogging = LogManager.getRootLogger().getLevel() == Level.TRACE;
 	
 	
 	public List<GenericArtifact> getArtifactDependencies(Document syncInfo,
@@ -137,14 +136,14 @@ public class RCQReader extends AbstractReader<RCQConnection> {
 			disconnect(connection);
 		}
 		try {
-			if (useTraceLogging) {
+			if (log.isTraceEnabled()) {
 				log.trace("Retrieved Generic Artifact:\n"
 						+ GenericArtifactHelper
 								.createGenericArtifactXMLDocument(ga).asXML()
 						+ "\n");
 			}
 		} catch (GenericArtifactParsingException e) {
-			if (useTraceLogging) {
+			if (log.isTraceEnabled()) {
 				log.trace("ERROR: could not get XML structure for GenericArtifact");
 			}
 		}
@@ -230,7 +229,7 @@ public class RCQReader extends AbstractReader<RCQConnection> {
 		String lastSynchedArtifactId = this.getLastSourceArtifactId(syncInfo);
 		DateFormat formatter = new SimpleDateFormat("yyyy-MM-dd H:m:s");
 		
-		if ( useTraceLogging ) {
+		if ( log.isTraceEnabled() ) {
 			log.trace("=============================>>>>>>>>>>>>>>> GETTING CHANGED ARTIFACTS SINCE " + formatter.format(lastModifiedDate));
 		}
 		RCQConnection connection = null;

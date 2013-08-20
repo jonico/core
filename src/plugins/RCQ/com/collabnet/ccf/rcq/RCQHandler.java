@@ -39,8 +39,6 @@ import com.rational.clearquest.cqjni.CQSession;
 public class RCQHandler {
 
 	private static final Log log = LogFactory.getLog(RCQHandler.class);
-	private static final boolean useTraceLogging = LogManager.getRootLogger()
-			.getLevel() == Level.TRACE;
 
 	public void getChangedRecords(RCQConnection connection,
 			Date lastModifiedDate, String lastSynchronizedVersion,
@@ -77,20 +75,20 @@ public class RCQHandler {
 			CQQueryFilterNode operator = myQD
 					.BuildFilterOperator(RCQBoolOperators.AND.getValue());
 			Calendar c = Calendar.getInstance();
-			// the Date filter seems not to take hours, minutes or seconds into
-			// account
-			// set the date to one day earlier to catch reallz all changed ones
+			// set the date to one day earlier to catch really all changed ones
 			// This will break around midnight:
 			// lastModified = 23:59, running at 00:01, will not catch
 			c.setTime(lastModifiedDate);
 			c.add(Calendar.DATE, -1);
 			Date ourLastModifiedDate = c.getTime();
 			ourLastDate[0] = formatter.format(ourLastModifiedDate);
+			// beware: this field is a userdefined field!
 			operator.BuildFilter("lastupdatedate",
 					RCQCompOperators.GREATERTHAN.getValue(), ourLastDate);
 
 		} catch (CQException e1) {
 			log.error("Could not create filter for last modified");
+			throw new CCFRuntimeException("Could not access field 'lastupdatedate'", e1 );
 		}
 
 		// finally, execute the query.
@@ -152,7 +150,7 @@ public class RCQHandler {
 				} else {
 					// skipping the artifact, it was changed before the
 					// lastUpdateTime
-					if (useTraceLogging) {
+					if (log.isTraceEnabled()) {
 						log.trace("skipping " + curCQId
 								+ " as it's modification date "
 								+ formatter.format(artLastModified)
@@ -190,19 +188,19 @@ public class RCQHandler {
 			}
 		});
 
-		if (useTraceLogging) {
+		if (log.isTraceEnabled()) {
 			log.trace("Fetched " + numResults + " records from clearquest");
 		}
 		if (updates > 0) {
 			log.debug(updates + " artifacts were updated after "
 					+ formatter.format(lastModifiedDate));
-			if (useTraceLogging) {
+			if (log.isTraceEnabled()) {
 				log.trace("-----> Fetched Objects:");
 			}
 		}
 
 		for (ArtifactState as : artifactStates) {
-			if (useTraceLogging) {
+			if (log.isTraceEnabled()) {
 				log.trace("      " + as.getArtifactId() + ": last modified on "
 						+ formatter.format(as.getArtifactLastModifiedDate())
 						+ "; Version: " + as.getArtifactVersion());
@@ -282,7 +280,7 @@ public class RCQHandler {
 							.parseQCDate(value));
 					// String lInfo = "converted date value: " + value +
 					// " ==> ";
-					// if ( useTraceLogging
+					// if ( log.isTraceEnabled()
 					// ) { log.trace(lInfo + newValue);
 					value = newValue;
 				}
@@ -371,14 +369,14 @@ public class RCQHandler {
 
 						currentAction = "getting state/transition names";
 						String[] legalActions = record.GetLegalActionDefNames();
-						if (useTraceLogging) {
+						if (log.isTraceEnabled()) {
 							log.trace("legal actions/transitions:");
 						}
 						List<String> actionCandidates = new ArrayList<String>();
 						for (String action : legalActions) {
 							String targetState = currentEntityDef
 									.GetActionDestStateName(action);
-							if (useTraceLogging) {
+							if (log.isTraceEnabled()) {
 								log.trace("		" + action + " --> " + targetState);
 							}
 							if (newState.equals(targetState)) {
