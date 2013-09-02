@@ -92,7 +92,6 @@ public class TFAppHandler {
 							|| lastModifiedDate.equals(createdDate)) {
 						continue;
 					}
-					log.info("New comments created( "+createdDate+" ) after lastModifiedDate " + lastModifiedDate);
 					String description = comment.getDescription();
 					description = "\nOriginal commenter: " + createdBy + "\n"
 							+ description;

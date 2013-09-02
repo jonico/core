@@ -392,7 +392,6 @@ public class TFReader extends AbstractReader<Connection> {
 		Date artifactLastModifiedDate = this.getArtifactLastModifiedDate(syncInfo);
 		String sourceSystemTimezone = this.getSourceSystemTimezone(syncInfo);
 		Connection connection;
-		log.info("Getting the artifact data for " +artifactId + " after the lastModifiedDate "+lastModifiedDate);
 		try {
 			connection = connect(sourceSystemId, sourceSystemKind,
 					sourceRepositoryId, sourceRepositoryKind, serverUrl,
@@ -454,7 +453,6 @@ public class TFReader extends AbstractReader<Connection> {
 					// we're interested in the comments.
 					if(getIdentityMappingDatabaseReader() != null) {
 						lastModifiedDate = artifactLastModifiedDate;
-						log.info("Setting artifact lastModifiedDate from IdentityMapping "+lastModifiedDate);
 					}
 					TFAppHandler appHandler = new TFAppHandler(connection);
 					appHandler.addComments(artifact, lastModifiedDate,
