@@ -21,8 +21,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifact.ArtifactActionValue;
@@ -43,9 +41,6 @@ import com.collabnet.teamforge.api.tracker.TrackerFieldValueDO;
  * 
  */
 public class TFToGenericArtifactConverter {
-
-	private static final Log log = LogFactory.getLog(TFToGenericArtifactConverter.class);
-	
 	/**
 	 * Converts the artifact data contained in the ArtifactSoapDO object into a
 	 * GenricArtifact object
@@ -194,7 +189,6 @@ public class TFToGenericArtifactConverter {
 					TFArtifactMetaData.TFFields.lastModifiedBy, lastModifiedBy,
 					genericArtifact, fieldsMap, includeFieldMetaData);
 			Date lastModifiedDate = artifactRow.getLastModifiedDate();
-			log.info("Getting artifact's( "+id+" ) sourceArtifactLastModifiedDate "+lastModifiedDate);
 			createGenericArtifactField(
 					TFArtifactMetaData.TFFields.lastModifiedDate,
 					lastModifiedDate, genericArtifact, fieldsMap,
