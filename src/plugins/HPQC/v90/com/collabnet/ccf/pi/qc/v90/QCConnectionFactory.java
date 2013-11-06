@@ -130,6 +130,11 @@ public class QCConnectionFactory implements ConnectionFactory<IConnection> {
 				// we now also accept a double hyphen to synchronize requirement types as well
 				if(splitRepoId.length == 3){
 					requirementsType = splitRepoId[2];
+					if(QCHandler.REQUIREMENT_TYPE_ALL.equals(requirementsType)){
+	                                        //if requirementsType is "ALL" we cache it and return it
+						repositoryIdToTechnicalRequirementsTypeIdMap.put(repositoryId, requirementsType);
+						return requirementsType;
+					}
 					// now we have to retrieve the technical id for the requirements type
 					String technicalId = QCHandler.getRequirementTypeTechnicalId(qcc, requirementsType);
 					repositoryIdToTechnicalRequirementsTypeIdMap.put(repositoryId, technicalId);

@@ -524,7 +524,10 @@ public class QCReader extends AbstractReader<IConnection> {
 					} else {
 						latestRequirement = qcGAHelper.getRequirementWithId(
 								connection, Integer.parseInt(artifactId));
-
+						String requirementType = latestRequirement.getTypeId();
+						if(QCHandler.REQUIREMENT_TYPE_ALL.equals(technicalRequirementsTypeId)) {
+							technicalRequirementsTypeId = QCHandler.getRequirementTypeTechnicalId(connection, requirementType);
+						}
 						latestArtifact = latestRequirement.getGenericArtifactObject(
 								connection,
 								info.lastTransactionId,
@@ -538,7 +541,11 @@ public class QCReader extends AbstractReader<IConnection> {
 								artifactHandler,
 								sourceSystemTimezone,
 								technicalRequirementsTypeId,
-								info.lastModifiedBy);
+								info.lastModifiedBy);	
+						if(sourceRepositoryId.matches("^.*-ALL")) { 
+						    //technicalRequirementsTypeId needs to be switched back -> ALL
+						    technicalRequirementsTypeId = QCHandler.REQUIREMENT_TYPE_ALL;
+						}
 						// set information about parent artifact
 						String parentId = latestRequirement.getParentId();
 						if (parentId != null) {
@@ -553,10 +560,16 @@ public class QCReader extends AbstractReader<IConnection> {
 											connection,
 											Integer.parseInt(parentId));
 									String parentRequirementType = parentRequirement.getTypeId();
-									latestArtifact.setDepParentSourceRepositoryId(
-											QCConnectionFactory.generateDependentRepositoryId(
-															sourceRepositoryId,
-															parentRequirementType));
+									if(QCHandler.REQUIREMENT_TYPE_ALL.equals(technicalRequirementsTypeId)) {
+										latestArtifact.setDepParentSourceRepositoryId(sourceRepositoryId);
+										
+									}else {
+										latestArtifact.setDepParentSourceRepositoryId(
+												QCConnectionFactory.generateDependentRepositoryId(
+																sourceRepositoryId,
+																parentRequirementType));
+										
+									}
 								} finally {
 									if (parentRequirement != null) {
 										parentRequirement.safeRelease();

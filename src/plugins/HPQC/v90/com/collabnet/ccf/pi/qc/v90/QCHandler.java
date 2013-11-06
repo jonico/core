@@ -69,12 +69,15 @@ public class QCHandler {
 	// private QCAttachmentHandler attachmentHandler;
 	private final static String QC_BUG_ID = "BG_BUG_ID";
 	private final static String QC_REQ_ID = "RQ_REQ_ID";
+	private final static String QC_REQ_TYPE_ID = "RQ_TYPE_ID";
 	private final static String QC_BUG_VER_STAMP = "BG_BUG_VER_STAMP";
 	private final static String QC_BG_ATTACHMENT = "BG_ATTACHMENT";
 	private final static String QC_RQ_ATTACHMENT = "RQ_ATTACHMENT";
 	private final static String QC_BG_VTS = "BG_VTS";
 	private final static String QC_RQ_VTS = "RQ_VTS";
 	private final static String UNDERSCORE_STRING = "<font color=\"#000080\"><b>________________________________________</b></font>";
+        
+        public static final String REQUIREMENT_TYPE_ALL = "ALL";
 	
 	public QCHandler(boolean useAlternativeFieldName) {
 		setUseAlternativeFieldName(useAlternativeFieldName);
@@ -1448,14 +1451,8 @@ public class QCHandler {
 	public List<ArtifactState> getLatestChangedRequirements(IConnection qcc,
 			String transactionId, String technicalRequirementsId) {
 		int rc = 0;
-		String sql = "SELECT AL.AU_ENTITY_ID AS AU_ENTITY_ID, AL.AU_ACTION_ID AS AU_ACTION_ID, AL.AU_TIME AS AU_TIME FROM AUDIT_LOG AL, REQ WHERE AL.AU_ENTITY_TYPE = 'REQ' AND AU_ACTION_ID > '"
-				+ transactionId
-				+ "' AND AL.AU_ACTION!='DELETE' AND AL.AU_FATHER_ID = '-1'"
-				+ " AND REQ.RQ_TYPE_ID = '"
-				+ technicalRequirementsId
-				+ "'"
-				+ " AND AL.AU_ENTITY_ID = REQ.RQ_REQ_ID"
-				+ " ORDER BY AL.AU_ACTION_ID";
+		 String sql = sqlQueryToRetrieveLatestRequirement(transactionId,
+		                technicalRequirementsId);
 
 		log.debug(sql);
 		ArrayList<ArtifactState> changedRequirements = new ArrayList<ArtifactState>();
@@ -1495,6 +1492,22 @@ public class QCHandler {
 		}
 		return changedRequirements;
 	}
+	
+	private String sqlQueryToRetrieveLatestRequirement(String transactionId,
+	            String technicalRequirementsId) {
+	        StringBuilder queryBuilder = new StringBuilder();
+	        queryBuilder
+	                .append("SELECT AL.AU_ENTITY_ID AS AU_ENTITY_ID, AL.AU_ACTION_ID AS AU_ACTION_ID, AL.AU_TIME AS AU_TIME FROM AUDIT_LOG AL, REQ WHERE AL.AU_ENTITY_TYPE = 'REQ' AND AU_ACTION_ID > '")
+	                .append(transactionId)
+	                .append("' AND AL.AU_ACTION!='DELETE' AND AL.AU_FATHER_ID = '-1'");
+	        if (!QCHandler.REQUIREMENT_TYPE_ALL.equals(technicalRequirementsId)) {
+	            queryBuilder.append(" AND REQ.RQ_TYPE_ID = '")
+	                    .append(technicalRequirementsId).append("'");
+	        }
+	        queryBuilder
+	                .append(" AND AL.AU_ENTITY_ID = REQ.RQ_REQ_ID ORDER BY AL.AU_ACTION_ID");
+	        return queryBuilder.toString();
+	    }
 
 	public IQCRequirement createRequirement(IConnection qcc,
 			List<GenericArtifactField> allFields, String connectorUser,
@@ -1505,6 +1518,8 @@ public class QCHandler {
 		IVersionControl versionControl = null;
 		boolean versionControlSupported = false;
 		Map<String,String> qcRequirementSchemaMetadataCache = null;
+		informalRequirementsType = configureRequirementsType(allFields,
+	                informalRequirementsType);
 		if(isUseAlternativeFieldName()){
 			String technicalReleaseTypeId = QCHandler.getRequirementTypeTechnicalId(qcc, informalRequirementsType);
 			GenericArtifact genericArtifactQCSchemaFields = QCConfigHelper.getSchemaFieldsForRequirement(qcc, technicalReleaseTypeId);
@@ -1634,6 +1649,22 @@ public class QCHandler {
 
 		return new QCRequirement((Requirement) req);
 	}
+	
+	private String configureRequirementsType(
+	            List<GenericArtifactField> allFields,
+	            String informalRequirementsType) {
+	        if (REQUIREMENT_TYPE_ALL.equals(informalRequirementsType)) {
+	            for (GenericArtifactField gaField : allFields) {
+	                String fieldName = gaField.getFieldName();
+	                if (QCHandler.QC_REQ_TYPE_ID.equals(fieldName)) {
+	                    informalRequirementsType = (String) gaField.getFieldValue();
+	                    break;
+	                }
+	                continue;
+	            }
+	        }
+	        return informalRequirementsType;
+	    }
 	
 	private Map<String,String> getQCSchemaMetadataMap(GenericArtifact genericArtifactQCSchemaFields){
 		Map<String,String> metadataMap = new HashMap<String,String>();
