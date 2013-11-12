@@ -1,26 +1,19 @@
 /*
- * Copyright 2009 CollabNet, Inc. ("CollabNet")
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- **/
+ * Copyright 2009 CollabNet, Inc. ("CollabNet") Licensed under the Apache
+ * License, Version 2.0 (the "License"); you may not use this file except in
+ * compliance with the License. You may obtain a copy of the License at
+ * http://www.apache.org/licenses/LICENSE-2.0 Unless required by applicable law
+ * or agreed to in writing, software distributed under the License is
+ * distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ */
 
 /*******************************************************************************
- * Copyright (c) 2004, 2007 Mylyn project committers and others.
- * All rights reserved. This program and the accompanying materials
- * are made available under the terms of the Eclipse Public License v1.0
- * which accompanies this distribution, and is available at
- * http://www.eclipse.org/legal/epl-v10.html
+ * Copyright (c) 2004, 2007 Mylyn project committers and others. All rights
+ * reserved. This program and the accompanying materials are made available
+ * under the terms of the Eclipse Public License v1.0 which accompanies this
+ * distribution, and is available at http://www.eclipse.org/legal/epl-v10.html
  *******************************************************************************/
 
 package com.collabnet.tracker.common.httpClient;
@@ -54,99 +47,111 @@ import org.apache.commons.httpclient.protocol.SecureProtocolSocketFactory;
 // API-3.0 move to internal package and merge with PollingSslProtocolSocketFactory
 public class SslProtocolSocketFactory implements SecureProtocolSocketFactory {
 
-	private static final String KEY_STORE = "javax.net.ssl.keyStore";
+    private static final String     KEY_STORE          = "javax.net.ssl.keyStore";
 
-	private static final String KEY_STORE_TYPE = "javax.net.ssl.keyStoreType";
+    private static final String     KEY_STORE_TYPE     = "javax.net.ssl.keyStoreType";
 
-	private static final String KEY_STORE_PASSWORD = "javax.net.ssl.keyStorePassword";
+    private static final String     KEY_STORE_PASSWORD = "javax.net.ssl.keyStorePassword";
 
-	static SslProtocolSocketFactory factory = new SslProtocolSocketFactory();
+    static SslProtocolSocketFactory factory            = new SslProtocolSocketFactory();
 
-	public static SslProtocolSocketFactory getInstance() {
-		return factory;
-	}
+    private SSLSocketFactory        socketFactory;
 
-	private SSLSocketFactory socketFactory;
+    private final boolean           hasKeyManager;
 
-	private final boolean hasKeyManager;
+    private SslProtocolSocketFactory() {
+        KeyManager[] keymanagers = null;
+        if (System.getProperty(KEY_STORE) != null
+                && System.getProperty(KEY_STORE_PASSWORD) != null) {
+            try {
+                String type = System.getProperty(KEY_STORE_TYPE,
+                        KeyStore.getDefaultType());
+                KeyStore keyStore = KeyStore.getInstance(type);
+                char[] password = System.getProperty(KEY_STORE_PASSWORD)
+                        .toCharArray();
+                FileInputStream keyStoreInputStream = new FileInputStream(
+                        System.getProperty(KEY_STORE));
+                keyStore.load(keyStoreInputStream, password);
+                keyStoreInputStream.close();
+                KeyManagerFactory keyManagerFactory = KeyManagerFactory
+                        .getInstance(KeyManagerFactory.getDefaultAlgorithm());
+                keyManagerFactory.init(keyStore, password);
+                keymanagers = keyManagerFactory.getKeyManagers();
+            } catch (Exception e) {
+                log(0, "Could not initialize keystore", e);
+            }
+        }
 
-	private SslProtocolSocketFactory() {
-		KeyManager[] keymanagers = null;
-		if (System.getProperty(KEY_STORE) != null && System.getProperty(KEY_STORE_PASSWORD) != null) {
-			try {
-				String type = System.getProperty(KEY_STORE_TYPE, KeyStore.getDefaultType());
-				KeyStore keyStore = KeyStore.getInstance(type);
-				char[] password = System.getProperty(KEY_STORE_PASSWORD).toCharArray();
-				FileInputStream keyStoreInputStream = new FileInputStream(System.getProperty(KEY_STORE));
-				keyStore.load(keyStoreInputStream, password);
-				keyStoreInputStream.close();
-				KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-				keyManagerFactory.init(keyStore, password);
-				keymanagers = keyManagerFactory.getKeyManagers();
-			} catch (Exception e) {
-				log(0, "Could not initialize keystore", e);
-			}
-		}
+        hasKeyManager = keymanagers != null;
 
-		hasKeyManager = keymanagers != null;
+        try {
+            SSLContext sslContext = SSLContext.getInstance("SSL");
+            sslContext.init(keymanagers,
+                    new TrustManager[] { new TrustAllTrustManager() }, null);
+            this.socketFactory = sslContext.getSocketFactory();
+        } catch (Exception e) {
+            log(0, "Could not initialize SSL context", e);
+        }
+    }
 
-		try {
-			SSLContext sslContext = SSLContext.getInstance("SSL");
-			sslContext.init(keymanagers, new TrustManager[] { new TrustAllTrustManager() }, null);
-			this.socketFactory = sslContext.getSocketFactory();
-		} catch (Exception e) {
-			log(0, "Could not initialize SSL context", e);
-		}
-	}
+    public Socket createSocket(Socket socket, String host, int port,
+            boolean autoClose) throws IOException, UnknownHostException {
+        return getSocketFactory().createSocket(socket, host, port, autoClose);
+    }
 
-	private void log(int i, String string, Exception e) {
-		System.out.println(string);
-		System.out.println(e.getMessage());
-	}
+    public Socket createSocket(String remoteHost, int remotePort)
+            throws IOException, UnknownHostException {
+        return getSocketFactory().createSocket(remoteHost, remotePort);
+    }
 
-	/**
-	 * @since 2.3
-	 */
-	public SSLSocketFactory getSocketFactory() throws IOException {
-		if (socketFactory == null) {
-			throw new IOException("Could not initialize SSL context");
-		}
-		return socketFactory;
-	}
+    public Socket createSocket(String remoteHost, int remotePort,
+            InetAddress clientHost, int clientPort) throws IOException,
+            UnknownHostException {
+        return getSocketFactory().createSocket(remoteHost, remotePort,
+                clientHost, clientPort);
+    }
 
-	public Socket createSocket(String remoteHost, int remotePort) throws IOException, UnknownHostException {
-		return getSocketFactory().createSocket(remoteHost, remotePort);
-	}
+    public Socket createSocket(String remoteHost, int remotePort,
+            InetAddress clientHost, int clientPort, HttpConnectionParams params)
+            throws IOException, UnknownHostException, ConnectTimeoutException {
+        if (params == null) {
+            throw new IllegalArgumentException("Parameters may not be null");
+        }
 
-	public Socket createSocket(String remoteHost, int remotePort, InetAddress clientHost, int clientPort)
-			throws IOException, UnknownHostException {
-		return getSocketFactory().createSocket(remoteHost, remotePort, clientHost, clientPort);
-	}
+        int timeout = params.getConnectionTimeout();
+        if (timeout == 0) {
+            return getSocketFactory().createSocket(remoteHost, remotePort,
+                    clientHost, clientPort);
+        } else {
+            Socket socket = getSocketFactory().createSocket();
+            socket.bind(new InetSocketAddress(clientHost, clientPort));
+            socket.connect(new InetSocketAddress(remoteHost, remotePort),
+                    timeout);
+            return socket;
+        }
+    }
 
-	public Socket createSocket(String remoteHost, int remotePort, InetAddress clientHost, int clientPort,
-			HttpConnectionParams params) throws IOException, UnknownHostException, ConnectTimeoutException {
-		if (params == null) {
-			throw new IllegalArgumentException("Parameters may not be null");
-		}
+    /**
+     * @since 2.3
+     */
+    public SSLSocketFactory getSocketFactory() throws IOException {
+        if (socketFactory == null) {
+            throw new IOException("Could not initialize SSL context");
+        }
+        return socketFactory;
+    }
 
-		int timeout = params.getConnectionTimeout();
-		if (timeout == 0) {
-			return getSocketFactory().createSocket(remoteHost, remotePort, clientHost, clientPort);
-		} else {
-			Socket socket = getSocketFactory().createSocket();
-			socket.bind(new InetSocketAddress(clientHost, clientPort));
-			socket.connect(new InetSocketAddress(remoteHost, remotePort), timeout);
-			return socket;
-		}
-	}
+    public boolean hasKeyManager() {
+        return hasKeyManager;
+    }
 
-	public Socket createSocket(Socket socket, String host, int port, boolean autoClose) throws IOException,
-			UnknownHostException {
-		return getSocketFactory().createSocket(socket, host, port, autoClose);
-	}
+    private void log(int i, String string, Exception e) {
+        System.out.println(string);
+        System.out.println(e.getMessage());
+    }
 
-	public boolean hasKeyManager() {
-		return hasKeyManager;
-	}
+    public static SslProtocolSocketFactory getInstance() {
+        return factory;
+    }
 
 }

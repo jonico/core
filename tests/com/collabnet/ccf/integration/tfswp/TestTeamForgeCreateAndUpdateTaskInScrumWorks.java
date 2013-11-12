@@ -21,101 +21,104 @@ import com.danube.scrumworks.api2.client.Task;
  */
 public class TestTeamForgeCreateAndUpdateTaskInScrumWorks extends TFSWPIntegrationTest {
 
-	/**
-	 * Creates a task item in TeamForge and verifies the task item in ScrumWorks
-	 * after the synchronization. Afterwards, we will update the task and look
-	 * whether the update goes through as well
-	 * 
-	 * @throws Exception
-	 *             if an error occurs
-	 */
-	@Test
-	public void testTaskCreationAndUpdate() throws Exception {
-		// first we have to create a PBI
-		String title = "TFTask";
-		String description = "TFTaskDescription";
-		String status = TaskStatus.NOT_STARTED.getStatus();
-		int remainingEffort = 0;
-		int originalEstimate = 0;
-		String assignedToUser = getTeamForgeTester().getUserName();
+    /**
+     * Creates a task item in TeamForge and verifies the task item in ScrumWorks
+     * after the synchronization. Afterwards, we will update the task and look
+     * whether the update goes through as well
+     * 
+     * @throws Exception
+     *             if an error occurs
+     */
+    @Test
+    public void testTaskCreationAndUpdate() throws Exception {
+        // first we have to create a PBI
+        String title = "TFTask";
+        String description = "TFTaskDescription";
+        String status = TaskStatus.NOT_STARTED.getStatus();
+        int remainingEffort = 0;
+        int originalEstimate = 0;
+        String assignedToUser = getTeamForgeTester().getUserName();
 
-		String taskId = getTeamForgeTester().createTaskAndPBI(title, description,
-				status, assignedToUser, remainingEffort, originalEstimate).getId();
+        String taskId = getTeamForgeTester().createTaskAndPBI(title,
+                description, status, assignedToUser, remainingEffort,
+                originalEstimate).getId();
 
-		// verify
-		List<BacklogItem> pbis = getSWPTester().waitForBacklogItemsToAppear(1); 
+        // verify
+        List<BacklogItem> pbis = getSWPTester().waitForBacklogItemsToAppear(1);
 
-		assertEquals(1, pbis.size());
-		BacklogItem pbi = pbis.get(0);
-		
-		// now that we can be sure that PBI has been created, update task again to trigger resynch
-		getTeamForgeTester().updateTask(taskId, title, description,
-				status, assignedToUser, remainingEffort, originalEstimate);
+        assertEquals(1, pbis.size());
+        BacklogItem pbi = pbis.get(0);
 
-		Task task = getSWPTester().waitForTaskToAppear(pbi, title, 1, null);
+        // now that we can be sure that PBI has been created, update task again to trigger resynch
+        getTeamForgeTester().updateTask(taskId, title, description, status,
+                assignedToUser, remainingEffort, originalEstimate);
 
-		assertEquals(title, task.getName());
-		assertEquals(description, task.getDescription());
-		assertEquals(status, task.getStatus());
-		assertNull(task.getCurrentEstimate());
-		assertNull(task.getOriginalEstimate());
-		assertEquals(assignedToUser + " (" + assignedToUser + ")", task
-				.getPointPerson());
+        Task task = getSWPTester().waitForTaskToAppear(pbi, title, 1, null);
 
-		// now we update the task
-		String newTitle = "ChangedTFTask";
-		String newDescription = "ChangedTFTaskDescription";
-		String newStatus = TaskStatus.IN_PROGRESS.getStatus();
-		int newRemainingEffort = 42;
-		int newOriginalEstimate = 42;
-		String newAssignedToUser = null;
+        assertEquals(title, task.getName());
+        assertEquals(description, task.getDescription());
+        assertEquals(status, task.getStatus());
+        assertNull(task.getCurrentEstimate());
+        assertNull(task.getOriginalEstimate());
+        assertEquals(assignedToUser + " (" + assignedToUser + ")",
+                task.getPointPerson());
 
-		getTeamForgeTester().updateTask(taskId, newTitle, newDescription,
-				newStatus, newAssignedToUser, newRemainingEffort, newOriginalEstimate);
+        // now we update the task
+        String newTitle = "ChangedTFTask";
+        String newDescription = "ChangedTFTaskDescription";
+        String newStatus = TaskStatus.IN_PROGRESS.getStatus();
+        int newRemainingEffort = 42;
+        int newOriginalEstimate = 42;
+        String newAssignedToUser = null;
 
-		// now we have to wait for the update to come through
-		task = getSWPTester().waitForTaskToAppear(pbi, newTitle, 1, null);
+        getTeamForgeTester().updateTask(taskId, newTitle, newDescription,
+                newStatus, newAssignedToUser, newRemainingEffort,
+                newOriginalEstimate);
 
-		assertEquals(newTitle, task.getName());
-		assertEquals(newDescription, task.getDescription());
-		assertEquals(newStatus, task.getStatus());
-		assertEquals(newRemainingEffort, task.getCurrentEstimate().intValue());
-		assertEquals(newOriginalEstimate, task.getOriginalEstimate().intValue());
-		assertNull(task.getPointPerson());
+        // now we have to wait for the update to come through
+        task = getSWPTester().waitForTaskToAppear(pbi, newTitle, 1, null);
 
-		
-		
-		// now we set the estimated hours to zero and expect zero (instead of
-		// null)
-		int zeroEffort = 0;
-		String yetAnotherTitle = "Yet another title";
-		String yetAnotherStatus = TaskStatus.DONE.getStatus();
-		String yetAnotherUser = getTeamForgeTester().getUserName();
-		String yetAnotherDescription = "yetAnotherDescription";
-		
-		getTeamForgeTester().updateTask(taskId, yetAnotherTitle, yetAnotherDescription,
-				yetAnotherStatus, yetAnotherUser, zeroEffort, newOriginalEstimate);
-		
-		// now we have to wait for the update to come through
-		task = getSWPTester().waitForTaskToAppear(pbi, yetAnotherTitle, 1, null); 
+        assertEquals(newTitle, task.getName());
+        assertEquals(newDescription, task.getDescription());
+        assertEquals(newStatus, task.getStatus());
+        assertEquals(newRemainingEffort, task.getCurrentEstimate().intValue());
+        assertEquals(newOriginalEstimate, task.getOriginalEstimate().intValue());
+        assertNull(task.getPointPerson());
 
-		assertEquals(yetAnotherTitle, task.getName());
-		assertEquals(yetAnotherDescription, task.getDescription());
-		assertEquals(yetAnotherStatus, task.getStatus());
-		assertEquals(zeroEffort, task.getCurrentEstimate().intValue());
-		assertEquals(newOriginalEstimate, task.getOriginalEstimate().intValue());
-		assertEquals(assignedToUser + " (" + assignedToUser + ")", task
-				.getPointPerson());
+        // now we set the estimated hours to zero and expect zero (instead of
+        // null)
+        int zeroEffort = 0;
+        String yetAnotherTitle = "Yet another title";
+        String yetAnotherStatus = TaskStatus.DONE.getStatus();
+        String yetAnotherUser = getTeamForgeTester().getUserName();
+        String yetAnotherDescription = "yetAnotherDescription";
 
-		// now we check whether comments have been transported
-		List<Comment> comments = getSWPTester().getSWPEndpoint().getCommentsForTask(task.getId());
-		
-		// if multiple comments are added to TF in the same second, it might deliver it multiple times
-		assertTrue(comments.size() > 2);
-		for (Comment comment : comments) {
-			assertTrue(comment.getText().contains("updating task ..."));
-		}
-		
-	}
+        getTeamForgeTester().updateTask(taskId, yetAnotherTitle,
+                yetAnotherDescription, yetAnotherStatus, yetAnotherUser,
+                zeroEffort, newOriginalEstimate);
+
+        // now we have to wait for the update to come through
+        task = getSWPTester()
+                .waitForTaskToAppear(pbi, yetAnotherTitle, 1, null);
+
+        assertEquals(yetAnotherTitle, task.getName());
+        assertEquals(yetAnotherDescription, task.getDescription());
+        assertEquals(yetAnotherStatus, task.getStatus());
+        assertEquals(zeroEffort, task.getCurrentEstimate().intValue());
+        assertEquals(newOriginalEstimate, task.getOriginalEstimate().intValue());
+        assertEquals(assignedToUser + " (" + assignedToUser + ")",
+                task.getPointPerson());
+
+        // now we check whether comments have been transported
+        List<Comment> comments = getSWPTester().getSWPEndpoint()
+                .getCommentsForTask(task.getId());
+
+        // if multiple comments are added to TF in the same second, it might deliver it multiple times
+        assertTrue(comments.size() > 2);
+        for (Comment comment : comments) {
+            assertTrue(comment.getText().contains("updating task ..."));
+        }
+
+    }
 
 }

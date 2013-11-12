@@ -41,473 +41,460 @@ import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 
 public class JIRAHandler {
 
-	private static final Log log = LogFactory.getLog(JIRAHandler.class);
-	private static final Log logConflictResolutor = LogFactory
-			.getLog("com.collabnet.ccf.core.conflict.resolution");
-	
-	public String get_all_issue_query = "project = ?1 AND TYPE=?2 AND UPDATED >= '?3' order by UPDATED asc";
-	static final NullProgressMonitor pm = new NullProgressMonitor();
-	
-	public void getChangedWorkItems(JIRAConnection connection, String projectKey, String issueType,
-			Date lastModifiedDate, String lastSynchronizedVersion,
-			String lastSynchedArtifactId,
-			ArrayList<ArtifactState> artifactStates, String userName,
-			boolean ignoreConnectorUserUpdates, String jiraTimezone) {
+    private static final Log         log                  = LogFactory
+                                                                  .getLog(JIRAHandler.class);
+    private static final Log         logConflictResolutor = LogFactory
+                                                                  .getLog("com.collabnet.ccf.core.conflict.resolution");
 
-		 	
-		    DateFormat df = new SimpleDateFormat(
-					"yyyy-MM-dd HH:mm");
-		    df.setTimeZone(TimeZone.getTimeZone(jiraTimezone));
-		    
-		 
-			String finalQuery = get_all_issue_query
-					.replace("?1", projectKey).replace("?2",issueType).replace("?3", df.format(lastModifiedDate));
+    public String                    get_all_issue_query  = "project = ?1 AND TYPE=?2 AND UPDATED >= '?3' order by UPDATED asc";
+    static final NullProgressMonitor pm                   = new NullProgressMonitor();
 
-			SearchResult<BasicIssue> result= connection.getJiraRestClient().getSearchClient().searchJql(finalQuery, pm);
-	    	Iterable<BasicIssue>  basicIssueList=result.getIssues();
-	    	
-			
-			ArrayList<Issue> detailRowsFull = new ArrayList<Issue>();
-			ArrayList<Issue> detailRowsNew = new ArrayList<Issue>();
-			boolean duplicateFound = false;
+    public BasicIssue createIssue(GenericArtifact ga, String projectKey,
+            String issueTypeString, JIRAConnection connection) {
 
-			for(BasicIssue basicIssue : basicIssueList){
-				Issue workItem = connection.getJiraRestClient().getIssueClient().getIssue(basicIssue.getKey(), pm);
-				
-				
+        //FIXME implement retry logic for mid-air conflicts
+        //FIXME Adding comments
+        //FIXME Setting all fields
+        //FIXME Creating Parent-Child dependencies
+        //FIXME to find out correct version number
+        //FIXME html to plain text conversion
+        //FIXME get issue type IDs instead of name
 
-				// check last date sync
+        DateTime createdDate = null;
 
-				Date workItemTimeStamp = workItem.getUpdateDate().toDate();
+        JiraRestClient restClient = connection.getJiraRestClient();
+        IssueRestClient issueClient = restClient.getIssueClient();
 
-				Date artifactLastModifiedDate = new Date(0);
+        final IssueInputBuilder issueInputBuilder = getIssueInputBuilder(ga,
+                projectKey, issueTypeString, issueClient);
+        final BasicIssue basicCreatedIssue = issueClient.createIssue(
+                issueInputBuilder.build(), pm);
+        Issue issue = issueClient.getIssue(basicCreatedIssue.getKey(), pm);
 
-				if (workItemTimeStamp != null) {
-					artifactLastModifiedDate = workItemTimeStamp;
-				}
+        Iterable<com.atlassian.jira.rest.client.domain.Field> fields = issue
+                .getFields();
+        issue = addIssueComment(ga, issueClient, basicCreatedIssue.getKey(),
+                issue);
 
-				if (artifactLastModifiedDate.compareTo(lastModifiedDate) >= 0) {
+        if (issue.getComments() != null) {
+            createdDate = getUpdatedDate(connection, issue);
+        }
 
-					String workItemRevisionNumber = String.valueOf(workItem.getUpdateDate().getMillis());
-					String id = String.valueOf(workItem.getId());
-					if (id.equals(lastSynchedArtifactId)
-							&& workItemRevisionNumber
-									.equals(lastSynchronizedVersion)) {
-						duplicateFound = true;
-					} else {
-						if (duplicateFound) {
-							detailRowsNew.add(workItem);
-						}
-						detailRowsFull.add(workItem);
-					}
-				}
-			}
+        //TODO Code will be used on Updateissue()
+        /*
+         * if (issue.getChangelog() != null) { Iterator<ChangelogGroup> it =
+         * issue.getChangelog().iterator(); while (it.hasNext()) { // FIXME Find
+         * out the change log items order ChangelogGroup changeLogGroup =
+         * it.next(); BasicUser createdUser = changeLogGroup.getAuthor(); if
+         * (connection.getUsername().equalsIgnoreCase( createdUser.getName())) {
+         * createdDate = changeLogGroup.getCreated(); break; } } }
+         */
 
-			List<Issue> issues = duplicateFound ? detailRowsNew
-					: detailRowsFull;
-			for (Issue issue : issues) {
-				ArtifactState artifactState = new ArtifactState();
-				artifactState.setArtifactId(issue.getId());
+        createdDate = issue.getCreationDate();
+        if (createdDate == null) {
+            throw new CCFRuntimeException(
+                    "Could not determine creation date for newly created issue "
+                            + issue.getKey());
+        }
+        ga.setTargetArtifactVersion(String.valueOf(createdDate.getMillis()));
 
-				artifactState.setArtifactLastModifiedDate(issue.getUpdateDate().toDate());
+        try {
+            ga.setTargetArtifactLastModifiedDate(GenericArtifactHelper.df
+                    .format(createdDate.toDate()));
 
-				artifactState.setArtifactVersion(issue.getUpdateDate().getMillis());
-				artifactStates.add(artifactState);
-			}
-	}
+        } catch (NullPointerException e) {
 
-	public void getIssue(JIRAConnection connection,
-			String projectKey, String issueType, Date lastModifiedDate,
-			String lastSynchronizedVersion, String lastSynchedArtifactId,
-			String artifactId, String userName,
-			boolean ignoreConnectorUserUpdates,
-			GenericArtifact genericArtifact, String sourceRepositoryId) {
+            String message = "Null pointer setting the new workItem changedDate";
+            throw new CCFRuntimeException(message);
+        }
 
-		Issue issue = connection.getJiraRestClient().getIssueClient().getIssue(artifactId, pm);
+        ga.setTargetArtifactId(String.valueOf(basicCreatedIssue.getId()));
 
-		String lastModifiedBy = "ccfteam";
-		Date creationDate = issue.getCreationDate().toDate();
-		Date lasWorkItemtModifiedDate = issue.getUpdateDate().toDate();
-		String revisionNumber = String.valueOf(issue.getUpdateDate().getMillis());
+        return basicCreatedIssue;
+    }
 
-		boolean isResync = false;
-		boolean isIgnore = false;
+    public void getChangedWorkItems(JIRAConnection connection,
+            String projectKey, String issueType, Date lastModifiedDate,
+            String lastSynchronizedVersion, String lastSynchedArtifactId,
+            ArrayList<ArtifactState> artifactStates, String userName,
+            boolean ignoreConnectorUserUpdates, String jiraTimezone) {
 
-		/*if (lastModifiedBy.equalsIgnoreCase(userName)
-				&& ignoreConnectorUserUpdates) {
-			if (creationDate.after(lastModifiedDate)) {
-				log.info(String
-						.format("resync is necessary, despite the artifact %s last being updated by the connector user",
-								artifactId));
-				isResync = true;
-			} else {
-				log.info(String
-						.format("artifact %s is an ordinary connector update, ignore it.",
-								artifactId));
-				isIgnore = true;
-			}
-		}*/
-		
-		Iterator<com.atlassian.jira.rest.client.domain.Field> it = issue.getFields().iterator();
-		
-		while (it.hasNext()) {
+        DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+        df.setTimeZone(TimeZone.getTimeZone(jiraTimezone));
 
-			com.atlassian.jira.rest.client.domain.Field field = it.next();
-			addIssueField(genericArtifact, field);
-		}
-		GenericArtifactField summaryField = genericArtifact.addNewField(
-				"description", "mandatoryField");
-		summaryField.setFieldValueType(FieldValueTypeValue.STRING);
-		summaryField.setFieldAction(FieldActionValue.REPLACE);
-		summaryField.setFieldValue(issue.getDescription());
-		
-		GenericArtifactField descriptionField = genericArtifact.addNewField(
-				"summary", "mandatoryField");
-		descriptionField.setFieldValueType(FieldValueTypeValue.STRING);
-		descriptionField.setFieldAction(FieldActionValue.REPLACE);
-		descriptionField.setFieldValue(issue.getSummary());
-		
-		GenericArtifactField statusField = genericArtifact.addNewField(
-				"status", "mandatoryField");
-		statusField.setFieldValueType(FieldValueTypeValue.STRING);
-		statusField.setFieldAction(FieldActionValue.REPLACE);
-		statusField.setFieldValue(issue.getStatus().getName());
+        String finalQuery = get_all_issue_query.replace("?1", projectKey)
+                .replace("?2", issueType)
+                .replace("?3", df.format(lastModifiedDate));
 
-		final Iterable<CimProject> metadataProjects = connection.getJiraRestClient().getIssueClient().getCreateIssueMetadata(
-				new GetCreateIssueMetadataOptionsBuilder().withProjectKeys(projectKey).withIssueTypeNames(issueType).withExpandedIssueTypesFields().build(), pm);
-		final CimProject project = metadataProjects.iterator().next();
-		final CimIssueType createIssueType = EntityHelper.findEntityByName(project.getIssueTypes(), issueType);
-		
-		Map<String, CimFieldInfo> fieldMap=createIssueType.getFields();
-		 Iterator<Entry<String, CimFieldInfo>> fieldsit = fieldMap.entrySet().iterator();
-		while(fieldsit.hasNext()){
-			 CimFieldInfo field = fieldsit.next().getValue();
-			/*if(field.getId().equalsIgnoreCase("description")){
-				GenericArtifactField gaField = genericArtifact.addNewField(
-						field.getId(), "mandatoryField");
-				gaField.setFieldValueType(FieldValueTypeValue.STRING);
-				gaField.setFieldAction(FieldActionValue.REPLACE);
-				gaField.setFieldValue(issue.getf.getDescription());
-				
-			}
-			if(field.getId().equalsIgnoreCase("summary")){
-				GenericArtifactField gaField = genericArtifact.addNewField(
-						field.getId(), "mandatoryField");
-				gaField.setFieldValueType(FieldValueTypeValue.STRING);
-				gaField.setFieldAction(FieldActionValue.REPLACE);
-				gaField.setFieldValue(issue.getSummary());
-				
-			}
-			if(field.getId().equalsIgnoreCase("status")){
-				GenericArtifactField gaField = genericArtifact.addNewField(
-						field.getId(), "mandatoryField");
-				gaField.setFieldValueType(FieldValueTypeValue.STRING);
-				gaField.setFieldAction(FieldActionValue.REPLACE);
-				gaField.setFieldValue(issue.getStatus().getName());
-				
-			}*/
-			//addIssueField(genericArtifact, field, issue);
-		}
+        SearchResult<BasicIssue> result = connection.getJiraRestClient()
+                .getSearchClient().searchJql(finalQuery, pm);
+        Iterable<BasicIssue> basicIssueList = result.getIssues();
 
-		
-		if (isIgnore) {
-			genericArtifact
-					.setArtifactAction(GenericArtifact.ArtifactActionValue.IGNORE);
-		} else {
-			if (isResync) {
-				genericArtifact
-						.setArtifactAction(GenericArtifact.ArtifactActionValue.RESYNC);
-			}
-			// now fetch the comments
-			Iterator<Comment> commIt = issue.getComments().iterator();
-		
-			while (commIt.hasNext()) {
+        ArrayList<Issue> detailRowsFull = new ArrayList<Issue>();
+        ArrayList<Issue> detailRowsNew = new ArrayList<Issue>();
+        boolean duplicateFound = false;
 
-				Comment comment = commIt.next();
-				
-				String changedBy = comment.getAuthor().getName();
-				if (changedBy.equalsIgnoreCase(userName)
-						&& ignoreConnectorUserUpdates) {
-					continue;
-				}
+        for (BasicIssue basicIssue : basicIssueList) {
+            Issue workItem = connection.getJiraRestClient().getIssueClient()
+                    .getIssue(basicIssue.getKey(), pm);
 
-				Date changedDate = comment.getUpdateDate().toDate();
-				if (lastModifiedDate.compareTo(changedDate) >= 0) {
-					continue;
-				}
+            // check last date sync
 
-				String history = comment.getBody();
-				if (StringUtils.isEmpty(history)) {
-					continue;
-				}
-				addComment(genericArtifact,comment);
-				
-			}
-		}
+            Date workItemTimeStamp = workItem.getUpdateDate().toDate();
 
-		genericArtifact
-				.setSourceArtifactLastModifiedDate(GenericArtifactHelper.df
-						.format(lasWorkItemtModifiedDate));
-		genericArtifact.setSourceArtifactVersion(revisionNumber);
+            Date artifactLastModifiedDate = new Date(0);
 
-		// looking for a parent-child relationship
-		/*if (workItem.getLinks().size() > 0) {
+            if (workItemTimeStamp != null) {
+                artifactLastModifiedDate = workItemTimeStamp;
+            }
 
-			workItem.getLinks().iterator().next();
-			Iterator<Link> linkIterator = workItem.getLinks().iterator();
+            if (artifactLastModifiedDate.compareTo(lastModifiedDate) >= 0) {
 
-			while (linkIterator.hasNext()) {
+                String workItemRevisionNumber = String.valueOf(workItem
+                        .getUpdateDate().getMillis());
+                String id = String.valueOf(workItem.getId());
+                if (id.equals(lastSynchedArtifactId)
+                        && workItemRevisionNumber
+                                .equals(lastSynchronizedVersion)) {
+                    duplicateFound = true;
+                } else {
+                    if (duplicateFound) {
+                        detailRowsNew.add(workItem);
+                    }
+                    detailRowsFull.add(workItem);
+                }
+            }
+        }
 
-				Link link = linkIterator.next();
+        List<Issue> issues = duplicateFound ? detailRowsNew : detailRowsFull;
+        for (Issue issue : issues) {
+            ArtifactState artifactState = new ArtifactState();
+            artifactState.setArtifactId(issue.getId());
 
-				// it looks for a Related relationship
-				if (link.getLinkID() == -1) {
+            artifactState.setArtifactLastModifiedDate(issue.getUpdateDate()
+                    .toDate());
 
-					RelatedLinkImpl relatedLink = (RelatedLinkImpl) link;
+            artifactState.setArtifactVersion(issue.getUpdateDate().getMillis());
+            artifactStates.add(artifactState);
+        }
+    }
 
-					// it looks for a Parent relationship
-					if (relatedLink.getWorkItemLinkTypeID() == -2) {
+    public void getIssue(JIRAConnection connection, String projectKey,
+            String issueType, Date lastModifiedDate,
+            String lastSynchronizedVersion, String lastSynchedArtifactId,
+            String artifactId, String userName,
+            boolean ignoreConnectorUserUpdates,
+            GenericArtifact genericArtifact, String sourceRepositoryId) {
 
-						WorkItem fatherWorkItem = connection
-								.getTpc()
-								.getWorkItemClient()
-								.getWorkItemByID(
-										relatedLink.getTargetWorkItemID());
-						String parentSourceRepositoryId = sourceRepositoryId
-								.substring(0,
-										sourceRepositoryId.lastIndexOf("-"))
-								+ "-" + fatherWorkItem.getType().getName();
+        Issue issue = connection.getJiraRestClient().getIssueClient()
+                .getIssue(artifactId, pm);
 
-						genericArtifact
-								.setDepParentSourceRepositoryId(parentSourceRepositoryId);
-						genericArtifact.setDepParentSourceArtifactId(String
-								.valueOf(fatherWorkItem.getID()));
-					}
-				}
-			}
-		}*/
+        String lastModifiedBy = "ccfteam";
+        Date creationDate = issue.getCreationDate().toDate();
+        Date lasWorkItemtModifiedDate = issue.getUpdateDate().toDate();
+        String revisionNumber = String.valueOf(issue.getUpdateDate()
+                .getMillis());
 
-	}
+        boolean isResync = false;
+        boolean isIgnore = false;
 
-	private void addIssueField(GenericArtifact genericArtifact,
-			CimFieldInfo field, Issue issue) {
-		Field actualField = issue.getField(field.getId());
-		GenericArtifactField gaField = genericArtifact.addNewField(
-				field.getId(), "mandatoryField");
-		// FIXME Type conversion
-		gaField.setFieldValueType(FieldValueTypeValue.STRING);
-		gaField.setFieldAction(FieldActionValue.REPLACE);
-		
-		if (actualField != null) {
-			Object fieldValue = actualField.getValue();
-			if (fieldValue != null) {
-				gaField.setFieldValue(fieldValue.toString());
-				return;
-			}
-		}
-		gaField.setFieldValue(null);
-	}
+        /*
+         * if (lastModifiedBy.equalsIgnoreCase(userName) &&
+         * ignoreConnectorUserUpdates) { if
+         * (creationDate.after(lastModifiedDate)) { log.info(String .format(
+         * "resync is necessary, despite the artifact %s last being updated by the connector user"
+         * , artifactId)); isResync = true; } else { log.info(String
+         * .format("artifact %s is an ordinary connector update, ignore it.",
+         * artifactId)); isIgnore = true; } }
+         */
 
-	private void addComment(GenericArtifact genericArtifact, Comment comment) {
-		GenericArtifactField gaField = genericArtifact.addNewField(
-				"comment", "mandatoryField");
-		gaField.setFieldValueType(FieldValueTypeValue.STRING);
-		gaField.setFieldAction(FieldActionValue.APPEND);
-		gaField.setFieldValue(comment.getBody());
-	}
+        Iterator<com.atlassian.jira.rest.client.domain.Field> it = issue
+                .getFields().iterator();
 
-	private void addIssueField(GenericArtifact genericArtifact, Field field) {
-		
-		// in the moment we find out that TFS supports more than one field with
-		// the same name, we have to use the field type to differentiate them
-		GenericArtifactField gaField = genericArtifact.addNewField(
-				field.getId(), "mandatoryField");
-		gaField.setFieldValueType(FieldValueTypeValue.STRING);
-		gaField.setFieldAction(FieldActionValue.REPLACE);
-		gaField.setFieldValue(field.getValue());
-	}
+        while (it.hasNext()) {
 
-	public BasicIssue createIssue(GenericArtifact ga, String projectKey,
-			String issueTypeString , JIRAConnection connection) {
-		
-		//FIXME implement retry logic for mid-air conflicts
-		//FIXME Adding comments
-		//FIXME Setting all fields
-		//FIXME Creating Parent-Child dependencies
-		//FIXME to find out correct version number
-		//FIXME html to plain text conversion
-		//FIXME get issue type IDs instead of name
-		
-		DateTime createdDate=null;
-		 
-		JiraRestClient restClient=connection.getJiraRestClient();
-		IssueRestClient issueClient = restClient.getIssueClient();
-		
-		final IssueInputBuilder issueInputBuilder = getIssueInputBuilder(ga,
-				projectKey, issueTypeString, issueClient);
-		final BasicIssue basicCreatedIssue = issueClient.createIssue(issueInputBuilder.build(), pm);
-		Issue issue = issueClient.getIssue(basicCreatedIssue.getKey(), pm);
-		
-		Iterable<com.atlassian.jira.rest.client.domain.Field> fields= issue.getFields();
-		issue = addIssueComment(ga, issueClient, basicCreatedIssue.getKey(), issue);
-		
-		
-		if (issue.getComments()!=null) {
-			createdDate=getUpdatedDate(connection, issue);
-		}
-		
-		//TODO Code will be used on Updateissue()
-		/*if (issue.getChangelog() != null) {
-			Iterator<ChangelogGroup> it = issue.getChangelog().iterator();
-			while (it.hasNext()) {
-				// FIXME Find out the change log items order
-				ChangelogGroup changeLogGroup = it.next();
-				BasicUser createdUser = changeLogGroup.getAuthor();
-				if (connection.getUsername().equalsIgnoreCase(
-						createdUser.getName())) {
-					createdDate = changeLogGroup.getCreated();
-					break;
-				}
-			}
-		}*/
-		
-		 createdDate=issue.getCreationDate();
-		 if (createdDate==null) {
-			 throw new CCFRuntimeException("Could not determine creation date for newly created issue "+ issue.getKey());
-		 }
-		ga.setTargetArtifactVersion(String.valueOf(createdDate.getMillis()));
-		
-		
-	try{	
-		ga.setTargetArtifactLastModifiedDate(GenericArtifactHelper.df
-				.format(createdDate.toDate()));
-		
-	} catch (NullPointerException e){
-		
-		String message = "Null pointer setting the new workItem changedDate";
-		throw new CCFRuntimeException(message);
-	}
-		
-		ga.setTargetArtifactId(String.valueOf(basicCreatedIssue.getId()));
+            com.atlassian.jira.rest.client.domain.Field field = it.next();
+            addIssueField(genericArtifact, field);
+        }
+        GenericArtifactField summaryField = genericArtifact.addNewField(
+                "description", "mandatoryField");
+        summaryField.setFieldValueType(FieldValueTypeValue.STRING);
+        summaryField.setFieldAction(FieldActionValue.REPLACE);
+        summaryField.setFieldValue(issue.getDescription());
 
-		return basicCreatedIssue;
-	}
+        GenericArtifactField descriptionField = genericArtifact.addNewField(
+                "summary", "mandatoryField");
+        descriptionField.setFieldValueType(FieldValueTypeValue.STRING);
+        descriptionField.setFieldAction(FieldActionValue.REPLACE);
+        descriptionField.setFieldValue(issue.getSummary());
 
-	/**
-	 * @param ga
-	 * @param projectKey
-	 * @param issueTypeString
-	 * @param issueClient
-	 * @return
-	 */
-	private IssueInputBuilder getIssueInputBuilder(GenericArtifact ga,
-			String projectKey, String issueTypeString,
-			IssueRestClient issueClient) {
-		final Iterable<CimProject> metadataProjects = issueClient.getCreateIssueMetadata(
-				new GetCreateIssueMetadataOptionsBuilder().withProjectKeys(projectKey).withIssueTypeNames(issueTypeString).withExpandedIssueTypesFields().build(), pm);
-		final CimProject project = metadataProjects.iterator().next();
-		final CimIssueType createIssueType = EntityHelper.findEntityByName(project.getIssueTypes(), issueTypeString);
-		
-		final IssueInputBuilder issueInputBuilder = new IssueInputBuilder(projectKey, createIssueType.getId());
-		Map<String, CimFieldInfo> fieldMap=createIssueType.getFields();
-		 Iterator<Entry<String, CimFieldInfo>> fieldsit = fieldMap.entrySet().iterator();
-		while(fieldsit.hasNext()){
-			 Entry<String, CimFieldInfo> field = fieldsit.next();
-			String fieldId=field.getValue().getId();
-			List<GenericArtifactField> gaFields = ga
-					.getAllGenericArtifactFieldsWithSameFieldName(fieldId);
-			if (gaFields != null && gaFields.get(0).getFieldValueHasChanged()) {
-				issueInputBuilder.setFieldValue(fieldId, gaFields.get(0).getFieldValue());
-			}
-		}
-		return issueInputBuilder;
-	}
+        GenericArtifactField statusField = genericArtifact.addNewField(
+                "status", "mandatoryField");
+        statusField.setFieldValueType(FieldValueTypeValue.STRING);
+        statusField.setFieldAction(FieldActionValue.REPLACE);
+        statusField.setFieldValue(issue.getStatus().getName());
 
-	/**
-	 * @param connection
-	 * @param issue
-	 */
-	private DateTime getUpdatedDate(JIRAConnection connection, Issue issue) {
-		DateTime updatedDate = null;
-		Iterator<Comment> it = issue.getComments().iterator();
-		while (it.hasNext()) {
-			Comment comment = it.next();
-			if (connection.getUsername().equalsIgnoreCase(
-					comment.getAuthor().getName())) {
-				 updatedDate = comment.getCreationDate();
-				continue;
-			}
-		}
-		return updatedDate;
-	}
+        final Iterable<CimProject> metadataProjects = connection
+                .getJiraRestClient()
+                .getIssueClient()
+                .getCreateIssueMetadata(
+                        new GetCreateIssueMetadataOptionsBuilder()
+                                .withProjectKeys(projectKey)
+                                .withIssueTypeNames(issueType)
+                                .withExpandedIssueTypesFields().build(), pm);
+        final CimProject project = metadataProjects.iterator().next();
+        final CimIssueType createIssueType = EntityHelper.findEntityByName(
+                project.getIssueTypes(), issueType);
 
-	/**
-	 * @param ga
-	 * @param issueClient
-	 * @param basicCreatedIssue
-	 * @param issue
-	 * @return
-	 */
-	private Issue addIssueComment(GenericArtifact ga,
-			IssueRestClient issueClient, String key,
-			Issue issue) {
-		List<GenericArtifactField> comments = ga
-				.getAllGenericArtifactFieldsWithSameFieldName("comments");
-		if (comments != null) {
-			for (ListIterator<GenericArtifactField> iterator = comments
-					.listIterator(comments.size()); iterator.hasPrevious();) {
+        Map<String, CimFieldInfo> fieldMap = createIssueType.getFields();
+        Iterator<Entry<String, CimFieldInfo>> fieldsit = fieldMap.entrySet()
+                .iterator();
+        while (fieldsit.hasNext()) {
+            CimFieldInfo field = fieldsit.next().getValue();
+            /*
+             * if(field.getId().equalsIgnoreCase("description")){
+             * GenericArtifactField gaField = genericArtifact.addNewField(
+             * field.getId(), "mandatoryField");
+             * gaField.setFieldValueType(FieldValueTypeValue.STRING);
+             * gaField.setFieldAction(FieldActionValue.REPLACE);
+             * gaField.setFieldValue(issue.getf.getDescription()); }
+             * if(field.getId().equalsIgnoreCase("summary")){
+             * GenericArtifactField gaField = genericArtifact.addNewField(
+             * field.getId(), "mandatoryField");
+             * gaField.setFieldValueType(FieldValueTypeValue.STRING);
+             * gaField.setFieldAction(FieldActionValue.REPLACE);
+             * gaField.setFieldValue(issue.getSummary()); }
+             * if(field.getId().equalsIgnoreCase("status")){
+             * GenericArtifactField gaField = genericArtifact.addNewField(
+             * field.getId(), "mandatoryField");
+             * gaField.setFieldValueType(FieldValueTypeValue.STRING);
+             * gaField.setFieldAction(FieldActionValue.REPLACE);
+             * gaField.setFieldValue(issue.getStatus().getName()); }
+             */
+            //addIssueField(genericArtifact, field, issue);
+        }
 
-				GenericArtifactField comment = iterator.previous();
+        if (isIgnore) {
+            genericArtifact
+                    .setArtifactAction(GenericArtifact.ArtifactActionValue.IGNORE);
+        } else {
+            if (isResync) {
+                genericArtifact
+                        .setArtifactAction(GenericArtifact.ArtifactActionValue.RESYNC);
+            }
+            // now fetch the comments
+            Iterator<Comment> commIt = issue.getComments().iterator();
 
-				String commentValue = (String) comment.getFieldValue();
-				if (StringUtils.isEmpty(commentValue)) {
-					continue;
-				}
-				issueClient.addComment(pm, issue.getCommentsUri(),Comment.valueOf(commentValue));
-			}
-			issue = issueClient.getIssue(key, pm);
-		}
-		return issue;
-	}
+            while (commIt.hasNext()) {
 
-	public Issue updateIssue(GenericArtifact ga, 
-			String projectKey, String issueTypeString,
-			JIRAConnection connection) {
-		
-		JiraRestClient restClient=connection.getJiraRestClient();
-		IssueRestClient issueClient = restClient.getIssueClient();
-		DateTime updatedDate =null;
-		String issueId = ga.getTargetArtifactId();
-		Issue issue = issueClient.getIssue(issueId, pm);
-		Long issueRevision = issue.getUpdateDate().getMillis();
+                Comment comment = commIt.next();
 
-		if (!AbstractWriter.handleConflicts(issueRevision, ga)) {
-			return null;
-		}
-		
-		final IssueInputBuilder issueInputBuilder = getIssueInputBuilder(ga,
-				projectKey, issueTypeString, issueClient);
-		issueClient.updateIssue(issue.getKey(), issueInputBuilder.build(), null);
-		issue = issueClient.getIssue(issueId, pm);
-		
-		issue = addIssueComment(ga, issueClient, issue.getKey(), issue);
-		updatedDate = issue.getUpdateDate();
-		//FIXME calculate update date based on MAX(latest ccf entry from change log, latest ccf entry from comments,latest know update date)
-		
-		ga.setTargetArtifactVersion(String.valueOf(updatedDate.getMillis()));
-		
-		try {
-			ga.setTargetArtifactLastModifiedDate(GenericArtifactHelper.df
-					.format(updatedDate.toDate()));
-		} catch (NullPointerException e){
-			
-			String message = "Null pointer getting the workItem changedDate in workItem (" + issueId +")";
-			throw new CCFRuntimeException(message);
-		}
+                String changedBy = comment.getAuthor().getName();
+                if (changedBy.equalsIgnoreCase(userName)
+                        && ignoreConnectorUserUpdates) {
+                    continue;
+                }
 
-		return issue;
-	
-	
-	}
+                Date changedDate = comment.getUpdateDate().toDate();
+                if (lastModifiedDate.compareTo(changedDate) >= 0) {
+                    continue;
+                }
+
+                String history = comment.getBody();
+                if (StringUtils.isEmpty(history)) {
+                    continue;
+                }
+                addComment(genericArtifact, comment);
+
+            }
+        }
+
+        genericArtifact
+                .setSourceArtifactLastModifiedDate(GenericArtifactHelper.df
+                        .format(lasWorkItemtModifiedDate));
+        genericArtifact.setSourceArtifactVersion(revisionNumber);
+
+        // looking for a parent-child relationship
+        /*
+         * if (workItem.getLinks().size() > 0) {
+         * workItem.getLinks().iterator().next(); Iterator<Link> linkIterator =
+         * workItem.getLinks().iterator(); while (linkIterator.hasNext()) { Link
+         * link = linkIterator.next(); // it looks for a Related relationship if
+         * (link.getLinkID() == -1) { RelatedLinkImpl relatedLink =
+         * (RelatedLinkImpl) link; // it looks for a Parent relationship if
+         * (relatedLink.getWorkItemLinkTypeID() == -2) { WorkItem fatherWorkItem
+         * = connection .getTpc() .getWorkItemClient() .getWorkItemByID(
+         * relatedLink.getTargetWorkItemID()); String parentSourceRepositoryId =
+         * sourceRepositoryId .substring(0, sourceRepositoryId.lastIndexOf("-"))
+         * + "-" + fatherWorkItem.getType().getName(); genericArtifact
+         * .setDepParentSourceRepositoryId(parentSourceRepositoryId);
+         * genericArtifact.setDepParentSourceArtifactId(String
+         * .valueOf(fatherWorkItem.getID())); } } } }
+         */
+
+    }
+
+    public Issue updateIssue(GenericArtifact ga, String projectKey,
+            String issueTypeString, JIRAConnection connection) {
+
+        JiraRestClient restClient = connection.getJiraRestClient();
+        IssueRestClient issueClient = restClient.getIssueClient();
+        DateTime updatedDate = null;
+        String issueId = ga.getTargetArtifactId();
+        Issue issue = issueClient.getIssue(issueId, pm);
+        Long issueRevision = issue.getUpdateDate().getMillis();
+
+        if (!AbstractWriter.handleConflicts(issueRevision, ga)) {
+            return null;
+        }
+
+        final IssueInputBuilder issueInputBuilder = getIssueInputBuilder(ga,
+                projectKey, issueTypeString, issueClient);
+        issueClient
+                .updateIssue(issue.getKey(), issueInputBuilder.build(), null);
+        issue = issueClient.getIssue(issueId, pm);
+
+        issue = addIssueComment(ga, issueClient, issue.getKey(), issue);
+        updatedDate = issue.getUpdateDate();
+        //FIXME calculate update date based on MAX(latest ccf entry from change log, latest ccf entry from comments,latest know update date)
+
+        ga.setTargetArtifactVersion(String.valueOf(updatedDate.getMillis()));
+
+        try {
+            ga.setTargetArtifactLastModifiedDate(GenericArtifactHelper.df
+                    .format(updatedDate.toDate()));
+        } catch (NullPointerException e) {
+
+            String message = "Null pointer getting the workItem changedDate in workItem ("
+                    + issueId + ")";
+            throw new CCFRuntimeException(message);
+        }
+
+        return issue;
+
+    }
+
+    private void addComment(GenericArtifact genericArtifact, Comment comment) {
+        GenericArtifactField gaField = genericArtifact.addNewField("comment",
+                "mandatoryField");
+        gaField.setFieldValueType(FieldValueTypeValue.STRING);
+        gaField.setFieldAction(FieldActionValue.APPEND);
+        gaField.setFieldValue(comment.getBody());
+    }
+
+    /**
+     * @param ga
+     * @param issueClient
+     * @param basicCreatedIssue
+     * @param issue
+     * @return
+     */
+    private Issue addIssueComment(GenericArtifact ga,
+            IssueRestClient issueClient, String key, Issue issue) {
+        List<GenericArtifactField> comments = ga
+                .getAllGenericArtifactFieldsWithSameFieldName("comments");
+        if (comments != null) {
+            for (ListIterator<GenericArtifactField> iterator = comments
+                    .listIterator(comments.size()); iterator.hasPrevious();) {
+
+                GenericArtifactField comment = iterator.previous();
+
+                String commentValue = (String) comment.getFieldValue();
+                if (StringUtils.isEmpty(commentValue)) {
+                    continue;
+                }
+                issueClient.addComment(pm, issue.getCommentsUri(),
+                        Comment.valueOf(commentValue));
+            }
+            issue = issueClient.getIssue(key, pm);
+        }
+        return issue;
+    }
+
+    private void addIssueField(GenericArtifact genericArtifact,
+            CimFieldInfo field, Issue issue) {
+        Field actualField = issue.getField(field.getId());
+        GenericArtifactField gaField = genericArtifact.addNewField(
+                field.getId(), "mandatoryField");
+        // FIXME Type conversion
+        gaField.setFieldValueType(FieldValueTypeValue.STRING);
+        gaField.setFieldAction(FieldActionValue.REPLACE);
+
+        if (actualField != null) {
+            Object fieldValue = actualField.getValue();
+            if (fieldValue != null) {
+                gaField.setFieldValue(fieldValue.toString());
+                return;
+            }
+        }
+        gaField.setFieldValue(null);
+    }
+
+    private void addIssueField(GenericArtifact genericArtifact, Field field) {
+
+        // in the moment we find out that TFS supports more than one field with
+        // the same name, we have to use the field type to differentiate them
+        GenericArtifactField gaField = genericArtifact.addNewField(
+                field.getId(), "mandatoryField");
+        gaField.setFieldValueType(FieldValueTypeValue.STRING);
+        gaField.setFieldAction(FieldActionValue.REPLACE);
+        gaField.setFieldValue(field.getValue());
+    }
+
+    /**
+     * @param ga
+     * @param projectKey
+     * @param issueTypeString
+     * @param issueClient
+     * @return
+     */
+    private IssueInputBuilder getIssueInputBuilder(GenericArtifact ga,
+            String projectKey, String issueTypeString,
+            IssueRestClient issueClient) {
+        final Iterable<CimProject> metadataProjects = issueClient
+                .getCreateIssueMetadata(
+                        new GetCreateIssueMetadataOptionsBuilder()
+                                .withProjectKeys(projectKey)
+                                .withIssueTypeNames(issueTypeString)
+                                .withExpandedIssueTypesFields().build(), pm);
+        final CimProject project = metadataProjects.iterator().next();
+        final CimIssueType createIssueType = EntityHelper.findEntityByName(
+                project.getIssueTypes(), issueTypeString);
+
+        final IssueInputBuilder issueInputBuilder = new IssueInputBuilder(
+                projectKey, createIssueType.getId());
+        Map<String, CimFieldInfo> fieldMap = createIssueType.getFields();
+        Iterator<Entry<String, CimFieldInfo>> fieldsit = fieldMap.entrySet()
+                .iterator();
+        while (fieldsit.hasNext()) {
+            Entry<String, CimFieldInfo> field = fieldsit.next();
+            String fieldId = field.getValue().getId();
+            List<GenericArtifactField> gaFields = ga
+                    .getAllGenericArtifactFieldsWithSameFieldName(fieldId);
+            if (gaFields != null && gaFields.get(0).getFieldValueHasChanged()) {
+                issueInputBuilder.setFieldValue(fieldId, gaFields.get(0)
+                        .getFieldValue());
+            }
+        }
+        return issueInputBuilder;
+    }
+
+    /**
+     * @param connection
+     * @param issue
+     */
+    private DateTime getUpdatedDate(JIRAConnection connection, Issue issue) {
+        DateTime updatedDate = null;
+        Iterator<Comment> it = issue.getComments().iterator();
+        while (it.hasNext()) {
+            Comment comment = it.next();
+            if (connection.getUsername().equalsIgnoreCase(
+                    comment.getAuthor().getName())) {
+                updatedDate = comment.getCreationDate();
+                continue;
+            }
+        }
+        return updatedDate;
+    }
 
 }

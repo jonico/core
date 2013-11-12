@@ -1,19 +1,13 @@
 /*
- * Copyright 2009 CollabNet, Inc. ("CollabNet")
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- **/
+ * Copyright 2009 CollabNet, Inc. ("CollabNet") Licensed under the Apache
+ * License, Version 2.0 (the "License"); you may not use this file except in
+ * compliance with the License. You may obtain a copy of the License at
+ * http://www.apache.org/licenses/LICENSE-2.0 Unless required by applicable law
+ * or agreed to in writing, software distributed under the License is
+ * distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ */
 
 package com.collabnet.ccf.core.utils;
 
@@ -37,111 +31,110 @@ import org.openadaptor.core.exception.ProcessingException;
  * @author jnicolai
  * 
  */
-public class GenericArtifactMultiLineParser extends Component implements
-		IDataProcessor {
-	/**
-	 * Logger for this class
-	 */
-	private static final Log log = LogFactory
-			.getLog(GenericArtifactMultiLineParser.class);
+public class GenericArtifactMultiLineParser extends Component implements IDataProcessor {
+    /**
+     * Logger for this class
+     */
+    private static final Log log         = LogFactory
+                                                 .getLog(GenericArtifactMultiLineParser.class);
 
-	/**
-	 * Constructor
-	 */
-	public GenericArtifactMultiLineParser() {
-	}
+    /**
+     * This string buffer will store the strings line by line until all lines
+     * for one XML document have arrived. After this, the content of the buffer
+     * will be used to construct an XML document and empty the buffer again.
+     */
+    private StringBuffer     xmlDocument = new StringBuffer();
 
-	/**
-	 * Hook to perform any validation of the component properties required by
-	 * the implementation. Default behaviour should be a no-op.
-	 */
-	@SuppressWarnings("unchecked")
-	public void validate(List exceptions) {
-	}
+    /**
+     * Constructor
+     */
+    public GenericArtifactMultiLineParser() {
+    }
 
-	/**
-	 * Reset processor
-	 */
-	public void reset(Object context) {
-	}
+    /**
+     * Constructs XML documents line per line. The records can be either strings
+     * or a dom4j document object
+     * 
+     * @param record
+     *            the message record
+     * 
+     * @return a Document[] containing no entry if the current line has not
+     *         closed the top level element of the XML document or one entry
+     *         (the constructed XML document) if the line piped into this method
+     *         closes the top level element
+     * 
+     * @throws ProcessingException
+     *             if the record type is not supported
+     */
+    public Object[] process(Object record) throws ProcessingException {
+        if (record == null)
+            return null;
 
-	/**
-	 * This string buffer will store the strings line by line until all lines
-	 * for one XML document have arrived. After this, the content of the buffer
-	 * will be used to construct an XML document and empty the buffer again.
-	 */
-	private StringBuffer xmlDocument = new StringBuffer();
+        Document dom4JXmlDocument;
 
-	/**
-	 * Constructs XML documents line per line. The records can be either strings
-	 * or a dom4j document object
-	 * 
-	 * @param record
-	 *            the message record
-	 * 
-	 * @return a Document[] containing no entry if the current line has not
-	 *         closed the top level element of the XML document or one entry
-	 *         (the constructed XML document) if the line piped into this method
-	 *         closes the top level element
-	 * 
-	 * @throws ProcessingException
-	 *             if the record type is not supported
-	 */
-	public Object[] process(Object record) throws ProcessingException {
-		if (record == null)
-			return null;
+        if (record instanceof String) {
+            // trackerWorkflowXmlDocument=createDOMFromString("<?xml
+            // version='1.0' encoding='UTF-8'?>\n"+(String) record);
+            String xmlDocumentLine = (String) record;
+            // check whether XML document was terminated by top-level element so
+            // that we can finally parse it
+            if (xmlDocumentLine.matches(".*</artifact>")) {
+                xmlDocument.append(xmlDocumentLine);
+                dom4JXmlDocument = createDOMFromString(xmlDocument.toString());
+                xmlDocument = new StringBuffer();
+            } else {
+                // we append the line to the already stored content of the xml
+                // document
+                xmlDocument.append(xmlDocumentLine);
+                xmlDocument.append('\n');
+                return new Document[] {};
+            }
+        }
 
-		Document dom4JXmlDocument;
+        else if (record instanceof Document)
+            dom4JXmlDocument = (Document) record;
 
-		if (record instanceof String) {
-			// trackerWorkflowXmlDocument=createDOMFromString("<?xml
-			// version='1.0' encoding='UTF-8'?>\n"+(String) record);
-			String xmlDocumentLine = (String) record;
-			// check whether XML document was terminated by top-level element so
-			// that we can finally parse it
-			if (xmlDocumentLine.matches(".*</artifact>")) {
-				xmlDocument.append(xmlDocumentLine);
-				dom4JXmlDocument = createDOMFromString(xmlDocument.toString());
-				xmlDocument = new StringBuffer();
-			} else {
-				// we append the line to the already stored content of the xml
-				// document
-				xmlDocument.append(xmlDocumentLine);
-				xmlDocument.append('\n');
-				return new Document[] {};
-			}
-		}
+        // if we get this far then we cannot process the record
+        else
+            throw new ProcessingException("Invalid record (type: "
+                    + record.getClass().toString()
+                    + "). Cannot convert to XML document", this);
 
-		else if (record instanceof Document)
-			dom4JXmlDocument = (Document) record;
+        return new Document[] { dom4JXmlDocument };
+    }
 
-		// if we get this far then we cannot process the record
-		else
-			throw new ProcessingException("Invalid record (type: "
-					+ record.getClass().toString()
-					+ "). Cannot convert to XML document", this);
+    /**
+     * Reset processor
+     */
+    public void reset(Object context) {
+    }
 
-		return new Document[] { dom4JXmlDocument };
-	}
+    /**
+     * Hook to perform any validation of the component properties required by
+     * the implementation. Default behaviour should be a no-op.
+     */
+    @SuppressWarnings("unchecked")
+    public void validate(List exceptions) {
+    }
 
-	/**
-	 * Use the XML supplied to create a DOM document
-	 * 
-	 * @param xml
-	 *            valid XML
-	 * 
-	 * @return dom4j document object
-	 * 
-	 * @throws ProcessingException
-	 *             if the supplied XML cannot be parsed
-	 */
-	private Document createDOMFromString(String xml) {
-		try {
-			return DocumentHelper.parseText(xml);
-		} catch (DocumentException e) {
-			log.error("Failed to parse XML document: " + xml);
-			throw new ProcessingException("Failed to parse XML: "
-					+ e.getMessage(), this);
-		}
-	}
+    /**
+     * Use the XML supplied to create a DOM document
+     * 
+     * @param xml
+     *            valid XML
+     * 
+     * @return dom4j document object
+     * 
+     * @throws ProcessingException
+     *             if the supplied XML cannot be parsed
+     */
+    private Document createDOMFromString(String xml) {
+        try {
+            return DocumentHelper.parseText(xml);
+        } catch (DocumentException e) {
+            log.error("Failed to parse XML document: " + xml);
+            throw new ProcessingException("Failed to parse XML: "
+                    + e.getMessage(), this);
+        }
+    }
 }

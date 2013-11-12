@@ -1,19 +1,13 @@
 /*
- * Copyright 2009 CollabNet, Inc. ("CollabNet")
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- **/
+ * Copyright 2009 CollabNet, Inc. ("CollabNet") Licensed under the Apache
+ * License, Version 2.0 (the "License"); you may not use this file except in
+ * compliance with the License. You may obtain a copy of the License at
+ * http://www.apache.org/licenses/LICENSE-2.0 Unless required by applicable law
+ * or agreed to in writing, software distributed under the License is
+ * distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied. See the License for the specific language
+ * governing permissions and limitations under the License.
+ */
 
 package com.collabnet.ccf.core;
 
@@ -55,1260 +49,1262 @@ import com.collabnet.ccf.core.utils.XPathUtils;
  * 
  */
 public class EntityService extends LifecycleComponent implements IDataProcessor {
-	/**
-	 * log4j logger instance
-	 */
-	private static final Log log = LogFactory.getLog(EntityService.class);
+    /**
+     * log4j logger instance
+     */
+    private static final Log  log                                        = LogFactory
+                                                                                 .getLog(EntityService.class);
 
-	private JDBCReadConnector identityMappingDatabaseReader = null;
+    private JDBCReadConnector identityMappingDatabaseReader              = null;
 
-	private JDBCReadConnector hospitalDatabaseReader = null;
+    private JDBCReadConnector hospitalDatabaseReader                     = null;
 
-	private JDBCReadConnector parentIdentityMappingDatabaseReader = null;
-	private JDBCReadConnector projectMappingDatabaseReader = null;
+    private JDBCReadConnector parentIdentityMappingDatabaseReader        = null;
+    private JDBCReadConnector projectMappingDatabaseReader               = null;
 
-	private boolean skipNewerVersionsOfQuarantinedAttachments;
+    private boolean           skipNewerVersionsOfQuarantinedAttachments;
 
-	private long identityMapEventWaitTime = 500L;
+    private long              identityMapEventWaitTime                   = 500L;
 
-	private int identityMapEventWaitCount = 4;
+    private int               identityMapEventWaitCount                  = 4;
 
-	/**
-	 * If this property is set to true (false by default), resynched artifacts
-	 * are even transported if a newer version has already been synchronized
-	 */
-	private boolean alwaysPassResynchedArtifacts = false;
+    /**
+     * If this property is set to true (false by default), resynched artifacts
+     * are even transported if a newer version has already been synchronized
+     */
+    private boolean           alwaysPassResynchedArtifacts               = false;
 
-	/**
-	 * If this property is set to true (false by default), partial artifacts
-	 * are even transported if a newer version has already been synchronized
-	 */
-	private boolean alwaysPassPartialArtifacts = false;
+    /**
+     * If this property is set to true (false by default), partial artifacts are
+     * even transported if a newer version has already been synchronized
+     */
+    private boolean           alwaysPassPartialArtifacts                 = false;
 
-	/**
-	 * If this property is set to true (false by default), attachments whose parent plain artifact
-	 * could not be found, will only be quarantined if the parent in question is still in the hospital.
-	 * Use this option if you only map a subset of source artifacts to the target repository.
-	 */
-	private boolean onlyQuarantineAttachmentIfParentInHospital = false;
+    /**
+     * If this property is set to true (false by default), attachments whose
+     * parent plain artifact could not be found, will only be quarantined if the
+     * parent in question is still in the hospital. Use this option if you only
+     * map a subset of source artifacts to the target repository.
+     */
+    private boolean           onlyQuarantineAttachmentIfParentInHospital = false;
 
-	/**
-	 * openAdaptor Method to process all input and puts out the results This
-	 * method will only handle Dom4J documents encoded in the generic XML schema
-	 */
-	public Object[] process(Object data) {
-		if (data == null) {
-			String cause = "Expected Document. Null record not permitted.";
-			log.error(cause);
-			throw new CCFRuntimeException(cause);
-		}
+    /**
+     * Gets the (optional) data base reader that is used to find out whether the
+     * artifact is currently quarantined in the hospital and has not been
+     * reprocessed yet. If this property is not set, no lookup will be done in
+     * the hospital. If the artifact is in the hospital its version in the
+     * hospital will be compared with the current version. If the current
+     * artifact version is less or equal to the quarantined artifact, no
+     * artifact will be shipped. Otherwise the
+     * skipNewerVersionsOfQuarantinedArtifacts property will determine whether
+     * to skip newer versions as well.
+     * 
+     * @return
+     */
+    public JDBCReadConnector getHospitalDatabaseReader() {
+        return hospitalDatabaseReader;
+    }
 
-		if (!(data instanceof Document)) {
-			String cause = "Expected Document. Got ["
-					+ data.getClass().getName() + "]";
-			log.error(cause);
-			throw new CCFRuntimeException(cause);
-		}
+    public int getIdentityMapEventWaitCount() {
+        return identityMapEventWaitCount;
+    }
 
-		return processXMLDocument((Document) data);
-	}
+    public long getIdentityMapEventWaitTime() {
+        return identityMapEventWaitTime;
+    }
 
-	/**
-	 * Main method to handle the mapping and filtering of source artifacts to
-	 * target repository artifact items Also include the quarantined artifact
-	 * lookup code
-	 * 
-	 * @param data
-	 *            input XML document in generic XML artifact format
-	 * @return array of generated XML documents compliant to generic XML
-	 *         artifact schema
-	 */
-	private Object[] processXMLDocument(Document data) {
-		Element element = null;
-		try {
-			element = XPathUtils.getRootElement(data);
-			String artifactAction = XPathUtils.getAttributeValue(element,
-					GenericArtifactHelper.ARTIFACT_ACTION);
-			if (artifactAction
-					.equals(GenericArtifactHelper.ARTIFACT_ACTION_IGNORE)) {
-				return new Object[] { data };
-			}
+    /**
+     * Gets the (mandatory) data base reader that is used to retrieve the target
+     * artifact id from the the identity mapping table. If the artifact has been
+     * already mapped to a target artifact this information will be inserted. If
+     * the processed artifact has been already mapped in a newer or equal
+     * version the duplicate shipment detection algorithm will skip the
+     * artifact.
+     * 
+     */
+    public JDBCReadConnector getIdentityMappingDatabaseReader() {
+        return identityMappingDatabaseReader;
+    }
 
-			// get top level attributes
-			String artifactType = XPathUtils.getAttributeValue(element,
-					GenericArtifactHelper.ARTIFACT_TYPE);
-			String sourceArtifactId = XPathUtils.getAttributeValue(element,
-					GenericArtifactHelper.SOURCE_ARTIFACT_ID);
-			String sourceSystemId = XPathUtils.getAttributeValue(element,
-					GenericArtifactHelper.SOURCE_SYSTEM_ID);
-			String sourceRepositoryId = XPathUtils.getAttributeValue(element,
-					GenericArtifactHelper.SOURCE_REPOSITORY_ID);
-			String targetSystemId = XPathUtils.getAttributeValue(element,
-					GenericArtifactHelper.TARGET_SYSTEM_ID);
-			String targetRepositoryId = XPathUtils.getAttributeValue(element,
-					GenericArtifactHelper.TARGET_REPOSITORY_ID);
-			String sourceArtifactVersion = XPathUtils.getAttributeValue(
-					element, GenericArtifactHelper.SOURCE_ARTIFACT_VERSION);
-			String transactionId = XPathUtils.getAttributeValue(element,
-					GenericArtifactHelper.TRANSACTION_ID);
-			String artifactMode = XPathUtils.getAttributeValue(element, GenericArtifactHelper.ARTIFACT_MODE);
-			boolean isPartialUpdate = GenericArtifactHelper.ARTIFACT_MODE_CHANGED_FIELDS_ONLY.equals(artifactMode);
+    /**
+     * Gets the (optional) data base reader that is used to retrieve the parent
+     * target artifact id from the the identity mapping table. This reader is
+     * only necessary if you like to use CCF advanced dependency features. This
+     * is not necessary for artifact attachments.
+     * 
+     */
+    public JDBCReadConnector getParentIdentityMappingDatabaseReader() {
+        return parentIdentityMappingDatabaseReader;
+    }
 
-			boolean replayedArtifact = (transactionId != null && !transactionId
-					.equals(GenericArtifact.VALUE_UNKNOWN));
+    /**
+     * Gets the (optional) data base reader that is used to retrieve the project
+     * mappings for the repository the parent artifact belongs to. This reader
+     * is only necessary if you like to use CCF advanced dependency features.
+     * This is not necessary for artifact attachments.
+     * 
+     */
+    public JDBCReadConnector getProjectMappingDatabaseReader() {
+        return projectMappingDatabaseReader;
+    }
 
-			if (sourceArtifactVersion == null
-					|| sourceArtifactVersion
-							.equals(GenericArtifact.VALUE_UNKNOWN)) {
-				sourceArtifactVersion = GenericArtifactHelper.ARTIFACT_VERSION_FORCE_RESYNC;
-			}
+    /**
+     * If this property is set to true (false by default), partial artifacts are
+     * even transported if a newer version has already been synchronized
+     */
+    public boolean isAlwaysPassPartialArtifacts() {
+        return alwaysPassPartialArtifacts;
+    }
 
-			String sourceArtifactLastModifiedDateStr = XPathUtils
-					.getAttributeValue(
-							element,
-							GenericArtifactHelper.SOURCE_ARTIFACT_LAST_MODIFICATION_DATE);
+    /**
+     * If this property is set to true (false by default), resynched artifacts
+     * are even transported if a newer version has already been synchronized
+     */
+    public boolean isAlwaysPassResynchedArtifacts() {
+        return alwaysPassResynchedArtifacts;
+    }
 
-			Date sourceArtifactLastModifiedDate = null;
-			if (!sourceArtifactLastModifiedDateStr
-					.equalsIgnoreCase(GenericArtifact.VALUE_UNKNOWN)) {
-				sourceArtifactLastModifiedDate = DateUtil
-						.parse(sourceArtifactLastModifiedDateStr);
-			}
-			// use the earliest date possible
-			else
-				sourceArtifactLastModifiedDate = new Date(0);
+    /**
+     * If this property is set to true (false by default), attachments whose
+     * parent plain artifact could not be found, will only be quarantined if the
+     * parent in question is still in the hospital. Use this option if you only
+     * map a subset of source artifacts to the target repository.
+     */
+    public boolean isOnlyQuarantineAttachmentIfParentInHospital() {
+        return onlyQuarantineAttachmentIfParentInHospital;
+    }
 
-			long sourceArtifactVersionLong = Long
-					.parseLong(sourceArtifactVersion);
-			String targetArtifactIdFromTable = null;
-			String targetArtifactVersion = null;
-			if (sourceArtifactId
-					.equalsIgnoreCase(GenericArtifact.VALUE_UNKNOWN)) {
-				return new Object[] { data };
-			}
+    /**
+     * This optional property (default value false) determines whether
+     * non-reprocessed artifacts in the hospital should be skipped even if a
+     * newer version of the artifact is available in the source system.
+     * 
+     * @param skipNewerVersionsOfQuarantinedAttachments
+     */
+    public boolean isSkipNewerVersionsOfQuarantinedArtifacts() {
+        return skipNewerVersionsOfQuarantinedAttachments;
+    }
 
-			// find out whether to skip the artifact because it has been
-			// quarantined
-			if (!replayedArtifact
-					&& skipQuarantinedArtifact(element, sourceArtifactId,
-							sourceSystemId, sourceRepositoryId, targetSystemId,
-							targetRepositoryId, artifactType,
-							sourceArtifactLastModifiedDate,
-							sourceArtifactVersionLong, false)) {
-				XPathUtils.addAttribute(element,
-						GenericArtifactHelper.ARTIFACT_ACTION,
-						GenericArtifactHelper.ARTIFACT_ACTION_IGNORE);
-				return new Object[] { data };
-			}
+    /**
+     * openAdaptor Method to process all input and puts out the results This
+     * method will only handle Dom4J documents encoded in the generic XML schema
+     */
+    public Object[] process(Object data) {
+        if (data == null) {
+            String cause = "Expected Document. Null record not permitted.";
+            log.error(cause);
+            throw new CCFRuntimeException(cause);
+        }
 
-			Object[] results = lookupTargetArtifact(element, sourceArtifactId,
-					sourceSystemId, sourceRepositoryId, targetSystemId,
-					targetRepositoryId, artifactType);
+        if (!(data instanceof Document)) {
+            String cause = "Expected Document. Got ["
+                    + data.getClass().getName() + "]";
+            log.error(cause);
+            throw new CCFRuntimeException(cause);
+        }
 
-			if (results != null && results.length != 0) {
-				targetArtifactIdFromTable = results[0].toString();
-				Date sourceArtifactLastModifiedDateFromTable = (Date) results[1];
-				String sourceArtifactVersionFromTable = results[2].toString();
-				if (sourceArtifactVersionFromTable
-						.equalsIgnoreCase(GenericArtifact.VALUE_UNKNOWN)) {
-					sourceArtifactVersionFromTable = GenericArtifactHelper.ARTIFACT_VERSION_FORCE_RESYNC;
-				}
-				long sourceArtifactVersionLongFromTable = Long
-						.parseLong(sourceArtifactVersionFromTable);
-				// if (sourceArtifactLastModifiedDateFromTable
-				// .after(sourceArtifactLastModifiedDate)
-				// || sourceArtifactVersionLongFromTable >=
-				// sourceArtifactVersionLong) {
-				if (sourceArtifactVersionLongFromTable >= sourceArtifactVersionLong) {
-					if (sourceArtifactVersionLong == -1
-							&& sourceArtifactVersionLongFromTable == -1) {
-						log
-								.warn("It seems as if artifact synchronization is done exclusively with a system that does not support version control for combination "
-										+ sourceArtifactId
-										+ "-"
-										+ sourceRepositoryId
-										+ "-"
-										+ sourceSystemId
-										+ targetRepositoryId
-										+ "-"
-										+ targetSystemId
-										+ " so artifact will not be skipped.");
-					} else {
-						// only skip if this is not an intended artifact resync
-						// obvious resync duplicates are still filtered out.
-						// partial updates are always passed through.
-						if ((!isPartialUpdate || !isAlwaysPassPartialArtifacts())
-							&& ((!artifactAction.equals(GenericArtifactHelper.ARTIFACT_ACTION_RESYNC))
-							   || ((sourceArtifactVersionLongFromTable > sourceArtifactVersionLong) && !isAlwaysPassResynchedArtifacts()))) {
-							log
-									.warn("\nSource artifact last modified date in table "
-											+ DateUtil
-													.format(sourceArtifactLastModifiedDateFromTable)
-											+ "\nSource artifact last modified date "
-											+ DateUtil
-													.format(sourceArtifactLastModifiedDate)
-											+ "\nSource artifact version from table "
-											+ sourceArtifactVersionLongFromTable
-											+ "\nSource artifact version "
-											+ sourceArtifactVersionLong);
-							log
-									.warn("Seems the artifact has already been shipped in newer or same version. Skipped artifact with source artifact id "
-											+ sourceArtifactId
-											+ " and version "
-											+ sourceArtifactVersion
-											+ " for combination "
-											+ sourceArtifactId
-											+ "-"
-											+ sourceRepositoryId
-											+ "-"
-											+ sourceSystemId
-											+ targetRepositoryId
-											+ "-"
-											+ targetSystemId);
+        return processXMLDocument((Document) data);
+    }
 
-							XPathUtils
-									.addAttribute(
-											element,
-											GenericArtifactHelper.ARTIFACT_ACTION,
-											GenericArtifactHelper.ARTIFACT_ACTION_IGNORE);
-							return new Object[] { data };
-						}
-					}
-				}
-				targetArtifactVersion = results[3].toString();
-			}
+    /**
+     * Reset the processor
+     */
+    public void reset(Object context) {
+    }
 
-			if (artifactType
-					.equals(GenericArtifactHelper.ARTIFACT_TYPE_ATTACHMENT)) {
-				String sourceParentArtifactId = XPathUtils.getAttributeValue(
-						element,
-						GenericArtifactHelper.DEP_PARENT_SOURCE_ARTIFACT_ID);
-				String sourceParentRepositoryId = XPathUtils.getAttributeValue(
-						element,
-						GenericArtifactHelper.DEP_PARENT_SOURCE_REPOSITORY_ID);
-				String targetParentRepositoryId = XPathUtils.getAttributeValue(
-						element,
-						GenericArtifactHelper.DEP_PARENT_TARGET_REPOSITORY_ID);
-				Object[] resultsDep = lookupTargetArtifact(element,
-						sourceParentArtifactId, sourceSystemId,
-						sourceParentRepositoryId, targetSystemId,
-						targetParentRepositoryId,
-						GenericArtifactHelper.ARTIFACT_TYPE_PLAIN_ARTIFACT);
-				String targetParentArtifactId = null;
-				if (resultsDep != null && resultsDep[0] != null) {
-					targetParentArtifactId = resultsDep[0].toString();
-				}
-				if (StringUtils.isEmpty(targetParentArtifactId)) {
-					if (artifactAction
-							.equals(GenericArtifactHelper.ARTIFACT_ACTION_DELETE)) {
-						String cause = "Parent artifact "
-								+ sourceParentArtifactId
-								+ " for attachment "
-								+ sourceArtifactId
-								+ " is not yet created on the target system for combination "
-								+ sourceArtifactId
-								+ "-"
-								+ sourceRepositoryId
-								+ "-"
-								+ sourceSystemId
-								+ "-"
-								+ targetRepositoryId
-								+ "-"
-								+ targetSystemId
-								+ ". Since attachment has been marked to be deleted, ignoring the shipment ...";
-						log.warn(cause);
-						XPathUtils.addAttribute(element,
-								GenericArtifactHelper.ARTIFACT_ACTION,
-								GenericArtifactHelper.ARTIFACT_ACTION_IGNORE);
-						return new Object[] { data };
-					}
-					if (!isOnlyQuarantineAttachmentIfParentInHospital() || skipQuarantinedArtifact(null, sourceParentArtifactId, sourceSystemId, sourceParentRepositoryId, targetSystemId, targetParentRepositoryId, GenericArtifactHelper.ARTIFACT_TYPE_PLAIN_ARTIFACT, null, 0, true)) {
-						String cause = "Parent artifact "
-							+ sourceParentArtifactId
-							+ " for attachment "
-							+ sourceArtifactId
-							+ " is not created on the target system for combination "
-							+ sourceArtifactId + "-" + sourceRepositoryId + "-"
-							+ sourceSystemId + "-" + targetRepositoryId + "-"
-							+ targetSystemId;
-						log.error(cause);
-						XPathUtils.addAttribute(element,
-								GenericArtifactHelper.ERROR_CODE,
-								GenericArtifact.ERROR_PARENT_ARTIFACT_NOT_PRESENT);
-						throw new CCFRuntimeException(cause);	
-					} else {
-						String cause = "Parent artifact "
-							+ sourceParentArtifactId
-							+ " for attachment "
-							+ sourceArtifactId
-							+ " is not created on the target system for combination "
-							+ sourceArtifactId + "-" + sourceRepositoryId + "-"
-							+ sourceSystemId + "-" + targetRepositoryId + "-"
-							+ targetSystemId + ". Do not quarantine attachment since parent could not be found in hospital.";
-						log.warn(cause);
-						return null;
-					}
-				} else {
-					XPathUtils
-							.addAttribute(
-									element,
-									GenericArtifactHelper.DEP_PARENT_TARGET_ARTIFACT_ID,
-									targetParentArtifactId);
-				}
-			} else if (artifactType
-					.equals(GenericArtifactHelper.ARTIFACT_TYPE_PLAIN_ARTIFACT)) {
-				// now realize parent artifact lookup for ordinary artifacts
-				String sourceParentArtifactId = XPathUtils.getAttributeValue(
-						element,
-						GenericArtifactHelper.DEP_PARENT_SOURCE_ARTIFACT_ID);
-				if (sourceParentArtifactId != null
-						&& !sourceParentArtifactId
-								.equals(GenericArtifact.VALUE_UNKNOWN)) {
-					// looks as if dependency lookup has been required
-					if (sourceParentArtifactId
-							.equals(GenericArtifact.VALUE_NONE)) {
-						// none is always mapped to none
-						XPathUtils
-								.addAttribute(
-										element,
-										GenericArtifactHelper.DEP_PARENT_TARGET_ARTIFACT_ID,
-										GenericArtifact.VALUE_NONE);
-					} else if (getParentIdentityMappingDatabaseReader() == null) {
-						log
-								.warn("Seems the artifact required advanced dependency lookup but this feature has not been configured. "
-										+ "Skipped parent lookup for artifact with source artifact id "
-										+ sourceArtifactId
-										+ " and version "
-										+ sourceArtifactVersion
-										+ " for combination "
-										+ sourceArtifactId
-										+ "-"
-										+ sourceRepositoryId
-										+ "-"
-										+ sourceSystemId
-										+ "-"
-										+ targetRepositoryId
-										+ "-"
-										+ targetSystemId);
-					} else {
-						// do the actual parent id lookup
-						String sourceParentRepositoryId = XPathUtils
-								.getAttributeValue(
-										element,
-										GenericArtifactHelper.DEP_PARENT_SOURCE_REPOSITORY_ID);
-						Object[] resultsDep = lookupParentTargetArtifact(
-								element,
-								sourceParentArtifactId,
-								sourceSystemId,
-								sourceParentRepositoryId,
-								targetSystemId,
-								GenericArtifactHelper.ARTIFACT_TYPE_PLAIN_ARTIFACT);
-						String targetParentArtifactId = null;
-						String targetParentRepositoryId = null;
-						if (resultsDep != null && resultsDep[0] != null) {
-							targetParentArtifactId = resultsDep[0].toString();
-						}
-						if (resultsDep != null && resultsDep[4] != null) {
-							targetParentRepositoryId = resultsDep[4].toString();
-						}
-						if (StringUtils.isEmpty(targetParentArtifactId)
-								|| StringUtils
-										.isEmpty(targetParentRepositoryId)) {
-							if (getProjectMappingDatabaseReader() != null) {
-								// if it turns out that the repository the
-								// parent artifact belongs to is not mapped at
-								// all,
-								// we will proceed with a warning
-								if (!projectMappingExists(sourceSystemId,
-										targetSystemId,
-										sourceParentRepositoryId)) {
-									String cause = "Parent artifact "
-											+ sourceParentArtifactId
-											+ " for artifact "
-											+ sourceArtifactId
-											+ " is not yet created on the target system for combination "
-											+ sourceArtifactId
-											+ "-"
-											+ sourceRepositoryId
-											+ "-"
-											+ sourceSystemId
-											+ "-"
-											+ targetRepositoryId
-											+ "-"
-											+ targetSystemId
-											+ ". Since no project mapping exists for "
-											+ sourceParentRepositoryId
-											+ " CCF does not bail out but ignores parent dependency.";
-									log.warn(cause);
-								} else if (artifactAction
-										.equals(GenericArtifactHelper.ARTIFACT_ACTION_DELETE)) {
-									String cause = "Parent artifact "
-											+ sourceParentArtifactId
-											+ " for artifact "
-											+ sourceArtifactId
-											+ " is not yet created on the target system for combination "
-											+ sourceArtifactId
-											+ "-"
-											+ sourceRepositoryId
-											+ "-"
-											+ sourceSystemId
-											+ "-"
-											+ targetRepositoryId
-											+ "-"
-											+ targetSystemId
-											+ ". Since artifact has been marked to be deleted, ignoring the shipment ...";
-									log.warn(cause);
-									XPathUtils
-											.addAttribute(
-													element,
-													GenericArtifactHelper.ARTIFACT_ACTION,
-													GenericArtifactHelper.ARTIFACT_ACTION_IGNORE);
-									return new Object[] { data };
-								} else {
-									String cause = "Parent artifact "
-											+ sourceParentArtifactId
-											+ " for artifact "
-											+ sourceArtifactId
-											+ " is not yet created on the target system for combination "
-											+ sourceArtifactId
-											+ "-"
-											+ sourceRepositoryId
-											+ "-"
-											+ sourceSystemId
-											+ "-"
-											+ targetRepositoryId
-											+ "-"
-											+ targetSystemId
-											+ ". Since a project mapping exists for "
-											+ sourceParentRepositoryId
-											+ " CCF bails out now.";
-									log.warn(cause);
-									XPathUtils
-											.addAttribute(
-													element,
-													GenericArtifactHelper.ERROR_CODE,
-													GenericArtifact.ERROR_PARENT_ARTIFACT_NOT_PRESENT);
-									throw new CCFRuntimeException(cause);
-								}
-							} else {
-								String cause = "Parent artifact "
-										+ sourceParentArtifactId
-										+ " for artifact "
-										+ sourceArtifactId
-										+ " is not yet created on the target system for combination "
-										+ sourceArtifactId
-										+ "-"
-										+ sourceRepositoryId
-										+ "-"
-										+ sourceSystemId
-										+ "-"
-										+ targetRepositoryId
-										+ "-"
-										+ targetSystemId
-										+ ". Since projectMappingDatabaseReader property has not been set"
-										+ "CCF does not know whether a project mapping for "
-										+ sourceParentRepositoryId
-										+ "exists and bails out.";
-								log.warn(cause);
-								XPathUtils
-										.addAttribute(
-												element,
-												GenericArtifactHelper.ERROR_CODE,
-												GenericArtifact.ERROR_PARENT_ARTIFACT_NOT_PRESENT);
-								throw new CCFRuntimeException(cause);
-							}
-						} else {
-							XPathUtils
-									.addAttribute(
-											element,
-											GenericArtifactHelper.DEP_PARENT_TARGET_ARTIFACT_ID,
-											targetParentArtifactId);
-							XPathUtils
-									.addAttribute(
-											element,
-											GenericArtifactHelper.DEP_PARENT_TARGET_REPOSITORY_ID,
-											targetParentRepositoryId);
-						}
-					}
-				}
-			}
+    /**
+     * If this property is set to true (false by default), partial artifacts are
+     * even transported if a newer version has already been synchronized
+     * 
+     * @param alwaysPassResynchedArtifacts
+     */
+    public void setAlwaysPassPartialArtifacts(boolean alwaysPassPartialArtifacts) {
+        this.alwaysPassPartialArtifacts = alwaysPassPartialArtifacts;
+    }
 
-			if (targetArtifactIdFromTable != null) {
-				XPathUtils.addAttribute(element,
-						GenericArtifactHelper.TARGET_ARTIFACT_ID,
-						targetArtifactIdFromTable);
-				XPathUtils.addAttribute(element,
-						GenericArtifactHelper.TARGET_ARTIFACT_VERSION,
-						targetArtifactVersion);
-				if (artifactAction
-						.equals(GenericArtifactHelper.ARTIFACT_ACTION_UNKNOWN)) {
-					XPathUtils.addAttribute(element,
-							GenericArtifactHelper.ARTIFACT_ACTION,
-							GenericArtifactHelper.ARTIFACT_ACTION_UPDATE);
-				} else if (artifactAction
-						.equals(GenericArtifactHelper.ARTIFACT_ACTION_CREATE)) {
-					String cause = "The artifact action is marked as "
-							+ artifactAction
-							+ ".\nBut the Entity Service found a target artifact id "
-							+ targetArtifactIdFromTable
-							+ " for source artifact id " + sourceArtifactId;
-					log.warn(cause);
-					XPathUtils.addAttribute(element,
-							GenericArtifactHelper.ARTIFACT_ACTION,
-							GenericArtifactHelper.ARTIFACT_ACTION_UPDATE);
-				}
-			} else {
-				if (artifactAction
-						.equals(GenericArtifactHelper.ARTIFACT_ACTION_UNKNOWN)) {
-					XPathUtils.addAttribute(element,
-							GenericArtifactHelper.ARTIFACT_ACTION,
-							GenericArtifactHelper.ARTIFACT_ACTION_CREATE);
-				} else if (artifactAction
-						.equals(GenericArtifactHelper.ARTIFACT_ACTION_UPDATE)) {
-					String cause = "The artifact action is marked as "
-							+ artifactAction
-							+ ".\nBut the Entity Service could not find a target artifact id for source artifact id "
-							+ sourceArtifactId
-							+ ". Marking the artifact to create";
-					log.warn(cause);
-					XPathUtils.addAttribute(element,
-							GenericArtifactHelper.ARTIFACT_ACTION,
-							GenericArtifactHelper.ARTIFACT_ACTION_CREATE);
-				} else if (artifactAction
-						.equals(GenericArtifactHelper.ARTIFACT_ACTION_DELETE)) {
-					String cause = "The artifact action is marked as "
-							+ artifactAction
-							+ ".\nBut the Entity Service could not find a target artifact id for source artifact id "
-							+ sourceArtifactId + ". Ignoring the artifact ...";
-					log.warn(cause);
-					XPathUtils.addAttribute(element,
-							GenericArtifactHelper.ARTIFACT_ACTION,
-							GenericArtifactHelper.ARTIFACT_ACTION_IGNORE);
-					return new Object[] { data };
-				} else if (artifactAction
-						.equals(GenericArtifactHelper.ARTIFACT_ACTION_RESYNC)) {
-					String cause = "The artifact action is marked as "
-							+ artifactAction
-							+ ".\nBut the Entity Service could not find a target artifact id for source artifact id "
-							+ sourceArtifactId + ". Discarding the artifact.";
-					log.warn(cause);
-					XPathUtils.addAttribute(element,
-							GenericArtifactHelper.ARTIFACT_ACTION,
-							GenericArtifactHelper.ARTIFACT_ACTION_IGNORE);
-					return new Object[] { data };
-				}
-			}
-		} catch (GenericArtifactParsingException e) {
-			String cause = "Problem occured while parsing the Document to extract specific attributes";
-			log.error(cause, e);
-			XPathUtils.addAttribute(data.getRootElement(),
-					GenericArtifactHelper.ERROR_CODE,
-					GenericArtifact.ERROR_GENERIC_ARTIFACT_PARSING);
-			throw new CCFRuntimeException(cause, e);
-		}
+    /**
+     * If this property is set to true (false by default), resynched artifacts
+     * are even transported if a newer version has already been synchronized
+     * 
+     * @param alwaysPassResynchedArtifacts
+     */
+    public void setAlwaysPassResynchedArtifacts(
+            boolean alwaysPassResynchedArtifacts) {
+        this.alwaysPassResynchedArtifacts = alwaysPassResynchedArtifacts;
+    }
 
-		Object[] result = { data };
-		return result;
-	}
+    /**
+     * Sets the (optional) data base reader that is used to find out whether the
+     * artifact is currently quarantined in the hospital and has not been
+     * reprocessed yet. If this property is not set, no lookup will be done in
+     * the hospital. If the artifact is in the hospital its version in the
+     * hospital will be compared with the current version. If the current
+     * artifact version is less or equal to the quarantined artifact, no
+     * artifact will be shipped. Otherwise the
+     * skipNewerVersionsOfQuarantinedArtifacts property will determine whether
+     * to skip newer versions as well.
+     * 
+     * @param hospitalDatabaseReader
+     */
+    public void setHospitalDatabaseReader(
+            JDBCReadConnector hospitalDatabaseReader) {
+        this.hospitalDatabaseReader = hospitalDatabaseReader;
+    }
 
-	/**
-	 * Returns whether a project mapping exists in the target system for the
-	 * repository id of the parent artifact This information is used to
-	 * determine whether to bail out if no equivalent to the parent artifact can
-	 * be found in the target system.
-	 * 
-	 * @param sourceSystemId
-	 * @param targetSystemId
-	 * @param sourceParentRepositoryId
-	 * @return tre if project mapping exists, false if not
-	 */
-	private boolean projectMappingExists(String sourceSystemId,
-			String targetSystemId, String sourceParentRepositoryId) {
-		IOrderedMap inputParameters = new OrderedHashMap();
-		inputParameters.add(sourceSystemId);
-		inputParameters.add(targetSystemId);
-		inputParameters.add(sourceParentRepositoryId);
+    public void setIdentityMapEventWaitCount(int identityMapEventWaitCount) {
+        this.identityMapEventWaitCount = identityMapEventWaitCount;
+    }
 
-		Object[] resultSet = null;
-		projectMappingDatabaseReader.connect();
-		resultSet = projectMappingDatabaseReader.next(inputParameters, 1);
-		if (resultSet == null || resultSet.length == 0) {
-			return false;
-		}
-		return true;
-	}
+    public void setIdentityMapEventWaitTime(long identityMapEventWaitTime) {
+        this.identityMapEventWaitTime = identityMapEventWaitTime;
+    }
 
-	/**
-	 * For a given source artifact id, source repository and the target
-	 * repository details, this method finds out the target artifact id mapped
-	 * to the source artifact id by looking up the identity mapping table.
-	 * 
-	 * If the source artifact id had ever passed through the wiring the identity
-	 * mapping will contain the corresponding target artifact id. This method
-	 * fetches the target artifact id and returns. If there is no target
-	 * artifact id mapped to this source artifact id this method return a null.
-	 * 
-	 * @param sourceArtifactId
-	 *            - The source artifact id that should be looked up for a target
-	 *            artifact id
-	 * @param sourceSystemId
-	 *            - The system id of the source repository
-	 * @param sourceRepositoryId
-	 *            - The repository id of the source artifact
-	 * @param targetSystemId
-	 *            - The system id of the target repository
-	 * @param targetRepositoryId
-	 *            - The repository id of the target artifact
-	 * @param artifactType
-	 *            - The artifact type
-	 * 
-	 * @return array with target artifactId, sourceArtifactLastModifiedDate,
-	 *         sourceArtifactVersion, targetArtifactVersion (in this order)
-	 */
-	private Object[] lookupTargetArtifact(Element element,
-			String sourceArtifactId, String sourceSystemId,
-			String sourceRepositoryId, String targetSystemId,
-			String targetRepositoryId, String artifactType) {
-		IOrderedMap inputParameters = new OrderedHashMap();
+    /**
+     * Sets the (mandatory) data base reader that is used to retrieve the target
+     * artifact id from the the identity mapping table. If the artifact has been
+     * already mapped to a target artifact this information will be inserted. If
+     * the processed artifact has been already mapped in a newer or equal
+     * version the duplicate shipment detection algorithm will skip the
+     * artifact.
+     * 
+     * @param identityMappingDatabaseReader
+     */
+    public void setIdentityMappingDatabaseReader(
+            JDBCReadConnector identityMappingDatabaseReader) {
+        this.identityMappingDatabaseReader = identityMappingDatabaseReader;
+    }
 
-		inputParameters.add(sourceSystemId);
-		inputParameters.add(sourceRepositoryId);
-		inputParameters.add(targetSystemId);
-		inputParameters.add(targetRepositoryId);
-		inputParameters.add(sourceArtifactId);
-		inputParameters.add(artifactType);
-		String artifactAction = null;
-		try {
-			artifactAction = XPathUtils.getAttributeValue(element,
-					GenericArtifactHelper.ARTIFACT_ACTION);
-		} catch (GenericArtifactParsingException e) {
-			String cause = "Problem occured while parsing the Document to extract specific attributes";
-			log.error(cause, e);
-			XPathUtils.addAttribute(element, GenericArtifactHelper.ERROR_CODE,
-					GenericArtifact.ERROR_GENERIC_ARTIFACT_PARSING);
-			throw new CCFRuntimeException(cause, e);
-		}
-		boolean waitForIdentityMappedEvent = false;
-		int waitCount = 0;
-		// identityMappingDatabaseReader.disconnect();
-		Object[] resultSet = null;
-		do {
-			identityMappingDatabaseReader.connect();
-			resultSet = identityMappingDatabaseReader.next(inputParameters,
-					1000);
-			// identityMappingDatabaseReader.disconnect();
-			if (artifactAction
-					.equals(GenericArtifactHelper.ARTIFACT_ACTION_RESYNC)) {
-				if (resultSet == null || resultSet.length == 0) {
-					if (++waitCount < this.getIdentityMapEventWaitCount()) {
-						waitForIdentityMappedEvent = true;
-						try {
-							log
-									.debug("No identity mapping found for resync request of "
-											+ sourceArtifactId
-											+ "-"
-											+ sourceRepositoryId
-											+ "-"
-											+ sourceSystemId
-											+ "-"
-											+ targetRepositoryId
-											+ "-"
-											+ targetSystemId
-											+ ". Sleeping for "
-											+ this
-													.getIdentityMapEventWaitTime()
-											+ " milliseconds...");
-							Thread.sleep(this.getIdentityMapEventWaitTime());
-						} catch (InterruptedException e) {
-							// INFO Digesting the interrupt
-						}
-					} else {
-						log
-								.warn("There was no prior identity mapping for the resync request "
-										+ sourceArtifactId
-										+ "-"
-										+ sourceRepositoryId
-										+ "-"
-										+ sourceSystemId
-										+ "-"
-										+ targetRepositoryId
-										+ "-"
-										+ targetSystemId
-										+ " in the identity mapping table even after the entity service waited for "
-										+ (waitCount * this
-												.getIdentityMapEventWaitTime())
-										+ " milliseconds. Discarding the artifact.");
-						waitForIdentityMappedEvent = false;
-					}
-				} else {
-					waitForIdentityMappedEvent = false;
-				}
-			}
-		} while (waitForIdentityMappedEvent);
-		Object[] results = null;
-		if (resultSet == null || resultSet.length == 0) {
-			log.debug(sourceArtifactId + "-" + sourceRepositoryId + "-"
-					+ sourceSystemId + "-" + targetRepositoryId + "-"
-					+ targetSystemId + " are not mapped.");
-		} else if (resultSet.length == 1) {
-			if (resultSet[0] instanceof OrderedHashMap) {
-				OrderedHashMap result = (OrderedHashMap) resultSet[0];
-				if (result.size() == 4) {
-					results = new Object[4];
-					results[0] = result.get(0);
-					Timestamp timeStamp = (Timestamp) result.get(1);
-					Date date;
-					if (timeStamp == null) {
-						// use earliest date possible
-						date = new Date(0);
-					} else {
-						date = new Date(timeStamp.getTime());
-					}
+    /**
+     * If this property is set to true (false by default), attachments whose
+     * parent plain artifact could not be found, will only be quarantined if the
+     * parent in question is still in the hospital. Use this option if you only
+     * map a subset of source artifacts to the target repository.
+     */
+    public void setOnlyQuarantineAttachmentIfParentInHospital(
+            boolean onlyQuarantineAttachmentIfParentInHospital) {
+        this.onlyQuarantineAttachmentIfParentInHospital = onlyQuarantineAttachmentIfParentInHospital;
+    }
 
-					results[1] = date;
-					results[2] = result.get(2);
-					results[3] = result.get(3);
-				} else {
-					String cause = "Seems as if the SQL statement for identityMappingDatabase reader does not return 4 values.";
-					XPathUtils
-							.addAttribute(
-									element,
-									GenericArtifactHelper.ERROR_CODE,
-									GenericArtifact.ERROR_INTERNAL_DATABASE_TABLE_CORRUPT);
-					log.error(cause);
-					throw new CCFRuntimeException(cause);
-				}
-			} else {
-				String cause = "SQL query on identity mapping table did not return data in correct format!";
-				XPathUtils.addAttribute(element,
-						GenericArtifactHelper.ERROR_CODE,
-						GenericArtifact.ERROR_INTERNAL_DATABASE_TABLE_CORRUPT);
-				log.error(cause);
-				throw new CCFRuntimeException(cause);
-			}
-		} else {
-			String cause = "There is more than one mapping for the combination "
-					+ sourceArtifactId
-					+ "-"
-					+ sourceRepositoryId
-					+ "-"
-					+ sourceSystemId
-					+ "-"
-					+ targetRepositoryId
-					+ "-"
-					+ targetSystemId + " in the identity mapping table.";
-			XPathUtils.addAttribute(element, GenericArtifactHelper.ERROR_CODE,
-					GenericArtifact.ERROR_INTERNAL_DATABASE_TABLE_CORRUPT);
-			log.error(cause);
-			throw new CCFRuntimeException(cause);
-		}
-		return results;
-	}
+    /**
+     * Sets the (optional) data base reader that is used to retrieve the parent
+     * target artifact id from the the identity mapping table. This reader is
+     * only necessary if you like to use CCF advanced dependency features. This
+     * is not necessary for artifact attachments.
+     * 
+     * @param parentIdentityMappingDatabaseReader
+     */
+    public void setParentIdentityMappingDatabaseReader(
+            JDBCReadConnector parentIdentityMappingDatabaseReader) {
+        this.parentIdentityMappingDatabaseReader = parentIdentityMappingDatabaseReader;
+    }
 
-	/**
-	 * For a given source artifact id, source repository and the target
-	 * repository details, this method finds out the target artifact id mapped
-	 * to the source artifact id by looking up the identity mapping table.
-	 * 
-	 * If the source artifact id had ever passed through the wiring the identity
-	 * mapping will contain the corresponding target artifact id. This method
-	 * fetches the target artifact id and returns. If there is no target
-	 * artifact id mapped to this source artifact id this method return a null.
-	 * 
-	 * The difference to the ordinary target lookup method is that this one does
-	 * not require the target repository id. This one is found out automatically
-	 * by querying the synchronization status table as well.
-	 * 
-	 * @param sourceArtifactId
-	 *            - The source artifact id that should be looked up for a target
-	 *            artifact id
-	 * @param sourceSystemId
-	 *            - The system id of the source repository
-	 * @param sourceRepositoryId
-	 *            - The repository id of the source artifact
-	 * @param targetSystemId
-	 *            - The system id of the target repository
-	 * @param artifactType
-	 *            - The artifact type
-	 * 
-	 * @return array with target artifactId, sourceArtifactLastModifiedDate,
-	 *         sourceArtifactVersion, targetArtifactVersion (in this order)
-	 */
-	private Object[] lookupParentTargetArtifact(Element element,
-			String sourceArtifactId, String sourceSystemId,
-			String sourceRepositoryId, String targetSystemId,
-			String artifactType) {
-		IOrderedMap inputParameters = new OrderedHashMap();
+    /**
+     * Sets the (optional) data base reader that is used to retrieve the project
+     * mappings for the repository the parent artifact belongs to. This reader
+     * is only necessary if you like to use CCF advanced dependency features.
+     * This is not necessary for artifact attachments.
+     * 
+     */
+    public void setProjectMappingDatabaseReader(
+            JDBCReadConnector projectMappingDatabaseReader) {
+        this.projectMappingDatabaseReader = projectMappingDatabaseReader;
+    }
 
-		inputParameters.add(sourceSystemId);
-		inputParameters.add(sourceRepositoryId);
-		inputParameters.add(targetSystemId);
-		inputParameters.add(sourceArtifactId);
-		inputParameters.add(artifactType);
-		inputParameters.add(sourceSystemId);
-		inputParameters.add(targetSystemId);
-		inputParameters.add(sourceRepositoryId);
+    /**
+     * This optional property (default value false) determines whether
+     * non-reprocessed artifacts in the hospital should be skipped even if a
+     * newer version of the artifact is available in the source system.
+     * 
+     * @param skipNewerVersionsOfQuarantinedAttachments
+     */
+    public void setSkipNewerVersionsOfQuarantinedArtifacts(
+            boolean skipNewerVersionsOfQuarantinedAttachments) {
+        this.skipNewerVersionsOfQuarantinedAttachments = skipNewerVersionsOfQuarantinedAttachments;
+    }
 
-		Object[] resultSet = null;
-		parentIdentityMappingDatabaseReader.connect();
-		resultSet = parentIdentityMappingDatabaseReader.next(inputParameters,
-				1000);
+    @SuppressWarnings("unchecked")
+    /*
+     * Validate whether all mandatory properties are set correctly
+     */
+    public void validate(List exceptions) {
+        super.validate(exceptions);
+        if (getIdentityMappingDatabaseReader() == null) {
+            log.error("identityMappingDatabaseReader-property not set");
+            exceptions.add(new ValidationException(
+                    "identityMappingDatabaseReader-property not set", this));
+        }
+        if (getHospitalDatabaseReader() == null) {
+            log.warn("Entity service does not check whether artifacts are quarantined since hospitalDatabaseReader property has not been set.");
+        }
+        if (getParentIdentityMappingDatabaseReader() == null) {
+            log.warn("Entity service will not support advanced dependency features since parentIdentityMappingDatabaseReader property has not been set.");
+        }
+    }
 
-		Object[] results = null;
-		if (resultSet == null || resultSet.length == 0) {
-			log.debug(sourceArtifactId + "-" + sourceRepositoryId + "-"
-					+ sourceSystemId + "-" + "???" + "-" + targetSystemId
-					+ " are not mapped.");
-		} else if (resultSet.length == 1) {
-			if (resultSet[0] instanceof OrderedHashMap) {
-				OrderedHashMap result = (OrderedHashMap) resultSet[0];
-				if (result.size() == 5) {
-					results = new Object[5];
-					results[0] = result.get(0);
-					Timestamp timeStamp = (Timestamp) result.get(1);
-					Date date;
-					if (timeStamp == null) {
-						// use earliest date possible
-						date = new Date(0);
-					} else {
-						date = new Date(timeStamp.getTime());
-					}
+    /**
+     * For a given source artifact id, source repository and the target
+     * repository details, this method finds out the target artifact id mapped
+     * to the source artifact id by looking up the identity mapping table.
+     * 
+     * If the source artifact id had ever passed through the wiring the identity
+     * mapping will contain the corresponding target artifact id. This method
+     * fetches the target artifact id and returns. If there is no target
+     * artifact id mapped to this source artifact id this method return a null.
+     * 
+     * The difference to the ordinary target lookup method is that this one does
+     * not require the target repository id. This one is found out automatically
+     * by querying the synchronization status table as well.
+     * 
+     * @param sourceArtifactId
+     *            - The source artifact id that should be looked up for a target
+     *            artifact id
+     * @param sourceSystemId
+     *            - The system id of the source repository
+     * @param sourceRepositoryId
+     *            - The repository id of the source artifact
+     * @param targetSystemId
+     *            - The system id of the target repository
+     * @param artifactType
+     *            - The artifact type
+     * 
+     * @return array with target artifactId, sourceArtifactLastModifiedDate,
+     *         sourceArtifactVersion, targetArtifactVersion (in this order)
+     */
+    private Object[] lookupParentTargetArtifact(Element element,
+            String sourceArtifactId, String sourceSystemId,
+            String sourceRepositoryId, String targetSystemId,
+            String artifactType) {
+        IOrderedMap inputParameters = new OrderedHashMap();
 
-					results[1] = date;
-					results[2] = result.get(2);
-					results[3] = result.get(3);
-					results[4] = result.get(4);
-				} else {
-					String cause = "Seems as if the SQL statement for parentIdentityMappingDatabase reader does not return 5 values.";
-					XPathUtils
-							.addAttribute(
-									element,
-									GenericArtifactHelper.ERROR_CODE,
-									GenericArtifact.ERROR_INTERNAL_DATABASE_TABLE_CORRUPT);
-					log.error(cause);
-					throw new CCFRuntimeException(cause);
-				}
-			} else {
-				String cause = "SQL query on identity mapping table did not return data in correct format!";
-				XPathUtils.addAttribute(element,
-						GenericArtifactHelper.ERROR_CODE,
-						GenericArtifact.ERROR_INTERNAL_DATABASE_TABLE_CORRUPT);
-				log.error(cause);
-				throw new CCFRuntimeException(cause);
-			}
-		} else {
-			String cause = "There is more than one mapping for the combination "
-					+ sourceArtifactId
-					+ "-"
-					+ sourceRepositoryId
-					+ "-"
-					+ sourceSystemId
-					+ "-"
-					+ "???"
-					+ "-"
-					+ targetSystemId
-					+ " in the identity mapping table.";
-			XPathUtils.addAttribute(element, GenericArtifactHelper.ERROR_CODE,
-					GenericArtifact.ERROR_INTERNAL_DATABASE_TABLE_CORRUPT);
-			log.error(cause);
-			throw new CCFRuntimeException(cause);
-		}
-		return results;
-	}
+        inputParameters.add(sourceSystemId);
+        inputParameters.add(sourceRepositoryId);
+        inputParameters.add(targetSystemId);
+        inputParameters.add(sourceArtifactId);
+        inputParameters.add(artifactType);
+        inputParameters.add(sourceSystemId);
+        inputParameters.add(targetSystemId);
+        inputParameters.add(sourceRepositoryId);
 
-	/**
-	 * This method looks up whether the artifact has been quarantined in the
-	 * hospital and has not been reprocessed yet. If so, it will find out
-	 * whether to skip the artifact or not.
-	 * 
-	 * @param sourceArtifactId
-	 *            - The source artifact id that should be looked up for a target
-	 *            artifact id
-	 * @param sourceSystemId
-	 *            - The system id of the source repository
-	 * @param sourceRepositoryId
-	 *            - The repository id of the source artifact
-	 * @param targetSystemId
-	 *            - The system id of the target repository
-	 * @param targetRepositoryId
-	 *            - The repository id of the target artifact
-	 * @param artifactType
-	 *            - The artifact type
-	 * @param sourceArtifactVersionInt
-	 *            version of the current artifact
-	 * @param sourceArtifactLastModifiedDate
-	 *            last modified date of the current artifact
-	 * 
-	 * @return true if artifact should be skipped, false if not
-	 */
-	private boolean skipQuarantinedArtifact(Element element,
-			String sourceArtifactId, String sourceSystemId,
-			String sourceRepositoryId, String targetSystemId,
-			String targetRepositoryId, String artifactType,
-			Date sourceArtifactLastModifiedDate, long sourceArtifactVersionLong,
-			boolean onlyCheckIfQuarantinedArtifactExists) {
+        Object[] resultSet = null;
+        parentIdentityMappingDatabaseReader.connect();
+        resultSet = parentIdentityMappingDatabaseReader.next(inputParameters,
+                1000);
 
-		// only if a connection to the hospital table is possible we can skip
-		// artifacts
-		if (getHospitalDatabaseReader() == null) {
-			return false;
-		}
+        Object[] results = null;
+        if (resultSet == null || resultSet.length == 0) {
+            log.debug(sourceArtifactId + "-" + sourceRepositoryId + "-"
+                    + sourceSystemId + "-" + "???" + "-" + targetSystemId
+                    + " are not mapped.");
+        } else if (resultSet.length == 1) {
+            if (resultSet[0] instanceof OrderedHashMap) {
+                OrderedHashMap result = (OrderedHashMap) resultSet[0];
+                if (result.size() == 5) {
+                    results = new Object[5];
+                    results[0] = result.get(0);
+                    Timestamp timeStamp = (Timestamp) result.get(1);
+                    Date date;
+                    if (timeStamp == null) {
+                        // use earliest date possible
+                        date = new Date(0);
+                    } else {
+                        date = new Date(timeStamp.getTime());
+                    }
 
-		IOrderedMap inputParameters = new OrderedHashMap();
+                    results[1] = date;
+                    results[2] = result.get(2);
+                    results[3] = result.get(3);
+                    results[4] = result.get(4);
+                } else {
+                    String cause = "Seems as if the SQL statement for parentIdentityMappingDatabase reader does not return 5 values.";
+                    XPathUtils
+                            .addAttribute(
+                                    element,
+                                    GenericArtifactHelper.ERROR_CODE,
+                                    GenericArtifact.ERROR_INTERNAL_DATABASE_TABLE_CORRUPT);
+                    log.error(cause);
+                    throw new CCFRuntimeException(cause);
+                }
+            } else {
+                String cause = "SQL query on identity mapping table did not return data in correct format!";
+                XPathUtils.addAttribute(element,
+                        GenericArtifactHelper.ERROR_CODE,
+                        GenericArtifact.ERROR_INTERNAL_DATABASE_TABLE_CORRUPT);
+                log.error(cause);
+                throw new CCFRuntimeException(cause);
+            }
+        } else {
+            String cause = "There is more than one mapping for the combination "
+                    + sourceArtifactId
+                    + "-"
+                    + sourceRepositoryId
+                    + "-"
+                    + sourceSystemId
+                    + "-"
+                    + "???"
+                    + "-"
+                    + targetSystemId
+                    + " in the identity mapping table.";
+            XPathUtils.addAttribute(element, GenericArtifactHelper.ERROR_CODE,
+                    GenericArtifact.ERROR_INTERNAL_DATABASE_TABLE_CORRUPT);
+            log.error(cause);
+            throw new CCFRuntimeException(cause);
+        }
+        return results;
+    }
 
-		inputParameters.add(sourceSystemId);
-		inputParameters.add(sourceRepositoryId);
-		inputParameters.add(targetSystemId);
-		inputParameters.add(targetRepositoryId);
-		inputParameters.add(sourceArtifactId);
-		inputParameters.add(artifactType);
-		// hospitalDatabaseReader.disconnect();
-		hospitalDatabaseReader.connect();
-		// TODO Find out whether 10000 is enough in hard cases
-		Object[] resultSet = hospitalDatabaseReader
-				.next(inputParameters, 10000);
-		// hospitalDatabaseReader.disconnect();
-		if (resultSet == null || resultSet.length == 0) {
-			// artifact is not in the hospital
-			return false;
-		} else if (onlyCheckIfQuarantinedArtifactExists) {
-			return true;
-		} else if (isSkipNewerVersionsOfQuarantinedArtifacts()) {
-			// we do not have to compare version numbers since we skip every
-			// version of the artifact
-			log
-					.warn("At least one entry for combination "
-							+ sourceArtifactId
-							+ "-"
-							+ sourceRepositoryId
-							+ "-"
-							+ sourceSystemId
-							+ targetRepositoryId
-							+ "-"
-							+ targetSystemId
-							+ " is still in the hospital and not yet reprocessed, skipping it ...");
-			return true;
-		}
+    /**
+     * For a given source artifact id, source repository and the target
+     * repository details, this method finds out the target artifact id mapped
+     * to the source artifact id by looking up the identity mapping table.
+     * 
+     * If the source artifact id had ever passed through the wiring the identity
+     * mapping will contain the corresponding target artifact id. This method
+     * fetches the target artifact id and returns. If there is no target
+     * artifact id mapped to this source artifact id this method return a null.
+     * 
+     * @param sourceArtifactId
+     *            - The source artifact id that should be looked up for a target
+     *            artifact id
+     * @param sourceSystemId
+     *            - The system id of the source repository
+     * @param sourceRepositoryId
+     *            - The repository id of the source artifact
+     * @param targetSystemId
+     *            - The system id of the target repository
+     * @param targetRepositoryId
+     *            - The repository id of the target artifact
+     * @param artifactType
+     *            - The artifact type
+     * 
+     * @return array with target artifactId, sourceArtifactLastModifiedDate,
+     *         sourceArtifactVersion, targetArtifactVersion (in this order)
+     */
+    private Object[] lookupTargetArtifact(Element element,
+            String sourceArtifactId, String sourceSystemId,
+            String sourceRepositoryId, String targetSystemId,
+            String targetRepositoryId, String artifactType) {
+        IOrderedMap inputParameters = new OrderedHashMap();
 
-		for (Object resultObject : resultSet) {
-			if (resultObject instanceof OrderedHashMap) {
-				OrderedHashMap result = (OrderedHashMap) resultObject;
-				if (result.size() == 3) {
-					Date sourceArtifactLastModifiedDateFromTable;
-					String hospitalId = result.get(0).toString();
-					Timestamp timeStamp = (Timestamp) result.get(1);
-					if (timeStamp == null) {
-						// use earliest date possible
-						sourceArtifactLastModifiedDateFromTable = new Date(0);
-					} else {
-						sourceArtifactLastModifiedDateFromTable = new Date(
-								timeStamp.getTime());
-					}
-					String sourceArtifactVersionFromTable = result.get(2)
-							.toString();
-					if (sourceArtifactVersionFromTable
-							.equalsIgnoreCase(GenericArtifact.VALUE_UNKNOWN)) {
-						sourceArtifactVersionFromTable = GenericArtifactHelper.ARTIFACT_VERSION_FORCE_RESYNC;
-					}
-					long sourceArtifactVersionLongFromTable = Long
-							.parseLong(sourceArtifactVersionFromTable);
-					if (sourceArtifactLastModifiedDateFromTable
-							.after(sourceArtifactLastModifiedDate)
-							|| sourceArtifactVersionLongFromTable >= sourceArtifactVersionLong) {
-						if (sourceArtifactVersionLong == -1
-								&& sourceArtifactVersionLongFromTable == -1) {
-							log
-									.warn("It seems as if artifact synchronization is done exclusively with a system that does not support version control, so artifact from combination "
-											+ sourceArtifactId
-											+ "-"
-											+ sourceRepositoryId
-											+ "-"
-											+ sourceSystemId
-											+ targetRepositoryId
-											+ "-"
-											+ targetSystemId
-											+ " will not be skipped despite it is in the hospital. Hospital ID: "
-											+ hospitalId);
-						} else {
-							log
-									.warn("Non re-processed artifact from combination "
-											+ sourceArtifactId
-											+ "-"
-											+ sourceRepositoryId
-											+ "-"
-											+ sourceSystemId
-											+ targetRepositoryId
-											+ "-"
-											+ targetSystemId
-											+ " is still in the hospital in a newer or equal version, so skipping it. Hospital ID: "
-											+ hospitalId);
-							return true;
-						}
-					}
-				} else {
-					String cause = "Seems as if the SQL statement for hospitalDatabase reader does not return 3 values.";
-					XPathUtils
-							.addAttribute(
-									element,
-									GenericArtifactHelper.ERROR_CODE,
-									GenericArtifact.ERROR_INTERNAL_DATABASE_TABLE_CORRUPT);
-					log.error(cause);
-					throw new CCFRuntimeException(cause);
-				}
-			} else {
-				String cause = "SQL query on hospital table did not return data in correct format!";
-				XPathUtils.addAttribute(element,
-						GenericArtifactHelper.ERROR_CODE,
-						GenericArtifact.ERROR_INTERNAL_DATABASE_TABLE_CORRUPT);
-				log.error(cause);
-				throw new CCFRuntimeException(cause);
-			}
-		}
-		log
-				.info("Only older non-reprocessed versions of artifact combination "
-						+ sourceArtifactId
-						+ "-"
-						+ sourceRepositoryId
-						+ "-"
-						+ sourceSystemId
-						+ "-"
-						+ targetRepositoryId
-						+ "-"
-						+ targetSystemId
-						+ " are in the hospital, so pass artifact ...");
-		return false;
-	}
+        inputParameters.add(sourceSystemId);
+        inputParameters.add(sourceRepositoryId);
+        inputParameters.add(targetSystemId);
+        inputParameters.add(targetRepositoryId);
+        inputParameters.add(sourceArtifactId);
+        inputParameters.add(artifactType);
+        String artifactAction = null;
+        try {
+            artifactAction = XPathUtils.getAttributeValue(element,
+                    GenericArtifactHelper.ARTIFACT_ACTION);
+        } catch (GenericArtifactParsingException e) {
+            String cause = "Problem occured while parsing the Document to extract specific attributes";
+            log.error(cause, e);
+            XPathUtils.addAttribute(element, GenericArtifactHelper.ERROR_CODE,
+                    GenericArtifact.ERROR_GENERIC_ARTIFACT_PARSING);
+            throw new CCFRuntimeException(cause, e);
+        }
+        boolean waitForIdentityMappedEvent = false;
+        int waitCount = 0;
+        // identityMappingDatabaseReader.disconnect();
+        Object[] resultSet = null;
+        do {
+            identityMappingDatabaseReader.connect();
+            resultSet = identityMappingDatabaseReader.next(inputParameters,
+                    1000);
+            // identityMappingDatabaseReader.disconnect();
+            if (artifactAction
+                    .equals(GenericArtifactHelper.ARTIFACT_ACTION_RESYNC)) {
+                if (resultSet == null || resultSet.length == 0) {
+                    if (++waitCount < this.getIdentityMapEventWaitCount()) {
+                        waitForIdentityMappedEvent = true;
+                        try {
+                            log.debug("No identity mapping found for resync request of "
+                                    + sourceArtifactId
+                                    + "-"
+                                    + sourceRepositoryId
+                                    + "-"
+                                    + sourceSystemId
+                                    + "-"
+                                    + targetRepositoryId
+                                    + "-"
+                                    + targetSystemId
+                                    + ". Sleeping for "
+                                    + this.getIdentityMapEventWaitTime()
+                                    + " milliseconds...");
+                            Thread.sleep(this.getIdentityMapEventWaitTime());
+                        } catch (InterruptedException e) {
+                            // INFO Digesting the interrupt
+                        }
+                    } else {
+                        log.warn("There was no prior identity mapping for the resync request "
+                                + sourceArtifactId
+                                + "-"
+                                + sourceRepositoryId
+                                + "-"
+                                + sourceSystemId
+                                + "-"
+                                + targetRepositoryId
+                                + "-"
+                                + targetSystemId
+                                + " in the identity mapping table even after the entity service waited for "
+                                + (waitCount * this
+                                        .getIdentityMapEventWaitTime())
+                                + " milliseconds. Discarding the artifact.");
+                        waitForIdentityMappedEvent = false;
+                    }
+                } else {
+                    waitForIdentityMappedEvent = false;
+                }
+            }
+        } while (waitForIdentityMappedEvent);
+        Object[] results = null;
+        if (resultSet == null || resultSet.length == 0) {
+            log.debug(sourceArtifactId + "-" + sourceRepositoryId + "-"
+                    + sourceSystemId + "-" + targetRepositoryId + "-"
+                    + targetSystemId + " are not mapped.");
+        } else if (resultSet.length == 1) {
+            if (resultSet[0] instanceof OrderedHashMap) {
+                OrderedHashMap result = (OrderedHashMap) resultSet[0];
+                if (result.size() == 4) {
+                    results = new Object[4];
+                    results[0] = result.get(0);
+                    Timestamp timeStamp = (Timestamp) result.get(1);
+                    Date date;
+                    if (timeStamp == null) {
+                        // use earliest date possible
+                        date = new Date(0);
+                    } else {
+                        date = new Date(timeStamp.getTime());
+                    }
 
-	/**
-	 * Reset the processor
-	 */
-	public void reset(Object context) {
-	}
+                    results[1] = date;
+                    results[2] = result.get(2);
+                    results[3] = result.get(3);
+                } else {
+                    String cause = "Seems as if the SQL statement for identityMappingDatabase reader does not return 4 values.";
+                    XPathUtils
+                            .addAttribute(
+                                    element,
+                                    GenericArtifactHelper.ERROR_CODE,
+                                    GenericArtifact.ERROR_INTERNAL_DATABASE_TABLE_CORRUPT);
+                    log.error(cause);
+                    throw new CCFRuntimeException(cause);
+                }
+            } else {
+                String cause = "SQL query on identity mapping table did not return data in correct format!";
+                XPathUtils.addAttribute(element,
+                        GenericArtifactHelper.ERROR_CODE,
+                        GenericArtifact.ERROR_INTERNAL_DATABASE_TABLE_CORRUPT);
+                log.error(cause);
+                throw new CCFRuntimeException(cause);
+            }
+        } else {
+            String cause = "There is more than one mapping for the combination "
+                    + sourceArtifactId
+                    + "-"
+                    + sourceRepositoryId
+                    + "-"
+                    + sourceSystemId
+                    + "-"
+                    + targetRepositoryId
+                    + "-"
+                    + targetSystemId + " in the identity mapping table.";
+            XPathUtils.addAttribute(element, GenericArtifactHelper.ERROR_CODE,
+                    GenericArtifact.ERROR_INTERNAL_DATABASE_TABLE_CORRUPT);
+            log.error(cause);
+            throw new CCFRuntimeException(cause);
+        }
+        return results;
+    }
 
-	@SuppressWarnings("unchecked")
-	/*
-	 * Validate whether all mandatory properties are set correctly
-	 */
-	public void validate(List exceptions) {
-		super.validate(exceptions);
-		if (getIdentityMappingDatabaseReader() == null) {
-			log.error("identityMappingDatabaseReader-property not set");
-			exceptions.add(new ValidationException(
-					"identityMappingDatabaseReader-property not set", this));
-		}
-		if (getHospitalDatabaseReader() == null) {
-			log
-					.warn("Entity service does not check whether artifacts are quarantined since hospitalDatabaseReader property has not been set.");
-		}
-		if (getParentIdentityMappingDatabaseReader() == null) {
-			log
-					.warn("Entity service will not support advanced dependency features since parentIdentityMappingDatabaseReader property has not been set.");
-		}
-	}
+    /**
+     * Main method to handle the mapping and filtering of source artifacts to
+     * target repository artifact items Also include the quarantined artifact
+     * lookup code
+     * 
+     * @param data
+     *            input XML document in generic XML artifact format
+     * @return array of generated XML documents compliant to generic XML
+     *         artifact schema
+     */
+    private Object[] processXMLDocument(Document data) {
+        Element element = null;
+        try {
+            element = XPathUtils.getRootElement(data);
+            String artifactAction = XPathUtils.getAttributeValue(element,
+                    GenericArtifactHelper.ARTIFACT_ACTION);
+            if (artifactAction
+                    .equals(GenericArtifactHelper.ARTIFACT_ACTION_IGNORE)) {
+                return new Object[] { data };
+            }
 
-	/**
-	 * Gets the (mandatory) data base reader that is used to retrieve the target
-	 * artifact id from the the identity mapping table. If the artifact has been
-	 * already mapped to a target artifact this information will be inserted. If
-	 * the processed artifact has been already mapped in a newer or equal
-	 * version the duplicate shipment detection algorithm will skip the
-	 * artifact.
-	 * 
-	 */
-	public JDBCReadConnector getIdentityMappingDatabaseReader() {
-		return identityMappingDatabaseReader;
-	}
+            // get top level attributes
+            String artifactType = XPathUtils.getAttributeValue(element,
+                    GenericArtifactHelper.ARTIFACT_TYPE);
+            String sourceArtifactId = XPathUtils.getAttributeValue(element,
+                    GenericArtifactHelper.SOURCE_ARTIFACT_ID);
+            String sourceSystemId = XPathUtils.getAttributeValue(element,
+                    GenericArtifactHelper.SOURCE_SYSTEM_ID);
+            String sourceRepositoryId = XPathUtils.getAttributeValue(element,
+                    GenericArtifactHelper.SOURCE_REPOSITORY_ID);
+            String targetSystemId = XPathUtils.getAttributeValue(element,
+                    GenericArtifactHelper.TARGET_SYSTEM_ID);
+            String targetRepositoryId = XPathUtils.getAttributeValue(element,
+                    GenericArtifactHelper.TARGET_REPOSITORY_ID);
+            String sourceArtifactVersion = XPathUtils.getAttributeValue(
+                    element, GenericArtifactHelper.SOURCE_ARTIFACT_VERSION);
+            String transactionId = XPathUtils.getAttributeValue(element,
+                    GenericArtifactHelper.TRANSACTION_ID);
+            String artifactMode = XPathUtils.getAttributeValue(element,
+                    GenericArtifactHelper.ARTIFACT_MODE);
+            boolean isPartialUpdate = GenericArtifactHelper.ARTIFACT_MODE_CHANGED_FIELDS_ONLY
+                    .equals(artifactMode);
 
-	/**
-	 * Sets the (optional) data base reader that is used to retrieve the parent
-	 * target artifact id from the the identity mapping table. This reader is
-	 * only necessary if you like to use CCF advanced dependency features. This
-	 * is not necessary for artifact attachments.
-	 * 
-	 * @param parentIdentityMappingDatabaseReader
-	 */
-	public void setParentIdentityMappingDatabaseReader(
-			JDBCReadConnector parentIdentityMappingDatabaseReader) {
-		this.parentIdentityMappingDatabaseReader = parentIdentityMappingDatabaseReader;
-	}
+            boolean replayedArtifact = (transactionId != null && !transactionId
+                    .equals(GenericArtifact.VALUE_UNKNOWN));
 
-	/**
-	 * Gets the (optional) data base reader that is used to retrieve the parent
-	 * target artifact id from the the identity mapping table. This reader is
-	 * only necessary if you like to use CCF advanced dependency features. This
-	 * is not necessary for artifact attachments.
-	 * 
-	 */
-	public JDBCReadConnector getParentIdentityMappingDatabaseReader() {
-		return parentIdentityMappingDatabaseReader;
-	}
+            if (sourceArtifactVersion == null
+                    || sourceArtifactVersion
+                            .equals(GenericArtifact.VALUE_UNKNOWN)) {
+                sourceArtifactVersion = GenericArtifactHelper.ARTIFACT_VERSION_FORCE_RESYNC;
+            }
 
-	/**
-	 * Sets the (optional) data base reader that is used to retrieve the project
-	 * mappings for the repository the parent artifact belongs to. This reader
-	 * is only necessary if you like to use CCF advanced dependency features.
-	 * This is not necessary for artifact attachments.
-	 * 
-	 */
-	public void setProjectMappingDatabaseReader(
-			JDBCReadConnector projectMappingDatabaseReader) {
-		this.projectMappingDatabaseReader = projectMappingDatabaseReader;
-	}
+            String sourceArtifactLastModifiedDateStr = XPathUtils
+                    .getAttributeValue(
+                            element,
+                            GenericArtifactHelper.SOURCE_ARTIFACT_LAST_MODIFICATION_DATE);
 
-	/**
-	 * Gets the (optional) data base reader that is used to retrieve the project
-	 * mappings for the repository the parent artifact belongs to. This reader
-	 * is only necessary if you like to use CCF advanced dependency features.
-	 * This is not necessary for artifact attachments.
-	 * 
-	 */
-	public JDBCReadConnector getProjectMappingDatabaseReader() {
-		return projectMappingDatabaseReader;
-	}
+            Date sourceArtifactLastModifiedDate = null;
+            if (!sourceArtifactLastModifiedDateStr
+                    .equalsIgnoreCase(GenericArtifact.VALUE_UNKNOWN)) {
+                sourceArtifactLastModifiedDate = DateUtil
+                        .parse(sourceArtifactLastModifiedDateStr);
+            }
+            // use the earliest date possible
+            else
+                sourceArtifactLastModifiedDate = new Date(0);
 
-	/**
-	 * Sets the (mandatory) data base reader that is used to retrieve the target
-	 * artifact id from the the identity mapping table. If the artifact has been
-	 * already mapped to a target artifact this information will be inserted. If
-	 * the processed artifact has been already mapped in a newer or equal
-	 * version the duplicate shipment detection algorithm will skip the
-	 * artifact.
-	 * 
-	 * @param identityMappingDatabaseReader
-	 */
-	public void setIdentityMappingDatabaseReader(
-			JDBCReadConnector identityMappingDatabaseReader) {
-		this.identityMappingDatabaseReader = identityMappingDatabaseReader;
-	}
+            long sourceArtifactVersionLong = Long
+                    .parseLong(sourceArtifactVersion);
+            String targetArtifactIdFromTable = null;
+            String targetArtifactVersion = null;
+            if (sourceArtifactId
+                    .equalsIgnoreCase(GenericArtifact.VALUE_UNKNOWN)) {
+                return new Object[] { data };
+            }
 
-	/**
-	 * Gets the (optional) data base reader that is used to find out whether the
-	 * artifact is currently quarantined in the hospital and has not been
-	 * reprocessed yet. If this property is not set, no lookup will be done in
-	 * the hospital. If the artifact is in the hospital its version in the
-	 * hospital will be compared with the current version. If the current
-	 * artifact version is less or equal to the quarantined artifact, no
-	 * artifact will be shipped. Otherwise the
-	 * skipNewerVersionsOfQuarantinedArtifacts property will determine whether
-	 * to skip newer versions as well.
-	 * 
-	 * @return
-	 */
-	public JDBCReadConnector getHospitalDatabaseReader() {
-		return hospitalDatabaseReader;
-	}
+            // find out whether to skip the artifact because it has been
+            // quarantined
+            if (!replayedArtifact
+                    && skipQuarantinedArtifact(element, sourceArtifactId,
+                            sourceSystemId, sourceRepositoryId, targetSystemId,
+                            targetRepositoryId, artifactType,
+                            sourceArtifactLastModifiedDate,
+                            sourceArtifactVersionLong, false)) {
+                XPathUtils.addAttribute(element,
+                        GenericArtifactHelper.ARTIFACT_ACTION,
+                        GenericArtifactHelper.ARTIFACT_ACTION_IGNORE);
+                return new Object[] { data };
+            }
 
-	/**
-	 * Sets the (optional) data base reader that is used to find out whether the
-	 * artifact is currently quarantined in the hospital and has not been
-	 * reprocessed yet. If this property is not set, no lookup will be done in
-	 * the hospital. If the artifact is in the hospital its version in the
-	 * hospital will be compared with the current version. If the current
-	 * artifact version is less or equal to the quarantined artifact, no
-	 * artifact will be shipped. Otherwise the
-	 * skipNewerVersionsOfQuarantinedArtifacts property will determine whether
-	 * to skip newer versions as well.
-	 * 
-	 * @param hospitalDatabaseReader
-	 */
-	public void setHospitalDatabaseReader(
-			JDBCReadConnector hospitalDatabaseReader) {
-		this.hospitalDatabaseReader = hospitalDatabaseReader;
-	}
+            Object[] results = lookupTargetArtifact(element, sourceArtifactId,
+                    sourceSystemId, sourceRepositoryId, targetSystemId,
+                    targetRepositoryId, artifactType);
 
-	/**
-	 * This optional property (default value false) determines whether
-	 * non-reprocessed artifacts in the hospital should be skipped even if a
-	 * newer version of the artifact is available in the source system.
-	 * 
-	 * @param skipNewerVersionsOfQuarantinedAttachments
-	 */
-	public void setSkipNewerVersionsOfQuarantinedArtifacts(
-			boolean skipNewerVersionsOfQuarantinedAttachments) {
-		this.skipNewerVersionsOfQuarantinedAttachments = skipNewerVersionsOfQuarantinedAttachments;
-	}
+            if (results != null && results.length != 0) {
+                targetArtifactIdFromTable = results[0].toString();
+                Date sourceArtifactLastModifiedDateFromTable = (Date) results[1];
+                String sourceArtifactVersionFromTable = results[2].toString();
+                if (sourceArtifactVersionFromTable
+                        .equalsIgnoreCase(GenericArtifact.VALUE_UNKNOWN)) {
+                    sourceArtifactVersionFromTable = GenericArtifactHelper.ARTIFACT_VERSION_FORCE_RESYNC;
+                }
+                long sourceArtifactVersionLongFromTable = Long
+                        .parseLong(sourceArtifactVersionFromTable);
+                // if (sourceArtifactLastModifiedDateFromTable
+                // .after(sourceArtifactLastModifiedDate)
+                // || sourceArtifactVersionLongFromTable >=
+                // sourceArtifactVersionLong) {
+                if (sourceArtifactVersionLongFromTable >= sourceArtifactVersionLong) {
+                    if (sourceArtifactVersionLong == -1
+                            && sourceArtifactVersionLongFromTable == -1) {
+                        log.warn("It seems as if artifact synchronization is done exclusively with a system that does not support version control for combination "
+                                + sourceArtifactId
+                                + "-"
+                                + sourceRepositoryId
+                                + "-"
+                                + sourceSystemId
+                                + targetRepositoryId
+                                + "-"
+                                + targetSystemId
+                                + " so artifact will not be skipped.");
+                    } else {
+                        // only skip if this is not an intended artifact resync
+                        // obvious resync duplicates are still filtered out.
+                        // partial updates are always passed through.
+                        if ((!isPartialUpdate || !isAlwaysPassPartialArtifacts())
+                                && ((!artifactAction
+                                        .equals(GenericArtifactHelper.ARTIFACT_ACTION_RESYNC)) || ((sourceArtifactVersionLongFromTable > sourceArtifactVersionLong) && !isAlwaysPassResynchedArtifacts()))) {
+                            log.warn("\nSource artifact last modified date in table "
+                                    + DateUtil
+                                            .format(sourceArtifactLastModifiedDateFromTable)
+                                    + "\nSource artifact last modified date "
+                                    + DateUtil
+                                            .format(sourceArtifactLastModifiedDate)
+                                    + "\nSource artifact version from table "
+                                    + sourceArtifactVersionLongFromTable
+                                    + "\nSource artifact version "
+                                    + sourceArtifactVersionLong);
+                            log.warn("Seems the artifact has already been shipped in newer or same version. Skipped artifact with source artifact id "
+                                    + sourceArtifactId
+                                    + " and version "
+                                    + sourceArtifactVersion
+                                    + " for combination "
+                                    + sourceArtifactId
+                                    + "-"
+                                    + sourceRepositoryId
+                                    + "-"
+                                    + sourceSystemId
+                                    + targetRepositoryId
+                                    + "-"
+                                    + targetSystemId);
 
-	/**
-	 * This optional property (default value false) determines whether
-	 * non-reprocessed artifacts in the hospital should be skipped even if a
-	 * newer version of the artifact is available in the source system.
-	 * 
-	 * @param skipNewerVersionsOfQuarantinedAttachments
-	 */
-	public boolean isSkipNewerVersionsOfQuarantinedArtifacts() {
-		return skipNewerVersionsOfQuarantinedAttachments;
-	}
+                            XPathUtils
+                                    .addAttribute(
+                                            element,
+                                            GenericArtifactHelper.ARTIFACT_ACTION,
+                                            GenericArtifactHelper.ARTIFACT_ACTION_IGNORE);
+                            return new Object[] { data };
+                        }
+                    }
+                }
+                targetArtifactVersion = results[3].toString();
+            }
 
-	public long getIdentityMapEventWaitTime() {
-		return identityMapEventWaitTime;
-	}
+            if (artifactType
+                    .equals(GenericArtifactHelper.ARTIFACT_TYPE_ATTACHMENT)) {
+                String sourceParentArtifactId = XPathUtils.getAttributeValue(
+                        element,
+                        GenericArtifactHelper.DEP_PARENT_SOURCE_ARTIFACT_ID);
+                String sourceParentRepositoryId = XPathUtils.getAttributeValue(
+                        element,
+                        GenericArtifactHelper.DEP_PARENT_SOURCE_REPOSITORY_ID);
+                String targetParentRepositoryId = XPathUtils.getAttributeValue(
+                        element,
+                        GenericArtifactHelper.DEP_PARENT_TARGET_REPOSITORY_ID);
+                Object[] resultsDep = lookupTargetArtifact(element,
+                        sourceParentArtifactId, sourceSystemId,
+                        sourceParentRepositoryId, targetSystemId,
+                        targetParentRepositoryId,
+                        GenericArtifactHelper.ARTIFACT_TYPE_PLAIN_ARTIFACT);
+                String targetParentArtifactId = null;
+                if (resultsDep != null && resultsDep[0] != null) {
+                    targetParentArtifactId = resultsDep[0].toString();
+                }
+                if (StringUtils.isEmpty(targetParentArtifactId)) {
+                    if (artifactAction
+                            .equals(GenericArtifactHelper.ARTIFACT_ACTION_DELETE)) {
+                        String cause = "Parent artifact "
+                                + sourceParentArtifactId
+                                + " for attachment "
+                                + sourceArtifactId
+                                + " is not yet created on the target system for combination "
+                                + sourceArtifactId
+                                + "-"
+                                + sourceRepositoryId
+                                + "-"
+                                + sourceSystemId
+                                + "-"
+                                + targetRepositoryId
+                                + "-"
+                                + targetSystemId
+                                + ". Since attachment has been marked to be deleted, ignoring the shipment ...";
+                        log.warn(cause);
+                        XPathUtils.addAttribute(element,
+                                GenericArtifactHelper.ARTIFACT_ACTION,
+                                GenericArtifactHelper.ARTIFACT_ACTION_IGNORE);
+                        return new Object[] { data };
+                    }
+                    if (!isOnlyQuarantineAttachmentIfParentInHospital()
+                            || skipQuarantinedArtifact(
+                                    null,
+                                    sourceParentArtifactId,
+                                    sourceSystemId,
+                                    sourceParentRepositoryId,
+                                    targetSystemId,
+                                    targetParentRepositoryId,
+                                    GenericArtifactHelper.ARTIFACT_TYPE_PLAIN_ARTIFACT,
+                                    null, 0, true)) {
+                        String cause = "Parent artifact "
+                                + sourceParentArtifactId
+                                + " for attachment "
+                                + sourceArtifactId
+                                + " is not created on the target system for combination "
+                                + sourceArtifactId + "-" + sourceRepositoryId
+                                + "-" + sourceSystemId + "-"
+                                + targetRepositoryId + "-" + targetSystemId;
+                        log.error(cause);
+                        XPathUtils
+                                .addAttribute(
+                                        element,
+                                        GenericArtifactHelper.ERROR_CODE,
+                                        GenericArtifact.ERROR_PARENT_ARTIFACT_NOT_PRESENT);
+                        throw new CCFRuntimeException(cause);
+                    } else {
+                        String cause = "Parent artifact "
+                                + sourceParentArtifactId
+                                + " for attachment "
+                                + sourceArtifactId
+                                + " is not created on the target system for combination "
+                                + sourceArtifactId
+                                + "-"
+                                + sourceRepositoryId
+                                + "-"
+                                + sourceSystemId
+                                + "-"
+                                + targetRepositoryId
+                                + "-"
+                                + targetSystemId
+                                + ". Do not quarantine attachment since parent could not be found in hospital.";
+                        log.warn(cause);
+                        return null;
+                    }
+                } else {
+                    XPathUtils
+                            .addAttribute(
+                                    element,
+                                    GenericArtifactHelper.DEP_PARENT_TARGET_ARTIFACT_ID,
+                                    targetParentArtifactId);
+                }
+            } else if (artifactType
+                    .equals(GenericArtifactHelper.ARTIFACT_TYPE_PLAIN_ARTIFACT)) {
+                // now realize parent artifact lookup for ordinary artifacts
+                String sourceParentArtifactId = XPathUtils.getAttributeValue(
+                        element,
+                        GenericArtifactHelper.DEP_PARENT_SOURCE_ARTIFACT_ID);
+                if (sourceParentArtifactId != null
+                        && !sourceParentArtifactId
+                                .equals(GenericArtifact.VALUE_UNKNOWN)) {
+                    // looks as if dependency lookup has been required
+                    if (sourceParentArtifactId
+                            .equals(GenericArtifact.VALUE_NONE)) {
+                        // none is always mapped to none
+                        XPathUtils
+                                .addAttribute(
+                                        element,
+                                        GenericArtifactHelper.DEP_PARENT_TARGET_ARTIFACT_ID,
+                                        GenericArtifact.VALUE_NONE);
+                    } else if (getParentIdentityMappingDatabaseReader() == null) {
+                        log.warn("Seems the artifact required advanced dependency lookup but this feature has not been configured. "
+                                + "Skipped parent lookup for artifact with source artifact id "
+                                + sourceArtifactId
+                                + " and version "
+                                + sourceArtifactVersion
+                                + " for combination "
+                                + sourceArtifactId
+                                + "-"
+                                + sourceRepositoryId
+                                + "-"
+                                + sourceSystemId
+                                + "-"
+                                + targetRepositoryId + "-" + targetSystemId);
+                    } else {
+                        // do the actual parent id lookup
+                        String sourceParentRepositoryId = XPathUtils
+                                .getAttributeValue(
+                                        element,
+                                        GenericArtifactHelper.DEP_PARENT_SOURCE_REPOSITORY_ID);
+                        Object[] resultsDep = lookupParentTargetArtifact(
+                                element,
+                                sourceParentArtifactId,
+                                sourceSystemId,
+                                sourceParentRepositoryId,
+                                targetSystemId,
+                                GenericArtifactHelper.ARTIFACT_TYPE_PLAIN_ARTIFACT);
+                        String targetParentArtifactId = null;
+                        String targetParentRepositoryId = null;
+                        if (resultsDep != null && resultsDep[0] != null) {
+                            targetParentArtifactId = resultsDep[0].toString();
+                        }
+                        if (resultsDep != null && resultsDep[4] != null) {
+                            targetParentRepositoryId = resultsDep[4].toString();
+                        }
+                        if (StringUtils.isEmpty(targetParentArtifactId)
+                                || StringUtils
+                                        .isEmpty(targetParentRepositoryId)) {
+                            if (getProjectMappingDatabaseReader() != null) {
+                                // if it turns out that the repository the
+                                // parent artifact belongs to is not mapped at
+                                // all,
+                                // we will proceed with a warning
+                                if (!projectMappingExists(sourceSystemId,
+                                        targetSystemId,
+                                        sourceParentRepositoryId)) {
+                                    String cause = "Parent artifact "
+                                            + sourceParentArtifactId
+                                            + " for artifact "
+                                            + sourceArtifactId
+                                            + " is not yet created on the target system for combination "
+                                            + sourceArtifactId
+                                            + "-"
+                                            + sourceRepositoryId
+                                            + "-"
+                                            + sourceSystemId
+                                            + "-"
+                                            + targetRepositoryId
+                                            + "-"
+                                            + targetSystemId
+                                            + ". Since no project mapping exists for "
+                                            + sourceParentRepositoryId
+                                            + " CCF does not bail out but ignores parent dependency.";
+                                    log.warn(cause);
+                                } else if (artifactAction
+                                        .equals(GenericArtifactHelper.ARTIFACT_ACTION_DELETE)) {
+                                    String cause = "Parent artifact "
+                                            + sourceParentArtifactId
+                                            + " for artifact "
+                                            + sourceArtifactId
+                                            + " is not yet created on the target system for combination "
+                                            + sourceArtifactId
+                                            + "-"
+                                            + sourceRepositoryId
+                                            + "-"
+                                            + sourceSystemId
+                                            + "-"
+                                            + targetRepositoryId
+                                            + "-"
+                                            + targetSystemId
+                                            + ". Since artifact has been marked to be deleted, ignoring the shipment ...";
+                                    log.warn(cause);
+                                    XPathUtils
+                                            .addAttribute(
+                                                    element,
+                                                    GenericArtifactHelper.ARTIFACT_ACTION,
+                                                    GenericArtifactHelper.ARTIFACT_ACTION_IGNORE);
+                                    return new Object[] { data };
+                                } else {
+                                    String cause = "Parent artifact "
+                                            + sourceParentArtifactId
+                                            + " for artifact "
+                                            + sourceArtifactId
+                                            + " is not yet created on the target system for combination "
+                                            + sourceArtifactId
+                                            + "-"
+                                            + sourceRepositoryId
+                                            + "-"
+                                            + sourceSystemId
+                                            + "-"
+                                            + targetRepositoryId
+                                            + "-"
+                                            + targetSystemId
+                                            + ". Since a project mapping exists for "
+                                            + sourceParentRepositoryId
+                                            + " CCF bails out now.";
+                                    log.warn(cause);
+                                    XPathUtils
+                                            .addAttribute(
+                                                    element,
+                                                    GenericArtifactHelper.ERROR_CODE,
+                                                    GenericArtifact.ERROR_PARENT_ARTIFACT_NOT_PRESENT);
+                                    throw new CCFRuntimeException(cause);
+                                }
+                            } else {
+                                String cause = "Parent artifact "
+                                        + sourceParentArtifactId
+                                        + " for artifact "
+                                        + sourceArtifactId
+                                        + " is not yet created on the target system for combination "
+                                        + sourceArtifactId
+                                        + "-"
+                                        + sourceRepositoryId
+                                        + "-"
+                                        + sourceSystemId
+                                        + "-"
+                                        + targetRepositoryId
+                                        + "-"
+                                        + targetSystemId
+                                        + ". Since projectMappingDatabaseReader property has not been set"
+                                        + "CCF does not know whether a project mapping for "
+                                        + sourceParentRepositoryId
+                                        + "exists and bails out.";
+                                log.warn(cause);
+                                XPathUtils
+                                        .addAttribute(
+                                                element,
+                                                GenericArtifactHelper.ERROR_CODE,
+                                                GenericArtifact.ERROR_PARENT_ARTIFACT_NOT_PRESENT);
+                                throw new CCFRuntimeException(cause);
+                            }
+                        } else {
+                            XPathUtils
+                                    .addAttribute(
+                                            element,
+                                            GenericArtifactHelper.DEP_PARENT_TARGET_ARTIFACT_ID,
+                                            targetParentArtifactId);
+                            XPathUtils
+                                    .addAttribute(
+                                            element,
+                                            GenericArtifactHelper.DEP_PARENT_TARGET_REPOSITORY_ID,
+                                            targetParentRepositoryId);
+                        }
+                    }
+                }
+            }
 
-	public void setIdentityMapEventWaitTime(long identityMapEventWaitTime) {
-		this.identityMapEventWaitTime = identityMapEventWaitTime;
-	}
+            if (targetArtifactIdFromTable != null) {
+                XPathUtils.addAttribute(element,
+                        GenericArtifactHelper.TARGET_ARTIFACT_ID,
+                        targetArtifactIdFromTable);
+                XPathUtils.addAttribute(element,
+                        GenericArtifactHelper.TARGET_ARTIFACT_VERSION,
+                        targetArtifactVersion);
+                if (artifactAction
+                        .equals(GenericArtifactHelper.ARTIFACT_ACTION_UNKNOWN)) {
+                    XPathUtils.addAttribute(element,
+                            GenericArtifactHelper.ARTIFACT_ACTION,
+                            GenericArtifactHelper.ARTIFACT_ACTION_UPDATE);
+                } else if (artifactAction
+                        .equals(GenericArtifactHelper.ARTIFACT_ACTION_CREATE)) {
+                    String cause = "The artifact action is marked as "
+                            + artifactAction
+                            + ".\nBut the Entity Service found a target artifact id "
+                            + targetArtifactIdFromTable
+                            + " for source artifact id " + sourceArtifactId;
+                    log.warn(cause);
+                    XPathUtils.addAttribute(element,
+                            GenericArtifactHelper.ARTIFACT_ACTION,
+                            GenericArtifactHelper.ARTIFACT_ACTION_UPDATE);
+                }
+            } else {
+                if (artifactAction
+                        .equals(GenericArtifactHelper.ARTIFACT_ACTION_UNKNOWN)) {
+                    XPathUtils.addAttribute(element,
+                            GenericArtifactHelper.ARTIFACT_ACTION,
+                            GenericArtifactHelper.ARTIFACT_ACTION_CREATE);
+                } else if (artifactAction
+                        .equals(GenericArtifactHelper.ARTIFACT_ACTION_UPDATE)) {
+                    String cause = "The artifact action is marked as "
+                            + artifactAction
+                            + ".\nBut the Entity Service could not find a target artifact id for source artifact id "
+                            + sourceArtifactId
+                            + ". Marking the artifact to create";
+                    log.warn(cause);
+                    XPathUtils.addAttribute(element,
+                            GenericArtifactHelper.ARTIFACT_ACTION,
+                            GenericArtifactHelper.ARTIFACT_ACTION_CREATE);
+                } else if (artifactAction
+                        .equals(GenericArtifactHelper.ARTIFACT_ACTION_DELETE)) {
+                    String cause = "The artifact action is marked as "
+                            + artifactAction
+                            + ".\nBut the Entity Service could not find a target artifact id for source artifact id "
+                            + sourceArtifactId + ". Ignoring the artifact ...";
+                    log.warn(cause);
+                    XPathUtils.addAttribute(element,
+                            GenericArtifactHelper.ARTIFACT_ACTION,
+                            GenericArtifactHelper.ARTIFACT_ACTION_IGNORE);
+                    return new Object[] { data };
+                } else if (artifactAction
+                        .equals(GenericArtifactHelper.ARTIFACT_ACTION_RESYNC)) {
+                    String cause = "The artifact action is marked as "
+                            + artifactAction
+                            + ".\nBut the Entity Service could not find a target artifact id for source artifact id "
+                            + sourceArtifactId + ". Discarding the artifact.";
+                    log.warn(cause);
+                    XPathUtils.addAttribute(element,
+                            GenericArtifactHelper.ARTIFACT_ACTION,
+                            GenericArtifactHelper.ARTIFACT_ACTION_IGNORE);
+                    return new Object[] { data };
+                }
+            }
+        } catch (GenericArtifactParsingException e) {
+            String cause = "Problem occured while parsing the Document to extract specific attributes";
+            log.error(cause, e);
+            XPathUtils.addAttribute(data.getRootElement(),
+                    GenericArtifactHelper.ERROR_CODE,
+                    GenericArtifact.ERROR_GENERIC_ARTIFACT_PARSING);
+            throw new CCFRuntimeException(cause, e);
+        }
 
-	public int getIdentityMapEventWaitCount() {
-		return identityMapEventWaitCount;
-	}
+        Object[] result = { data };
+        return result;
+    }
 
-	public void setIdentityMapEventWaitCount(int identityMapEventWaitCount) {
-		this.identityMapEventWaitCount = identityMapEventWaitCount;
-	}
+    /**
+     * Returns whether a project mapping exists in the target system for the
+     * repository id of the parent artifact This information is used to
+     * determine whether to bail out if no equivalent to the parent artifact can
+     * be found in the target system.
+     * 
+     * @param sourceSystemId
+     * @param targetSystemId
+     * @param sourceParentRepositoryId
+     * @return tre if project mapping exists, false if not
+     */
+    private boolean projectMappingExists(String sourceSystemId,
+            String targetSystemId, String sourceParentRepositoryId) {
+        IOrderedMap inputParameters = new OrderedHashMap();
+        inputParameters.add(sourceSystemId);
+        inputParameters.add(targetSystemId);
+        inputParameters.add(sourceParentRepositoryId);
 
-	/**
-	 * If this property is set to true (false by default), resynched artifacts
-	 * are even transported if a newer version has already been synchronized
-	 * 
-	 * @param alwaysPassResynchedArtifacts
-	 */
-	public void setAlwaysPassResynchedArtifacts(
-			boolean alwaysPassResynchedArtifacts) {
-		this.alwaysPassResynchedArtifacts = alwaysPassResynchedArtifacts;
-	}
+        Object[] resultSet = null;
+        projectMappingDatabaseReader.connect();
+        resultSet = projectMappingDatabaseReader.next(inputParameters, 1);
+        if (resultSet == null || resultSet.length == 0) {
+            return false;
+        }
+        return true;
+    }
 
-	/**
-	 * If this property is set to true (false by default), resynched artifacts
-	 * are even transported if a newer version has already been synchronized
-	 */
-	public boolean isAlwaysPassResynchedArtifacts() {
-		return alwaysPassResynchedArtifacts;
-	}
+    /**
+     * This method looks up whether the artifact has been quarantined in the
+     * hospital and has not been reprocessed yet. If so, it will find out
+     * whether to skip the artifact or not.
+     * 
+     * @param sourceArtifactId
+     *            - The source artifact id that should be looked up for a target
+     *            artifact id
+     * @param sourceSystemId
+     *            - The system id of the source repository
+     * @param sourceRepositoryId
+     *            - The repository id of the source artifact
+     * @param targetSystemId
+     *            - The system id of the target repository
+     * @param targetRepositoryId
+     *            - The repository id of the target artifact
+     * @param artifactType
+     *            - The artifact type
+     * @param sourceArtifactVersionInt
+     *            version of the current artifact
+     * @param sourceArtifactLastModifiedDate
+     *            last modified date of the current artifact
+     * 
+     * @return true if artifact should be skipped, false if not
+     */
+    private boolean skipQuarantinedArtifact(Element element,
+            String sourceArtifactId, String sourceSystemId,
+            String sourceRepositoryId, String targetSystemId,
+            String targetRepositoryId, String artifactType,
+            Date sourceArtifactLastModifiedDate,
+            long sourceArtifactVersionLong,
+            boolean onlyCheckIfQuarantinedArtifactExists) {
 
-	/**
-	 * If this property is set to true (false by default), partial artifacts
-	 * are even transported if a newer version has already been synchronized
-	 * 
-	 * @param alwaysPassResynchedArtifacts
-	 */
-	public void setAlwaysPassPartialArtifacts(
-			boolean alwaysPassPartialArtifacts) {
-		this.alwaysPassPartialArtifacts = alwaysPassPartialArtifacts;
-	}
+        // only if a connection to the hospital table is possible we can skip
+        // artifacts
+        if (getHospitalDatabaseReader() == null) {
+            return false;
+        }
 
-	/**
-	 * If this property is set to true (false by default), partial artifacts
-	 * are even transported if a newer version has already been synchronized
-	 */
-	public boolean isAlwaysPassPartialArtifacts() {
-		return alwaysPassPartialArtifacts;
-	}
+        IOrderedMap inputParameters = new OrderedHashMap();
 
-	/**
-	 * If this property is set to true (false by default), attachments whose parent plain artifact
-	 * could not be found, will only be quarantined if the parent in question is still in the hospital.
-	 * Use this option if you only map a subset of source artifacts to the target repository.
-	 */
-	public void setOnlyQuarantineAttachmentIfParentInHospital(
-			boolean onlyQuarantineAttachmentIfParentInHospital) {
-		this.onlyQuarantineAttachmentIfParentInHospital = onlyQuarantineAttachmentIfParentInHospital;
-	}
+        inputParameters.add(sourceSystemId);
+        inputParameters.add(sourceRepositoryId);
+        inputParameters.add(targetSystemId);
+        inputParameters.add(targetRepositoryId);
+        inputParameters.add(sourceArtifactId);
+        inputParameters.add(artifactType);
+        // hospitalDatabaseReader.disconnect();
+        hospitalDatabaseReader.connect();
+        // TODO Find out whether 10000 is enough in hard cases
+        Object[] resultSet = hospitalDatabaseReader
+                .next(inputParameters, 10000);
+        // hospitalDatabaseReader.disconnect();
+        if (resultSet == null || resultSet.length == 0) {
+            // artifact is not in the hospital
+            return false;
+        } else if (onlyCheckIfQuarantinedArtifactExists) {
+            return true;
+        } else if (isSkipNewerVersionsOfQuarantinedArtifacts()) {
+            // we do not have to compare version numbers since we skip every
+            // version of the artifact
+            log.warn("At least one entry for combination "
+                    + sourceArtifactId
+                    + "-"
+                    + sourceRepositoryId
+                    + "-"
+                    + sourceSystemId
+                    + targetRepositoryId
+                    + "-"
+                    + targetSystemId
+                    + " is still in the hospital and not yet reprocessed, skipping it ...");
+            return true;
+        }
 
-	/**
-	 * If this property is set to true (false by default), attachments whose parent plain artifact
-	 * could not be found, will only be quarantined if the parent in question is still in the hospital.
-	 * Use this option if you only map a subset of source artifacts to the target repository.
-	 */
-	public boolean isOnlyQuarantineAttachmentIfParentInHospital() {
-		return onlyQuarantineAttachmentIfParentInHospital;
-	}
+        for (Object resultObject : resultSet) {
+            if (resultObject instanceof OrderedHashMap) {
+                OrderedHashMap result = (OrderedHashMap) resultObject;
+                if (result.size() == 3) {
+                    Date sourceArtifactLastModifiedDateFromTable;
+                    String hospitalId = result.get(0).toString();
+                    Timestamp timeStamp = (Timestamp) result.get(1);
+                    if (timeStamp == null) {
+                        // use earliest date possible
+                        sourceArtifactLastModifiedDateFromTable = new Date(0);
+                    } else {
+                        sourceArtifactLastModifiedDateFromTable = new Date(
+                                timeStamp.getTime());
+                    }
+                    String sourceArtifactVersionFromTable = result.get(2)
+                            .toString();
+                    if (sourceArtifactVersionFromTable
+                            .equalsIgnoreCase(GenericArtifact.VALUE_UNKNOWN)) {
+                        sourceArtifactVersionFromTable = GenericArtifactHelper.ARTIFACT_VERSION_FORCE_RESYNC;
+                    }
+                    long sourceArtifactVersionLongFromTable = Long
+                            .parseLong(sourceArtifactVersionFromTable);
+                    if (sourceArtifactLastModifiedDateFromTable
+                            .after(sourceArtifactLastModifiedDate)
+                            || sourceArtifactVersionLongFromTable >= sourceArtifactVersionLong) {
+                        if (sourceArtifactVersionLong == -1
+                                && sourceArtifactVersionLongFromTable == -1) {
+                            log.warn("It seems as if artifact synchronization is done exclusively with a system that does not support version control, so artifact from combination "
+                                    + sourceArtifactId
+                                    + "-"
+                                    + sourceRepositoryId
+                                    + "-"
+                                    + sourceSystemId
+                                    + targetRepositoryId
+                                    + "-"
+                                    + targetSystemId
+                                    + " will not be skipped despite it is in the hospital. Hospital ID: "
+                                    + hospitalId);
+                        } else {
+                            log.warn("Non re-processed artifact from combination "
+                                    + sourceArtifactId
+                                    + "-"
+                                    + sourceRepositoryId
+                                    + "-"
+                                    + sourceSystemId
+                                    + targetRepositoryId
+                                    + "-"
+                                    + targetSystemId
+                                    + " is still in the hospital in a newer or equal version, so skipping it. Hospital ID: "
+                                    + hospitalId);
+                            return true;
+                        }
+                    }
+                } else {
+                    String cause = "Seems as if the SQL statement for hospitalDatabase reader does not return 3 values.";
+                    XPathUtils
+                            .addAttribute(
+                                    element,
+                                    GenericArtifactHelper.ERROR_CODE,
+                                    GenericArtifact.ERROR_INTERNAL_DATABASE_TABLE_CORRUPT);
+                    log.error(cause);
+                    throw new CCFRuntimeException(cause);
+                }
+            } else {
+                String cause = "SQL query on hospital table did not return data in correct format!";
+                XPathUtils.addAttribute(element,
+                        GenericArtifactHelper.ERROR_CODE,
+                        GenericArtifact.ERROR_INTERNAL_DATABASE_TABLE_CORRUPT);
+                log.error(cause);
+                throw new CCFRuntimeException(cause);
+            }
+        }
+        log.info("Only older non-reprocessed versions of artifact combination "
+                + sourceArtifactId + "-" + sourceRepositoryId + "-"
+                + sourceSystemId + "-" + targetRepositoryId + "-"
+                + targetSystemId + " are in the hospital, so pass artifact ...");
+        return false;
+    }
 }
