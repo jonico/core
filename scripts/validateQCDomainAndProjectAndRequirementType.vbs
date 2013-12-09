@@ -81,16 +81,22 @@ Else
     				Set CustTypes = Cust.Types
 					Set ReqTypes = CustTypes.GetEntityCustomizationTypes(0)
 					foundReqType = false
-    				For Each ReqType In ReqTypes
-    					If ReqType.Name = RequirementType Then
-    						foundReqType = true
-    						XmlDocument.documentElement=XmlDocument.createElement("success")
-		    				XmlDocument.documentElement.text = "Valid domain/project/requirement type"
-		    				Output (XmlDocument.xml)
-    					End If
-    				Next
+					If RequirementType = "ALL" Then
+    					foundReqType = true
+    				Else
+		    			For Each ReqType In ReqTypes
+		    				If ReqType.Name = RequirementType Then
+		    					foundReqType = true
+		    					Exit For
+    						End If
+    					Next
+    				End If
     				If Not foundReqType Then
     					ErrorMessage "Invalid domain/project/requirement type", XmlDocument
+    				Else   					
+    					XmlDocument.documentElement=XmlDocument.createElement("success")
+		    			XmlDocument.documentElement.text = "Valid domain/project/requirement type"
+		    			Output (XmlDocument.xml)
     				End If
     				WScript.Sleep 1000
 					tdConnection.DisconnectProject

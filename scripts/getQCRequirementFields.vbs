@@ -120,48 +120,81 @@ Else
 				tdConnection.Connect QCDomain, QCProject
 				If tdConnection.ProjectConnected = False Then
 					ErrorMessage "Invalid domain/project", XmlDocument
-				Else
-					Set Cust = tdConnection.Customization
-    				Set CustTypes = Cust.Types
-					Set ReqTypes = CustTypes.GetEntityCustomizationTypes(0)
+				Else					
 					foundReqType = false
-    				For Each ReqType In ReqTypes
-    					If ReqType.Name = RequirementType Then
-    						foundReqType = true
-    						XmlDocument.documentElement=XmlDocument.createElement("success")
-		    				Set custFields = ReqType.Fields
-		    				For Each custField In custFields
-		    					Set aCustField = custField.Field
-		    					If aCustField.IsActive Then
-			        				Set FieldElement=XmlDocument.createElement("field")
-			        				AddAttribute XmlDocument, FieldElement, "UserLabel", aCustField.UserLabel
-			        				AddAttribute XmlDocument, FieldElement, "IsRequired", aCustField.IsRequired
-			        				AddAttribute XmlDocument, FieldElement, "IsMultiValue", aCustField.IsMultiValue
-			        				AddAttribute XmlDocument, FieldElement, "UserColumnType", aCustField.UserColumnType
-			        				AddAttribute XmlDocument, FieldElement, "Type", aCustField.Type
-			        				AddAttribute XmlDocument, FieldElement, "ColumnName", aCustField.ColumnName
-			        				AddAttribute XmlDocument, FieldElement, "EditStyle", aCustField.EditStyle
-			        				AddAttribute XmlDocument, FieldElement, "ColumnType", aCustField.ColumnType
-			        				AddAttribute XmlDocument, FieldElement, "TableName", aCustField.TableName
-			        				AddAttribute XmlDocument, FieldElement, "IsHistory", aCustField.IsHistory
-			        				AddAttribute XmlDocument, FieldElement, "SupportsHistory", aCustField.IsSupportsHistory
-			        				ListName = ""
-		        					'If the field is linked to a custom list, get the name
-		        					' of the list and the field properties.
-		            				If Not (aCustField.List Is Nothing) Then
-		            					AddFieldValues XmlDocument, FieldElement, aCustField.List.RootNode.Children
-		            				End If
-		         	        		XmlDocument.documentElement.appendChild(FieldElement)
-			        			End If
-		    				Next
-		    				' Add release and cycle info
-		    				AddReleaseAndCycleFieldValues XmlDocument, XmlDocument.documentElement, tdConnection.ReleaseFolderFactory.Root
-		    				Output (XmlDocument.xml)
-    					End If
-    				Next
-    				If Not foundReqType Then
-    					ErrorMessage "Could not find specified requirement type", XmlDocument
-    				End If
+					If RequirementType = "ALL" Then
+						foundReqType = true
+						Set Cust = tdConnection.Customization
+	    				XmlDocument.documentElement=XmlDocument.createElement("success")
+						Set custFields = Cust.Fields
+		    			For Each aCustField In custFields.Fields
+		    				If aCustField.IsActive And aCustField.TableName = "REQ" Then
+			        			Set FieldElement=XmlDocument.createElement("field")
+								AddAttribute XmlDocument, FieldElement, "UserLabel", aCustField.UserLabel
+			        			AddAttribute XmlDocument, FieldElement, "IsRequired", aCustField.IsRequired
+			        			AddAttribute XmlDocument, FieldElement, "IsMultiValue", aCustField.IsMultiValue
+			        			AddAttribute XmlDocument, FieldElement, "UserColumnType", aCustField.UserColumnType
+			        			AddAttribute XmlDocument, FieldElement, "Type", aCustField.Type
+			        			AddAttribute XmlDocument, FieldElement, "ColumnName", aCustField.ColumnName
+			        			AddAttribute XmlDocument, FieldElement, "EditStyle", aCustField.EditStyle
+			        			AddAttribute XmlDocument, FieldElement, "ColumnType", aCustField.ColumnType
+			        			AddAttribute XmlDocument, FieldElement, "TableName", aCustField.TableName
+			        			AddAttribute XmlDocument, FieldElement, "IsHistory", aCustField.IsHistory
+			        			AddAttribute XmlDocument, FieldElement, "SupportsHistory", aCustField.IsSupportsHistory
+			        			ListName = ""
+		        				'If the field is linked to a custom list, get the name
+		        				' of the list and the field properties.
+		            			If Not (aCustField.List Is Nothing) Then
+		            				AddFieldValues XmlDocument, FieldElement, aCustField.List.RootNode.Children
+		            			End If
+		         	       		XmlDocument.documentElement.appendChild(FieldElement)
+			        		End If
+		    			Next
+		    			' Add release and cycle info
+		    			AddReleaseAndCycleFieldValues XmlDocument, XmlDocument.documentElement, tdConnection.ReleaseFolderFactory.Root
+		    			Output (XmlDocument.xml)
+					Else
+						Set Cust = tdConnection.Customization
+						Set CustTypes = Cust.Types
+						Set ReqTypes = CustTypes.GetEntityCustomizationTypes(0)
+						For Each ReqType In ReqTypes
+							If ReqType.Name = RequirementType Then
+								foundReqType = true
+								XmlDocument.documentElement=XmlDocument.createElement("success")
+								Set custFields = ReqType.Fields
+								For Each custField In custFields
+									Set aCustField = custField.Field
+									If aCustField.IsActive Then
+										Set FieldElement=XmlDocument.createElement("field")
+										AddAttribute XmlDocument, FieldElement, "UserLabel", aCustField.UserLabel
+			        					AddAttribute XmlDocument, FieldElement, "IsRequired", aCustField.IsRequired
+			        					AddAttribute XmlDocument, FieldElement, "IsMultiValue", aCustField.IsMultiValue
+			        					AddAttribute XmlDocument, FieldElement, "UserColumnType", aCustField.UserColumnType
+			        					AddAttribute XmlDocument, FieldElement, "Type", aCustField.Type
+			        					AddAttribute XmlDocument, FieldElement, "ColumnName", aCustField.ColumnName
+			        					AddAttribute XmlDocument, FieldElement, "EditStyle", aCustField.EditStyle
+			        					AddAttribute XmlDocument, FieldElement, "ColumnType", aCustField.ColumnType
+			        					AddAttribute XmlDocument, FieldElement, "TableName", aCustField.TableName
+			        					AddAttribute XmlDocument, FieldElement, "IsHistory", aCustField.IsHistory
+			        					AddAttribute XmlDocument, FieldElement, "SupportsHistory", aCustField.IsSupportsHistory
+										ListName = ""
+										'If the field is linked to a custom list, get the name
+										' of the list and the field properties.
+										If Not (aCustField.List Is Nothing) Then
+											AddFieldValues XmlDocument, FieldElement, aCustField.List.RootNode.Children
+										End If
+										XmlDocument.documentElement.appendChild(FieldElement)
+									End If
+								Next
+								' Add release and cycle info
+								AddReleaseAndCycleFieldValues XmlDocument, XmlDocument.documentElement, tdConnection.ReleaseFolderFactory.Root
+								Output (XmlDocument.xml)
+							End If
+						Next
+					End If
+					If Not foundReqType Then
+						ErrorMessage "Could not find specified requirement type", XmlDocument
+					End If
     				WScript.Sleep 1000
 					tdConnection.DisconnectProject
 				End If

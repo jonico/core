@@ -73,6 +73,9 @@ Else
 						TypeElement.text = reqType.Name
 						XmlDocument.documentElement.appendChild (TypeElement)
     				Next
+    				Set AllTypeElement = XmlDocument.createElement("type")
+    				AllTypeElement.text = "ALL"
+    				XmlDocument.documentElement.appendChild (AllTypeElement)
     				Output (XmlDocument.xml)
     				WScript.Sleep 1000
 					tdConnection.DisconnectProject
