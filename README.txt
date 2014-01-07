@@ -79,7 +79,7 @@ For new developers:
 			Window -> Preferences -> Java -> Code Style -> Formatter -> import 
 		2.Also configure Member sort order(this is to align and order variable and methods).Following changes needs to be applied.
 			Window -> Preferences -> Java -> Appearance -> Member Sort Order
-		3.In Member Sort Order dialog window correct sequential order as mentioned below 
+		3.In Member Sort Order dialog window correct sequential order as mentioned below. 
 			Types,Fields,Static Fields,Initializers,Static Initializers,Constructor,Methods,Static Methods
 		4.Also in Member Sort Order dialog window enable "Sort members in same category by visibility" option and correct the order as given below.
 			Public,Protected,Private,Default  
