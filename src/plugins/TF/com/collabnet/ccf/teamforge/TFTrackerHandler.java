@@ -190,7 +190,8 @@ public class TFTrackerHandler {
                     artifactData.getId());
         }
 
-        log.info("Artifact created: " + artifactData.getId());
+        log.info("Artifact created: " + artifactData.getId() + " in "
+                + trackerId);
         return artifactData;
     }
 
@@ -830,8 +831,8 @@ public class TFTrackerHandler {
                     "CCF generated parent-child relationship");
         }
 
-        log.info("Artifact updated id: " + artifactData.getId()
-                + " in tracker " + artifactData.getFolderId());
+        log.info("Artifact updated id: " + artifactData.getId() + " in "
+                + artifactData.getFolderId());
         return artifactData;
     }
 
