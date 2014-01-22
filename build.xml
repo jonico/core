@@ -89,8 +89,8 @@
 		<mkdir dir="build/classes" />
 	</target>
 	<target depends="clean" name="cleanall" />
-	<target depends="init, create.manifest, build.core, build.sfee.plugin, build.cee.plugin, build.qc.plugin, build.tf.plugin, build.swp.plugin, build.tfs.plugin, build.jira.plugin, build.sample, package" name="build" />
-	<target depends="init, create.manifestHudson, build.core, build.sfee.plugin, build.cee.plugin, build.qc.plugin, build.tf.plugin, build.swp.plugin, build.tfs.plugin, build.jira.plugin, build.sample, package" name="buildHudson" />
+	<target depends="init, create.manifest, create.ccfcoreversion, build.core, build.sfee.plugin, build.cee.plugin, build.qc.plugin, build.tf.plugin, build.swp.plugin, build.tfs.plugin, build.jira.plugin, build.sample, package" name="build" />
+	<target depends="init, create.manifestHudson, build.core, create.ccfcoreversion, build.sfee.plugin, build.cee.plugin, build.qc.plugin, build.tf.plugin, build.swp.plugin, build.tfs.plugin, build.jira.plugin, build.sample, package" name="buildHudson" />
 	<target name="create.manifest">
 		<property file="default.properties" />
 		<manifest file="build/MANIFEST.MF">
@@ -103,6 +103,17 @@
 		</manifest>
 	</target>
 
+	<target name="create.ccfcoreversion">
+		<propertyfile file="ccfcoreversion.properties" comment="# File to be used by CCFMaster for sanity check and to display as part of connector maintenance section.Updates will only be possible if version of the new zip file is higher than the one currently displayed">
+				<entry key="ccfcore.major.version" value="2" />
+				<entry key="ccfcore.minor.version" value="3" />
+				<entry key="ccfcore.patch.version" value="0" />
+				<entry key="ccfcore.revisionstring" value="${env.BUILD_NUMBER}" />
+				<entry key="ccfcore.description" value="CCF 2.3" />
+		</propertyfile>		
+	</target>
+	
+	
 	<target name="create.manifestHudson">
 		<property file="env" />
 		<manifest file="build/MANIFEST.MF">
@@ -110,7 +121,7 @@
 				<attribute name="Implementation-Title" value="CollabNet Connector Framework" />
 				<attribute name="Implementation-Version" value="2.0.1-${env.BUILD_NUMBER}" />
 				<attribute name="Build-Date" value="${now}" />
-				<attribute name="SVN-Revision" value="${env.SVN_REVISION}" />
+				<attribute name="Build-Number" value="${env.BUILD_NUMBER}" />
 				<attribute name="Implementation-Vendor" value="CollabNet" />
 			</section>
 		</manifest>
