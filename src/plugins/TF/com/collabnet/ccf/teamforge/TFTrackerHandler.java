@@ -912,6 +912,7 @@ public class TFTrackerHandler {
                     List<TrackerFieldValueDO> updatedValuesList = new ArrayList<TrackerFieldValueDO>();
                     for (String anticipatedFieldValue : anticipatedFieldValues) {
                         TrackerFieldValueDO fieldValue = new TrackerFieldValueDO(
+                                connection.supports60(),
                                 connection.supports50());
                         fieldValue.setIsDefault(false);
                         fieldValue.setValue(anticipatedFieldValue);

@@ -56,6 +56,7 @@
 		<pathelement location="src/core/lib/openadaptor-3.4/3rdparty/jericho-html-3.1.jar" />
 		<pathelement location="src/plugins/SFEE/v44/lib/sf_soap44_sdk.jar" />
 		<pathelement location="src/plugins/TF/lib/sf_soap50_sdk.jar" />
+		<pathelement location="src/plugins/TF/lib/sf_soap60_sdk.jar" />
 		<pathelement location="src/plugins/TF/lib/tfapi.jar" />
 		<pathelement location="src/plugins/CEE/ProjectTracker/v50/lib/cee-5.0.jar" />
 		<pathelement location="src/plugins/CEE/ProjectTracker/v50/lib/wss4j-1.5.1.jar" />
