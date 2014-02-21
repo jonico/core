@@ -97,9 +97,16 @@ public class TFConnectionFactory implements ConnectionFactory<Connection> {
             String key = systemId + systemKind + repositoryId + repositoryKind
                     + connectionInfo + credentialInfo;
             // we want to make sure that we always get a new connection here since we do connection management on our own
-            connection = Connection.getConnection(connectionInfo, username,
-                    password, null, key,
-                    Long.toString(System.currentTimeMillis()), false);
+            /*
+             * connection = Connection.getConnection(connectionInfo, username,
+             * password, null, key, Long.toString(System.currentTimeMillis()),
+             * false);
+             */
+            //Added new implementation to get connection as getConnection() is deprecated with new api.
+            connection = Connection.builder(connectionInfo)
+                    .userNamePassword(username, password)
+                    .httpAuth(key, Long.toString(System.currentTimeMillis()))
+                    .proxy(null).validateBeforeBuild(false).build();
             connection.login();
         } catch (RemoteException e) {
             String cause = "While trying to login into TF " + connectionInfo
