@@ -42,7 +42,10 @@ public class TFConnectionFactory implements ConnectionFactory<Connection> {
     public void closeConnection(Connection connection)
             throws ConnectionException {
         try {
-            if (connection.supports50()) {
+            if (connection.supports60()) {
+                connection.getTeamForgeClient()
+                        .logoff60(connection.getUserId());
+            } else if (connection.supports50()) {
                 connection.getTeamForgeClient()
                         .logoff50(connection.getUserId());
             } else {
@@ -119,7 +122,10 @@ public class TFConnectionFactory implements ConnectionFactory<Connection> {
 
     public boolean isAlive(Connection connection) {
         try {
-            if (connection.supports50()) {
+
+            if (connection.supports60()) {
+                connection.getTeamForgeClient().keepAlive60();
+            } else if (connection.supports50()) {
                 connection.getTeamForgeClient().keepAlive50();
             } else {
                 connection.getTeamForgeClient().keepAlive44();
