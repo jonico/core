@@ -16,10 +16,11 @@ import java.util.HashMap;
 import java.util.List;
 
 import com.collabnet.ccf.core.ga.GenericArtifact;
-import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifact.ArtifactActionValue;
+import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.utils.DateUtil;
 import com.collabnet.ce.soap50.webservices.cemain.TrackerFieldSoapDO;
+import com.collabnet.teamforge.api.Connection;
 import com.collabnet.teamforge.api.FieldValues;
 import com.collabnet.teamforge.api.planning.PlanningFolderDO;
 import com.collabnet.teamforge.api.tracker.ArtifactDO;
@@ -265,7 +266,7 @@ public class TFToGenericArtifactConverter {
         return null;
     }
 
-    public static GenericArtifact convertPlanningFolder(boolean supports54,
+    public static GenericArtifact convertPlanningFolder(Connection connection,
             PlanningFolderDO planningFolder, Date lastReadDate,
             boolean includeFieldMetaData, String sourceSystemTimezone,
             String releaseHumandReadableName) {
@@ -360,7 +361,7 @@ public class TFToGenericArtifactConverter {
                         includeFieldMetaData);
             }
 
-            if (supports54) {
+            if (connection.supports54()) {
                 int capacity = planningRow.getCapacity();
                 createGenericArtifactField(
                         TFArtifactMetaData.TFFields.capacity, capacity,
@@ -378,6 +379,21 @@ public class TFToGenericArtifactConverter {
                         genericArtifact, null, includeFieldMetaData);
             }
 
+            if (connection.supports62()) {
+                String trackerUnitId = planningRow.getTrackerUnitId();
+                createGenericArtifactField(
+                        TFArtifactMetaData.TFFields.trackerUnitId,
+                        trackerUnitId, genericArtifact, null,
+                        includeFieldMetaData);
+            }
+
+            if (connection.supports63()) {
+                int pointsCapacity = planningRow.getPointsCapacity();
+                createGenericArtifactField(
+                        TFArtifactMetaData.TFFields.pointsCapacity,
+                        pointsCapacity, genericArtifact, null,
+                        includeFieldMetaData);
+            }
             return genericArtifact;
         }
         return null;
