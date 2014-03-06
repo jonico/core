@@ -26,6 +26,7 @@ import java.util.TreeSet;
 import javax.xml.namespace.QName;
 
 import org.apache.axis.AxisFault;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dom4j.Document;
@@ -39,9 +40,9 @@ import com.collabnet.ccf.core.eis.connection.ConnectionManager;
 import com.collabnet.ccf.core.eis.connection.MaxConnectionsReachedException;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
+import com.collabnet.ccf.core.ga.GenericArtifactField.FieldValueTypeValue;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
-import com.collabnet.ccf.core.ga.GenericArtifactField.FieldValueTypeValue;
 import com.collabnet.ccf.core.utils.DateUtil;
 import com.collabnet.ccf.core.utils.Obfuscator;
 import com.collabnet.ccf.core.utils.XPathUtils;
@@ -1246,6 +1247,24 @@ public class TFWriter extends AbstractWriter<Connection> implements IDataProcess
             releaseId = GenericArtifactHelper.getStringMandatoryGAField(
                     TFArtifactMetaData.TFFields.releaseId.getFieldName(), ga);
         }
+
+        //To support display effort in field added in TF 7.0
+        String trackerUnitId = null;
+        if (connection.supports62()) {
+            trackerUnitId = GenericArtifactHelper.getStringMandatoryGAField(
+                    TFArtifactMetaData.TFFields.trackerUnitId.getFieldName(),
+                    ga);
+
+        }
+
+        //For points capacity field added in TF 7.1
+        int pointsCapacity = 0;
+        if (connection.supports63()) {
+            pointsCapacity = GenericArtifactHelper.getIntMandatoryGAField(
+                    TFArtifactMetaData.TFFields.pointsCapacity.getFieldName(),
+                    ga);
+        }
+
         PlanningFolderDO planningFolder = null;
 
         try {
@@ -1258,9 +1277,14 @@ public class TFWriter extends AbstractWriter<Connection> implements IDataProcess
                                 isReleaseIdFieldsContainFileReleasePackageName() ? getPackageReleaseSeparatorString()
                                         : null);
             }
+            String trackerUnitIdValue = !StringUtils.isEmpty(trackerUnitId) ? trackerUnitId
+                    : "Hours";
+            trackerUnitId = TFTrackerHandler.getTrackerUnitId(connection,
+                    trackerUnitIdValue, project);
             planningFolder = connection.getPlanningClient()
                     .createPlanningFolder(parentId, title, description,
-                            startDate, endDate, status, capacity, releaseId);
+                            startDate, endDate, status, capacity,
+                            pointsCapacity, releaseId, trackerUnitId);
         } catch (RemoteException e) {
             String cause = "Could not create planning folder: "
                     + e.getMessage();
@@ -1682,6 +1706,9 @@ public class TFWriter extends AbstractWriter<Connection> implements IDataProcess
         GenericArtifactField statusField = null;
         GenericArtifactField releaseIdField = null;
         GenericArtifactField capacityField = null;
+        GenericArtifactField pointsCapacityField = null;
+        GenericArtifactField trackerUnitIdField = null;
+
         if (connection.supports54()) {
             statusField = GenericArtifactHelper.getMandatoryGAField(
                     TFArtifactMetaData.TFFields.status.getFieldName(), ga);
@@ -1689,6 +1716,18 @@ public class TFWriter extends AbstractWriter<Connection> implements IDataProcess
                     TFArtifactMetaData.TFFields.releaseId.getFieldName(), ga);
             capacityField = GenericArtifactHelper.getMandatoryGAField(
                     TFArtifactMetaData.TFFields.capacity.getFieldName(), ga);
+        }
+
+        if (connection.supports62()) {
+            trackerUnitIdField = GenericArtifactHelper.getMandatoryGAField(
+                    TFArtifactMetaData.TFFields.trackerUnitId.getFieldName(),
+                    ga);
+        }
+
+        if (connection.supports63()) {
+            pointsCapacityField = GenericArtifactHelper.getMandatoryGAField(
+                    TFArtifactMetaData.TFFields.pointsCapacity.getFieldName(),
+                    ga);
         }
 
         GenericArtifactField startDateField = GenericArtifactHelper
@@ -1805,6 +1844,37 @@ public class TFWriter extends AbstractWriter<Connection> implements IDataProcess
 
                 }
 
+                if (pointsCapacityField != null
+                        && pointsCapacityField.getFieldValueHasChanged()) {
+                    Object fieldValueObj = pointsCapacityField.getFieldValue();
+                    int fieldValue = 0;
+                    if (fieldValueObj instanceof String) {
+                        String fieldValueString = (String) fieldValueObj;
+                        try {
+                            fieldValue = Integer.parseInt(fieldValueString);
+                        } catch (NumberFormatException e) {
+                            throw new CCFRuntimeException(
+                                    "Could not parse value of mandatory field points capacity: "
+                                            + e.getMessage(), e);
+                        }
+                    } else if (fieldValueObj instanceof Integer) {
+                        fieldValue = ((Integer) fieldValueObj).intValue();
+                    }
+                    planningFolder.setPointsCapacity(fieldValue);
+
+                    if (trackerUnitIdField != null
+                            && trackerUnitIdField.getFieldValueHasChanged()) {
+                        String trackerUnitId = (String) trackerUnitIdField
+                                .getFieldValue();
+                        String trackerUnitIdValue = !StringUtils
+                                .isEmpty(trackerUnitId) ? trackerUnitId
+                                : "Hours";
+                        trackerUnitId = TFTrackerHandler.getTrackerUnitId(
+                                connection, trackerUnitIdValue, project);
+                        planningFolder.setTrackerUnitId(trackerUnitId);
+                    }
+
+                }
                 connection.getPlanningClient().setPlanningFolderData(
                         planningFolder);
             } catch (AxisFault e) {

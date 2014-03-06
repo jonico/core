@@ -103,6 +103,11 @@ public class TFArtifactMetaData {
                 "points", "Story Points", FIELD_TYPE.CONFIGURABLE,
                 GenericArtifactField.FieldValueTypeValue.INTEGER, false, ""), capacity(
                 "capacity", "Capacity", FIELD_TYPE.SYSTEM_DEFINED,
+                GenericArtifactField.FieldValueTypeValue.INTEGER, false, ""), pointsCapacity(
+                "pointsCapacity", "Points Capacity", FIELD_TYPE.SYSTEM_DEFINED,
+                GenericArtifactField.FieldValueTypeValue.STRING, false,
+                "resolvedInRelease"), trackerUnitId("trackerUnitId",
+                "Display Effort in", FIELD_TYPE.CONFIGURABLE,
                 GenericArtifactField.FieldValueTypeValue.INTEGER, false, ""), releaseId(
                 "releaseId", "Release ID", FIELD_TYPE.SYSTEM_DEFINED,
                 GenericArtifactField.FieldValueTypeValue.STRING, false, ""), planningFolderHumanReadableName(

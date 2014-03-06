@@ -420,8 +420,8 @@ public class TFReader extends AbstractReader<Connection> {
                 }
 
                 genericArtifact = TFToGenericArtifactConverter
-                        .convertPlanningFolder(connection.supports54(),
-                                planningFolder, lastModifiedDate,
+                        .convertPlanningFolder(connection, planningFolder,
+                                lastModifiedDate,
                                 this.isIncludeFieldMetaData(),
                                 sourceSystemTimezone, releaseHumandReadableName);
 

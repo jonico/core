@@ -51,6 +51,8 @@ import com.collabnet.teamforge.api.tracker.ArtifactDetailRow;
 import com.collabnet.teamforge.api.tracker.TrackerDO;
 import com.collabnet.teamforge.api.tracker.TrackerFieldDO;
 import com.collabnet.teamforge.api.tracker.TrackerFieldValueDO;
+import com.collabnet.teamforge.api.tracker.TrackerUnitList;
+import com.collabnet.teamforge.api.tracker.TrackerUnitRow;
 
 /**
  * The tracker handler class provides support for listing and/or edit trackers
@@ -61,10 +63,12 @@ public class TFTrackerHandler {
      * Tracker Soap API handle
      */
 
-    private static final Log log                  = LogFactory
-                                                          .getLog(TFTrackerHandler.class);
-    private static final Log logConflictResolutor = LogFactory
-                                                          .getLog("com.collabnet.ccf.core.conflict.resolution");
+    private static final Log       log                  = LogFactory
+                                                                .getLog(TFTrackerHandler.class);
+    private static final Log       logConflictResolutor = LogFactory
+                                                                .getLog("com.collabnet.ccf.core.conflict.resolution");
+
+    static HashMap<String, String> trackerUnitIdMap     = new HashMap<String, String>();
 
     /**
      * Class constructor.
@@ -1068,6 +1072,45 @@ public class TFTrackerHandler {
             }
         }
         return null;
+    }
+
+    public static String getTrackerUnitId(Connection connection,
+            String trackerUnitIdValue, String projectId) throws RemoteException {
+        String key = projectId + "-" + trackerUnitIdValue;
+        String trackerUnitId = trackerUnitIdMap.get(key);
+        if (trackerUnitId != null) {
+            return trackerUnitId;
+        } else {
+            TrackerUnitList trackerUnitList = connection.getTrackerClient()
+                    .getUnitsByProject(projectId);
+            //populate cache with the trackerUnitIds for the given projectid
+            populateTrackerUnitIdCache(trackerUnitList, projectId);
+            return getTechnicalTrackerUnitIdValue(trackerUnitIdValue,
+                    trackerUnitList);
+        }
+    }
+
+    private static String getTechnicalTrackerUnitIdValue(
+            String trackerUnitIdValue, TrackerUnitList trackerUnitList) {
+        TrackerUnitRow[] trackerUnits = trackerUnitList.getDataRows();
+        String trackerUnitId = null;
+        for (TrackerUnitRow trackerUnitRow : trackerUnits) {
+            if (trackerUnitIdValue.equals(trackerUnitRow.getName())) {
+                trackerUnitId = trackerUnitRow.getId();
+                break;
+            }
+        }
+        return trackerUnitId;
+    }
+
+    private static void populateTrackerUnitIdCache(
+            TrackerUnitList trackerUnitList, String projectId) {
+        TrackerUnitRow[] trackerUnits = trackerUnitList.getDataRows();
+        for (TrackerUnitRow trackerUnitRow : trackerUnits) {
+            //key: ProjectId-TrackerUnitId Value:TechnialTrackerUnitId (proj1001-Hours,tkn1007)
+            trackerUnitIdMap.put(projectId + "-" + trackerUnitRow.getName(),
+                    trackerUnitRow.getId());
+        }
     }
 
 }
