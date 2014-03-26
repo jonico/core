@@ -37,6 +37,7 @@ import org.openadaptor.core.Component;
 import org.openadaptor.core.IDataProcessor;
 import org.openadaptor.core.exception.ValidationException;
 
+import com.collabnet.ccf.core.db.RMDConfigExtractor;
 import com.collabnet.ccf.core.eis.connection.ConnectionManager;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
@@ -184,6 +185,8 @@ public abstract class AbstractReader<T> extends Component implements IDataProces
      * happen
      */
     private boolean                           isBulkImport                                            = false;
+
+    private RMDConfigExtractor                rmdConfigExtractor                                      = null;
 
     public AbstractReader() {
         super();
@@ -465,6 +468,10 @@ public abstract class AbstractReader<T> extends Component implements IDataProces
             }
         }
         return number;
+    }
+
+    public RMDConfigExtractor getRmdConfigExtractor() {
+        return rmdConfigExtractor;
     }
 
     /**
@@ -1015,6 +1022,7 @@ public abstract class AbstractReader<T> extends Component implements IDataProces
                         int maxMsToSleep = connectionManager
                                 .getMaximumRetryWaitingTime();
                         try {
+                            populateRMDConfig(syncInfo);
                             String artifactId = artifactState.getArtifactId();
                             // To avoid tampering SyncInfo object we have created a clone
                             // As per java documentation Document.clone() method provides
@@ -1327,6 +1335,10 @@ public abstract class AbstractReader<T> extends Component implements IDataProces
      */
     public void setNameOfEntityService(String nameOfEntityService) {
         this.nameOfEntityService = nameOfEntityService;
+    }
+
+    public void setRmdConfigExtractor(RMDConfigExtractor rmdConfigExtractor) {
+        this.rmdConfigExtractor = rmdConfigExtractor;
     }
 
     /**
@@ -1717,6 +1729,13 @@ public abstract class AbstractReader<T> extends Component implements IDataProces
     private void moveToTail(RepositoryRecord currentRecord) {
         repositorySynchronizationWaitingList.remove(currentRecord);
         repositorySynchronizationWaitingList.add(currentRecord);
+    }
+
+    private void populateRMDConfig(Document syncInfo) {
+        if (isCCF2xProcess && getRmdConfigExtractor() != null) {
+            rmdConfigExtractor
+                    .getRMDConfigMap(getRepositoryMappingDirectionId(syncInfo));
+        }
     }
 
     /**
