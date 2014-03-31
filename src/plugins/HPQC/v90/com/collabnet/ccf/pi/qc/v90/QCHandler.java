@@ -30,10 +30,11 @@ import org.apache.commons.logging.LogFactory;
 import com.collabnet.ccf.core.ArtifactState;
 import com.collabnet.ccf.core.CCFRuntimeException;
 import com.collabnet.ccf.core.ga.GenericArtifact;
-import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifact.ArtifactModeValue;
+import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.utils.DateUtil;
 import com.collabnet.ccf.core.utils.GATransformerUtil;
+import com.collabnet.ccf.core.utils.JerichoUtils;
 import com.collabnet.ccf.pi.qc.v90.api.DefectAlreadyLockedException;
 import com.collabnet.ccf.pi.qc.v90.api.IBug;
 import com.collabnet.ccf.pi.qc.v90.api.IBugFactory;
@@ -49,30 +50,55 @@ import com.collabnet.ccf.pi.qc.v90.api.dcom.Requirement;
 import com.jacob.com.ComFailException;
 
 /**
- * The Defect handler class provides support for listing and/or edit defects.
+ * The Defect handler class provides support for listing and/or edit defects .
  * 
  */
 public class QCHandler {
 
-    private boolean             useAlternativeFieldName = false;
-    private static final String QC11_LAST_TAGS          = "\r\n</body>\r\n</html>";
-    private static final String QC11_FIRST_TAGS         = "<html>\r\n<body>\r\n";
-    private static final String FIRST_TAGS              = "<html><body>";
-    private static final String LAST_TAGS               = "</body></html>";
-    private static final Log    log                     = LogFactory
-                                                                .getLog(QCHandler.class);
+    private static final String QC_END_HTML_TAGS                 = "\\s*</body>\\s*</html>\\s*$";
+    private static final String QC_START__HTML_TAGS              = "^\\s*<html>\\s*<body>\\s*";
+    private static final String QC_LINES_WITH_NON_BREAKING_SPACE = "<br />&nbsp;";
+    private static final String QC_TAG_WITH_EMPTY_LINE           = "</span></font></div>\\s*<div align=\"left\"><font face=\"Arial\"><span style=\"font-size:8pt\"><br />";
+    private static final String QC_FIRST_BREAK                   = "<br[^>]*>";
+    private static final String QC_COMMENT_SEPERATOR             = "(?i)<font[^>]*>(?:<span[^>]*>)?<b>_+</b>(?:</span>)?</font>";
+    private static final String QC_FIRST_COMMENT_PREFIX          = "<div align=\"left\"><font face=\"Arial\"><span style=\"font-size:8pt\">&nbsp;&nbsp;</span></font></div>";
+    private static final String QC_BREAK                         = "<br>";
+    private static final String QC_LINE_BREAK                    = "<br />\r\n";
+    private static final String QC_COMMENT_PREFIX                = "<div align=";
+    private static final String QC12_INSERT_BREAK                = "<br /><br />";
+    private static final String QC_VERSION_OTHERS_END            = "</b></font>";
+    private static final String QC_VERSION_OTHERS_START          = "<font color=\"#000080\"><b>";
+    private static final String QC11_FIRST_COMMENT_START         = "<div align=\"left\"><font face=\"Arial\" color=\"#000080\"><span style=\"font-size:8pt\"><b>%s, %s:</b></span></font><font face=\"Arial\"><span style=\"font-size:8pt\">%s</span></font></div>";
+    private static final String QC12_INITIAL_COMMENT_START       = "<div align=\"left\"><font face=\"Arial\" color=\"#000080\"><span style=\"font-size:8pt\">&nbsp;&nbsp;<b>%s, %s:</b></span></font><font face=\"Arial\"><span style=\"font-size:8pt\">%s</span></font></div>";
+    private static final String QC_COMMENT_END                   = "<span style=\"font-size:10pt\"><b>________________________________________</b></span></font><font \r\nface=\"Arial\"><span style=\"font-size:8pt\"><br />\r\n</span></font><font face=\"Arial\" color=\"#000080\">"
+                                                                         + "<span style=\"font-size:8pt\"><b>%s, %s:</b></span></font><font face=\"Arial\"><span style=\"font-size:8pt\">%s</span></font></div>";
+    private static final String QC_COMMENT_START                 = "<div align=\"left\"><font face=\"Arial\"><span style=\"font-size:8pt\"><br />\n</span></font>";
+    private static final String QC11_FONT_TAG                    = "<font face=\"Arial\" color=\"#000080\" size=\"+0\">";
+    private static final String QC12_FONT_TAG                    = "<font face=\"Arial\" color=\"#000080\">";
+    private static final String QC_VERSION_11                    = "11";
+    private static final String QC_VERSION_12                    = "12";
+    private boolean             useAlternativeFieldName          = false;
+    private static final String QC11_LAST_TAGS                   = "\r\n</body>\r\n</html>";
+    private static final String QC11_FIRST_TAGS                  = "<html>\r\n<body>\r\n";
+    private static final String FIRST_TAGS                       = "<html><body>";
+    private static final String LAST_TAGS                        = "</body></html>";
+    private static final Log    log                              = LogFactory
+                                                                         .getLog(QCHandler.class);
     // private QCAttachmentHandler attachmentHandler;
-    private final static String QC_BUG_ID               = "BG_BUG_ID";
-    private final static String QC_REQ_ID               = "RQ_REQ_ID";
-    private final static String QC_REQ_TYPE_ID          = "RQ_TYPE_ID";
-    private final static String QC_BUG_VER_STAMP        = "BG_BUG_VER_STAMP";
-    private final static String QC_BG_ATTACHMENT        = "BG_ATTACHMENT";
-    private final static String QC_RQ_ATTACHMENT        = "RQ_ATTACHMENT";
-    private final static String QC_BG_VTS               = "BG_VTS";
-    private final static String QC_RQ_VTS               = "RQ_VTS";
-    private final static String UNDERSCORE_STRING       = "<font color=\"#000080\"><b>________________________________________</b></font>";
+    private final static String QC_BUG_ID                        = "BG_BUG_ID";
+    private final static String QC_REQ_ID                        = "RQ_REQ_ID";
+    private final static String QC_REQ_TYPE_ID                   = "RQ_TYPE_ID";
+    private final static String QC_BUG_VER_STAMP                 = "BG_BUG_VER_STAMP";
+    private final static String QC_BG_ATTACHMENT                 = "BG_ATTACHMENT";
+    private final static String QC_RQ_ATTACHMENT                 = "RQ_ATTACHMENT";
+    private final static String QC_BG_VTS                        = "BG_VTS";
+    private final static String QC_RQ_VTS                        = "RQ_VTS";
+    private final static String UNDERSCORE_STRING                = "<font color=\"#000080\"><b>________________________________________</b></font>";
 
-    public static final String  REQUIREMENT_TYPE_ALL    = "ALL";
+    public static final String  REQUIREMENT_TYPE_ALL             = "ALL";
+
+    private final static String QC12_UNDERSCORE_STRING           = "\r\n________________________________________\r\n";
+    private final static String QC12_INSERTNEWLINE               = "________________________________________\r\n";
 
     public QCHandler(boolean useAlternativeFieldName) {
         setUseAlternativeFieldName(useAlternativeFieldName);
@@ -450,38 +476,49 @@ public class QCHandler {
         java.util.Date date = new java.util.Date();
         String currentDateString = DateUtil.formatQCDate(date);
         fieldValue = fieldValue.replaceAll("\t", "        ");
+        final String qcMajorVersion = qcc.getMajorVersion();
         if (!StringUtils.isEmpty(oldFieldValue)) {
             oldFieldValue = this.stripStartAndEndTags(oldFieldValue);
-            if ("11".equals(qcc.getMajorVersion())) {
+            if (QC_VERSION_12.equals(qcMajorVersion)) {
                 concatinatedFieldValue = QC11_FIRST_TAGS
                         + oldFieldValue
-                        + String.format(
-                                "<div align=\"left\"><font face=\"Arial\"><span style=\"font-size:8pt\"><br />\n"
-                                        + "</span></font><font face=\"Arial\" color=\"#000080\" size=\"+0\"><span style=\"font-size:10pt\"><b>________________________________________</b></span></font><font \r\nface=\"Arial\"><span style=\"font-size:8pt\"><br />\r\n"
-                                        + "</span></font><font face=\"Arial\" color=\"#000080\"><span style=\"font-size:8pt\"><b>%s, %s:</b></span></font><font face=\"Arial\"><span style=\"font-size:8pt\">%s</span></font></div>",
-                                connectorUser, currentDateString,
-                                fieldValue.replace("<br>", "<br />\r\n"))
+                        + String.format(QC_COMMENT_START + QC12_FONT_TAG
+                                + QC_COMMENT_END, connectorUser,
+                                currentDateString,
+                                fieldValue.replace(QC_BREAK, QC_LINE_BREAK))
+                        + QC11_LAST_TAGS;
+            } else if (QC_VERSION_11.equals(qcMajorVersion)) {
+                concatinatedFieldValue = QC11_FIRST_TAGS
+                        + oldFieldValue
+                        + String.format(QC_COMMENT_START + QC11_FONT_TAG
+                                + QC_COMMENT_END, connectorUser,
+                                currentDateString,
+                                fieldValue.replace(QC_BREAK, QC_LINE_BREAK))
                         + QC11_LAST_TAGS;
             } else {
-                concatinatedFieldValue = FIRST_TAGS + oldFieldValue + "<br>"
-                        + UNDERSCORE_STRING + "<br>"
-                        + "<font color=\"#000080\"><b>" + connectorUser + ", "
-                        + currentDateString + ": " + "</b></font>" + fieldValue
-                        + LAST_TAGS;
+                concatinatedFieldValue = FIRST_TAGS + oldFieldValue + QC_BREAK
+                        + UNDERSCORE_STRING + QC_BREAK
+                        + QC_VERSION_OTHERS_START + connectorUser + ", "
+                        + currentDateString + ": " + QC_VERSION_OTHERS_END
+                        + fieldValue + LAST_TAGS;
             }
         } else {
-            if ("11".equals(qcc.getMajorVersion())) {
+            if (QC_VERSION_12.equals(qcMajorVersion)) {
                 concatinatedFieldValue = QC11_FIRST_TAGS
-                        + String.format(
-                                "<div align=\"left\"><font face=\"Arial\" color=\"#000080\"><span style=\"font-size:8pt\"><b>%s, %s:</b></span></font><font face=\"Arial\"><span style=\"font-size:8pt\">%s</span></font></div>",
+                        + String.format(QC12_INITIAL_COMMENT_START,
                                 connectorUser, currentDateString,
-                                fieldValue.replaceAll("<br>", "<br />\r\n"))
+                                fieldValue.replaceAll(QC_BREAK, QC_LINE_BREAK))
+                        + QC11_LAST_TAGS;
+            } else if (QC_VERSION_11.equals(qcMajorVersion)) {
+                concatinatedFieldValue = QC11_FIRST_TAGS
+                        + String.format(QC11_FIRST_COMMENT_START,
+                                connectorUser, currentDateString,
+                                fieldValue.replaceAll(QC_BREAK, QC_LINE_BREAK))
                         + QC11_LAST_TAGS;
             } else {
-                concatinatedFieldValue = FIRST_TAGS
-                        + "<font color=\"#000080\"><b>" + connectorUser + ", "
-                        + currentDateString + ": " + "</b></font>" + fieldValue
-                        + LAST_TAGS;
+                concatinatedFieldValue = FIRST_TAGS + QC_VERSION_OTHERS_START
+                        + connectorUser + ", " + currentDateString + ": "
+                        + QC_VERSION_OTHERS_END + fieldValue + LAST_TAGS;
             }
         }
 
@@ -1424,29 +1461,25 @@ public class QCHandler {
         // remove the first comment separator.
         // QC11 introduces a <span> element after the <font> element.
         // (?i) == use case-insensitive matching
-        String res = commentHTML.replaceFirst(
-                "(?i)<font[^>]*>(?:<span[^>]*>)?<b>_+</b>(?:</span>)?</font>",
-                "");
+        String res = commentHTML.replaceFirst(QC_COMMENT_SEPERATOR, "");
 
         // remove gunk that causes Jericho to insert a newline as the first
         // char in the comment, causing "hanging comments" in TF. 
         // Unlike previous versions, the first comment of an artifact in QC11 doesn't 
         // start with a <br/> element, but with an "almost empty" div:
-        final String FIRST_COMMENT_PREFIX = "<div align=\"left\"><font face=\"Arial\"><span style=\"font-size:8pt\">&nbsp;&nbsp;</span></font></div>";
+        final String FIRST_COMMENT_PREFIX = QC_FIRST_COMMENT_PREFIX;
         if (res.startsWith(FIRST_COMMENT_PREFIX)) {
             res = res.substring(FIRST_COMMENT_PREFIX.length());
         } else {
             // remove the first <br/> to avoid "hanging comments" after Jericho conversion
-            res = res.replaceFirst("<br[^>]*>", "");
+            res = res.replaceFirst(QC_FIRST_BREAK, "");
         }
         // replace empty lines by lines containing a non-breaking space
         // to prevent Jericho from removing the first empty line.
         // this applies only to QC11, QC10 uses different HTML that
         // doesn't exhibit this problem in the first place.
-        res = res
-                .replaceAll(
-                        "</span></font></div>\\s*<div align=\"left\"><font face=\"Arial\"><span style=\"font-size:8pt\"><br />",
-                        "<br />&nbsp;");
+        res = res.replaceAll(QC_TAG_WITH_EMPTY_LINE,
+                QC_LINES_WITH_NON_BREAKING_SPACE);
         return FIRST_TAGS + res + LAST_TAGS;
     }
 
@@ -1505,37 +1538,62 @@ public class QCHandler {
                         .getFieldValueAsString("AP_NEW_LONG_VALUE");
                 if (!StringUtils.isEmpty(newFieldValue)
                         && !StringUtils.isEmpty(oldFieldValue)) {
-                    if (newFieldValue.length() > oldFieldValue.length()) {
-                        String strippedOldValue = stripStartAndEndTags(oldFieldValue);
-                        String strippedNewValue = stripStartAndEndTags(newFieldValue);
-                        String delta = strippedNewValue
-                                .substring(strippedOldValue.length());
-                        if ("11".equals(qcc.getMajorVersion())) {
-                            /*
-                             * QC11 inserts line breaks into the comment values,
-                             * which causes the new value to be too long after a
-                             * comment was synched e.g. from TF. Thus, the delta
-                             * contains some characters at the beginning which
-                             * belong to the previous comment. Here, we cut
-                             * these off in order to prevent the extraneous
-                             * chars from being synched back to the other
-                             * system. XXX: this will break if a very long
-                             * comment or very many comments are synched, so
-                             * that the start of the delta moves so far back
-                             * that the "extraneous chars" contain the entire
-                             * previous comment.
-                             */
-                            final String commentStart = "<div align=";
-                            final int offset = delta.indexOf(commentStart);
-                            if (offset > 0) {
-                                delta = delta.substring(offset);
-                            }
-                        }
+                    String strippedOldValue = stripStartAndEndTags(oldFieldValue);
+                    String strippedNewValue = stripStartAndEndTags(newFieldValue);
+                    String delta = "";
+                    final String qcMajorVersion = qcc.getMajorVersion();
+                    if (QC_VERSION_12.equals(qcMajorVersion)) {
+                        //Extract text values from html tags
+                        String trimmedOldValue = JerichoUtils
+                                .htmlToText(strippedOldValue);
+                        String trimmedNewValue = JerichoUtils
+                                .htmlToText(strippedNewValue);
+                        //Get the new comment value from the extracted text
+                        String newComment = trimmedNewValue
+                                .substring(trimmedOldValue.length());
+                        //New comment has underscrore string prefixed, so substringafter to get the comment value 
+                        //incase of multi new comments replace underscrore string  with new line for formatting
+                        delta = StringUtils.substringAfter(newComment,
+                                QC12_UNDERSCORE_STRING).replaceAll(
+                                QC12_INSERTNEWLINE, QC12_INSERT_BREAK);
                         deltaComment += delta;
-                    } else if (newFieldValue.length() == oldFieldValue.length()) {
-                        log.warn("QC comments not changed");
                     } else {
-                        log.warn("New comment is smaller than old comment");
+                        if (newFieldValue.length() > oldFieldValue.length()) {
+                            if (QC_VERSION_11.equals(qcMajorVersion)) {
+                                delta = strippedNewValue
+                                        .substring(strippedOldValue.length());
+                                /*
+                                 * QC11 inserts line breaks into the comment
+                                 * values, which causes the new value to be too
+                                 * long after a comment was synched e.g. from
+                                 * TF. Thus, the delta contains some characters
+                                 * at the beginning which belong to the previous
+                                 * comment. Here, we cut these off in order to
+                                 * prevent the extraneous chars from being
+                                 * synched back to the other system. XXX: this
+                                 * will break if a very long comment or very
+                                 * many comments are synched, so that the start
+                                 * of the delta moves so far back that the
+                                 * "extraneous chars" contain the entire
+                                 * previous comment.
+                                 */
+                                final String commentPrefix = QC_COMMENT_PREFIX;
+                                final int offset = delta.indexOf(commentPrefix);
+                                if (offset > 0) {
+                                    delta = delta.substring(offset);
+                                }
+                            } else {
+                                delta = strippedNewValue
+                                        .substring(strippedOldValue.length());
+                            }
+
+                            deltaComment += delta;
+                        } else if (newFieldValue.length() == oldFieldValue
+                                .length()) {
+                            log.warn("QC comments not changed");
+                        } else {
+                            log.warn("New comment is smaller than old comment");
+                        }
                     }
                 } else {
                     if (!StringUtils.isEmpty(newFieldValue)) {
@@ -1650,8 +1708,8 @@ public class QCHandler {
         if (StringUtils.isEmpty(fieldValue)) {
             return "";
         }
-        return fieldValue.replaceAll("^\\s*<html>\\s*<body>\\s*", "")
-                .replaceAll("\\s*</body>\\s*</html>\\s*$", "");
+        return fieldValue.replaceAll(QC_START__HTML_TAGS, "").replaceAll(
+                QC_END_HTML_TAGS, "");
     }
 
     public static String getRequirementTypeTechnicalId(IConnection qcc,
