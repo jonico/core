@@ -27,6 +27,7 @@ import org.openadaptor.core.IDataProcessor;
 import org.openadaptor.core.exception.ValidationException;
 import org.openadaptor.core.lifecycle.LifecycleComponent;
 
+import com.collabnet.ccf.core.db.RMDConfigExtractor;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
@@ -54,33 +55,33 @@ public class EntityService2 extends LifecycleComponent implements IDataProcessor
     /**
      * log4j logger instance
      */
-    private static final Log  log                                        = LogFactory
-                                                                                 .getLog(EntityService2.class);
+    private static final Log   log                                        = LogFactory
+                                                                                  .getLog(EntityService2.class);
 
-    private JDBCReadConnector identityMappingDatabaseReader              = null;
+    private JDBCReadConnector  identityMappingDatabaseReader              = null;
 
-    private JDBCReadConnector hospitalDatabaseReader                     = null;
+    private JDBCReadConnector  hospitalDatabaseReader                     = null;
 
-    private JDBCReadConnector parentIdentityMappingDatabaseReader        = null;
-    private JDBCReadConnector projectMappingDatabaseReader               = null;
+    private JDBCReadConnector  parentIdentityMappingDatabaseReader        = null;
+    private JDBCReadConnector  projectMappingDatabaseReader               = null;
 
-    private boolean           skipNewerVersionsOfQuarantinedAttachments;
+    private boolean            skipNewerVersionsOfQuarantinedAttachments;
 
-    private long              identityMapEventWaitTime                   = 500L;
+    private long               identityMapEventWaitTime                   = 500L;
 
-    private int               identityMapEventWaitCount                  = 4;
+    private int                identityMapEventWaitCount                  = 4;
 
     /**
      * If this property is set to true (false by default), resynched artifacts
      * are even transported if a newer version has already been synchronized
      */
-    private boolean           alwaysPassResynchedArtifacts               = false;
+    private boolean            alwaysPassResynchedArtifacts               = false;
 
     /**
      * If this property is set to true (false by default), partial artifacts are
      * even transported if a newer version has already been synchronized
      */
-    private boolean           alwaysPassPartialArtifacts                 = false;
+    private boolean            alwaysPassPartialArtifacts                 = false;
 
     /**
      * If this property is set to true (false by default), attachments whose
@@ -88,7 +89,9 @@ public class EntityService2 extends LifecycleComponent implements IDataProcessor
      * parent in question is still in the hospital. Use this option if you only
      * map a subset of source artifacts to the target repository.
      */
-    private boolean           onlyQuarantineAttachmentIfParentInHospital = false;
+    private boolean            onlyQuarantineAttachmentIfParentInHospital = false;
+
+    private RMDConfigExtractor rmdConfigExtractor                         = null;
 
     /**
      * Gets the (optional) data base reader that is used to find out whether the
@@ -148,6 +151,10 @@ public class EntityService2 extends LifecycleComponent implements IDataProcessor
      */
     public JDBCReadConnector getProjectMappingDatabaseReader() {
         return projectMappingDatabaseReader;
+    }
+
+    public RMDConfigExtractor getRmdConfigExtractor() {
+        return rmdConfigExtractor;
     }
 
     /**
@@ -310,6 +317,10 @@ public class EntityService2 extends LifecycleComponent implements IDataProcessor
     public void setProjectMappingDatabaseReader(
             JDBCReadConnector projectMappingDatabaseReader) {
         this.projectMappingDatabaseReader = projectMappingDatabaseReader;
+    }
+
+    public void setRmdConfigExtractor(RMDConfigExtractor rmdConfigExtractor) {
+        this.rmdConfigExtractor = rmdConfigExtractor;
     }
 
     /**
