@@ -27,10 +27,11 @@ import org.openadaptor.core.IDataProcessor;
 import org.openadaptor.core.exception.ValidationException;
 import org.openadaptor.core.lifecycle.LifecycleComponent;
 
-import com.collabnet.ccf.core.db.RMDConfigExtractor;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
+import com.collabnet.ccf.core.rmdhandlers.DryModeHandler;
+import com.collabnet.ccf.core.rmdhandlers.NoOpDryModeHandler;
 import com.collabnet.ccf.core.utils.DateUtil;
 import com.collabnet.ccf.core.utils.XPathUtils;
 
@@ -55,33 +56,33 @@ public class EntityService2 extends LifecycleComponent implements IDataProcessor
     /**
      * log4j logger instance
      */
-    private static final Log   log                                        = LogFactory
-                                                                                  .getLog(EntityService2.class);
+    private static final Log  log                                        = LogFactory
+                                                                                 .getLog(EntityService2.class);
 
-    private JDBCReadConnector  identityMappingDatabaseReader              = null;
+    private JDBCReadConnector identityMappingDatabaseReader              = null;
 
-    private JDBCReadConnector  hospitalDatabaseReader                     = null;
+    private JDBCReadConnector hospitalDatabaseReader                     = null;
 
-    private JDBCReadConnector  parentIdentityMappingDatabaseReader        = null;
-    private JDBCReadConnector  projectMappingDatabaseReader               = null;
+    private JDBCReadConnector parentIdentityMappingDatabaseReader        = null;
+    private JDBCReadConnector projectMappingDatabaseReader               = null;
 
-    private boolean            skipNewerVersionsOfQuarantinedAttachments;
+    private boolean           skipNewerVersionsOfQuarantinedAttachments;
 
-    private long               identityMapEventWaitTime                   = 500L;
+    private long              identityMapEventWaitTime                   = 500L;
 
-    private int                identityMapEventWaitCount                  = 4;
+    private int               identityMapEventWaitCount                  = 4;
 
     /**
      * If this property is set to true (false by default), resynched artifacts
      * are even transported if a newer version has already been synchronized
      */
-    private boolean            alwaysPassResynchedArtifacts               = false;
+    private boolean           alwaysPassResynchedArtifacts               = false;
 
     /**
      * If this property is set to true (false by default), partial artifacts are
      * even transported if a newer version has already been synchronized
      */
-    private boolean            alwaysPassPartialArtifacts                 = false;
+    private boolean           alwaysPassPartialArtifacts                 = false;
 
     /**
      * If this property is set to true (false by default), attachments whose
@@ -89,9 +90,9 @@ public class EntityService2 extends LifecycleComponent implements IDataProcessor
      * parent in question is still in the hospital. Use this option if you only
      * map a subset of source artifacts to the target repository.
      */
-    private boolean            onlyQuarantineAttachmentIfParentInHospital = false;
+    private boolean           onlyQuarantineAttachmentIfParentInHospital = false;
 
-    private RMDConfigExtractor rmdConfigExtractor                         = null;
+    private DryModeHandler    rmdDryModeHandler                          = new NoOpDryModeHandler();
 
     /**
      * Gets the (optional) data base reader that is used to find out whether the
@@ -153,8 +154,8 @@ public class EntityService2 extends LifecycleComponent implements IDataProcessor
         return projectMappingDatabaseReader;
     }
 
-    public RMDConfigExtractor getRmdConfigExtractor() {
-        return rmdConfigExtractor;
+    public DryModeHandler getRmdDryModeHandler() {
+        return rmdDryModeHandler;
     }
 
     /**
@@ -319,8 +320,8 @@ public class EntityService2 extends LifecycleComponent implements IDataProcessor
         this.projectMappingDatabaseReader = projectMappingDatabaseReader;
     }
 
-    public void setRmdConfigExtractor(RMDConfigExtractor rmdConfigExtractor) {
-        this.rmdConfigExtractor = rmdConfigExtractor;
+    public void setRmdDryModeHandler(DryModeHandler rmdDryModeHandler) {
+        this.rmdDryModeHandler = rmdDryModeHandler;
     }
 
     /**
@@ -682,6 +683,9 @@ public class EntityService2 extends LifecycleComponent implements IDataProcessor
             boolean replayedArtifact = (transactionId != null && !transactionId
                     .equals(GenericArtifact.VALUE_UNKNOWN));
 
+            String dryRunModeValue = rmdDryModeHandler
+                    .getDryRunModeValueFromCache(repositoryMappingDirectionId);
+
             if (sourceArtifactVersion == null
                     || sourceArtifactVersion
                             .equals(GenericArtifact.VALUE_UNKNOWN)) {
@@ -720,11 +724,22 @@ public class EntityService2 extends LifecycleComponent implements IDataProcessor
                             targetRepositoryId, artifactType,
                             sourceArtifactLastModifiedDate,
                             sourceArtifactVersionLong, false,
-                            repositoryMappingDirectionId)) {
+                            repositoryMappingDirectionId, dryRunModeValue)) {
                 XPathUtils.addAttribute(element,
                         GenericArtifactHelper.ARTIFACT_ACTION,
                         GenericArtifactHelper.ARTIFACT_ACTION_IGNORE);
                 return new Object[] { data };
+            }
+
+            if (DryModeHandler
+                    .isDryRunEqualsBeforeTransformation(dryRunModeValue)) {
+                String cause = "Storing in hospital as dryrun mode is enabled for the repository mapping direction id: "
+                        + repositoryMappingDirectionId;
+                XPathUtils.addAttribute(element,
+                        GenericArtifactHelper.ERROR_CODE,
+                        GenericArtifact.ERROR_IN_DRY_RUN_MODE);
+                log.warn(cause);
+                throw new CCFRuntimeException(cause);
             }
 
             Object[] results = lookupTargetArtifact(element, sourceArtifactId,
@@ -855,7 +870,9 @@ public class EntityService2 extends LifecycleComponent implements IDataProcessor
                                     targetSystemId,
                                     targetParentRepositoryId,
                                     GenericArtifactHelper.ARTIFACT_TYPE_PLAIN_ARTIFACT,
-                                    null, 0, true, repositoryMappingDirectionId)) {
+                                    null, 0, true,
+                                    repositoryMappingDirectionId,
+                                    dryRunModeValue)) {
                         String cause = "Parent artifact "
                                 + sourceParentArtifactId
                                 + " for attachment "
@@ -1207,7 +1224,7 @@ public class EntityService2 extends LifecycleComponent implements IDataProcessor
             Date sourceArtifactLastModifiedDate,
             long sourceArtifactVersionLong,
             boolean onlyCheckIfQuarantinedArtifactExists,
-            String repositoryMappingDirectionId) {
+            String repositoryMappingDirectionId, String dryRunModeValue) {
 
         // only if a connection to the hospital table is possible we can skip
         // artifacts
@@ -1286,17 +1303,32 @@ public class EntityService2 extends LifecycleComponent implements IDataProcessor
                                     + " will not be skipped despite it is in the hospital. Hospital ID: "
                                     + hospitalId);
                         } else {
-                            log.warn("Non re-processed artifact from combination "
-                                    + sourceArtifactId
-                                    + "-"
-                                    + sourceRepositoryId
-                                    + "-"
-                                    + sourceSystemId
-                                    + targetRepositoryId
-                                    + "-"
-                                    + targetSystemId
-                                    + " is still in the hospital in a newer or equal version, so skipping it. Hospital ID: "
-                                    + hospitalId);
+                            if (DryModeHandler.isDryRunMode(dryRunModeValue)) {
+                                log.info("Dont Repeat the artifact from combination"
+                                        + sourceArtifactId
+                                        + "-"
+                                        + sourceRepositoryId
+                                        + "-"
+                                        + sourceSystemId
+                                        + targetRepositoryId
+                                        + "-"
+                                        + targetSystemId
+                                        + " as repository mapping direction id "
+                                        + repositoryMappingDirectionId
+                                        + " is in dry-run mode. To reprocess the artifact,stop the dry-run mode for the repository mapping direction and delete the corresponding entry from Hospital");
+                            } else {
+                                log.warn("Non re-processed artifact from combination "
+                                        + sourceArtifactId
+                                        + "-"
+                                        + sourceRepositoryId
+                                        + "-"
+                                        + sourceSystemId
+                                        + targetRepositoryId
+                                        + "-"
+                                        + targetSystemId
+                                        + " is still in the hospital in a newer or equal version, so skipping it. Hospital ID: "
+                                        + hospitalId);
+                            }
                             return true;
                         }
                     }
@@ -1325,4 +1357,5 @@ public class EntityService2 extends LifecycleComponent implements IDataProcessor
                 + targetSystemId + " are in the hospital, so pass artifact ...");
         return false;
     }
+
 }

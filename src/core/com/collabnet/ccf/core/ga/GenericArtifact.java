@@ -480,6 +480,8 @@ public class GenericArtifact {
 
     public final static String                                           ERROR_REPLAYED_WITH_TRANSFORMATION                                  = "replayedWithTransformation";
 
+    public final static String                                           ERROR_IN_DRY_RUN_MODE                                               = "dryRunModeEnabled";
+
     /**
      * Create a new empty generic artifact All attributes will be set to
      * "unknown"
