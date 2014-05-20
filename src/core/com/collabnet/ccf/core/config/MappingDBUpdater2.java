@@ -30,6 +30,8 @@ import com.collabnet.ccf.core.CCFRuntimeException;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
+import com.collabnet.ccf.core.rmdhandlers.DryModeHandler;
+import com.collabnet.ccf.core.rmdhandlers.NoOpDryModeHandler;
 import com.collabnet.ccf.core.utils.DateUtil;
 import com.collabnet.ccf.core.utils.XPathUtils;
 
@@ -101,6 +103,8 @@ public class MappingDBUpdater2 extends LifecycleComponent implements IDataProces
 
     private static final String NULL_VALUE                           = null;
 
+    private DryModeHandler      rmdDryModeHandler                    = new NoOpDryModeHandler();
+
     /**
      * Gets the data base inserter that is used to insert a new artifact mapping
      * into the identity mapping table
@@ -129,6 +133,10 @@ public class MappingDBUpdater2 extends LifecycleComponent implements IDataProces
      */
     public JDBCWriteConnector getIdentityMappingDatabaseUpdater() {
         return identityMappingDatabaseUpdater;
+    }
+
+    public DryModeHandler getRmdDryModeHandler() {
+        return rmdDryModeHandler;
     }
 
     /**
@@ -238,9 +246,13 @@ public class MappingDBUpdater2 extends LifecycleComponent implements IDataProces
                 java.sql.Timestamp sourceTime = new java.sql.Timestamp(
                         sourceLastModifiedDate.getTime());
 
+                String dryRunModeValue = rmdDryModeHandler
+                        .getDryRunModeValueFromCache(repositoryMappingDirectionId);
+
                 if (artifactAction
                         .equals(GenericArtifactHelper.ARTIFACT_ACTION_IGNORE)) {
                     if (!replayedArtifact
+                            && !DryModeHandler.isDryRunMode(dryRunModeValue)
                             && updateSynchronizationStatusTable
                             && !artifactType
                                     .equals(GenericArtifactHelper.ARTIFACT_TYPE_ATTACHMENT)) {
@@ -320,6 +332,9 @@ public class MappingDBUpdater2 extends LifecycleComponent implements IDataProces
                 java.sql.Timestamp targetTime = new java.sql.Timestamp(
                         targetLastModifiedDate.getTime());
 
+                String currentDryRunModeValue = rmdDryModeHandler
+                        .getDryRunModeValueFromCache(sourceSystemKind);
+
                 createMapping(element, sourceArtifactId, sourceRepositoryId,
                         sourceRepositoryKind, sourceSystemId, sourceSystemKind,
                         targetArtifactId, targetRepositoryId,
@@ -334,6 +349,7 @@ public class MappingDBUpdater2 extends LifecycleComponent implements IDataProces
                         repositoryMappingId);
 
                 if (!replayedArtifact
+                        && !DryModeHandler.isDryRunMode(currentDryRunModeValue)
                         && updateSynchronizationStatusTable
                         && !artifactType
                                 .equals(GenericArtifactHelper.ARTIFACT_TYPE_ATTACHMENT)) {
@@ -391,6 +407,10 @@ public class MappingDBUpdater2 extends LifecycleComponent implements IDataProces
     public void setIdentityMappingDatabaseUpdater(
             JDBCWriteConnector identityMappingUpdater) {
         this.identityMappingDatabaseUpdater = identityMappingUpdater;
+    }
+
+    public void setRmdDryModeHandler(DryModeHandler rmdDryModeHandler) {
+        this.rmdDryModeHandler = rmdDryModeHandler;
     }
 
     /**
@@ -743,5 +763,4 @@ public class MappingDBUpdater2 extends LifecycleComponent implements IDataProces
         synchronizationStatusDatabaseUpdater.deliver(params);
         //synchronizationStatusDatabaseUpdater.disconnect();
     }
-
 }

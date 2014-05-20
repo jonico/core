@@ -20,6 +20,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang.StringUtils;
@@ -31,6 +32,7 @@ import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.Node;
 import org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector;
+import org.openadaptor.auxil.connector.jdbc.writer.JDBCWriteConnector;
 import org.openadaptor.auxil.orderedmap.IOrderedMap;
 import org.openadaptor.auxil.orderedmap.OrderedHashMap;
 import org.openadaptor.core.Component;
@@ -42,6 +44,8 @@ import com.collabnet.ccf.core.eis.connection.ConnectionManager;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
+import com.collabnet.ccf.core.rmdhandlers.DryModeHandler;
+import com.collabnet.ccf.core.rmdhandlers.NoOpDryModeHandler;
 import com.collabnet.ccf.core.utils.DateUtil;
 
 /**
@@ -105,6 +109,10 @@ public abstract class AbstractReader<T> extends Component implements IDataProces
     private long                              maxAttachmentSizePerArtifact                            = DEFAULT_MAX_ATTACHMENT_SIZE_PER_ARTIFACT;
     private ConnectionManager<T>              connectionManager;
     private static final String               ARTIFACT_TYPE_PLAIN_ARTIFACT                            = "plainArtifact";
+    private static final String               REPOSITORY_MAPPING_DIRECTION_CONFIG_VAL                 = "repositoryMappingDirectionConfig.VAL";
+    private static final String               REPOSITORY_MAPPING_DIRECTION                            = "REPOSITORY_MAPPING_DIRECTION";
+    private static final String               REPOSITORY_MAPPING_DIRECTION_CONFIG_NAME                = "NAME";
+    private static final String               REPOSITORY_MAPPING_DIRECTION_CONFIG_OLD_VAL             = "VAL";
 
     /**
      * This variable is set to false until we get the first reoccuring
@@ -187,6 +195,10 @@ public abstract class AbstractReader<T> extends Component implements IDataProces
     private boolean                           isBulkImport                                            = false;
 
     private RMDConfigExtractor                rmdConfigExtractor                                      = null;
+
+    private JDBCWriteConnector                repositoryMappingDirectionConfigTableUpdater            = null;
+
+    private DryModeHandler                    rmdDryModeHandler                                       = new NoOpDryModeHandler();
 
     public AbstractReader() {
         super();
@@ -470,8 +482,16 @@ public abstract class AbstractReader<T> extends Component implements IDataProces
         return number;
     }
 
+    public JDBCWriteConnector getRepositoryMappingDirectionConfigTableUpdater() {
+        return repositoryMappingDirectionConfigTableUpdater;
+    }
+
     public RMDConfigExtractor getRmdConfigExtractor() {
         return rmdConfigExtractor;
+    }
+
+    public DryModeHandler getRmdDryModeHandler() {
+        return rmdDryModeHandler;
     }
 
     /**
@@ -836,6 +856,23 @@ public abstract class AbstractReader<T> extends Component implements IDataProces
                     .getArtifactsToBeShippedList();
             List<ArtifactState> artifactsToBeReadList = currentRecord
                     .getArtifactsToBeReadList();
+
+            String repositoryMappingDirectionId = this
+                    .getRepositoryMappingDirectionId(syncInfoIn);
+            Map<String, String> rmdConfigMap = populateRMDConfig(repositoryMappingDirectionId);
+            String dryRunModeValue = rmdDryModeHandler
+                    .getDryRunValue(rmdConfigMap);
+
+            // If dryrun mode is set to stop,clear all already fetched artifacts for the RMD 
+            // and set dry-mode to off
+            if (DryModeHandler.isDryRunEqualsStop(dryRunModeValue)) {
+                artifactsToBeReadList.clear();
+                updateRepositoryMappingDirectionConfig(
+                        DryModeHandler.DRYRUN_OFF,
+                        repositoryMappingDirectionId,
+                        DryModeHandler.DRYRUN_KEY, dryRunModeValue);
+            }
+
             if (!artifactsToBeShippedList.isEmpty()) {
                 log.debug("There are " + artifactsToBeShippedList.size()
                         + " artifacts to be shipped.");
@@ -1022,7 +1059,6 @@ public abstract class AbstractReader<T> extends Component implements IDataProces
                         int maxMsToSleep = connectionManager
                                 .getMaximumRetryWaitingTime();
                         try {
-                            populateRMDConfig(syncInfo);
                             String artifactId = artifactState.getArtifactId();
                             // To avoid tampering SyncInfo object we have created a clone
                             // As per java documentation Document.clone() method provides
@@ -1337,8 +1373,17 @@ public abstract class AbstractReader<T> extends Component implements IDataProces
         this.nameOfEntityService = nameOfEntityService;
     }
 
+    public void setRepositoryMappingDirectionConfigTableUpdater(
+            JDBCWriteConnector repositoryMappingDirectionConfigTableUpdater) {
+        this.repositoryMappingDirectionConfigTableUpdater = repositoryMappingDirectionConfigTableUpdater;
+    }
+
     public void setRmdConfigExtractor(RMDConfigExtractor rmdConfigExtractor) {
         this.rmdConfigExtractor = rmdConfigExtractor;
+    }
+
+    public void setRmdDryModeHandler(DryModeHandler rmdDryModeHandler) {
+        this.rmdDryModeHandler = rmdDryModeHandler;
     }
 
     /**
@@ -1404,6 +1449,7 @@ public abstract class AbstractReader<T> extends Component implements IDataProces
         if (getNameOfEntityService() == null) {
             log.warn("Retransformation of replayed artifacts is not configured since nameOfEntityService property has not been set.");
         }
+
     }
 
     protected Date getArtifactLastModifiedDate(Document syncInfo) {
@@ -1731,11 +1777,12 @@ public abstract class AbstractReader<T> extends Component implements IDataProces
         repositorySynchronizationWaitingList.add(currentRecord);
     }
 
-    private void populateRMDConfig(Document syncInfo) {
-        if (isCCF2xProcess && getRmdConfigExtractor() != null) {
-            rmdConfigExtractor
-                    .getRMDConfigMap(getRepositoryMappingDirectionId(syncInfo));
+    private Map<String, String> populateRMDConfig(String rmdId) {
+        Map<String, String> rmdConfigMap = new HashMap<String, String>();
+        if (getRmdConfigExtractor() != null) {
+            rmdConfigMap = rmdConfigExtractor.getRMDConfigMap(rmdId);
         }
+        return rmdConfigMap;
     }
 
     /**
@@ -1752,6 +1799,26 @@ public abstract class AbstractReader<T> extends Component implements IDataProces
         String repositoryKey = currentRecord.getRepositoryId();
         repositoryRecordsInRepositorySynchronizationWaitingList
                 .remove(repositoryKey);
+    }
+
+    private void updateRepositoryMappingDirectionConfig(String value,
+            String repositoryMappingDirectionId, String name, String oldValue) {
+        if (repositoryMappingDirectionConfigTableUpdater != null) {
+            IOrderedMap inputParameters = new OrderedHashMap();
+
+            inputParameters.add(0, REPOSITORY_MAPPING_DIRECTION_CONFIG_VAL,
+                    value);
+            inputParameters.add(1, REPOSITORY_MAPPING_DIRECTION,
+                    repositoryMappingDirectionId);
+            inputParameters.add(2, REPOSITORY_MAPPING_DIRECTION_CONFIG_NAME,
+                    name);
+            inputParameters.add(3, REPOSITORY_MAPPING_DIRECTION_CONFIG_OLD_VAL,
+                    oldValue);
+
+            IOrderedMap[] params = new IOrderedMap[] { inputParameters };
+            repositoryMappingDirectionConfigTableUpdater.connect();
+            repositoryMappingDirectionConfigTableUpdater.deliver(params);
+        }
     }
 
     /**

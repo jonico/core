@@ -25,6 +25,8 @@ import com.collabnet.ccf.core.eis.connection.ConnectionManager;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
+import com.collabnet.ccf.core.rmdhandlers.DryModeHandler;
+import com.collabnet.ccf.core.rmdhandlers.NoOpDryModeHandler;
 import com.collabnet.ccf.core.utils.XPathUtils;
 
 public abstract class AbstractWriter<T> extends Component implements IDataProcessor {
@@ -34,6 +36,8 @@ public abstract class AbstractWriter<T> extends Component implements IDataProces
                                                               .getLog("com.collabnet.ccf.core.conflict.resolution");
 
     private ConnectionManager<T> connectionManager    = null;
+
+    private DryModeHandler       rmdDryModeHandler    = new NoOpDryModeHandler();
 
     public AbstractWriter() {
     }
@@ -60,6 +64,10 @@ public abstract class AbstractWriter<T> extends Component implements IDataProces
      */
     public ConnectionManager<T> getConnectionManager() {
         return connectionManager;
+    }
+
+    public DryModeHandler getRmdDryModeHandler() {
+        return rmdDryModeHandler;
     }
 
     public boolean handleException(Throwable rootCause,
@@ -94,6 +102,10 @@ public abstract class AbstractWriter<T> extends Component implements IDataProces
      */
     public void setConnectionManager(ConnectionManager<T> connectionManager) {
         this.connectionManager = connectionManager;
+    }
+
+    public void setRmdDryModeHandler(DryModeHandler rmdDryModeHandler) {
+        this.rmdDryModeHandler = rmdDryModeHandler;
     }
 
     public void start() {
@@ -136,12 +148,31 @@ public abstract class AbstractWriter<T> extends Component implements IDataProces
             int msToSleep = (numberOfTries - 1)
                     * connectionManager.getRetryIncrementTime();
             int maxMsToSleep = connectionManager.getMaximumRetryWaitingTime();
+
             try {
                 element = XPathUtils.getRootElement(gaDocument);
                 String artifactAction = XPathUtils.getAttributeValue(element,
                         GenericArtifactHelper.ARTIFACT_ACTION);
                 String artifactType = XPathUtils.getAttributeValue(element,
                         GenericArtifactHelper.ARTIFACT_TYPE);
+                String repositoryMappingDirectionId = XPathUtils
+                        .getAttributeValue(element,
+                                GenericArtifactHelper.SOURCE_SYSTEM_KIND);
+                String dryRunModeValue = rmdDryModeHandler
+                        .getDryRunModeValueFromCache(repositoryMappingDirectionId);
+
+                if (!artifactAction
+                        .equals(GenericArtifactHelper.ARTIFACT_ACTION_IGNORE)
+                        && DryModeHandler
+                                .isDryRunEqualsAfterTransformation(dryRunModeValue)) {
+                    String cause = "Storing in hospital as dryrun mode is enabled for the repository mapping direction id:"
+                            + repositoryMappingDirectionId;
+                    XPathUtils.addAttribute(element,
+                            GenericArtifactHelper.ERROR_CODE,
+                            GenericArtifact.ERROR_IN_DRY_RUN_MODE);
+                    log.warn(cause);
+                    throw new CCFRuntimeException(cause);
+                }
                 if (artifactAction
                         .equals(GenericArtifactHelper.ARTIFACT_ACTION_IGNORE)) {
                     return new Object[] { gaDocument };
@@ -409,4 +440,5 @@ public abstract class AbstractWriter<T> extends Component implements IDataProces
             return true;
         }
     }
+
 }

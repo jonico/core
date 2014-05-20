@@ -273,6 +273,9 @@
 			 Since CCF Sync is based on Artifact specific last modified timestamp or last modified version
 		 -->		
 		<property name="identityMappingDatabaseReader" ref="IndentityMappingDatabaseReaderTF2QC" /> 
+		<property name="rmdConfigExtractor" ref="rmdConfigExtractor"/>
+		<property name="rmdDryModeHandler" ref="rmdDryModeHandler"/>
+		<property name="repositoryMappingDirectionConfigTableUpdater" ref="RepositoryMappingDirectionConfigDatabaseUpdaterTF2QC"/>
 	</bean>
 	<bean id="TFConnectionManager"
 		class="com.collabnet.ccf.core.eis.connection.ConnectionManager">
@@ -293,6 +296,7 @@
         <property name="enableReloginAfterSessionTimeout" value="true"/>
         <property name="enableRetryAfterNetworkTimeout" value="true"/>
         <property name="maximumRetryWaitingTime" value="${ccf.direction.tf.max.retrywaitingtime}"/>
+        
 	</bean>
 
 	<bean id="TFConnectionFactory"
@@ -338,6 +342,7 @@
 		<property name="identityMappingDatabaseInserter"
 			ref="IdentityMappingDatabaseInserterTF2QC" />
 		<property name="sourceSystemIsTeamForge" value="true" />
+		<property name="rmdDryModeHandler" ref="rmdDryModeHandler"/>
 	</bean>
 
 	<bean id="ResultSetConverter"
@@ -449,6 +454,7 @@
 		<property name="identityMapEventWaitTime" value="${ccf.direction.identityMapEventWaitTime}"></property>
 		<property name="alwaysPassPartialArtifacts" value="true"/>
 		<property name="onlyQuarantineAttachmentIfParentInHospital" value="true"></property>
+		<property name="rmdDryModeHandler" ref="rmdDryModeHandler"/>
 	</bean>
 
 	<bean id="HospitalDatabaseReaderTF2QC"
@@ -479,6 +485,7 @@
 		<property name="preserveSemanticallyUnchangedHTMLFieldValues" value="true"/>
 		<property name="useAlternativeFieldName" value="${ccf.direction.usealternativefieldname}"/>
 		<property name="quarantineIfQCReportsPermissionDenied" value="false"/>
+		<property name="rmdDryModeHandler" ref="rmdDryModeHandler"/>
 	</bean>
 
 	<bean id="IdentityMappingTableInserter"
@@ -679,6 +686,53 @@
 	    ORDER BY ID ASC 
 	    LIMIT 1
 	    </value>
+		</property>
+	</bean>
+	
+	<bean id="rmdConfigExtractor" class="com.collabnet.ccf.core.db.RMDConfigExtractor">
+		<property name="rmdConfigJDBCReadConnector" ref="rmdConfigJDBCExtractor"></property>
+	</bean>
+
+	 <bean id="rmdDryModeHandler" class="com.collabnet.ccf.core.rmdhandlers.RMDDryModeHandler">
+		<property name="rmdConfigExtractor" ref="rmdConfigExtractor"/>
+	</bean>
+
+	<bean id="rmdConfigJDBCExtractor"
+		class="org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector">
+		<description>
+			This database reader component extracts quarantined
+			artifacts from
+			the hospital that are ready to be replayed
+		</description>
+		<property name="jdbcConnection" ref="HospitalJDBCConnection" />
+		<property name="batchSize" value="0" />
+		<property name="sql">
+			<value>SELECT NAME,VAL FROM REPOSITORY_MAPPING_DIRECTION_CONFIG
+				WHERE REPOSITORY_MAPPING_DIRECTION = ? ORDER BY ID ASC</value>
+		</property>
+	</bean>
+	
+	<bean id="RepositoryMappingDirectionConfigDatabaseUpdaterTF2QC"
+		class="org.openadaptor.auxil.connector.jdbc.writer.JDBCWriteConnector">
+		<property name="writer" ref="RepositoryMappingDirectionConfigTableUpdater"></property>
+		<property name="jdbcConnection" ref="JdbcConnectionTF2QC">
+		</property>
+	</bean>
+	<bean id="RepositoryMappingDirectionConfigTableUpdater" class="com.collabnet.ccf.core.db.MapTableUpdater">
+		<description>
+			This is the writer object that updates the RepositoryMappingDirectionConfig table.
+		</description>
+		<property name="tableName" value="REPOSITORY_MAPPING_DIRECTION_CONFIG"></property>
+		<property name="sql">
+			<value>${ccf.sql.updaterepositorymappingdirectionconfigs}</value>
+		</property>
+		<property name="outputColumns">
+			<list>
+				<value>repositoryMappingDirectionConfig.VAL</value>
+				<value>REPOSITORY_MAPPING_DIRECTION</value>
+				<value>NAME</value>
+				<value>VAL</value>
+			</list>
 		</property>
 	</bean>
 	
