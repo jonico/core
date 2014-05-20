@@ -1,17 +1,31 @@
 package com.collabnet.ccf.core.rmdhandlers;
 
-import java.util.Map;
-
 public class NoOpDryModeHandler extends DryModeHandler {
 
-    @Override
-    public String getDryRunModeValueFromCache(String rmdId) {
-        return null;
+    public boolean isDryRunEqualsAfterTransformation(String rmdId) {
+        return false;
     }
 
-    @Override
-    public String getDryRunValue(Map<String, String> rmdConfigMap) {
-        return null;
+    public boolean isDryRunEqualsBeforeTransformation(String rmdId) {
+        return false;
+    }
+
+    public boolean isDryRunEqualsStop(String rmdId) {
+        return false;
+    }
+
+    public boolean isDryRunMode(String rmdId) {
+        return false;
+    }
+
+    public void loadRMDAndRMDConfig(String rmdID) {
+        // Nothing to implement
+
+    }
+
+    public void updateRMDConfigToOff(String rmdId) {
+        // Nothing to implement
+
     }
 
 }

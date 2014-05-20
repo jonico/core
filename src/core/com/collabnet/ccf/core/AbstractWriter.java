@@ -158,13 +158,11 @@ public abstract class AbstractWriter<T> extends Component implements IDataProces
                 String repositoryMappingDirectionId = XPathUtils
                         .getAttributeValue(element,
                                 GenericArtifactHelper.SOURCE_SYSTEM_KIND);
-                String dryRunModeValue = rmdDryModeHandler
-                        .getDryRunModeValueFromCache(repositoryMappingDirectionId);
 
                 if (!artifactAction
                         .equals(GenericArtifactHelper.ARTIFACT_ACTION_IGNORE)
-                        && DryModeHandler
-                                .isDryRunEqualsAfterTransformation(dryRunModeValue)) {
+                        && rmdDryModeHandler
+                                .isDryRunEqualsAfterTransformation(repositoryMappingDirectionId)) {
                     String cause = "Storing in hospital as dryrun mode is enabled for the repository mapping direction id:"
                             + repositoryMappingDirectionId;
                     XPathUtils.addAttribute(element,

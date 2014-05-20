@@ -13,8 +13,6 @@ package com.collabnet.ccf.core.eis.connection;
 
 import java.util.WeakHashMap;
 
-import com.collabnet.ccf.core.db.RMDConfigExtractor;
-
 /**
  * The connection manager is responsible to manage the connection pools for each
  * source/target system. It creates and manages one pool per repository. As the
@@ -80,8 +78,6 @@ public class ConnectionManager<T> {
     private boolean                useStandardTimeoutHandlingCode   = false;
 
     private WeakHashMap<String, T> connectionLookupTable            = new WeakHashMap<String, T>();
-
-    private RMDConfigExtractor         rmdConfigExtractor               = null;
 
     public ConnectionManager() {
         pool = new ConnectionPool<T>();
@@ -233,10 +229,6 @@ public class ConnectionManager<T> {
      */
     public int getRetryIncrementTime() {
         return retryIncrementTime;
-    }
-
-    public RMDConfigExtractor getRmdConfigExtractor() {
-        return rmdConfigExtractor;
     }
 
     /**
@@ -403,10 +395,6 @@ public class ConnectionManager<T> {
      */
     public void setRetryIncrementTime(int retryIncrementTime) {
         this.retryIncrementTime = retryIncrementTime;
-    }
-
-    public void setRmdConfigExtractor(RMDConfigExtractor rmdConfigExtractor) {
-        this.rmdConfigExtractor = rmdConfigExtractor;
     }
 
     /**

@@ -246,13 +246,11 @@ public class MappingDBUpdater2 extends LifecycleComponent implements IDataProces
                 java.sql.Timestamp sourceTime = new java.sql.Timestamp(
                         sourceLastModifiedDate.getTime());
 
-                String dryRunModeValue = rmdDryModeHandler
-                        .getDryRunModeValueFromCache(repositoryMappingDirectionId);
-
                 if (artifactAction
                         .equals(GenericArtifactHelper.ARTIFACT_ACTION_IGNORE)) {
                     if (!replayedArtifact
-                            && !DryModeHandler.isDryRunMode(dryRunModeValue)
+                            && !rmdDryModeHandler
+                                    .isDryRunMode(repositoryMappingDirectionId)
                             && updateSynchronizationStatusTable
                             && !artifactType
                                     .equals(GenericArtifactHelper.ARTIFACT_TYPE_ATTACHMENT)) {
@@ -332,9 +330,6 @@ public class MappingDBUpdater2 extends LifecycleComponent implements IDataProces
                 java.sql.Timestamp targetTime = new java.sql.Timestamp(
                         targetLastModifiedDate.getTime());
 
-                String currentDryRunModeValue = rmdDryModeHandler
-                        .getDryRunModeValueFromCache(sourceSystemKind);
-
                 createMapping(element, sourceArtifactId, sourceRepositoryId,
                         sourceRepositoryKind, sourceSystemId, sourceSystemKind,
                         targetArtifactId, targetRepositoryId,
@@ -349,7 +344,7 @@ public class MappingDBUpdater2 extends LifecycleComponent implements IDataProces
                         repositoryMappingId);
 
                 if (!replayedArtifact
-                        && !DryModeHandler.isDryRunMode(currentDryRunModeValue)
+                        && !rmdDryModeHandler.isDryRunMode(sourceSystemKind)
                         && updateSynchronizationStatusTable
                         && !artifactType
                                 .equals(GenericArtifactHelper.ARTIFACT_TYPE_ATTACHMENT)) {

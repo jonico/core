@@ -683,9 +683,6 @@ public class EntityService2 extends LifecycleComponent implements IDataProcessor
             boolean replayedArtifact = (transactionId != null && !transactionId
                     .equals(GenericArtifact.VALUE_UNKNOWN));
 
-            String dryRunModeValue = rmdDryModeHandler
-                    .getDryRunModeValueFromCache(repositoryMappingDirectionId);
-
             if (sourceArtifactVersion == null
                     || sourceArtifactVersion
                             .equals(GenericArtifact.VALUE_UNKNOWN)) {
@@ -724,15 +721,15 @@ public class EntityService2 extends LifecycleComponent implements IDataProcessor
                             targetRepositoryId, artifactType,
                             sourceArtifactLastModifiedDate,
                             sourceArtifactVersionLong, false,
-                            repositoryMappingDirectionId, dryRunModeValue)) {
+                            repositoryMappingDirectionId)) {
                 XPathUtils.addAttribute(element,
                         GenericArtifactHelper.ARTIFACT_ACTION,
                         GenericArtifactHelper.ARTIFACT_ACTION_IGNORE);
                 return new Object[] { data };
             }
 
-            if (DryModeHandler
-                    .isDryRunEqualsBeforeTransformation(dryRunModeValue)) {
+            if (rmdDryModeHandler
+                    .isDryRunEqualsBeforeTransformation(repositoryMappingDirectionId)) {
                 String cause = "Storing in hospital as dryrun mode is enabled for the repository mapping direction id: "
                         + repositoryMappingDirectionId;
                 XPathUtils.addAttribute(element,
@@ -870,9 +867,7 @@ public class EntityService2 extends LifecycleComponent implements IDataProcessor
                                     targetSystemId,
                                     targetParentRepositoryId,
                                     GenericArtifactHelper.ARTIFACT_TYPE_PLAIN_ARTIFACT,
-                                    null, 0, true,
-                                    repositoryMappingDirectionId,
-                                    dryRunModeValue)) {
+                                    null, 0, true, repositoryMappingDirectionId)) {
                         String cause = "Parent artifact "
                                 + sourceParentArtifactId
                                 + " for attachment "
@@ -1224,7 +1219,7 @@ public class EntityService2 extends LifecycleComponent implements IDataProcessor
             Date sourceArtifactLastModifiedDate,
             long sourceArtifactVersionLong,
             boolean onlyCheckIfQuarantinedArtifactExists,
-            String repositoryMappingDirectionId, String dryRunModeValue) {
+            String repositoryMappingDirectionId) {
 
         // only if a connection to the hospital table is possible we can skip
         // artifacts
@@ -1303,7 +1298,8 @@ public class EntityService2 extends LifecycleComponent implements IDataProcessor
                                     + " will not be skipped despite it is in the hospital. Hospital ID: "
                                     + hospitalId);
                         } else {
-                            if (DryModeHandler.isDryRunMode(dryRunModeValue)) {
+                            if (rmdDryModeHandler
+                                    .isDryRunMode(repositoryMappingDirectionId)) {
                                 log.info("Dont Repeat the artifact from combination"
                                         + sourceArtifactId
                                         + "-"

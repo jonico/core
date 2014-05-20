@@ -343,9 +343,8 @@
 			all the comments and attachment; Since CCF Sync is based on Artifact specific 
 			last modified timestamp or last modified version -->
 		<property name="identityMappingDatabaseReader" ref="IndentityMappingDatabaseReaderQC2TF" />
-		<property name="rmdConfigExtractor" ref="rmdConfigExtractor"/>
 		<property name="rmdDryModeHandler" ref="rmdDryModeHandler"/>
-		<property name="repositoryMappingDirectionConfigTableUpdater" ref="RepositoryMappingDirectionConfigDatabaseUpdaterQC2TF"/>
+		<property name="rmdFilterHandler" ref="rmdFilterHandler"/>
 	</bean>
 	<bean id="QCConnectionManager" class="com.collabnet.ccf.core.eis.connection.ConnectionManager">
 		<!-- Please set the number of connections to the number of project mappings 
@@ -736,12 +735,13 @@
 	</bean>
 
 	
-	<bean id="rmdConfigExtractor" class="com.collabnet.ccf.core.db.RMDConfigExtractor">
+	<bean id="rmdConfigExtractor" class="com.collabnet.ccf.core.db.RMDConfigDBExtractor">
 		<property name="rmdConfigJDBCReadConnector" ref="rmdConfigJDBCExtractor"></property>
 	</bean>
 
     <bean id="rmdDryModeHandler" class="com.collabnet.ccf.core.rmdhandlers.RMDDryModeHandler">
 		<property name="rmdConfigExtractor" ref="rmdConfigExtractor"/>
+		<property name="repositoryMappingDirectionConfigTableUpdater" ref="RepositoryMappingDirectionConfigDatabaseUpdaterQC2TF"></property>
 	</bean>
 
 	<bean id="rmdConfigJDBCExtractor"
@@ -781,6 +781,10 @@
 				<value>VAL</value>
 			</list>
 		</property>
+	</bean>
+	
+	<bean id="rmdFilterHandler" class="com.collabnet.ccf.core.rmdhandlers.RMDFilterHandler">
+		<property name="rmdConfigExtractor" ref="rmdConfigExtractor" />
 	</bean>
 
 	<bean id="mBeanExporter" class="org.springframework.jmx.export.MBeanExporter">
