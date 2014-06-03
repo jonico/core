@@ -6,7 +6,7 @@ public class NoOpFilterHandler implements FilterHandler {
         return true;
     }
 
-    public boolean hospitalOnlyFilterEnabled(String rmdID) {
+    public boolean ignoreOrdinaryArtifactUpdates(String rmdID) {
         return false;
     }
 

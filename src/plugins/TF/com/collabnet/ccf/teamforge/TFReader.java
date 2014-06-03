@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 
 import javax.xml.namespace.QName;
 
@@ -106,6 +107,31 @@ public class TFReader extends AbstractReader<Connection> {
      * created.
      */
     private String              resyncUserName;
+
+    public Connection connect(Document syncInfo) {
+        Connection connection = null;
+        String sourceSystemId = this.getSourceSystemId(syncInfo);
+        String sourceSystemKind = this.getSourceSystemKind(syncInfo);
+        String sourceRepositoryId = this.getSourceRepositoryId(syncInfo);
+        String sourceRepositoryKind = this.getSourceRepositoryKind(syncInfo);
+        try {
+            connection = connect(sourceSystemId, sourceSystemKind,
+                    sourceRepositoryId, sourceRepositoryKind, serverUrl,
+                    getUsername() + TFConnectionFactory.PARAM_DELIMITER
+                            + getPassword());
+        } catch (MaxConnectionsReachedException e) {
+            String cause = "Could not create connection to the TF system. Max connections reached for "
+                    + serverUrl;
+            log.error(cause, e);
+            throw new CCFRuntimeException(cause, e);
+        } catch (ConnectionException e) {
+            String cause = "Could not create connection to the TF system "
+                    + serverUrl;
+            log.error(cause, e);
+            throw new CCFRuntimeException(cause, e);
+        }
+        return connection;
+    }
 
     /**
      * Below property -"preserveBulkCommentOrder" preserves the bulk/multi
@@ -251,6 +277,7 @@ public class TFReader extends AbstractReader<Connection> {
         String sourceSystemKind = this.getSourceSystemKind(syncInfo);
         String sourceRepositoryId = this.getSourceRepositoryId(syncInfo);
         String sourceRepositoryKind = this.getSourceRepositoryKind(syncInfo);
+        boolean isArtifactForced = this.isArtifactForced(syncInfo);
         Date lastModifiedDate = this.getLastModifiedDate(syncInfo);
         Date artifactLastModifiedDate = this
                 .getArtifactLastModifiedDate(syncInfo);
@@ -299,7 +326,7 @@ public class TFReader extends AbstractReader<Connection> {
                 lastModifiedBy = artifact.getLastModifiedBy();
                 Date creationDate = artifact.getCreatedDate();
                 if (lastModifiedBy.equalsIgnoreCase(getUsername())
-                        && isIgnoreConnectorUserUpdates()) {
+                        && isIgnoreConnectorUserUpdates() && !isArtifactForced) {
                     if (creationDate.after(lastModifiedDate)) {
                         log.info(String
                                 .format("resync is necessary, despite the artifact %s last being updated by the connector user",
@@ -464,6 +491,10 @@ public class TFReader extends AbstractReader<Connection> {
 
             populateSrcAndDest(syncInfo, genericArtifact);
 
+            if (isArtifactForced) {
+                genericArtifact.setTransactionId(DUMMY_FORCE_TRANSACTIONID);
+            }
+
         } catch (RemoteException e) {
             String cause = "During the artifact retrieval process from TF, an error occured";
             log.error(cause, e);
@@ -502,10 +533,7 @@ public class TFReader extends AbstractReader<Connection> {
      */
     @Override
     public List<ArtifactState> getChangedArtifacts(Document syncInfo) {
-        String sourceSystemId = this.getSourceSystemId(syncInfo);
-        String sourceSystemKind = this.getSourceSystemKind(syncInfo);
         String sourceRepositoryId = this.getSourceRepositoryId(syncInfo);
-        String sourceRepositoryKind = this.getSourceRepositoryKind(syncInfo);
         String lastSynchronizedArtifactId = this
                 .getLastSourceArtifactId(syncInfo);
         String lastSynchronizedVersion = this.getLastSourceVersion(syncInfo);
@@ -516,23 +544,7 @@ public class TFReader extends AbstractReader<Connection> {
             log.warn("Version string is not a number "
                     + lastSynchronizedVersion, e);
         }
-        Connection connection;
-        try {
-            connection = connect(sourceSystemId, sourceSystemKind,
-                    sourceRepositoryId, sourceRepositoryKind, serverUrl,
-                    getUsername() + TFConnectionFactory.PARAM_DELIMITER
-                            + getPassword());
-        } catch (MaxConnectionsReachedException e) {
-            String cause = "Could not create connection to the TF system. Max connections reached for "
-                    + serverUrl;
-            log.error(cause, e);
-            throw new CCFRuntimeException(cause, e);
-        } catch (ConnectionException e) {
-            String cause = "Could not create connection to the TF system "
-                    + serverUrl;
-            log.error(cause, e);
-            throw new CCFRuntimeException(cause, e);
-        }
+        Connection connection = connect(syncInfo);
         try {
             Date lastModifiedDate = this.getLastModifiedDate(syncInfo);
             if (lastModifiedDate == null) {
@@ -605,6 +617,82 @@ public class TFReader extends AbstractReader<Connection> {
         } finally {
             this.disconnect(connection);
         }
+    }
+
+    public List<ArtifactState> getChangedArtifactsToForceSync(
+            Set<String> artifactsToForce, Document syncInfo) {
+        List<ArtifactState> artifactStates = new ArrayList<ArtifactState>();
+        String sourceRepositoryId = this.getSourceRepositoryId(syncInfo);
+        Connection connection = connect(syncInfo);
+        try {
+            if (TFConnectionFactory.isTrackerRepository(sourceRepositoryId)) {
+                try {
+                    for (String artifactId : artifactsToForce) {
+                        ArtifactDO artifactData = trackerHandler
+                                .getChangedArtifactDataToForce(connection,
+                                        artifactId);
+                        if (artifactData != null
+                                && artifactData.getFolderId().equals(
+                                        sourceRepositoryId)) {
+                            ArtifactState artifactState = new ArtifactState();
+                            artifactState.setArtifactId(artifactData.getId());
+                            artifactState
+                                    .setArtifactLastModifiedDate(artifactData
+                                            .getLastModifiedDate());
+                            artifactState.setArtifactVersion(artifactData
+                                    .getVersion());
+                            artifactState.setForcedArtifact(true);
+                            artifactStates.add(artifactState);
+                        }
+                    }
+                } catch (RemoteException e) {
+                    String cause = "During the changed artifacts retrieval process from TF, an exception occured";
+                    log.error(cause, e);
+                    throw new CCFRuntimeException(cause, e);
+                }
+            } else if (TFConnectionFactory
+                    .isPlanningFolderRepository(sourceRepositoryId)) {
+                //We retrieve planning folders
+                if (!connection.supports53()) {
+                    log.warn("Planning folder extraction requested, but this version of TF does not support planning folders: "
+                            + sourceRepositoryId);
+                } else {
+                    try {
+                        String projectId = TFConnectionFactory
+                                .extractProjectFromRepositoryId(sourceRepositoryId);
+                        for (String artifactId : artifactsToForce) {
+                            PlanningFolderDO planningFolder = trackerHandler
+                                    .getChangedPlanningFolderToForce(
+                                            connection, artifactId);
+                            if (planningFolder != null
+                                    && planningFolder.getProjectId().equals(
+                                            projectId)) {
+                                ArtifactState artifactState = new ArtifactState();
+                                artifactState.setArtifactId(planningFolder
+                                        .getId());
+                                artifactState
+                                        .setArtifactLastModifiedDate(planningFolder
+                                                .getLastModifiedDate());
+                                artifactState.setArtifactVersion(planningFolder
+                                        .getVersion());
+                                artifactState.setForcedArtifact(true);
+                                artifactStates.add(artifactState);
+                            }
+                        }
+                    } catch (RemoteException e) {
+                        String cause = "During the changed planning folder retrieval process from TF, an exception occured";
+                        log.error(cause, e);
+                        throw new CCFRuntimeException(cause, e);
+                    }
+                }
+            } else {
+                throw new CCFRuntimeException("Unknown repository id format: "
+                        + sourceRepositoryId);
+            }
+        } finally {
+            this.disconnect(connection);
+        }
+        return artifactStates;
     }
 
     /**

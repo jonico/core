@@ -43,8 +43,10 @@ import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
 import com.collabnet.ccf.core.rmdhandlers.DryModeHandler;
 import com.collabnet.ccf.core.rmdhandlers.FilterHandler;
+import com.collabnet.ccf.core.rmdhandlers.ForceHandler;
 import com.collabnet.ccf.core.rmdhandlers.NoOpDryModeHandler;
 import com.collabnet.ccf.core.rmdhandlers.NoOpFilterHandler;
+import com.collabnet.ccf.core.rmdhandlers.NoOpForceHandler;
 import com.collabnet.ccf.core.utils.DateUtil;
 
 /**
@@ -64,6 +66,7 @@ import com.collabnet.ccf.core.utils.DateUtil;
  * 
  */
 public abstract class AbstractReader<T> extends Component implements IDataProcessor {
+    public static final String                DUMMY_FORCE_TRANSACTIONID                               = "forcedUpdate";
     private static final String               FIELD_MAPPING_LANDSCAPE_DIRECTORY                       = "landscape";
     private static final String               FIELD_MAPPING_CORE_DIRECTORY                            = "core";
     private static final String               TARGET_SYSTEM_ENCODING                                  = "//TARGET_SYSTEM_ENCODING | //target_system_encoding";
@@ -93,6 +96,8 @@ public abstract class AbstractReader<T> extends Component implements IDataProces
     private static final String               ARTIFACT_LAST_MODIFIED_VERSION_ELEMENT                  = "ARTIFACT_LAST_MODIFIED_VERSION";
     private static final String               ARTIFACT_LAST_MODIFIED_DATE                             = "//ARTIFACT_LAST_MODIFIED_DATE | //artifact_last_modified_date";
     private static final String               ARTIFACT_LAST_MODIFIED_VERSION                          = "//ARTIFACT_LAST_MODIFIED_VERSION | //artifact_last_modified_version";
+    private static final String               FORCED_ARTIFACT_ELEMENT                                 = "FORCED_ARTIFACT";
+    private static final String               FORCED_ARTIFACT                                         = "//FORCED_ARTIFACT | //forced_artifact";
 
     private static final Log                  log                                                     = LogFactory
                                                                                                               .getLog(AbstractReader.class);
@@ -193,6 +198,8 @@ public abstract class AbstractReader<T> extends Component implements IDataProces
 
     private FilterHandler                     rmdFilterHandler                                        = new NoOpFilterHandler();
 
+    private ForceHandler                      rmdForceHandler                                         = new NoOpForceHandler();
+
     public AbstractReader() {
         super();
         init();
@@ -284,6 +291,9 @@ public abstract class AbstractReader<T> extends Component implements IDataProces
      * @return
      */
     public abstract List<ArtifactState> getChangedArtifacts(Document syncInfo);
+
+    public abstract List<ArtifactState> getChangedArtifactsToForceSync(
+            Set<String> artifactsToForce, Document SyncInfo);
 
     /**
      * Extracts and returns the conflictResolutionPriority for the source
@@ -481,6 +491,10 @@ public abstract class AbstractReader<T> extends Component implements IDataProces
 
     public FilterHandler getRmdFilterHandler() {
         return rmdFilterHandler;
+    }
+
+    public ForceHandler getRmdForceHandler() {
+        return rmdForceHandler;
     }
 
     /**
@@ -706,6 +720,17 @@ public abstract class AbstractReader<T> extends Component implements IDataProces
         return false;
     }
 
+    public boolean isArtifactForced(Document syncInfo) {
+        Node node = syncInfo.selectSingleNode(FORCED_ARTIFACT);
+        if (node == null)
+            return false;
+        String val = node.getText();
+        if (!StringUtils.isEmpty(val)) {
+            return Boolean.parseBoolean(val);
+        }
+        return false;
+    }
+
     /**
      * Returns whether this scenario is just used for bulk import and no
      * frequent artifact changes are currently done on the repository. This
@@ -842,6 +867,7 @@ public abstract class AbstractReader<T> extends Component implements IDataProces
             Document syncInfo = currentRecord.getSyncInfo();
             rmdDryModeHandler.loadRMDAndRMDConfig(repositoryMappingDirectionID);
             rmdFilterHandler.loadRMDAndRMDConfig(repositoryMappingDirectionID);
+            rmdForceHandler.loadRMDAndRMDConfig(repositoryMappingDirectionID);
             // RepositoryRecord movedRecord =
             // repositorySynchronizationWaitingList.remove(0);
             // repositorySynchronizationWaitingList.add(movedRecord);
@@ -1006,6 +1032,12 @@ public abstract class AbstractReader<T> extends Component implements IDataProces
                 log.debug("There are " + artifactsToBeReadList.size()
                         + " artifacts to be read.");
                 ArtifactState artifactState = artifactsToBeReadList.remove(0);
+                if (rmdForceHandler
+                        .isForceEnabled(repositoryMappingDirectionID)
+                        && artifactsToBeReadList.isEmpty()) {
+                    rmdForceHandler
+                            .updateRMDConfigToOff(repositoryMappingDirectionID);
+                }
                 List<GenericArtifact> sortedGAs = null;
                 if (artifactState.isReplayedArtifact()) {
                     sortedGAs = new ArrayList<GenericArtifact>();
@@ -1061,6 +1093,9 @@ public abstract class AbstractReader<T> extends Component implements IDataProces
                                 updateSyncInfoFromIdentityMapping(tempSyncInfo,
                                         artifactId,
                                         ARTIFACT_TYPE_PLAIN_ARTIFACT);
+                            }
+                            if (artifactState.isForcedArtifact()) {
+                                modifySyncInfo(tempSyncInfo, true);
                             }
                             GenericArtifact artifactData = this
                                     .getArtifactData(tempSyncInfo, artifactId);
@@ -1371,6 +1406,10 @@ public abstract class AbstractReader<T> extends Component implements IDataProces
         this.rmdFilterHandler = rmdFilterHandler;
     }
 
+    public void setRmdForceHandler(ForceHandler rmdForceHandler) {
+        this.rmdForceHandler = rmdForceHandler;
+    }
+
     /**
      * Sets the flag whether to ship the attachments or not.
      * 
@@ -1651,7 +1690,13 @@ public abstract class AbstractReader<T> extends Component implements IDataProces
             Document syncInfo) {
         String rmdID = this.getRepositoryMappingDirectionId(syncInfo);
         List<ArtifactState> changedArtifacts = getChangedArtifactsFromHospital(syncInfo);
-        if (!rmdFilterHandler.hospitalOnlyFilterEnabled(rmdID)) {
+        Set<String> artifactsToBeForced = rmdForceHandler
+                .getArtifactIdSet(rmdID);
+        if (!artifactsToBeForced.isEmpty()) {
+            changedArtifacts.addAll(getChangedArtifactsToForceSync(
+                    artifactsToBeForced, syncInfo));
+        }
+        if (!rmdFilterHandler.ignoreOrdinaryArtifactUpdates(rmdID)) {
             changedArtifacts.addAll(getChangedArtifacts(syncInfo));
         }
         return changedArtifacts;
@@ -1739,6 +1784,13 @@ public abstract class AbstractReader<T> extends Component implements IDataProces
             return true;
         }
         return false;
+    }
+
+    private void modifySyncInfo(Document syncInfo, boolean isForced) {
+        Element rootElement = syncInfo.getRootElement();
+        Element forcedArtifactElement = rootElement
+                .addElement(FORCED_ARTIFACT_ELEMENT);
+        forcedArtifactElement.setText(Boolean.toString(isForced));
     }
 
     private void modifySyncInfo(Document syncInfo,

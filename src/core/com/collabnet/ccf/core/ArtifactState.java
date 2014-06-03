@@ -29,6 +29,12 @@ public class ArtifactState {
     private boolean replayedArtifact     = false;
 
     /**
+     * this property is used to indicate whether this is a forced artifact or
+     * not
+     */
+    private boolean forcedArtifact       = false;
+
+    /**
      * this property is used to store the serialized XML of the replayed
      * artifact
      */
@@ -63,6 +69,10 @@ public class ArtifactState {
         return transactionId;
     }
 
+    public boolean isForcedArtifact() {
+        return forcedArtifact;
+    }
+
     public boolean isReplayedArtifact() {
         return replayedArtifact;
     }
@@ -81,6 +91,10 @@ public class ArtifactState {
 
     public void setErrorCode(String errorCode) {
         this.errorCode = errorCode;
+    }
+
+    public void setForcedArtifact(boolean forcedArtifact) {
+        this.forcedArtifact = forcedArtifact;
     }
 
     public void setReplayedArtifact(boolean replayedArtifact) {

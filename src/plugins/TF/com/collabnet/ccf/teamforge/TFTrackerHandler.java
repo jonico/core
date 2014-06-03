@@ -228,6 +228,17 @@ public class TFTrackerHandler {
                 .getParentDependencyList(artifactId).getDataRows();
     }
 
+    public ArtifactDO getChangedArtifactDataToForce(Connection connection,
+            String artifactId) throws RemoteException {
+        return connection.getTrackerClient().getArtifactData(artifactId);
+
+    }
+
+    public PlanningFolderDO getChangedPlanningFolderToForce(Connection connection,
+            String artifactID) throws RemoteException {
+        return connection.getPlanningClient().getPlanningFolderData(artifactID);
+    }
+
     public List<PlanningFolderDO> getChangedPlanningFolders(
             Connection connection, String sourceRepositoryId,
             Date lastModifiedDate, String lastSynchronizedArtifactId,

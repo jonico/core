@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.xml.datatype.DatatypeConfigurationException;
 
@@ -665,6 +666,12 @@ public class SWPReader extends AbstractReader<Connection> {
             disconnect(connection);
         }
         return artifactStates;
+    }
+
+    public List<ArtifactState> getChangedArtifactsToForceSync(
+            Set<String> artifactsToForce, Document SyncInfo) {
+        //Currently we don't support changed artifacts to force sync 
+        return new ArrayList<ArtifactState>();
     }
 
     /**

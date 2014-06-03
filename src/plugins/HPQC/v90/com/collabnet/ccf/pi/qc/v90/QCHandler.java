@@ -469,6 +469,63 @@ public class QCHandler {
         return newRs;
     }
 
+    public ArtifactState getChangedDefectToForce(IConnection qcc,
+            String artifactId) {
+        ArtifactState defectState = new ArtifactState();
+        String sql = "SELECT AU_ENTITY_ID, AU_ACTION_ID, AU_TIME FROM AUDIT_LOG WHERE AU_ENTITY_TYPE = 'BUG' AND AU_ENTITY_ID ='"
+                + artifactId
+                + "' AND AU_ACTION!='DELETE' AND AU_FATHER_ID = '-1' ORDER BY AU_ACTION_ID DESC";
+        log.debug(sql);
+        IRecordSet rs = null;
+        try {
+            rs = qcc.executeSQL(sql);
+            if (rs != null) {
+                String bugId = rs.getFieldValueAsString("AU_ENTITY_ID");
+                String actionIdStr = rs.getFieldValueAsString("AU_ACTION_ID");
+                int actionId = Integer.parseInt(actionIdStr);
+                String actionDateStr = rs.getFieldValueAsString("AU_TIME");
+                Date actionDate = DateUtil.parseQCDate(actionDateStr);
+                defectState.setArtifactId(bugId);
+                defectState.setArtifactLastModifiedDate(actionDate);
+                defectState.setArtifactVersion(actionId);
+            }
+        } finally {
+            if (rs != null) {
+                rs.safeRelease();
+                rs = null;
+            }
+        }
+        return defectState;
+    }
+
+    public ArtifactState getChangedRequirementToForce(IConnection qcc,
+            String artifactId, String reqType) {
+        ArtifactState defectState = new ArtifactState();
+        String sql = sqlQueryToRetrieveAndForceLatestRequirement(artifactId,
+                reqType);
+        log.debug(sql);
+        IRecordSet rs = null;
+        try {
+            rs = qcc.executeSQL(sql);
+            if (rs != null) {
+                String bugId = rs.getFieldValueAsString("AU_ENTITY_ID");
+                String actionIdStr = rs.getFieldValueAsString("AU_ACTION_ID");
+                int actionId = Integer.parseInt(actionIdStr);
+                String actionDateStr = rs.getFieldValueAsString("AU_TIME");
+                Date actionDate = DateUtil.parseQCDate(actionDateStr);
+                defectState.setArtifactId(bugId);
+                defectState.setArtifactLastModifiedDate(actionDate);
+                defectState.setArtifactVersion(actionId);
+            }
+        } finally {
+            if (rs != null) {
+                rs.safeRelease();
+                rs = null;
+            }
+        }
+        return defectState;
+    }
+
     public String getConcatinatedCommentValue(String oldFieldValue,
             String fieldValue, String connectorUser, IConnection qcc) {
 
@@ -1689,6 +1746,22 @@ public class QCHandler {
                 rs = null;
             }
         }
+    }
+
+    private String sqlQueryToRetrieveAndForceLatestRequirement(
+            String artifactId, String technicalRequirementsId) {
+        StringBuilder queryBuilder = new StringBuilder();
+        queryBuilder
+                .append("SELECT AL.AU_ENTITY_ID AS AU_ENTITY_ID, AL.AU_ACTION_ID AS AU_ACTION_ID, AL.AU_TIME AS AU_TIME FROM AUDIT_LOG AL, REQ WHERE AL.AU_ENTITY_TYPE = 'REQ' AND AU_ENTITY_ID = '")
+                .append(artifactId)
+                .append("' AND AL.AU_ACTION!='DELETE' AND AL.AU_FATHER_ID = '-1'");
+        if (!QCHandler.REQUIREMENT_TYPE_ALL.equals(technicalRequirementsId)) {
+            queryBuilder.append(" AND REQ.RQ_TYPE_ID = '")
+                    .append(technicalRequirementsId).append("'");
+        }
+        queryBuilder
+                .append(" AND AL.AU_ENTITY_ID = REQ.RQ_REQ_ID ORDER BY AL.AU_ACTION_ID DESC");
+        return queryBuilder.toString();
     }
 
     private String sqlQueryToRetrieveLatestRequirement(String transactionId,

@@ -14,6 +14,7 @@ package com.collabnet.ccf.samples;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 import org.dom4j.Document;
 
@@ -197,6 +198,13 @@ public class SampleReader extends AbstractReader<String> {
         state.setArtifactLastModifiedDate(new Date());
         artifactSatesList.add(state);
         return artifactSatesList;
+    }
+
+    @Override
+    public List<ArtifactState> getChangedArtifactsToForceSync(
+            Set<String> artifactsToForce, Document SyncInfo) {
+        //Currently we don't support changed artifacts to force sync 
+        return new ArrayList<ArtifactState>();
     }
 
 }

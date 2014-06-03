@@ -63,7 +63,8 @@ public class RMDFilterHandlerTest {
     @Test
     public void test21RegexWithMistake() {
         RMDFilterHandler filterHandler = getFilterHandler("regex:^artf123.+*$");
-        validateAssert(filterHandler);
+        Assert.assertFalse(filterHandler.containsId(rmdID, "artf1234"));
+        Assert.assertFalse(filterHandler.containsId(rmdID, "testValue"));
 
     }
 
@@ -97,27 +98,41 @@ public class RMDFilterHandlerTest {
     }
 
     @Test
-    public void test32EmptyQueryFoRanges() {
+    public void test32EmptyQueryForRanges() {
         RMDFilterHandler filterHandler = getFilterHandler("ranges:");
         validateAssert(filterHandler);
     }
 
     @Test
+    public void test33MisMatchQueryForRanges() {
+        RMDFilterHandler filterHandler = getFilterHandler("ranges:artf1234-abc1235");
+        Assert.assertFalse(filterHandler.containsId(rmdID, "artf1234"));
+        Assert.assertFalse(filterHandler.containsId(rmdID, "abc1235"));
+    }
+
+    @Test
+    public void test33RangeSeperatorAsQueryRanges() {
+        RMDFilterHandler filterHandler = getFilterHandler("ranges: - ");
+        Assert.assertTrue(filterHandler.containsId(rmdID, "artf1234"));
+    }
+
+    @Test
     public void test40HospitalOnly() {
-        RMDFilterHandler filterHandler = getFilterHandler("hospitalonly");
-        Assert.assertTrue(filterHandler.hospitalOnlyFilterEnabled(rmdID));
+        RMDFilterHandler filterHandler = getFilterHandler("ignoreOrdinaryArtifactUpdates");
+        Assert.assertTrue(filterHandler.ignoreOrdinaryArtifactUpdates(rmdID));
+        Assert.assertTrue(filterHandler.containsId(rmdID, "artf1234"));
     }
 
     @Test
     public void test41NullForHospitalOnly() {
         RMDFilterHandler filterHandler = getFilterHandler(null);
-        Assert.assertFalse(filterHandler.hospitalOnlyFilterEnabled(rmdID));
+        Assert.assertFalse(filterHandler.ignoreOrdinaryArtifactUpdates(rmdID));
     }
 
     @Test
     public void test42EmptyForHospitalOnly() {
         RMDFilterHandler filterHandler = getFilterHandler("");
-        Assert.assertFalse(filterHandler.hospitalOnlyFilterEnabled(rmdID));
+        Assert.assertFalse(filterHandler.ignoreOrdinaryArtifactUpdates(rmdID));
     }
 
     @Test
@@ -168,7 +183,7 @@ public class RMDFilterHandlerTest {
     }
 
     private void validateAssert(RMDFilterHandler filterHandler) {
-        Assert.assertFalse(filterHandler.containsId(rmdID, "artf1234"));
-        Assert.assertFalse(filterHandler.containsId(rmdID, "testValue"));
+        Assert.assertTrue(filterHandler.containsId(rmdID, "artf1234"));
+        Assert.assertTrue(filterHandler.containsId(rmdID, "testValue"));
     }
 }

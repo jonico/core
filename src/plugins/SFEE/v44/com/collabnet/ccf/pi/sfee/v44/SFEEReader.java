@@ -16,6 +16,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Set;
 
 import javax.xml.namespace.QName;
 
@@ -376,6 +377,12 @@ public class SFEEReader extends AbstractReader<Connection> {
             }
         }
         return artifactStates;
+    }
+
+    public List<ArtifactState> getChangedArtifactsToForceSync(
+            Set<String> artifactsToForce, Document SyncInfo) {
+        //Currently we don't support changed artifacts to force sync 
+        return new ArrayList<ArtifactState>();
     }
 
     /**

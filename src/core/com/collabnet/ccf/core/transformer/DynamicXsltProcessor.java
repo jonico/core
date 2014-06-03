@@ -38,22 +38,17 @@ import org.apache.commons.vfs.FileSystemManager;
 import org.apache.commons.vfs.VFS;
 import org.apache.commons.vfs.impl.DefaultFileMonitor;
 import org.dom4j.Document;
-import org.dom4j.DocumentException;
-import org.dom4j.DocumentFactory;
-import org.dom4j.DocumentHelper;
 import org.dom4j.Element;
 import org.dom4j.XPath;
 import org.dom4j.io.DocumentResult;
 import org.dom4j.io.DocumentSource;
 import org.dom4j.io.SAXReader;
 import org.jaxen.SimpleNamespaceContext;
-import org.jaxen.SimpleVariableContext;
 import org.openadaptor.auxil.processor.script.ScriptProcessor;
 import org.openadaptor.core.Component;
 import org.openadaptor.core.IDataProcessor;
 import org.openadaptor.core.exception.ProcessingException;
 import org.openadaptor.core.exception.ValidationException;
-import org.openadaptor.thirdparty.dom4j.Dom4jUtils;
 
 import com.collabnet.ccf.core.CCFRuntimeException;
 import com.collabnet.ccf.core.ga.GenericArtifact;
@@ -290,7 +285,8 @@ public class DynamicXsltProcessor extends Component implements IDataProcessor {
                 // do not transform artifacts to be replayed (unless specific
                 // error code is set)
                 if (transactionId != null
-                        && !transactionId.equals(GenericArtifact.VALUE_UNKNOWN)) {
+                        && !transactionId.equals(GenericArtifact.VALUE_UNKNOWN)
+                        && !transactionId.equals("forcedUpdate")) {
                     if (errorCode == null
                             || !errorCode
                                     .equals(GenericArtifact.ERROR_REPLAYED_WITH_TRANSFORMATION)) {

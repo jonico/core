@@ -345,6 +345,7 @@
 		<property name="identityMappingDatabaseReader" ref="IndentityMappingDatabaseReaderQC2TF" />
 		<property name="rmdDryModeHandler" ref="rmdDryModeHandler"/>
 		<property name="rmdFilterHandler" ref="rmdFilterHandler"/>
+		<property name="rmdForceHandler" ref="rmdForceHandler"/>
 	</bean>
 	<bean id="QCConnectionManager" class="com.collabnet.ccf.core.eis.connection.ConnectionManager">
 		<!-- Please set the number of connections to the number of project mappings 
@@ -690,7 +691,7 @@
 			<value>
 				var transactionId =
 				oa_data.getRootElement().selectSingleNode("@transactionId").getText();
-				if (transactionId == "unknown") transactionId = "-1";
+				if (transactionId == "unknown" || transactionId =="forcedUpdate") transactionId = "-1";
 				oa_data = "DELETE FROM HOSPITAL_ENTRY WHERE ID = " + transactionId;
 			</value>
 		</property>
@@ -704,7 +705,7 @@
 			<value>
 				var transactionId =
 				oa_data.getRootElement().selectSingleNode("@transactionId").getText();
-				if (transactionId == "unknown") transactionId = "-1";
+				if (transactionId == "unknown" || transactionId =="forcedUpdate") transactionId = "-1";
 				oa_data = "UPDATE HOSPITAL_ENTRY SET REPROCESSED = TRUE WHERE ID = " +
 				transactionId;
 			</value>
@@ -785,6 +786,12 @@
 	
 	<bean id="rmdFilterHandler" class="com.collabnet.ccf.core.rmdhandlers.RMDFilterHandler">
 		<property name="rmdConfigExtractor" ref="rmdConfigExtractor" />
+	</bean>	
+	
+	
+	<bean id="rmdForceHandler" class="com.collabnet.ccf.core.rmdhandlers.RMDForceHandler">
+		<property name="rmdConfigExtractor" ref="rmdConfigExtractor" />
+		<property name="repositoryMappingDirectionConfigTableUpdater" ref="RepositoryMappingDirectionConfigDatabaseUpdaterQC2TF"/>
 	</bean>
 
 	<bean id="mBeanExporter" class="org.springframework.jmx.export.MBeanExporter">
