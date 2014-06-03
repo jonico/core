@@ -274,7 +274,8 @@
 		 -->		
 		<property name="identityMappingDatabaseReader" ref="IndentityMappingDatabaseReaderTF2QC" /> 
 		<property name="rmdDryModeHandler" ref="rmdDryModeHandler"/>
-		<property name="rmdFilterHandler" ref="rmdFilterHandler"></property>
+		<property name="rmdFilterHandler" ref="rmdFilterHandler"/>
+		<property name="rmdForceHandler" ref="rmdForceHandler"/>
 	</bean>
 	<bean id="TFConnectionManager"
 		class="com.collabnet.ccf.core.eis.connection.ConnectionManager">
@@ -738,6 +739,11 @@
 	
 	<bean id="rmdFilterHandler" class="com.collabnet.ccf.core.rmdhandlers.RMDFilterHandler">
 		<property name="rmdConfigExtractor" ref="rmdConfigExtractor" />
+	</bean>
+	
+	<bean id="rmdForceHandler" class="com.collabnet.ccf.core.rmdhandlers.RMDForceHandler">
+		<property name="rmdConfigExtractor" ref="rmdConfigExtractor" />
+		<property name="repositoryMappingDirectionConfigTableUpdater" ref="RepositoryMappingDirectionConfigDatabaseUpdaterTF2QC"/>
 	</bean>
 	
 	<bean id="mBeanExporter" class="org.springframework.jmx.export.MBeanExporter">

@@ -1,7 +1,6 @@
 package com.collabnet.ccf.core.rmdhandlers;
 
-
-public abstract class DryModeHandler {
+public interface DryModeHandler {
 
     public final static String DRYRUN_OFF                                  = "off";
     public final static String DRYRUN_STOP                                 = "stop";
@@ -13,15 +12,15 @@ public abstract class DryModeHandler {
     public static final String REPOSITORY_MAPPING_DIRECTION_CONFIG_NAME    = "NAME";
     public static final String REPOSITORY_MAPPING_DIRECTION_CONFIG_OLD_VAL = "VAL";
 
-    public abstract boolean isDryRunEqualsAfterTransformation(String rmdId);
+    public boolean isDryRunEqualsAfterTransformation(String rmdId);
 
-    public abstract boolean isDryRunEqualsBeforeTransformation(String rmdId);
+    public boolean isDryRunEqualsBeforeTransformation(String rmdId);
 
-    public abstract boolean isDryRunEqualsStop(String rmdId);
+    public boolean isDryRunEqualsStop(String rmdId);
 
-    public abstract boolean isDryRunMode(String rmdId);
+    public boolean isDryRunMode(String rmdId);
 
-    public abstract void loadRMDAndRMDConfig(String rmdID);
+    public void loadRMDAndRMDConfig(String rmdID);
 
-    public abstract void updateRMDConfigToOff(String rmdId);
+    public void updateRMDConfigToOff(String rmdId);
 }

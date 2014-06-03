@@ -1,6 +1,6 @@
 package com.collabnet.ccf.core.rmdhandlers;
 
-public class NoOpDryModeHandler extends DryModeHandler {
+public class NoOpDryModeHandler implements DryModeHandler {
 
     public boolean isDryRunEqualsAfterTransformation(String rmdId) {
         return false;

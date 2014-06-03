@@ -43,8 +43,10 @@ import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
 import com.collabnet.ccf.core.rmdhandlers.DryModeHandler;
 import com.collabnet.ccf.core.rmdhandlers.FilterHandler;
+import com.collabnet.ccf.core.rmdhandlers.ForceHandler;
 import com.collabnet.ccf.core.rmdhandlers.NoOpDryModeHandler;
 import com.collabnet.ccf.core.rmdhandlers.NoOpFilterHandler;
+import com.collabnet.ccf.core.rmdhandlers.NoOpForceHandler;
 import com.collabnet.ccf.core.utils.DateUtil;
 
 /**
@@ -193,6 +195,8 @@ public abstract class AbstractReader<T> extends Component implements IDataProces
 
     private FilterHandler                     rmdFilterHandler                                        = new NoOpFilterHandler();
 
+    private ForceHandler                      rmdForceHandler                                         = new NoOpForceHandler();
+
     public AbstractReader() {
         super();
         init();
@@ -284,6 +288,9 @@ public abstract class AbstractReader<T> extends Component implements IDataProces
      * @return
      */
     public abstract List<ArtifactState> getChangedArtifacts(Document syncInfo);
+
+    public abstract List<ArtifactState> getChangedArtifactsToForceSync(
+            Set<String> artifactsToForce, Document SyncInfo);
 
     /**
      * Extracts and returns the conflictResolutionPriority for the source
@@ -481,6 +488,10 @@ public abstract class AbstractReader<T> extends Component implements IDataProces
 
     public FilterHandler getRmdFilterHandler() {
         return rmdFilterHandler;
+    }
+
+    public ForceHandler getRmdForceHandler() {
+        return rmdForceHandler;
     }
 
     /**
@@ -842,6 +853,7 @@ public abstract class AbstractReader<T> extends Component implements IDataProces
             Document syncInfo = currentRecord.getSyncInfo();
             rmdDryModeHandler.loadRMDAndRMDConfig(repositoryMappingDirectionID);
             rmdFilterHandler.loadRMDAndRMDConfig(repositoryMappingDirectionID);
+            rmdForceHandler.loadRMDAndRMDConfig(repositoryMappingDirectionID);
             // RepositoryRecord movedRecord =
             // repositorySynchronizationWaitingList.remove(0);
             // repositorySynchronizationWaitingList.add(movedRecord);
@@ -1006,6 +1018,12 @@ public abstract class AbstractReader<T> extends Component implements IDataProces
                 log.debug("There are " + artifactsToBeReadList.size()
                         + " artifacts to be read.");
                 ArtifactState artifactState = artifactsToBeReadList.remove(0);
+                if (rmdForceHandler
+                        .isForceEnabled(repositoryMappingDirectionID)
+                        && artifactsToBeReadList.isEmpty()) {
+                    rmdForceHandler
+                            .updateRMDConfigToOff(repositoryMappingDirectionID);
+                }
                 List<GenericArtifact> sortedGAs = null;
                 if (artifactState.isReplayedArtifact()) {
                     sortedGAs = new ArrayList<GenericArtifact>();
@@ -1371,6 +1389,10 @@ public abstract class AbstractReader<T> extends Component implements IDataProces
         this.rmdFilterHandler = rmdFilterHandler;
     }
 
+    public void setRmdForceHandler(ForceHandler rmdForceHandler) {
+        this.rmdForceHandler = rmdForceHandler;
+    }
+
     /**
      * Sets the flag whether to ship the attachments or not.
      * 
@@ -1651,6 +1673,12 @@ public abstract class AbstractReader<T> extends Component implements IDataProces
             Document syncInfo) {
         String rmdID = this.getRepositoryMappingDirectionId(syncInfo);
         List<ArtifactState> changedArtifacts = getChangedArtifactsFromHospital(syncInfo);
+        Set<String> artifactsToBeForced = rmdForceHandler
+                .getArtifactIdSet(rmdID);
+        if (!artifactsToBeForced.isEmpty()) {
+            changedArtifacts.addAll(getChangedArtifactsToForceSync(
+                    artifactsToBeForced, syncInfo));
+        }
         if (!rmdFilterHandler.hospitalOnlyFilterEnabled(rmdID)) {
             changedArtifacts.addAll(getChangedArtifacts(syncInfo));
         }

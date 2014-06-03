@@ -6,7 +6,7 @@ import org.openadaptor.auxil.orderedmap.OrderedHashMap;
 
 import com.collabnet.ccf.core.db.RMDConfigExtractor;
 
-public class RMDDryModeHandler extends DryModeHandler {
+public class RMDDryModeHandler implements DryModeHandler {
 
     private RMDConfigExtractor rmdConfigExtractor                           = null;
 

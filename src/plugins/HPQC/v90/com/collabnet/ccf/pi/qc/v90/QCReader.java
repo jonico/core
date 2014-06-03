@@ -16,6 +16,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -29,8 +30,8 @@ import com.collabnet.ccf.core.eis.connection.ConnectionException;
 import com.collabnet.ccf.core.eis.connection.ConnectionManager;
 import com.collabnet.ccf.core.eis.connection.MaxConnectionsReachedException;
 import com.collabnet.ccf.core.ga.GenericArtifact;
-import com.collabnet.ccf.pi.qc.v90.QCGAHelper.ArtifactInformation;
 import com.collabnet.ccf.core.utils.Obfuscator;
+import com.collabnet.ccf.pi.qc.v90.QCGAHelper.ArtifactInformation;
 import com.collabnet.ccf.pi.qc.v90.api.AttachmentUploadStillInProgressException;
 import com.collabnet.ccf.pi.qc.v90.api.DefectAlreadyLockedException;
 import com.collabnet.ccf.pi.qc.v90.api.IConnection;
@@ -116,6 +117,32 @@ public class QCReader extends AbstractReader<IConnection> {
         super();
         // register clean up routine
         Runtime.getRuntime().addShutdownHook(new CleanUpCOMHookQCReader(this));
+    }
+
+    public IConnection connect(Document syncInfo) {
+        String sourceRepositoryId = getSourceRepositoryId(syncInfo);
+        String sourceRepositoryKind = getSourceRepositoryKind(syncInfo);
+        String sourceSystemId = getSourceSystemId(syncInfo);
+        String sourceSystemKind = getSourceSystemKind(syncInfo);
+        String credentialInfo = this.getUserName()
+                + QCConnectionFactory.PARAM_DELIMITER + getPassword();
+        IConnection connection = null;
+        try {
+            connection = connect(sourceSystemId, sourceSystemKind,
+                    sourceRepositoryId, sourceRepositoryKind, getServerUrl(),
+                    credentialInfo);
+        } catch (ConnectionException e) {
+            String cause = "Could not create connection to the HP QC system "
+                    + serverUrl;
+            log.error(cause, e);
+            throw new CCFRuntimeException(cause, e);
+        } catch (MaxConnectionsReachedException e) {
+            String cause = "Could not create connection to the HP QC system "
+                    + serverUrl;
+            log.error(cause, e);
+            throw new CCFRuntimeException(cause, e);
+        }
+        return connection;
     }
 
     /**
@@ -696,6 +723,49 @@ public class QCReader extends AbstractReader<IConnection> {
         }
     }
 
+    public List<ArtifactState> getChangedArtifactsToForceSync(
+            Set<String> artifactsToForce, Document syncInfo) {
+        String sourceRepositoryId = getSourceRepositoryId(syncInfo);
+        IConnection connection = connect(syncInfo);
+        List<ArtifactState> artifactIds = new ArrayList<ArtifactState>();
+        if (QCConnectionFactory.isDefectRepository(sourceRepositoryId)) {
+            try {
+                for (String artifactId : artifactsToForce) {
+                    ArtifactState state = artifactHandler
+                            .getChangedDefectToForce(connection, artifactId);
+                    artifactIds.add(state);
+                }
+            } catch (Exception e1) {
+                String cause = "Error in fetching the defect Ids to be shipped from QC";
+                log.error(cause, e1);
+                throw new CCFRuntimeException(cause, e1);
+            } finally {
+                this.disconnect(connection);
+            }
+            return artifactIds;
+        } else {
+            // we have to extract requirements
+            try {
+                String technicalRequirementsId = QCConnectionFactory
+                        .extractTechnicalRequirementsType(sourceRepositoryId,
+                                connection);
+                for (String artifactId : artifactsToForce) {
+                    ArtifactState state = artifactHandler
+                            .getChangedRequirementToForce(connection,
+                                    artifactId, technicalRequirementsId);
+                    artifactIds.add(state);
+                }
+            } catch (Exception e1) {
+                String cause = "Error in fetching the defect Ids to be shipped from QC";
+                log.error(cause, e1);
+                throw new CCFRuntimeException(cause, e1);
+            } finally {
+                this.disconnect(connection);
+            }
+            return artifactIds;
+        }
+    }
+
     public int getCommentDescriber() {
         return commentDescriber;
     }
@@ -726,16 +796,6 @@ public class QCReader extends AbstractReader<IConnection> {
         return maximumAttachmentRetryCount;
     }
 
-    /**
-     * Returns the server URL of the source HP QC system that is configured in
-     * the wiring file.
-     * 
-     * @return
-     */
-    public String getServerUrl() {
-        return serverUrl;
-    }
-
     /*
      * @Override public void stop(){ log.info("Got signal to stop QC connector
      * ..."); while(isConnected){ // This will ensure that the release will be
@@ -745,6 +805,16 @@ public class QCReader extends AbstractReader<IConnection> {
      * Thread.sleep(50); } catch (InterruptedException e) { //Digest the
      * exception break; } } log.info("Stopping...."); tearDownCOM(); }
      */
+
+    /**
+     * Returns the server URL of the source HP QC system that is configured in
+     * the wiring file.
+     * 
+     * @return
+     */
+    public String getServerUrl() {
+        return serverUrl;
+    }
 
     /**
      * Gets the mandatory user name The user name is used to login into the HP

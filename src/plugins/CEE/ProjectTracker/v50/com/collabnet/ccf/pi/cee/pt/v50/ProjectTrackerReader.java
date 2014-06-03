@@ -24,8 +24,8 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
+import java.util.Set;
 
 import javax.activation.DataHandler;
 import javax.xml.rpc.ServiceException;
@@ -1312,6 +1312,12 @@ public class ProjectTrackerReader extends AbstractReader<TrackerWebServicesClien
         } else {
             return artifactStatesDuplicate;
         }
+    }
+
+    public List<ArtifactState> getChangedArtifactsToForceSync(
+            Set<String> artifactsToForce, Document SyncInfo) {
+        //Currently we don't support changed artifacts to force sync 
+        return new ArrayList<ArtifactState>();
     }
 
     public String getConnectorUserDisplayName() {
