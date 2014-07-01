@@ -60,7 +60,7 @@ public class GenericArtifactHelper {
 
     private static final String                                                SCHEMA_LOCATION_ATTRIBUTE              = "schemaLocation";
     public static final DateFormat                                             df                                     = new SimpleDateFormat(
-                                                                                                                              "EEE, d MMM yyyy HH:mm:ss.SSS Z");                                                                                        // DateFormat.getDateTimeInstance(
+                                                                                                                              "EEE, d MMM yyyy HH:mm:ss.SSS Z");                                                                                       // DateFormat.getDateTimeInstance(
     // DateFormat.FULL, DateFormat.FULL, new Locale("en"));
     public static final String                                                 ARTIFACT_ROOT_ELEMENT_NAME             = "artifact";
     public static final String                                                 CCF_ARTIFACT_NAMESPACE                 = "http://ccf.open.collab.net/GenericArtifactV1.0";
@@ -1076,16 +1076,16 @@ public class GenericArtifactHelper {
     private static Element getRootElement(Document document)
             throws GenericArtifactParsingException {
         Element rootElement = document.getRootElement();
-        if (!ARTIFACT_ROOT_ELEMENT_NAME.equals(rootElement.getName()))
-            throw new GenericArtifactParsingException(
-                    "Root-element of XML document is not named "
-                            + ARTIFACT_ROOT_ELEMENT_NAME + "but "
-                            + rootElement.getName());
-        if (!CCF_ARTIFACT_NAMESPACE.equals(rootElement.getNamespaceURI()))
-            throw new GenericArtifactParsingException(
-                    "Namespace-URI of root-element of XML document is not named "
-                            + CCF_ARTIFACT_NAMESPACE + "but "
-                            + rootElement.getNamespaceURI());
+        //        if (!ARTIFACT_ROOT_ELEMENT_NAME.equals(rootElement.getName()))
+        //            throw new GenericArtifactParsingException(
+        //                    "Root-element of XML document is not named "
+        //                            + ARTIFACT_ROOT_ELEMENT_NAME + "but "
+        //                            + rootElement.getName());
+        //        if (!CCF_ARTIFACT_NAMESPACE.equals(rootElement.getNamespaceURI()))
+        //            throw new GenericArtifactParsingException(
+        //                    "Namespace-URI of root-element of XML document is not named "
+        //                            + CCF_ARTIFACT_NAMESPACE + "but "
+        //                            + rootElement.getNamespaceURI());
         return rootElement;
     }
 

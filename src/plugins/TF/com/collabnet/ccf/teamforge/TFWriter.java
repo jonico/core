@@ -1236,13 +1236,11 @@ public class TFWriter extends AbstractWriter<Connection> implements IDataProcess
             }
         }
 
-        int capacity = 0;
-        String status = null;
         String releaseId = null;
         if (connection.supports54()) {
-            capacity = GenericArtifactHelper.getIntMandatoryGAField(
+            GenericArtifactHelper.getIntMandatoryGAField(
                     TFArtifactMetaData.TFFields.capacity.getFieldName(), ga);
-            status = GenericArtifactHelper.getStringMandatoryGAField(
+            GenericArtifactHelper.getStringMandatoryGAField(
                     TFArtifactMetaData.TFFields.status.getFieldName(), ga);
             releaseId = GenericArtifactHelper.getStringMandatoryGAField(
                     TFArtifactMetaData.TFFields.releaseId.getFieldName(), ga);
@@ -1250,17 +1248,15 @@ public class TFWriter extends AbstractWriter<Connection> implements IDataProcess
 
         //To support display effort in field added in TF 7.0
         String trackerUnitId = null;
-        if (connection.supports62()) {
+        if (connection.supports61()) {
             trackerUnitId = GenericArtifactHelper.getStringMandatoryGAField(
                     TFArtifactMetaData.TFFields.trackerUnitId.getFieldName(),
                     ga);
 
         }
 
-        //For points capacity field added in TF 7.1
-        int pointsCapacity = 0;
-        if (connection.supports63()) {
-            pointsCapacity = GenericArtifactHelper.getIntMandatoryGAField(
+        if (connection.supports61()) {
+            GenericArtifactHelper.getIntMandatoryGAField(
                     TFArtifactMetaData.TFFields.pointsCapacity.getFieldName(),
                     ga);
         }
@@ -1283,8 +1279,7 @@ public class TFWriter extends AbstractWriter<Connection> implements IDataProcess
                     trackerUnitIdValue, project);
             planningFolder = connection.getPlanningClient()
                     .createPlanningFolder(parentId, title, description,
-                            startDate, endDate, status, capacity,
-                            pointsCapacity, releaseId, trackerUnitId);
+                            startDate, endDate);
         } catch (RemoteException e) {
             String cause = "Could not create planning folder: "
                     + e.getMessage();
@@ -1718,13 +1713,13 @@ public class TFWriter extends AbstractWriter<Connection> implements IDataProcess
                     TFArtifactMetaData.TFFields.capacity.getFieldName(), ga);
         }
 
-        if (connection.supports62()) {
+        if (connection.supports61()) {
             trackerUnitIdField = GenericArtifactHelper.getMandatoryGAField(
                     TFArtifactMetaData.TFFields.trackerUnitId.getFieldName(),
                     ga);
         }
 
-        if (connection.supports63()) {
+        if (connection.supports61()) {
             pointsCapacityField = GenericArtifactHelper.getMandatoryGAField(
                     TFArtifactMetaData.TFFields.pointsCapacity.getFieldName(),
                     ga);
@@ -1847,20 +1842,19 @@ public class TFWriter extends AbstractWriter<Connection> implements IDataProcess
                 if (pointsCapacityField != null
                         && pointsCapacityField.getFieldValueHasChanged()) {
                     Object fieldValueObj = pointsCapacityField.getFieldValue();
-                    int fieldValue = 0;
                     if (fieldValueObj instanceof String) {
                         String fieldValueString = (String) fieldValueObj;
                         try {
-                            fieldValue = Integer.parseInt(fieldValueString);
+                            Integer.parseInt(fieldValueString);
                         } catch (NumberFormatException e) {
                             throw new CCFRuntimeException(
                                     "Could not parse value of mandatory field points capacity: "
                                             + e.getMessage(), e);
                         }
                     } else if (fieldValueObj instanceof Integer) {
-                        fieldValue = ((Integer) fieldValueObj).intValue();
+                        ((Integer) fieldValueObj).intValue();
                     }
-                    planningFolder.setPointsCapacity(fieldValue);
+                    //                    planningFolder.setPointsCapacity(fieldValue);
 
                     if (trackerUnitIdField != null
                             && trackerUnitIdField.getFieldValueHasChanged()) {
@@ -1871,7 +1865,7 @@ public class TFWriter extends AbstractWriter<Connection> implements IDataProcess
                                 : "Hours";
                         trackerUnitId = TFTrackerHandler.getTrackerUnitId(
                                 connection, trackerUnitIdValue, project);
-                        planningFolder.setTrackerUnitId(trackerUnitId);
+                        //                        planningFolder.setTrackerUnitId(trackerUnitId);
                     }
 
                 }

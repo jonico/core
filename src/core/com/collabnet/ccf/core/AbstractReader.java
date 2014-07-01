@@ -66,57 +66,57 @@ import com.collabnet.ccf.core.utils.DateUtil;
  * 
  */
 public abstract class AbstractReader<T> extends Component implements IDataProcessor {
-    private static final String               FIELD_MAPPING_LANDSCAPE_DIRECTORY                       = "landscape";
-    private static final String               FIELD_MAPPING_CORE_DIRECTORY                            = "core";
-    private static final String               TARGET_SYSTEM_ENCODING                                  = "//TARGET_SYSTEM_ENCODING | //target_system_encoding";
-    private static final String               SOURCE_SYSTEM_ENCODING                                  = "//SOURCE_SYSTEM_ENCODING | //source_system_encoding";
-    private static final String               TARGET_SYSTEM_TIMEZONE                                  = "//TARGET_SYSTEM_TIMEZONE | //target_system_timezone";
-    private static final String               SOURCE_SYSTEM_TIMEZONE                                  = "//SOURCE_SYSTEM_TIMEZONE | //source_system_timezone";
-    private static final String               CONFLICT_RESOLUTION_PRIORITY                            = "//CONFLICT_RESOLUTION_PRIORITY | //conflict_resolution_priority";
-    private static final String               TARGET_SYSTEM_KIND                                      = "//TARGET_SYSTEM_KIND | //target_system_kind";
-    private static final String               TARGET_SYSTEM_ID                                        = "//TARGET_SYSTEM_ID | //target_system_id";
-    private static final String               TARGET_REPOSITORY_KIND                                  = "//TARGET_REPOSITORY_KIND | //target_repository_kind";
-    private static final String               TARGET_REPOSITORY_ID                                    = "//TARGET_REPOSITORY_ID | //target_repository_id";
-    private static final String               SOURCE_SYSTEM_KIND                                      = "//SOURCE_SYSTEM_KIND | //source_system_kind";
-    private static final String               SOURCE_SYSTEM_ID                                        = "//SOURCE_SYSTEM_ID | //source_system_id";
-    private static final String               SOURCE_REPOSITORY_KIND                                  = "//SOURCE_REPOSITORY_KIND | //source_repository_kind";
-    private static final String               SOURCE_REPOSITORY_ID                                    = "//SOURCE_REPOSITORY_ID | //source_repository_id";
-    private static final String               LAST_SOURCE_ARTIFACT_ID                                 = "//LAST_SOURCE_ARTIFACT_ID | //last_source_artifact_id";
-    private static final String               LAST_SOURCE_ARTIFACT_VERSION                            = "//LAST_SOURCE_ARTIFACT_VERSION | //last_source_artifact_version";
-    private static final String               LAST_SOURCE_ARTIFACT_MODIFICATION_DATE                  = "//LAST_SOURCE_ARTIFACT_MODIFICATION_DATE | //last_source_artifact_modification_date";
-    private static final String               FIELD_MAPPING_SCOPE                                     = "//FIELD_MAPPING_SCOPE | //field_mapping_scope";
-    private static final String               FIELD_MAPPING_KIND                                      = "//FIELD_MAPPING_KIND | //field_mapping_kind";
-    private static final String               FIELD_MAPPING_NAME                                      = "//FIELD_MAPPING_NAME | //field_mapping_name";
-    private static final String               REPOSITORY_MAPPING_DIRECTION_ID                         = "//REPOSITORY_MAPPING_DIRECTION_ID | //repository_mapping_direction_id";
-    private static final String               REPOSITORY_MAPPING_ID                                   = "//REPOSITORY_MAPPING_ID | //repository_mapping_id";
-    private static final String               EXTERNAL_APP_LINK_ID                                    = "//EXTERNAL_APP_LINK_ID | //external_app_link_id";
-    private static final String               REPOSITORY_MAPPING_DIRECTION_DIRECTION                  = "//REPOSITORY_MAPPING_DIRECTION_DIRECTION | //repository_mapping_direction_direction";
-    private static final String               ARTIFACT_LAST_MODIFIED_DATE_ELEMENT                     = "ARTIFACT_LAST_MODIFIED_DATE";
-    private static final String               ARTIFACT_LAST_MODIFIED_VERSION_ELEMENT                  = "ARTIFACT_LAST_MODIFIED_VERSION";
-    private static final String               ARTIFACT_LAST_MODIFIED_DATE                             = "//ARTIFACT_LAST_MODIFIED_DATE | //artifact_last_modified_date";
-    private static final String               ARTIFACT_LAST_MODIFIED_VERSION                          = "//ARTIFACT_LAST_MODIFIED_VERSION | //artifact_last_modified_version";
+    private static final String                 FIELD_MAPPING_LANDSCAPE_DIRECTORY                       = "landscape";
+    private static final String                 FIELD_MAPPING_CORE_DIRECTORY                            = "core";
+    private static final String                 TARGET_SYSTEM_ENCODING                                  = "//TARGET_SYSTEM_ENCODING | //target_system_encoding";
+    private static final String                 SOURCE_SYSTEM_ENCODING                                  = "//SOURCE_SYSTEM_ENCODING | //source_system_encoding";
+    private static final String                 TARGET_SYSTEM_TIMEZONE                                  = "//TARGET_SYSTEM_TIMEZONE | //target_system_timezone";
+    private static final String                 SOURCE_SYSTEM_TIMEZONE                                  = "//SOURCE_SYSTEM_TIMEZONE | //source_system_timezone";
+    private static final String                 CONFLICT_RESOLUTION_PRIORITY                            = "//CONFLICT_RESOLUTION_PRIORITY | //conflict_resolution_priority";
+    private static final String                 TARGET_SYSTEM_KIND                                      = "//TARGET_SYSTEM_KIND | //target_system_kind";
+    private static final String                 TARGET_SYSTEM_ID                                        = "//TARGET_SYSTEM_ID | //target_system_id";
+    private static final String                 TARGET_REPOSITORY_KIND                                  = "//TARGET_REPOSITORY_KIND | //target_repository_kind";
+    private static final String                 TARGET_REPOSITORY_ID                                    = "//TARGET_REPOSITORY_ID | //target_repository_id";
+    private static final String                 SOURCE_SYSTEM_KIND                                      = "//SOURCE_SYSTEM_KIND | //source_system_kind";
+    private static final String                 SOURCE_SYSTEM_ID                                        = "//SOURCE_SYSTEM_ID | //source_system_id";
+    private static final String                 SOURCE_REPOSITORY_KIND                                  = "//SOURCE_REPOSITORY_KIND | //source_repository_kind";
+    private static final String                 SOURCE_REPOSITORY_ID                                    = "//SOURCE_REPOSITORY_ID | //source_repository_id";
+    private static final String                 LAST_SOURCE_ARTIFACT_ID                                 = "//LAST_SOURCE_ARTIFACT_ID | //last_source_artifact_id";
+    private static final String                 LAST_SOURCE_ARTIFACT_VERSION                            = "//LAST_SOURCE_ARTIFACT_VERSION | //last_source_artifact_version";
+    private static final String                 LAST_SOURCE_ARTIFACT_MODIFICATION_DATE                  = "//LAST_SOURCE_ARTIFACT_MODIFICATION_DATE | //last_source_artifact_modification_date";
+    private static final String                 FIELD_MAPPING_SCOPE                                     = "//FIELD_MAPPING_SCOPE | //field_mapping_scope";
+    private static final String                 FIELD_MAPPING_KIND                                      = "//FIELD_MAPPING_KIND | //field_mapping_kind";
+    private static final String                 FIELD_MAPPING_NAME                                      = "//FIELD_MAPPING_NAME | //field_mapping_name";
+    private static final String                 REPOSITORY_MAPPING_DIRECTION_ID                         = "//REPOSITORY_MAPPING_DIRECTION_ID | //repository_mapping_direction_id";
+    private static final String                 REPOSITORY_MAPPING_ID                                   = "//REPOSITORY_MAPPING_ID | //repository_mapping_id";
+    private static final String                 EXTERNAL_APP_LINK_ID                                    = "//EXTERNAL_APP_LINK_ID | //external_app_link_id";
+    private static final String                 REPOSITORY_MAPPING_DIRECTION_DIRECTION                  = "//REPOSITORY_MAPPING_DIRECTION_DIRECTION | //repository_mapping_direction_direction";
+    private static final String                 ARTIFACT_LAST_MODIFIED_DATE_ELEMENT                     = "ARTIFACT_LAST_MODIFIED_DATE";
+    private static final String                 ARTIFACT_LAST_MODIFIED_VERSION_ELEMENT                  = "ARTIFACT_LAST_MODIFIED_VERSION";
+    private static final String                 ARTIFACT_LAST_MODIFIED_DATE                             = "//ARTIFACT_LAST_MODIFIED_DATE | //artifact_last_modified_date";
+    private static final String                 ARTIFACT_LAST_MODIFIED_VERSION                          = "//ARTIFACT_LAST_MODIFIED_VERSION | //artifact_last_modified_version";
 
-    private static final Log                  log                                                     = LogFactory
-                                                                                                              .getLog(AbstractReader.class);
-    private HashMap<String, RepositoryRecord> repositoryRecordHashMap                                 = null;
-    private ArrayList<RepositoryRecord>       repositorySynchronizationWaitingList                    = null;
-    private HashSet<String>                   repositoryRecordsInRepositorySynchronizationWaitingList = null;
-    private long                              sleepInterval                                           = -1;
-    private boolean                           shipAttachments                                         = true;
-    private boolean                           shipAttachmentsWithArtifact                             = false;
-    private boolean                           includeFieldMetaData                                    = false;
-    private Comparator<GenericArtifact>       genericArtifactComparator                               = null;
-    public static final long                  DEFAULT_MAX_ATTACHMENT_SIZE_PER_ARTIFACT                = 10 * 1024 * 1024;
-    private long                              maxAttachmentSizePerArtifact                            = DEFAULT_MAX_ATTACHMENT_SIZE_PER_ARTIFACT;
-    private ConnectionManager<T>              connectionManager;
-    private static final String               ARTIFACT_TYPE_PLAIN_ARTIFACT                            = "plainArtifact";
+    private static final Log                    log                                                     = LogFactory
+                                                                                                                .getLog(AbstractReader.class);
+    protected HashMap<String, RepositoryRecord> repositoryRecordHashMap                                 = null;
+    protected ArrayList<RepositoryRecord>       repositorySynchronizationWaitingList                    = null;
+    protected HashSet<String>                   repositoryRecordsInRepositorySynchronizationWaitingList = null;
+    protected long                              sleepInterval                                           = -1;
+    protected boolean                           shipAttachments                                         = true;
+    private boolean                             shipAttachmentsWithArtifact                             = false;
+    private boolean                             includeFieldMetaData                                    = false;
+    private Comparator<GenericArtifact>         genericArtifactComparator                               = null;
+    public static final long                    DEFAULT_MAX_ATTACHMENT_SIZE_PER_ARTIFACT                = 10 * 1024 * 1024;
+    private long                                maxAttachmentSizePerArtifact                            = DEFAULT_MAX_ATTACHMENT_SIZE_PER_ARTIFACT;
+    protected ConnectionManager<T>              connectionManager;
+    protected static final String               ARTIFACT_TYPE_PLAIN_ARTIFACT                            = "plainArtifact";
 
     /**
      * This variable is set to false until we get the first reoccuring
      * synchronization status record which means that we have processed the
      * initial synchronization status records
      */
-    private boolean                           connectorHasReadAllInitialSynchronizationStatusRecords  = false;
+    protected boolean                           connectorHasReadAllInitialSynchronizationStatusRecords  = false;
 
     /**
      * Setting this variable to true causes the CCF to shutdown after there are
@@ -124,14 +124,14 @@ public abstract class AbstractReader<T> extends Component implements IDataProces
      * this time. This property is useful for scenarios that just like to take a
      * snapshot of a repository.
      */
-    private boolean                           shutdownCCFAfterInitialSync                             = false;
+    private boolean                             shutdownCCFAfterInitialSync                             = false;
 
     /**
      * If the restart connector variable is set to true, all readers will begin
      * to flush their buffers and exit with a special error code (42) that will
      * cause service wrapper to restart the connector.
      */
-    private static boolean                    restartConnector                                        = false;
+    private static boolean                      restartConnector                                        = false;
 
     /**
      * If this property is set to something else but null, artifacts quarantined
@@ -139,23 +139,23 @@ public abstract class AbstractReader<T> extends Component implements IDataProces
      * special treatment during artifact replay: The XSLTProcessor will
      * transform the payload again.
      */
-    private String                            nameOfEntityService                                     = null;
+    private String                              nameOfEntityService                                     = null;
 
     /**
      * If the shutDownConnector variable is set, this will cause service wrapper
      * to flush all the buffers and signal the shutdown hook thread that it is
      * ready to exit
      */
-    private static boolean                    shutDownConnector                                       = false;
+    private static boolean                      shutDownConnector                                       = false;
 
     // used for the polling hospital
-    private JDBCReadConnector                 hospitalDatabaseReader                                  = null;
+    private JDBCReadConnector                   hospitalDatabaseReader                                  = null;
 
     /**
      * This field determines whether the reader component is used within a CCF
      * 2.x process Defaults to false
      */
-    private boolean                           isCCF2xProcess                                          = false;
+    private boolean                             isCCF2xProcess                                          = false;
 
     /**
      * This (optional) property is used to retrieve the source/target artifact
@@ -169,33 +169,33 @@ public abstract class AbstractReader<T> extends Component implements IDataProces
      * version and resolves the leftover comments/attachments during stale
      * artifact scenario.
      */
-    private JDBCReadConnector                 identityMappingDatabaseReader                           = null;
+    private JDBCReadConnector                   identityMappingDatabaseReader                           = null;
 
-    private static final int                  RESTART_EXIT_CODE                                       = 42;
+    public static final int                     RESTART_EXIT_CODE                                       = 42;
 
     /**
      * This field contains the date when the CCF was started
      */
-    private Date                              startedDate                                             = new Date();
+    protected Date                              startedDate                                             = new Date();
 
     /**
      * This property denotes after how many seconds the CCF will restart
      * automatically
      */
-    private int                               autoRestartPeriod                                       = -1;
+    private int                                 autoRestartPeriod                                       = -1;
 
     /**
      * Determines whether concrete readers can assume that this scenario is just
      * used for bulk imports, e. g. no frequent artifact data change is going to
      * happen
      */
-    private boolean                           isBulkImport                                            = false;
+    private boolean                             isBulkImport                                            = false;
 
-    private DryModeHandler                    rmdDryModeHandler                                       = new NoOpDryModeHandler();
+    protected DryModeHandler                    rmdDryModeHandler                                       = new NoOpDryModeHandler();
 
-    private FilterHandler                     rmdFilterHandler                                        = new NoOpFilterHandler();
+    protected FilterHandler                     rmdFilterHandler                                        = new NoOpFilterHandler();
 
-    private ForceHandler                      rmdForceHandler                                         = new NoOpForceHandler();
+    protected ForceHandler                      rmdForceHandler                                         = new NoOpForceHandler();
 
     public AbstractReader() {
         super();
@@ -1459,6 +1459,33 @@ public abstract class AbstractReader<T> extends Component implements IDataProces
 
     }
 
+    /**
+     * All the artifact data and dependent data generic artifacts are
+     * accumulated in a single List and are sorted according to their last
+     * modified date so that the artifact that was changed early will ship
+     * first.
+     * 
+     * @param artifactData
+     *            - The artifact's data
+     * @param artifactAttachments
+     *            - Attachments of an artifact
+     * @param artifactDependencies
+     *            - Dependent artifacts
+     * 
+     * @return - The sorted list of Generic Artifact objects
+     */
+    protected List<GenericArtifact> combineAndSort(
+            GenericArtifact artifactData,
+            List<GenericArtifact> artifactAttachments,
+            List<GenericArtifact> artifactDependencies) {
+        ArrayList<GenericArtifact> gaList = new ArrayList<GenericArtifact>();
+        gaList.add(artifactData);
+        gaList.addAll(artifactAttachments);
+        gaList.addAll(artifactDependencies);
+        Collections.sort(gaList, genericArtifactComparator);
+        return gaList;
+    }
+
     protected Date getArtifactLastModifiedDate(Document syncInfo) {
         String lastModifiedDateString = this
                 .getArtifactLastModifiedTime(syncInfo);
@@ -1469,6 +1496,29 @@ public abstract class AbstractReader<T> extends Component implements IDataProces
             lastModifiedDate = new Date(0);
         }
         return lastModifiedDate;
+    }
+
+    /**
+     * This method will first read one artifact from the hospital and then
+     * populates the rest of the list with changes from the repository
+     * 
+     * @param syncInfo
+     * @return list with changed artifacts
+     */
+    protected List<ArtifactState> getChangedArtifactsFromHospitalAndRepository(
+            Document syncInfo) {
+        String rmdID = this.getRepositoryMappingDirectionId(syncInfo);
+        List<ArtifactState> changedArtifacts = getChangedArtifactsFromHospital(syncInfo);
+        Set<String> artifactsToBeForced = rmdForceHandler
+                .getArtifactIdSet(rmdID);
+        if (!artifactsToBeForced.isEmpty()) {
+            changedArtifacts.addAll(getChangedArtifactsToForceSync(
+                    artifactsToBeForced, syncInfo));
+        }
+        if (!rmdFilterHandler.hospitalAndForceSynchsOnly(rmdID)) {
+            changedArtifacts.addAll(getChangedArtifacts(syncInfo));
+        }
+        return changedArtifacts;
     }
 
     protected String getExternalAppLinkId(Document syncInfo) {
@@ -1563,6 +1613,109 @@ public abstract class AbstractReader<T> extends Component implements IDataProces
         return node.getText();
     }
 
+    protected boolean isArtifactStale(ArtifactState artifactState,
+            GenericArtifact artifactData) {
+        // In a bulk import scenario, stale updates should not happen at all
+        if (isBulkImport()) {
+            return false;
+        }
+        String newVersionStr = artifactData.getSourceArtifactVersion();
+        long newVersion = Long.parseLong(newVersionStr);
+        String newLastModifiedDateStr = artifactData
+                .getSourceArtifactLastModifiedDate();
+        Date newLastModifiedDate = DateUtil.parse(newLastModifiedDateStr);
+        if (artifactState.getArtifactVersion() < newVersion
+                && artifactState.getArtifactLastModifiedDate().before(
+                        newLastModifiedDate)) {
+            log.debug("Stale update on artifact "
+                    + artifactState.getArtifactId() + ": Old version: "
+                    + artifactState.getArtifactVersion() + " new version: "
+                    + newVersion + " old time stamp: "
+                    + artifactState.getArtifactLastModifiedDate()
+                    + " new time stamp: " + newLastModifiedDate);
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Moves the repository to the tail of the waiting list so that in the next
+     * immediate run the repository will not be considered for synchronization
+     * (Unless it is the lone repository that is being sync-ed).
+     * 
+     * @param currentRecord
+     *            - The repository record to be moved to the tail.
+     */
+    protected void moveToTail(RepositoryRecord currentRecord) {
+        repositorySynchronizationWaitingList.remove(currentRecord);
+        repositorySynchronizationWaitingList.add(currentRecord);
+    }
+
+    /**
+     * Removes the record passed in the parameter from the waiting list so that
+     * in the further runs this repository will not be taken into account for
+     * artifact shipment (Unless the repository record is added again by the
+     * incoming synchronization record).
+     * 
+     * @param currentRecord
+     *            - The repository record to be removed from the waiting list.
+     */
+    protected void removeFromWaitingList(RepositoryRecord currentRecord) {
+        repositorySynchronizationWaitingList.remove(currentRecord);
+        String repositoryKey = currentRecord.getRepositoryId();
+        repositoryRecordsInRepositorySynchronizationWaitingList
+                .remove(repositoryKey);
+    }
+
+    /**
+     * Update the sync info with the artifact lastmodifiedtime and
+     * lastModifiedVersion fetched from the identity mapping. This will makes
+     * reader to sync all the comments and attachment in an artifact, as Sync is
+     * based on Artifact last modified timestamp or last modified version as
+     * previously it was based on repository lastmodifiedtime or version. This
+     * will resolve the leftover comments/attachments during stale scenario.
+     * 
+     * @param syncInfo
+     * @param artifactId
+     * @param artifactType
+     */
+    protected void updateSyncInfoFromIdentityMapping(Document syncInfo,
+            String artifactId, String artifactType) {
+        IOrderedMap inputParameters = new OrderedHashMap();
+        String lastModifiedTime = null, lastModifiedVersion = null;
+        if (!isCCF2xProcess) {
+            inputParameters.add(this.getSourceSystemId(syncInfo));//sourceSystemId
+            inputParameters.add(this.getSourceRepositoryId(syncInfo));//sourceRepositoryId
+            inputParameters.add(this.getTargetSystemId(syncInfo));//targetSystemId
+            inputParameters.add(this.getTargetRepositoryId(syncInfo));//targetRepositoryId
+        } else {
+            inputParameters.add(this.getRepositoryMappingId(syncInfo));//repositorymappingid
+        }
+        inputParameters.add(artifactId);//artifactId
+        inputParameters.add(artifactType);//artifactType
+        try {
+            identityMappingDatabaseReader.connect();
+            Object[] resultSet = identityMappingDatabaseReader.next(
+                    inputParameters, 1000);
+            if (resultSet == null || resultSet.length == 0) {
+                lastModifiedTime = new Timestamp(0).toString();
+                lastModifiedVersion = "0";
+                log.debug("Setting the lastModifiedTime and lastModifiedVersion to default values");
+            } else {
+                IOrderedMap resultSetMap = (OrderedHashMap) resultSet[0];
+                Timestamp lastModifiedTimestamp = (java.sql.Timestamp) resultSetMap
+                        .get(1);
+                lastModifiedVersion = (String) resultSetMap.get(2);
+                lastModifiedTime = lastModifiedTimestamp.toString();
+            }
+            modifySyncInfo(syncInfo, lastModifiedTime, lastModifiedVersion);
+        } catch (Exception e) {
+            log.debug(
+                    "Update syncInfo from IdentityMapping failed due to following exception ",
+                    e);
+        }
+    }
+
     private void addArtifactStateFromHospital(
             ArrayList<ArtifactState> quarantinedArtifact, Object[] resultSet) {
         if (resultSet.length != 0) {
@@ -1593,32 +1746,6 @@ public abstract class AbstractReader<T> extends Component implements IDataProces
             artifactState.setReplayedArtifact(true);
             quarantinedArtifact.add(artifactState);
         }
-    }
-
-    /**
-     * All the artifact data and dependent data generic artifacts are
-     * accumulated in a single List and are sorted according to their last
-     * modified date so that the artifact that was changed early will ship
-     * first.
-     * 
-     * @param artifactData
-     *            - The artifact's data
-     * @param artifactAttachments
-     *            - Attachments of an artifact
-     * @param artifactDependencies
-     *            - Dependent artifacts
-     * 
-     * @return - The sorted list of Generic Artifact objects
-     */
-    private List<GenericArtifact> combineAndSort(GenericArtifact artifactData,
-            List<GenericArtifact> artifactAttachments,
-            List<GenericArtifact> artifactDependencies) {
-        ArrayList<GenericArtifact> gaList = new ArrayList<GenericArtifact>();
-        gaList.add(artifactData);
-        gaList.addAll(artifactAttachments);
-        gaList.addAll(artifactDependencies);
-        Collections.sort(gaList, genericArtifactComparator);
-        return gaList;
     }
 
     /**
@@ -1660,29 +1787,6 @@ public abstract class AbstractReader<T> extends Component implements IDataProces
             // hospitalDatabaseReader.disconnect();
         }
         return quarantinedArtifact;
-    }
-
-    /**
-     * This method will first read one artifact from the hospital and then
-     * populates the rest of the list with changes from the repository
-     * 
-     * @param syncInfo
-     * @return list with changed artifacts
-     */
-    private List<ArtifactState> getChangedArtifactsFromHospitalAndRepository(
-            Document syncInfo) {
-        String rmdID = this.getRepositoryMappingDirectionId(syncInfo);
-        List<ArtifactState> changedArtifacts = getChangedArtifactsFromHospital(syncInfo);
-        Set<String> artifactsToBeForced = rmdForceHandler
-                .getArtifactIdSet(rmdID);
-        if (!artifactsToBeForced.isEmpty()) {
-            changedArtifacts.addAll(getChangedArtifactsToForceSync(
-                    artifactsToBeForced, syncInfo));
-        }
-        if (!rmdFilterHandler.hospitalOnlyFilterEnabled(rmdID)) {
-            changedArtifacts.addAll(getChangedArtifacts(syncInfo));
-        }
-        return changedArtifacts;
     }
 
     /**
@@ -1744,31 +1848,6 @@ public abstract class AbstractReader<T> extends Component implements IDataProces
         };
     }
 
-    private boolean isArtifactStale(ArtifactState artifactState,
-            GenericArtifact artifactData) {
-        // In a bulk import scenario, stale updates should not happen at all
-        if (isBulkImport()) {
-            return false;
-        }
-        String newVersionStr = artifactData.getSourceArtifactVersion();
-        long newVersion = Long.parseLong(newVersionStr);
-        String newLastModifiedDateStr = artifactData
-                .getSourceArtifactLastModifiedDate();
-        Date newLastModifiedDate = DateUtil.parse(newLastModifiedDateStr);
-        if (artifactState.getArtifactVersion() < newVersion
-                && artifactState.getArtifactLastModifiedDate().before(
-                        newLastModifiedDate)) {
-            log.debug("Stale update on artifact "
-                    + artifactState.getArtifactId() + ": Old version: "
-                    + artifactState.getArtifactVersion() + " new version: "
-                    + newVersion + " old time stamp: "
-                    + artifactState.getArtifactLastModifiedDate()
-                    + " new time stamp: " + newLastModifiedDate);
-            return true;
-        }
-        return false;
-    }
-
     private void modifySyncInfo(Document syncInfo,
             String lastArtifactModifiedTime, String lastArtifactModifiedVersion) {
         if (lastArtifactModifiedTime == null
@@ -1783,84 +1862,6 @@ public abstract class AbstractReader<T> extends Component implements IDataProces
         Element artifactLastModifiedVersionElement = rootElement
                 .addElement(ARTIFACT_LAST_MODIFIED_VERSION_ELEMENT);
         artifactLastModifiedVersionElement.setText(lastArtifactModifiedVersion);
-    }
-
-    /**
-     * Moves the repository to the tail of the waiting list so that in the next
-     * immediate run the repository will not be considered for synchronization
-     * (Unless it is the lone repository that is being sync-ed).
-     * 
-     * @param currentRecord
-     *            - The repository record to be moved to the tail.
-     */
-    private void moveToTail(RepositoryRecord currentRecord) {
-        repositorySynchronizationWaitingList.remove(currentRecord);
-        repositorySynchronizationWaitingList.add(currentRecord);
-    }
-
-    /**
-     * Removes the record passed in the parameter from the waiting list so that
-     * in the further runs this repository will not be taken into account for
-     * artifact shipment (Unless the repository record is added again by the
-     * incoming synchronization record).
-     * 
-     * @param currentRecord
-     *            - The repository record to be removed from the waiting list.
-     */
-    private void removeFromWaitingList(RepositoryRecord currentRecord) {
-        repositorySynchronizationWaitingList.remove(currentRecord);
-        String repositoryKey = currentRecord.getRepositoryId();
-        repositoryRecordsInRepositorySynchronizationWaitingList
-                .remove(repositoryKey);
-    }
-
-    /**
-     * Update the sync info with the artifact lastmodifiedtime and
-     * lastModifiedVersion fetched from the identity mapping. This will makes
-     * reader to sync all the comments and attachment in an artifact, as Sync is
-     * based on Artifact last modified timestamp or last modified version as
-     * previously it was based on repository lastmodifiedtime or version. This
-     * will resolve the leftover comments/attachments during stale scenario.
-     * 
-     * @param syncInfo
-     * @param artifactId
-     * @param artifactType
-     */
-    private void updateSyncInfoFromIdentityMapping(Document syncInfo,
-            String artifactId, String artifactType) {
-        IOrderedMap inputParameters = new OrderedHashMap();
-        String lastModifiedTime = null, lastModifiedVersion = null;
-        if (!isCCF2xProcess) {
-            inputParameters.add(this.getSourceSystemId(syncInfo));//sourceSystemId
-            inputParameters.add(this.getSourceRepositoryId(syncInfo));//sourceRepositoryId
-            inputParameters.add(this.getTargetSystemId(syncInfo));//targetSystemId
-            inputParameters.add(this.getTargetRepositoryId(syncInfo));//targetRepositoryId
-        } else {
-            inputParameters.add(this.getRepositoryMappingId(syncInfo));//repositorymappingid
-        }
-        inputParameters.add(artifactId);//artifactId
-        inputParameters.add(artifactType);//artifactType
-        try {
-            identityMappingDatabaseReader.connect();
-            Object[] resultSet = identityMappingDatabaseReader.next(
-                    inputParameters, 1000);
-            if (resultSet == null || resultSet.length == 0) {
-                lastModifiedTime = new Timestamp(0).toString();
-                lastModifiedVersion = "0";
-                log.debug("Setting the lastModifiedTime and lastModifiedVersion to default values");
-            } else {
-                IOrderedMap resultSetMap = (OrderedHashMap) resultSet[0];
-                Timestamp lastModifiedTimestamp = (java.sql.Timestamp) resultSetMap
-                        .get(1);
-                lastModifiedVersion = (String) resultSetMap.get(2);
-                lastModifiedTime = lastModifiedTimestamp.toString();
-            }
-            modifySyncInfo(syncInfo, lastModifiedTime, lastModifiedVersion);
-        } catch (Exception e) {
-            log.debug(
-                    "Update syncInfo from IdentityMapping failed due to following exception ",
-                    e);
-        }
     }
 
     public static String convertTimeZoneFromCCF2xDataBaseFormat(String timezone) {

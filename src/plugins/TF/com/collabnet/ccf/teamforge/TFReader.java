@@ -64,7 +64,7 @@ public class TFReader extends AbstractReader<Connection> {
 
     private TFAttachmentHandler attachmentHandler                    = null;
 
-    private String              serverUrl                            = null;
+    protected String            serverUrl                            = null;
 
     private String              password                             = null;
 
@@ -1008,60 +1008,13 @@ public class TFReader extends AbstractReader<Connection> {
         }
     }
 
-    private String getHumanReadablePlanningFolderName(Connection connection,
-            String planningFolderId) throws RemoteException {
-        if (!StringUtils.isEmpty(planningFolderId)) {
-            PlanningFolderDO pf = connection.getPlanningClient()
-                    .getPlanningFolderData(planningFolderId);
-            if (StringUtils.isEmpty(pf.getParentFolderId())
-                    || pf.getParentFolderId().startsWith("PlanningApp")) {
-                return pf.getTitle();
-            } else {
-                return getHumanReadablePlanningFolderName(connection,
-                        pf.getParentFolderId())
-                        + getPlanningFolderSeparatorString() + pf.getTitle();
-            }
-        } else {
-            return "";
-        }
-    }
-
-    private String getHumanReadableReleaseName(Connection connection,
-            String releaseId) throws RemoteException {
-        if (!StringUtils.isEmpty(releaseId)) {
-            ReleaseDO releaseDO = connection.getFrsClient().getReleaseData(
-                    releaseId);
-            String title = releaseDO.getTitle();
-            String packageTitle = connection.getFrsClient()
-                    .getPackageData(releaseDO.getParentFolderId()).getTitle();
-            return packageTitle + getPackageReleaseSeparatorString() + title;
-        } else {
-            return "";
-        }
-    }
-
     /**
      * Gets the mandatory password that belongs to the username
      * 
      * @return the password
      */
-    private String getPassword() {
+    protected String getPassword() {
         return password;
-    }
-
-    /**
-     * Gets the optional resync username The resync user name is used to login
-     * into the TF/CSFE instance whenever an artifact should be created. This
-     * user has to differ from the ordinary user used to log in in order to
-     * force initial resyncs with the source system once a new artifact has been
-     * created. This property can also be set for the reader component in order
-     * to be able to differentiate between artifacts created by ordinary users
-     * and artifacts to be resynced.
-     * 
-     * @return the resyncUserName
-     */
-    private String getResyncUserName() {
-        return resyncUserName;
     }
 
     /**
@@ -1071,7 +1024,7 @@ public class TFReader extends AbstractReader<Connection> {
      * @param syncInfo
      * @param ga
      */
-    private void populateSrcAndDest(Document syncInfo, GenericArtifact ga) {
+    protected void populateSrcAndDest(Document syncInfo, GenericArtifact ga) {
         String sourceArtifactId = ga.getSourceArtifactId();
         String sourceRepositoryId = this.getSourceRepositoryId(syncInfo);
         String sourceRepositoryKind = this.getSourceRepositoryKind(syncInfo);
@@ -1108,6 +1061,53 @@ public class TFReader extends AbstractReader<Connection> {
         ga.setTargetSystemId(targetSystemId);
         ga.setTargetSystemKind(targetSystemKind);
         ga.setTargetSystemTimezone(targetSystemTimezone);
+    }
+
+    private String getHumanReadablePlanningFolderName(Connection connection,
+            String planningFolderId) throws RemoteException {
+        if (!StringUtils.isEmpty(planningFolderId)) {
+            PlanningFolderDO pf = connection.getPlanningClient()
+                    .getPlanningFolderData(planningFolderId);
+            if (StringUtils.isEmpty(pf.getParentFolderId())
+                    || pf.getParentFolderId().startsWith("PlanningApp")) {
+                return pf.getTitle();
+            } else {
+                return getHumanReadablePlanningFolderName(connection,
+                        pf.getParentFolderId())
+                        + getPlanningFolderSeparatorString() + pf.getTitle();
+            }
+        } else {
+            return "";
+        }
+    }
+
+    private String getHumanReadableReleaseName(Connection connection,
+            String releaseId) throws RemoteException {
+        if (!StringUtils.isEmpty(releaseId)) {
+            ReleaseDO releaseDO = connection.getFrsClient().getReleaseData(
+                    releaseId);
+            String title = releaseDO.getTitle();
+            String packageTitle = connection.getFrsClient()
+                    .getPackageData(releaseDO.getParentFolderId()).getTitle();
+            return packageTitle + getPackageReleaseSeparatorString() + title;
+        } else {
+            return "";
+        }
+    }
+
+    /**
+     * Gets the optional resync username The resync user name is used to login
+     * into the TF/CSFE instance whenever an artifact should be created. This
+     * user has to differ from the ordinary user used to log in in order to
+     * force initial resyncs with the source system once a new artifact has been
+     * created. This property can also be set for the reader component in order
+     * to be able to differentiate between artifacts created by ordinary users
+     * and artifacts to be resynced.
+     * 
+     * @return the resyncUserName
+     */
+    private String getResyncUserName() {
+        return resyncUserName;
     }
 
     /**

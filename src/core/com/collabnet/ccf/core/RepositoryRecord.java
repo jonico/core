@@ -12,9 +12,12 @@
 package com.collabnet.ccf.core;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import org.dom4j.Document;
+
 import com.collabnet.ccf.core.ga.GenericArtifact;
+import com.collabnet.ccf.core.utils.DummyArtifactSoapDO;
 
 public class RepositoryRecord {
     private String                     repositoryId;
@@ -27,12 +30,15 @@ public class RepositoryRecord {
     private boolean                    readyForNewSynchInfo             = true;
     private boolean                    staleRecordUpdateAlreadyReceived = true;
 
+    private List<DummyArtifactSoapDO>  dummyArtifactSoapToBeShippedList = null;
+
     public RepositoryRecord(String repositoryId, Document syncInfo) {
         this.repositoryId = repositoryId;
         this.syncInfo = syncInfo;
         this.newSyncInfo = syncInfo;
         artifactsToBeShippedList = new ArrayList<GenericArtifact>();
         artifactsToBeReadList = new ArrayList<ArtifactState>();
+        this.dummyArtifactSoapToBeShippedList = new ArrayList<DummyArtifactSoapDO>();
     }
 
     public ArrayList<ArtifactState> getArtifactsToBeReadList() {
@@ -41,6 +47,10 @@ public class RepositoryRecord {
 
     public ArrayList<GenericArtifact> getArtifactsToBeShippedList() {
         return artifactsToBeShippedList;
+    }
+
+    public List<DummyArtifactSoapDO> getDummyArtifactSoapToBeShippedList() {
+        return dummyArtifactSoapToBeShippedList;
     }
 
     /**
@@ -86,6 +96,11 @@ public class RepositoryRecord {
     public void setArtifactsToBeShippedList(
             ArrayList<GenericArtifact> artifactsToBeShippedList) {
         this.artifactsToBeShippedList = artifactsToBeShippedList;
+    }
+
+    public void setDummyArtifactSoapToBeShippedList(
+            List<DummyArtifactSoapDO> dummyArtifactSoapToBeShippedList) {
+        this.dummyArtifactSoapToBeShippedList = dummyArtifactSoapToBeShippedList;
     }
 
     /**

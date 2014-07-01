@@ -379,21 +379,21 @@ public class TFToGenericArtifactConverter {
                         genericArtifact, null, includeFieldMetaData);
             }
 
-            if (connection.supports62()) {
-                String trackerUnitId = planningRow.getTrackerUnitId();
-                createGenericArtifactField(
-                        TFArtifactMetaData.TFFields.trackerUnitId,
-                        trackerUnitId, genericArtifact, null,
-                        includeFieldMetaData);
-            }
-
-            if (connection.supports63()) {
-                int pointsCapacity = planningRow.getPointsCapacity();
-                createGenericArtifactField(
-                        TFArtifactMetaData.TFFields.pointsCapacity,
-                        pointsCapacity, genericArtifact, null,
-                        includeFieldMetaData);
-            }
+            //            if (connection.supports62()) {
+            //                String trackerUnitId = planningRow.getTrackerUnitId();
+            //                createGenericArtifactField(
+            //                        TFArtifactMetaData.TFFields.trackerUnitId,
+            //                        trackerUnitId, genericArtifact, null,
+            //                        includeFieldMetaData);
+            //            }
+            //
+            //            if (connection.supports63()) {
+            //                int pointsCapacity = planningRow.getPointsCapacity();
+            //                createGenericArtifactField(
+            //                        TFArtifactMetaData.TFFields.pointsCapacity,
+            //                        pointsCapacity, genericArtifact, null,
+            //                        includeFieldMetaData);
+            //            }
             return genericArtifact;
         }
         return null;

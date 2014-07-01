@@ -87,31 +87,32 @@
 					value-ref="TFReader" />
 				
 				<!-- This plugs in the polling hospital -->
-				<entry key-ref="TFReader">
-					<list>
-						<ref bean="HospitalUpdatorSQLConverterReprocessed" />
-						<ref bean="QCEntityService" />
-					</list>
+				<entry key-ref="TFReader" >
+					 <list>
+						<!-- <ref bean="HospitalUpdatorSQLConverterReprocessed" /> -->
+						<ref bean="fileSplunkWriter" />
+					</list> 
 				</entry>
 				
-				<entry key-ref="QCEntityService"
+				<entry key-ref="fileSplunkWriter" value-ref="SynchronizationStatusAndIdentityMappingTableUpdaterTF2QC" />
+				<!-- <entry key-ref="QCEntityService"
 					value-ref="QCTransformer" />
 				<entry key-ref="QCTransformer" value-ref="QCWriter" />
 				<entry key-ref="QCWriter" value-ref="SynchronizationStatusAndIdentityMappingTableUpdaterTF2QC" />
 				
-				<!-- This plugs in the polling hospital -->
+				This plugs in the polling hospital
 				<entry key-ref="SynchronizationStatusAndIdentityMappingTableUpdaterTF2QC">
-					<list>
+					 <list>
 						<ref bean="HospitalUpdatorSQLConverterFixed"/>
 						<ref bean="PartialUpdateHospitalWriter" />
 					</list>
-				</entry>
+				</entry>-->
 					
-				<!-- This plugs in the polling hospital -->	
+				<!-- This plugs in the polling hospital	
 				<entry key-ref="HospitalUpdatorSQLConverterReprocessed" value-ref="HospitalUpdator" />
 				
-				<!-- This plugs in the polling hospital -->	
-				<entry key-ref="HospitalUpdatorSQLConverterFixed" value-ref="HospitalUpdator" />
+				This plugs in the polling hospital	
+				<entry key-ref="HospitalUpdatorSQLConverterFixed" value-ref="HospitalUpdator" /> -->
 
 				<!-- Exception processors -->
         		<entry key-ref="ExceptionConvertor" value-ref="HospitalWriter"/>
@@ -121,6 +122,8 @@
 		<property name="exceptionProcessor" ref="ExceptionConvertor"/><property name="metricsEnabled" value="true"/>
 	</bean>
 
+	<bean id="fileSplunkWriter" class="com.collabnet.ccf.splunk.FileSplunkWriter"/>
+	
 	<bean id="PartialUpdateHospitalWriter" class="com.collabnet.ccf.core.config.HospitalFilter">
 		<description>If we could only perform a partial update,
 		this component will place the artifact in the hospital, 
@@ -216,7 +219,7 @@
 	</bean>
 
 	<bean id="TFReader"
-		class="com.collabnet.ccf.teamforge.TFReader">
+		class="com.collabnet.ccf.splunk.SplunkTFReader">
 		<description>
 			This reader reads the modified artifacts in the TF system's tracker configured in the
 			${sfee.server.1.url} and the sync info tables. It also reads all the related dependent artifact details

@@ -51,8 +51,6 @@ import com.collabnet.teamforge.api.tracker.ArtifactDetailRow;
 import com.collabnet.teamforge.api.tracker.TrackerDO;
 import com.collabnet.teamforge.api.tracker.TrackerFieldDO;
 import com.collabnet.teamforge.api.tracker.TrackerFieldValueDO;
-import com.collabnet.teamforge.api.tracker.TrackerUnitList;
-import com.collabnet.teamforge.api.tracker.TrackerUnitRow;
 
 /**
  * The tracker handler class provides support for listing and/or edit trackers
@@ -234,11 +232,6 @@ public class TFTrackerHandler {
 
     }
 
-    public PlanningFolderDO getChangedPlanningFolderToForce(Connection connection,
-            String artifactID) throws RemoteException {
-        return connection.getPlanningClient().getPlanningFolderData(artifactID);
-    }
-
     public List<PlanningFolderDO> getChangedPlanningFolders(
             Connection connection, String sourceRepositoryId,
             Date lastModifiedDate, String lastSynchronizedArtifactId,
@@ -279,6 +272,11 @@ public class TFTrackerHandler {
             return null;
         else
             return detailRowsNew;
+    }
+
+    public PlanningFolderDO getChangedPlanningFolderToForce(
+            Connection connection, String planId) throws RemoteException {
+        return connection.getPlanningClient().getPlanningFolderData(planId);
     }
 
     /**
@@ -1091,37 +1089,39 @@ public class TFTrackerHandler {
         String trackerUnitId = trackerUnitIdMap.get(key);
         if (trackerUnitId != null) {
             return trackerUnitId;
-        } else {
-            TrackerUnitList trackerUnitList = connection.getTrackerClient()
-                    .getUnitsByProject(projectId);
-            //populate cache with the trackerUnitIds for the given projectid
-            populateTrackerUnitIdCache(trackerUnitList, projectId);
-            return getTechnicalTrackerUnitIdValue(trackerUnitIdValue,
-                    trackerUnitList);
         }
+        //        } else {
+        //            TrackerUnitList trackerUnitList = connection.getTrackerClient()
+        //                    .getUnitsByProject(projectId);
+        //populate cache with the trackerUnitIds for the given projectid
+        //            populateTrackerUnitIdCache(trackerUnitList, projectId);
+        //            return getTechnicalTrackerUnitIdValue(trackerUnitIdValue,
+        //                    trackerUnitList);
+        //        }
+        return null;
     }
 
-    private static String getTechnicalTrackerUnitIdValue(
-            String trackerUnitIdValue, TrackerUnitList trackerUnitList) {
-        TrackerUnitRow[] trackerUnits = trackerUnitList.getDataRows();
-        String trackerUnitId = null;
-        for (TrackerUnitRow trackerUnitRow : trackerUnits) {
-            if (trackerUnitIdValue.equals(trackerUnitRow.getName())) {
-                trackerUnitId = trackerUnitRow.getId();
-                break;
-            }
-        }
-        return trackerUnitId;
-    }
+    //    private static String getTechnicalTrackerUnitIdValue(
+    //            String trackerUnitIdValue, TrackerUnitList trackerUnitList) {
+    //        //        TrackerUnitRow[] trackerUnits = trackerUnitList.getDataRows();
+    //        String trackerUnitId = null;
+    //        //        for (TrackerUnitRow trackerUnitRow : trackerUnits) {
+    //        //            if (trackerUnitIdValue.equals(trackerUnitRow.getName())) {
+    //        //                trackerUnitId = trackerUnitRow.getId();
+    //        //                break;
+    //        //            }
+    //        //        }
+    //        return trackerUnitId;
+    //    }
 
-    private static void populateTrackerUnitIdCache(
-            TrackerUnitList trackerUnitList, String projectId) {
-        TrackerUnitRow[] trackerUnits = trackerUnitList.getDataRows();
-        for (TrackerUnitRow trackerUnitRow : trackerUnits) {
-            //key: ProjectId-TrackerUnitId Value:TechnialTrackerUnitId (proj1001-Hours,tkn1007)
-            trackerUnitIdMap.put(projectId + "-" + trackerUnitRow.getName(),
-                    trackerUnitRow.getId());
-        }
-    }
+    //    private static void populateTrackerUnitIdCache(
+    //            TrackerUnitList trackerUnitList, String projectId) {
+    //        TrackerUnitRow[] trackerUnits = trackerUnitList.getDataRows();
+    //        for (TrackerUnitRow trackerUnitRow : trackerUnits) {
+    //            //key: ProjectId-TrackerUnitId Value:TechnialTrackerUnitId (proj1001-Hours,tkn1007)
+    //            trackerUnitIdMap.put(projectId + "-" + trackerUnitRow.getName(),
+    //                    trackerUnitRow.getId());
+    //        }
+    //    }
 
 }
