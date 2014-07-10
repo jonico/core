@@ -65,7 +65,7 @@ public class QCHandler {
     private static final String QC_BREAK                         = "<br>";
     private static final String QC_LINE_BREAK                    = "<br />\r\n";
     private static final String QC_COMMENT_PREFIX                = "<div align=";
-    private static final String QC12_INSERT_BREAK                = "<br /><br />";
+    private static final String QC12_INSERT_BREAK                = "\r\n \r\n";
     private static final String QC_VERSION_OTHERS_END            = "</b></font>";
     private static final String QC_VERSION_OTHERS_START          = "<font color=\"#000080\"><b>";
     private static final String QC11_FIRST_COMMENT_START         = "<div align=\"left\"><font face=\"Arial\" color=\"#000080\"><span style=\"font-size:8pt\"><b>%s, %s:</b></span></font><font face=\"Arial\"><span style=\"font-size:8pt\">%s</span></font></div>";
@@ -1556,7 +1556,10 @@ public class QCHandler {
                         delta = StringUtils.substringAfter(newComment,
                                 QC12_UNDERSCORE_STRING).replaceAll(
                                 QC12_INSERTNEWLINE, QC12_INSERT_BREAK);
-                        deltaComment += delta;
+                        //Encode back html to entity references to preserve tags around the <fullname> in the QC comment format
+                        //which is validated during  transformation
+                        deltaComment += com.collabnet.ccf.core.utils.StringUtils
+                                .encodeHTMLToEntityReferences(delta);
                     } else {
                         if (newFieldValue.length() > oldFieldValue.length()) {
                             if (QC_VERSION_11.equals(qcMajorVersion)) {
