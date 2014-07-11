@@ -1,9 +1,6 @@
 package com.collabnet.ccf.core.utils;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
 import java.util.Date;
-import java.util.TimeZone;
 
 import org.dom4j.Document;
 
@@ -124,29 +121,7 @@ public class DummyArtifactSoapDO {
 
     private void addVal(ArtifactDO updatedData2) {
         setLastModifiedDate(updatedData2.getLastModifiedDate());
-        setLastVersion(String.valueOf(updatedData2.getVersion())); //Hope this comes with incremental value
-        //        setProjectIdString(updatedData2.);
 
-    }
-
-    private String iso8601Date(Date date) {
-        TimeZone tz = TimeZone.getTimeZone("UTC");
-        //        DateFormat df = isElasticSearch ? new SimpleDateFormat(
-        //                "yyyy-MM-dd'T'HH:mm:ss") : new SimpleDateFormat(
-        //                "yyyy-MM-dd'T'HH:mm:ss:SSSZ");
-        String osName = System.getProperty("os.name");
-        SimpleDateFormat format1, format2;
-        if (osName.startsWith("Win")) {
-            format1 = new SimpleDateFormat("yyyy-MM-dd'T'HH.mm.ss");
-            format2 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss:SSSZ");
-        } else {
-            format1 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss");
-            format2 = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss:SSSZ");
-
-        }
-        DateFormat df = true ? format1 : format2;
-        df.setTimeZone(tz);
-        return df.format(date);
     }
 
 }

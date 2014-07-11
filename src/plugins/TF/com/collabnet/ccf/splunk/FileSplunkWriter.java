@@ -34,6 +34,9 @@ public class FileSplunkWriter extends DynamicFileWriteConnector {
 
     @Override
     public Object deliver(Object[] data) {
+        if (data[0] == null) {
+            return null;
+        }
         //Hope this is the one it comes
         DummyArtifactSoapDO artifactSoapDO = (DummyArtifactSoapDO) data[0];
         String type = artifactSoapDO.getType();
@@ -189,18 +192,27 @@ public class FileSplunkWriter extends DynamicFileWriteConnector {
             StringBuilder builder = new StringBuilder(iso8601Date(currentDate));
             builder.append(" ");
             for (String key : eventProperties.keySet()) {
-                String valString = key + "=" + format(eventProperties.get(key));
-                builder.append(valString);
-                builder.append(" ");
-                //                if (isElasticSearch) {
-                //                    writer.println();
-                //                } else {
-                //                    writer.print(" "); // newlines seem to disturb Splunk
-                //                }
-                //                // encode the type into it for immature technologies
-                //                if (isElasticSearch) {
-                //                    typeEncoding(writer, key, eventProperties.get(key));
-                //                }
+                if (!key.equals("o_Description") && !key.equals("Description")) {
+                    String valString = key + "="
+                            + format(eventProperties.get(key));
+                    builder.append(valString);
+                    builder.append(" ");
+                } else {
+                    int fieldValueLength = eventProperties.get(key).length();
+                    if (fieldValueLength > 512) {
+                        String valString = key
+                                + "="
+                                + format(eventProperties.get(key).substring(0,
+                                        512));
+                        builder.append(valString);
+                        builder.append(" ");
+                    } else {
+                        String valString = key + "="
+                                + format(eventProperties.get(key));
+                        builder.append(valString);
+                        builder.append(" ");
+                    }
+                }
             }
             String keyVal = builder.toString().trim();
             collectionVaList.add(keyVal);

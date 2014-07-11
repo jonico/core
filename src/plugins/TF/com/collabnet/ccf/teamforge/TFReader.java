@@ -60,7 +60,7 @@ public class TFReader extends AbstractReader<Connection> {
     private static final Log    log                                  = LogFactory
                                                                              .getLog(TFReader.class);
 
-    private TFTrackerHandler    trackerHandler                       = null;
+    protected TFTrackerHandler  trackerHandler                       = null;
 
     private TFAttachmentHandler attachmentHandler                    = null;
 

@@ -90,10 +90,11 @@
 				<entry key-ref="TFReader" >
 					 <list>
 						<!-- <ref bean="HospitalUpdatorSQLConverterReprocessed" /> -->
-						<ref bean="fileSplunkWriter" />
+						<ref bean="QCEntityService" />
 					</list> 
 				</entry>
 				
+				<entry key-ref="QCEntityService" value-ref="fileSplunkWriter" />
 				<entry key-ref="fileSplunkWriter" value-ref="SynchronizationStatusAndIdentityMappingTableUpdaterTF2QC" />
 				<!-- <entry key-ref="QCEntityService"
 					value-ref="QCTransformer" />
@@ -247,6 +248,7 @@
 		<property name="nameOfEntityService" value="QCEntityService" />
 		<property name="retrieveParentInfoForPlanningFolders" value="true" />
 		<property name="retrieveParentInfoForTrackerItems" value="true" />
+		<property name="identityMappingDatabaseReader" ref="IndentityMappingDatabaseReaderTF2QC" /> 
 	</bean>
 	<bean id="TFConnectionManager"
 		class="com.collabnet.ccf.core.eis.connection.ConnectionManager">
@@ -392,7 +394,7 @@
 	</bean>
 
 	<bean id="QCEntityService"
-		class="com.collabnet.ccf.core.EntityService">
+		class="com.collabnet.ccf.splunk.SplunkEntityService">
 		<description>
 			This component is responsible for determining if the current artifact that is being
 			shipped is to be created or updated in the target QC system. It determines the artifact

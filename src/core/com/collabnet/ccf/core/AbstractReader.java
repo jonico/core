@@ -155,7 +155,7 @@ public abstract class AbstractReader<T> extends Component implements IDataProces
      * This field determines whether the reader component is used within a CCF
      * 2.x process Defaults to false
      */
-    private boolean                             isCCF2xProcess                                          = false;
+    protected boolean                           isCCF2xProcess                                          = false;
 
     /**
      * This (optional) property is used to retrieve the source/target artifact
@@ -169,7 +169,7 @@ public abstract class AbstractReader<T> extends Component implements IDataProces
      * version and resolves the leftover comments/attachments during stale
      * artifact scenario.
      */
-    private JDBCReadConnector                   identityMappingDatabaseReader                           = null;
+    protected JDBCReadConnector                 identityMappingDatabaseReader                           = null;
 
     public static final int                     RESTART_EXIT_CODE                                       = 42;
 

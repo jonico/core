@@ -2,6 +2,7 @@ package com.collabnet.ccf.splunk;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.rmi.RemoteException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -12,6 +13,8 @@ import org.apache.commons.logging.LogFactory;
 import org.dom4j.Document;
 import org.dom4j.DocumentException;
 import org.dom4j.DocumentHelper;
+import org.openadaptor.auxil.orderedmap.IOrderedMap;
+import org.openadaptor.auxil.orderedmap.OrderedHashMap;
 
 import com.collabnet.ccf.core.ArtifactState;
 import com.collabnet.ccf.core.CCFRuntimeException;
@@ -23,6 +26,7 @@ import com.collabnet.ccf.core.ga.GenericArtifact.ArtifactTypeValue;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
 import com.collabnet.ccf.core.utils.DummyArtifactSoapDO;
+import com.collabnet.ccf.teamforge.TFConnectionFactory;
 import com.collabnet.ccf.teamforge.TFReader;
 import com.collabnet.ccf.teamforge.TFToGenericArtifactConverter;
 import com.collabnet.ce.soap60.webservices.cemain.AuditHistorySoapRow;
@@ -30,7 +34,9 @@ import com.collabnet.teamforge.api.Connection;
 import com.collabnet.teamforge.api.main.AuditHistoryList;
 import com.collabnet.teamforge.api.main.AuditHistoryRow;
 import com.collabnet.teamforge.api.main.TeamForgeClient;
+import com.collabnet.teamforge.api.planning.PlanningFolderDO;
 import com.collabnet.teamforge.api.tracker.ArtifactDO;
+import com.collabnet.teamforge.api.tracker.ArtifactDetailRow;
 import com.collabnet.teamforge.api.tracker.TrackerClient;
 
 public class SplunkTFReader extends TFReader {
@@ -47,7 +53,7 @@ public class SplunkTFReader extends TFReader {
     }
 
     public List<DummyArtifactSoapDO> getArtifactData1(Document syncInfo,
-            String artifactId) {
+            String artifactId) throws Exception {
 
         List<DummyArtifactSoapDO> allVersions = new ArrayList<DummyArtifactSoapDO>();
         Connection connection = connect(syncInfo);
@@ -74,11 +80,13 @@ public class SplunkTFReader extends TFReader {
                     auditSaopList, auditClone);
 
             ArtifactDO currentDo = cloneCurrentArtifact, oldDO = null;
-            while (changeSet.size() != 0) {
+            while (!changeSet.isEmpty()) {
                 DummyArtifactSoapDO dummy = new DummyArtifactSoapDO();
                 dummy.setType("artifact");
                 dummy.setOperation("update");
                 dummy.setProjectIdString(projectID);
+                String version = String.valueOf(currentDo.getVersion());
+                dummy.setLastVersion(version);
                 Date lastModifiedDate = currentDo.getLastModifiedDate();
                 dummy.setUpdatedData(artifactClone(connection, currentDo));
                 ga.setArtifactAction(ArtifactActionValue.UPDATE);
@@ -89,14 +97,22 @@ public class SplunkTFReader extends TFReader {
                 ga.setTargetArtifactId(artifactId);
                 super.populateSrcAndDest(syncInfo, ga);
                 dummy.setGenericArtifact(ga);
-                boolean runBelowLoop = true;
-                while (runBelowLoop) {
-                    oldDO = applyOldValueChanges(currentDo, changeSet.remove(0));
-                    dummy.setOriginalData(artifactClone(connection, oldDO));
-                    runBelowLoop = false;
+                if (changeSet.size() > 1) {
+                    List<AuditHistoryRow> latestChange = changeSet.remove(0);
+                    List<AuditHistoryRow> perviousChange = changeSet.get(0);
+                    oldDO = applyOldValueChanges(currentDo, latestChange,
+                            perviousChange.get(0).getDateModified(),
+                            perviousChange.get(0).getModifiedBy());
+
+                } else if (changeSet.size() == 1) {
+                    List<AuditHistoryRow> latestChange = changeSet.remove(0);
+                    oldDO = applyOldValueChanges(currentDo, latestChange,
+                            currentDo.getCreatedDate(),
+                            currentDo.getCreatedBy());
                 }
-                allVersions.add(dummy);
                 if (oldDO != null) {
+                    dummy.setOriginalData(artifactClone(connection, oldDO));
+                    allVersions.add(dummy);
                     currentDo = artifactClone(connection, oldDO);
                 }
             }
@@ -105,6 +121,8 @@ public class SplunkTFReader extends TFReader {
                 dummy1.setType("artifact");
                 dummy1.setOperation("create");
                 dummy1.setProjectIdString(projectID);
+                String version = String.valueOf(currentDo.getVersion());
+                dummy1.setLastVersion(version);
                 dummy1.setUpdatedData(currentDo);
                 dummy1.setOriginalData(currentDo);
                 ga.setArtifactAction(ArtifactActionValue.CREATE);
@@ -120,15 +138,105 @@ public class SplunkTFReader extends TFReader {
 
             }
             Collections.reverse(allVersions);
-        } catch (Exception e) {
-            // TODO: handle exception
-            log.error(e.getMessage());
-            e.printStackTrace();
         } finally {
             this.disconnect(connection);
         }
 
         return allVersions;
+    }
+
+    public List<ArtifactState> getChangedArtifacts(Document syncInfo) {
+        String sourceRepositoryId = this.getSourceRepositoryId(syncInfo);
+        String lastSynchronizedArtifactId = this
+                .getLastSourceArtifactId(syncInfo);
+        String lastSynchronizedVersion = this.getLastSourceVersion(syncInfo);
+        int version = 0;
+        try {
+            version = Integer.parseInt(lastSynchronizedVersion);
+        } catch (NumberFormatException e) {
+            log.warn("Version string is not a number "
+                    + lastSynchronizedVersion, e);
+        }
+        Connection connection = connect(syncInfo);
+        try {
+            //            Date lastModifiedDate = this.getLastModifiedDate(syncInfo);
+            Date lastModifiedDate = null;
+            if (lastModifiedDate == null) {
+                lastModifiedDate = new Date(0);
+            }
+            ArrayList<ArtifactState> artifactStates = new ArrayList<ArtifactState>();
+
+            if (TFConnectionFactory.isTrackerRepository(sourceRepositoryId)) {
+                List<ArtifactDetailRow> artifactRows = null;
+                try {
+                    artifactRows = trackerHandler.getChangedTrackerItems(
+                            connection, sourceRepositoryId, lastModifiedDate,
+                            lastSynchronizedArtifactId, 0);
+                } catch (RemoteException e) {
+                    String cause = "During the changed artifacts retrieval process from TF, an exception occured";
+                    log.error(cause, e);
+                    throw new CCFRuntimeException(cause, e);
+                }
+                if (artifactRows != null) {
+                    for (ArtifactDetailRow artifact : artifactRows) {
+                        String artifactId = artifact.getId();
+                        int versionFromIdentityMapping = getLastVersionFromIdentityMapping(
+                                syncInfo, artifactId,
+                                ARTIFACT_TYPE_PLAIN_ARTIFACT);
+                        if (versionFromIdentityMapping != artifact.getVersion()) {
+                            ArtifactState artifactState = new ArtifactState();
+                            artifactState.setArtifactId(artifactId);
+                            artifactState.setArtifactLastModifiedDate(artifact
+                                    .getLastModifiedDate());
+                            artifactState.setArtifactVersion(artifact
+                                    .getVersion());
+                            artifactStates.add(artifactState);
+                        }
+                    }
+                }
+            } else if (TFConnectionFactory
+                    .isPlanningFolderRepository(sourceRepositoryId)) {
+                // we retrieve planning folders
+                if (!connection.supports53()) {
+                    log.warn("Planning folder extraction requested, but this version of TF does not support planning folders: "
+                            + sourceRepositoryId);
+                } else {
+                    String project = TFConnectionFactory
+                            .extractProjectFromRepositoryId(sourceRepositoryId);
+                    List<PlanningFolderDO> artifactRows = null;
+                    try {
+                        artifactRows = trackerHandler
+                                .getChangedPlanningFolders(connection,
+                                        sourceRepositoryId, lastModifiedDate,
+                                        lastSynchronizedArtifactId, version,
+                                        project);
+                    } catch (RemoteException e) {
+                        String cause = "During the changed planning folder retrieval process from TF, an exception occured";
+                        log.error(cause, e);
+                        throw new CCFRuntimeException(cause, e);
+                    }
+                    if (artifactRows != null) {
+                        for (PlanningFolderDO planningFolder : artifactRows) {
+                            String artifactId = planningFolder.getId();
+                            ArtifactState artifactState = new ArtifactState();
+                            artifactState.setArtifactId(artifactId);
+                            artifactState
+                                    .setArtifactLastModifiedDate(planningFolder
+                                            .getLastModifiedDate());
+                            artifactState.setArtifactVersion(planningFolder
+                                    .getVersion());
+                            artifactStates.add(artifactState);
+                        }
+                    }
+                }
+            } else {
+                throw new CCFRuntimeException("Unknown repository id format: "
+                        + sourceRepositoryId);
+            }
+            return artifactStates;
+        } finally {
+            this.disconnect(connection);
+        }
     }
 
     @Override
@@ -209,7 +317,7 @@ public class SplunkTFReader extends TFReader {
                         .updateRMDConfigToOff(repositoryMappingDirectionID);
             }
 
-            if (!artifactsToBeShippedList.isEmpty()) { //TODO: this needs to rewritten with dummyArtifactSoapToBeShippedList
+            if (!artifactsToBeShippedList.isEmpty()) {
                 log.debug("There are " + artifactsToBeShippedList.size()
                         + " artifacts to be shipped.");
                 DummyArtifactSoapDO genericArtifact = artifactsToBeShippedList
@@ -410,14 +518,14 @@ public class SplunkTFReader extends TFReader {
                             // As per java documentation Document.clone() method provides
                             //detached and deep copy of the Object
                             Document tempSyncInfo = (Document) syncInfo.clone();
-                            if (getIdentityMappingDatabaseReader() != null) {
-                                // Update the syncinfo with the artifact lastmodifiedtime and lastModifiedVersion
-                                // fetched from the identity mapping.Modifying the syncinfo does not has any side effects
-                                // because artifactsToBeShippedList has already been populated with the artifact data
-                                updateSyncInfoFromIdentityMapping(tempSyncInfo,
-                                        artifactId,
-                                        ARTIFACT_TYPE_PLAIN_ARTIFACT);
-                            }
+                            //                            if (getIdentityMappingDatabaseReader() != null) {
+                            // Update the syncinfo with the artifact lastmodifiedtime and lastModifiedVersion
+                            // fetched from the identity mapping.Modifying the syncinfo does not has any side effects
+                            // because artifactsToBeShippedList has already been populated with the artifact data
+                            //                                updateSyncInfoFromIdentityMapping(tempSyncInfo,
+                            //                                        artifactId,
+                            //                                        ARTIFACT_TYPE_PLAIN_ARTIFACT);
+                            //                            }
                             List<DummyArtifactSoapDO> artifactDatas = this
                                     .getArtifactData1(tempSyncInfo, artifactId);
                             for (DummyArtifactSoapDO arifactDatArtifactSoapDO : artifactDatas) {
@@ -608,8 +716,49 @@ public class SplunkTFReader extends TFReader {
 
     }
 
+    protected int getLastVersionFromIdentityMapping(Document syncInfo,
+            String artifactId, String artifactType) {
+        IOrderedMap inputParameters = new OrderedHashMap();
+        int lastModifiedVersion = 0;
+        if (!isCCF2xProcess) {
+            inputParameters.add(this.getSourceSystemId(syncInfo));//sourceSystemId
+            inputParameters.add(this.getSourceRepositoryId(syncInfo));//sourceRepositoryId
+            inputParameters.add(this.getTargetSystemId(syncInfo));//targetSystemId
+            inputParameters.add(this.getTargetRepositoryId(syncInfo));//targetRepositoryId
+        } else {
+            inputParameters.add(this.getRepositoryMappingId(syncInfo));//repositorymappingid
+        }
+        inputParameters.add(artifactId);//artifactId
+        inputParameters.add(artifactType);//artifactType
+        try {
+            identityMappingDatabaseReader.connect();
+            Object[] resultSet = identityMappingDatabaseReader.next(
+                    inputParameters, 1000);
+            if (resultSet == null || resultSet.length == 0) {
+                lastModifiedVersion = 0;
+                log.debug("Setting the lastModifiedTime and lastModifiedVersion to default values");
+            } else {
+                IOrderedMap resultSetMap = (OrderedHashMap) resultSet[0];
+                String lastModifiedVersionStr = (String) resultSetMap.get(2);
+                if (lastModifiedVersionStr == null) {
+                    return lastModifiedVersion;
+                } else {
+                    lastModifiedVersion = Integer
+                            .valueOf(lastModifiedVersionStr);
+                }
+            }
+
+        } catch (Exception e) {
+            log.debug(
+                    "Update syncInfo from IdentityMapping failed due to following exception ",
+                    e);
+        }
+        return lastModifiedVersion;
+    }
+
     private ArtifactDO applyOldValueChanges(ArtifactDO cloneCurrentArtifact,
-            List<AuditHistoryRow> changeList) throws IllegalAccessException,
+            List<AuditHistoryRow> changeList, Date lastModifiedDate,
+            String lastModifiedBy) throws IllegalAccessException,
             InvocationTargetException {
         Class kClass = cloneCurrentArtifact.getClass();
         Method[] methods = kClass.getMethods();
@@ -645,12 +794,10 @@ public class SplunkTFReader extends TFReader {
                 }
             }
         }
-        if (!changeList.isEmpty()) {
-            AuditHistoryRow auditRow = changeList.get(0);
-            cloneCurrentArtifact.setLastModifiedBy(auditRow.getModifiedBy());
-            cloneCurrentArtifact
-                    .setLastModifiedDate(auditRow.getDateModified());
-        }
+        cloneCurrentArtifact.setLastModifiedBy(lastModifiedBy);
+        cloneCurrentArtifact.setLastModifiedDate(lastModifiedDate);
+        int oldVersion = cloneCurrentArtifact.getVersion() - 1;
+        cloneCurrentArtifact.setVersion(oldVersion);
         return cloneCurrentArtifact;
     }
 
