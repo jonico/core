@@ -28,9 +28,8 @@ public class FileSplunkWriter extends DynamicFileWriteConnector {
 
     public final static Log log             = LogFactory
                                                     .getLog(FileSplunkWriter.class);
-    public static boolean   isElasticSearch = false;
-    public static String    eventsDirectory = isElasticSearch ? "/opt/collabnet/teamforge/events"
-                                                    : "/opt/collabnet/teamforge/splunknew";
+    public boolean          isElasticSearch = false;
+    public String           eventsDirectory = "/opt/collabnet/teamforge/splunk";
 
     @Override
     public Object deliver(Object[] data) {
@@ -226,6 +225,23 @@ public class FileSplunkWriter extends DynamicFileWriteConnector {
         return artifactSoapDO.getGenericArtifact();
     }
 
+    public String getEventsDirectory() {
+        return eventsDirectory;
+    }
+
+    public boolean isElasticSearch() {
+        return isElasticSearch;
+    }
+
+    public void setElasticSearch(boolean isElasticSearch) {
+        this.isElasticSearch = isElasticSearch;
+    }
+
+    public void setEventsDirectory(String eventsDirectory) {
+        this.eventsDirectory = isElasticSearch() ? "/opt/collabnet/teamforge/events"
+                : eventsDirectory;
+    }
+
     //TODO: need to uncomment this one later
     public void validate(List exceptions) {
         //        super.validate(exceptions);
@@ -245,7 +261,7 @@ public class FileSplunkWriter extends DynamicFileWriteConnector {
                 //            super.moveOutputFile();
             }
             try {
-                File dumpFile = new File(eventsDirectory, getFilename());
+                File dumpFile = new File(getEventsDirectory(), getFilename());
                 return new FileOutputStream(dumpFile, isAppend());
             } catch (FileNotFoundException e) {
                 throw new RuntimeException("FileNotFoundException, "

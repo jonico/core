@@ -528,7 +528,8 @@ public class MappingDBUpdater extends LifecycleComponent implements IDataProcess
 
         OrderedHashMap identityMappingTableRow = lookupIdentiyMappingRow(
                 element, sourceArtifactId, sourceSystemId, sourceRepositoryId,
-                targetSystemId, targetRepositoryId, artifactType);
+                targetSystemId, targetRepositoryId, artifactType,
+                targetArtifactId);
         String targetArtifactIdFromTable = null;
         if (identityMappingTableRow != null) {
             targetArtifactIdFromTable = (String) identityMappingTableRow.get(0);
@@ -591,7 +592,8 @@ public class MappingDBUpdater extends LifecycleComponent implements IDataProcess
     private OrderedHashMap lookupIdentiyMappingRow(Element element,
             String sourceArtifactId, String sourceSystemId,
             String sourceRepositoryId, String targetSystemId,
-            String targetRepositoryId, String artifactType) {
+            String targetRepositoryId, String artifactType,
+            String targetArtifactId) {
         OrderedHashMap result = null;
         IOrderedMap inputParameters = new OrderedHashMap();
 
@@ -601,6 +603,7 @@ public class MappingDBUpdater extends LifecycleComponent implements IDataProcess
         inputParameters.add(targetRepositoryId);
         inputParameters.add(sourceArtifactId);
         inputParameters.add(artifactType);
+        inputParameters.add(targetArtifactId);
 
         identityMappingDatabaseReader.connect();
         Object[] resultSet = identityMappingDatabaseReader.next(

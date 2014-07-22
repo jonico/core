@@ -555,6 +555,10 @@ public class GenericArtifactHelper {
                 addAttribute(root, ARTIFACT_TYPE, ARTIFACT_TYPE_UNKNOWN);
                 break;
             }
+            case ASSOCIATION: {
+                addAttribute(root, ARTIFACT_TYPE, "association");
+                break;
+            }
             default: {
                 throw new GenericArtifactParsingException(
                         "Non valid value for root-attribute " + ARTIFACT_TYPE

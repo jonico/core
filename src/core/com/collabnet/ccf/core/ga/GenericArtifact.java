@@ -59,7 +59,7 @@ public class GenericArtifact {
      * @author jnicolai
      */
     public enum ArtifactTypeValue {
-        PLAINARTIFACT, DEPENDENCY, ATTACHMENT, UNKNOWN
+        PLAINARTIFACT, DEPENDENCY, ATTACHMENT, ASSOCIATION, UNKNOWN
     };
 
     /**

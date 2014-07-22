@@ -7,31 +7,30 @@ import org.dom4j.Document;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
-import com.collabnet.teamforge.api.tracker.ArtifactDO;
 
-public class DummyArtifactSoapDO {
+public class DummyArtifactSoapDO<T> {
 
-    private String     type             = "Artifact";
+    private String   type             = "Artifact";
 
-    private String     operation        = null;
+    private String   operation        = null;
 
-    private String     projectIdString  = null;
+    private String   projectIdString  = null;
 
-    private Date       lastModifiedDate = null;
+    private Date     lastModifiedDate = null;
 
-    private String     lastVersion      = null;
+    private String   lastVersion      = null;
 
-    private Document   genericArtifact  = null;
+    private Document genericArtifact  = null;
 
-    private ArtifactDO originalData     = null;
+    private T        originalData     = null;
 
-    private ArtifactDO updatedData      = null;
+    private T        updatedData      = null;
 
     public DummyArtifactSoapDO() {
 
     }
 
-    public DummyArtifactSoapDO(ArtifactDO orignalData, ArtifactDO updatedData) {
+    public DummyArtifactSoapDO(T orignalData, T updatedData) {
         this.originalData = orignalData;
         this.updatedData = updatedData;
     }
@@ -52,7 +51,7 @@ public class DummyArtifactSoapDO {
         return operation;
     }
 
-    public ArtifactDO getOriginalData() {
+    public T getOriginalData() {
         return originalData;
     }
 
@@ -64,7 +63,7 @@ public class DummyArtifactSoapDO {
         return type;
     }
 
-    public ArtifactDO getUpdatedData() {
+    public T getUpdatedData() {
         return updatedData;
     }
 
@@ -90,7 +89,7 @@ public class DummyArtifactSoapDO {
         this.operation = operation;
     }
 
-    public void setOriginalData(ArtifactDO originalData) {
+    public void setOriginalData(T originalData) {
         this.originalData = originalData;
     }
 
@@ -102,8 +101,8 @@ public class DummyArtifactSoapDO {
         this.type = type;
     }
 
-    public void setUpdatedData(ArtifactDO updatedData) {
-        addVal(updatedData);
+    public void setUpdatedData(T updatedData) {
+        //        addVal(updatedData);
         this.updatedData = updatedData;
     }
 
@@ -117,11 +116,6 @@ public class DummyArtifactSoapDO {
     @Override
     protected Object clone() throws CloneNotSupportedException {
         return super.clone();
-    }
-
-    private void addVal(ArtifactDO updatedData2) {
-        setLastModifiedDate(updatedData2.getLastModifiedDate());
-
     }
 
 }

@@ -31,6 +31,8 @@ import com.collabnet.ccf.teamforge.TFReader;
 import com.collabnet.ccf.teamforge.TFToGenericArtifactConverter;
 import com.collabnet.ce.soap60.webservices.cemain.AuditHistorySoapRow;
 import com.collabnet.teamforge.api.Connection;
+import com.collabnet.teamforge.api.main.AssociationList;
+import com.collabnet.teamforge.api.main.AssociationRow;
 import com.collabnet.teamforge.api.main.AuditHistoryList;
 import com.collabnet.teamforge.api.main.AuditHistoryRow;
 import com.collabnet.teamforge.api.main.TeamForgeClient;
@@ -81,14 +83,18 @@ public class SplunkTFReader extends TFReader {
 
             ArtifactDO currentDo = cloneCurrentArtifact, oldDO = null;
             while (!changeSet.isEmpty()) {
-                DummyArtifactSoapDO dummy = new DummyArtifactSoapDO();
+                DummyArtifactSoapDO<ArtifactDO> dummy = new DummyArtifactSoapDO<ArtifactDO>();
                 dummy.setType("artifact");
                 dummy.setOperation("update");
                 dummy.setProjectIdString(projectID);
                 String version = String.valueOf(currentDo.getVersion());
                 dummy.setLastVersion(version);
                 Date lastModifiedDate = currentDo.getLastModifiedDate();
-                dummy.setUpdatedData(artifactClone(connection, currentDo));
+                ArtifactDO updataDataArtifactDO = artifactClone(connection,
+                        currentDo);
+                dummy.setLastModifiedDate(updataDataArtifactDO
+                        .getLastModifiedDate());
+                dummy.setUpdatedData(updataDataArtifactDO);
                 ga.setArtifactAction(ArtifactActionValue.UPDATE);
                 ga.setArtifactType(ArtifactTypeValue.PLAINARTIFACT);
                 ga.setSourceArtifactId(artifactId);
@@ -117,12 +123,13 @@ public class SplunkTFReader extends TFReader {
                 }
             }
             if (changeSet.size() == 0) { // while create
-                DummyArtifactSoapDO dummy1 = new DummyArtifactSoapDO();
+                DummyArtifactSoapDO<ArtifactDO> dummy1 = new DummyArtifactSoapDO<ArtifactDO>();
                 dummy1.setType("artifact");
                 dummy1.setOperation("create");
                 dummy1.setProjectIdString(projectID);
                 String version = String.valueOf(currentDo.getVersion());
                 dummy1.setLastVersion(version);
+                dummy1.setLastModifiedDate(currentDo.getLastModifiedDate());
                 dummy1.setUpdatedData(currentDo);
                 dummy1.setOriginalData(currentDo);
                 ga.setArtifactAction(ArtifactActionValue.CREATE);
@@ -142,6 +149,61 @@ public class SplunkTFReader extends TFReader {
             this.disconnect(connection);
         }
 
+        return allVersions;
+    }
+
+    public List<DummyArtifactSoapDO> getAssociationData(Document syncInfo,
+            String artifactId) throws Exception {
+        List<DummyArtifactSoapDO> allVersions = new ArrayList<DummyArtifactSoapDO>();
+        Connection connection = connect(syncInfo);
+        try {
+            TrackerClient trackerClient = connection.getTrackerClient();
+            TeamForgeClient tfClient = connection.getTeamForgeClient();
+            ArtifactDO currentArtifactData = trackerClient
+                    .getArtifactData(artifactId);
+            AssociationList associations = tfClient.getAssociationList(
+                    artifactId, true);
+            String projectID = tfClient.getProjectDataByPath(
+                    currentArtifactData.getPath().split("/")[0]).getId();
+            for (AssociationRow associationRow : associations.getDataRows()) {
+
+                String associationId = associationRow.getOriginId() + ":"
+                        + associationRow.getTargetId();
+
+                //                if (!isArtifactIdExist(syncInfo, associationId, "association")) {
+                GenericArtifact ga = TFToGenericArtifactConverter
+                        .convertArtifact(connection.supports53(),
+                                connection.supports54(), currentArtifactData,
+                                null, this.getLastModifiedDate(syncInfo),
+                                false, this.getSourceSystemTimezone(syncInfo),
+                                null, null, null);
+                DummyArtifactSoapDO<AssociationRow> dummy1 = new DummyArtifactSoapDO<AssociationRow>();
+                dummy1.setType("relationship");
+                dummy1.setOperation("create");
+                dummy1.setProjectIdString(projectID);
+                dummy1.setLastModifiedDate(associationRow.getDateCreated());
+
+                String version = String.valueOf(currentArtifactData
+                        .getVersion());
+                dummy1.setLastVersion(version);
+                dummy1.setUpdatedData(associationRow);
+                dummy1.setOriginalData(associationRow);
+                ga.setArtifactAction(ArtifactActionValue.CREATE);
+                ga.setArtifactType(ArtifactTypeValue.ASSOCIATION);
+                ga.setSourceArtifactId(associationId);
+                ga.setSourceArtifactLastModifiedDate(formatIFDate(currentArtifactData
+                        .getLastModifiedDate()));
+                ga.setSourceArtifactVersion(dummy1.getLastVersion());
+                ga.setTargetArtifactId(associationRow.getTargetId() + ":"
+                        + associationRow.getOriginId());
+                super.populateSrcAndDest(syncInfo, ga);
+                dummy1.setGenericArtifact(ga);
+                allVersions.add(dummy1);
+                //                }
+            }
+        } finally {
+            this.disconnect(connection);
+        }
         return allVersions;
     }
 
@@ -532,6 +594,14 @@ public class SplunkTFReader extends TFReader {
                                 artifactsToBeShippedList
                                         .add(arifactDatArtifactSoapDO);
 
+                            }
+
+                            List<DummyArtifactSoapDO> artifactAssociations = this
+                                    .getAssociationData(tempSyncInfo,
+                                            artifactId);
+                            for (DummyArtifactSoapDO arifactAssociation : artifactAssociations) {
+                                artifactsToBeShippedList
+                                        .add(arifactAssociation);
                             }
                             //                            if (artifactData != null) {
                             //                                log.debug("Finding out whether artifact data is stale ...");

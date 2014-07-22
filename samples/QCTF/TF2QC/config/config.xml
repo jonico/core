@@ -123,7 +123,10 @@
 		<property name="exceptionProcessor" ref="ExceptionConvertor"/><property name="metricsEnabled" value="true"/>
 	</bean>
 
-	<bean id="fileSplunkWriter" class="com.collabnet.ccf.splunk.FileSplunkWriter"/>
+	<bean id="fileSplunkWriter" class="com.collabnet.ccf.splunk.FileSplunkWriter">
+	<property name="eventsDirectory" value="/opt/collabnet/teamforge/splunk"/>
+	<property name="elasticSearch" value="false"/>
+	</bean>
 	
 	<bean id="PartialUpdateHospitalWriter" class="com.collabnet.ccf.core.config.HospitalFilter">
 		<description>If we could only perform a partial update,
@@ -308,7 +311,7 @@
 			id and creates an identity mapping entry for the source and target artifact ids.
 		</description>
 		<property name="synchronizationStatusDatabaseUpdater" ref="SynchronizationStatusDatabaseUpdaterTF2QC"></property>
-		<property name="identityMappingDatabaseReader" ref="IndentityMappingDatabaseReaderTF2QC" />
+		<property name="identityMappingDatabaseReader" ref="IndentityMappingDatabaseReaderTF2QCForSplunkEntityService" />
 		<property name="identityMappingDatabaseUpdater" ref="IdentityMappingDatabaseUpdaterTF2QC" />
 		<property name="identityMappingDatabaseInserter"
 			ref="IdentityMappingDatabaseInserterTF2QC">
@@ -403,7 +406,7 @@
 			action as create otherwise update. Please refer the SynchronizationStatusAndIdentityMappingTableUpdater
 			component.
 		</description>
-		<property name="identityMappingDatabaseReader" ref="IndentityMappingDatabaseReaderTF2QC" />
+		<property name="identityMappingDatabaseReader" ref="IndentityMappingDatabaseReaderTF2QCForSplunkEntityService" />
 		<property name="parentIdentityMappingDatabaseReader" ref="ParentIndentityMappingDatabaseReaderTF2QC" />
 		<property name="projectMappingDatabaseReader" ref="ProjectMappingDatabaseReaderTF2QC" />
 		<property name="hospitalDatabaseReader" ref="HospitalDatabaseReaderTF2QC"/>
@@ -498,6 +501,22 @@
 		<property name="batchSize" value="0" />
 		<property name="sql">
 			<value>SELECT TARGET_ARTIFACT_ID, SOURCE_LAST_MODIFICATION_TIME, SOURCE_ARTIFACT_VERSION, TARGET_ARTIFACT_VERSION FROM IDENTITY_MAPPING WHERE SOURCE_SYSTEM_ID='?' AND SOURCE_REPOSITORY_ID='?' AND TARGET_SYSTEM_ID='?' AND TARGET_REPOSITORY_ID='?' AND SOURCE_ARTIFACT_ID='?' AND ARTIFACT_TYPE='?'</value>
+		</property>
+	</bean>
+	
+	<bean id="IndentityMappingDatabaseReaderTF2QCForSplunkEntityService"
+		class="org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector">
+		<description>
+			This database reader component reads the target artifact id from the databse
+			for a given source artifact id and the target repository and system information.
+		</description>
+		<property name="jdbcConnection"
+			ref="JdbcConnectionTF2QC" />
+		<!-- batch size of 0 or less means process all rows in one message batch. -->
+		<!-- batch size of one means process one row per message and so on -->
+		<property name="batchSize" value="0" />
+		<property name="sql">
+			<value>SELECT TARGET_ARTIFACT_ID, SOURCE_LAST_MODIFICATION_TIME, SOURCE_ARTIFACT_VERSION, TARGET_ARTIFACT_VERSION FROM IDENTITY_MAPPING WHERE SOURCE_SYSTEM_ID='?' AND SOURCE_REPOSITORY_ID='?' AND TARGET_SYSTEM_ID='?' AND TARGET_REPOSITORY_ID='?' AND SOURCE_ARTIFACT_ID='?' AND ARTIFACT_TYPE='?' AND TARGET_ARTIFACT_ID='?'</value>
 		</property>
 	</bean>
 	

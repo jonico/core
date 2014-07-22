@@ -34,6 +34,8 @@ public class SplunkEntityService extends EntityService {
                         GenericArtifactHelper.TARGET_SYSTEM_ID);
                 String targetRepositoryId = XPathUtils.getAttributeValue(
                         element, GenericArtifactHelper.TARGET_REPOSITORY_ID);
+                String targetArtifactId = XPathUtils.getAttributeValue(element,
+                        GenericArtifactHelper.TARGET_ARTIFACT_ID);
                 IOrderedMap inputParameters = new OrderedHashMap();
                 inputParameters.add(sourceSystemId);
                 inputParameters.add(sourceRepositoryId);
@@ -41,6 +43,7 @@ public class SplunkEntityService extends EntityService {
                 inputParameters.add(targetRepositoryId);
                 inputParameters.add(sourceArtifactId);
                 inputParameters.add(artifactType);
+                inputParameters.add(targetArtifactId);
                 identityMappingDatabaseReader.connect();
                 Object[] resultSet = identityMappingDatabaseReader.next(
                         inputParameters, 1000);
@@ -51,9 +54,19 @@ public class SplunkEntityService extends EntityService {
                 int versionFromTable = Integer.valueOf((String) result.get(2));
                 int currentVersion = Integer.valueOf(artifactSoapDO
                         .getLastVersion());
-                if (currentVersion > versionFromTable) {
-                    return new Object[] { data };
+                if (artifactType.equalsIgnoreCase("plainArtifact")) {
+                    if (currentVersion > versionFromTable) {
+                        return new Object[] { data };
+                    }
+                } else {
+                    return null;
                 }
+
+                /*
+                 * if (artifactSoapDO.getUpdatedData() instanceof
+                 * AssociationRow) { if (currentVersion == versionFromTable) {
+                 * return new Object[] { data }; } }
+                 */
 
             } catch (GenericArtifactParsingException e) {
                 throw new CCFRuntimeException(e.getMessage());
