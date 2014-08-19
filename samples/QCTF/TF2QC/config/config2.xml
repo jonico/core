@@ -275,6 +275,11 @@
 		<property name="identityMappingDatabaseReader" ref="IndentityMappingDatabaseReaderTF2QC" /> 
 		<property name="rmdDryModeHandler" ref="rmdDryModeHandler"/>
 		<property name="rmdFilterHandler" ref="rmdFilterHandler"></property>
+		<!-- Below property -"preserveBulkCommentOrder" preserves the bulk/multi comments order received from TF; by default set to false sorted by 
+		descending (latest comment at top) and when set to true, comments are sorted by ascending (latest comment at bottom) as QC expects the latest 
+		comment to be at the bottom. 
+		 -->
+		<property name="preserveBulkCommentOrder" value="false" /> 
 	</bean>
 	<bean id="TFConnectionManager"
 		class="com.collabnet.ccf.core.eis.connection.ConnectionManager">

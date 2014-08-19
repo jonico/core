@@ -108,6 +108,15 @@ public class TFReader extends AbstractReader<Connection> {
     private String              resyncUserName;
 
     /**
+     * Below property -"preserveBulkCommentOrder" preserves the bulk/multi
+     * comments order received from TF; by default set to false sorted by
+     * descending (latest comment at top).and when set to true, comments are
+     * sorted by ascending (latest comment at bottom) as QC expects the latest
+     * comment to be at the bottom.
+     */
+    private boolean             preserveBulkCommentOrder             = false;
+
+    /**
      * Connects to the source TF system using the connectionInfo and
      * credentialInfo details.
      * 
@@ -320,7 +329,8 @@ public class TFReader extends AbstractReader<Connection> {
                             isIgnoreConnectorUserUpdates() ? this.getUsername()
                                     : "",
                             isIgnoreConnectorUserUpdates() ? this
-                                    .getResyncUserName() : "");
+                                    .getResyncUserName() : "",
+                            isPreserveBulkCommentOrder());
                     if (this.shipReleaseHumanReadableName) {
                         reportedInRelaseHumanReadableName = getHumanReadableReleaseName(
                                 connection, artifact.getReportedReleaseId());
@@ -702,6 +712,10 @@ public class TFReader extends AbstractReader<Connection> {
         return pre44SP1HF1System;
     }
 
+    public boolean isPreserveBulkCommentOrder() {
+        return preserveBulkCommentOrder;
+    }
+
     /**
      * Returns whether parent info for planning folders should be retrieved
      * (default set to false)
@@ -799,6 +813,10 @@ public class TFReader extends AbstractReader<Connection> {
      */
     public void setPre44SP1HF1System(boolean pre44SP1HF1System) {
         this.pre44SP1HF1System = pre44SP1HF1System;
+    }
+
+    public void setPreserveBulkCommentOrder(boolean preserveBulkCommentOrder) {
+        this.preserveBulkCommentOrder = preserveBulkCommentOrder;
     }
 
     /**

@@ -13,6 +13,8 @@ package com.collabnet.ccf.teamforge;
 
 import java.rmi.RemoteException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -71,12 +73,17 @@ public class TFAppHandler {
      *            - The resync user for CCF
      */
     public void addComments(ArtifactDO artifact, Date lastModifiedDate,
-            String connectorUser, String resyncUser) {
+            String connectorUser, String resyncUser,
+            boolean isPreserveBulkCommentOrder) {
         try {
             CommentList commentList = connection.getTeamForgeClient()
                     .getCommentList(artifact.getId());
             CommentRow[] comments = commentList.getDataRows();
+
             if (comments != null) {
+                if (isPreserveBulkCommentOrder && comments.length > 1) {
+                    Collections.reverse(Arrays.asList(comments));
+                }
                 for (CommentRow comment : comments) {
                     String createdBy = comment.getCreatedBy();
                     Date createdDate = comment.getDateCreated();
