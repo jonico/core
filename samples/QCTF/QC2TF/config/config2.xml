@@ -418,6 +418,9 @@
 			value="${ccf.direction.qc.releaseIdfields.containfilerelease.packagename}" />
 		<property name="packageReleaseSeparatorString" value="${ccf.direction.package.release.separator}" />
 		<property name="rmdDryModeHandler" ref="rmdDryModeHandler"/>
+		<!-- Attachment filename is prefixed with sync username when the property ignoreSyncUserNameFromAttachment is set to false.
+		By default the value is false. -->
+		<property name="ignoreSyncUserNameFromAttachment" value="false" />
 	</bean>
 
 	<bean id="TFUserHandler" class="com.collabnet.ccf.core.utils.TFUserHandler">

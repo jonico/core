@@ -95,6 +95,13 @@ public class TFWriter extends AbstractWriter<Connection> implements IDataProcess
     private String              packageReleaseSeparatorString                = " > ";
 
     /**
+     * Attachment filename is prefixed with sync username when the property
+     * ignoreSyncUserNameFromAttachment is set to false and by default the value
+     * is false.
+     */
+    private boolean             ignoreSyncUserNameFromAttachment             = false;
+
+    /**
      * Password that is used to login into the TF/CSFE instance in combination
      * with the username
      */
@@ -274,7 +281,8 @@ public class TFWriter extends AbstractWriter<Connection> implements IDataProcess
         try {
             try {
                 attachmentHandler.handleAttachment(connection, ga,
-                        targetParentArtifactId, this.getUsername());
+                        targetParentArtifactId, this.getUsername(),
+                        this.isIgnoreSyncUserNameFromAttachment());
             } catch (PlanningFolderRuleViolationException e) {
                 // should not happen since we never modify the planning folder
                 // here
@@ -689,6 +697,10 @@ public class TFWriter extends AbstractWriter<Connection> implements IDataProcess
         return false;
     }
 
+    public boolean isIgnoreSyncUserNameFromAttachment() {
+        return ignoreSyncUserNameFromAttachment;
+    }
+
     /**
      * This property (false by default), determines whether the human readable
      * release name that should be translated into a technical release id is
@@ -722,6 +734,11 @@ public class TFWriter extends AbstractWriter<Connection> implements IDataProcess
             throw new CCFRuntimeException(cause, e);
         }
         return document;
+    }
+
+    public void setIgnoreSyncUserNameFromAttachment(
+            boolean ignoreSyncUserNameFromAttachment) {
+        this.ignoreSyncUserNameFromAttachment = ignoreSyncUserNameFromAttachment;
     }
 
     /**

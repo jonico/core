@@ -293,8 +293,8 @@ public class TFAttachmentHandler {
      * @throws PlanningFolderRuleViolationException
      */
     public void handleAttachment(Connection connection, GenericArtifact att,
-            String artifactId, String userName) throws RemoteException,
-            PlanningFolderRuleViolationException {
+            String artifactId, String userName, boolean ignoreSyncUserPrefix)
+            throws RemoteException, PlanningFolderRuleViolationException {
         log.info("An attachment will be created for artifact id " + artifactId);
         String contentType = GenericArtifactHelper.getStringFlexGAField(
                 AttachmentMetaData.ATTACHMENT_TYPE, att);
@@ -304,7 +304,9 @@ public class TFAttachmentHandler {
                 AttachmentMetaData.ATTACHMENT_MIME_TYPE, att);
         String attachmentName = GenericArtifactHelper.getStringFlexGAField(
                 AttachmentMetaData.ATTACHMENT_NAME, att);
-        attachmentName = userName + "_" + attachmentName;
+        if (!ignoreSyncUserPrefix) {
+            attachmentName = userName + "_" + attachmentName;
+        }
         String attachmentURL = GenericArtifactHelper.getStringFlexGAField(
                 AttachmentMetaData.ATTACHMENT_SOURCE_URL, att);
         GenericArtifact.ArtifactActionValue attAction = att.getArtifactAction();
