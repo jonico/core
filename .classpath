@@ -2,6 +2,7 @@
 <classpath>
 	<classpathentry kind="lib" path="src/plugins/TFS/lib/com.microsoft.tfs.sdk-10.1.0.jar"/>
 	<classpathentry excluding="lib/**" kind="src" path="src/plugins/SFEE/v44"/>
+	<classpathentry kind="src" path="src/plugins/IST"/>
 	<classpathentry kind="src" path="src/plugins/JIRA"/>
 	<classpathentry kind="src" path="src/plugins/TFS"/>
 	<classpathentry kind="src" path="src/plugins/SWP"/>
