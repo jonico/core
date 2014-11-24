@@ -90,8 +90,8 @@
 		<mkdir dir="build/classes" />
 	</target>
 	<target depends="clean" name="cleanall" />
-	<target depends="init, create.manifest, create.ccfcoreversion, build.core, build.sfee.plugin, build.cee.plugin, build.qc.plugin, build.tf.plugin, build.swp.plugin, build.tfs.plugin, build.jira.plugin, build.sample, package" name="build" />
-	<target depends="init, create.manifestHudson, build.core, create.ccfcoreversion, build.sfee.plugin, build.cee.plugin, build.qc.plugin, build.tf.plugin, build.swp.plugin, build.tfs.plugin, build.jira.plugin, build.sample, package" name="buildHudson" />
+	<target depends="init, create.manifest, create.ccfcoreversion, build.core, build.sfee.plugin, build.cee.plugin, build.qc.plugin, build.tf.plugin, build.swp.plugin, build.tfs.plugin, build.ist.plugin, build.jira.plugin, build.sample, package" name="build" />
+	<target depends="init, create.manifestHudson, build.core, create.ccfcoreversion, build.sfee.plugin, build.cee.plugin, build.qc.plugin, build.tf.plugin, build.swp.plugin, build.tfs.plugin, build.ist.plugin, build.jira.plugin, build.sample, package" name="buildHudson" />
 	<target name="create.manifest">
 		<property file="default.properties" />
 		<manifest file="build/MANIFEST.MF">
@@ -214,6 +214,25 @@
 					</classpath>
 				</javac>
 				<jar destfile="build/jars/CCFTFSPlugin.jar" manifest="build/MANIFEST.MF">
+					<fileset dir="build/classes">
+						<include name="**/*.class" />
+					</fileset>
+				</jar>
+		</target>
+	
+	<target name="build.ist.plugin">
+				<antcall target="clean">
+				</antcall>
+				<javac debug="true" debuglevel="${debuglevel}" destdir="build/classes" source="${source}" target="${target}">
+					<src path="src/plugins/IST/" />
+					<classpath refid="CCFJ.classpath" />
+					<classpath>
+						<fileset dir="build/jars">
+							<include name="CCFCoreV10.jar" />
+						</fileset>
+					</classpath>
+				</javac>
+				<jar destfile="build/jars/CCFISTPlugin.jar" manifest="build/MANIFEST.MF">
 					<fileset dir="build/classes">
 						<include name="**/*.class" />
 					</fileset>
