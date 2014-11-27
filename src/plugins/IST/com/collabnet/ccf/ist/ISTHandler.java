@@ -22,18 +22,8 @@ import com.inflectra.spirateam.mylyn.core.internal.services.soap.RemoteSort;
 
 public class ISTHandler {
 
-    private ISTConnection              connection    = null;
-
-    private static final Log           log           = LogFactory
-                                                             .getLog(ISTHandler.class);
-
-    private static final ObjectFactory objectFactory = new ObjectFactory();
-
-    public ISTHandler(ISTConnection c) {
-        connection = c;
-    }
-
-    private ArrayOfRemoteIncident getIncidentsSorted() {
+    public static ArrayOfRemoteIncident getIncidentsSorted(
+            ISTConnection connection) {
         objectFactory.createArrayOfRemoteIncident();
         ArrayOfRemoteFilter filters = objectFactory.createArrayOfRemoteFilter();
         RemoteSort sort = objectFactory.createRemoteSort();
@@ -52,9 +42,20 @@ public class ISTHandler {
 
     }
 
+    private ISTConnection              connection    = null;
+
+    private static final Log           log           = LogFactory
+                                                             .getLog(ISTHandler.class);
+
+    private static final ObjectFactory objectFactory = new ObjectFactory();
+
+    public ISTHandler(ISTConnection c) {
+        connection = c;
+    }
+
     private Date getRealLastUpdated(RemoteIncident incident) {
 
-        Date lmd = ISTMetaData.toDate(incident.getLastUpdateDate());
+        ISTMetaData.toDate(incident.getLastUpdateDate());
         ArrayOfRemoteFilter filters = objectFactory.createArrayOfRemoteFilter();
         RemoteSort sort = objectFactory.createRemoteSort();
 
@@ -93,6 +94,7 @@ public class ISTHandler {
                     .format("    %5s(...)  %-23s", c.getText().getValue()
                             .substring(0, 5), c.getCreationDate().getValue()));
         }
+        return new Date();
     }
 
     public void retrieveAllIncidents(ISTConnection connection,
@@ -104,7 +106,7 @@ public class ISTHandler {
             ArtifactState ast = new ArtifactState();
 
             ast.setArtifactId(String.valueOf(i.getIncidentId().getValue()));
-            ast.setArtifactLastModifiedDate(artifactLastModifiedDate);
+            //ast.setArtifactLastModifiedDate(artifactLastModifiedDate);
         }
 
     }
