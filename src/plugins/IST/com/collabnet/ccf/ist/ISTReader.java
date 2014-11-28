@@ -19,7 +19,8 @@ import com.inflectra.spirateam.mylyn.core.internal.services.soap.RemoteIncident;
 
 public class ISTReader extends AbstractReader<ISTConnection> {
 
-    private static final Log log       = LogFactory.getLog(ISTReader.class);
+    private static final Log log                        = LogFactory
+                                                                .getLog(ISTReader.class);
 
     /**
      * Properties set via injection
@@ -30,10 +31,11 @@ public class ISTReader extends AbstractReader<ISTConnection> {
      * @projectId
      */
 
-    private String           username  = null;
-    private String           password  = null;
-    private String           serverUrl = null;
-    private String           projectId = null;
+    private String           username                   = null;
+    private String           password                   = null;
+    private String           serverUrl                  = null;
+    private String           projectId                  = null;
+    private boolean          ignoreConnectorUserUpdates = true;
 
     private ISTConnection connect(String systemId, String systemKind,
             String repositoryId, String repositoryKind) {
@@ -60,9 +62,10 @@ public class ISTReader extends AbstractReader<ISTConnection> {
             log.error(cause, e);
             throw new CCFRuntimeException(cause, e);
         }
-        log.trace("     succesfully connected");
-        return connection;
 
+        log.trace("     succesfully connected");
+
+        return connection;
     }
 
     @Override
@@ -156,6 +159,14 @@ public class ISTReader extends AbstractReader<ISTConnection> {
 
     public void setUsername(String username) {
         this.username = username;
+    }
+
+    public boolean isIgnoreConnectorUserUpdates() {
+        return ignoreConnectorUserUpdates;
+    }
+
+    public void setIgnoreConnectorUserUpdates(boolean ignoreConnectorUserUpdates) {
+        this.ignoreConnectorUserUpdates = ignoreConnectorUserUpdates;
     }
 
 }

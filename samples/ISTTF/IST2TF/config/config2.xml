@@ -264,8 +264,8 @@
 		</description>
 		<property name="CCF2xProcess" value="true" />
 		<property name="serverUrl" value="${ccf.participant.ist.server}" />
-		<property name="userName" value="${ccf.landscape.ist.username}" />
-		<property name="password" value="${ccf.landscape.ist.password}" />
+		<property name="username" value="${ccf.participant.ist.username}" />
+		<property name="password" value="${ccf.participant.ist.password}" />
 		<property name="connectionManager" ref="ISTConnectionManager"></property>
 		<property name="sleepInterval" value="${ccf.direction.ist.sleepinterval}"></property>
 		<property name="maxAttachmentSizePerArtifact" value="${ccf.direction.ist.max.attachmentsize}" />
