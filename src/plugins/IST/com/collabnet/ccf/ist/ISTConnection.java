@@ -16,21 +16,19 @@ import com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportCo
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportConnectionDisconnectServiceFaultMessageFaultFaultMessage;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportUserRetrieveByUserNameServiceFaultMessageFaultFaultMessage;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.ImportExport;
-import com.inflectra.spirateam.mylyn.core.internal.services.soap.RemoteUser;
 
 public class ISTConnection {
 
-    private static final String WEB_SERVICE_SUFFIX    = "/Services/v4_0/ImportExport.svc";                                //$NON-NLS-1$
+    private static final String WEB_SERVICE_SUFFIX    = "/SpiraTest/Services/v4_0/ImportExport.svc";                      //$NON-NLS-1$
     private static final String WEB_SERVICE_NAMESPACE = "{http://www.inflectra.com/SpiraTest/Services/v4.0/}ImportExport"; //$NON-NLS-1$
 
     private static final Log    log                   = LogFactory
-                                                              .getLog(ISTConnection.class);
+            .getLog(ISTConnection.class);
     private IImportExport       soap                  = null;
 
     private String              username              = null;
 
     public ISTConnection(String credentialInfo, String connectionInfo) {
-        log.debug("Connecting to Spira Test: " + connectionInfo);
 
         String baseUrl = null;
         String password = null;
@@ -59,7 +57,7 @@ public class ISTConnection {
 
         if (connectionInfo != null) {
             String[] splitConnection = connectionInfo
-                    .split(ISTConnectionFactory.PARAM_DELIMITER);
+                    .split(ISTConnectionFactory.CONNECTION_INFO_DELIMITER);
             if (splitConnection != null && splitConnection.length == 2) {
                 baseUrl = splitConnection[0];
                 projectId = Integer.valueOf(splitConnection[1]);
@@ -74,7 +72,8 @@ public class ISTConnection {
         } catch (MalformedURLException e) {
             log.error("Malformed URL: " + connectionInfo + WEB_SERVICE_SUFFIX);
         }
-
+        log.debug("Connecting to Spira Test: " + serviceUrl + " as " + username
+                + " to project " + projectId);
         connect(serviceUrl, username, password, projectId);
     }
 
@@ -100,7 +99,8 @@ public class ISTConnection {
         Map<String, Object> requestContext = ((BindingProvider) soap)
                 .getRequestContext();
         requestContext.put(BindingProvider.SESSION_MAINTAIN_PROPERTY, true);
-
+        log.debug("Connecting to SpiraTest as user " + username
+                + " with password `" + password + "`");
         try {
             if (!soap.connectionAuthenticate(username, password)) {
                 log.error("Authentication failed, please verify credentials");
@@ -126,8 +126,8 @@ public class ISTConnection {
     public boolean isAlive() {
         if (username != null) {
             try {
-                RemoteUser tmp = soap.userRetrieveByUserName(username);
-                return tmp.getUserName().getValue().equals(username);
+                soap.userRetrieveByUserName(username);
+                return true;
             } catch (IImportExportUserRetrieveByUserNameServiceFaultMessageFaultFaultMessage e) {
                 log.debug("failed to get user info for " + username, e);
                 return false;

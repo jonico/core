@@ -9,10 +9,10 @@ import com.collabnet.ccf.core.eis.connection.ConnectionManager;
 
 public class ISTConnectionFactory implements ConnectionFactory<ISTConnection> {
 
-    public static final String PARAM_DELIMITER           = ":";
+    public static final String PARAM_DELIMITER           = "::";
     private static final Log   log                       = LogFactory
             .getLog(ISTConnectionFactory.class);
-    public static final String CONNECTION_INFO_DELIMITER = "-";
+    public static final String CONNECTION_INFO_DELIMITER = "::";
 
     @Override
     public void closeConnection(ISTConnection connection) {

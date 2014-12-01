@@ -1,12 +1,18 @@
 package com.collabnet.ccf.ist;
 
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dom4j.Document;
+import org.openadaptor.core.Component;
+import org.openadaptor.core.exception.ValidationException;
 
 import com.collabnet.ccf.core.AbstractReader;
 import com.collabnet.ccf.core.ArtifactState;
@@ -14,8 +20,10 @@ import com.collabnet.ccf.core.CCFRuntimeException;
 import com.collabnet.ccf.core.eis.connection.ConnectionException;
 import com.collabnet.ccf.core.eis.connection.MaxConnectionsReachedException;
 import com.collabnet.ccf.core.ga.GenericArtifact;
-import com.inflectra.spirateam.mylyn.core.internal.services.soap.ArrayOfRemoteIncident;
-import com.inflectra.spirateam.mylyn.core.internal.services.soap.RemoteIncident;
+import com.collabnet.ccf.core.ga.GenericArtifact.ArtifactModeValue;
+import com.collabnet.ccf.core.ga.GenericArtifact.ArtifactTypeValue;
+import com.collabnet.ccf.core.ga.GenericArtifactHelper;
+import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
 
 public class ISTReader extends AbstractReader<ISTConnection> {
 
@@ -29,6 +37,7 @@ public class ISTReader extends AbstractReader<ISTConnection> {
      * @password
      * @serverUrl
      * @projectId
+     * @ignoreConnectorUserUpdates
      */
 
     private String           username                   = null;
@@ -37,13 +46,16 @@ public class ISTReader extends AbstractReader<ISTConnection> {
     private String           projectId                  = null;
     private boolean          ignoreConnectorUserUpdates = true;
 
+    private ISTHandler       istHandler                 = null;
+    private DateFormat       df                         = GenericArtifactHelper.df;
+
     private ISTConnection connect(String systemId, String systemKind,
             String repositoryId, String repositoryKind) {
 
         String credentialInfo = getUsername()
                 + ISTConnectionFactory.PARAM_DELIMITER + getPassword();
         String connectionInfo = getServerUrl()
-                + ISTConnectionFactory.PARAM_DELIMITER + getProjectId();
+                + ISTConnectionFactory.CONNECTION_INFO_DELIMITER + repositoryId;
 
         ISTConnection connection = null;
         try {
@@ -63,7 +75,9 @@ public class ISTReader extends AbstractReader<ISTConnection> {
             throw new CCFRuntimeException(cause, e);
         }
 
-        log.trace("     succesfully connected");
+        this.istHandler = new ISTHandler(connection);
+
+        log.debug("     succesfully connected");
 
         return connection;
     }
@@ -72,20 +86,61 @@ public class ISTReader extends AbstractReader<ISTConnection> {
     public List<GenericArtifact> getArtifactAttachments(Document syncInfo,
             GenericArtifact artifactData) {
         // TODO Auto-generated method stub
-        return null;
+        return new ArrayList<GenericArtifact>();
     }
 
     @Override
     public GenericArtifact getArtifactData(Document syncInfo, String artifactId) {
-        // TODO Auto-generated method stub
-        return null;
+        String sourceSystemId = this.getSourceSystemId(syncInfo);
+        String sourceSystemKind = this.getSourceSystemKind(syncInfo);
+        String sourceRepositoryId = this.getSourceRepositoryId(syncInfo);
+        String sourceRepositoryKind = this.getSourceRepositoryKind(syncInfo);
+        this.getLastSourceVersion(syncInfo);
+        Date lastModifiedDate = this.getLastModifiedDate(syncInfo);
+        this.getLastSourceArtifactId(syncInfo);
+
+        ISTConnection connection = connect(sourceSystemId, sourceSystemKind,
+                sourceRepositoryId, sourceRepositoryKind);
+
+        GenericArtifact ga = new GenericArtifact();
+
+        try {
+            populateSrcAndDest(syncInfo, ga);
+            ga.setSourceArtifactId(artifactId);
+            ga.setArtifactMode(ArtifactModeValue.COMPLETE);
+            ga.setArtifactType(ArtifactTypeValue.PLAINARTIFACT);
+
+            istHandler.retrieveIncident(Integer.valueOf(artifactId),
+                    lastModifiedDate, sourceRepositoryKind,
+                    ignoreConnectorUserUpdates, ga, sourceRepositoryId);
+
+        } catch (Exception e) {
+            String cause = "An error occurred during incident retrieval";
+            log.error(cause, e);
+            throw new CCFRuntimeException(cause, e);
+        }
+
+        // release connection to pool
+        getConnectionManager().releaseConnection(connection);
+
+        try {
+            log.trace("Rendered Source Artifact XML for "
+                    + ga.getSourceArtifactId()
+                    + ":\n"
+                    + GenericArtifactHelper
+                            .createGenericArtifactXMLDocument(ga).asXML());
+        } catch (GenericArtifactParsingException e) {
+            log.warn("Tried to convert GA to XML but failed!");
+        }
+
+        return ga;
     }
 
     @Override
     public List<GenericArtifact> getArtifactDependencies(Document syncInfo,
             String artifactId) {
         // TODO Auto-generated method stub
-        return null;
+        return new ArrayList<GenericArtifact>();
     }
 
     @Override
@@ -94,31 +149,49 @@ public class ISTReader extends AbstractReader<ISTConnection> {
         String sourceSystemKind = this.getSourceSystemKind(syncInfo);
         String sourceRepositoryId = this.getSourceRepositoryId(syncInfo);
         String sourceRepositoryKind = this.getSourceRepositoryKind(syncInfo);
-        this.getLastSourceVersion(syncInfo);
-        this.getLastModifiedDate(syncInfo);
-        this.getLastSourceArtifactId(syncInfo);
+        String lastSynchronizedVersion = this.getLastSourceVersion(syncInfo);
+        Date lastModifiedDate = this.getLastModifiedDate(syncInfo);
+        String lastSynchedArtifactId = this.getLastSourceArtifactId(syncInfo);
         this.getSourceSystemTimezone(syncInfo);
 
         ISTConnection connection = connect(sourceSystemId, sourceSystemKind,
                 sourceRepositoryId, sourceRepositoryKind);
 
-        ArrayOfRemoteIncident allIncidents = ISTHandler
-                .getIncidentsSorted(connection);
-        log.debug("retrieved " + allIncidents.getRemoteIncident().size()
-                + " incidents");
-        if (allIncidents.getRemoteIncident().size() > 0) {
-            log.debug(String.format("  %3d  %-20s  %-23s", "ID", "Name",
-                    "Last Updated"));
-            for (RemoteIncident in : allIncidents.getRemoteIncident()) {
-                log.debug(String.format("  %3d  %-20s  %=23s", in
-                        .getIncidentId().getValue(), in.getName().getValue(),
-                        in.getLastUpdateDate().toString()));
+        // istHandler.debugAllIncidents(connection);
+
+        // testing cutoff date
+        try {
+            lastModifiedDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
+            .parse("2014-11-28 6:26:50");
+        } catch (ParseException e) {
+            String cause = "Failed to set test date";
+            log.error(cause, e);
+            throw new CCFRuntimeException(cause, e);
+        }
+
+        ArrayList<ArtifactState> artifactStates = new ArrayList<ArtifactState>();
+
+        istHandler.retrieveChangedIncidents(lastModifiedDate,
+                lastSynchronizedVersion, lastSynchedArtifactId, artifactStates);
+
+        log.debug("found " + artifactStates.size()
+                + " artifact/s changed since " + df.format(lastModifiedDate));
+
+        if (artifactStates.size() > 0) {
+            log.debug(String.format("  ID   %-23s  %-30s", "Last Update",
+                    "Version"));
+            for (ArtifactState as : artifactStates) {
+                log.debug(String.format("  %-3s  %-23s  %-30d",
+                        as.getArtifactId(),
+                        df.format(as.getArtifactLastModifiedDate()),
+                        as.getArtifactVersion()));
             }
         }
 
-        // bulld the GA list
-        ArrayList<ArtifactState> artifactStates = new ArrayList<ArtifactState>();
+        // release connection to pool
+        getConnectionManager().releaseConnection(connection);
 
+        // for now, do not ship stuff over.
         return artifactStates;
     }
 
@@ -145,6 +218,48 @@ public class ISTReader extends AbstractReader<ISTConnection> {
         return username;
     }
 
+    public boolean isIgnoreConnectorUserUpdates() {
+        return ignoreConnectorUserUpdates;
+    }
+
+    private void populateSrcAndDest(Document syncInfo, GenericArtifact ga) {
+        String sourceRepositoryId = this.getSourceRepositoryId(syncInfo);
+        String sourceRepositoryKind = this.getSourceRepositoryKind(syncInfo);
+        String sourceSystemId = this.getSourceSystemId(syncInfo);
+        String sourceSystemKind = this.getSourceSystemKind(syncInfo);
+        String conflictResolutionPriority = this
+                .getConflictResolutionPriority(syncInfo);
+
+        String sourceSystemTimezone = this.getSourceSystemTimezone(syncInfo);
+        String targetSystemTimezone = this.getTargetSystemTimezone(syncInfo);
+
+        String targetRepositoryId = this.getTargetRepositoryId(syncInfo);
+        String targetRepositoryKind = this.getTargetRepositoryKind(syncInfo);
+        String targetSystemId = this.getTargetSystemId(syncInfo);
+        String targetSystemKind = this.getTargetSystemKind(syncInfo);
+
+        ga.setSourceRepositoryId(sourceRepositoryId);
+        ga.setSourceRepositoryKind(sourceRepositoryKind);
+        ga.setSourceSystemId(sourceSystemId);
+        ga.setSourceSystemKind(sourceSystemKind);
+        ga.setConflictResolutionPriority(conflictResolutionPriority);
+        ga.setSourceSystemTimezone(sourceSystemTimezone);
+
+        ga.setTargetRepositoryId(targetRepositoryId);
+        ga.setTargetRepositoryKind(targetRepositoryKind);
+        ga.setTargetSystemId(targetSystemId);
+        ga.setTargetSystemKind(targetSystemKind);
+        ga.setTargetSystemTimezone(targetSystemTimezone);
+    }
+
+    public void setIgnoreConnectorUserUpdates(boolean ignoreConnectorUserUpdates) {
+        this.ignoreConnectorUserUpdates = ignoreConnectorUserUpdates;
+    }
+
+    public void setIstHandler(ISTHandler istHandler) {
+        this.istHandler = istHandler;
+    }
+
     public void setPassword(String password) {
         this.password = password;
     }
@@ -161,12 +276,28 @@ public class ISTReader extends AbstractReader<ISTConnection> {
         this.username = username;
     }
 
-    public boolean isIgnoreConnectorUserUpdates() {
-        return ignoreConnectorUserUpdates;
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+    public void validate(List exceptions) {
+        super.validate(exceptions);
+        validateNotNull(this.getPassword(), "SpiraTest password not set", this,
+                exceptions);
+        validateNotNull(this.getUsername(), "SpiraTest username not set", this,
+                exceptions);
+        validateNotNull(this.getServerUrl(), "SpiraTest Server URL not set",
+                this, exceptions);
+
+        log.info("===========================================================");
+        log.info("started SpiraTest Reader " + ISTVersion.getVersion());
+
     }
 
-    public void setIgnoreConnectorUserUpdates(boolean ignoreConnectorUserUpdates) {
-        this.ignoreConnectorUserUpdates = ignoreConnectorUserUpdates;
+    private void validateNotNull(Object toValidate, String cause,
+            Component component, List<ValidationException> exceptions) {
+        if (toValidate == null) {
+            log.error(cause);
+            exceptions.add(new ValidationException(cause, component));
+        }
+
     }
 
 }

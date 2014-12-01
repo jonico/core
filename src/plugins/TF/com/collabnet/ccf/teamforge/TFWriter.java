@@ -57,9 +57,9 @@ import com.collabnet.teamforge.api.tracker.TrackerDO;
 /**
  * This component is responsible for writing TF tracker items encoded in the
  * generic XML artifact format back to the TF tracker
- * 
+ *
  * @author jnicolai
- * 
+ *
  */
 public class TFWriter extends AbstractWriter<Connection> implements IDataProcessor {
 
@@ -67,10 +67,10 @@ public class TFWriter extends AbstractWriter<Connection> implements IDataProcess
      * log4j logger instance
      */
     private static final Log    log                                          = LogFactory
-                                                                                     .getLog(TFWriter.class);
+            .getLog(TFWriter.class);
 
     private static final Log    logConflictResolutor                         = LogFactory
-                                                                                     .getLog("com.collabnet.ccf.core.conflict.resolution");
+            .getLog("com.collabnet.ccf.core.conflict.resolution");
 
     /**
      * TF tracker handler instance
@@ -143,13 +143,13 @@ public class TFWriter extends AbstractWriter<Connection> implements IDataProcess
                 connection = connect(targetSystemId, targetSystemKind,
                         targetRepositoryId, targetRepositoryKind, serverUrl,
                         getUsername() + TFConnectionFactory.PARAM_DELIMITER
-                                + getPassword(), false);
+                        + getPassword(), false);
             } else {
                 connection = connect(targetSystemId, targetSystemKind,
                         targetRepositoryId, targetRepositoryKind, serverUrl,
                         getResyncUserName()
-                                + TFConnectionFactory.PARAM_DELIMITER
-                                + getResyncPassword(), true);
+                        + TFConnectionFactory.PARAM_DELIMITER
+                        + getResyncPassword(), true);
             }
         } catch (MaxConnectionsReachedException e) {
             String cause = "Could not create connection to the TF system. Max connections reached for "
@@ -170,7 +170,7 @@ public class TFWriter extends AbstractWriter<Connection> implements IDataProcess
     public Connection connect(String systemId, String systemKind,
             String repositoryId, String repositoryKind, String connectionInfo,
             String credentialInfo, boolean forceResync)
-            throws MaxConnectionsReachedException, ConnectionException {
+                    throws MaxConnectionsReachedException, ConnectionException {
         Connection connection = null;
         ConnectionManager<Connection> connectionManager = (ConnectionManager<Connection>) getConnectionManager();
         if (forceResync) {
@@ -212,13 +212,13 @@ public class TFWriter extends AbstractWriter<Connection> implements IDataProcess
                     // update Id field after creating the artifact
                     targetArtifactId = result.getId();
                     TFGAHelper
-                            .addField(
-                                    ga,
-                                    TFArtifactMetaData.TFFields.id
-                                            .getFieldName(),
-                                    targetArtifactId,
-                                    GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD,
-                                    GenericArtifactField.FieldValueTypeValue.STRING);
+                    .addField(
+                            ga,
+                            TFArtifactMetaData.TFFields.id
+                            .getFieldName(),
+                            targetArtifactId,
+                            GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD,
+                            GenericArtifactField.FieldValueTypeValue.STRING);
                     this.populateTargetArtifactAttributes(ga, result);
                     return this.returnDocument(ga);
                 } catch (NumberFormatException e) {
@@ -265,6 +265,203 @@ public class TFWriter extends AbstractWriter<Connection> implements IDataProcess
 
     }
 
+    /**
+     * Creates the artifact represented by the GenericArtifact object on the
+     * target TF system
+     *
+     * @param ga
+     *            - the GenericArtifact object
+     * @param tracker
+     *            - The target TF tracker ID
+     * @param connection
+     *            - The Connection object for the target TF system
+     * @return - the newly created artifact's ArtifactSoapDO object
+     */
+    private ArtifactDO createArtifact(GenericArtifact ga, String tracker,
+            Connection connection) {
+        ArrayList<String> flexFieldNames = new ArrayList<String>();
+        ArrayList<String> flexFieldTypes = new ArrayList<String>();
+        ArrayList<Object> flexFieldValues = new ArrayList<Object>();
+
+        List<GenericArtifactField> gaFields = ga
+                .getAllGenericArtifactFieldsWithSameFieldType(GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
+        String targetSystemTimezone = ga.getTargetSystemTimezone();
+        if (gaFields != null) {
+            for (GenericArtifactField gaField : gaFields) {
+                String fieldName = gaField.getFieldName();
+                String trackerFieldValueType = TFArtifactMetaData
+                        .getTFFieldValueTypeForGAFieldType(gaField
+                                .getFieldValueType());
+                flexFieldNames.add(fieldName);
+                flexFieldTypes.add(trackerFieldValueType);
+                Object value = null;
+                FieldValueTypeValue fieldType = gaField.getFieldValueType();
+                if (trackerFieldValueType
+                        .equals(TrackerFieldSoapDO.FIELD_VALUE_TYPE_DATE)) {
+                    if (fieldType == FieldValueTypeValue.DATE) {
+                        GregorianCalendar gc = (GregorianCalendar) gaField
+                                .getFieldValue();
+                        if (gc != null) {
+                            Date dateValue = gc.getTime();
+                            if (DateUtil.isAbsoluteDateInTimezone(dateValue,
+                                    "GMT")) {
+                                value = DateUtil
+                                        .convertGMTToTimezoneAbsoluteDate(
+                                                dateValue, targetSystemTimezone);
+                            } else {
+                                value = dateValue;
+                            }
+                        }
+                    } else if (fieldType == FieldValueTypeValue.DATETIME) {
+                        value = gaField.getFieldValue();
+                    }
+                } else {
+                    value = gaField.getFieldValue();
+                }
+                flexFieldValues.add(value);
+            }
+        }
+
+        String folderId = GenericArtifactHelper.getStringMandatoryGAField(
+                TFArtifactMetaData.TFFields.folderId.getFieldName(), ga);
+        String description = GenericArtifactHelper.getStringMandatoryGAField(
+                TFArtifactMetaData.TFFields.description.getFieldName(), ga);
+        String category = GenericArtifactHelper.getStringMandatoryGAField(
+                TFArtifactMetaData.TFFields.category.getFieldName(), ga);
+        String group = GenericArtifactHelper.getStringMandatoryGAField(
+                TFArtifactMetaData.TFFields.group.getFieldName(), ga);
+        String status = GenericArtifactHelper.getStringMandatoryGAField(
+                TFArtifactMetaData.TFFields.status.getFieldName(), ga);
+        String statusClass = GenericArtifactHelper.getStringMandatoryGAField(
+                TFArtifactMetaData.TFFields.statusClass.getFieldName(), ga);
+        String customer = GenericArtifactHelper.getStringMandatoryGAField(
+                TFArtifactMetaData.TFFields.customer.getFieldName(), ga);
+        int priority = GenericArtifactHelper.getIntMandatoryGAField(
+                TFArtifactMetaData.TFFields.priority.getFieldName(), ga);
+
+        int estimatedEffort = 0;
+        int actualEffort = 0;
+        int remainingEffort = 0;
+        String planningFolder = null;
+        Boolean autosumming = false;
+
+        estimatedEffort = GenericArtifactHelper.getIntMandatoryGAField(
+                TFArtifactMetaData.TFFields.estimatedHours.getFieldName(), ga);
+        actualEffort = GenericArtifactHelper.getIntMandatoryGAField(
+                TFArtifactMetaData.TFFields.actualHours.getFieldName(), ga);
+        if (connection.supports53()) {
+            remainingEffort = GenericArtifactHelper.getIntMandatoryGAField(
+                    TFArtifactMetaData.TFFields.remainingEffort.getFieldName(),
+                    ga);
+
+            planningFolder = GenericArtifactHelper.getStringMandatoryGAField(
+                    TFArtifactMetaData.TFFields.planningFolder.getFieldName(),
+                    ga);
+
+            autosumming = GenericArtifactHelper.getBooleanMandatoryGAField(
+                    TFArtifactMetaData.TFFields.autosumming.getFieldName(), ga);
+        }
+
+        int points = 0;
+        if (connection.supports54()) {
+            points = GenericArtifactHelper.getIntMandatoryGAField(
+                    TFArtifactMetaData.TFFields.points.getFieldName(), ga);
+
+        }
+
+        Date closeDate = GenericArtifactHelper.getDateMandatoryGAField(
+                TFArtifactMetaData.TFFields.closeDate.getFieldName(), ga);
+        String assignedTo = GenericArtifactHelper.getStringMandatoryGAField(
+                TFArtifactMetaData.TFFields.assignedTo.getFieldName(), ga);
+        String reportedReleaseId = GenericArtifactHelper
+                .getStringMandatoryGAField(
+                        TFArtifactMetaData.TFFields.reportedReleaseId
+                        .getFieldName(), ga);
+        String resolvedReleaseId = GenericArtifactHelper
+                .getStringMandatoryGAField(
+                        TFArtifactMetaData.TFFields.resolvedReleaseId
+                        .getFieldName(), ga);
+        String title = GenericArtifactHelper.getStringMandatoryGAField(
+                TFArtifactMetaData.TFFields.title.getFieldName(), ga);
+        String[] comments = this.getComments(ga);
+        ArtifactDO result = null;
+        try {
+            if (this.translateTechnicalReleaseIds) {
+                reportedReleaseId = TFTrackerHandler
+                        .convertReleaseId(
+                                connection,
+                                reportedReleaseId,
+                                folderId,
+                                isReleaseIdFieldsContainFileReleasePackageName() ? getPackageReleaseSeparatorString()
+                                        : null);
+                resolvedReleaseId = TFTrackerHandler
+                        .convertReleaseId(
+                                connection,
+                                resolvedReleaseId,
+                                folderId,
+                                isReleaseIdFieldsContainFileReleasePackageName() ? getPackageReleaseSeparatorString()
+                                        : null);
+            }
+
+            // now we have to deal with the parent dependencies
+            String parentId = ga.getDepParentTargetArtifactId();
+            boolean associateWithParent = false;
+            if (parentId != null
+                    && !parentId.equals(GenericArtifact.VALUE_UNKNOWN)
+                    && !parentId.equals(GenericArtifact.VALUE_NONE)) {
+                // parent is a planning folder
+                if (parentId.startsWith("plan")) {
+                    planningFolder = parentId;
+                } else {
+                    associateWithParent = true;
+                    if (planningFolder == null) {
+                        ArtifactDO parentArtifact = connection
+                                .getTrackerClient().getArtifactData(parentId);
+                        planningFolder = parentArtifact.getPlanningFolderId();
+                    }
+
+                }
+            }
+
+            result = trackerHandler.createArtifact(connection, folderId,
+                    description, category, group, status, statusClass,
+                    customer, priority, estimatedEffort, actualEffort,
+                    closeDate, assignedTo, reportedReleaseId,
+                    resolvedReleaseId, flexFieldNames, flexFieldValues,
+                    flexFieldTypes, title, comments, remainingEffort,
+                    autosumming, planningFolder, points);
+
+            // now create parent dependency
+            if (associateWithParent) {
+                trackerHandler.createArtifactDependency(connection, parentId,
+                        result.getId(), "CCF created parent-child dependency");
+            }
+
+            log.info("New artifact "
+                    + result.getId()
+                    + " is created with the change from "
+                    + ga.getSourceArtifactId()
+                    + "! XML: \n"
+                    + GenericArtifactHelper
+                            .createGenericArtifactXMLDocument(ga).asXML());
+        } catch (RemoteException e) {
+            String cause = "While trying to create an artifact within TF, an error occured";
+            log.error(cause, e);
+            ga.setErrorCode(GenericArtifact.ERROR_EXTERNAL_SYSTEM_WRITE);
+            throw new CCFRuntimeException(cause, e);
+        } catch (PlanningFolderRuleViolationException e) {
+            String cause = "While trying to create an artifact within TF, a planning folder rule violation occured: "
+                    + e.getMessage();
+            log.error(cause, e);
+            ga.setErrorCode(GenericArtifact.ERROR_EXTERNAL_SYSTEM_WRITE);
+            throw new CCFRuntimeException(cause, e);
+        } catch (GenericArtifactParsingException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        return result;
+    }
+
     public Document[] createAttachment(Document data) {
         GenericArtifact ga = null;
         try {
@@ -297,11 +494,11 @@ public class TFWriter extends AbstractWriter<Connection> implements IDataProcess
             // for replayed attachments
             parentArtifact.setTransactionId(ga.getTransactionId());
             parentArtifact
-                    .setArtifactType(GenericArtifact.ArtifactTypeValue.PLAINARTIFACT);
+            .setArtifactType(GenericArtifact.ArtifactTypeValue.PLAINARTIFACT);
             parentArtifact
-                    .setArtifactAction(GenericArtifact.ArtifactActionValue.UPDATE);
+            .setArtifactAction(GenericArtifact.ArtifactActionValue.UPDATE);
             parentArtifact
-                    .setArtifactMode(GenericArtifact.ArtifactModeValue.CHANGEDFIELDSONLY);
+            .setArtifactMode(GenericArtifact.ArtifactModeValue.CHANGEDFIELDSONLY);
             parentArtifact.setConflictResolutionPriority(ga
                     .getConflictResolutionPriority());
             parentArtifact.setSourceArtifactId(ga
@@ -314,9 +511,9 @@ public class TFWriter extends AbstractWriter<Connection> implements IDataProcess
             parentArtifact.setSourceSystemId(ga.getSourceSystemId());
             parentArtifact.setSourceSystemKind(ga.getSourceSystemKind());
             parentArtifact
-                    .setSourceRepositoryKind(ga.getSourceRepositoryKind());
+            .setSourceRepositoryKind(ga.getSourceRepositoryKind());
             parentArtifact
-                    .setSourceSystemTimezone(ga.getSourceSystemTimezone());
+            .setSourceSystemTimezone(ga.getSourceSystemTimezone());
 
             parentArtifact.setTargetArtifactId(targetParentArtifactId);
             parentArtifact.setTargetArtifactLastModifiedDate(DateUtil
@@ -325,11 +522,11 @@ public class TFWriter extends AbstractWriter<Connection> implements IDataProcess
                     .getVersion()));
             parentArtifact.setTargetRepositoryId(ga.getTargetRepositoryId());
             parentArtifact
-                    .setTargetRepositoryKind(ga.getTargetRepositoryKind());
+            .setTargetRepositoryKind(ga.getTargetRepositoryKind());
             parentArtifact.setTargetSystemId(ga.getTargetSystemId());
             parentArtifact.setTargetSystemKind(ga.getTargetSystemKind());
             parentArtifact
-                    .setTargetSystemTimezone(ga.getTargetSystemTimezone());
+            .setTargetSystemTimezone(ga.getTargetSystemTimezone());
 
         } catch (RemoteException e) {
             String cause = "Problem occured while creating attachments in TF";
@@ -352,6 +549,130 @@ public class TFWriter extends AbstractWriter<Connection> implements IDataProcess
         // CCFRuntimeException("createDependency is not implemented...!");
         log.warn("createDependency is not implemented...!");
         return null;
+    }
+
+    private PlanningFolderDO createPlanningFolder(GenericArtifact ga,
+            String project, Connection connection) {
+
+        String targetSystemTimezone = ga.getTargetSystemTimezone();
+        String parentId = project;
+        String targetParentArtifactId = ga.getDepParentTargetArtifactId();
+
+        if (targetParentArtifactId != null
+                && !targetParentArtifactId.equals(GenericArtifact.VALUE_NONE)
+                && !targetParentArtifactId
+                .equals(GenericArtifact.VALUE_UNKNOWN)) {
+            parentId = targetParentArtifactId;
+        }
+
+        String title = GenericArtifactHelper.getStringMandatoryGAField(
+                TFArtifactMetaData.TFFields.title.getFieldName(), ga);
+
+        String description = GenericArtifactHelper.getStringMandatoryGAField(
+                TFArtifactMetaData.TFFields.description.getFieldName(), ga);
+
+        Date startDate = null;
+        Date endDate = null;
+
+        GenericArtifactField startDateField = GenericArtifactHelper
+                .getMandatoryGAField(
+                        TFArtifactMetaData.TFFields.startDate.getFieldName(),
+                        ga);
+
+        if (startDateField != null) {
+            GregorianCalendar gc = (GregorianCalendar) startDateField
+                    .getFieldValue();
+            if (gc != null) {
+                Date dateValue = gc.getTime();
+                if (DateUtil.isAbsoluteDateInTimezone(dateValue, "GMT")) {
+                    startDate = DateUtil.convertGMTToTimezoneAbsoluteDate(
+                            dateValue, targetSystemTimezone);
+                } else {
+                    startDate = dateValue;
+                }
+            }
+        }
+
+        GenericArtifactField endDateField = GenericArtifactHelper
+                .getMandatoryGAField(
+                        TFArtifactMetaData.TFFields.endDate.getFieldName(), ga);
+
+        if (endDateField != null) {
+            GregorianCalendar gc = (GregorianCalendar) endDateField
+                    .getFieldValue();
+            if (gc != null) {
+                Date dateValue = gc.getTime();
+                if (DateUtil.isAbsoluteDateInTimezone(dateValue, "GMT")) {
+                    endDate = DateUtil.convertGMTToTimezoneAbsoluteDate(
+                            dateValue, targetSystemTimezone);
+                } else {
+                    endDate = dateValue;
+                }
+            }
+        }
+
+        int capacity = 0;
+        String status = null;
+        String releaseId = null;
+        if (connection.supports54()) {
+            capacity = GenericArtifactHelper.getIntMandatoryGAField(
+                    TFArtifactMetaData.TFFields.capacity.getFieldName(), ga);
+            status = GenericArtifactHelper.getStringMandatoryGAField(
+                    TFArtifactMetaData.TFFields.status.getFieldName(), ga);
+            releaseId = GenericArtifactHelper.getStringMandatoryGAField(
+                    TFArtifactMetaData.TFFields.releaseId.getFieldName(), ga);
+        }
+
+        //To support display effort in field added in TF 7.0
+        String trackerUnitId = null;
+        if (connection.supports62()) {
+            trackerUnitId = GenericArtifactHelper.getStringMandatoryGAField(
+                    TFArtifactMetaData.TFFields.trackerUnitId.getFieldName(),
+                    ga);
+
+        }
+
+        //For points capacity field added in TF 7.1
+        int pointsCapacity = 0;
+        if (connection.supports63()) {
+            pointsCapacity = GenericArtifactHelper.getIntMandatoryGAField(
+                    TFArtifactMetaData.TFFields.pointsCapacity.getFieldName(),
+                    ga);
+        }
+
+        PlanningFolderDO planningFolder = null;
+
+        try {
+            if (translateTechnicalReleaseIds) {
+                releaseId = TFTrackerHandler
+                        .convertReleaseIdForProject(
+                                connection,
+                                releaseId,
+                                project,
+                                isReleaseIdFieldsContainFileReleasePackageName() ? getPackageReleaseSeparatorString()
+                                        : null);
+            }
+            String trackerUnitIdValue = !StringUtils.isEmpty(trackerUnitId) ? trackerUnitId
+                    : "Hours";
+            trackerUnitId = TFTrackerHandler.getTrackerUnitId(connection,
+                    trackerUnitIdValue, project);
+            planningFolder = connection.getPlanningClient()
+                    .createPlanningFolder(parentId, title, description,
+                            startDate, endDate, status, capacity,
+                            pointsCapacity, releaseId, trackerUnitId);
+        } catch (RemoteException e) {
+            String cause = "Could not create planning folder: "
+                    + e.getMessage();
+            log.error(cause, e);
+            ga.setErrorCode(GenericArtifact.ERROR_EXTERNAL_SYSTEM_WRITE);
+            throw new CCFRuntimeException(cause, e);
+        }
+        log.info("Created planning folder " + planningFolder.getId()
+                + " in project " + project + " with parent " + parentId
+                + " other system id: " + ga.getSourceArtifactId()
+                + " in repository: " + ga.getSourceRepositoryId());
+
+        return planningFolder;
     }
 
     @Override
@@ -378,11 +699,11 @@ public class TFWriter extends AbstractWriter<Connection> implements IDataProcess
         // replayed attachments
         deletedArtifact.setTransactionId(ga.getTransactionId());
         deletedArtifact
-                .setArtifactType(GenericArtifact.ArtifactTypeValue.PLAINARTIFACT);
+        .setArtifactType(GenericArtifact.ArtifactTypeValue.PLAINARTIFACT);
         deletedArtifact
-                .setArtifactAction(GenericArtifact.ArtifactActionValue.DELETE);
+        .setArtifactAction(GenericArtifact.ArtifactActionValue.DELETE);
         deletedArtifact
-                .setArtifactMode(GenericArtifact.ArtifactModeValue.CHANGEDFIELDSONLY);
+        .setArtifactMode(GenericArtifact.ArtifactModeValue.CHANGEDFIELDSONLY);
         deletedArtifact.setConflictResolutionPriority(ga
                 .getConflictResolutionPriority());
         deletedArtifact.setSourceArtifactId(ga.getSourceArtifactId());
@@ -561,11 +882,11 @@ public class TFWriter extends AbstractWriter<Connection> implements IDataProcess
             // for replayed attachments
             parentArtifact.setTransactionId(ga.getTransactionId());
             parentArtifact
-                    .setArtifactType(GenericArtifact.ArtifactTypeValue.PLAINARTIFACT);
+            .setArtifactType(GenericArtifact.ArtifactTypeValue.PLAINARTIFACT);
             parentArtifact
-                    .setArtifactAction(GenericArtifact.ArtifactActionValue.UPDATE);
+            .setArtifactAction(GenericArtifact.ArtifactActionValue.UPDATE);
             parentArtifact
-                    .setArtifactMode(GenericArtifact.ArtifactModeValue.CHANGEDFIELDSONLY);
+            .setArtifactMode(GenericArtifact.ArtifactModeValue.CHANGEDFIELDSONLY);
             parentArtifact.setConflictResolutionPriority(ga
                     .getConflictResolutionPriority());
             parentArtifact.setSourceArtifactId(ga
@@ -578,9 +899,9 @@ public class TFWriter extends AbstractWriter<Connection> implements IDataProcess
             parentArtifact.setSourceSystemId(ga.getSourceSystemId());
             parentArtifact.setSourceSystemKind(ga.getSourceSystemKind());
             parentArtifact
-                    .setSourceRepositoryKind(ga.getSourceRepositoryKind());
+            .setSourceRepositoryKind(ga.getSourceRepositoryKind());
             parentArtifact
-                    .setSourceSystemTimezone(ga.getSourceSystemTimezone());
+            .setSourceSystemTimezone(ga.getSourceSystemTimezone());
 
             parentArtifact.setTargetArtifactId(artifactId);
             parentArtifact.setTargetArtifactLastModifiedDate(DateUtil
@@ -589,11 +910,11 @@ public class TFWriter extends AbstractWriter<Connection> implements IDataProcess
                     .getVersion()));
             parentArtifact.setTargetRepositoryId(ga.getTargetRepositoryId());
             parentArtifact
-                    .setTargetRepositoryKind(ga.getTargetRepositoryKind());
+            .setTargetRepositoryKind(ga.getTargetRepositoryKind());
             parentArtifact.setTargetSystemId(ga.getTargetSystemId());
             parentArtifact.setTargetSystemKind(ga.getTargetSystemKind());
             parentArtifact
-                    .setTargetSystemTimezone(ga.getTargetSystemTimezone());
+            .setTargetSystemTimezone(ga.getTargetSystemTimezone());
         } catch (RemoteException e) {
 
             String message = "Exception while deleting attachment "
@@ -629,10 +950,39 @@ public class TFWriter extends AbstractWriter<Connection> implements IDataProcess
         return null;
     }
 
+    private void disconnect(Connection connection) {
+        ConnectionManager<Connection> connectionManager = (ConnectionManager<Connection>) getConnectionManager();
+        connectionManager.releaseConnection(connection);
+    }
+
+    private String[] getComments(GenericArtifact ga) {
+        String[] comments = null;
+        List<GenericArtifactField> gaFields = ga
+                .getAllGenericArtifactFieldsWithSameFieldTypeAndFieldName(
+                        GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD,
+                        TFArtifactMetaData.TFFields.commentText.getFieldName());
+        int commentsSize = 0;
+        if (gaFields != null) {
+            commentsSize = gaFields.size();
+        }
+        if (commentsSize > 0) {
+            comments = new String[commentsSize];
+            for (int i = 0; i < commentsSize; i++) {
+                GenericArtifactField field = gaFields.get(i);
+                String comment = (String) field.getFieldValue();
+                comments[i] = comment;
+            }
+        }
+        if (comments == null) {
+            comments = new String[0];
+        }
+        return comments;
+    }
+
     /**
      * Returns the separator used to compute the human readable name of releases
      * The default value is " > "
-     * 
+     *
      * @return
      */
     public String getPackageReleaseSeparatorString() {
@@ -640,9 +990,40 @@ public class TFWriter extends AbstractWriter<Connection> implements IDataProcess
     }
 
     /**
+     * Gets the mandatory password that belongs to the username
+     *
+     * @return the password
+     */
+    private String getPassword() {
+        return password;
+    }
+
+    /**
+     * Gets the optional resync password that belongs to the resync user
+     *
+     * @return the resyncPassword
+     */
+    private String getResyncPassword() {
+        return resyncPassword;
+    }
+
+    /**
+     * Gets the optional resync username The resync user name is used to login
+     * into the TF/CSFE instance whenever an artifact should be created. This
+     * user has to differ from the ordinary user used to log in in order to
+     * force initial resyncs with the source system once a new artifact has been
+     * created.
+     *
+     * @return the resyncUserName
+     */
+    private String getResyncUserName() {
+        return resyncUserName;
+    }
+
+    /**
      * Returns the server URL of the CSFE/TF system that is configured in the
      * wiring file.
-     * 
+     *
      * @return
      */
     public String getServerUrl() {
@@ -651,7 +1032,7 @@ public class TFWriter extends AbstractWriter<Connection> implements IDataProcess
 
     /**
      * Get the update comment
-     * 
+     *
      * @return see private attribute doc
      */
     public String getUpdateComment() {
@@ -663,7 +1044,7 @@ public class TFWriter extends AbstractWriter<Connection> implements IDataProcess
      * TF/CSFE instance whenever an artifact should be updated or extracted.
      * This user has to differ from the resync user in order to force initial
      * resyncs with the source system once a new artifact has been created.
-     * 
+     *
      * @return the userName
      */
     public String getUsername() {
@@ -697,6 +1078,45 @@ public class TFWriter extends AbstractWriter<Connection> implements IDataProcess
         return false;
     }
 
+    private void initializeArtifact(GenericArtifact ga) {
+        GenericArtifact.ArtifactActionValue artifactAction = ga
+                .getArtifactAction();
+        // GenericArtifact.ArtifactTypeValue artifactType =
+        // ga.getArtifactType();
+        // String sourceArtifactId = ga.getSourceArtifactId();
+        String targetRepositoryId = ga.getTargetRepositoryId();
+        String targetArtifactId = ga.getTargetArtifactId();
+        String tracker = targetRepositoryId;
+
+        if (artifactAction == GenericArtifact.ArtifactActionValue.UPDATE) {
+            if (TFGAHelper.containsSingleMandatoryField(ga,
+                    TFArtifactMetaData.TFFields.id.getFieldName())) {
+                TFGAHelper.updateSingleMandatoryField(ga,
+                        TFArtifactMetaData.TFFields.id.getFieldName(),
+                        targetArtifactId);
+                ga.setTargetArtifactId(targetArtifactId);
+            } else {
+                TFGAHelper.addField(ga,
+                        TFArtifactMetaData.TFFields.id.getFieldName(),
+                        targetArtifactId,
+                        GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD,
+                        GenericArtifactField.FieldValueTypeValue.STRING);
+            }
+        }
+        if (TFGAHelper.containsSingleMandatoryField(ga,
+                TFArtifactMetaData.TFFields.folderId.getFieldName())) {
+            TFGAHelper.updateSingleMandatoryField(ga,
+                    TFArtifactMetaData.TFFields.folderId.getFieldName(),
+                    tracker);
+        } else {
+            TFGAHelper.addField(ga,
+                    TFArtifactMetaData.TFFields.folderId.getFieldName(),
+                    tracker,
+                    GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD,
+                    GenericArtifactField.FieldValueTypeValue.STRING);
+        }
+    }
+
     public boolean isIgnoreSyncUserNameFromAttachment() {
         return ignoreSyncUserNameFromAttachment;
     }
@@ -706,7 +1126,7 @@ public class TFWriter extends AbstractWriter<Connection> implements IDataProcess
      * release name that should be translated into a technical release id is
      * prepended by the file release package title. Only used if
      * translateTechnicalReleaseIds property is set to true
-     * 
+     *
      */
     public boolean isReleaseIdFieldsContainFileReleasePackageName() {
         return releaseIdFieldsContainFileReleasePackageName;
@@ -714,6 +1134,36 @@ public class TFWriter extends AbstractWriter<Connection> implements IDataProcess
 
     public boolean isTranslateTechnicalReleaseIds() {
         return translateTechnicalReleaseIds;
+    }
+
+    private void populateTargetArtifactAttributes(GenericArtifact ga,
+            ArtifactDO result) {
+        ga.setTargetArtifactId(result.getId());
+        Date targetArtifactLastModifiedDate = result.getLastModifiedDate();
+        String targetArtifactLastModifiedDateStr = DateUtil
+                .format(targetArtifactLastModifiedDate);
+        ga.setTargetArtifactLastModifiedDate(targetArtifactLastModifiedDateStr);
+        ga.setTargetArtifactVersion(Integer.toString(result.getVersion()));
+    }
+
+    private void populateTargetArtifactAttributesFromPlanningFolder(
+            GenericArtifact ga, PlanningFolderDO result) {
+        ga.setTargetArtifactId(result.getId());
+        Date targetArtifactLastModifiedDate = result.getLastModifiedDate();
+        String targetArtifactLastModifiedDateStr = DateUtil
+                .format(targetArtifactLastModifiedDate);
+        ga.setTargetArtifactLastModifiedDate(targetArtifactLastModifiedDateStr);
+        ga.setTargetArtifactVersion(Integer.toString(result.getVersion()));
+    }
+
+    private void populateTargetArtifactAttributesFromTracker(
+            GenericArtifact ga, TrackerDO result) {
+        ga.setTargetArtifactId(result.getId());
+        Date targetArtifactLastModifiedDate = result.getLastModifiedDate();
+        String targetArtifactLastModifiedDateStr = DateUtil
+                .format(targetArtifactLastModifiedDate);
+        ga.setTargetArtifactLastModifiedDate(targetArtifactLastModifiedDateStr);
+        ga.setTargetArtifactVersion(Integer.toString(result.getVersion()));
     }
 
     /**
@@ -744,7 +1194,7 @@ public class TFWriter extends AbstractWriter<Connection> implements IDataProcess
     /**
      * Determines the separator used to compute the human readable name of
      * releases The default value is " > "
-     * 
+     *
      * @param planningFolderSeparatorString
      */
     public void setPackageReleaseSeparatorString(
@@ -754,7 +1204,7 @@ public class TFWriter extends AbstractWriter<Connection> implements IDataProcess
 
     /**
      * Sets the password that belongs to the username
-     * 
+     *
      * @param password
      *            the password to set
      */
@@ -767,7 +1217,7 @@ public class TFWriter extends AbstractWriter<Connection> implements IDataProcess
      * release name that should be translated into a technical release id is
      * prepended by the file release package title. Only used if
      * translateTechnicalReleaseIds property is set to true
-     * 
+     *
      * @param releaseIdFieldsContainFileReleasePackageName
      */
     public void setReleaseIdFieldsContainFileReleasePackageName(
@@ -777,7 +1227,7 @@ public class TFWriter extends AbstractWriter<Connection> implements IDataProcess
 
     /**
      * Sets the optional resync password that belongs to the resync user
-     * 
+     *
      * @param resyncPassword
      *            the resyncPassword to set
      */
@@ -787,12 +1237,12 @@ public class TFWriter extends AbstractWriter<Connection> implements IDataProcess
 
     /**
      * Sets the optional resync username
-     * 
+     *
      * The resync user name is used to login into the TF/CSFE instance whenever
      * an artifact should be created. This user has to differ from the ordinary
      * user used to log in in order to force initial resyncs with the source
      * system once a new artifact has been created.
-     * 
+     *
      * @param resyncUserName
      *            the resyncUserName to set
      */
@@ -802,7 +1252,7 @@ public class TFWriter extends AbstractWriter<Connection> implements IDataProcess
 
     /**
      * Sets the CSFE/TF system's SOAP server URL.
-     * 
+     *
      * @param serverUrl
      *            - the URL of the source TF system.
      */
@@ -817,7 +1267,7 @@ public class TFWriter extends AbstractWriter<Connection> implements IDataProcess
 
     /**
      * Set the update comment
-     * 
+     *
      * @param updateComment
      *            see private attribute doc
      */
@@ -827,12 +1277,12 @@ public class TFWriter extends AbstractWriter<Connection> implements IDataProcess
 
     /**
      * Sets the mandatory username
-     * 
+     *
      * The user name is used to login into the TF/CSFE instance whenever an
      * artifact should be updated or extracted. This user has to differ from the
      * resync user in order to force initial resyncs with the source system once
      * a new artifact has been created.
-     * 
+     *
      * @param resyncUserName
      *            the resyncUserName to set
      */
@@ -939,517 +1389,10 @@ public class TFWriter extends AbstractWriter<Connection> implements IDataProcess
         }
     }
 
-    @Override
-    public Document updateAttachment(Document gaDocument) {
-        // throw new
-        // CCFRuntimeException("updateAttachment is not implemented...!");
-        log.warn("updateAttachment is not implemented...!");
-        return null;
-    }
-
-    @Override
-    public Document updateDependency(Document gaDocument) {
-        // throw new
-        // CCFRuntimeException("updateDependency is not implemented...!");
-        log.warn("updateDependency is not implemented...!");
-        return null;
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    /*
-     * Validate whether all mandatory properties are set correctly
-     */
-    public void validate(List exceptions) {
-        super.validate(exceptions);
-
-        /*
-         * if (getResyncUserName() == null) { log .warn(
-         * "resyncUserName-property has not been set, so that initial resyncs after artifact creation are not possible."
-         * ); }
-         */
-
-        if (getUpdateComment() == null) {
-            log.error("updateComment-property not set");
-            exceptions.add(new ValidationException(
-                    "updateComment-property not set", this));
-        }
-
-        if (getPassword() == null) {
-            log.error("password-property not set");
-            exceptions.add(new ValidationException("password-property not set",
-                    this));
-        }
-
-        if (getUsername() == null) {
-            log.error("userName-property not set");
-            exceptions.add(new ValidationException("userName-property not set",
-                    this));
-        }
-
-        if (getServerUrl() == null) {
-            log.error("serverUrl-property not set");
-            exceptions.add(new ValidationException(
-                    "serverUrl-property not set", this));
-        }
-
-        ConnectionManager<Connection> connectionManager = getConnectionManager();
-
-        if (exceptions.size() == 0) {
-            trackerHandler = new TFTrackerHandler(getServerUrl(),
-                    connectionManager);
-            attachmentHandler = new TFAttachmentHandler(getServerUrl(),
-                    connectionManager);
-        }
-    }
-
     /**
      * Creates the artifact represented by the GenericArtifact object on the
      * target TF system
-     * 
-     * @param ga
-     *            - the GenericArtifact object
-     * @param tracker
-     *            - The target TF tracker ID
-     * @param connection
-     *            - The Connection object for the target TF system
-     * @return - the newly created artifact's ArtifactSoapDO object
-     */
-    private ArtifactDO createArtifact(GenericArtifact ga, String tracker,
-            Connection connection) {
-        ArrayList<String> flexFieldNames = new ArrayList<String>();
-        ArrayList<String> flexFieldTypes = new ArrayList<String>();
-        ArrayList<Object> flexFieldValues = new ArrayList<Object>();
-
-        List<GenericArtifactField> gaFields = ga
-                .getAllGenericArtifactFieldsWithSameFieldType(GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
-        String targetSystemTimezone = ga.getTargetSystemTimezone();
-        if (gaFields != null) {
-            for (GenericArtifactField gaField : gaFields) {
-                String fieldName = gaField.getFieldName();
-                String trackerFieldValueType = TFArtifactMetaData
-                        .getTFFieldValueTypeForGAFieldType(gaField
-                                .getFieldValueType());
-                flexFieldNames.add(fieldName);
-                flexFieldTypes.add(trackerFieldValueType);
-                Object value = null;
-                FieldValueTypeValue fieldType = gaField.getFieldValueType();
-                if (trackerFieldValueType
-                        .equals(TrackerFieldSoapDO.FIELD_VALUE_TYPE_DATE)) {
-                    if (fieldType == FieldValueTypeValue.DATE) {
-                        GregorianCalendar gc = (GregorianCalendar) gaField
-                                .getFieldValue();
-                        if (gc != null) {
-                            Date dateValue = gc.getTime();
-                            if (DateUtil.isAbsoluteDateInTimezone(dateValue,
-                                    "GMT")) {
-                                value = DateUtil
-                                        .convertGMTToTimezoneAbsoluteDate(
-                                                dateValue, targetSystemTimezone);
-                            } else {
-                                value = dateValue;
-                            }
-                        }
-                    } else if (fieldType == FieldValueTypeValue.DATETIME) {
-                        value = gaField.getFieldValue();
-                    }
-                } else {
-                    value = gaField.getFieldValue();
-                }
-                flexFieldValues.add(value);
-            }
-        }
-
-        String folderId = GenericArtifactHelper.getStringMandatoryGAField(
-                TFArtifactMetaData.TFFields.folderId.getFieldName(), ga);
-        String description = GenericArtifactHelper.getStringMandatoryGAField(
-                TFArtifactMetaData.TFFields.description.getFieldName(), ga);
-        String category = GenericArtifactHelper.getStringMandatoryGAField(
-                TFArtifactMetaData.TFFields.category.getFieldName(), ga);
-        String group = GenericArtifactHelper.getStringMandatoryGAField(
-                TFArtifactMetaData.TFFields.group.getFieldName(), ga);
-        String status = GenericArtifactHelper.getStringMandatoryGAField(
-                TFArtifactMetaData.TFFields.status.getFieldName(), ga);
-        String statusClass = GenericArtifactHelper.getStringMandatoryGAField(
-                TFArtifactMetaData.TFFields.statusClass.getFieldName(), ga);
-        String customer = GenericArtifactHelper.getStringMandatoryGAField(
-                TFArtifactMetaData.TFFields.customer.getFieldName(), ga);
-        int priority = GenericArtifactHelper.getIntMandatoryGAField(
-                TFArtifactMetaData.TFFields.priority.getFieldName(), ga);
-
-        int estimatedEffort = 0;
-        int actualEffort = 0;
-        int remainingEffort = 0;
-        String planningFolder = null;
-        Boolean autosumming = false;
-
-        estimatedEffort = GenericArtifactHelper.getIntMandatoryGAField(
-                TFArtifactMetaData.TFFields.estimatedHours.getFieldName(), ga);
-        actualEffort = GenericArtifactHelper.getIntMandatoryGAField(
-                TFArtifactMetaData.TFFields.actualHours.getFieldName(), ga);
-        if (connection.supports53()) {
-            remainingEffort = GenericArtifactHelper.getIntMandatoryGAField(
-                    TFArtifactMetaData.TFFields.remainingEffort.getFieldName(),
-                    ga);
-
-            planningFolder = GenericArtifactHelper.getStringMandatoryGAField(
-                    TFArtifactMetaData.TFFields.planningFolder.getFieldName(),
-                    ga);
-
-            autosumming = GenericArtifactHelper.getBooleanMandatoryGAField(
-                    TFArtifactMetaData.TFFields.autosumming.getFieldName(), ga);
-        }
-
-        int points = 0;
-        if (connection.supports54()) {
-            points = GenericArtifactHelper.getIntMandatoryGAField(
-                    TFArtifactMetaData.TFFields.points.getFieldName(), ga);
-
-        }
-
-        Date closeDate = GenericArtifactHelper.getDateMandatoryGAField(
-                TFArtifactMetaData.TFFields.closeDate.getFieldName(), ga);
-        String assignedTo = GenericArtifactHelper.getStringMandatoryGAField(
-                TFArtifactMetaData.TFFields.assignedTo.getFieldName(), ga);
-        String reportedReleaseId = GenericArtifactHelper
-                .getStringMandatoryGAField(
-                        TFArtifactMetaData.TFFields.reportedReleaseId
-                                .getFieldName(), ga);
-        String resolvedReleaseId = GenericArtifactHelper
-                .getStringMandatoryGAField(
-                        TFArtifactMetaData.TFFields.resolvedReleaseId
-                                .getFieldName(), ga);
-        String title = GenericArtifactHelper.getStringMandatoryGAField(
-                TFArtifactMetaData.TFFields.title.getFieldName(), ga);
-        String[] comments = this.getComments(ga);
-        ArtifactDO result = null;
-        try {
-            if (this.translateTechnicalReleaseIds) {
-                reportedReleaseId = TFTrackerHandler
-                        .convertReleaseId(
-                                connection,
-                                reportedReleaseId,
-                                folderId,
-                                isReleaseIdFieldsContainFileReleasePackageName() ? getPackageReleaseSeparatorString()
-                                        : null);
-                resolvedReleaseId = TFTrackerHandler
-                        .convertReleaseId(
-                                connection,
-                                resolvedReleaseId,
-                                folderId,
-                                isReleaseIdFieldsContainFileReleasePackageName() ? getPackageReleaseSeparatorString()
-                                        : null);
-            }
-
-            // now we have to deal with the parent dependencies
-            String parentId = ga.getDepParentTargetArtifactId();
-            boolean associateWithParent = false;
-            if (parentId != null
-                    && !parentId.equals(GenericArtifact.VALUE_UNKNOWN)
-                    && !parentId.equals(GenericArtifact.VALUE_NONE)) {
-                // parent is a planning folder
-                if (parentId.startsWith("plan")) {
-                    planningFolder = parentId;
-                } else {
-                    associateWithParent = true;
-                    if (planningFolder == null) {
-                        ArtifactDO parentArtifact = connection
-                                .getTrackerClient().getArtifactData(parentId);
-                        planningFolder = parentArtifact.getPlanningFolderId();
-                    }
-
-                }
-            }
-
-            result = trackerHandler.createArtifact(connection, folderId,
-                    description, category, group, status, statusClass,
-                    customer, priority, estimatedEffort, actualEffort,
-                    closeDate, assignedTo, reportedReleaseId,
-                    resolvedReleaseId, flexFieldNames, flexFieldValues,
-                    flexFieldTypes, title, comments, remainingEffort,
-                    autosumming, planningFolder, points);
-
-            // now create parent dependency
-            if (associateWithParent) {
-                trackerHandler.createArtifactDependency(connection, parentId,
-                        result.getId(), "CCF created parent-child dependency");
-            }
-
-            log.info("New artifact " + result.getId()
-                    + " is created with the change from "
-                    + ga.getSourceArtifactId());
-        } catch (RemoteException e) {
-            String cause = "While trying to create an artifact within TF, an error occured";
-            log.error(cause, e);
-            ga.setErrorCode(GenericArtifact.ERROR_EXTERNAL_SYSTEM_WRITE);
-            throw new CCFRuntimeException(cause, e);
-        } catch (PlanningFolderRuleViolationException e) {
-            String cause = "While trying to create an artifact within TF, a planning folder rule violation occured: "
-                    + e.getMessage();
-            log.error(cause, e);
-            ga.setErrorCode(GenericArtifact.ERROR_EXTERNAL_SYSTEM_WRITE);
-            throw new CCFRuntimeException(cause, e);
-        }
-        return result;
-    }
-
-    private PlanningFolderDO createPlanningFolder(GenericArtifact ga,
-            String project, Connection connection) {
-
-        String targetSystemTimezone = ga.getTargetSystemTimezone();
-        String parentId = project;
-        String targetParentArtifactId = ga.getDepParentTargetArtifactId();
-
-        if (targetParentArtifactId != null
-                && !targetParentArtifactId.equals(GenericArtifact.VALUE_NONE)
-                && !targetParentArtifactId
-                        .equals(GenericArtifact.VALUE_UNKNOWN)) {
-            parentId = targetParentArtifactId;
-        }
-
-        String title = GenericArtifactHelper.getStringMandatoryGAField(
-                TFArtifactMetaData.TFFields.title.getFieldName(), ga);
-
-        String description = GenericArtifactHelper.getStringMandatoryGAField(
-                TFArtifactMetaData.TFFields.description.getFieldName(), ga);
-
-        Date startDate = null;
-        Date endDate = null;
-
-        GenericArtifactField startDateField = GenericArtifactHelper
-                .getMandatoryGAField(
-                        TFArtifactMetaData.TFFields.startDate.getFieldName(),
-                        ga);
-
-        if (startDateField != null) {
-            GregorianCalendar gc = (GregorianCalendar) startDateField
-                    .getFieldValue();
-            if (gc != null) {
-                Date dateValue = gc.getTime();
-                if (DateUtil.isAbsoluteDateInTimezone(dateValue, "GMT")) {
-                    startDate = DateUtil.convertGMTToTimezoneAbsoluteDate(
-                            dateValue, targetSystemTimezone);
-                } else {
-                    startDate = dateValue;
-                }
-            }
-        }
-
-        GenericArtifactField endDateField = GenericArtifactHelper
-                .getMandatoryGAField(
-                        TFArtifactMetaData.TFFields.endDate.getFieldName(), ga);
-
-        if (endDateField != null) {
-            GregorianCalendar gc = (GregorianCalendar) endDateField
-                    .getFieldValue();
-            if (gc != null) {
-                Date dateValue = gc.getTime();
-                if (DateUtil.isAbsoluteDateInTimezone(dateValue, "GMT")) {
-                    endDate = DateUtil.convertGMTToTimezoneAbsoluteDate(
-                            dateValue, targetSystemTimezone);
-                } else {
-                    endDate = dateValue;
-                }
-            }
-        }
-
-        int capacity = 0;
-        String status = null;
-        String releaseId = null;
-        if (connection.supports54()) {
-            capacity = GenericArtifactHelper.getIntMandatoryGAField(
-                    TFArtifactMetaData.TFFields.capacity.getFieldName(), ga);
-            status = GenericArtifactHelper.getStringMandatoryGAField(
-                    TFArtifactMetaData.TFFields.status.getFieldName(), ga);
-            releaseId = GenericArtifactHelper.getStringMandatoryGAField(
-                    TFArtifactMetaData.TFFields.releaseId.getFieldName(), ga);
-        }
-
-        //To support display effort in field added in TF 7.0
-        String trackerUnitId = null;
-        if (connection.supports62()) {
-            trackerUnitId = GenericArtifactHelper.getStringMandatoryGAField(
-                    TFArtifactMetaData.TFFields.trackerUnitId.getFieldName(),
-                    ga);
-
-        }
-
-        //For points capacity field added in TF 7.1
-        int pointsCapacity = 0;
-        if (connection.supports63()) {
-            pointsCapacity = GenericArtifactHelper.getIntMandatoryGAField(
-                    TFArtifactMetaData.TFFields.pointsCapacity.getFieldName(),
-                    ga);
-        }
-
-        PlanningFolderDO planningFolder = null;
-
-        try {
-            if (translateTechnicalReleaseIds) {
-                releaseId = TFTrackerHandler
-                        .convertReleaseIdForProject(
-                                connection,
-                                releaseId,
-                                project,
-                                isReleaseIdFieldsContainFileReleasePackageName() ? getPackageReleaseSeparatorString()
-                                        : null);
-            }
-            String trackerUnitIdValue = !StringUtils.isEmpty(trackerUnitId) ? trackerUnitId
-                    : "Hours";
-            trackerUnitId = TFTrackerHandler.getTrackerUnitId(connection,
-                    trackerUnitIdValue, project);
-            planningFolder = connection.getPlanningClient()
-                    .createPlanningFolder(parentId, title, description,
-                            startDate, endDate, status, capacity,
-                            pointsCapacity, releaseId, trackerUnitId);
-        } catch (RemoteException e) {
-            String cause = "Could not create planning folder: "
-                    + e.getMessage();
-            log.error(cause, e);
-            ga.setErrorCode(GenericArtifact.ERROR_EXTERNAL_SYSTEM_WRITE);
-            throw new CCFRuntimeException(cause, e);
-        }
-        log.info("Created planning folder " + planningFolder.getId()
-                + " in project " + project + " with parent " + parentId
-                + " other system id: " + ga.getSourceArtifactId()
-                + " in repository: " + ga.getSourceRepositoryId());
-
-        return planningFolder;
-    }
-
-    private void disconnect(Connection connection) {
-        ConnectionManager<Connection> connectionManager = (ConnectionManager<Connection>) getConnectionManager();
-        connectionManager.releaseConnection(connection);
-    }
-
-    private String[] getComments(GenericArtifact ga) {
-        String[] comments = null;
-        List<GenericArtifactField> gaFields = ga
-                .getAllGenericArtifactFieldsWithSameFieldTypeAndFieldName(
-                        GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD,
-                        TFArtifactMetaData.TFFields.commentText.getFieldName());
-        int commentsSize = 0;
-        if (gaFields != null) {
-            commentsSize = gaFields.size();
-        }
-        if (commentsSize > 0) {
-            comments = new String[commentsSize];
-            for (int i = 0; i < commentsSize; i++) {
-                GenericArtifactField field = gaFields.get(i);
-                String comment = (String) field.getFieldValue();
-                comments[i] = comment;
-            }
-        }
-        if (comments == null) {
-            comments = new String[0];
-        }
-        return comments;
-    }
-
-    /**
-     * Gets the mandatory password that belongs to the username
-     * 
-     * @return the password
-     */
-    private String getPassword() {
-        return password;
-    }
-
-    /**
-     * Gets the optional resync password that belongs to the resync user
-     * 
-     * @return the resyncPassword
-     */
-    private String getResyncPassword() {
-        return resyncPassword;
-    }
-
-    /**
-     * Gets the optional resync username The resync user name is used to login
-     * into the TF/CSFE instance whenever an artifact should be created. This
-     * user has to differ from the ordinary user used to log in in order to
-     * force initial resyncs with the source system once a new artifact has been
-     * created.
-     * 
-     * @return the resyncUserName
-     */
-    private String getResyncUserName() {
-        return resyncUserName;
-    }
-
-    private void initializeArtifact(GenericArtifact ga) {
-        GenericArtifact.ArtifactActionValue artifactAction = ga
-                .getArtifactAction();
-        // GenericArtifact.ArtifactTypeValue artifactType =
-        // ga.getArtifactType();
-        // String sourceArtifactId = ga.getSourceArtifactId();
-        String targetRepositoryId = ga.getTargetRepositoryId();
-        String targetArtifactId = ga.getTargetArtifactId();
-        String tracker = targetRepositoryId;
-
-        if (artifactAction == GenericArtifact.ArtifactActionValue.UPDATE) {
-            if (TFGAHelper.containsSingleMandatoryField(ga,
-                    TFArtifactMetaData.TFFields.id.getFieldName())) {
-                TFGAHelper.updateSingleMandatoryField(ga,
-                        TFArtifactMetaData.TFFields.id.getFieldName(),
-                        targetArtifactId);
-                ga.setTargetArtifactId(targetArtifactId);
-            } else {
-                TFGAHelper.addField(ga,
-                        TFArtifactMetaData.TFFields.id.getFieldName(),
-                        targetArtifactId,
-                        GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD,
-                        GenericArtifactField.FieldValueTypeValue.STRING);
-            }
-        }
-        if (TFGAHelper.containsSingleMandatoryField(ga,
-                TFArtifactMetaData.TFFields.folderId.getFieldName())) {
-            TFGAHelper.updateSingleMandatoryField(ga,
-                    TFArtifactMetaData.TFFields.folderId.getFieldName(),
-                    tracker);
-        } else {
-            TFGAHelper.addField(ga,
-                    TFArtifactMetaData.TFFields.folderId.getFieldName(),
-                    tracker,
-                    GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD,
-                    GenericArtifactField.FieldValueTypeValue.STRING);
-        }
-    }
-
-    private void populateTargetArtifactAttributes(GenericArtifact ga,
-            ArtifactDO result) {
-        ga.setTargetArtifactId(result.getId());
-        Date targetArtifactLastModifiedDate = result.getLastModifiedDate();
-        String targetArtifactLastModifiedDateStr = DateUtil
-                .format(targetArtifactLastModifiedDate);
-        ga.setTargetArtifactLastModifiedDate(targetArtifactLastModifiedDateStr);
-        ga.setTargetArtifactVersion(Integer.toString(result.getVersion()));
-    }
-
-    private void populateTargetArtifactAttributesFromPlanningFolder(
-            GenericArtifact ga, PlanningFolderDO result) {
-        ga.setTargetArtifactId(result.getId());
-        Date targetArtifactLastModifiedDate = result.getLastModifiedDate();
-        String targetArtifactLastModifiedDateStr = DateUtil
-                .format(targetArtifactLastModifiedDate);
-        ga.setTargetArtifactLastModifiedDate(targetArtifactLastModifiedDateStr);
-        ga.setTargetArtifactVersion(Integer.toString(result.getVersion()));
-    }
-
-    private void populateTargetArtifactAttributesFromTracker(
-            GenericArtifact ga, TrackerDO result) {
-        ga.setTargetArtifactId(result.getId());
-        Date targetArtifactLastModifiedDate = result.getLastModifiedDate();
-        String targetArtifactLastModifiedDateStr = DateUtil
-                .format(targetArtifactLastModifiedDate);
-        ga.setTargetArtifactLastModifiedDate(targetArtifactLastModifiedDateStr);
-        ga.setTargetArtifactVersion(Integer.toString(result.getVersion()));
-    }
-
-    /**
-     * Creates the artifact represented by the GenericArtifact object on the
-     * target TF system
-     * 
+     *
      * @param ga
      * @param tracker
      * @param forceOverride
@@ -1572,11 +1515,11 @@ public class TFWriter extends AbstractWriter<Connection> implements IDataProcess
         GenericArtifactField reportedReleaseId = GenericArtifactHelper
                 .getMandatoryGAField(
                         TFArtifactMetaData.TFFields.reportedReleaseId
-                                .getFieldName(), ga);
+                        .getFieldName(), ga);
         GenericArtifactField resolvedReleaseId = GenericArtifactHelper
                 .getMandatoryGAField(
                         TFArtifactMetaData.TFFields.resolvedReleaseId
-                                .getFieldName(), ga);
+                        .getFieldName(), ga);
         GenericArtifactField title = GenericArtifactHelper.getMandatoryGAField(
                 TFArtifactMetaData.TFFields.title.getFieldName(), ga);
 
@@ -1637,7 +1580,7 @@ public class TFWriter extends AbstractWriter<Connection> implements IDataProcess
                     // special value requested for this
                     if (connection.supports53()
                             && (planningFolder == null || !planningFolder
-                                    .getFieldValueHasChanged())) {
+                            .getFieldValueHasChanged())) {
                         ArtifactDO parentArtifact = trackerHandler
                                 .getTrackerItem(connection, newParentId);
                         planningFolder = TFToGenericArtifactConverter
@@ -1702,6 +1645,22 @@ public class TFWriter extends AbstractWriter<Connection> implements IDataProcess
             throw new CCFRuntimeException(cause, e);
         }
         return result;
+    }
+
+    @Override
+    public Document updateAttachment(Document gaDocument) {
+        // throw new
+        // CCFRuntimeException("updateAttachment is not implemented...!");
+        log.warn("updateAttachment is not implemented...!");
+        return null;
+    }
+
+    @Override
+    public Document updateDependency(Document gaDocument) {
+        // throw new
+        // CCFRuntimeException("updateDependency is not implemented...!");
+        log.warn("updateDependency is not implemented...!");
+        return null;
     }
 
     private PlanningFolderDO updatePlanningFolder(GenericArtifact ga,
@@ -1885,7 +1844,7 @@ public class TFWriter extends AbstractWriter<Connection> implements IDataProcess
                                 .getFieldValue();
                         String trackerUnitIdValue = !StringUtils
                                 .isEmpty(trackerUnitId) ? trackerUnitId
-                                : "Hours";
+                                        : "Hours";
                         trackerUnitId = TFTrackerHandler.getTrackerUnitId(
                                 connection, trackerUnitIdValue, project);
                         planningFolder.setTrackerUnitId(trackerUnitId);
@@ -1901,8 +1860,8 @@ public class TFWriter extends AbstractWriter<Connection> implements IDataProcess
                 }
                 logConflictResolutor.warn(
                         "Stale update for TF planning folder " + id
-                                + " in project " + project
-                                + ". Trying again ...", e);
+                        + " in project " + project
+                        + ". Trying again ...", e);
                 planningFolderNotUpdated = true;
             }
         }
@@ -1977,6 +1936,54 @@ public class TFWriter extends AbstractWriter<Connection> implements IDataProcess
                     + result.getId());
         }
         return result;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    /*
+     * Validate whether all mandatory properties are set correctly
+     */
+    public void validate(List exceptions) {
+        super.validate(exceptions);
+
+        /*
+         * if (getResyncUserName() == null) { log .warn(
+         * "resyncUserName-property has not been set, so that initial resyncs after artifact creation are not possible."
+         * ); }
+         */
+
+        if (getUpdateComment() == null) {
+            log.error("updateComment-property not set");
+            exceptions.add(new ValidationException(
+                    "updateComment-property not set", this));
+        }
+
+        if (getPassword() == null) {
+            log.error("password-property not set");
+            exceptions.add(new ValidationException("password-property not set",
+                    this));
+        }
+
+        if (getUsername() == null) {
+            log.error("userName-property not set");
+            exceptions.add(new ValidationException("userName-property not set",
+                    this));
+        }
+
+        if (getServerUrl() == null) {
+            log.error("serverUrl-property not set");
+            exceptions.add(new ValidationException(
+                    "serverUrl-property not set", this));
+        }
+
+        ConnectionManager<Connection> connectionManager = getConnectionManager();
+
+        if (exceptions.size() == 0) {
+            trackerHandler = new TFTrackerHandler(getServerUrl(),
+                    connectionManager);
+            attachmentHandler = new TFAttachmentHandler(getServerUrl(),
+                    connectionManager);
+        }
     }
 
 }
