@@ -23,6 +23,8 @@ import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactField.FieldActionValue;
 import com.collabnet.ccf.core.ga.GenericArtifactField.FieldValueTypeValue;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
+import com.collabnet.ccf.core.utils.JerichoUtils;
+import com.inflectra.spirateam.mylyn.core.internal.services.soap.ArrayOfRemoteArtifactCustomProperty;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.ArrayOfRemoteComment;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.ArrayOfRemoteDocument;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.ArrayOfRemoteFilter;
@@ -32,7 +34,9 @@ import com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportIn
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportIncidentRetrieveCommentsServiceFaultMessageFaultFaultMessage;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportIncidentRetrieveServiceFaultMessageFaultFaultMessage;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.ObjectFactory;
+import com.inflectra.spirateam.mylyn.core.internal.services.soap.RemoteArtifactCustomProperty;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.RemoteComment;
+import com.inflectra.spirateam.mylyn.core.internal.services.soap.RemoteCustomProperty;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.RemoteDocument;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.RemoteIncident;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.RemoteSort;
@@ -97,10 +101,11 @@ public class ISTHandler {
     }
 
     private static DateFormat          df            = GenericArtifactHelper.df;
+
     private ISTConnection              connection    = null;
 
     private static final Log           log           = LogFactory
-                                                             .getLog(ISTHandler.class);
+            .getLog(ISTHandler.class);
 
     private static final ObjectFactory objectFactory = new ObjectFactory();
 
@@ -405,6 +410,7 @@ public class ISTHandler {
             //
             //            log.debug("      " + df.format(creationDate) + "  C: " + comment);
             ret = creationDate.after(ret) ? creationDate : ret;
+
         }
 
         if (!ret.equals(toDate(incident.getLastUpdateDate()))) {
@@ -421,13 +427,16 @@ public class ISTHandler {
             ArrayList<ArtifactState> artifactStates) {
 
         ArrayOfRemoteIncident allincidents = null;
-
         objectFactory.createArrayOfRemoteIncident();
+
+        // Query Helpers
         ArrayOfRemoteFilter filters = objectFactory.createArrayOfRemoteFilter();
         RemoteSort sort = objectFactory.createRemoteSort();
         sort.setPropertyName(objectFactory
                 .createRemoteFilterPropertyName("LastUpdateDate"));
         sort.setSortAscending(false);
+
+        RemoteSort docSort = objectFactory.createRemoteSort();
 
         try {
             allincidents = connection.getService().incidentRetrieve(filters,
@@ -436,19 +445,89 @@ public class ISTHandler {
             log.error("Failed to retrieve indicents!", e);
         }
 
-        long version = Long.valueOf(lastSynchronizedVersion);
+        Long.valueOf(lastSynchronizedVersion);
 
-        // create full list with 'real modifcation dates'
+        // fetch *all* incidents
+        // currently the only way to identify all changed ones and to build the version
         for (RemoteIncident inc : allincidents.getRemoteIncident()) {
             ArtifactState xs = new ArtifactState();
             xs.setArtifactId(String.valueOf(inc.getIncidentId().getValue()));
-            xs.setArtifactVersion(++version);
-            xs.setArtifactLastModifiedDate(getRealLastUpdated(inc));
+            Date lastUpdated = toDate(inc.getLastUpdateDate());
+
+            // get attachments intel
+            String documentsStamp = "";
+            ArrayOfRemoteDocument documents = null;
+            try {
+                documents = connection.getService()
+                        .documentRetrieveForArtifact(inc.getArtifactTypeId(),
+                                inc.getIncidentId().getValue(), filters,
+                                docSort);
+            } catch (IImportExportDocumentRetrieveForArtifactServiceFaultMessageFaultFaultMessage e) {
+                log.error("Failed to retrieve documents for incident #"
+                        + inc.getIncidentId().getValue(), e);
+            }
+
+            for (RemoteDocument d : documents.getRemoteDocument()) {
+                Date uploadDate = toDate(d.getUploadDate());
+                lastUpdated = uploadDate.after(lastUpdated) ? uploadDate
+                        : lastUpdated;
+                documentsStamp += d.getFilenameOrUrl().getValue()
+                        + df.format(uploadDate);
+            }
+
+            // get comments intel
+            String commentsStamp = "";
+            ArrayOfRemoteComment comments = null;
+            try {
+                comments = connection.getService().incidentRetrieveComments(
+                        inc.getIncidentId().getValue());
+            } catch (IImportExportIncidentRetrieveCommentsServiceFaultMessageFaultFaultMessage e) {
+                log.error("Failed to retrieve comments for incident #"
+                        + inc.getIncidentId().getValue(), e);
+            }
+
+            for (RemoteComment c : comments.getRemoteComment()) {
+                Date creationDate = toDate(c.getCreationDate().getValue());
+                lastUpdated = creationDate.after(lastUpdated) ? creationDate
+                        : lastUpdated;
+                commentsStamp += JerichoUtils
+                        .htmlToText(c.getText().getValue());
+            }
+
+            ArrayOfRemoteArtifactCustomProperty properties = null;
+            properties = inc.getCustomProperties().getValue();
+
+            if (properties.getRemoteArtifactCustomProperty().size() > 0) {
+                log.debug("  ==> Custom Propeties for ID #"
+                        + inc.getIncidentId().getValue());
+                log.debug(String.format("      %-30s  %-15s  %-15s  %-15s",
+                        "Field Name", "System Type", "Field Type", "Value"));
+            }
+            for (RemoteArtifactCustomProperty aprop : properties
+                    .getRemoteArtifactCustomProperty()) {
+                RemoteCustomProperty prop = aprop.getDefinition().getValue();
+                String fieldType = prop.getCustomPropertyTypeName().getValue();
+                String systemType = prop.getSystemDataType().getValue();
+                String fieldName = prop.getName().getValue();
+                String value = ISTMetaData.getValue(aprop);
+                log.debug(String.format("      %-30s  %-15s  %-15s  %-15s",
+                        fieldName, systemType, fieldType, value));
+            }
+
+            xs.setArtifactLastModifiedDate(lastUpdated);
+            long hashedVersionPart = ISTArtifactVersionHelper
+                    .generateFullVersion(connection, objectFactory, inc,
+                            commentsStamp, documentsStamp);
+            ISTArtifactVersionHelper.incrementVersion(ISTArtifactVersionHelper
+                    .getFullVersion(101, (int) hashedVersionPart));
+            xs.setArtifactVersion(hashedVersionPart);
             artifactStates.add(xs);
         }
 
         // update sort order
         Collections.sort(artifactStates, new ArtifactStateComparator());
+
+        int totalLength = artifactStates.size();
 
         // remove items before Last Modified Date
         CollectionUtils.filter(artifactStates, new Predicate() {
@@ -460,6 +539,11 @@ public class ISTHandler {
             }
 
         });
+
+        int filterLength = artifactStates.size();
+
+        log.debug("Filtered " + filterLength + " artifacts out of "
+                + totalLength);
 
     }
 
@@ -495,8 +579,8 @@ public class ISTHandler {
 
             fetchMandatoryData(ga, ri);
 
-            // TODO Comments since last Modifed, add them to ga
             fetchComments(ga, ri, lastModifiedDate);
+
             // TODO check dependencies / parents
 
             // TODO Components

@@ -27,12 +27,12 @@ public class ISTConnection {
     private IImportExport       soap                  = null;
 
     private String              username              = null;
+    private String              password              = null;
+    private String              baseUrl               = null;
+    private int                 projectId             = 0;
+    private URL                 serviceUrl            = null;
 
     public ISTConnection(String credentialInfo, String connectionInfo) {
-
-        String baseUrl = null;
-        String password = null;
-        int projectId = 0;
 
         if (credentialInfo != null) {
             String[] splitCredentials = credentialInfo
@@ -66,7 +66,6 @@ public class ISTConnection {
             }
         }
 
-        URL serviceUrl = null;
         try {
             serviceUrl = new URL(baseUrl + WEB_SERVICE_SUFFIX);
         } catch (MalformedURLException e) {
@@ -74,7 +73,9 @@ public class ISTConnection {
         }
         log.debug("Connecting to Spira Test: " + serviceUrl + " as " + username
                 + " to project " + projectId);
-        connect(serviceUrl, username, password, projectId);
+
+        // connect SOAP session
+        connect();
     }
 
     public void close() {
@@ -89,9 +90,8 @@ public class ISTConnection {
         }
     }
 
-    private void connect(URL serviceurl, String username, String password,
-            int projectid) {
-        ImportExport service = new ImportExport(serviceurl,
+    private void connect() {
+        ImportExport service = new ImportExport(serviceUrl,
                 QName.valueOf(WEB_SERVICE_NAMESPACE));
         soap = service.getBasicHttpBindingIImportExport();
 
@@ -99,24 +99,32 @@ public class ISTConnection {
         Map<String, Object> requestContext = ((BindingProvider) soap)
                 .getRequestContext();
         requestContext.put(BindingProvider.SESSION_MAINTAIN_PROPERTY, true);
-        log.debug("Connecting to SpiraTest as user " + username
-                + " with password `" + password + "`");
+        log.debug("Connecting to IST project #" + projectId + "  as "
+                + username);
         try {
             if (!soap.connectionAuthenticate(username, password)) {
                 log.error("Authentication failed, please verify credentials");
             }
-            if (!soap.connectionConnectToProject(projectid)) {
+            if (!soap.connectionConnectToProject(projectId)) {
                 log.error("Project Connection failed");
             }
         } catch (IImportExportConnectionAuthenticateServiceFaultMessageFaultFaultMessage e) {
-            log.error("Could not authenticate, please verify credentials", e);
+            log.error("Could not authenticate user " + username
+                    + ", please verify credentials", e);
         } catch (IImportExportConnectionConnectToProjectServiceFaultMessageFaultFaultMessage e) {
-            log.error("Could not open project ID (" + projectid + ")", e);
+            log.error("Could not open project ID (" + projectId + ")", e);
         }
 
         log.info("Connection (v" + ISTVersion.getVersion() + ") to "
-                + serviceurl.getHost() + " as " + username + " to project #"
-                + projectid);
+                + serviceUrl.getHost() + " as " + username + " to project #"
+                + projectId);
+    }
+
+    public String getIncidentHístory(String spec, int projectId, int incidentId) {
+
+        String ret = null;
+
+        return ret;
     }
 
     public IImportExport getService() {

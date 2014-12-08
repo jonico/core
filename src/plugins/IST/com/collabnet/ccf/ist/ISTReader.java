@@ -28,7 +28,7 @@ import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
 public class ISTReader extends AbstractReader<ISTConnection> {
 
     private static final Log log                        = LogFactory
-                                                                .getLog(ISTReader.class);
+            .getLog(ISTReader.class);
 
     /**
      * Properties set via injection
@@ -128,7 +128,7 @@ public class ISTReader extends AbstractReader<ISTConnection> {
                     + ga.getSourceArtifactId()
                     + ":\n"
                     + GenericArtifactHelper
-                            .createGenericArtifactXMLDocument(ga).asXML());
+                    .createGenericArtifactXMLDocument(ga).asXML());
         } catch (GenericArtifactParsingException e) {
             log.warn("Tried to convert GA to XML but failed!");
         }
@@ -162,7 +162,7 @@ public class ISTReader extends AbstractReader<ISTConnection> {
         // testing cutoff date
         try {
             lastModifiedDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
-            .parse("2014-11-28 6:26:50");
+                    .parse("2014-11-28 6:26:50");
         } catch (ParseException e) {
             String cause = "Failed to set test date";
             log.error(cause, e);
@@ -175,16 +175,21 @@ public class ISTReader extends AbstractReader<ISTConnection> {
                 lastSynchronizedVersion, lastSynchedArtifactId, artifactStates);
 
         log.debug("found " + artifactStates.size()
-                + " artifact/s changed since " + df.format(lastModifiedDate));
+                + " artifact/s changed since " + df.format(lastModifiedDate)
+                + ", last sync Version: " + lastSynchronizedVersion);
 
         if (artifactStates.size() > 0) {
-            log.debug(String.format("  ID   %-23s  %-30s", "Last Update",
-                    "Version"));
+            log.debug(String.format("  %-3s  %-40s  %-15s  %-15s  %-15s", "ID",
+                    "Last Update", "Full Version", "Version", "Hash"));
             for (ArtifactState as : artifactStates) {
-                log.debug(String.format("  %-3s  %-23s  %-30d",
+                long fullVersion = as.getArtifactVersion();
+                log.debug(String.format("  %-3s  %-40s  %-15d  %-15d  %-15d",
                         as.getArtifactId(),
                         df.format(as.getArtifactLastModifiedDate()),
-                        as.getArtifactVersion()));
+                        fullVersion,
+                        ISTArtifactVersionHelper.getIncrementPart(fullVersion),
+                        ISTArtifactVersionHelper.getHashPart(fullVersion)));
+
             }
         }
 
