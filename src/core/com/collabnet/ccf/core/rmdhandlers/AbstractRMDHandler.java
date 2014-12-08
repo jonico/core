@@ -14,28 +14,26 @@ import com.collabnet.ccf.core.db.RMDConfigExtractor;
 
 public abstract class AbstractRMDHandler {
 
-    private static final Log   log                 = LogFactory
-                                                           .getLog(AbstractRMDHandler.class);
+    private static final Log     log                 = LogFactory
+                                                             .getLog(AbstractRMDHandler.class);
 
-    public final static String VALUES              = "values";
+    public final static String   VALUES              = "values";
 
-    public final static String RANGES              = "ranges";
+    public final static String   RANGES              = "ranges";
 
-    public final static String EMPTY_STRING        = "";
+    public final static String   EMPTY_STRING        = "";
 
-    public final static String ALPHA_NUMERIC_REGEX = "^([a-zA-Z]+?.)([0-9]+?)$";             // matches a1,A1,artf1234,jira-1234
+    public final static String   ALPHA_NUMERIC_REGEX = "^([a-zA-Z]+?.)([0-9]+?)$";             // matches a1,A1,artf1234,jira-1234
 
-    public final static String NUMERIC_REGEX       = "^([0-9]+)$";
+    public final static String   NUMERIC_REGEX       = "^([0-9]+)$";
 
-    public final static String COMMAS              = ",";
+    public final static String   COMMAS              = ",";
 
-    private String             valueSeparator      = ":";
+    private String               valueSeparator      = ":";
 
-    private String             rangeSeperator      = "-";
+    private String               rangeSeperator      = "-";
 
-    private RMDConfigExtractor rmdConfigExtractor  = null;
-
-    public abstract String getValForRMDConfig(String rmdID);
+    protected RMDConfigExtractor rmdConfigExtractor  = null;
 
     public String getRangeSeperator() {
         return rangeSeperator;
@@ -45,14 +43,10 @@ public abstract class AbstractRMDHandler {
         return rmdConfigExtractor;
     }
 
+    public abstract String getValForRMDConfig(String rmdID);
+
     public String getValueSeparator() {
         return valueSeparator;
-    }
-
-    public void loadRMDAndRMDConfig(String rmdID) {
-        if (this.getRmdConfigExtractor() != null) {
-            this.getRmdConfigExtractor().populateRMDAndRMDConfigValues(rmdID);
-        }
     }
 
     public boolean rangesFilterEnabled(String type, String query) {

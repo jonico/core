@@ -57,48 +57,50 @@ import com.collabnet.teamforge.api.tracker.TrackerFieldDO;
 
 public class TFReader extends AbstractReader<Connection> {
 
-    private static final Log    log                                  = LogFactory
-                                                                             .getLog(TFReader.class);
+    private static final String RMD_TF_RETRIEVE_PARENT_INFO_FOR_TRACKER_ITEMS = "ccf.repositoryMappingDirection.tf.retrieve.parentInfo.forTrackerItems";
 
-    private TFTrackerHandler    trackerHandler                       = null;
+    private static final Log    log                                           = LogFactory
+                                                                                      .getLog(TFReader.class);
 
-    private TFAttachmentHandler attachmentHandler                    = null;
+    private TFTrackerHandler    trackerHandler                                = null;
 
-    private String              serverUrl                            = null;
+    private TFAttachmentHandler attachmentHandler                             = null;
 
-    private String              password                             = null;
+    private String              serverUrl                                     = null;
 
-    private String              username                             = null;
+    private String              password                                      = null;
 
-    private boolean             ignoreConnectorUserUpdates           = true;
+    private String              username                                      = null;
 
-    private boolean             translateTechnicalReleaseIds         = false;
+    private boolean             ignoreConnectorUserUpdates                    = true;
 
-    private boolean             shipReleaseHumanReadableName         = false;
+    private boolean             translateTechnicalReleaseIds                  = false;
 
-    private boolean             shipPlanningFolderHumanReadableName  = false;
+    private boolean             shipReleaseHumanReadableName                  = false;
 
-    private String              planningFolderSeparatorString        = " > ";
+    private boolean             shipPlanningFolderHumanReadableName           = false;
 
-    private String              packageReleaseSeparatorString        = " > ";
+    private String              planningFolderSeparatorString                 = " > ";
+
+    private String              packageReleaseSeparatorString                 = " > ";
 
     /**
      * This variable indicates whether no web services introduced in SFEE 4.4
      * SP1 HF1 should be used
      */
-    private boolean             pre44SP1HF1System                    = false;
+    private boolean             pre44SP1HF1System                             = false;
 
     /**
      * Determines whether parent info should be fetched for tracker items
      * (default is false)
      */
-    private boolean             retrieveParentInfoForTrackerItems    = false;
+    private boolean             retrieveParentInfoForTrackerItems             = false;
 
     /**
      * Determines whether parent info should be fetched for planning folders
      * (default is true)
      */
-    private boolean             retrieveParentInfoForPlanningFolders = true;
+    private boolean             retrieveParentInfoForPlanningFolders          = true;
 
     /**
      * Another user name that is used to login into the TF/CSFE instance This
@@ -107,6 +109,15 @@ public class TFReader extends AbstractReader<Connection> {
      * created.
      */
     private String              resyncUserName;
+
+    /**
+     * Below property -"preserveBulkCommentOrder" preserves the bulk/multi
+     * comments order received from TF; by default set to false sorted by
+     * descending (latest comment at top).and when set to true, comments are
+     * sorted by ascending (latest comment at bottom) as QC expects the latest
+     * comment to be at the bottom.
+     */
+    private boolean             preserveBulkCommentOrder                      = false;
 
     public Connection connect(Document syncInfo) {
         Connection connection = null;
@@ -132,15 +143,6 @@ public class TFReader extends AbstractReader<Connection> {
         }
         return connection;
     }
-
-    /**
-     * Below property -"preserveBulkCommentOrder" preserves the bulk/multi
-     * comments order received from TF; by default set to false sorted by
-     * descending (latest comment at top).and when set to true, comments are
-     * sorted by ascending (latest comment at bottom) as QC expects the latest
-     * comment to be at the bottom.
-     */
-    private boolean             preserveBulkCommentOrder             = false;
 
     /**
      * Connects to the source TF system using the connectionInfo and
@@ -279,6 +281,7 @@ public class TFReader extends AbstractReader<Connection> {
         String sourceRepositoryKind = this.getSourceRepositoryKind(syncInfo);
         boolean isArtifactForced = this.isArtifactForced(syncInfo);
         Date lastModifiedDate = this.getLastModifiedDate(syncInfo);
+        String rmdID = this.getRepositoryMappingDirectionId(syncInfo);
         Date artifactLastModifiedDate = this
                 .getArtifactLastModifiedDate(syncInfo);
         String sourceSystemTimezone = this.getSourceSystemTimezone(syncInfo);
@@ -384,7 +387,8 @@ public class TFReader extends AbstractReader<Connection> {
                 // now care about parent artifacts/planning folders
                 // first we find out whether we have a parent artifact or not
                 // but only if we don't ignore this shipment anyway
-                if (!isIgnore && isRetrieveParentInfoForTrackerItems()) {
+                boolean doRetrieveParentInfo = doRetrieveParentTrackerInfo(rmdID);
+                if (!isIgnore && doRetrieveParentInfo) {
                     ArtifactDependencyRow[] parents = trackerHandler
                             .getArtifactParentDependencies(connection,
                                     artifactId);
@@ -1031,6 +1035,16 @@ public class TFReader extends AbstractReader<Connection> {
             attachmentHandler = new TFAttachmentHandler(getServerUrl(),
                     getConnectionManager());
         }
+    }
+
+    private boolean doRetrieveParentTrackerInfo(String rmdID) {
+        boolean doRetrieveParentInfo = isRetrieveParentInfoForTrackerItems();
+        String rmdConfigValue = this.getRmdConfigExtractor().getRMDConfigValue(
+                rmdID, RMD_TF_RETRIEVE_PARENT_INFO_FOR_TRACKER_ITEMS);
+        if (rmdConfigValue != null) {
+            doRetrieveParentInfo = Boolean.parseBoolean(rmdConfigValue);
+        }
+        return doRetrieveParentInfo;
     }
 
     private String getHumanReadablePlanningFolderName(Connection connection,

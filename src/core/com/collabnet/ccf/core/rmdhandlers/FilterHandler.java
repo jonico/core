@@ -1,5 +1,7 @@
 package com.collabnet.ccf.core.rmdhandlers;
 
+import com.collabnet.ccf.core.db.RMDConfigExtractor;
+
 public interface FilterHandler {
 
     public final static String FILTER_KEY                       = "ccf.repositoryMappingDirection.filter";
@@ -12,6 +14,6 @@ public interface FilterHandler {
 
     public boolean ignoreOrdinaryArtifactUpdates(String rmdID);
 
-    public void loadRMDAndRMDConfig(String rmdID);
+    public void setRmdConfigExtractor(RMDConfigExtractor rmdConfigExtractor);
 
 }

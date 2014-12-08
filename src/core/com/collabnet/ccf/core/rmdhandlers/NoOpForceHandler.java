@@ -3,6 +3,8 @@ package com.collabnet.ccf.core.rmdhandlers;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.collabnet.ccf.core.db.RMDConfigExtractor;
+
 public class NoOpForceHandler implements ForceHandler {
 
     public Set<String> getArtifactIdSet(String rmdID) {
@@ -13,9 +15,8 @@ public class NoOpForceHandler implements ForceHandler {
         return false;
     }
 
-    public void loadRMDAndRMDConfig(String rmdID) {
-        // Nothing to implement
-
+    public void setRmdConfigExtractor(RMDConfigExtractor rmdConfigExtractor) {
+        // Nothing to implement        
     }
 
     public void updateRMDConfigToOff(String rmdId) {

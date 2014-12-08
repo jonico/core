@@ -38,12 +38,6 @@ public class RMDDryModeHandler implements DryModeHandler {
                 || DRYRUN_BEFORE_TRANSFORMATION.equals(dryRunVal);
     }
 
-    public void loadRMDAndRMDConfig(String rmdID) {
-        if (this.getRmdConfigExtractor() != null) {
-            this.getRmdConfigExtractor().populateRMDAndRMDConfigValues(rmdID);
-        }
-    }
-
     public void setRepositoryMappingDirectionConfigTableUpdater(
             JDBCWriteConnector repositoryMappingDirectionConfigTableUpdater) {
         this.repositoryMappingDirectionConfigTableUpdater = repositoryMappingDirectionConfigTableUpdater;

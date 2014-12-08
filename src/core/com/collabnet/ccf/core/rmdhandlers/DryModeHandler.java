@@ -1,5 +1,7 @@
 package com.collabnet.ccf.core.rmdhandlers;
 
+import com.collabnet.ccf.core.db.RMDConfigExtractor;
+
 public interface DryModeHandler {
 
     public final static String DRYRUN_OFF                                  = "off";
@@ -20,7 +22,7 @@ public interface DryModeHandler {
 
     public boolean isDryRunMode(String rmdId);
 
-    public void loadRMDAndRMDConfig(String rmdID);
+    public void setRmdConfigExtractor(RMDConfigExtractor rmdConfigExtractor);
 
     public void updateRMDConfigToOff(String rmdId);
 }

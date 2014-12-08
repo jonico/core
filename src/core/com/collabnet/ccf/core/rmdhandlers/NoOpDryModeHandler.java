@@ -1,5 +1,7 @@
 package com.collabnet.ccf.core.rmdhandlers;
 
+import com.collabnet.ccf.core.db.RMDConfigExtractor;
+
 public class NoOpDryModeHandler implements DryModeHandler {
 
     public boolean isDryRunEqualsAfterTransformation(String rmdId) {
@@ -18,7 +20,7 @@ public class NoOpDryModeHandler implements DryModeHandler {
         return false;
     }
 
-    public void loadRMDAndRMDConfig(String rmdID) {
+    public void setRmdConfigExtractor(RMDConfigExtractor rmdConfigExtractor) {
         // Nothing to implement
 
     }

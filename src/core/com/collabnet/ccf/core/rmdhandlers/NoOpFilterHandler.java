@@ -1,5 +1,7 @@
 package com.collabnet.ccf.core.rmdhandlers;
 
+import com.collabnet.ccf.core.db.RMDConfigExtractor;
+
 public class NoOpFilterHandler implements FilterHandler {
 
     public boolean containsId(String rmdID, String id) {
@@ -10,7 +12,7 @@ public class NoOpFilterHandler implements FilterHandler {
         return false;
     }
 
-    public void loadRMDAndRMDConfig(String rmdID) {
+    public void setRmdConfigExtractor(RMDConfigExtractor rmdConfigExtractor) {
         // Nothing to implement
     }
 

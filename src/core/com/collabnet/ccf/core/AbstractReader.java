@@ -37,6 +37,8 @@ import org.openadaptor.core.Component;
 import org.openadaptor.core.IDataProcessor;
 import org.openadaptor.core.exception.ValidationException;
 
+import com.collabnet.ccf.core.db.NoOpRMDConfigDBExtractor;
+import com.collabnet.ccf.core.db.RMDConfigExtractor;
 import com.collabnet.ccf.core.eis.connection.ConnectionManager;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
@@ -193,6 +195,8 @@ public abstract class AbstractReader<T> extends Component implements IDataProces
      * happen
      */
     private boolean                           isBulkImport                                            = false;
+
+    private RMDConfigExtractor                rmdConfigExtractor                                      = new NoOpRMDConfigDBExtractor();
 
     private DryModeHandler                    rmdDryModeHandler                                       = new NoOpDryModeHandler();
 
@@ -483,6 +487,10 @@ public abstract class AbstractReader<T> extends Component implements IDataProces
             }
         }
         return number;
+    }
+
+    public RMDConfigExtractor getRmdConfigExtractor() {
+        return rmdConfigExtractor;
     }
 
     public DryModeHandler getRmdDryModeHandler() {
@@ -865,9 +873,7 @@ public abstract class AbstractReader<T> extends Component implements IDataProces
             // from being synched
             moveToTail(currentRecord);
             Document syncInfo = currentRecord.getSyncInfo();
-            rmdDryModeHandler.loadRMDAndRMDConfig(repositoryMappingDirectionID);
-            rmdFilterHandler.loadRMDAndRMDConfig(repositoryMappingDirectionID);
-            rmdForceHandler.loadRMDAndRMDConfig(repositoryMappingDirectionID);
+            loadRMDConfigExtractorToRMDHandlers(repositoryMappingDirectionID);
             // RepositoryRecord movedRecord =
             // repositorySynchronizationWaitingList.remove(0);
             // repositorySynchronizationWaitingList.add(movedRecord);
@@ -1398,6 +1404,10 @@ public abstract class AbstractReader<T> extends Component implements IDataProces
         this.nameOfEntityService = nameOfEntityService;
     }
 
+    public void setRmdConfigExtractor(RMDConfigExtractor rmdConfigExtractor) {
+        this.rmdConfigExtractor = rmdConfigExtractor;
+    }
+
     public void setRmdDryModeHandler(DryModeHandler rmdDryModeHandler) {
         this.rmdDryModeHandler = rmdDryModeHandler;
     }
@@ -1784,6 +1794,13 @@ public abstract class AbstractReader<T> extends Component implements IDataProces
             return true;
         }
         return false;
+    }
+
+    private void loadRMDConfigExtractorToRMDHandlers(String rmdID) {
+        this.getRmdConfigExtractor().populateRMDAndRMDConfigValues(rmdID);
+        rmdDryModeHandler.setRmdConfigExtractor(getRmdConfigExtractor());
+        rmdFilterHandler.setRmdConfigExtractor(getRmdConfigExtractor());
+        rmdForceHandler.setRmdConfigExtractor(getRmdConfigExtractor());
     }
 
     private void modifySyncInfo(Document syncInfo, boolean isForced) {

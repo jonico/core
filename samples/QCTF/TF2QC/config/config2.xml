@@ -273,7 +273,8 @@
 		<!-- Below property -"identityMappingDatabaseReader" makes reader to read all the comments and attachment;
 			 Since CCF Sync is based on Artifact specific last modified timestamp or last modified version
 		 -->		
-		<property name="identityMappingDatabaseReader" ref="IndentityMappingDatabaseReaderTF2QC" /> 
+		<property name="identityMappingDatabaseReader" ref="IndentityMappingDatabaseReaderTF2QC" />
+		<property name="rmdConfigExtractor" ref="rmdConfigExtractor"/> 
 		<property name="rmdDryModeHandler" ref="rmdDryModeHandler"/>
 		<property name="rmdFilterHandler" ref="rmdFilterHandler"/>
 		<property name="rmdForceHandler" ref="rmdForceHandler"/>
@@ -700,7 +701,6 @@
 	</bean>
 
 	 <bean id="rmdDryModeHandler" class="com.collabnet.ccf.core.rmdhandlers.RMDDryModeHandler">
-		<property name="rmdConfigExtractor" ref="rmdConfigExtractor"/>
 		<property name="repositoryMappingDirectionConfigTableUpdater" ref="RepositoryMappingDirectionConfigDatabaseUpdaterTF2QC"></property>
 	</bean>
 
@@ -743,12 +743,9 @@
 		</property>
 	</bean>	
 	
-	<bean id="rmdFilterHandler" class="com.collabnet.ccf.core.rmdhandlers.RMDFilterHandler">
-		<property name="rmdConfigExtractor" ref="rmdConfigExtractor" />
-	</bean>
+	<bean id="rmdFilterHandler" class="com.collabnet.ccf.core.rmdhandlers.RMDFilterHandler"/>
 	
 	<bean id="rmdForceHandler" class="com.collabnet.ccf.core.rmdhandlers.RMDForceHandler">
-		<property name="rmdConfigExtractor" ref="rmdConfigExtractor" />
 		<property name="repositoryMappingDirectionConfigTableUpdater" ref="RepositoryMappingDirectionConfigDatabaseUpdaterTF2QC"/>
 	</bean>
 	
