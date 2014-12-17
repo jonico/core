@@ -1,8 +1,6 @@
 package com.collabnet.ccf.ist;
 
 import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -47,6 +45,7 @@ public class ISTReader extends AbstractReader<ISTConnection> {
     private boolean          ignoreConnectorUserUpdates = true;
 
     private ISTHandler       istHandler                 = null;
+
     private DateFormat       df                         = GenericArtifactHelper.df;
 
     private ISTConnection connect(String systemId, String systemKind,
@@ -60,21 +59,30 @@ public class ISTReader extends AbstractReader<ISTConnection> {
         ISTConnection connection = null;
         try {
             connection = getConnectionManager()
-                    .getConnectionToUpdateOrExtractArtifact(systemId,
-                            systemKind, repositoryId, repositoryKind,
-                            connectionInfo, credentialInfo);
+                    .getConnectionToUpdateOrExtractArtifact(
+                            systemId,
+                            systemKind,
+                            repositoryId,
+                            repositoryKind,
+                            connectionInfo,
+                            credentialInfo);
         } catch (MaxConnectionsReachedException e) {
             String cause = "The maximum allowed connection configuration for a Connection Pool is reached."
                     + serverUrl;
-            log.error(cause, e);
+            log.error(
+                    cause,
+                    e);
             throw new CCFRuntimeException(cause, e);
         } catch (ConnectionException e) {
             String cause = "Could not create connection to the IST system "
                     + serverUrl;
-            log.error(cause, e);
+            log.error(
+                    cause,
+                    e);
             throw new CCFRuntimeException(cause, e);
         }
 
+        // load handler - this also loads all current Custom Property List Values
         this.istHandler = new ISTHandler(connection);
 
         log.debug("     succesfully connected");
@@ -85,8 +93,59 @@ public class ISTReader extends AbstractReader<ISTConnection> {
     @Override
     public List<GenericArtifact> getArtifactAttachments(Document syncInfo,
             GenericArtifact artifactData) {
-        // TODO Auto-generated method stub
-        return new ArrayList<GenericArtifact>();
+
+        String sourceSystemId = this.getSourceSystemId(syncInfo);
+        String sourceSystemKind = this.getSourceSystemKind(syncInfo);
+        String sourceRepositoryId = this.getSourceRepositoryId(syncInfo);
+        String sourceRepositoryKind = this.getSourceRepositoryKind(syncInfo);
+        Date lastModifiedDate = this.getLastModifiedDate(syncInfo);
+        this.getArtifactLastModifiedDate(syncInfo);
+
+        ISTConnection connection = connect(
+                sourceSystemId,
+                sourceSystemKind,
+                sourceRepositoryId,
+                sourceRepositoryKind);
+
+        log.debug("Loading attachments for incident "
+                + artifactData.getSourceArtifactId() + " since "
+                + df.format(lastModifiedDate));
+
+        ISTAttachmentHandler attHandler = new ISTAttachmentHandler();
+        List<GenericArtifact> attachments = attHandler
+                .getAttachmentsForIncident(
+                        connection,
+                        lastModifiedDate,
+                        artifactData,
+                        true);
+        // last arg was `this.isShipAttachmentsWithArtifact()`, default = false. why/how/when should this be set?
+
+        // release connection to pool
+        getConnectionManager().releaseConnection(
+                connection);
+
+        for (GenericArtifact ga : attachments) {
+            populateSrcAndDestForAttachment(
+                    syncInfo,
+                    ga);
+
+            log.debug(String.format(
+                    "  attachment %s.%s, last updated on %s",
+                    ga.getDepParentSourceArtifactId(),
+                    ga.getSourceArtifactId(),
+                    ga.getSourceArtifactLastModifiedDate()));
+            try {
+                log.trace("Attachment XML\n"
+                        + GenericArtifactHelper
+                                .createGenericArtifactXMLDocument(
+                                        ga).asXML());
+            } catch (GenericArtifactParsingException e) {
+                log.warn("Could not render attachment XML: " + e.getMessage());
+            }
+
+        }
+
+        return attachments;
     }
 
     @Override
@@ -99,36 +158,47 @@ public class ISTReader extends AbstractReader<ISTConnection> {
         Date lastModifiedDate = this.getLastModifiedDate(syncInfo);
         this.getLastSourceArtifactId(syncInfo);
 
-        ISTConnection connection = connect(sourceSystemId, sourceSystemKind,
-                sourceRepositoryId, sourceRepositoryKind);
+        ISTConnection connection = connect(
+                sourceSystemId,
+                sourceSystemKind,
+                sourceRepositoryId,
+                sourceRepositoryKind);
 
         GenericArtifact ga = new GenericArtifact();
 
         try {
-            populateSrcAndDest(syncInfo, ga);
+            populateSrcAndDest(
+                    syncInfo,
+                    ga);
             ga.setSourceArtifactId(artifactId);
             ga.setArtifactMode(ArtifactModeValue.COMPLETE);
             ga.setArtifactType(ArtifactTypeValue.PLAINARTIFACT);
 
-            istHandler.retrieveIncident(Integer.valueOf(artifactId),
-                    lastModifiedDate, sourceRepositoryKind,
-                    ignoreConnectorUserUpdates, ga, sourceRepositoryId);
+            istHandler.retrieveIncident(
+                    Integer.valueOf(artifactId),
+                    lastModifiedDate,
+                    sourceRepositoryKind,
+                    ignoreConnectorUserUpdates,
+                    ga,
+                    sourceRepositoryId);
 
         } catch (Exception e) {
             String cause = "An error occurred during incident retrieval";
-            log.error(cause, e);
+            log.error(
+                    cause,
+                    e);
             throw new CCFRuntimeException(cause, e);
         }
 
         // release connection to pool
-        getConnectionManager().releaseConnection(connection);
+        getConnectionManager().releaseConnection(
+                connection);
 
         try {
             log.trace("Rendered Source Artifact XML for "
-                    + ga.getSourceArtifactId()
-                    + ":\n"
-                    + GenericArtifactHelper
-                    .createGenericArtifactXMLDocument(ga).asXML());
+                    + ga.getSourceArtifactId() + ":\n"
+                    + GenericArtifactHelper.createGenericArtifactXMLDocument(
+                            ga).asXML());
         } catch (GenericArtifactParsingException e) {
             log.warn("Tried to convert GA to XML but failed!");
         }
@@ -139,7 +209,7 @@ public class ISTReader extends AbstractReader<ISTConnection> {
     @Override
     public List<GenericArtifact> getArtifactDependencies(Document syncInfo,
             String artifactId) {
-        // TODO Auto-generated method stub
+        // TODO this is called when shipping attachments :o
         return new ArrayList<GenericArtifact>();
     }
 
@@ -154,47 +224,57 @@ public class ISTReader extends AbstractReader<ISTConnection> {
         String lastSynchedArtifactId = this.getLastSourceArtifactId(syncInfo);
         this.getSourceSystemTimezone(syncInfo);
 
-        ISTConnection connection = connect(sourceSystemId, sourceSystemKind,
-                sourceRepositoryId, sourceRepositoryKind);
-
-        // istHandler.debugAllIncidents(connection);
-
-        // testing cutoff date
-        try {
-            lastModifiedDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
-                    .parse("2014-11-28 6:26:50");
-        } catch (ParseException e) {
-            String cause = "Failed to set test date";
-            log.error(cause, e);
-            throw new CCFRuntimeException(cause, e);
-        }
+        // FIXME: lastModifed is set to the !oldest! date in the list of returned artifacts ??
 
         ArrayList<ArtifactState> artifactStates = new ArrayList<ArtifactState>();
 
-        istHandler.retrieveChangedIncidents(lastModifiedDate,
-                lastSynchronizedVersion, lastSynchedArtifactId, artifactStates);
+        boolean skipit = false;
+        if (skipit)
+            return artifactStates;
+
+        ISTConnection connection = connect(
+                sourceSystemId,
+                sourceSystemKind,
+                sourceRepositoryId,
+                sourceRepositoryKind);
+
+        log.debug("retrieving incidents changed since "
+                + df.format(lastModifiedDate));
+
+        istHandler.retrieveChangedIncidents(
+                lastModifiedDate,
+                lastSynchronizedVersion,
+                lastSynchedArtifactId,
+                artifactStates);
 
         log.debug("found " + artifactStates.size()
                 + " artifact/s changed since " + df.format(lastModifiedDate)
                 + ", last sync Version: " + lastSynchronizedVersion);
 
         if (artifactStates.size() > 0) {
-            log.debug(String.format("  %-3s  %-40s  %-15s  %-15s  %-15s", "ID",
-                    "Last Update", "Full Version", "Version", "Hash"));
+            log.debug(String.format(
+                    "  %-3s  %-40s  %-15s  %-15s  %-15s",
+                    "ID",
+                    "Last Update",
+                    "Full Version",
+                    "Version",
+                    "Hash"));
             for (ArtifactState as : artifactStates) {
                 long fullVersion = as.getArtifactVersion();
-                log.debug(String.format("  %-3s  %-40s  %-15d  %-15d  %-15d",
+                log.debug(String.format(
+                        "  %-3s  %-40s  %-15d  %-15d  %-15d",
                         as.getArtifactId(),
                         df.format(as.getArtifactLastModifiedDate()),
                         fullVersion,
-                        ISTArtifactVersionHelper.getIncrementPart(fullVersion),
+                        ISTArtifactVersionHelper.getVersionPart(fullVersion),
                         ISTArtifactVersionHelper.getHashPart(fullVersion)));
 
             }
         }
 
         // release connection to pool
-        getConnectionManager().releaseConnection(connection);
+        getConnectionManager().releaseConnection(
+                connection);
 
         // for now, do not ship stuff over.
         return artifactStates;
@@ -257,6 +337,43 @@ public class ISTReader extends AbstractReader<ISTConnection> {
         ga.setTargetSystemTimezone(targetSystemTimezone);
     }
 
+    /**
+     * Populates the source and destination attributes for this GenericArtifact
+     * Attachment object from the Sync Info database document.
+     *
+     * @param syncInfo
+     * @param ga
+     */
+    private void populateSrcAndDestForAttachment(Document syncInfo,
+            GenericArtifact ga) {
+
+        String sourceRepositoryId = this.getSourceRepositoryId(syncInfo);
+        String sourceRepositoryKind = this.getSourceRepositoryKind(syncInfo);
+        String sourceSystemId = this.getSourceSystemId(syncInfo);
+        String sourceSystemKind = this.getSourceSystemKind(syncInfo);
+
+        String targetRepositoryId = this.getTargetRepositoryId(syncInfo);
+        String targetRepositoryKind = this.getTargetRepositoryKind(syncInfo);
+        String targetSystemId = this.getTargetSystemId(syncInfo);
+        String targetSystemKind = this.getTargetSystemKind(syncInfo);
+
+        ga.setSourceRepositoryId(sourceRepositoryId);
+        ga.setSourceRepositoryKind(sourceRepositoryKind);
+        ga.setSourceSystemId(sourceSystemId);
+        ga.setSourceSystemKind(sourceSystemKind);
+
+        ga.setDepParentSourceRepositoryId(sourceRepositoryId);
+        ga.setDepParentSourceRepositoryKind(sourceRepositoryKind);
+
+        ga.setTargetRepositoryId(targetRepositoryId);
+        ga.setTargetRepositoryKind(targetRepositoryKind);
+        ga.setTargetSystemId(targetSystemId);
+        ga.setTargetSystemKind(targetSystemKind);
+
+        ga.setDepParentTargetRepositoryId(targetRepositoryId);
+        ga.setDepParentTargetRepositoryKind(targetRepositoryKind);
+    }
+
     public void setIgnoreConnectorUserUpdates(boolean ignoreConnectorUserUpdates) {
         this.ignoreConnectorUserUpdates = ignoreConnectorUserUpdates;
     }
@@ -284,12 +401,21 @@ public class ISTReader extends AbstractReader<ISTConnection> {
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public void validate(List exceptions) {
         super.validate(exceptions);
-        validateNotNull(this.getPassword(), "SpiraTest password not set", this,
+        validateNotNull(
+                this.getPassword(),
+                "SpiraTest password not set",
+                this,
                 exceptions);
-        validateNotNull(this.getUsername(), "SpiraTest username not set", this,
+        validateNotNull(
+                this.getUsername(),
+                "SpiraTest username not set",
+                this,
                 exceptions);
-        validateNotNull(this.getServerUrl(), "SpiraTest Server URL not set",
-                this, exceptions);
+        validateNotNull(
+                this.getServerUrl(),
+                "SpiraTest Server URL not set",
+                this,
+                exceptions);
 
         log.info("===========================================================");
         log.info("started SpiraTest Reader " + ISTVersion.getVersion());

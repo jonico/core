@@ -84,7 +84,9 @@ public class ISTConnection {
             try {
                 soap.connectionDisconnect();
             } catch (IImportExportConnectionDisconnectServiceFaultMessageFaultFaultMessage e) {
-                log.error("Could not disconnect!", e);
+                log.error(
+                        "Could not disconnect!",
+                        e);
             }
 
         }
@@ -98,21 +100,30 @@ public class ISTConnection {
         //Make sure that session is maintained
         Map<String, Object> requestContext = ((BindingProvider) soap)
                 .getRequestContext();
-        requestContext.put(BindingProvider.SESSION_MAINTAIN_PROPERTY, true);
-        log.debug("Connecting to IST project #" + projectId + "  as "
-                + username);
+        requestContext.put(
+                BindingProvider.SESSION_MAINTAIN_PROPERTY,
+                true);
+        log.debug("Connecting to IST project #" + projectId + " as " + username);
+
         try {
-            if (!soap.connectionAuthenticate(username, password)) {
+            if (!soap.connectionAuthenticate(
+                    username,
+                    password)) {
                 log.error("Authentication failed, please verify credentials");
             }
             if (!soap.connectionConnectToProject(projectId)) {
                 log.error("Project Connection failed");
             }
+
         } catch (IImportExportConnectionAuthenticateServiceFaultMessageFaultFaultMessage e) {
-            log.error("Could not authenticate user " + username
-                    + ", please verify credentials", e);
+            log.error(
+                    "Could not authenticate user " + username
+                            + ", please verify credentials",
+                    e);
         } catch (IImportExportConnectionConnectToProjectServiceFaultMessageFaultFaultMessage e) {
-            log.error("Could not open project ID (" + projectId + ")", e);
+            log.error(
+                    "Could not open project ID (" + projectId + ")",
+                    e);
         }
 
         log.info("Connection (v" + ISTVersion.getVersion() + ") to "
@@ -137,7 +148,9 @@ public class ISTConnection {
                 soap.userRetrieveByUserName(username);
                 return true;
             } catch (IImportExportUserRetrieveByUserNameServiceFaultMessageFaultFaultMessage e) {
-                log.debug("failed to get user info for " + username, e);
+                log.debug(
+                        "failed to get user info for " + username,
+                        e);
                 return false;
             }
         }

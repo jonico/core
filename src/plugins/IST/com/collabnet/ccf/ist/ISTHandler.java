@@ -23,7 +23,6 @@ import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactField.FieldActionValue;
 import com.collabnet.ccf.core.ga.GenericArtifactField.FieldValueTypeValue;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
-import com.collabnet.ccf.core.utils.JerichoUtils;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.ArrayOfRemoteArtifactCustomProperty;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.ArrayOfRemoteComment;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.ArrayOfRemoteDocument;
@@ -62,10 +61,15 @@ public class ISTHandler {
         sort.setSortAscending(false);
 
         try {
-            return connection.getService().incidentRetrieve(filters, sort, 0,
+            return connection.getService().incidentRetrieve(
+                    filters,
+                    sort,
+                    0,
                     Integer.MAX_VALUE);
         } catch (IImportExportIncidentRetrieveServiceFaultMessageFaultFaultMessage e) {
-            log.error("Failed to retrieve indicents!", e);
+            log.error(
+                    "Failed to retrieve indicents!",
+                    e);
         }
 
         return null;
@@ -91,16 +95,18 @@ public class ISTHandler {
         XMLGregorianCalendar xmlCalendar = null;
         try {
             xmlCalendar = DatatypeFactory.newInstance()
-                    .newXMLGregorianCalendar(gCalendar);
+                    .newXMLGregorianCalendar(
+                            gCalendar);
         } catch (DatatypeConfigurationException ex) {
             log.error(
                     "Failed to convert Date to XML Gregorian: "
-                            + date.toString(), ex);
+                            + date.toString(),
+                            ex);
         }
         return xmlCalendar;
     }
 
-    private static DateFormat          df            = GenericArtifactHelper.df;
+    private static final DateFormat    df            = GenericArtifactHelper.df;
 
     private ISTConnection              connection    = null;
 
@@ -109,30 +115,64 @@ public class ISTHandler {
 
     private static final ObjectFactory objectFactory = new ObjectFactory();
 
+    private ISTMetaData                metaHelper    = null;
+
+    private ISTArtifactVersionHelper   vHelper       = null;
+
+    private ArrayOfRemoteFilter        nofilters     = objectFactory
+                                                             .createArrayOfRemoteFilter();
+
+    private RemoteSort                 dateSort      = objectFactory
+                                                             .createRemoteSort();
+
+    private RemoteSort                 noSort        = objectFactory
+                                                             .createRemoteSort();
+
     public ISTHandler(ISTConnection conn) {
         this.connection = conn;
+        this.metaHelper = new ISTMetaData(conn);
+        this.vHelper = new ISTArtifactVersionHelper(this.metaHelper);
+        // Query Helpers
+        dateSort.setPropertyName(objectFactory
+                .createRemoteFilterPropertyName("LastUpdateDate"));
+        dateSort.setSortAscending(false);
+
     }
 
     private void addGAField(GenericArtifact ga, String label, Object value,
             FieldValueTypeValue fieldValueType) {
-        addGAField(ga, label, value, fieldValueType,
+        addGAField(
+                ga,
+                label,
+                value,
+                fieldValueType,
                 GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD);
     }
 
     private void addGAField(GenericArtifact ga, String label, Object value,
             FieldValueTypeValue fieldValueType, boolean isMandatory) {
         if (isMandatory) {
-            addGAField(ga, label, value, fieldValueType,
+            addGAField(
+                    ga,
+                    label,
+                    value,
+                    fieldValueType,
                     GenericArtifactField.VALUE_FIELD_TYPE_MANDATORY_FIELD);
         } else {
-            addGAField(ga, label, value, fieldValueType,
+            addGAField(
+                    ga,
+                    label,
+                    value,
+                    fieldValueType,
                     GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
         }
     }
 
     private void addGAField(GenericArtifact ga, String label, Object value,
             FieldValueTypeValue fieldValueType, String valueFieldType) {
-        GenericArtifactField gaf = ga.addNewField(label, valueFieldType);
+        GenericArtifactField gaf = ga.addNewField(
+                label,
+                valueFieldType);
         gaf.setFieldValueType(fieldValueType);
         gaf.setFieldAction(FieldActionValue.REPLACE);
         gaf.setFieldValue(value);
@@ -146,45 +186,86 @@ public class ISTHandler {
                     + " incidents");
             if (log.isTraceEnabled()
                     && allIncidents.getRemoteIncident().size() > 0) {
-                log.trace(String.format("  ID   %-23s  %-30s", "Last Update",
+                log.trace(String.format(
+                        "  ID   %-23s  %-30s",
+                        "Last Update",
                         "Name"));
                 for (RemoteIncident in : allIncidents.getRemoteIncident()) {
                     //                log.debug(in.getIncidentId().getValue() + "  "
                     //                        + in.getLastUpdateDate().toString() + " - "
                     //                        + in.getName().getValue());
-                    log.trace(String.format("  %3d  %-23s  %-30s", in
-                            .getIncidentId().getValue(), df
-                            .format(getRealLastUpdated(in)), in.getName()
-                            .getValue()));
+                    log.trace(String.format(
+                            "  %3d  %-23s  %-30s",
+                            in.getIncidentId().getValue(),
+                            df.format(getRealLastUpdated(in)),
+                            in.getName().getValue()));
                 }
             }
         }
     }
 
-    private void fetchComments(GenericArtifact ga, RemoteIncident ri,
+    /**
+     * Feeds all comment of ri since lastModifiedDate into ga Also returns a
+     * concatenation of all comments
+     *
+     * @param ga
+     * @param ri
+     * @param lastModifiedDate
+     * @return String
+     */
+    private String fetchComments(GenericArtifact ga, RemoteIncident ri,
             Date lastModifiedDate) {
-        // get comments
+
         ArrayOfRemoteComment comments = null;
         try {
             comments = connection.getService().incidentRetrieveComments(
                     ri.getIncidentId().getValue());
         } catch (IImportExportIncidentRetrieveCommentsServiceFaultMessageFaultFaultMessage e) {
-            log.error("Failed to retrieve comments for incident #"
-                    + ri.getIncidentId().getValue(), e);
+            log.error(
+                    "Failed to retrieve comments for incident #"
+                            + ri.getIncidentId().getValue(),
+                            e);
         }
 
         for (RemoteComment c : comments.getRemoteComment()) {
             Date creationDate = toDate(c.getCreationDate().getValue());
             String comment = c.getText().getValue();
-            comment = comment.length() > 20 ? comment.substring(0, 20)
-                    + "(...)" : comment;
+            comment = comment.length() > 20 ? comment.substring(
+                    0,
+                    20) + "(...)" : comment;
 
+            // TODO use a HasMap to order comments correctly by Date
             log.debug("      " + df.format(creationDate) + "  C: " + comment);
             if (creationDate.after(lastModifiedDate)) {
-                addGAField(ga, "comments", c.getText().getValue(),
+                addGAField(
+                        ga,
+                        "comments",
+                        c.getText().getValue(),
                         FieldValueTypeValue.HTMLSTRING);
             }
         }
+
+        return vHelper.generateCommentsDump(comments);
+
+    }
+
+    private String fetchCustoms(GenericArtifact ga, RemoteIncident ri) {
+        ArrayOfRemoteArtifactCustomProperty properties = ri
+                .getCustomProperties().getValue();
+
+        for (RemoteArtifactCustomProperty prop : properties
+                .getRemoteArtifactCustomProperty()) {
+            String name = metaHelper.getName(prop);
+            String value = metaHelper.getValue(prop);
+            addGAField(
+                    ga,
+                    name,
+                    value,
+                    FieldValueTypeValue.STRING,
+                    false);
+        }
+
+        return vHelper.generateCustomsDump(properties);
 
     }
 
@@ -209,161 +290,248 @@ public class ISTHandler {
 
         // type ID
         int riTypeId = ri.getArtifactTypeId();
-        addGAField(ga, "artifactTypeId", String.valueOf(riTypeId),
+        addGAField(
+                ga,
+                "artifactTypeId",
+                String.valueOf(riTypeId),
                 FieldValueTypeValue.STRING);
 
         // Closed Date
-        addGAField(ga, "closedDate", toDate(ri.getClosedDate().getValue()),
+        addGAField(
+                ga,
+                "closedDate",
+                toDate(ri.getClosedDate().getValue()),
                 FieldValueTypeValue.DATETIME);
 
         // CompletionPercent
-        addGAField(ga, "completionPercent",
+        addGAField(
+                ga,
+                "completionPercent",
                 String.valueOf(ri.getCompletionPercent()),
                 FieldValueTypeValue.STRING);
 
         // ConcurrencyDate
-        addGAField(ga, "concurrencyDate", toDate(ri.getConcurrencyDate()),
+        addGAField(
+                ga,
+                "concurrencyDate",
+                toDate(ri.getConcurrencyDate()),
                 FieldValueTypeValue.DATETIME);
 
         // getCreationDate
-        addGAField(ga, "creationDate", toDate(ri.getCreationDate().getValue()),
+        addGAField(
+                ga,
+                "creationDate",
+                toDate(ri.getCreationDate().getValue()),
                 FieldValueTypeValue.DATETIME);
 
         // Description
-        addGAField(ga, "description", ri.getDescription().getValue(),
+        addGAField(
+                ga,
+                "description",
+                ri.getDescription().getValue(),
                 FieldValueTypeValue.HTMLSTRING);
 
         // DetectedReleaseId
-        addGAField(ga, "detectedReleaseId", ri.getDetectedReleaseId()
-                .getValue(), FieldValueTypeValue.STRING);
+        addGAField(
+                ga,
+                "detectedReleaseId",
+                ri.getDetectedReleaseId().getValue(),
+                FieldValueTypeValue.STRING);
 
         // DetectedReleaseVersionNumber
-        addGAField(ga, "detectedReleaseVersionNumber", ri
-                .getDetectedReleaseVersionNumber().getValue(),
+        addGAField(
+                ga,
+                "detectedReleaseVersionNumber",
+                ri.getDetectedReleaseVersionNumber().getValue(),
                 FieldValueTypeValue.STRING);
 
         // EstimatedEffort
-        addGAField(ga, "estimatedEffort", ri.getEstimatedEffort().getValue(),
+        addGAField(
+                ga,
+                "estimatedEffort",
+                ri.getEstimatedEffort().getValue(),
                 FieldValueTypeValue.INTEGER);
 
         // FixedBuildId
-        addGAField(ga, "fixedBuildId",
+        addGAField(
+                ga,
+                "fixedBuildId",
                 String.valueOf(ri.getFixedBuildId().getValue()),
                 FieldValueTypeValue.STRING);
 
         // FixedBuildName
-        addGAField(ga, "fixedBuildName",
+        addGAField(
+                ga,
+                "fixedBuildName",
                 String.valueOf(ri.getFixedBuildName().getValue()),
                 FieldValueTypeValue.STRING);
 
         // IncidentId
-        addGAField(ga, "incidentId",
+        addGAField(
+                ga,
+                "incidentId",
                 String.valueOf(ri.getIncidentId().getValue()),
                 FieldValueTypeValue.STRING);
 
         // IncidentStatusId
-        addGAField(ga, "incidentStatusId",
+        addGAField(
+                ga,
+                "incidentStatusId",
                 String.valueOf(ri.getIncidentStatusId().getValue()),
                 FieldValueTypeValue.STRING);
 
         // IncidentStatusName
-        addGAField(ga, "incidentStatusName", ri.getIncidentStatusName()
-                .getValue(), FieldValueTypeValue.STRING);
+        addGAField(
+                ga,
+                "incidentStatusName",
+                ri.getIncidentStatusName().getValue(),
+                FieldValueTypeValue.STRING);
 
         // IncidentStatusOpenStatus
-        addGAField(ga, "incidentStatusOpenStatus",
+        addGAField(
+                ga,
+                "incidentStatusOpenStatus",
                 String.valueOf(ri.getIncidentStatusOpenStatus().getValue()),
                 FieldValueTypeValue.STRING);
 
         // IncidentTypeId
-        addGAField(ga, "incidentTypeId",
+        addGAField(
+                ga,
+                "incidentTypeId",
                 String.valueOf(ri.getIncidentTypeId().getValue()),
                 FieldValueTypeValue.STRING);
 
         // IncidentTypeName
-        addGAField(ga, "incidentTypeName", ri.getIncidentTypeName().getValue(),
+        addGAField(
+                ga,
+                "incidentTypeName",
+                ri.getIncidentTypeName().getValue(),
                 FieldValueTypeValue.STRING);
 
         // Name
-        addGAField(ga, "name", ri.getName().getValue(),
+        addGAField(
+                ga,
+                "name",
+                ri.getName().getValue(),
                 FieldValueTypeValue.STRING);
 
         // OpenerId
-        addGAField(ga, "openerId", String.valueOf(ri.getOpenerId().getValue()),
+        addGAField(
+                ga,
+                "openerId",
+                String.valueOf(ri.getOpenerId().getValue()),
                 FieldValueTypeValue.STRING);
 
         // OpenerName
-        addGAField(ga, "openerName", ri.getOpenerName().getValue(),
+        addGAField(
+                ga,
+                "openerName",
+                ri.getOpenerName().getValue(),
                 FieldValueTypeValue.STRING);
 
         // OwnerId
-        addGAField(ga, "ownerId", String.valueOf(ri.getOwnerId().getValue()),
+        addGAField(
+                ga,
+                "ownerId",
+                String.valueOf(ri.getOwnerId().getValue()),
                 FieldValueTypeValue.STRING);
 
         // PriorityId
-        addGAField(ga, "priorityId",
+        addGAField(
+                ga,
+                "priorityId",
                 String.valueOf(ri.getPriorityId().getValue()),
                 FieldValueTypeValue.STRING);
 
         // PriorityName
-        addGAField(ga, "priorityName", ri.getPriorityName().getValue(),
+        addGAField(
+                ga,
+                "priorityName",
+                ri.getPriorityName().getValue(),
                 FieldValueTypeValue.STRING);
 
         // ProjectedEffort
-        addGAField(ga, "projectedEffort",
+        addGAField(
+                ga,
+                "projectedEffort",
                 String.valueOf(ri.getProjectedEffort().getValue()),
                 FieldValueTypeValue.STRING);
 
         // ProjectId
-        addGAField(ga, "projectId",
+        addGAField(
+                ga,
+                "projectId",
                 String.valueOf(ri.getProjectId().getValue()),
                 FieldValueTypeValue.STRING);
 
         // ProjectName
-        addGAField(ga, "projectName", ri.getProjectName().getValue(),
+        addGAField(
+                ga,
+                "projectName",
+                ri.getProjectName().getValue(),
                 FieldValueTypeValue.STRING);
 
         // RemainingEffort
-        addGAField(ga, "remainingEffort",
+        addGAField(
+                ga,
+                "remainingEffort",
                 String.valueOf(ri.getRemainingEffort().getValue()),
                 FieldValueTypeValue.STRING);
 
         // ResolvedReleaseId
-        addGAField(ga, "resolvedReleaseId",
+        addGAField(
+                ga,
+                "resolvedReleaseId",
                 String.valueOf(ri.getResolvedReleaseId().getValue()),
                 FieldValueTypeValue.STRING);
 
         // ResolvedReleaseVersionNumber
-        addGAField(ga, "resolvedReleaseVersionNumber", ri
-                .getResolvedReleaseVersionNumber().getValue(),
+        addGAField(
+                ga,
+                "resolvedReleaseVersionNumber",
+                ri.getResolvedReleaseVersionNumber().getValue(),
                 FieldValueTypeValue.STRING);
 
         // SeverityId
-        addGAField(ga, "severityId",
+        addGAField(
+                ga,
+                "severityId",
                 String.valueOf(ri.getSeverityId().getValue()),
                 FieldValueTypeValue.STRING);
 
         // SeverityName
-        addGAField(ga, "severityName", ri.getSeverityName().getValue(),
+        addGAField(
+                ga,
+                "severityName",
+                ri.getSeverityName().getValue(),
                 FieldValueTypeValue.STRING);
 
         // StartDate
-        addGAField(ga, "startDate", toDate(ri.getStartDate().getValue()),
+        addGAField(
+                ga,
+                "startDate",
+                toDate(ri.getStartDate().getValue()),
                 FieldValueTypeValue.DATETIME);
 
         // TestRunStepId
-        addGAField(ga, "testRunStepId",
+        addGAField(
+                ga,
+                "testRunStepId",
                 String.valueOf(ri.getTestRunStepId().getValue()),
                 FieldValueTypeValue.STRING);
 
         // VerifiedReleaseId
-        addGAField(ga, "verifiedReleaseId",
+        addGAField(
+                ga,
+                "verifiedReleaseId",
                 String.valueOf(ri.getVerifiedReleaseId().getValue()),
                 FieldValueTypeValue.STRING);
 
         // VerifiedReleaseVersionNumber
-        addGAField(ga, "verifiedReleaseVersionNumber", ri
-                .getVerifiedReleaseVersionNumber().getValue(),
+        addGAField(
+                ga,
+                "verifiedReleaseVersionNumber",
+                ri.getVerifiedReleaseVersionNumber().getValue(),
                 FieldValueTypeValue.STRING);
 
     }
@@ -379,10 +547,14 @@ public class ISTHandler {
         try {
             documents = connection.getService().documentRetrieveForArtifact(
                     incident.getArtifactTypeId(),
-                    incident.getIncidentId().getValue(), filters, sort);
+                    incident.getIncidentId().getValue(),
+                    filters,
+                    sort);
         } catch (IImportExportDocumentRetrieveForArtifactServiceFaultMessageFaultFaultMessage e) {
-            log.error("Failed to retrieve documents for incident #"
-                    + incident.getIncidentId().getValue(), e);
+            log.error(
+                    "Failed to retrieve documents for incident #"
+                            + incident.getIncidentId().getValue(),
+                            e);
         }
 
         for (RemoteDocument d : documents.getRemoteDocument()) {
@@ -398,8 +570,10 @@ public class ISTHandler {
             comments = connection.getService().incidentRetrieveComments(
                     incident.getIncidentId().getValue());
         } catch (IImportExportIncidentRetrieveCommentsServiceFaultMessageFaultFaultMessage e) {
-            log.error("Failed to retrieve comments for incident #"
-                    + incident.getIncidentId().getValue(), e);
+            log.error(
+                    "Failed to retrieve comments for incident #"
+                            + incident.getIncidentId().getValue(),
+                            e);
         }
 
         for (RemoteComment c : comments.getRemoteComment()) {
@@ -422,6 +596,23 @@ public class ISTHandler {
         return ret;
     }
 
+    private boolean isUntouchedSinceLastVisit(String gaVersion,
+            RemoteIncident ri, String commentsDump, String documentsDump,
+            String customsDump) {
+
+        long actualVersion = ISTArtifactVersionHelper.generateHash(
+                ri,
+                commentsDump,
+                documentsDump,
+                customsDump);
+
+        int gaHash = ISTArtifactVersionHelper.getHashPart(Long
+                .valueOf(gaVersion));
+        int currenHash = ISTArtifactVersionHelper.getHashPart(actualVersion);
+
+        return gaHash == currenHash;
+    }
+
     public void retrieveChangedIncidents(final Date lastModifiedDate,
             String lastSynchronizedVersion, String lastSynchedArtifactId,
             ArrayList<ArtifactState> artifactStates) {
@@ -429,20 +620,16 @@ public class ISTHandler {
         ArrayOfRemoteIncident allincidents = null;
         objectFactory.createArrayOfRemoteIncident();
 
-        // Query Helpers
-        ArrayOfRemoteFilter filters = objectFactory.createArrayOfRemoteFilter();
-        RemoteSort sort = objectFactory.createRemoteSort();
-        sort.setPropertyName(objectFactory
-                .createRemoteFilterPropertyName("LastUpdateDate"));
-        sort.setSortAscending(false);
-
-        RemoteSort docSort = objectFactory.createRemoteSort();
-
         try {
-            allincidents = connection.getService().incidentRetrieve(filters,
-                    sort, 0, Integer.MAX_VALUE);
+            allincidents = connection.getService().incidentRetrieve(
+                    this.nofilters,
+                    this.dateSort,
+                    0,
+                    Integer.MAX_VALUE);
         } catch (IImportExportIncidentRetrieveServiceFaultMessageFaultFaultMessage e) {
-            log.error("Failed to retrieve indicents!", e);
+            log.error(
+                    "Failed to retrieve indicents!",
+                    e);
         }
 
         Long.valueOf(lastSynchronizedVersion);
@@ -454,97 +641,125 @@ public class ISTHandler {
             xs.setArtifactId(String.valueOf(inc.getIncidentId().getValue()));
             Date lastUpdated = toDate(inc.getLastUpdateDate());
 
-            // get attachments intel
-            String documentsStamp = "";
             ArrayOfRemoteDocument documents = null;
-            try {
-                documents = connection.getService()
-                        .documentRetrieveForArtifact(inc.getArtifactTypeId(),
-                                inc.getIncidentId().getValue(), filters,
-                                docSort);
-            } catch (IImportExportDocumentRetrieveForArtifactServiceFaultMessageFaultFaultMessage e) {
-                log.error("Failed to retrieve documents for incident #"
-                        + inc.getIncidentId().getValue(), e);
-            }
+            documents = retrieveDocuments(inc);
 
+            String attachmentsDump = vHelper.generateAttachmentsDump(documents);
             for (RemoteDocument d : documents.getRemoteDocument()) {
                 Date uploadDate = toDate(d.getUploadDate());
                 lastUpdated = uploadDate.after(lastUpdated) ? uploadDate
                         : lastUpdated;
-                documentsStamp += d.getFilenameOrUrl().getValue()
-                        + df.format(uploadDate);
             }
 
-            // get comments intel
-            String commentsStamp = "";
             ArrayOfRemoteComment comments = null;
             try {
                 comments = connection.getService().incidentRetrieveComments(
                         inc.getIncidentId().getValue());
             } catch (IImportExportIncidentRetrieveCommentsServiceFaultMessageFaultFaultMessage e) {
-                log.error("Failed to retrieve comments for incident #"
-                        + inc.getIncidentId().getValue(), e);
+                log.error(
+                        "Failed to retrieve comments for incident #"
+                                + inc.getIncidentId().getValue(),
+                                e);
             }
 
-            for (RemoteComment c : comments.getRemoteComment()) {
-                Date creationDate = toDate(c.getCreationDate().getValue());
-                lastUpdated = creationDate.after(lastUpdated) ? creationDate
-                        : lastUpdated;
-                commentsStamp += JerichoUtils
-                        .htmlToText(c.getText().getValue());
-            }
+            String commentsDump = vHelper.generateCommentsDump(comments);
 
             ArrayOfRemoteArtifactCustomProperty properties = null;
             properties = inc.getCustomProperties().getValue();
 
             if (properties.getRemoteArtifactCustomProperty().size() > 0) {
-                log.debug("  ==> Custom Propeties for ID #"
+                log.trace("  ==> Custom Properties for ID #"
                         + inc.getIncidentId().getValue());
-                log.debug(String.format("      %-30s  %-15s  %-15s  %-15s",
-                        "Field Name", "System Type", "Field Type", "Value"));
+                log.trace(String.format(
+                        "      %-30s  %-15s  %-15s  %-15s",
+                        "Field Name",
+                        "System Type",
+                        "Field Type",
+                        "Value"));
             }
             for (RemoteArtifactCustomProperty aprop : properties
                     .getRemoteArtifactCustomProperty()) {
-                RemoteCustomProperty prop = aprop.getDefinition().getValue();
-                String fieldType = prop.getCustomPropertyTypeName().getValue();
-                String systemType = prop.getSystemDataType().getValue();
-                String fieldName = prop.getName().getValue();
-                String value = ISTMetaData.getValue(aprop);
-                log.debug(String.format("      %-30s  %-15s  %-15s  %-15s",
-                        fieldName, systemType, fieldType, value));
+                RemoteCustomProperty propDef = aprop.getDefinition().getValue();
+                String fieldType = propDef.getCustomPropertyTypeName()
+                        .getValue();
+                String systemType = propDef.getSystemDataType().getValue();
+                String fieldName = metaHelper.getName(aprop);
+                String value = metaHelper.getValue(aprop);
+                log.trace(String.format(
+                        "      %-30s  %-15s  %-15s  %-15s",
+                        fieldName,
+                        systemType,
+                        fieldType,
+                        value));
             }
 
+            String customsDump = vHelper.generateCustomsDump(properties);
+
             xs.setArtifactLastModifiedDate(lastUpdated);
-            long hashedVersionPart = ISTArtifactVersionHelper
-                    .generateFullVersion(connection, objectFactory, inc,
-                            commentsStamp, documentsStamp);
-            ISTArtifactVersionHelper.incrementVersion(ISTArtifactVersionHelper
-                    .getFullVersion(101, (int) hashedVersionPart));
-            xs.setArtifactVersion(hashedVersionPart);
+
+            int riHash = ISTArtifactVersionHelper.generateHash(
+                    inc,
+                    commentsDump,
+                    attachmentsDump,
+                    customsDump);
+
+            int lastVersion = ISTArtifactVersionHelper.getVersionPart(Long
+                    .valueOf(lastSynchronizedVersion));
+
+            long fullVersion = ISTArtifactVersionHelper.getFullVersion(
+                    lastVersion,
+                    riHash);
+
+            fullVersion = ISTArtifactVersionHelper
+                    .getIncrementedVersion(fullVersion);
+
+            xs.setArtifactVersion(fullVersion);
             artifactStates.add(xs);
         }
 
         // update sort order
-        Collections.sort(artifactStates, new ArtifactStateComparator());
+        Collections.sort(
+                artifactStates,
+                new ArtifactStateComparator());
 
         int totalLength = artifactStates.size();
 
         // remove items before Last Modified Date
-        CollectionUtils.filter(artifactStates, new Predicate() {
+        CollectionUtils.filter(
+                artifactStates,
+                new Predicate() {
 
-            @Override
-            public boolean evaluate(Object o) {
-                return ((Date) ((ArtifactState) o)
-                        .getArtifactLastModifiedDate()).after(lastModifiedDate);
-            }
-
-        });
+                    @Override
+                    public boolean evaluate(Object o) {
+                        return ((Date) ((ArtifactState) o)
+                                .getArtifactLastModifiedDate())
+                                .after(lastModifiedDate);
+                    }
+                });
 
         int filterLength = artifactStates.size();
 
         log.debug("Filtered " + filterLength + " artifacts out of "
                 + totalLength);
 
+    }
+
+    private ArrayOfRemoteDocument retrieveDocuments(RemoteIncident inc) {
+        try {
+            ArrayOfRemoteDocument documents = connection.getService()
+                    .documentRetrieveForArtifact(
+                            inc.getArtifactTypeId(),
+                            inc.getIncidentId().getValue(),
+                            nofilters,
+                            noSort);
+            return documents;
+        } catch (IImportExportDocumentRetrieveForArtifactServiceFaultMessageFaultFaultMessage e) {
+            log.error(
+                    "Failed to retrieve documents for incident #"
+                            + inc.getIncidentId().getValue(),
+                            e);
+        }
+        return null;
     }
 
     public void retrieveIncident(int incidentId, Date lastModifiedDate,
@@ -556,35 +771,50 @@ public class ISTHandler {
                     incidentId);
             Date riCreationDate = toDate(ri.getCreationDate().getValue());
 
-            String riOpener = ri.getOpenerName().getValue();
+            ri.getOpenerName().getValue();
             ri.getOwnerName().getValue();
 
             boolean isResync = false;
             boolean isIgnore = false;
 
-            if (riOpener.equalsIgnoreCase(username)
-                    && ignoreConnectorUserUpdates) {
+            fetchMandatoryData(
+                    ga,
+                    ri);
+
+            String commentsDump = fetchComments(
+                    ga,
+                    ri,
+                    lastModifiedDate);
+
+            String customsDump = fetchCustoms(
+                    ga,
+                    ri);
+
+            String attachmentsDump = vHelper
+                    .generateAttachmentsDump(retrieveDocuments(ri));
+
+            // FIXME - use version fingerprint check
+            if (isUntouchedSinceLastVisit(
+                    ga.getSourceArtifactVersion(),
+                    ri,
+                    commentsDump,
+                    attachmentsDump,
+                    customsDump)) {
                 if (riCreationDate.after(lastModifiedDate)) {
                     log.info(String
-                            .format("resync is necessary, despite the artifact #%d last being updated by the connector user",
+                            .format(
+                                    "resync is necessary, despite the artifact #%d last being updated by the connector user",
                                     incidentId));
                     isResync = true;
                 } else {
-                    log.debug(String
-                            .format("artifact %d updated by connector user, ignoring it.",
-                                    incidentId));
+                    log.debug(String.format(
+                            "artifact %d updated by CCF, ignoring it.",
+                            incidentId));
                     isIgnore = true;
                 }
             }
 
-            fetchMandatoryData(ga, ri);
-
-            fetchComments(ga, ri, lastModifiedDate);
-
             // TODO check dependencies / parents
-
-            // TODO Components
-            // TODO Detected By
 
             if (isIgnore) {
                 ga.setArtifactAction(GenericArtifact.ArtifactActionValue.IGNORE);
@@ -597,10 +827,11 @@ public class ISTHandler {
         } catch (IImportExportIncidentRetrieveByIdServiceFaultMessageFaultFaultMessage e) {
             String cause = "Could not retrieve Incident #" + incidentId
                     + " as user " + username;
-            log.error(cause, e);
+            log.error(
+                    cause,
+                    e);
             throw new CCFRuntimeException(cause, e);
         }
 
     }
-
 }

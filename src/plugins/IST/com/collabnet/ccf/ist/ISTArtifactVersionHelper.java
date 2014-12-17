@@ -1,13 +1,21 @@
 package com.collabnet.ccf.ist;
 
 import java.io.UnsupportedEncodingException;
+import java.text.DateFormat;
 import java.util.zip.CRC32;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.collabnet.ccf.core.CCFRuntimeException;
+import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.utils.JerichoUtils;
-import com.inflectra.spirateam.mylyn.core.internal.services.soap.ObjectFactory;
+import com.inflectra.spirateam.mylyn.core.internal.services.soap.ArrayOfRemoteArtifactCustomProperty;
+import com.inflectra.spirateam.mylyn.core.internal.services.soap.ArrayOfRemoteComment;
+import com.inflectra.spirateam.mylyn.core.internal.services.soap.ArrayOfRemoteDocument;
+import com.inflectra.spirateam.mylyn.core.internal.services.soap.RemoteArtifactCustomProperty;
+import com.inflectra.spirateam.mylyn.core.internal.services.soap.RemoteComment;
+import com.inflectra.spirateam.mylyn.core.internal.services.soap.RemoteDocument;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.RemoteIncident;
 
 /**
@@ -18,34 +26,22 @@ import com.inflectra.spirateam.mylyn.core.internal.services.soap.RemoteIncident;
  */
 public class ISTArtifactVersionHelper {
 
-    /**
-     * returns a good enough unique integer identifier for the RemoteIncident.
-     * It is based on all mandatory incident fields, all comment texts and all
-     * attached file
-     *
-     * @param inc
-     * @return
-     */
-    public static final long generateFullVersion(ISTConnection connection,
-            ObjectFactory objectFactory, RemoteIncident ri,
-            String commentsStamp, String documentsStamp) {
+    public static final int generateHash(RemoteIncident ri,
+            String commentsDump, String documentsDump, String customsDump) {
         String fullString = "";
         //        String hashInfo = "empty";
-        long theVersion = 0;
+        int theVersion = 0;
         long theDigest = 0;
 
         // serialize all known internal fields, but excluding the last updated info!
 
-        // TODO use CCF DateFormatter for all date values
-
         fullString += String.valueOf(ri.getArtifactTypeId());
-        fullString += String.valueOf(ISTHandler.toDate(ri.getClosedDate()
-                .getValue()));
+        fullString += ri.getClosedDate().isNil() ? "unset" : df
+                .format(ISTHandler.toDate(ri.getClosedDate().getValue()));
         fullString += String.valueOf(ri.getCompletionPercent());
-        fullString += String
-                .valueOf(ISTHandler.toDate(ri.getConcurrencyDate()));
-        fullString += String.valueOf(ISTHandler.toDate(ri.getCreationDate()
-                .getValue()));
+        fullString += df.format(ISTHandler.toDate(ri.getConcurrencyDate()));
+        fullString += ri.getCreationDate().isNil() ? "unset" : df
+                .format(ISTHandler.toDate(ri.getCreationDate().getValue()));
         fullString += JerichoUtils.htmlToText(ri.getDescription().getValue());
         fullString += String.valueOf(ri.getDetectedReleaseId().getValue());
         fullString += ri.getDetectedReleaseVersionNumber().getValue();
@@ -73,32 +69,33 @@ public class ISTArtifactVersionHelper {
         fullString += ri.getResolvedReleaseVersionNumber().getValue();
         fullString += String.valueOf(ri.getSeverityId().getValue());
         fullString += ri.getSeverityName().getValue();
-        fullString += String.valueOf(ISTHandler.toDate(ri.getStartDate()
-                .getValue()));
+        fullString += ri.getStartDate().isNil() ? "unset" : df
+                .format(ISTHandler.toDate(ri.getStartDate().getValue()));
         fullString += String.valueOf(ri.getTestRunStepId().getValue());
         fullString += String.valueOf(ri.getVerifiedReleaseId().getValue());
         fullString += ri.getVerifiedReleaseVersionNumber().getValue();
 
-        // add comments
-        fullString += commentsStamp;
-        // add attachments
-        fullString += documentsStamp;
-
-        // add custom fields
+        // add list field values
+        fullString += commentsDump;
+        fullString += documentsDump;
+        fullString += customsDump;
 
         try {
             CRC32 crc = new CRC32();
             byte[] bytesOfMessage = fullString.getBytes("UTF-8");
             crc.update(bytesOfMessage);
             theDigest = crc.getValue();
-            theVersion = (long) (Long.valueOf(theDigest) % Math.pow(2, 20));
+            theVersion = (int) (Long.valueOf(theDigest) % Math.pow(
+                    2,
+                    20));
 
             //            hashInfo = Long.toHexString(theDigest) + "  "
             //                    + Math.abs(Long.valueOf(theDigest).hashCode()) + "  "
             //                    + theVersion;
         } catch (UnsupportedEncodingException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            String cause = "Failed to generate version hash for incident #"
+                    + ri.getIncidentId().getValue();
+            throw new CCFRuntimeException(cause, e);
         }
 
         return theVersion;
@@ -112,16 +109,68 @@ public class ISTArtifactVersionHelper {
         return (int) (fullVersion);
     }
 
-    public static int getIncrementPart(long fullVersion) {
-        return (int) (fullVersion >> 32);
-    }
-
-    public static final long incrementVersion(long fullVersion) {
-        return getFullVersion(getIncrementPart(fullVersion) + 1,
+    public static final long getIncrementedVersion(long fullVersion) {
+        return getFullVersion(
+                getVersionPart(fullVersion) + 1,
                 getHashPart(fullVersion));
     }
 
-    private static final Log log = LogFactory
-                                         .getLog(ISTArtifactVersionHelper.class);
+    public static int getVersionPart(long fullVersion) {
+        return (int) (fullVersion >> 32);
+    }
+
+    /**
+     * returns a good enough unique integer identifier for the RemoteIncident.
+     * It is based on all mandatory incident fields, all comment texts and all
+     * attached file
+     *
+     * @param inc
+     * @return
+     */
+
+    private ISTMetaData       metaHelper = null;
+
+    private static DateFormat df         = GenericArtifactHelper.df;
+
+    private static final Log  log        = LogFactory
+            .getLog(ISTArtifactVersionHelper.class);
+
+    public ISTArtifactVersionHelper(ISTMetaData md) {
+        this.metaHelper = md;
+    }
+
+    public String generateAttachmentsDump(ArrayOfRemoteDocument documents) {
+        String ret = "";
+        for (RemoteDocument d : documents.getRemoteDocument()) {
+            ret += d.getAttachmentId().getValue()
+                    + d.getFilenameOrUrl().getValue()
+                    + df.format(ISTHandler.toDate(d.getUploadDate()));
+        }
+
+        return ret;
+    }
+
+    public String generateCommentsDump(ArrayOfRemoteComment comments) {
+        String ret = "";
+        for (RemoteComment c : comments.getRemoteComment()) {
+            ret += c.getCommentId().getValue()
+                    + JerichoUtils.htmlToText(c.getText().getValue())
+                    + df.format(ISTHandler.toDate(c.getCreationDate()
+                            .getValue()));
+        }
+        return ret;
+    }
+
+    public String generateCustomsDump(
+            ArrayOfRemoteArtifactCustomProperty properties) {
+
+        String ret = "";
+        for (RemoteArtifactCustomProperty prop : properties
+                .getRemoteArtifactCustomProperty()) {
+            ret += metaHelper.getName(prop) + metaHelper.getValue(prop);
+        }
+
+        return ret;
+    }
 
 }
