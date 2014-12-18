@@ -6,6 +6,10 @@ import com.collabnet.ccf.core.AbstractWriter;
 
 public class ISTWriter extends AbstractWriter<ISTWriter> {
 
+    private String serverUrl = null;
+    private String userName  = null;
+    private String password  = null;
+
     @Override
     public Document createArtifact(Document gaDocument) {
         // TODO Auto-generated method stub
@@ -40,6 +44,30 @@ public class ISTWriter extends AbstractWriter<ISTWriter> {
     public Document deleteDependency(Document gaDocument) {
         // TODO Auto-generated method stub
         return null;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public String getServerUrl() {
+        return serverUrl;
+    }
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
+
+    public void setServerUrl(String serverUrl) {
+        this.serverUrl = serverUrl;
+    }
+
+    public void setUserName(String username) {
+        this.userName = username;
     }
 
     @Override

@@ -51,6 +51,17 @@ public class ISTHandler {
         }
     }
 
+    public static void addGAField(GenericArtifact ga, String label,
+            Object value, FieldValueTypeValue fieldValueTypeValue,
+            String fieldType) {
+        GenericArtifactField gaf = ga.addNewField(
+                label,
+                fieldType);
+        gaf.setFieldValueType(fieldValueTypeValue);
+        gaf.setFieldAction(FieldActionValue.REPLACE);
+        gaf.setFieldValue(value);
+    }
+
     public static ArrayOfRemoteIncident getIncidentsSorted(
             ISTConnection connection) {
         objectFactory.createArrayOfRemoteIncident();
@@ -101,7 +112,7 @@ public class ISTHandler {
             log.error(
                     "Failed to convert Date to XML Gregorian: "
                             + date.toString(),
-                            ex);
+                    ex);
         }
         return xmlCalendar;
     }
@@ -111,7 +122,7 @@ public class ISTHandler {
     private ISTConnection              connection    = null;
 
     private static final Log           log           = LogFactory
-            .getLog(ISTHandler.class);
+                                                             .getLog(ISTHandler.class);
 
     private static final ObjectFactory objectFactory = new ObjectFactory();
 
@@ -120,23 +131,24 @@ public class ISTHandler {
     private ISTArtifactVersionHelper   vHelper       = null;
 
     private ArrayOfRemoteFilter        nofilters     = objectFactory
-                                                             .createArrayOfRemoteFilter();
+            .createArrayOfRemoteFilter();
 
     private RemoteSort                 dateSort      = objectFactory
-                                                             .createRemoteSort();
+            .createRemoteSort();
 
     private RemoteSort                 noSort        = objectFactory
-                                                             .createRemoteSort();
+            .createRemoteSort();
 
     public ISTHandler(ISTConnection conn) {
         this.connection = conn;
         this.metaHelper = new ISTMetaData(conn);
         this.vHelper = new ISTArtifactVersionHelper(this.metaHelper);
-        // Query Helpers
+
+        // Configure the Incident Query to sort after Last Update
+        // not really needed as we have to walk over all of them in any case....
         dateSort.setPropertyName(objectFactory
                 .createRemoteFilterPropertyName("LastUpdateDate"));
         dateSort.setSortAscending(false);
-
     }
 
     private void addGAField(GenericArtifact ga, String label, Object value,
@@ -168,16 +180,6 @@ public class ISTHandler {
         }
     }
 
-    private void addGAField(GenericArtifact ga, String label, Object value,
-            FieldValueTypeValue fieldValueType, String valueFieldType) {
-        GenericArtifactField gaf = ga.addNewField(
-                label,
-                valueFieldType);
-        gaf.setFieldValueType(fieldValueType);
-        gaf.setFieldAction(FieldActionValue.REPLACE);
-        gaf.setFieldValue(value);
-    }
-
     void debugAllIncidents(ISTConnection connection) {
         if (log.isDebugEnabled() || log.isTraceEnabled()) {
             ArrayOfRemoteIncident allIncidents = ISTHandler
@@ -204,6 +206,20 @@ public class ISTHandler {
         }
     }
 
+    private String fillCustoms(GenericArtifact ga,
+            ArrayOfRemoteArtifactCustomProperty properties) {
+
+        for (RemoteArtifactCustomProperty prop : properties
+                .getRemoteArtifactCustomProperty()) {
+            metaHelper.fetchCustomProperty(
+                    ga,
+                    prop);
+        }
+
+        return vHelper.generateCustomsDump(properties);
+
+    }
+
     /**
      * Feeds all comment of ri since lastModifiedDate into ga Also returns a
      * concatenation of all comments
@@ -213,19 +229,8 @@ public class ISTHandler {
      * @param lastModifiedDate
      * @return String
      */
-    private String fetchComments(GenericArtifact ga, RemoteIncident ri,
-            Date lastModifiedDate) {
-
-        ArrayOfRemoteComment comments = null;
-        try {
-            comments = connection.getService().incidentRetrieveComments(
-                    ri.getIncidentId().getValue());
-        } catch (IImportExportIncidentRetrieveCommentsServiceFaultMessageFaultFaultMessage e) {
-            log.error(
-                    "Failed to retrieve comments for incident #"
-                            + ri.getIncidentId().getValue(),
-                            e);
-        }
+    private void fillLatestComments(GenericArtifact ga,
+            ArrayOfRemoteComment comments, Date lastModifiedDate) {
 
         for (RemoteComment c : comments.getRemoteComment()) {
             Date creationDate = toDate(c.getCreationDate().getValue());
@@ -245,28 +250,6 @@ public class ISTHandler {
             }
         }
 
-        return vHelper.generateCommentsDump(comments);
-
-    }
-
-    private String fetchCustoms(GenericArtifact ga, RemoteIncident ri) {
-        ArrayOfRemoteArtifactCustomProperty properties = ri
-                .getCustomProperties().getValue();
-
-        for (RemoteArtifactCustomProperty prop : properties
-                .getRemoteArtifactCustomProperty()) {
-            String name = metaHelper.getName(prop);
-            String value = metaHelper.getValue(prop);
-            addGAField(
-                    ga,
-                    name,
-                    value,
-                    FieldValueTypeValue.STRING,
-                    false);
-        }
-
-        return vHelper.generateCustomsDump(properties);
-
     }
 
     /**
@@ -277,7 +260,7 @@ public class ISTHandler {
      * @param ga
      * @param ri
      */
-    private void fetchMandatoryData(GenericArtifact ga, RemoteIncident ri) {
+    private void fillMandatoryData(GenericArtifact ga, RemoteIncident ri) {
 
         // artifact ID
         ga.setSourceArtifactId(String.valueOf(ri.getIncidentId().getValue()));
@@ -293,7 +276,7 @@ public class ISTHandler {
         addGAField(
                 ga,
                 "artifactTypeId",
-                String.valueOf(riTypeId),
+                riTypeId,
                 FieldValueTypeValue.STRING);
 
         // Closed Date
@@ -307,7 +290,7 @@ public class ISTHandler {
         addGAField(
                 ga,
                 "completionPercent",
-                String.valueOf(ri.getCompletionPercent()),
+                ri.getCompletionPercent(),
                 FieldValueTypeValue.STRING);
 
         // ConcurrencyDate
@@ -317,7 +300,7 @@ public class ISTHandler {
                 toDate(ri.getConcurrencyDate()),
                 FieldValueTypeValue.DATETIME);
 
-        // getCreationDate
+        // CreationDate
         addGAField(
                 ga,
                 "creationDate",
@@ -350,34 +333,34 @@ public class ISTHandler {
                 ga,
                 "estimatedEffort",
                 ri.getEstimatedEffort().getValue(),
-                FieldValueTypeValue.INTEGER);
+                FieldValueTypeValue.STRING);
 
         // FixedBuildId
         addGAField(
                 ga,
                 "fixedBuildId",
-                String.valueOf(ri.getFixedBuildId().getValue()),
+                ri.getFixedBuildId().getValue(),
                 FieldValueTypeValue.STRING);
 
         // FixedBuildName
         addGAField(
                 ga,
                 "fixedBuildName",
-                String.valueOf(ri.getFixedBuildName().getValue()),
+                ri.getFixedBuildName().getValue(),
                 FieldValueTypeValue.STRING);
 
         // IncidentId
         addGAField(
                 ga,
                 "incidentId",
-                String.valueOf(ri.getIncidentId().getValue()),
+                ri.getIncidentId().getValue(),
                 FieldValueTypeValue.STRING);
 
         // IncidentStatusId
         addGAField(
                 ga,
                 "incidentStatusId",
-                String.valueOf(ri.getIncidentStatusId().getValue()),
+                ri.getIncidentStatusId().getValue(),
                 FieldValueTypeValue.STRING);
 
         // IncidentStatusName
@@ -398,7 +381,7 @@ public class ISTHandler {
         addGAField(
                 ga,
                 "incidentTypeId",
-                String.valueOf(ri.getIncidentTypeId().getValue()),
+                ri.getIncidentTypeId().getValue(),
                 FieldValueTypeValue.STRING);
 
         // IncidentTypeName
@@ -419,7 +402,7 @@ public class ISTHandler {
         addGAField(
                 ga,
                 "openerId",
-                String.valueOf(ri.getOpenerId().getValue()),
+                ri.getOpenerId().getValue(),
                 FieldValueTypeValue.STRING);
 
         // OpenerName
@@ -433,14 +416,14 @@ public class ISTHandler {
         addGAField(
                 ga,
                 "ownerId",
-                String.valueOf(ri.getOwnerId().getValue()),
+                ri.getOwnerId().getValue(),
                 FieldValueTypeValue.STRING);
 
         // PriorityId
         addGAField(
                 ga,
                 "priorityId",
-                String.valueOf(ri.getPriorityId().getValue()),
+                ri.getPriorityId().getValue(),
                 FieldValueTypeValue.STRING);
 
         // PriorityName
@@ -454,14 +437,14 @@ public class ISTHandler {
         addGAField(
                 ga,
                 "projectedEffort",
-                String.valueOf(ri.getProjectedEffort().getValue()),
+                ri.getProjectedEffort().getValue(),
                 FieldValueTypeValue.STRING);
 
         // ProjectId
         addGAField(
                 ga,
                 "projectId",
-                String.valueOf(ri.getProjectId().getValue()),
+                ri.getProjectId().getValue(),
                 FieldValueTypeValue.STRING);
 
         // ProjectName
@@ -475,14 +458,14 @@ public class ISTHandler {
         addGAField(
                 ga,
                 "remainingEffort",
-                String.valueOf(ri.getRemainingEffort().getValue()),
+                ri.getRemainingEffort().getValue(),
                 FieldValueTypeValue.STRING);
 
         // ResolvedReleaseId
         addGAField(
                 ga,
                 "resolvedReleaseId",
-                String.valueOf(ri.getResolvedReleaseId().getValue()),
+                ri.getResolvedReleaseId().getValue(),
                 FieldValueTypeValue.STRING);
 
         // ResolvedReleaseVersionNumber
@@ -496,7 +479,7 @@ public class ISTHandler {
         addGAField(
                 ga,
                 "severityId",
-                String.valueOf(ri.getSeverityId().getValue()),
+                ri.getSeverityId().getValue(),
                 FieldValueTypeValue.STRING);
 
         // SeverityName
@@ -517,14 +500,14 @@ public class ISTHandler {
         addGAField(
                 ga,
                 "testRunStepId",
-                String.valueOf(ri.getTestRunStepId().getValue()),
+                ri.getTestRunStepId().getValue(),
                 FieldValueTypeValue.STRING);
 
         // VerifiedReleaseId
         addGAField(
                 ga,
                 "verifiedReleaseId",
-                String.valueOf(ri.getVerifiedReleaseId().getValue()),
+                ri.getVerifiedReleaseId().getValue(),
                 FieldValueTypeValue.STRING);
 
         // VerifiedReleaseVersionNumber
@@ -554,7 +537,7 @@ public class ISTHandler {
             log.error(
                     "Failed to retrieve documents for incident #"
                             + incident.getIncidentId().getValue(),
-                            e);
+                    e);
         }
 
         for (RemoteDocument d : documents.getRemoteDocument()) {
@@ -573,7 +556,7 @@ public class ISTHandler {
             log.error(
                     "Failed to retrieve comments for incident #"
                             + incident.getIncidentId().getValue(),
-                            e);
+                    e);
         }
 
         for (RemoteComment c : comments.getRemoteComment()) {
@@ -613,6 +596,39 @@ public class ISTHandler {
         return gaHash == currenHash;
     }
 
+    private ArrayOfRemoteComment retrieveAllComments(RemoteIncident ri) {
+        ArrayOfRemoteComment comments = new ArrayOfRemoteComment();
+        try {
+            comments = connection.getService().incidentRetrieveComments(
+                    ri.getIncidentId().getValue());
+        } catch (IImportExportIncidentRetrieveCommentsServiceFaultMessageFaultFaultMessage e) {
+            log.error(
+                    "Failed to retrieve comments for incident #"
+                            + ri.getIncidentId().getValue(),
+                    e);
+        }
+
+        return comments;
+    }
+
+    private ArrayOfRemoteDocument retrieveAllDocuments(RemoteIncident inc) {
+        try {
+            ArrayOfRemoteDocument documents = connection.getService()
+                    .documentRetrieveForArtifact(
+                            inc.getArtifactTypeId(),
+                            inc.getIncidentId().getValue(),
+                            nofilters,
+                            noSort);
+            return documents;
+        } catch (IImportExportDocumentRetrieveForArtifactServiceFaultMessageFaultFaultMessage e) {
+            log.error(
+                    "Failed to retrieve documents for incident #"
+                            + inc.getIncidentId().getValue(),
+                    e);
+        }
+        return null;
+    }
+
     public void retrieveChangedIncidents(final Date lastModifiedDate,
             String lastSynchronizedVersion, String lastSynchedArtifactId,
             ArrayList<ArtifactState> artifactStates) {
@@ -621,6 +637,10 @@ public class ISTHandler {
         objectFactory.createArrayOfRemoteIncident();
 
         try {
+            // fetch *all* incidents
+            // currently the only way to identify all changed ones and to build the version
+            // Integer.MAX_VALUE might break the SOAP message length for larger numbers
+            // TODO use pagination of approx 500 incidents.
             allincidents = connection.getService().incidentRetrieve(
                     this.nofilters,
                     this.dateSort,
@@ -634,66 +654,33 @@ public class ISTHandler {
 
         Long.valueOf(lastSynchronizedVersion);
 
-        // fetch *all* incidents
-        // currently the only way to identify all changed ones and to build the version
         for (RemoteIncident inc : allincidents.getRemoteIncident()) {
             ArtifactState xs = new ArtifactState();
             xs.setArtifactId(String.valueOf(inc.getIncidentId().getValue()));
             Date lastUpdated = toDate(inc.getLastUpdateDate());
 
+            // MAYBE soap offers a way to retrieve all docs for a project, might be faster
             ArrayOfRemoteDocument documents = null;
-            documents = retrieveDocuments(inc);
-
+            documents = retrieveAllDocuments(inc);
             String attachmentsDump = vHelper.generateAttachmentsDump(documents);
+
             for (RemoteDocument d : documents.getRemoteDocument()) {
                 Date uploadDate = toDate(d.getUploadDate());
                 lastUpdated = uploadDate.after(lastUpdated) ? uploadDate
                         : lastUpdated;
             }
 
-            ArrayOfRemoteComment comments = null;
-            try {
-                comments = connection.getService().incidentRetrieveComments(
-                        inc.getIncidentId().getValue());
-            } catch (IImportExportIncidentRetrieveCommentsServiceFaultMessageFaultFaultMessage e) {
-                log.error(
-                        "Failed to retrieve comments for incident #"
-                                + inc.getIncidentId().getValue(),
-                                e);
-            }
-
+            ArrayOfRemoteComment comments = retrieveAllComments(inc);
             String commentsDump = vHelper.generateCommentsDump(comments);
 
             ArrayOfRemoteArtifactCustomProperty properties = null;
             properties = inc.getCustomProperties().getValue();
-
-            if (properties.getRemoteArtifactCustomProperty().size() > 0) {
-                log.trace("  ==> Custom Properties for ID #"
-                        + inc.getIncidentId().getValue());
-                log.trace(String.format(
-                        "      %-30s  %-15s  %-15s  %-15s",
-                        "Field Name",
-                        "System Type",
-                        "Field Type",
-                        "Value"));
-            }
-            for (RemoteArtifactCustomProperty aprop : properties
-                    .getRemoteArtifactCustomProperty()) {
-                RemoteCustomProperty propDef = aprop.getDefinition().getValue();
-                String fieldType = propDef.getCustomPropertyTypeName()
-                        .getValue();
-                String systemType = propDef.getSystemDataType().getValue();
-                String fieldName = metaHelper.getName(aprop);
-                String value = metaHelper.getValue(aprop);
-                log.trace(String.format(
-                        "      %-30s  %-15s  %-15s  %-15s",
-                        fieldName,
-                        systemType,
-                        fieldType,
-                        value));
-            }
-
             String customsDump = vHelper.generateCustomsDump(properties);
+
+            // trace log all Custom Props
+            traceCustomProperties(
+                    inc.getIncidentId().getValue(),
+                    properties);
 
             xs.setArtifactLastModifiedDate(lastUpdated);
 
@@ -725,6 +712,7 @@ public class ISTHandler {
         int totalLength = artifactStates.size();
 
         // remove items before Last Modified Date
+        // TODO remove a few seconds from last modified to avoid racing conditions - check with DEV abotu heuristics
         CollectionUtils.filter(
                 artifactStates,
                 new Predicate() {
@@ -744,24 +732,6 @@ public class ISTHandler {
 
     }
 
-    private ArrayOfRemoteDocument retrieveDocuments(RemoteIncident inc) {
-        try {
-            ArrayOfRemoteDocument documents = connection.getService()
-                    .documentRetrieveForArtifact(
-                            inc.getArtifactTypeId(),
-                            inc.getIncidentId().getValue(),
-                            nofilters,
-                            noSort);
-            return documents;
-        } catch (IImportExportDocumentRetrieveForArtifactServiceFaultMessageFaultFaultMessage e) {
-            log.error(
-                    "Failed to retrieve documents for incident #"
-                            + inc.getIncidentId().getValue(),
-                            e);
-        }
-        return null;
-    }
-
     public void retrieveIncident(int incidentId, Date lastModifiedDate,
             String username, boolean ignoreConnectorUserUpdates,
             GenericArtifact ga, String sourceRepositoryId) {
@@ -777,23 +747,28 @@ public class ISTHandler {
             boolean isResync = false;
             boolean isIgnore = false;
 
-            fetchMandatoryData(
+            // get all built-in fields
+            fillMandatoryData(
                     ga,
                     ri);
 
-            String commentsDump = fetchComments(
+            // get all comments, then filter for latest ones only
+            ArrayOfRemoteComment comments = retrieveAllComments(ri);
+            String commentsDump = vHelper.generateCommentsDump(comments);
+            fillLatestComments(
                     ga,
-                    ri,
+                    comments,
                     lastModifiedDate);
 
-            String customsDump = fetchCustoms(
+            String customsDump = fillCustoms(
                     ga,
-                    ri);
+                    ri.getCustomProperties().getValue());
 
+            // we only need the documents info to build the hash
             String attachmentsDump = vHelper
-                    .generateAttachmentsDump(retrieveDocuments(ri));
+                    .generateAttachmentsDump(retrieveAllDocuments(ri));
 
-            // FIXME - use version fingerprint check
+            // check against the last known hash/version
             if (isUntouchedSinceLastVisit(
                     ga.getSourceArtifactVersion(),
                     ri,
@@ -814,7 +789,7 @@ public class ISTHandler {
                 }
             }
 
-            // TODO check dependencies / parents
+            // currently, no dependencies/parents handled for incidents.
 
             if (isIgnore) {
                 ga.setArtifactAction(GenericArtifact.ArtifactActionValue.IGNORE);
@@ -833,5 +808,32 @@ public class ISTHandler {
             throw new CCFRuntimeException(cause, e);
         }
 
+    }
+
+    private void traceCustomProperties(int incidentId,
+            ArrayOfRemoteArtifactCustomProperty properties) {
+        if (properties.getRemoteArtifactCustomProperty().size() > 0) {
+            log.trace("  ==> Custom Properties for ID #" + incidentId);
+            log.trace(String.format(
+                    "      %-30s  %-15s  %-15s  %-15s",
+                    "Field Name",
+                    "System Type",
+                    "Field Type",
+                    "Value"));
+        }
+        for (RemoteArtifactCustomProperty aprop : properties
+                .getRemoteArtifactCustomProperty()) {
+            RemoteCustomProperty propDef = aprop.getDefinition().getValue();
+            String fieldType = propDef.getCustomPropertyTypeName().getValue();
+            String systemType = propDef.getSystemDataType().getValue();
+            String fieldName = metaHelper.getName(aprop);
+            String value = metaHelper.getValue(aprop);
+            log.trace(String.format(
+                    "      %-30s  %-15s  %-15s  %-15s",
+                    fieldName,
+                    systemType,
+                    fieldType,
+                    value));
+        }
     }
 }

@@ -15,6 +15,9 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import com.collabnet.ccf.core.ga.GenericArtifact;
+import com.collabnet.ccf.core.ga.GenericArtifactField;
+import com.collabnet.ccf.core.ga.GenericArtifactField.FieldValueTypeValue;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.utils.JerichoUtils;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.ArrayOfRemoteCustomList;
@@ -202,6 +205,62 @@ public class ISTMetaData {
 
     }
 
+    /**
+     * adds the Custom Property and its value, type, etc to the GenericArtifact
+     *
+     * @param ga
+     * @param prop
+     */
+    public void fetchCustomProperty(GenericArtifact ga,
+            RemoteArtifactCustomProperty prop) {
+
+        RemoteCustomProperty propDef = prop.getDefinition().getValue();
+
+        ISTFieldTypes type = ISTFieldTypes.valueOf(propDef
+                .getCustomPropertyTypeName().getValue());
+
+        String label = getName(prop);
+        List<Object> values = new ArrayList<Object>();
+        FieldValueTypeValue fieldValueTypeValue = FieldValueTypeValue.STRING;
+
+        switch (type) {
+            case Text:
+                fieldValueTypeValue = FieldValueTypeValue.HTMLSTRING;
+                if (prop.getStringValue().getValue() != null)
+                    values.add(prop.getStringValue().getValue());
+                break;
+            case Date:
+                fieldValueTypeValue = FieldValueTypeValue.DATETIME;
+                if (prop.getDateTimeValue().getValue() != null)
+                    values.add(ISTHandler.toDate(prop.getDateTimeValue()
+                            .getValue()));
+                break;
+            case List:
+                values.add(getSingleListValue(prop));
+                break;
+            case MultiList:
+                ArrayList<String> selected = getMultiListValues(prop);
+                for (String s : selected)
+                    values.add(s);
+                break;
+            case Integer:
+                fieldValueTypeValue = fieldValueTypeValue.STRING;
+                values.add(prop.getIntegerValue().getValue());
+                break;
+        }
+
+        // add new fields to ga
+        for (Object value : values) {
+            // if value is null, the null
+            ISTHandler.addGAField(
+                    ga,
+                    label,
+                    value,
+                    fieldValueTypeValue,
+                    GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
+        }
+    }
+
     public String getCustomListItemValue(int customPropertyListValueId) {
         return this.customlistValues.get(customPropertyListValueId);
     }
@@ -210,7 +269,7 @@ public class ISTMetaData {
             RemoteArtifactCustomProperty prop) {
         ArrayList<String> list = new ArrayList<String>();
         ArrayOfint mvalues = prop.getIntegerListValue().getValue();
-        if (mvalues.getInt().size() > 0) {
+        if (mvalues != null && mvalues.getInt().size() > 0) {
             for (int listItemValueId : mvalues.getInt()) {
                 list.add(this.getCustomListItemValue(listItemValueId));
             }
@@ -223,11 +282,11 @@ public class ISTMetaData {
     }
 
     public final String getSingleListValue(RemoteArtifactCustomProperty prop) {
-        if (!prop.getIntegerValue().isNil()) {
+        if (prop.getIntegerValue().getValue() != null) {
             int listValueId = prop.getIntegerValue().getValue();
             return this.getCustomListItemValue(listValueId);
         }
-        return "null";
+        return null;
     }
 
     public String getValue(RemoteArtifactCustomProperty prop) {
@@ -259,4 +318,5 @@ public class ISTMetaData {
                 return null;
         }
     }
+
 }
