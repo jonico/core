@@ -9,6 +9,9 @@ import java.util.Set;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dom4j.Document;
+import org.openadaptor.auxil.connector.jdbc.reader.JDBCReadConnector;
+import org.openadaptor.auxil.orderedmap.IOrderedMap;
+import org.openadaptor.auxil.orderedmap.OrderedHashMap;
 import org.openadaptor.core.Component;
 import org.openadaptor.core.exception.ValidationException;
 
@@ -25,7 +28,7 @@ import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
 
 public class ISTReader extends AbstractReader<ISTConnection> {
 
-    private static final Log log                        = LogFactory
+    private static final Log  log                        = LogFactory
             .getLog(ISTReader.class);
 
     /**
@@ -38,15 +41,17 @@ public class ISTReader extends AbstractReader<ISTConnection> {
      * @ignoreConnectorUserUpdates
      */
 
-    private String           username                   = null;
-    private String           password                   = null;
-    private String           serverUrl                  = null;
-    private String           projectId                  = null;
-    private boolean          ignoreConnectorUserUpdates = true;
+    private String            username                   = null;
+    private String            password                   = null;
+    private String            serverUrl                  = null;
+    private String            projectId                  = null;
+    private boolean           ignoreConnectorUserUpdates = true;
 
-    private ISTHandler       handler                    = null;
+    private ISTHandler        handler                    = null;
 
-    private DateFormat       df                         = GenericArtifactHelper.df;
+    private DateFormat        df                         = GenericArtifactHelper.df;
+
+    private JDBCReadConnector identityMapping            = null;
 
     private ISTConnection connect(String systemId, String systemKind,
             String repositoryId, String repositoryKind) {
@@ -159,8 +164,24 @@ public class ISTReader extends AbstractReader<ISTConnection> {
         String sourceRepositoryId = this.getSourceRepositoryId(syncInfo);
         String sourceRepositoryKind = this.getSourceRepositoryKind(syncInfo);
         this.getLastSourceVersion(syncInfo);
+
+        String repositoryMappingId = this.getRepositoryMappingId(syncInfo);
+        String storedVersion = this.lookupSourceArtifactVersion(
+                artifactId,
+                repositoryMappingId);
+
+        if (storedVersion == null)
+            log.debug(String.format(
+                    "No previous version found for rmID-artfID %s-%s",
+                    repositoryMappingId,
+                    artifactId));
+        else
+            log.debug(String.format(
+                    "Found stored version for incident #%s: %s: ",
+                    artifactId,
+                    ISTIncident.getVersionString(storedVersion)));
+
         Date lastModifiedDate = this.getLastModifiedDate(syncInfo);
-        this.getLastSourceArtifactId(syncInfo);
         ISTConnection connection = null;
 
         GenericArtifact ga = new GenericArtifact();
@@ -180,12 +201,9 @@ public class ISTReader extends AbstractReader<ISTConnection> {
             ga.setArtifactType(ArtifactTypeValue.PLAINARTIFACT);
 
             handler.retrieveIncident(
-                    Integer.valueOf(artifactId),
                     lastModifiedDate,
-                    sourceRepositoryKind,
-                    ignoreConnectorUserUpdates,
-                    ga,
-                    sourceRepositoryId);
+                    storedVersion,
+                    ga);
 
         } catch (Exception e) {
             String cause = "An error occurred during incident retrieval";
@@ -215,7 +233,8 @@ public class ISTReader extends AbstractReader<ISTConnection> {
     @Override
     public List<GenericArtifact> getArtifactDependencies(Document syncInfo,
             String artifactId) {
-        // TODO this is called when shipping attachments :o
+        // dependencies, a.k.a. hierarchies are not implemented in SpiraTest
+        // http://www.inflectra.com/Support/Ticket/17234.aspx
         return new ArrayList<GenericArtifact>();
     }
 
@@ -227,18 +246,25 @@ public class ISTReader extends AbstractReader<ISTConnection> {
         String sourceRepositoryKind = this.getSourceRepositoryKind(syncInfo);
         String lastSynchronizedVersion = this.getLastSourceVersion(syncInfo);
         Date lastModifiedDate = this.getLastModifiedDate(syncInfo);
-        String lastSynchedArtifactId = this.getLastSourceArtifactId(syncInfo);
-        this.getSourceSystemTimezone(syncInfo);
 
         ISTConnection connection = null;
         ArrayList<ArtifactState> artifactStates = new ArrayList<ArtifactState>();
 
+        //        try {
+        //            lastModifiedDate = df.parse("Fr, 1 Jan 1999 00:00:00.000 +0700");
+        //        } catch (ParseException e) {
+        //            log.warn("could not reset date");
+        //        }
+
+        //FIXME multi list values get lost (again)
+
+        log.debug("retrieving incidents changed since "
+                + df.format(lastModifiedDate) + " and version "
+                + lastSynchronizedVersion);
+
         boolean skipit = false;
         if (skipit)
             return artifactStates;
-
-        log.debug("retrieving incidents changed since "
-                + df.format(lastModifiedDate));
 
         try {
             connection = connect(
@@ -249,38 +275,45 @@ public class ISTReader extends AbstractReader<ISTConnection> {
 
             handler.retrieveChangedIncidents(
                     lastModifiedDate,
-                    lastSynchronizedVersion,
-                    lastSynchedArtifactId,
                     artifactStates);
 
-            log.debug("found " + artifactStates.size()
-                    + " artifact/s changed since "
-                    + df.format(lastModifiedDate) + ", last sync Version: "
-                    + lastSynchronizedVersion);
-
-            if (artifactStates.size() > 0) {
-                log.debug(String.format(
-                        "  %-3s  %-40s  %-15s  %-15s  %-15s",
+            if (artifactStates.size() > 0 && log.isTraceEnabled()) {
+                log.trace("====================");
+                log.trace("Incident Update List");
+                log.trace("====================");
+                log.trace(String.format(
+                        "  %-4s  %-40s  %-15s  %-15s %-15s %-15s",
                         "ID",
                         "Last Update",
                         "Full Version",
-                        "Version",
-                        "Hash"));
+                        "DB Version",
+                        "Version.Hash",
+                        "DB Version.Hash"));
+                String repoMappingId = getRepositoryMappingId(syncInfo);
                 for (ArtifactState as : artifactStates) {
                     long fullVersion = as.getArtifactVersion();
-                    log.debug(String.format(
-                            "  %-3s  %-40s  %-15d  %-15d  %-15d",
+                    String tableVersion = this.lookupSourceArtifactVersion(
+                            as.getArtifactId(),
+                            repoMappingId);
+                    log.trace(String.format(
+                            "  %-4s  %-40s  %-15d  %-15s %-15s %-15s",
                             as.getArtifactId(),
                             df.format(as.getArtifactLastModifiedDate()),
                             fullVersion,
-                            ISTArtifactVersionHelper
-                                    .getVersionPart(fullVersion),
-                            ISTArtifactVersionHelper.getHashPart(fullVersion)));
+                            tableVersion,
+                            ISTIncident.getVersionString(String
+                                    .valueOf(fullVersion)),
+                                    ISTIncident.getVersionString(String
+                                            .valueOf(tableVersion))));
 
                 }
+            } else {
+
+                log.debug("found no artifacts changed since "
+                        + df.format(lastModifiedDate)
+                        + "; last sync'd Version: " + lastSynchronizedVersion);
             }
         } finally {
-
             // release connection to pool
             getConnectionManager().releaseConnection(
                     connection);
@@ -294,6 +327,10 @@ public class ISTReader extends AbstractReader<ISTConnection> {
             Set<String> artifactsToForce, Document SyncInfo) {
         // TODO Auto-generated method stub
         return null;
+    }
+
+    public JDBCReadConnector getIdentityMapping() {
+        return identityMapping;
     }
 
     public String getPassword() {
@@ -314,6 +351,59 @@ public class ISTReader extends AbstractReader<ISTConnection> {
 
     public boolean isIgnoreConnectorUserUpdates() {
         return ignoreConnectorUserUpdates;
+    }
+
+    /**
+     * fetches a the stored source artifact version from identity mappings.
+     *
+     * @param sourceArtifactId
+     * @param artifactType
+     * @param repositoryMappingId
+     * @return
+     */
+    private String lookupSourceArtifactVersion(String sourceArtifactId,
+            String repositoryMappingId) {
+        String result = null;
+        IOrderedMap inputParameters = new OrderedHashMap();
+
+        inputParameters.add(repositoryMappingId);
+        inputParameters.add(sourceArtifactId);
+        inputParameters.add("plainArtifact");
+        identityMapping.connect();
+        Object[] resultSet = identityMapping.next(
+                inputParameters,
+                1000);
+        //identityMappingDatabaseReader.disconnect();
+
+        if (resultSet == null || resultSet.length == 0) {
+            result = null;
+        } else if (resultSet.length == 1) {
+            if (resultSet[0] instanceof OrderedHashMap) {
+                OrderedHashMap results = (OrderedHashMap) resultSet[0];
+
+                // Source Artifact Version is the last of the four entries
+                if (results.size() == 4) {
+                    // the column is TARGET_ARTIFACT_VERSION as DB colmns are aloways named with CTF as SOURCE
+                    return String.valueOf(results.get(2));
+                } else {
+                    String cause = "Seems as if the SQL statement for identityMappingDatabase reader does not return values.";
+                    log.error(cause);
+                    throw new CCFRuntimeException(cause);
+                }
+            } else {
+                String cause = "SQL query on identity mapping table did not return data in correct format!";
+                log.error(cause);
+                throw new CCFRuntimeException(cause);
+            }
+        } else {
+            String cause = "There is more than one mapping for the combination RepoMappingID = "
+                    + repositoryMappingId
+                    + "; Source Artifact ID = "
+                    + sourceArtifactId + " in the identity mapping table.";
+            log.error(cause);
+            throw new CCFRuntimeException(cause);
+        }
+        return result;
     }
 
     private void populateSrcAndDest(Document syncInfo, GenericArtifact ga) {
@@ -383,6 +473,10 @@ public class ISTReader extends AbstractReader<ISTConnection> {
         ga.setDepParentTargetRepositoryKind(targetRepositoryKind);
     }
 
+    public void setIdentityMapping(JDBCReadConnector identityMapping) {
+        this.identityMapping = identityMapping;
+    }
+
     public void setIgnoreConnectorUserUpdates(boolean ignoreConnectorUserUpdates) {
         this.ignoreConnectorUserUpdates = ignoreConnectorUserUpdates;
     }
@@ -427,7 +521,7 @@ public class ISTReader extends AbstractReader<ISTConnection> {
                 exceptions);
 
         log.info("===========================================================");
-        log.info("started SpiraTest Reader " + ISTVersion.getVersion());
+        log.info("started SpiraTest Reader " + ISTVersionInfo.getVersion());
 
     }
 

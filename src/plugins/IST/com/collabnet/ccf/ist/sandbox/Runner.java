@@ -15,8 +15,8 @@ import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.namespace.QName;
 import javax.xml.ws.BindingProvider;
 
-import com.collabnet.ccf.ist.ISTFieldTypes;
-import com.collabnet.ccf.ist.ISTMetaData;
+import com.collabnet.ccf.ist.ISTCustomFieldType;
+import com.collabnet.ccf.ist.ISTMetaCache;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.ArrayOfRemoteArtifactCustomProperty;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.ArrayOfRemoteComment;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.ArrayOfRemoteCustomList;
@@ -35,6 +35,7 @@ import com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportDo
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportIncidentAddCommentsServiceFaultMessageFaultFaultMessage;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportIncidentCreateServiceFaultMessageFaultFaultMessage;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportIncidentCreateValidationFaultMessageFaultFaultMessage;
+import com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportIncidentRetrieveByIdServiceFaultMessageFaultFaultMessage;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportIncidentRetrieveCommentsServiceFaultMessageFaultFaultMessage;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportIncidentRetrieveServiceFaultMessageFaultFaultMessage;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportUserRetrieveByUserNameServiceFaultMessageFaultFaultMessage;
@@ -54,8 +55,7 @@ import com.inflectra.spirateam.mylyn.core.internal.services.soap.RemoteUser;
 
 public class Runner {
 
-    private static void addRandomComments(LoremIpsum li, int userid,
-            RemoteIncident i) {
+    private static void addRandomComments(LoremIpsum li, RemoteIncident i) {
         // add comments every now and then
         if (li.getTruth()) {
             ArrayOfRemoteComment comments = objectFactory
@@ -65,10 +65,10 @@ public class Runner {
                     RemoteComment comment = objectFactory.createRemoteComment();
                     // RemoteComment comment = new RemoteComment();
                     comment.setArtifactId(i.getIncidentId().getValue());
-                    comment.setText(ISTMetaData.CreateJAXBString(
+                    comment.setText(ISTMetaCache.CreateJAXBString(
                             "Text",
                             li.getLine()));
-                    comment.setCreationDate(ISTMetaData
+                    comment.setCreationDate(ISTMetaCache
                             .CreateJAXBXMLGregorianCalendar(
                                     "CreationDate",
                                     toXMLGregorianCalendar(new Date())));
@@ -106,15 +106,11 @@ public class Runner {
         }
     }
 
-    private static void createIncidents(int howmany, int userid) {
+    private static void createIncidents(int howmany) {
         for (int i = 1; i <= howmany; i++) {
             LoremIpsum li = new LoremIpsum(15);
 
-            RemoteIncident inc = createRandomIncident(
-                    li,
-                    userid);
-            log("created new incident #" + inc.getIncidentId().getValue()
-                    + ": " + inc.getName().getValue());
+            RemoteIncident inc = createRandomIncident(li);
             printIncInfo(inc);
         }
 
@@ -123,34 +119,102 @@ public class Runner {
     /*
      * creates a random incident
      */
-    private static RemoteIncident createRandomIncident(LoremIpsum li, int userid) {
+    private static RemoteIncident createRandomIncident(LoremIpsum li) {
 
         RemoteIncident ri = objectFactory.createRemoteIncident();
 
-        ri.setIncidentTypeId(objectFactory
-                .createRemoteIncidentIncidentTypeId(113));
-
-        ri.setIncidentStatusId(objectFactory
-                .createRemoteIncidentIncidentStatusId(113));
-
+        //        ri.setIncidentTypeId(objectFactory
+        //                .createRemoteIncidentIncidentTypeId(113));
+        //
+        //        ri.setIncidentStatusId(objectFactory
+        //                .createRemoteIncidentIncidentStatusId(113));
+        //
         ri.setName(objectFactory.createRemoteIncidentName(li.getShortLine()));
-
+        //
         ri.setDescription(objectFactory.createRemoteIncidentDescription(li
                 .getLoremIpsum()));
+        //
+        //        Date when = li.getDate();
+        //
+        //        ri.setCreationDate(objectFactory
+        //                .createRemoteIncidentCreationDate(toXMLGregorianCalendar(when)));
 
-        Date when = li.getDate();
+        // Incident Type
+        //        ri.setIncidentTypeName(ISTMetaData.toJXString(
+        //                "IncidentTypeName",
+        //                li.getTruth() ? "Bug" : "Change Request"));
 
-        ri.setCreationDate(objectFactory
-                .createRemoteIncidentCreationDate(toXMLGregorianCalendar(when)));
+        // Priority
+        ri.setPriorityName(ISTMetaCache.toJXString(
+                "PriorityName",
+                "3 - Medium"));
+
+        //            int prioId = meta.getPriorityKeyForValue("3 - Medium");
+        //            int typeId = meta.getIncidentTypeKeyForValue(ri
+        //                    .getIncidentTypeName().getValue());
+        //
+        //            ri.setPriorityId(ISTMetaData.toJXInt(
+        //                    "PriorityId",
+        //                    prioId));
+        //            ri.setIncidentTypeId(ISTMetaData.toJXInt(
+        //                    "IncidentTypeId",
+        //                    typeId));
+
+        //            System.out.printf(
+        //                    "Attempt: prio `%s` (%d)  and type `%s` (%d)\n",
+        //                    ri.getPriorityName().getValue(),
+        //                    ri.getPriorityId().getValue(),
+        //                    ri.getIncidentTypeName().getValue(),
+        //                    ri.getIncidentTypeId().getValue());
+
+        //        System.out.printf(
+        //                "Attempt: prio `%s` and type `%s`\n",
+        //                ri.getPriorityName().getValue(),
+        //                ri.getIncidentTypeName().getValue());
 
         try {
-
             RemoteIncident i = soap.incidentCreate(ri);
-            addRandomComments(
-                    li,
-                    userid,
-                    i);
-            return i;
+
+            System.out.printf(
+                    "   ===> created #%d with prio `%s` and type `%s`\n",
+                    i.getIncidentId().getValue(),
+                    i.getPriorityName().getValue(),
+                    i.getIncidentTypeName().getValue());
+
+            //            System.out.println("Attempting update on incident");
+
+            // Incident Type
+            //            i.setIncidentTypeId(ISTMetaData.toJXInt(
+            //                    "IncidentTypeId",
+            //                    typeId));
+            //            i.setIncidentTypeName(ISTMetaData.toJXString(
+            //                    "IncidentTypeName",
+            //                    li.getTruth() ? "Bug" : "Change Request"));
+            //
+            //            // Priority
+            //            i.setPriorityId(ISTMetaData.toJXInt(
+            //                    "PriorityId",
+            //                    prioId));
+            //            i.setPriorityName(ISTMetaData.toJXString(
+            //                    "PriorityName",
+            //                    "3 - Medium"));
+            //
+            //
+            //            soap.incidentUpdate(i);
+
+            System.out.println("reloading incident #"
+                    + i.getIncidentId().getValue());
+
+            RemoteIncident fetch = soap.incidentRetrieveById(i.getIncidentId()
+                    .getValue());
+            System.out.printf(
+                    "   ===> loaded #%d with prio `%s` and type `%s`\n",
+                    fetch.getIncidentId().getValue(),
+                    fetch.getPriorityName().getValue(),
+                    fetch.getIncidentTypeName().getValue());
+
+            return fetch;
+
         } catch (IImportExportIncidentCreateServiceFaultMessageFaultFaultMessage e) {
 
             // TODO Auto-generated catch block
@@ -158,6 +222,15 @@ public class Runner {
             e.printStackTrace();
 
         } catch (IImportExportIncidentCreateValidationFaultMessageFaultFaultMessage e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+            //        } catch (IImportExportIncidentUpdateServiceFaultMessageFaultFaultMessage e) {
+            //            // TODO Auto-generated catch block
+            //            e.printStackTrace();
+            //        } catch (IImportExportIncidentUpdateValidationFaultMessageFaultFaultMessage e) {
+            //            // TODO Auto-generated catch block
+            //            e.printStackTrace();
+        } catch (IImportExportIncidentRetrieveByIdServiceFaultMessageFaultFaultMessage e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
         }
@@ -361,7 +434,7 @@ public class Runner {
 
         RemoteCustomProperty propDef = prop.getDefinition().getValue();
 
-        ISTFieldTypes type = ISTFieldTypes.valueOf(propDef
+        ISTCustomFieldType type = ISTCustomFieldType.valueOf(propDef
                 .getCustomPropertyTypeName().getValue());
         switch (type) {
             case Text:
@@ -471,9 +544,16 @@ public class Runner {
         long end = System.currentTimeMillis();
         System.out.println("Connection setup took "
                 + tf.format(new Date(end - start)));
-        // printAllCustomLists();
+
+        meta = new ISTMetaCache(soap, true);
+
+        /**
+         * MAIN LOOP
+         */
+
         while (true) {
-            processIndicents(currentUser.getUserId().getValue());
+            createIncidents(10);
+            // processIndicents();
         }
 
     }
@@ -605,7 +685,7 @@ public class Runner {
 
     }
 
-    private static void processIndicents(int userid) {
+    private static void processIndicents() {
 
         ArrayOfRemoteIncident incidents = getIncidents();
 
@@ -626,10 +706,9 @@ public class Runner {
 
             printAttachments(inc);
 
-            addRandomComments(
-                    new LoremIpsum(10),
-                    userid,
-                    inc);
+            //            addRandomComments(
+            //                    new LoremIpsum(10),
+            //                    inc);
 
         }
     }
@@ -663,6 +742,8 @@ public class Runner {
         }
         return xmlCalendar;
     }
+
+    private static ISTMetaCache  meta                  = null;
 
     private static final String  WEB_SERVICE_SUFFIX    = "/Services/v4_0/ImportExport.svc";                                //$NON-NLS-1$
 

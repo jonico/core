@@ -126,7 +126,7 @@ public class ISTConnection {
                     e);
         }
 
-        log.info("Connection (v" + ISTVersion.getVersion() + ") to "
+        log.info("Connection (v" + ISTVersionInfo.getVersion() + ") to "
                 + serviceUrl.getHost() + " as " + username + " to project #"
                 + projectId);
     }
