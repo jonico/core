@@ -1020,13 +1020,16 @@ public class TFWriter extends AbstractWriter<Connection> implements IDataProcess
         ArrayList<String> flexFieldNames = new ArrayList<String>();
         ArrayList<String> flexFieldTypes = new ArrayList<String>();
         ArrayList<Object> flexFieldValues = new ArrayList<Object>();
-
+        String tfFieldComment = TFArtifactMetaData.TFFields.commentText
+                .getFieldName();
         List<GenericArtifactField> gaFields = ga
                 .getAllGenericArtifactFieldsWithSameFieldType(GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
         String targetSystemTimezone = ga.getTargetSystemTimezone();
         if (gaFields != null) {
             for (GenericArtifactField gaField : gaFields) {
                 String fieldName = gaField.getFieldName();
+                if (tfFieldComment.equals(fieldName))
+                    continue;
                 String trackerFieldValueType = TFArtifactMetaData
                         .getTFFieldValueTypeForGAFieldType(gaField
                                 .getFieldValueType());
@@ -1459,6 +1462,8 @@ public class TFWriter extends AbstractWriter<Connection> implements IDataProcess
     private ArtifactDO updateArtifact(GenericArtifact ga, String tracker,
             Connection connection) {
         String id = ga.getTargetArtifactId();
+        String tfFieldComment = TFArtifactMetaData.TFFields.commentText
+                .getFieldName();
         ArrayList<String> flexFieldNames = new ArrayList<String>();
         ArrayList<String> flexFieldTypes = new ArrayList<String>();
         ArrayList<Object> flexFieldValues = new ArrayList<Object>();
@@ -1469,6 +1474,8 @@ public class TFWriter extends AbstractWriter<Connection> implements IDataProcess
         if (gaFields != null) {
             for (GenericArtifactField gaField : gaFields) {
                 String fieldName = gaField.getFieldName();
+                if (tfFieldComment.equals(fieldName))
+                    continue;
                 if (gaField.getFieldValueHasChanged()) {
                     overriddenFlexFields.add(fieldName);
                 } else {
