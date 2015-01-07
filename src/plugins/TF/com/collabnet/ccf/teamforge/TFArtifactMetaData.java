@@ -98,7 +98,7 @@ public class TFArtifactMetaData {
                 GenericArtifactField.FieldValueTypeValue.STRING, true, ""), statusClass(
                 "statusClass", "Status class", FIELD_TYPE.SYSTEM_DEFINED,
                 GenericArtifactField.FieldValueTypeValue.STRING, false, ""), commentText(
-                "Comment Text", "Comment Text", FIELD_TYPE.SYSTEM_DEFINED,
+                COMMENT_TEXT, COMMENT_TEXT, FIELD_TYPE.SYSTEM_DEFINED,
                 GenericArtifactField.FieldValueTypeValue.STRING, false, ""), points(
                 "points", "Story Points", FIELD_TYPE.CONFIGURABLE,
                 GenericArtifactField.FieldValueTypeValue.INTEGER, false, ""), capacity(
@@ -169,6 +169,8 @@ public class TFArtifactMetaData {
             return required;
         }
     }
+
+    public static final String                                                     COMMENT_TEXT                 = "Comment Text";
 
     private static final Log                                                       log                          = LogFactory
                                                                                                                         .getLog(TFArtifactMetaData.class);
