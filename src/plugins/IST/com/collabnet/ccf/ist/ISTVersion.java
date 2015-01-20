@@ -1,8 +1,17 @@
 package com.collabnet.ccf.ist;
 
+import java.io.UnsupportedEncodingException;
+import java.util.zip.CRC32;
+
+import com.collabnet.ccf.core.CCFRuntimeException;
+
 public abstract class ISTVersion {
 
-    public static long getFullVersion(int incrementPart, int hashPart) {
+    public static int getCountPart(long fullVersion) {
+        return (int) (fullVersion >> 32);
+    }
+
+    private static long getFullVersion(int incrementPart, int hashPart) {
         return (((long) incrementPart) << 32) | (hashPart & 0xffffffffL);
     }
 
@@ -10,80 +19,119 @@ public abstract class ISTVersion {
         return (int) (fullVersion);
     }
 
-    public static final int getHashPart(String fullVersion) {
-        long fv = Long.parseLong(fullVersion);
-        return (int) fv;
+    private static String getInfoString(long version) {
+        return getCountPart(version) + "." + getHashPart(version);
+
     }
 
-    public static int getVersionPart(long fullVersion) {
+    private static int getVersionCounter(long fullVersion) {
         return (int) (fullVersion >> 32);
     }
 
-    public static int getVersionPart(String fullVersion) {
-        long fv = Long.parseLong(fullVersion);
-        return (int) (fv >> 32);
-    }
+    private static final int INITIALVERSION = 1;
 
-    public static String getVersionString(long version) {
-        return getVersionPart(version) + "." + getHashPart(version);
+    protected long           version        = 0;
 
-    }
+    protected int calculateHash(String s) {
+        int retHash = 0;
+        try {
+            CRC32 crc = new CRC32();
+            byte[] bytesOfMessage = s.getBytes("UTF-8");
+            crc.update(bytesOfMessage);
+            long theDigest = crc.getValue();
+            retHash = (int) (Long.valueOf(theDigest) % Math.pow(
+                    2,
+                    20));
 
-    public static String getVersionString(String version) {
-        return (!version.equals("null")) ? getVersionPart(version) + "."
-                + getHashPart(version) : "(not set)";
-
-    }
-
-    public static final String INITIALVERSION = "0";
-
-    protected int              hash           = 0;
-
-    private long               version        = 0;
-
-    protected abstract int determineHash();
-
-    public int getHash() {
-        if (this.hash == 0) {
-            this.hash = this.determineHash();
+        } catch (UnsupportedEncodingException e) {
+            String cause = "Failed to generate hash";
+            throw new CCFRuntimeException(cause, e);
         }
-        return this.hash;
+        return retHash;
+    }
+
+    protected void clearCache() {
+        this.version = 0;
     }
 
     /**
-     * returns the version part incremented by 1.
-     *
-     * @return
+     * this method determines the hash value and writes it to this.version
      */
-    public int getNextVersion() {
-        return getVersionPart(this.version) + 1;
-    }
+    protected abstract void determineHash();
 
+    /**
+     * returns the combined version with counter and hash
+     *
+     * @return long
+     */
     public long getVersion() {
         if (this.version == 0)
-            this.setVersionPart(INITIALVERSION);
+            this.determineHash();
         return this.version;
     }
 
-    public int getVersionPart() {
-        return getVersionPart(this.version);
-    }
-
-    public String getVersionString() {
-        return getVersionString(this.getVersion());
-    }
-
-    public int refreshHash() {
-        this.hash = this.determineHash();
-        return this.hash;
-    }
-
-    public void setHash(int newHash) {
-        this.hash = newHash;
+    /**
+     * determines the counting part of the version
+     *
+     * @return
+     */
+    public int getVersionCount() {
+        return getCountPart(this.getVersion());
     }
 
     /**
-     * writes the version Part
+     * gets the identifying hash for the incident
+     *
+     * @return
+     */
+    public int getVersionHash() {
+        return getHashPart(this.getVersion());
+    }
+
+    public String getVersionInfoString() {
+        return getInfoString(this.getVersion());
+    }
+
+    /**
+     * determines by hash comparison if the last change was done by CCF or not.
+     *
+     * if the hash parts are equal, the last update was via ISTWriter
+     *
+     * UNLESS the vesion part is INITIALVERSION, then the incident was never
+     * updated/created via ISTWriter
+     *
+     * @param previousVesion
+     * @return
+     */
+    public boolean hashEquals(long otherVersion) {
+
+        // initial shipment when incident was created in SpiraTest
+        if (INITIALVERSION == getCountPart(otherVersion))
+            return true;
+
+        int previousHash = getHashPart(otherVersion);
+        int currentHash = getHashPart(this.getVersionHash());
+
+        return previousHash != currentHash;
+    }
+
+    /**
+     * increments the version count by 1.
+     *
+     * @return
+     */
+    public void incrementVersionCount() {
+        this.setVersionCount(this.getVersionCount() + 1);
+    }
+
+    protected void initializeHash(int newHash) {
+        this.version = getFullVersion(
+                INITIALVERSION,
+                newHash);
+    }
+
+    /**
+     * writes the version Counting part
      *
      * left byte lastSynchedVersion - Version, a.k.a. incremental part
      *
@@ -92,30 +140,16 @@ public abstract class ISTVersion {
      * @param newVersion
      * @return
      */
-    public void setVersionPart(int newVersion) {
-        if (newVersion == Integer.valueOf(INITIALVERSION)) {
-            this.version = getFullVersion(
-                    Integer.parseInt(INITIALVERSION),
-                    this.determineHash());
-        } else {
-            this.version = getFullVersion(
-                    newVersion,
-                    this.determineHash());
-        }
+    public void setVersionCount(int newCount) {
+        this.version = getFullVersion(
+                newCount,
+                this.getVersionHash());
     }
 
-    /**
-     * writes the version Part
-     *
-     * left byte lastSynchedVersion - Version, a.k.a. incremental part
-     *
-     * right byte hash - crc of all field values , stay unchanged
-     *
-     * @param newVersion
-     * @return
-     */
-    public void setVersionPart(String newVersion) {
-        this.setVersionPart(Integer.parseInt(newVersion));
+    protected void setVersionHash(int newHash) {
+        this.version = getFullVersion(
+                this.getVersionCount(),
+                newHash);
     }
 
 }

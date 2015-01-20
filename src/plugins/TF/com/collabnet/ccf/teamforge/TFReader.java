@@ -35,6 +35,8 @@ import com.collabnet.ccf.core.eis.connection.ConnectionManager;
 import com.collabnet.ccf.core.eis.connection.MaxConnectionsReachedException;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
+import com.collabnet.ccf.core.ga.GenericArtifactHelper;
+import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
 import com.collabnet.ccf.core.utils.Obfuscator;
 import com.collabnet.teamforge.api.Connection;
 import com.collabnet.teamforge.api.frs.ReleaseDO;
@@ -47,15 +49,44 @@ import com.collabnet.teamforge.api.tracker.TrackerFieldDO;
 /**
  * This class retrieves the changed artifact details from an TF system
  * repository.
- * 
+ *
  * It uses the last read time of the sync info and fetches all the artifact data
  * that are changed after the last read time of the particular repository.
- * 
+ *
  * @author Johannes Nicolai
- * 
+ *
  */
 
 public class TFReader extends AbstractReader<Connection> {
+
+    public static void convertReleaseIds(Connection connection,
+            ArtifactDO artifact) throws RemoteException {
+        String reportedReleaseId = artifact.getReportedReleaseId();
+        String resolvedReleaseId = artifact.getResolvedReleaseId();
+        if (!StringUtils.isEmpty(reportedReleaseId)) {
+            ReleaseDO releaseDO = connection.getFrsClient().getReleaseData(
+                    reportedReleaseId);
+            String title = releaseDO.getTitle();
+            artifact.setReportedReleaseId(title);
+        }
+        if (!StringUtils.isEmpty(resolvedReleaseId)) {
+            ReleaseDO releaseDO = connection.getFrsClient().getReleaseData(
+                    resolvedReleaseId);
+            String title = releaseDO.getTitle();
+            artifact.setResolvedReleaseId(title);
+        }
+    }
+
+    public static void convertReleaseIds(Connection connection,
+            PlanningFolderDO artifact) throws RemoteException {
+        String releaseId = artifact.getReleaseId();
+        if (!StringUtils.isEmpty(releaseId)) {
+            ReleaseDO releaseDO = connection.getFrsClient().getReleaseData(
+                    releaseId);
+            String title = releaseDO.getTitle();
+            artifact.setReleaseId(title);
+        }
+    }
 
     private static final Log    log                                  = LogFactory
                                                                              .getLog(TFReader.class);
@@ -108,31 +139,6 @@ public class TFReader extends AbstractReader<Connection> {
      */
     private String              resyncUserName;
 
-    public Connection connect(Document syncInfo) {
-        Connection connection = null;
-        String sourceSystemId = this.getSourceSystemId(syncInfo);
-        String sourceSystemKind = this.getSourceSystemKind(syncInfo);
-        String sourceRepositoryId = this.getSourceRepositoryId(syncInfo);
-        String sourceRepositoryKind = this.getSourceRepositoryKind(syncInfo);
-        try {
-            connection = connect(sourceSystemId, sourceSystemKind,
-                    sourceRepositoryId, sourceRepositoryKind, serverUrl,
-                    getUsername() + TFConnectionFactory.PARAM_DELIMITER
-                            + getPassword());
-        } catch (MaxConnectionsReachedException e) {
-            String cause = "Could not create connection to the TF system. Max connections reached for "
-                    + serverUrl;
-            log.error(cause, e);
-            throw new CCFRuntimeException(cause, e);
-        } catch (ConnectionException e) {
-            String cause = "Could not create connection to the TF system "
-                    + serverUrl;
-            log.error(cause, e);
-            throw new CCFRuntimeException(cause, e);
-        }
-        return connection;
-    }
-
     /**
      * Below property -"preserveBulkCommentOrder" preserves the bulk/multi
      * comments order received from TF; by default set to false sorted by
@@ -142,13 +148,46 @@ public class TFReader extends AbstractReader<Connection> {
      */
     private boolean             preserveBulkCommentOrder             = false;
 
+    public Connection connect(Document syncInfo) {
+        Connection connection = null;
+        String sourceSystemId = this.getSourceSystemId(syncInfo);
+        String sourceSystemKind = this.getSourceSystemKind(syncInfo);
+        String sourceRepositoryId = this.getSourceRepositoryId(syncInfo);
+        String sourceRepositoryKind = this.getSourceRepositoryKind(syncInfo);
+        try {
+            connection = connect(
+                    sourceSystemId,
+                    sourceSystemKind,
+                    sourceRepositoryId,
+                    sourceRepositoryKind,
+                    serverUrl,
+                    getUsername() + TFConnectionFactory.PARAM_DELIMITER
+                            + getPassword());
+        } catch (MaxConnectionsReachedException e) {
+            String cause = "Could not create connection to the TF system. Max connections reached for "
+                    + serverUrl;
+            log.error(
+                    cause,
+                    e);
+            throw new CCFRuntimeException(cause, e);
+        } catch (ConnectionException e) {
+            String cause = "Could not create connection to the TF system "
+                    + serverUrl;
+            log.error(
+                    cause,
+                    e);
+            throw new CCFRuntimeException(cause, e);
+        }
+        return connection;
+    }
+
     /**
      * Connects to the source TF system using the connectionInfo and
      * credentialInfo details.
-     * 
+     *
      * This method uses the ConnectionManager configured in the wiring file for
      * the TFReader
-     * 
+     *
      * @param systemId
      *            - The system id of the source TF system
      * @param systemKind
@@ -172,20 +211,25 @@ public class TFReader extends AbstractReader<Connection> {
         // log.info("Before calling the parent connect()");
         Connection connection = null;
         connection = getConnectionManager()
-                .getConnectionToUpdateOrExtractArtifact(systemId, systemKind,
-                        repositoryId, repositoryKind, connectionInfo,
+                .getConnectionToUpdateOrExtractArtifact(
+                        systemId,
+                        systemKind,
+                        repositoryId,
+                        repositoryKind,
+                        connectionInfo,
                         credentialInfo);
         return connection;
     }
 
     /**
      * Releases the connection to the ConnectionManager.
-     * 
+     *
      * @param connection
      *            - The connection to be released to the ConnectionManager
      */
     public void disconnect(Connection connection) {
-        getConnectionManager().releaseConnection(connection);
+        getConnectionManager().releaseConnection(
+                connection);
     }
 
     /**
@@ -196,7 +240,7 @@ public class TFReader extends AbstractReader<Connection> {
      * returned as a GenericArtifact object. If there are multiple attachments
      * each of them are encoded in a separate GenericArtifact object and
      * returned in the list.
-     * 
+     *
      * @see com.collabnet.ccf.core.AbstractReader#getArtifactAttachments(org.dom4j.Document,
      *      java.lang.String)
      */
@@ -221,19 +265,27 @@ public class TFReader extends AbstractReader<Connection> {
 
         Connection connection;
         try {
-            connection = connect(sourceSystemId, sourceSystemKind,
-                    sourceRepositoryId, sourceRepositoryKind, serverUrl,
+            connection = connect(
+                    sourceSystemId,
+                    sourceSystemKind,
+                    sourceRepositoryId,
+                    sourceRepositoryKind,
+                    serverUrl,
                     getUsername() + TFConnectionFactory.PARAM_DELIMITER
                             + getPassword());
         } catch (MaxConnectionsReachedException e) {
             String cause = "Could not create connection to the TF system. Max connections reached for "
                     + serverUrl;
-            log.error(cause, e);
+            log.error(
+                    cause,
+                    e);
             throw new CCFRuntimeException(cause, e);
         } catch (ConnectionException e) {
             String cause = "Could not create connection to the TF system "
                     + serverUrl;
-            log.error(cause, e);
+            log.error(
+                    cause,
+                    e);
             throw new CCFRuntimeException(cause, e);
         }
         List<String> artifactIds = new ArrayList<String>();
@@ -243,18 +295,25 @@ public class TFReader extends AbstractReader<Connection> {
             if (getIdentityMappingDatabaseReader() != null) {
                 lastModifiedDate = artifactLastModifiedDate;
             }
-            attachments = attachmentHandler.listAttachments(connection,
+            attachments = attachmentHandler.listAttachments(
+                    connection,
                     lastModifiedDate,
                     isIgnoreConnectorUserUpdates() ? getUsername() : "",
                     isIgnoreConnectorUserUpdates() ? getResyncUserName() : "",
-                    artifactIds, this.getMaxAttachmentSizePerArtifact(), this
-                            .isShipAttachmentsWithArtifact(), artifactData);
+                    artifactIds,
+                                    this.getMaxAttachmentSizePerArtifact(),
+                                    this.isShipAttachmentsWithArtifact(),
+                                    artifactData);
             for (GenericArtifact attachment : attachments) {
-                populateSrcAndDestForAttachment(syncInfo, attachment);
+                populateSrcAndDestForAttachment(
+                        syncInfo,
+                        attachment);
             }
         } catch (RemoteException e) {
             String cause = "During the attachment retrieval process from TF, an error occured";
-            log.error(cause, e);
+            log.error(
+                    cause,
+                    e);
             throw new CCFRuntimeException(cause, e);
         } finally {
             this.disconnect(connection);
@@ -267,7 +326,7 @@ public class TFReader extends AbstractReader<Connection> {
      * latest data encoded in an GenericArtifact object. The TFReader is capable
      * of retrieving the artifact change history. But this feature is turned off
      * as of now.
-     * 
+     *
      * @see com.collabnet.ccf.core.AbstractReader#getArtifactData(org.dom4j.Document,
      *      java.lang.String)
      */
@@ -284,19 +343,27 @@ public class TFReader extends AbstractReader<Connection> {
         String sourceSystemTimezone = this.getSourceSystemTimezone(syncInfo);
         Connection connection;
         try {
-            connection = connect(sourceSystemId, sourceSystemKind,
-                    sourceRepositoryId, sourceRepositoryKind, serverUrl,
+            connection = connect(
+                    sourceSystemId,
+                    sourceSystemKind,
+                    sourceRepositoryId,
+                    sourceRepositoryKind,
+                    serverUrl,
                     getUsername() + TFConnectionFactory.PARAM_DELIMITER
                             + getPassword());
         } catch (MaxConnectionsReachedException e) {
             String cause = "Could not create connection to the TF system. Max connections reached for "
                     + serverUrl;
-            log.error(cause, e);
+            log.error(
+                    cause,
+                    e);
             throw new CCFRuntimeException(cause, e);
         } catch (ConnectionException e) {
             String cause = "Could not create connection to the TF system "
                     + serverUrl;
-            log.error(cause, e);
+            log.error(
+                    cause,
+                    e);
             throw new CCFRuntimeException(cause, e);
         }
         GenericArtifact genericArtifact = null;
@@ -310,17 +377,20 @@ public class TFReader extends AbstractReader<Connection> {
                 TrackerFieldDO[] trackerFields = null;
                 HashMap<String, List<TrackerFieldDO>> fieldsMap = null;
                 if (this.isIncludeFieldMetaData()) {
-                    trackerFields = trackerHandler.getFlexFields(connection,
+                    trackerFields = trackerHandler.getFlexFields(
+                            connection,
                             sourceRepositoryId);
                     fieldsMap = TFAppHandler
                             .loadTrackerFieldsInHashMap(trackerFields);
                 }
                 ArtifactDO artifact = null;
                 if (isPre44SP1HF1System()) {
-                    artifact = trackerHandler.getTrackerItem(connection,
+                    artifact = trackerHandler.getTrackerItem(
+                            connection,
                             artifactId);
                 } else {
-                    artifact = trackerHandler.getTrackerItemFull(connection,
+                    artifact = trackerHandler.getTrackerItemFull(
+                            connection,
                             artifactId);
                 }
                 lastModifiedBy = artifact.getLastModifiedBy();
@@ -329,12 +399,14 @@ public class TFReader extends AbstractReader<Connection> {
                         && isIgnoreConnectorUserUpdates() && !isArtifactForced) {
                     if (creationDate.after(lastModifiedDate)) {
                         log.info(String
-                                .format("resync is necessary, despite the artifact %s last being updated by the connector user",
+                                .format(
+                                        "resync is necessary, despite the artifact %s last being updated by the connector user",
                                         artifactId));
                         isResync = true;
                     } else {
                         log.info(String
-                                .format("artifact %s is an ordinary connector update, ignore it.",
+                                .format(
+                                        "artifact %s is an ordinary connector update, ignore it.",
                                         artifactId));
                         isIgnore = true;
                     }
@@ -360,23 +432,32 @@ public class TFReader extends AbstractReader<Connection> {
                             isPreserveBulkCommentOrder());
                     if (this.shipReleaseHumanReadableName) {
                         reportedInRelaseHumanReadableName = getHumanReadableReleaseName(
-                                connection, artifact.getReportedReleaseId());
+                                connection,
+                                artifact.getReportedReleaseId());
                         resolvedInReleaseHumanReadableName = getHumanReadableReleaseName(
-                                connection, artifact.getResolvedReleaseId());
+                                connection,
+                                artifact.getResolvedReleaseId());
                     }
                     if (this.shipPlanningFolderHumanReadableName
                             && connection.supports53()) {
                         planningFolderHumanReadableName = getHumanReadablePlanningFolderName(
-                                connection, artifact.getPlanningFolderId());
+                                connection,
+                                artifact.getPlanningFolderId());
                     }
                     if (this.translateTechnicalReleaseIds) {
-                        convertReleaseIds(connection, artifact);
+                        convertReleaseIds(
+                                connection,
+                                artifact);
                     }
                 }
                 genericArtifact = TFToGenericArtifactConverter.convertArtifact(
-                        connection.supports53(), connection.supports54(),
-                        artifact, fieldsMap, lastModifiedDate,
-                        this.isIncludeFieldMetaData(), sourceSystemTimezone,
+                        connection.supports53(),
+                        connection.supports54(),
+                        artifact,
+                        fieldsMap,
+                        lastModifiedDate,
+                        this.isIncludeFieldMetaData(),
+                        sourceSystemTimezone,
                         reportedInRelaseHumanReadableName,
                         resolvedInReleaseHumanReadableName,
                         planningFolderHumanReadableName);
@@ -386,7 +467,8 @@ public class TFReader extends AbstractReader<Connection> {
                 // but only if we don't ignore this shipment anyway
                 if (!isIgnore && isRetrieveParentInfoForTrackerItems()) {
                     ArtifactDependencyRow[] parents = trackerHandler
-                            .getArtifactParentDependencies(connection,
+                            .getArtifactParentDependencies(
+                                    connection,
                                     artifactId);
                     if (parents.length == 0) {
                         // we do not have any parent, so maybe we set a planning folder as our parent
@@ -402,7 +484,8 @@ public class TFReader extends AbstractReader<Connection> {
                                 // we have to set the repository id as well => we have to retrieve the planning folder
                                 PlanningFolderDO planningFolder = connection
                                         .getPlanningClient()
-                                        .getPlanningFolderData(planningFolderId);
+                                        .getPlanningFolderData(
+                                                planningFolderId);
                                 genericArtifact
                                         .setDepParentSourceRepositoryId(planningFolder
                                                 .getProjectId()
@@ -415,7 +498,9 @@ public class TFReader extends AbstractReader<Connection> {
                         String parentId = parent.getOriginId();
                         genericArtifact.setDepParentSourceArtifactId(parentId);
                         ArtifactDO parentArtifact = trackerHandler
-                                .getTrackerItem(connection, parentId);
+                                .getTrackerItem(
+                                        connection,
+                                        parentId);
                         genericArtifact
                                 .setDepParentSourceRepositoryId(parentArtifact
                                         .getFolderId());
@@ -426,19 +511,22 @@ public class TFReader extends AbstractReader<Connection> {
 
                 // we retrieve planning folder data now
                 PlanningFolderDO planningFolder = connection
-                        .getPlanningClient().getPlanningFolderData(artifactId);
+                        .getPlanningClient().getPlanningFolderData(
+                                artifactId);
                 lastModifiedBy = planningFolder.getLastModifiedBy();
                 Date creationDate = planningFolder.getCreatedDate();
                 if (lastModifiedBy.equalsIgnoreCase(getUsername())
                         && isIgnoreConnectorUserUpdates()) {
                     if (creationDate.after(lastModifiedDate)) {
                         log.info(String
-                                .format("resync is necessary, despite the planning folder %s last being updated by the connector user",
+                                .format(
+                                        "resync is necessary, despite the planning folder %s last being updated by the connector user",
                                         artifactId));
                         isResync = true;
                     } else {
                         log.info(String
-                                .format("artifact %s is an ordinary connector update, ignore it.",
+                                .format(
+                                        "artifact %s is an ordinary connector update, ignore it.",
                                         artifactId));
                         isIgnore = true;
                     }
@@ -449,18 +537,24 @@ public class TFReader extends AbstractReader<Connection> {
                 if (!isIgnore && connection.supports54()) {
                     if (shipReleaseHumanReadableName) {
                         releaseHumandReadableName = getHumanReadableReleaseName(
-                                connection, planningFolder.getReleaseId());
+                                connection,
+                                planningFolder.getReleaseId());
                     }
                     if (isTranslateTechnicalReleaseIds()) {
-                        convertReleaseIds(connection, planningFolder);
+                        convertReleaseIds(
+                                connection,
+                                planningFolder);
                     }
                 }
 
                 genericArtifact = TFToGenericArtifactConverter
-                        .convertPlanningFolder(connection, planningFolder,
+                        .convertPlanningFolder(
+                                connection,
+                                planningFolder,
                                 lastModifiedDate,
                                 this.isIncludeFieldMetaData(),
-                                sourceSystemTimezone, releaseHumandReadableName);
+                                sourceSystemTimezone,
+                                releaseHumandReadableName);
 
                 // finally, we have to set some info about the parent,
                 // but only if we don't ignore this shipment anyway
@@ -489,7 +583,9 @@ public class TFReader extends AbstractReader<Connection> {
                         .setArtifactAction(GenericArtifact.ArtifactActionValue.RESYNC);
             }
 
-            populateSrcAndDest(syncInfo, genericArtifact);
+            populateSrcAndDest(
+                    syncInfo,
+                    genericArtifact);
 
             if (isArtifactForced) {
                 genericArtifact.setTransactionId(DUMMY_FORCE_TRANSACTIONID);
@@ -497,18 +593,31 @@ public class TFReader extends AbstractReader<Connection> {
 
         } catch (RemoteException e) {
             String cause = "During the artifact retrieval process from TF, an error occured";
-            log.error(cause, e);
+            log.error(
+                    cause,
+                    e);
             throw new CCFRuntimeException(cause, e);
         } finally {
             this.disconnect(connection);
         }
+        try {
+            log.debug(String.format(
+                    "Retrieved Teamforge %s XML:\n%s",
+                    genericArtifact.getSourceArtifactId(),
+                    GenericArtifactHelper.createGenericArtifactXMLDocument(
+                            genericArtifact).asXML()));
+        } catch (GenericArtifactParsingException e) {
+            log.warn("Could not parse XML for "
+                    + genericArtifact.getSourceArtifactId());
+        }
+
         return genericArtifact;
     }
 
     /**
      * This method is supposed to return all the artifacts that are associated
      * with this artifact. But not implemented yet. Returns an empty list.
-     * 
+     *
      * @see com.collabnet.ccf.core.AbstractReader#getArtifactDependencies(org.dom4j.Document,
      *      java.lang.String)
      */
@@ -526,9 +635,9 @@ public class TFReader extends AbstractReader<Connection> {
      * This method queries the particular tracker in the source TF system to
      * check if there are artifacts changed/created after the last read time
      * coming in, in the Sync Info object.
-     * 
+     *
      * If there are changed artifacts their ids are returned in a List.
-     * 
+     *
      * @see com.collabnet.ccf.core.AbstractReader#getChangedArtifacts(org.dom4j.Document)
      */
     @Override
@@ -541,8 +650,9 @@ public class TFReader extends AbstractReader<Connection> {
         try {
             version = Integer.parseInt(lastSynchronizedVersion);
         } catch (NumberFormatException e) {
-            log.warn("Version string is not a number "
-                    + lastSynchronizedVersion, e);
+            log.warn(
+                    "Version string is not a number " + lastSynchronizedVersion,
+                    e);
         }
         Connection connection = connect(syncInfo);
         try {
@@ -556,11 +666,16 @@ public class TFReader extends AbstractReader<Connection> {
                 List<ArtifactDetailRow> artifactRows = null;
                 try {
                     artifactRows = trackerHandler.getChangedTrackerItems(
-                            connection, sourceRepositoryId, lastModifiedDate,
-                            lastSynchronizedArtifactId, version);
+                            connection,
+                            sourceRepositoryId,
+                            lastModifiedDate,
+                            lastSynchronizedArtifactId,
+                            version);
                 } catch (RemoteException e) {
                     String cause = "During the changed artifacts retrieval process from TF, an exception occured";
-                    log.error(cause, e);
+                    log.error(
+                            cause,
+                            e);
                     throw new CCFRuntimeException(cause, e);
                 }
                 if (artifactRows != null) {
@@ -586,13 +701,18 @@ public class TFReader extends AbstractReader<Connection> {
                     List<PlanningFolderDO> artifactRows = null;
                     try {
                         artifactRows = trackerHandler
-                                .getChangedPlanningFolders(connection,
-                                        sourceRepositoryId, lastModifiedDate,
-                                        lastSynchronizedArtifactId, version,
+                                .getChangedPlanningFolders(
+                                        connection,
+                                        sourceRepositoryId,
+                                        lastModifiedDate,
+                                        lastSynchronizedArtifactId,
+                                        version,
                                         project);
                     } catch (RemoteException e) {
                         String cause = "During the changed planning folder retrieval process from TF, an exception occured";
-                        log.error(cause, e);
+                        log.error(
+                                cause,
+                                e);
                         throw new CCFRuntimeException(cause, e);
                     }
                     if (artifactRows != null) {
@@ -629,7 +749,8 @@ public class TFReader extends AbstractReader<Connection> {
                 try {
                     for (String artifactId : artifactsToForce) {
                         ArtifactDO artifactData = trackerHandler
-                                .getChangedArtifactDataToForce(connection,
+                                .getChangedArtifactDataToForce(
+                                        connection,
                                         artifactId);
                         if (artifactData != null
                                 && artifactData.getFolderId().equals(
@@ -647,7 +768,9 @@ public class TFReader extends AbstractReader<Connection> {
                     }
                 } catch (RemoteException e) {
                     String cause = "During the changed artifacts retrieval process from TF, an exception occured";
-                    log.error(cause, e);
+                    log.error(
+                            cause,
+                            e);
                     throw new CCFRuntimeException(cause, e);
                 }
             } else if (TFConnectionFactory
@@ -663,7 +786,8 @@ public class TFReader extends AbstractReader<Connection> {
                         for (String artifactId : artifactsToForce) {
                             PlanningFolderDO planningFolder = trackerHandler
                                     .getChangedPlanningFolderToForce(
-                                            connection, artifactId);
+                                            connection,
+                                            artifactId);
                             if (planningFolder != null
                                     && planningFolder.getProjectId().equals(
                                             projectId)) {
@@ -681,7 +805,9 @@ public class TFReader extends AbstractReader<Connection> {
                         }
                     } catch (RemoteException e) {
                         String cause = "During the changed planning folder retrieval process from TF, an exception occured";
-                        log.error(cause, e);
+                        log.error(
+                                cause,
+                                e);
                         throw new CCFRuntimeException(cause, e);
                     }
                 }
@@ -695,10 +821,45 @@ public class TFReader extends AbstractReader<Connection> {
         return artifactStates;
     }
 
+    private String getHumanReadablePlanningFolderName(Connection connection,
+            String planningFolderId) throws RemoteException {
+        if (!StringUtils.isEmpty(planningFolderId)) {
+            PlanningFolderDO pf = connection.getPlanningClient()
+                    .getPlanningFolderData(
+                            planningFolderId);
+            if (StringUtils.isEmpty(pf.getParentFolderId())
+                    || pf.getParentFolderId().startsWith(
+                            "PlanningApp")) {
+                return pf.getTitle();
+            } else {
+                return getHumanReadablePlanningFolderName(
+                        connection,
+                        pf.getParentFolderId())
+                        + getPlanningFolderSeparatorString() + pf.getTitle();
+            }
+        } else {
+            return "";
+        }
+    }
+
+    private String getHumanReadableReleaseName(Connection connection,
+            String releaseId) throws RemoteException {
+        if (!StringUtils.isEmpty(releaseId)) {
+            ReleaseDO releaseDO = connection.getFrsClient().getReleaseData(
+                    releaseId);
+            String title = releaseDO.getTitle();
+            String packageTitle = connection.getFrsClient().getPackageData(
+                    releaseDO.getParentFolderId()).getTitle();
+            return packageTitle + getPackageReleaseSeparatorString() + title;
+        } else {
+            return "";
+        }
+    }
+
     /**
      * Returns the separator used to compute the human readable name of releases
      * The default value is " > "
-     * 
+     *
      * @return
      */
     public String getPackageReleaseSeparatorString() {
@@ -706,9 +867,18 @@ public class TFReader extends AbstractReader<Connection> {
     }
 
     /**
+     * Gets the mandatory password that belongs to the username
+     *
+     * @return the password
+     */
+    private String getPassword() {
+        return password;
+    }
+
+    /**
      * Returns the separator used to compute the human readable name of planning
      * folders The default value is " > "
-     * 
+     *
      * @return
      */
     public String getPlanningFolderSeparatorString() {
@@ -716,9 +886,24 @@ public class TFReader extends AbstractReader<Connection> {
     }
 
     /**
+     * Gets the optional resync username The resync user name is used to login
+     * into the TF/CSFE instance whenever an artifact should be created. This
+     * user has to differ from the ordinary user used to log in in order to
+     * force initial resyncs with the source system once a new artifact has been
+     * created. This property can also be set for the reader component in order
+     * to be able to differentiate between artifacts created by ordinary users
+     * and artifacts to be resynced.
+     *
+     * @return the resyncUserName
+     */
+    private String getResyncUserName() {
+        return resyncUserName;
+    }
+
+    /**
      * Returns the server URL of the source CSFE/TF system that is configured in
      * the wiring file.
-     * 
+     *
      * @return
      */
     public String getServerUrl() {
@@ -730,7 +915,7 @@ public class TFReader extends AbstractReader<Connection> {
      * associated with tracker items are shipped in separate fields of the
      * generic artifact produced For performance reason, the default value is
      * false.
-     * 
+     *
      * @param shipPlanningFolderHumanReadableName
      */
     public boolean getShipPlanningFolderHumanReadableName() {
@@ -742,7 +927,7 @@ public class TFReader extends AbstractReader<Connection> {
      * TF/CSFE instance whenever an artifact should be updated or extracted.
      * This user has to differ from the resync user in order to force initial
      * resyncs with the source system once a new artifact has been created.
-     * 
+     *
      * @return the userName
      */
     public String getUsername() {
@@ -762,16 +947,21 @@ public class TFReader extends AbstractReader<Connection> {
             return true;
         } else if (cause instanceof AxisFault) {
             QName faultCode = ((AxisFault) cause).getFaultCode();
-            if (faultCode.getLocalPart().equals("InvalidSessionFault")
+            if (faultCode.getLocalPart().equals(
+                    "InvalidSessionFault")
                     && connectionManager.isEnableReloginAfterSessionTimeout()) {
                 return true;
             }
         } else if (cause instanceof RemoteException) {
             Throwable innerCause = cause.getCause();
-            return handleException(innerCause, connectionManager);
+            return handleException(
+                    innerCause,
+                    connectionManager);
         } else if (cause instanceof CCFRuntimeException) {
             Throwable innerCause = cause.getCause();
-            return handleException(innerCause, connectionManager);
+            return handleException(
+                    innerCause,
+                    connectionManager);
         }
         return false;
     }
@@ -781,7 +971,7 @@ public class TFReader extends AbstractReader<Connection> {
      * should be ignored This is the default behavior to avoid infinite update
      * loops. However, in artifact export scenarios, where all artifacts should
      * be extracted, this property should is set to false
-     * 
+     *
      * @return the ignoreConnectorUserUpdates whether to ignore artifacts that
      *         have been created or lastly modified by the connector user
      */
@@ -792,7 +982,7 @@ public class TFReader extends AbstractReader<Connection> {
     /**
      * Returns whether no web service call introduced in SFEE 4.4 SP1 HF1 should
      * be used
-     * 
+     *
      * @return true if no web services introduced in SFEE 4.4 SP1 HF1 should be
      *         used
      */
@@ -807,7 +997,7 @@ public class TFReader extends AbstractReader<Connection> {
     /**
      * Returns whether parent info for planning folders should be retrieved
      * (default set to false)
-     * 
+     *
      * @return @return true if parent info should be retrieved, false if not
      */
     public boolean isRetrieveParentInfoForPlanningFolders() {
@@ -817,7 +1007,7 @@ public class TFReader extends AbstractReader<Connection> {
     /**
      * Returns whether parent info for tracker items should be retrieved
      * (default set to false)
-     * 
+     *
      * @return true if parent info should be retrieved, false if not
      */
     public boolean isRetrieveParentInfoForTrackerItems() {
@@ -838,261 +1028,10 @@ public class TFReader extends AbstractReader<Connection> {
         return translateTechnicalReleaseIds;
     }
 
-    public void reset(Object context) {
-    }
-
-    public void setAttachmentHandler(TFAttachmentHandler attachmentHandler) {
-        this.attachmentHandler = attachmentHandler;
-    }
-
-    /**
-     * Sets whether updated and created artifacts from the connector user should
-     * be ignored This is the default behavior to avoid infinite update loops.
-     * However, in artifact export scenarios, where all artifacts should be
-     * extracted, this property should be set to false
-     * 
-     * @param ignoreConnectorUserUpdates
-     *            whether to ignore artifacts that have been created or lastly
-     *            modified by the connector user
-     */
-    public void setIgnoreConnectorUserUpdates(boolean ignoreConnectorUserUpdates) {
-        this.ignoreConnectorUserUpdates = ignoreConnectorUserUpdates;
-    }
-
-    /**
-     * Determines the separator used to compute the human readable name of
-     * releases The default value is " > "
-     * 
-     * @param planningFolderSeparatorString
-     */
-    public void setPackageReleaseSeparatorString(
-            String packageReleaseSeparatorString) {
-        this.packageReleaseSeparatorString = packageReleaseSeparatorString;
-    }
-
-    /**
-     * Sets the password that belongs to the username
-     * 
-     * @param password
-     *            the password to set
-     */
-    public void setPassword(String password) {
-        this.password = Obfuscator.deObfuscatePassword(password);
-    }
-
-    /**
-     * Determines the separator used to compute the human readable name of
-     * planning folders The default value is " > "
-     * 
-     * @param planningFolderSeparatorString
-     */
-    public void setPlanningFolderSeparatorString(
-            String planningFolderSeparatorString) {
-        this.planningFolderSeparatorString = planningFolderSeparatorString;
-    }
-
-    /**
-     * Sets whether no web service call introduced in SFEE 4.4 SP1 HF1 should be
-     * used
-     * 
-     * @param pre44SP1HF1System
-     *            true if no web services introduced in SFEE 4.4 SP1 HF1 should
-     *            be used
-     */
-    public void setPre44SP1HF1System(boolean pre44SP1HF1System) {
-        this.pre44SP1HF1System = pre44SP1HF1System;
-    }
-
-    public void setPreserveBulkCommentOrder(boolean preserveBulkCommentOrder) {
-        this.preserveBulkCommentOrder = preserveBulkCommentOrder;
-    }
-
-    /**
-     * Sets the optional resync username
-     * 
-     * The resync user name is used to login into the TF/CSFE instance whenever
-     * an artifact should be created. This user has to differ from the ordinary
-     * user used to log in in order to force initial resyncs with the source
-     * system once a new artifact has been created. This property can also be
-     * set for the reader component in order to be able to differentiate between
-     * artifacts created by ordinary users and artifacts to be resynced.
-     * 
-     * @param resyncUserName
-     *            the resyncUserName to set
-     */
-    public void setResyncUserName(String resyncUserName) {
-        this.resyncUserName = resyncUserName;
-    }
-
-    /**
-     * Defines whether parent info for planning folders should be retrieved
-     * (default set to false)
-     * 
-     * @param retrieveParentInfoForPlanningFolders
-     */
-    public void setRetrieveParentInfoForPlanningFolders(
-            boolean retrieveParentInfoForPlanningFolders) {
-        this.retrieveParentInfoForPlanningFolders = retrieveParentInfoForPlanningFolders;
-    }
-
-    /**
-     * Defines whether parent info for tracker items should be retrieved
-     * (default set to false)
-     * 
-     * @param retrieveParentInfoForTrackerItems
-     */
-    public void setRetrieveParentInfoForTrackerItems(
-            boolean retrieveParentInfoForTrackerItems) {
-        this.retrieveParentInfoForTrackerItems = retrieveParentInfoForTrackerItems;
-    }
-
-    /**
-     * Sets the source CSFE/TF system's SOAP server URL.
-     * 
-     * @param serverUrl
-     *            - the URL of the source TF system.
-     */
-    public void setServerUrl(String serverUrl) {
-        this.serverUrl = serverUrl;
-    }
-
-    /**
-     * Determines whether the human readable display names of planning folders
-     * associated with tracker items should be shipped in separate fields of the
-     * generic artifact produced For performance reason, the default value is
-     * false.
-     * 
-     * @param shipPlanningFolderHumanReadableName
-     */
-    public void setShipPlanningFolderHumanReadableName(
-            boolean shipPlanningFolderHumanReadableName) {
-        this.shipPlanningFolderHumanReadableName = shipPlanningFolderHumanReadableName;
-    }
-
-    /**
-     * Determines whether the human readable display names of releases
-     * associated with tracker items or planning folders should be shipped in
-     * separate fields of the generic artifact produced For performance reason,
-     * the default value is false.
-     * 
-     * @param shipReleaseHumanReadableName
-     */
-    public void setShipReleaseHumanReadableName(
-            boolean shipReleaseHumanReadableName) {
-        this.shipReleaseHumanReadableName = shipReleaseHumanReadableName;
-    }
-
-    public void setTranslateTechnicalReleaseIds(
-            boolean translateTechnicalReleaseIds) {
-        this.translateTechnicalReleaseIds = translateTechnicalReleaseIds;
-    }
-
-    /**
-     * Sets the mandatory username
-     * 
-     * The user name is used to login into the TF/CSFE instance whenever an
-     * artifact should be updated or extracted. This user has to differ from the
-     * resync user in order to force initial resyncs with the source system once
-     * a new artifact has been created.
-     * 
-     * @param userName
-     *            the username to set
-     */
-    public void setUsername(String username) {
-        this.username = username;
-    }
-
-    @SuppressWarnings("unchecked")
-    @Override
-    public void validate(List exceptions) {
-        super.validate(exceptions);
-
-        /*
-         * if (getResyncUserName() == null) { log .warn(
-         * "resyncUserName-property has not been set, so that initial resyncs after artifact creation are not possible."
-         * ); }
-         */
-
-        if (StringUtils.isEmpty(getServerUrl())) {
-            exceptions.add(new ValidationException(
-                    "serverUrl-property not set", this));
-        }
-        if (StringUtils.isEmpty(getUsername())) {
-            exceptions.add(new ValidationException("username-property not set",
-                    this));
-        }
-        if (getPassword() == null) {
-            exceptions.add(new ValidationException("password-property not set",
-                    this));
-        }
-        if (exceptions.size() == 0) {
-            trackerHandler = new TFTrackerHandler(getServerUrl(),
-                    getConnectionManager());
-            attachmentHandler = new TFAttachmentHandler(getServerUrl(),
-                    getConnectionManager());
-        }
-    }
-
-    private String getHumanReadablePlanningFolderName(Connection connection,
-            String planningFolderId) throws RemoteException {
-        if (!StringUtils.isEmpty(planningFolderId)) {
-            PlanningFolderDO pf = connection.getPlanningClient()
-                    .getPlanningFolderData(planningFolderId);
-            if (StringUtils.isEmpty(pf.getParentFolderId())
-                    || pf.getParentFolderId().startsWith("PlanningApp")) {
-                return pf.getTitle();
-            } else {
-                return getHumanReadablePlanningFolderName(connection,
-                        pf.getParentFolderId())
-                        + getPlanningFolderSeparatorString() + pf.getTitle();
-            }
-        } else {
-            return "";
-        }
-    }
-
-    private String getHumanReadableReleaseName(Connection connection,
-            String releaseId) throws RemoteException {
-        if (!StringUtils.isEmpty(releaseId)) {
-            ReleaseDO releaseDO = connection.getFrsClient().getReleaseData(
-                    releaseId);
-            String title = releaseDO.getTitle();
-            String packageTitle = connection.getFrsClient()
-                    .getPackageData(releaseDO.getParentFolderId()).getTitle();
-            return packageTitle + getPackageReleaseSeparatorString() + title;
-        } else {
-            return "";
-        }
-    }
-
-    /**
-     * Gets the mandatory password that belongs to the username
-     * 
-     * @return the password
-     */
-    private String getPassword() {
-        return password;
-    }
-
-    /**
-     * Gets the optional resync username The resync user name is used to login
-     * into the TF/CSFE instance whenever an artifact should be created. This
-     * user has to differ from the ordinary user used to log in in order to
-     * force initial resyncs with the source system once a new artifact has been
-     * created. This property can also be set for the reader component in order
-     * to be able to differentiate between artifacts created by ordinary users
-     * and artifacts to be resynced.
-     * 
-     * @return the resyncUserName
-     */
-    private String getResyncUserName() {
-        return resyncUserName;
-    }
-
     /**
      * Populates the source and destination attributes for this GenericArtifact
      * object from the Sync Info database document.
-     * 
+     *
      * @param syncInfo
      * @param ga
      */
@@ -1138,7 +1077,7 @@ public class TFReader extends AbstractReader<Connection> {
     /**
      * Populates the source and destination attributes for this GenericArtifact
      * object from the Sync Info database document.
-     * 
+     *
      * @param syncInfo
      * @param ga
      */
@@ -1172,32 +1111,198 @@ public class TFReader extends AbstractReader<Connection> {
         ga.setDepParentTargetRepositoryKind(targetRepositoryKind);
     }
 
-    public static void convertReleaseIds(Connection connection,
-            ArtifactDO artifact) throws RemoteException {
-        String reportedReleaseId = artifact.getReportedReleaseId();
-        String resolvedReleaseId = artifact.getResolvedReleaseId();
-        if (!StringUtils.isEmpty(reportedReleaseId)) {
-            ReleaseDO releaseDO = connection.getFrsClient().getReleaseData(
-                    reportedReleaseId);
-            String title = releaseDO.getTitle();
-            artifact.setReportedReleaseId(title);
-        }
-        if (!StringUtils.isEmpty(resolvedReleaseId)) {
-            ReleaseDO releaseDO = connection.getFrsClient().getReleaseData(
-                    resolvedReleaseId);
-            String title = releaseDO.getTitle();
-            artifact.setResolvedReleaseId(title);
-        }
+    public void reset(Object context) {
     }
 
-    public static void convertReleaseIds(Connection connection,
-            PlanningFolderDO artifact) throws RemoteException {
-        String releaseId = artifact.getReleaseId();
-        if (!StringUtils.isEmpty(releaseId)) {
-            ReleaseDO releaseDO = connection.getFrsClient().getReleaseData(
-                    releaseId);
-            String title = releaseDO.getTitle();
-            artifact.setReleaseId(title);
+    public void setAttachmentHandler(TFAttachmentHandler attachmentHandler) {
+        this.attachmentHandler = attachmentHandler;
+    }
+
+    /**
+     * Sets whether updated and created artifacts from the connector user should
+     * be ignored This is the default behavior to avoid infinite update loops.
+     * However, in artifact export scenarios, where all artifacts should be
+     * extracted, this property should be set to false
+     *
+     * @param ignoreConnectorUserUpdates
+     *            whether to ignore artifacts that have been created or lastly
+     *            modified by the connector user
+     */
+    public void setIgnoreConnectorUserUpdates(boolean ignoreConnectorUserUpdates) {
+        this.ignoreConnectorUserUpdates = ignoreConnectorUserUpdates;
+    }
+
+    /**
+     * Determines the separator used to compute the human readable name of
+     * releases The default value is " > "
+     *
+     * @param planningFolderSeparatorString
+     */
+    public void setPackageReleaseSeparatorString(
+            String packageReleaseSeparatorString) {
+        this.packageReleaseSeparatorString = packageReleaseSeparatorString;
+    }
+
+    /**
+     * Sets the password that belongs to the username
+     *
+     * @param password
+     *            the password to set
+     */
+    public void setPassword(String password) {
+        this.password = Obfuscator.deObfuscatePassword(password);
+    }
+
+    /**
+     * Determines the separator used to compute the human readable name of
+     * planning folders The default value is " > "
+     *
+     * @param planningFolderSeparatorString
+     */
+    public void setPlanningFolderSeparatorString(
+            String planningFolderSeparatorString) {
+        this.planningFolderSeparatorString = planningFolderSeparatorString;
+    }
+
+    /**
+     * Sets whether no web service call introduced in SFEE 4.4 SP1 HF1 should be
+     * used
+     *
+     * @param pre44SP1HF1System
+     *            true if no web services introduced in SFEE 4.4 SP1 HF1 should
+     *            be used
+     */
+    public void setPre44SP1HF1System(boolean pre44SP1HF1System) {
+        this.pre44SP1HF1System = pre44SP1HF1System;
+    }
+
+    public void setPreserveBulkCommentOrder(boolean preserveBulkCommentOrder) {
+        this.preserveBulkCommentOrder = preserveBulkCommentOrder;
+    }
+
+    /**
+     * Sets the optional resync username
+     *
+     * The resync user name is used to login into the TF/CSFE instance whenever
+     * an artifact should be created. This user has to differ from the ordinary
+     * user used to log in in order to force initial resyncs with the source
+     * system once a new artifact has been created. This property can also be
+     * set for the reader component in order to be able to differentiate between
+     * artifacts created by ordinary users and artifacts to be resynced.
+     *
+     * @param resyncUserName
+     *            the resyncUserName to set
+     */
+    public void setResyncUserName(String resyncUserName) {
+        this.resyncUserName = resyncUserName;
+    }
+
+    /**
+     * Defines whether parent info for planning folders should be retrieved
+     * (default set to false)
+     *
+     * @param retrieveParentInfoForPlanningFolders
+     */
+    public void setRetrieveParentInfoForPlanningFolders(
+            boolean retrieveParentInfoForPlanningFolders) {
+        this.retrieveParentInfoForPlanningFolders = retrieveParentInfoForPlanningFolders;
+    }
+
+    /**
+     * Defines whether parent info for tracker items should be retrieved
+     * (default set to false)
+     *
+     * @param retrieveParentInfoForTrackerItems
+     */
+    public void setRetrieveParentInfoForTrackerItems(
+            boolean retrieveParentInfoForTrackerItems) {
+        this.retrieveParentInfoForTrackerItems = retrieveParentInfoForTrackerItems;
+    }
+
+    /**
+     * Sets the source CSFE/TF system's SOAP server URL.
+     *
+     * @param serverUrl
+     *            - the URL of the source TF system.
+     */
+    public void setServerUrl(String serverUrl) {
+        this.serverUrl = serverUrl;
+    }
+
+    /**
+     * Determines whether the human readable display names of planning folders
+     * associated with tracker items should be shipped in separate fields of the
+     * generic artifact produced For performance reason, the default value is
+     * false.
+     *
+     * @param shipPlanningFolderHumanReadableName
+     */
+    public void setShipPlanningFolderHumanReadableName(
+            boolean shipPlanningFolderHumanReadableName) {
+        this.shipPlanningFolderHumanReadableName = shipPlanningFolderHumanReadableName;
+    }
+
+    /**
+     * Determines whether the human readable display names of releases
+     * associated with tracker items or planning folders should be shipped in
+     * separate fields of the generic artifact produced For performance reason,
+     * the default value is false.
+     *
+     * @param shipReleaseHumanReadableName
+     */
+    public void setShipReleaseHumanReadableName(
+            boolean shipReleaseHumanReadableName) {
+        this.shipReleaseHumanReadableName = shipReleaseHumanReadableName;
+    }
+
+    public void setTranslateTechnicalReleaseIds(
+            boolean translateTechnicalReleaseIds) {
+        this.translateTechnicalReleaseIds = translateTechnicalReleaseIds;
+    }
+
+    /**
+     * Sets the mandatory username
+     *
+     * The user name is used to login into the TF/CSFE instance whenever an
+     * artifact should be updated or extracted. This user has to differ from the
+     * resync user in order to force initial resyncs with the source system once
+     * a new artifact has been created.
+     *
+     * @param userName
+     *            the username to set
+     */
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public void validate(List exceptions) {
+        super.validate(exceptions);
+
+        /*
+         * if (getResyncUserName() == null) { log .warn(
+         * "resyncUserName-property has not been set, so that initial resyncs after artifact creation are not possible."
+         * ); }
+         */
+
+        if (StringUtils.isEmpty(getServerUrl())) {
+            exceptions.add(new ValidationException(
+                    "serverUrl-property not set", this));
+        }
+        if (StringUtils.isEmpty(getUsername())) {
+            exceptions.add(new ValidationException("username-property not set",
+                    this));
+        }
+        if (getPassword() == null) {
+            exceptions.add(new ValidationException("password-property not set",
+                    this));
+        }
+        if (exceptions.size() == 0) {
+            trackerHandler = new TFTrackerHandler(getServerUrl(),
+                    getConnectionManager());
+            attachmentHandler = new TFAttachmentHandler(getServerUrl(),
+                    getConnectionManager());
         }
     }
 }

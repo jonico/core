@@ -11,7 +11,7 @@ public class ISTConnectionFactory implements ConnectionFactory<ISTConnection> {
 
     public static final String PARAM_DELIMITER           = "::";
     private static final Log   log                       = LogFactory
-            .getLog(ISTConnectionFactory.class);
+                                                                 .getLog(ISTConnectionFactory.class);
     public static final String CONNECTION_INFO_DELIMITER = "::";
 
     @Override
@@ -28,11 +28,10 @@ public class ISTConnectionFactory implements ConnectionFactory<ISTConnection> {
             String repositoryId, String repositoryKind, String connectionInfo,
             String credentialInfo,
             ConnectionManager<ISTConnection> connectionManager)
-                    throws ConnectionException {
+            throws ConnectionException {
 
-        log.debug("creating connection for: " + systemId + "-" + systemKind
-                + "-" + repositoryId + "-" + repositoryKind + "-"
-                + connectionInfo + "-" + credentialInfo);
+        log.debug("creating new connection for: " + systemId + "-" + systemKind
+                + "-" + repositoryId + "-" + repositoryKind);
 
         return new ISTConnection(credentialInfo, connectionInfo);
     }

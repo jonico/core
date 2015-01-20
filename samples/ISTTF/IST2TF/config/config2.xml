@@ -266,23 +266,28 @@
 		<property name="serverUrl" value="${ccf.participant.ist.server}" />
 		<property name="username" value="${ccf.participant.ist.username}" />
 		<property name="password" value="${ccf.participant.ist.password}" />
+
+		<!-- TODO allow to set extended logging in CCF UI -->
+		<property name="useExtendedHashLogging" value="true" />
+
 		<property name="connectionManager" ref="ISTConnectionManager"></property>
 		<property name="sleepInterval" value="${ccf.direction.ist.sleepinterval}"></property>
 		<property name="maxAttachmentSizePerArtifact" value="${ccf.direction.ist.max.attachmentsize}" />
+
 		<!-- Let this restart every 6 hours -->
 		<property name="autoRestartPeriod" value="${ccf.direction.autorestartperiod}" />
+		
 		<property name="shipAttachments" value="true" />		
-		<!-- <property name="serializeArtifactShipments" value="true" /> -->
-		<!-- <property name="triggerMetaDataResynchronizationAfterPBIShipment" value="false" /> -->
 		<property name="ignoreConnectorUserUpdates" value="true" />
+		
 		<!-- This plugs in the polling hospital -->
 		<property name="hospitalDatabaseReader" ref="HospitalDatabaseExtractor" />
 		<property name="nameOfEntityService" value="TFEntityService" />
 		
-		<!-- Just temporary added config values due to missing polling capabilities -->
-		<!--<property name="bulkImport" value="true" />
-		<property name="shutdownCCFAfterInitialSync" value="true"/>
-	--></bean>
+		<!-- we'll need Identity Mapping Read Access -->
+		<property name="identityMapping" ref="IndentityMappingDatabaseReaderIST2TF" />
+		
+	</bean>
 	<bean id="ISTConnectionManager" class="com.collabnet.ccf.core.eis.connection.ConnectionManager">
 		<!-- Please set the number of connections to the number of project mappings you have -->
 		<property name="maxConnectionsPerPool" value="10000"></property>

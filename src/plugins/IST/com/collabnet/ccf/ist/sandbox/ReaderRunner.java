@@ -15,7 +15,6 @@ import javax.xml.datatype.XMLGregorianCalendar;
 import javax.xml.namespace.QName;
 import javax.xml.ws.BindingProvider;
 
-import com.collabnet.ccf.ist.ISTCustomFieldType;
 import com.collabnet.ccf.ist.ISTMetaCache;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.ArrayOfRemoteArtifactCustomProperty;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.ArrayOfRemoteComment;
@@ -24,7 +23,6 @@ import com.inflectra.spirateam.mylyn.core.internal.services.soap.ArrayOfRemoteDo
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.ArrayOfRemoteDocumentVersion;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.ArrayOfRemoteFilter;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.ArrayOfRemoteIncident;
-import com.inflectra.spirateam.mylyn.core.internal.services.soap.ArrayOfint;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.DateRange;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExport;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportConnectionAuthenticateServiceFaultMessageFaultFaultMessage;
@@ -32,10 +30,6 @@ import com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportCo
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportCustomPropertyRetrieveCustomListByIdServiceFaultMessageFaultFaultMessage;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportCustomPropertyRetrieveCustomListsServiceFaultMessageFaultFaultMessage;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportDocumentRetrieveForArtifactServiceFaultMessageFaultFaultMessage;
-import com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportIncidentAddCommentsServiceFaultMessageFaultFaultMessage;
-import com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportIncidentCreateServiceFaultMessageFaultFaultMessage;
-import com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportIncidentCreateValidationFaultMessageFaultFaultMessage;
-import com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportIncidentRetrieveByIdServiceFaultMessageFaultFaultMessage;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportIncidentRetrieveCommentsServiceFaultMessageFaultFaultMessage;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportIncidentRetrieveServiceFaultMessageFaultFaultMessage;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportUserRetrieveByUserNameServiceFaultMessageFaultFaultMessage;
@@ -45,7 +39,6 @@ import com.inflectra.spirateam.mylyn.core.internal.services.soap.RemoteArtifactC
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.RemoteComment;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.RemoteCustomList;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.RemoteCustomListValue;
-import com.inflectra.spirateam.mylyn.core.internal.services.soap.RemoteCustomProperty;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.RemoteDocument;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.RemoteDocumentVersion;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.RemoteFilter;
@@ -53,189 +46,7 @@ import com.inflectra.spirateam.mylyn.core.internal.services.soap.RemoteIncident;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.RemoteSort;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.RemoteUser;
 
-public class Runner {
-
-    private static void addRandomComments(LoremIpsum li, RemoteIncident i) {
-        // add comments every now and then
-        if (li.getTruth()) {
-            ArrayOfRemoteComment comments = objectFactory
-                    .createArrayOfRemoteComment();
-            for (int t = 0; t < 5; t++) {
-                if (li.getTruth()) {
-                    RemoteComment comment = objectFactory.createRemoteComment();
-                    // RemoteComment comment = new RemoteComment();
-                    comment.setArtifactId(i.getIncidentId().getValue());
-                    comment.setText(ISTMetaCache.CreateJAXBString(
-                            "Text",
-                            li.getLine()));
-                    comment.setCreationDate(ISTMetaCache
-                            .CreateJAXBXMLGregorianCalendar(
-                                    "CreationDate",
-                                    toXMLGregorianCalendar(new Date())));
-
-                    if (comments.getRemoteComment().add(
-                            comment))
-                        System.out.println("    added comment to #"
-                                + comment.getArtifactId());
-                    else
-                        System.out.println("    failed to add comment to #"
-                                + i.getIncidentId().getValue());
-                }
-            }
-
-            System.out.println("==== list of comments intended for incident #"
-                    + i.getIncidentId().getValue());
-
-            for (RemoteComment rc : comments.getRemoteComment()) {
-                System.out
-                        .printf(
-                                "  on Incident #%d, created on %s, %d characters: %s\n",
-                                rc.getArtifactId(),
-                                df.format(toDate(rc.getCreationDate()
-                                        .getValue())),
-                                rc.getText().getValue().length(),
-                                rc.getText().getValue());
-            }
-            try {
-                soap.incidentAddComments(comments);
-            } catch (IImportExportIncidentAddCommentsServiceFaultMessageFaultFaultMessage e) {
-                System.out.println(e.getMessage());
-                e.printStackTrace();
-            }
-
-        }
-    }
-
-    private static void createIncidents(int howmany) {
-        for (int i = 1; i <= howmany; i++) {
-            LoremIpsum li = new LoremIpsum(15);
-
-            RemoteIncident inc = createRandomIncident(li);
-            printIncInfo(inc);
-        }
-
-    }
-
-    /*
-     * creates a random incident
-     */
-    private static RemoteIncident createRandomIncident(LoremIpsum li) {
-
-        RemoteIncident ri = objectFactory.createRemoteIncident();
-
-        //        ri.setIncidentTypeId(objectFactory
-        //                .createRemoteIncidentIncidentTypeId(113));
-        //
-        //        ri.setIncidentStatusId(objectFactory
-        //                .createRemoteIncidentIncidentStatusId(113));
-        //
-        ri.setName(objectFactory.createRemoteIncidentName(li.getShortLine()));
-        //
-        ri.setDescription(objectFactory.createRemoteIncidentDescription(li
-                .getLoremIpsum()));
-        //
-        //        Date when = li.getDate();
-        //
-        //        ri.setCreationDate(objectFactory
-        //                .createRemoteIncidentCreationDate(toXMLGregorianCalendar(when)));
-
-        // Incident Type
-        //        ri.setIncidentTypeName(ISTMetaData.toJXString(
-        //                "IncidentTypeName",
-        //                li.getTruth() ? "Bug" : "Change Request"));
-
-        // Priority
-        ri.setPriorityName(ISTMetaCache.toJXString(
-                "PriorityName",
-                "3 - Medium"));
-
-        //            int prioId = meta.getPriorityKeyForValue("3 - Medium");
-        //            int typeId = meta.getIncidentTypeKeyForValue(ri
-        //                    .getIncidentTypeName().getValue());
-        //
-        //            ri.setPriorityId(ISTMetaData.toJXInt(
-        //                    "PriorityId",
-        //                    prioId));
-        //            ri.setIncidentTypeId(ISTMetaData.toJXInt(
-        //                    "IncidentTypeId",
-        //                    typeId));
-
-        //            System.out.printf(
-        //                    "Attempt: prio `%s` (%d)  and type `%s` (%d)\n",
-        //                    ri.getPriorityName().getValue(),
-        //                    ri.getPriorityId().getValue(),
-        //                    ri.getIncidentTypeName().getValue(),
-        //                    ri.getIncidentTypeId().getValue());
-
-        //        System.out.printf(
-        //                "Attempt: prio `%s` and type `%s`\n",
-        //                ri.getPriorityName().getValue(),
-        //                ri.getIncidentTypeName().getValue());
-
-        try {
-            RemoteIncident i = soap.incidentCreate(ri);
-
-            System.out.printf(
-                    "   ===> created #%d with prio `%s` and type `%s`\n",
-                    i.getIncidentId().getValue(),
-                    i.getPriorityName().getValue(),
-                    i.getIncidentTypeName().getValue());
-
-            //            System.out.println("Attempting update on incident");
-
-            // Incident Type
-            //            i.setIncidentTypeId(ISTMetaData.toJXInt(
-            //                    "IncidentTypeId",
-            //                    typeId));
-            //            i.setIncidentTypeName(ISTMetaData.toJXString(
-            //                    "IncidentTypeName",
-            //                    li.getTruth() ? "Bug" : "Change Request"));
-            //
-            //            // Priority
-            //            i.setPriorityId(ISTMetaData.toJXInt(
-            //                    "PriorityId",
-            //                    prioId));
-            //            i.setPriorityName(ISTMetaData.toJXString(
-            //                    "PriorityName",
-            //                    "3 - Medium"));
-            //
-            //
-            //            soap.incidentUpdate(i);
-
-            System.out.println("reloading incident #"
-                    + i.getIncidentId().getValue());
-
-            RemoteIncident fetch = soap.incidentRetrieveById(i.getIncidentId()
-                    .getValue());
-            System.out.printf(
-                    "   ===> loaded #%d with prio `%s` and type `%s`\n",
-                    fetch.getIncidentId().getValue(),
-                    fetch.getPriorityName().getValue(),
-                    fetch.getIncidentTypeName().getValue());
-
-            return fetch;
-
-        } catch (IImportExportIncidentCreateServiceFaultMessageFaultFaultMessage e) {
-
-            // TODO Auto-generated catch block
-
-            e.printStackTrace();
-
-        } catch (IImportExportIncidentCreateValidationFaultMessageFaultFaultMessage e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-            //        } catch (IImportExportIncidentUpdateServiceFaultMessageFaultFaultMessage e) {
-            //            // TODO Auto-generated catch block
-            //            e.printStackTrace();
-            //        } catch (IImportExportIncidentUpdateValidationFaultMessageFaultFaultMessage e) {
-            //            // TODO Auto-generated catch block
-            //            e.printStackTrace();
-        } catch (IImportExportIncidentRetrieveByIdServiceFaultMessageFaultFaultMessage e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
-        return null;
-    }
+public class ReaderRunner {
 
     private static ArrayOfRemoteIncident getIncidents() {
         ArrayOfRemoteIncident incidents = objectFactory
@@ -333,21 +144,7 @@ public class Runner {
 
     public static ArrayList<String> getMultiListValues(
             RemoteArtifactCustomProperty prop) {
-        if (!prop.getIntegerListValue().isNil()) {
-            ArrayOfint mvalues = prop.getIntegerListValue().getValue();
-            ArrayList<String> list = new ArrayList<String>();
-            RemoteCustomProperty propDef = prop.getDefinition().getValue();
-            RemoteCustomList multi = propDef.getCustomList().getValue();
-
-            // TODO add CustomListValues Cache
-            for (int i : mvalues.getInt()) {
-                list.add(multi.getValues().getValue()
-                        .getRemoteCustomListValue().get(
-                                i).getName().getValue());
-            }
-            return list;
-        }
-        return null;
+        return RunnerHelper.getMultiListValues(prop);
     }
 
     private static Date getRealLastUpdated(RemoteIncident incident) {
@@ -369,7 +166,7 @@ public class Runner {
             log(
                     "Failed to retrieve documents for incident #"
                             + incident.getIncidentId().getValue(),
-                    e);
+                            e);
         }
 
         for (RemoteDocument d : documents.getRemoteDocument()) {
@@ -388,7 +185,7 @@ public class Runner {
             log(
                     "Failed to retrieve comments for incident #"
                             + incident.getIncidentId().getValue(),
-                    e);
+                            e);
         }
 
         for (RemoteComment c : comments.getRemoteComment()) {
@@ -397,7 +194,7 @@ public class Runner {
                     c.getText().getValue().trim().substring(
                             0,
                             5) + "(...)",
-                    c.getCreationDate().getValue()));
+                            c.getCreationDate().getValue()));
         }
 
         // log("    Found " + comments.getRemoteComment().size() +
@@ -410,65 +207,11 @@ public class Runner {
 
     public static final String getSingleListValue(
             RemoteArtifactCustomProperty prop) {
-        RemoteCustomProperty propDef = prop.getDefinition().getValue();
-
-        if (!prop.getIntegerValue().isNil()
-                && !propDef.getCustomPropertyId().isNil()) {
-            int listIndex = prop.getIntegerValue().getValue();
-            RemoteCustomList listDef = null;
-            try {
-                listDef = soap.customPropertyRetrieveCustomListById(propDef
-                        .getCustomPropertyId().getValue());
-            } catch (IImportExportCustomPropertyRetrieveCustomListByIdServiceFaultMessageFaultFaultMessage e) {
-                return "(custom list def not found)";
-                // e.printStackTrace();
-            }
-            return listDef.getValues().getValue().getRemoteCustomListValue()
-                    .get(
-                            listIndex).getName().getValue();
-        }
-        return "";
+        return RunnerHelper.getSingleListValue(prop);
     }
 
     public static String getValue(RemoteArtifactCustomProperty prop) {
-
-        RemoteCustomProperty propDef = prop.getDefinition().getValue();
-
-        ISTCustomFieldType type = ISTCustomFieldType.valueOf(propDef
-                .getCustomPropertyTypeName().getValue());
-        switch (type) {
-            case Text:
-                if (prop.getStringValue().isNil()) {
-                    return "(not set)";
-                } else {
-                    String val = prop.getStringValue().getValue().trim();
-                    if (val.contains(System.getProperty("line.separator"))) {
-                        String first = val.split("\n")[0];
-                        return first.trim() + "(...)";
-                    } else {
-                        return val.trim();
-                    }
-                }
-            case Date:
-                if (prop.getDateTimeValue().isNil())
-                    return "(not set)";
-                else
-                    return df
-                            .format(toDate(prop.getDateTimeValue().getValue()));
-            case List:
-                return getSingleListValue(prop);
-            case MultiList:
-                String multi = "";
-                ArrayList<String> selected = getMultiListValues(prop);
-                for (String s : selected) {
-                    multi += s + ",";
-                }
-                return multi;
-            case Integer:
-                return String.valueOf(prop.getIntegerValue().getValue());
-            default:
-                return null;
-        }
+        return RunnerHelper.getValue(prop);
     }
 
     private static void log(String message) {
@@ -545,14 +288,14 @@ public class Runner {
         System.out.println("Connection setup took "
                 + tf.format(new Date(end - start)));
 
-        meta = new ISTMetaCache(soap, true);
+        meta = new ISTMetaCache(soap);
 
         /**
          * MAIN LOOP
          */
 
         while (true) {
-            createIncidents(10);
+            WriterRunner.createIncidents(10);
             // processIndicents();
         }
 
@@ -578,7 +321,7 @@ public class Runner {
                             cl.getName().getValue(),
                             cl.getCustomPropertyListId().getValue(),
                             cl2.getValues().getValue()
-                                    .getRemoteCustomListValue().size());
+                            .getRemoteCustomListValue().size());
                     for (RemoteCustomListValue lv : cl2.getValues().getValue()
                             .getRemoteCustomListValue()) {
                         System.out.printf(
@@ -629,7 +372,7 @@ public class Runner {
                             doc.getFilenameOrUrl(),
                             doc.getAttachmentId().getValue(),
                             doc.getVersions().getValue()
-                                    .getRemoteDocumentVersion().size(),
+                            .getRemoteDocumentVersion().size(),
                             doc.getCurrentVersion().getValue(),
                             doc.getUploadDate());
                     ArrayOfRemoteDocumentVersion docVersions = doc
@@ -661,7 +404,7 @@ public class Runner {
         for (RemoteArtifactCustomProperty prop : properties
                 .getRemoteArtifactCustomProperty()) {
             String name = prop.getDefinition().getValue().getName().getValue();
-            String value = getValue(prop);
+            String value = RunnerHelper.getValue(prop);
             System.out.printf(
                     "| | |--%-25s = %s\n",
                     name,
@@ -670,7 +413,7 @@ public class Runner {
 
     }
 
-    private static void printIncInfo(RemoteIncident inc) {
+    static void printIncInfo(RemoteIncident inc) {
 
         System.out.printf(
                 "\n====\n%4d  %-30s\n",
@@ -738,25 +481,25 @@ public class Runner {
             log(
                     "Failed to convert Date to XML Gregorian: "
                             + date.toString(),
-                    ex);
+                            ex);
         }
         return xmlCalendar;
     }
 
-    private static ISTMetaCache  meta                  = null;
+    private static ISTMetaCache meta                  = null;
 
-    private static final String  WEB_SERVICE_SUFFIX    = "/Services/v4_0/ImportExport.svc";                                //$NON-NLS-1$
+    private static final String WEB_SERVICE_SUFFIX    = "/Services/v4_0/ImportExport.svc";                                //$NON-NLS-1$
 
-    private static final String  WEB_SERVICE_NAMESPACE = "{http://www.inflectra.com/SpiraTest/Services/v4.0/}ImportExport"; //$NON-NLS-1$
+    private static final String WEB_SERVICE_NAMESPACE = "{http://www.inflectra.com/SpiraTest/Services/v4.0/}ImportExport"; //$NON-NLS-1$
 
-    private static ObjectFactory objectFactory         = new ObjectFactory();
+    static ObjectFactory        objectFactory         = new ObjectFactory();
 
-    private static IImportExport soap                  = null;
+    static IImportExport        soap                  = null;
 
-    private static DateFormat    df                    = new SimpleDateFormat(
-            "yyyy-MM-dd HH:mm:ss");
+    static DateFormat           df                    = new SimpleDateFormat(
+                                                              "yyyy-MM-dd HH:mm:ss");
 
-    private static DateFormat    tf                    = new SimpleDateFormat(
-            "mm:ss");
+    private static DateFormat   tf                    = new SimpleDateFormat(
+                                                              "mm:ss");
 
 }

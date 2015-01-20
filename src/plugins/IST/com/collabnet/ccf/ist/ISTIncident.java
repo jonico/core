@@ -1,6 +1,5 @@
 package com.collabnet.ccf.ist;
 
-import java.io.UnsupportedEncodingException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.text.DateFormat;
@@ -8,7 +7,6 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.zip.CRC32;
 
 import javax.xml.bind.JAXBElement;
 import javax.xml.datatype.XMLGregorianCalendar;
@@ -25,13 +23,20 @@ import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.utils.JerichoUtils;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.ArrayOfRemoteArtifactCustomProperty;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.ArrayOfRemoteComment;
+import com.inflectra.spirateam.mylyn.core.internal.services.soap.ArrayOfRemoteCustomProperty;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.ArrayOfRemoteDocument;
+import com.inflectra.spirateam.mylyn.core.internal.services.soap.ArrayOfint;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExport;
+import com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportCustomPropertyRetrieveForArtifactTypeServiceFaultMessageFaultFaultMessage;
+import com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportDocumentAddFileServiceFaultMessageFaultFaultMessage;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportDocumentRetrieveForArtifactServiceFaultMessageFaultFaultMessage;
+import com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportIncidentAddCommentsServiceFaultMessageFaultFaultMessage;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportIncidentCreateServiceFaultMessageFaultFaultMessage;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportIncidentCreateValidationFaultMessageFaultFaultMessage;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportIncidentRetrieveByIdServiceFaultMessageFaultFaultMessage;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportIncidentRetrieveCommentsServiceFaultMessageFaultFaultMessage;
+import com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportIncidentUpdateServiceFaultMessageFaultFaultMessage;
+import com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportIncidentUpdateValidationFaultMessageFaultFaultMessage;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.ObjectFactory;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.RemoteArtifactCustomProperty;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.RemoteComment;
@@ -53,72 +58,138 @@ import com.inflectra.spirateam.mylyn.core.internal.services.soap.RemoteIncident;
  */
 public class ISTIncident extends ISTVersion {
 
-    private ISTMetaCache                        meta;
+    public static boolean isUseExtendedCreateLogging() {
+        return useExtendedCreateLogging;
+    }
 
+    public static boolean isUseExtendedHashLogging() {
+        return useExtendedHashLogging;
+    }
+
+    public static boolean isUseExtendedUpdateLogging() {
+        return useExtendedUpdateLogging;
+    }
+
+    public static void setUseExtendedCreateLogging(
+            boolean useExtendedCreateLogging) {
+        ISTIncident.useExtendedCreateLogging = useExtendedCreateLogging;
+    }
+
+    public static void setUseExtendedHashLogging(boolean useExtendedHashLogging) {
+        ISTIncident.useExtendedHashLogging = useExtendedHashLogging;
+    }
+
+    public static void setUseExtendedUpdateLogging(
+            boolean useExtendedUpdateLogging) {
+        ISTIncident.useExtendedUpdateLogging = useExtendedUpdateLogging;
+    }
+
+    private ISTMetaCache                        meta;
     private IImportExport                       soap;
     private RemoteIncident                      incident;
 
-    private static final DateFormat             df                   = GenericArtifactHelper.df;
-    private final ObjectFactory                 of                   = new ObjectFactory();
-
-    private static final Log                    log                  = LogFactory
+    private static final DateFormat             df                       = GenericArtifactHelper.df;
+    private final ObjectFactory                 of                       = new ObjectFactory();
+    private static final Log                    log                      = LogFactory
             .getLog(ISTIncident.class);
-    private final String                        DUMPSEPARATOR        = "::";
-    private final String                        DUMPNAMEVALSEPARATOR = "=";
 
-    private final String                        EMPTYDUMPVAL         = "null";
-    private ArrayOfRemoteComment                comments             = null;
-    private String                              commentsDump         = null;
+    private final String                        DUMPSEPARATOR            = "::";
 
-    private ArrayOfRemoteDocument               attachments          = null;
+    private final String                        DUMPNAMEVALSEPARATOR     = "=";
 
-    private String                              attachmentsDump      = null;
+    private final String                        RICHTEXTNEWLINE          = "<br />";
 
-    private ArrayOfRemoteArtifactCustomProperty customs              = null;
+    private final String                        EMPTYDUMPVAL             = "null";
 
-    private String                              customsDump          = null;
+    private ArrayOfRemoteComment                comments                 = null;
 
-    private String                              mandatoryDump        = null;
+    private String                              commentsDump             = null;
 
-    private Date                                lastUpdated          = null;
+    private ArrayOfRemoteDocument               attachments              = null;
 
-    private boolean                             hasPatchedUpdate     = false;
+    private String                              attachmentsDump          = null;
 
-    /**
-     * creates a new incident based on the the data in ga
-     *
-     * @param service
-     * @param ga
-     */
-    public ISTIncident(IImportExport service, GenericArtifact ga) {
-        this.soap = service;
-        this.meta = new ISTMetaCache(this.soap, true);
-        this.createIncident(ga);
-    }
+    private ArrayOfRemoteArtifactCustomProperty customs                  = null;
+    private String                              customsDump              = null;
+    private String                              mandatoryDump            = null;
+
+    private Date                                lastUpdated              = null;
+    private boolean                             hasPatchedUpdate         = false;
+
+    private final int                           INCIDENTARTIFACTTYPEID   = 3;
+
+    private static boolean                      useExtendedHashLogging   = false;
+    private static boolean                      useExtendedCreateLogging = false;
+    private static boolean                      useExtendedUpdateLogging = false;
 
     /**
-     * retrieves an existing incident for read access from SpiraTest
-     *
-     * @param service
-     * @param incidentId
-     */
-    public ISTIncident(IImportExport service, int incidentId, boolean readOnly) {
-        this.soap = service;
-        this.meta = new ISTMetaCache(this.soap, !readOnly);
-        this.reload(incidentId);
-    }
-
-    /**
-     * instantiates ISTIncident for write access
+     * instantiates ISTIncident
      *
      * @param service
      * @param ri
      */
-    public ISTIncident(IImportExport service, RemoteIncident ri) {
+    public ISTIncident(IImportExport service, ISTMetaCache cache) {
         this.soap = service;
-        this.incident = ri;
-        this.meta = new ISTMetaCache(this.soap, true);
+        this.meta = cache;
 
+    }
+
+    public RemoteDocument attachDocument(byte[] binaryData, String name,
+            String description) {
+
+        RemoteDocument attachment = new RemoteDocument();
+        RemoteDocument addedDocument = null;
+        attachment.setArtifactId(ISTMetaCache.CreateJAXBInteger(
+                "ArtifactId",
+                this.getId()));
+        attachment.setArtifactTypeId(ISTMetaCache.CreateJAXBInteger(
+                "ArtifactTypeId",
+                this.incident.getArtifactTypeId()));
+        attachment.setFilenameOrUrl(ISTMetaCache.CreateJAXBString(
+                "FilenameOrUrl",
+                name));
+        attachment.setDescription(ISTMetaCache.CreateJAXBString(
+                "Description",
+                description));
+        attachment.setUploadDate(ISTHandler.toXMLGregorianCalendar(new Date()));
+
+        try {
+            addedDocument = this.soap.documentAddFile(
+                    attachment,
+                    binaryData);
+        } catch (IImportExportDocumentAddFileServiceFaultMessageFaultFaultMessage e) {
+            String cause = "Could not create new attachment `" + name
+                    + "` on incident #" + this.getId();
+
+            throw new CCFRuntimeException(cause, e);
+        }
+
+        return addedDocument;
+    }
+
+    /**
+     * clear all cached information
+     *
+     * excluded
+     *
+     * @id
+     * @meta
+     * @soap
+     * @all static and final members
+     */
+    protected void clearCache() {
+        this.customs = null;
+        this.customsDump = null;
+        this.attachments = null;
+        this.attachmentsDump = null;
+        this.comments = null;
+        this.commentsDump = null;
+
+        this.mandatoryDump = null;
+        this.lastUpdated = null;
+
+        // clear version
+        super.clearCache();
     }
 
     /**
@@ -126,13 +197,13 @@ public class ISTIncident extends ISTVersion {
      *
      * @param ga
      */
-    private void createIncident(GenericArtifact ga) {
+    public void createIncident(GenericArtifact ga) {
 
         if ((ga.getAllGenericArtifactFieldsWithSameFieldName(
                 ISTMandatoryFieldType.Name.name()).size() == 0)
                 || (ga.getAllGenericArtifactFieldsWithSameFieldName(
                         ISTMandatoryFieldType.Description.name()).size() == 0)) {
-            String cause = "Name and/or Description are missing (or send multiple times), please check that your XSL sends `Name` and `Description` fields, each exactly once!";
+            String cause = "Inconclusive data. Please check that your XSL sends `Name` and `Description` fields to SpiraTest, each exactly once!";
             throw new CCFRuntimeException(cause);
         }
 
@@ -140,11 +211,11 @@ public class ISTIncident extends ISTVersion {
 
         this.fillMandatoryFields(ga);
         this.fillCustoms(ga);
-        this.fillComments(ga);
 
         try {
             this.incident = this.soap.incidentCreate(this.incident);
             log.info("Created new incident #" + this.getId());
+            this.uploadComments(ga);
 
             this.reload(this.getId());
 
@@ -159,51 +230,13 @@ public class ISTIncident extends ISTVersion {
         }
     }
 
-    protected int determineHash() {
-        String fullString = "";
-        //        String hashInfo = "empty";
-        int retHash = 0;
-        long theDigest = 0;
+    protected void determineHash() {
 
-        for (ISTMandatoryFieldType fieldMeta : ISTMandatoryFieldType
-                .getIdentifyingMandatoryFields()) {
-            Object value = this.getMandatoryFieldValue(fieldMeta);
-            fullString += fieldMeta.name() + DUMPSEPARATOR;
-            if (value != null) {
-                switch (fieldMeta.istFieldValueType()) {
-                    case Date:
-                        fullString += df.format((Date) value);
-                        break;
-                    default:
-                        fullString += String.valueOf(value);
-                }
-            }
-        }
+        int hash = this.calculateHash(getMandatoriesDump() + getCommentsDump()
+                + getAttachmentsDump() + getCustomsDump());
 
-        // add other identifying information
-        fullString += this.getCommentsDump();
-        fullString += this.getAttachmentsDump();
-        fullString += this.getCustomsDump();
+        this.initializeHash(hash);
 
-        try {
-            CRC32 crc = new CRC32();
-            byte[] bytesOfMessage = fullString.getBytes("UTF-8");
-            crc.update(bytesOfMessage);
-            theDigest = crc.getValue();
-            retHash = (int) (Long.valueOf(theDigest) % Math.pow(
-                    2,
-                    20));
-
-            //            hashInfo = Long.toHexString(theDigest) + "  "
-            //                    + Math.abs(Long.valueOf(theDigest).hashCode()) + "  "
-            //                    + theVersion;
-        } catch (UnsupportedEncodingException e) {
-            String cause = "Failed to generate version hash for incident #"
-                    + this.incident.getIncidentId().getValue();
-            throw new CCFRuntimeException(cause, e);
-        }
-
-        return retHash;
     }
 
     /**
@@ -213,13 +246,18 @@ public class ISTIncident extends ISTVersion {
      * @param ga
      */
     private void fetchComments(GenericArtifact ga, Date lastModifiedDate) {
-        int added = 0;
-        for (RemoteComment c : this.retrieveAllComments().getRemoteComment()) {
+        int fetched = 0;
+        int retrieved = 0;
+        for (RemoteComment c : this.getAllComments().getRemoteComment()) {
             Date creationDate = ISTHandler.toDate(c.getCreationDate()
                     .getValue());
-            // OPTIMIZE use a HasMap to order comments instead of trusting the API ?
-            added++;
-            if (creationDate.after(lastModifiedDate)) {
+
+            // use a HasMap to order comments instead of trusting the API ?
+            retrieved++;
+            if (creationDate.after(lastModifiedDate)
+                    && c.getUserId().getValue() != ISTConnection
+                    .getConnectorUserId()) {
+                fetched++;
                 ISTHandler.addGAField(
                         ga,
                         "comments",
@@ -229,9 +267,10 @@ public class ISTIncident extends ISTVersion {
             }
         }
         log.trace(String.format(
-                "  fetched %d comments created since %s",
-                added,
-                df.format(lastModifiedDate)));
+                "  fetched %d comments created since %s, skipped %d",
+                fetched,
+                df.format(lastModifiedDate),
+                retrieved - fetched));
     }
 
     /**
@@ -297,7 +336,7 @@ public class ISTIncident extends ISTVersion {
      * @param ga
      */
     private void fetchCustoms(GenericArtifact ga) {
-        for (RemoteArtifactCustomProperty prop : this.retrieveAllCustoms()
+        for (RemoteArtifactCustomProperty prop : this.getAllCustoms()
                 .getRemoteArtifactCustomProperty()) {
             this.fetchCustomProperty(
                     ga,
@@ -340,24 +379,14 @@ public class ISTIncident extends ISTVersion {
     }
 
     /**
-     * read comments from GA and update the Incident
-     *
-     * @param ga
-     */
-    private void fillComments(GenericArtifact ga) {
-
-    }
-
-    /**
      * read custom properties from GA and set the values on the Incident
      *
      * @param ga
      */
     private void fillCustoms(GenericArtifact ga) {
 
-        for (RemoteArtifactCustomProperty prop : this.customs
+        for (RemoteArtifactCustomProperty prop : this.getAllCustoms()
                 .getRemoteArtifactCustomProperty()) {
-            // get custom field value from ga
 
             String fieldName = prop.getDefinition().getValue().getName()
                     .getValue();
@@ -365,39 +394,42 @@ public class ISTIncident extends ISTVersion {
             List<GenericArtifactField> fields = ga
                     .getAllGenericArtifactFieldsWithSameFieldName(fieldName);
 
-            GenericArtifactField gaField = null;
             if (fields != null) {
-                gaField = fields.get(0);
-                if (gaField != null) {
-                    switch (gaField.getFieldValueType()) {
-                        case DATETIME:
-                        case HTMLSTRING:
-                        case USER: // currenty not implemented as target, does into texts
-                        case STRING: // Need to determine the target type, Strings can also be sent to lists and booleans!
-                        case INTEGER:
-                        case BOOLEAN:
-                            this.setCustomPropertyValue(
-                                    prop,
-                                    String.valueOf(gaField.getFieldValue()));
-                            break;
-                        case DATE:
-                            log.warn("Ignoring unsupported Date field value for field "
-                                    + this.getId() + "." + fieldName);
-                            break;
-                        case BASE64STRING:
-                            log.warn("Ignoring unsupported Base64 field value for field "
-                                    + this.getId() + "." + fieldName);
-                            break;
-                        case DOUBLE:
-                            log.warn("Ignoring unsupported Double field value for field "
-                                    + this.getId() + "." + fieldName);
-                            break;
+                for (GenericArtifactField gaField : fields) {
+                    if (gaField != null) {
+                        switch (gaField.getFieldValueType()) {
+                            case HTMLSTRING:
+                            case USER: // currenty not implemented as target, goes into texts
+                            case STRING: // Strings can also be sent to lists and booleans
+                            case INTEGER:
+                            case BOOLEAN:
+                                this.setCustomPropertyValue(
+                                        prop,
+                                        String.valueOf(gaField.getFieldValue()));
+                                break;
+                            case DATETIME:
+                                this.setCustomPropertyValue(
+                                        prop,
+                                        df.format(gaField.getFieldValue()));
+                                break;
+                            case DATE:
+                                log.warn("Ignoring unsupported Date field value for field "
+                                        + this.getId() + "." + fieldName);
+                                break;
+                            case BASE64STRING:
+                                log.warn("Ignoring unsupported Base64 field value for field "
+                                        + this.getId() + "." + fieldName);
+                                break;
+                            case DOUBLE:
+                                log.warn("Ignoring unsupported Double field value for field "
+                                        + this.getId() + "." + fieldName);
+                                break;
+                        }
                     }
                 }
 
             } else {
-                log.trace("Custom field `" + fieldName
-                        + "` is not in received GenericArtifact");
+                log.trace("Custom field `" + fieldName + "` is not in GA data");
             }
         }
 
@@ -420,15 +452,15 @@ public class ISTIncident extends ISTVersion {
                     .getAllGenericArtifactFieldsWithSameFieldName(fieldMeta
                             .name());
 
-            // there are currently no mandatory fields with multiple values
             GenericArtifactField gaField = null;
             if (fields != null) {
+                // there are currently no mandatory multi-select fields
                 gaField = fields.get(0);
 
                 if (fields.size() > 1) {
-                    log.warn("Unxepected number of mandatory values for field `"
+                    log.warn("More than one value for field `"
                             + fieldMeta.name()
-                            + "` found. Chose first item in list. Please validate your XSL.");
+                            + "` found. First value found was chosen. Please validate your XSL.");
                     int index = 0;
                     for (GenericArtifactField gaf : fields) {
                         log.warn(String.format(
@@ -445,43 +477,165 @@ public class ISTIncident extends ISTVersion {
 
                 }
             } else {
-                log.trace("Mandatory field `" + fieldMeta.name()
-                        + "` is not in received GenericArtifact");
+                if (useExtendedUpdateLogging)
+                    log.trace("Mandatory field `" + fieldMeta.name()
+                            + "` is not in present GenericArtifact");
             }
 
         }
     }
 
+    /**
+     * reads all comments, returns cached object in subsquent calls.
+     *
+     * @return
+     */
+    private ArrayOfRemoteComment getAllComments() {
+        if (this.comments == null) {
+            try {
+                this.comments = this.soap
+                        .incidentRetrieveComments(this.getId());
+            } catch (IImportExportIncidentRetrieveCommentsServiceFaultMessageFaultFaultMessage e) {
+                log.error(
+                        "Failed to retrieve comments for incident #"
+                                + this.getId(),
+                                e);
+            }
+        }
+        return this.comments;
+    }
+
+    /**
+     * load all custom properties, either from incident or from project meta
+     * definitions. Returns cached object on subsequent calls.
+     *
+     * @return
+     */
+    private ArrayOfRemoteArtifactCustomProperty getAllCustoms() {
+        if (this.customs == null) {
+            if (this.incident.getCustomProperties() != null) {
+                this.customs = this.incident.getCustomProperties().getValue();
+            } else {
+                // new incident, create a new object
+                this.customs = of.createArrayOfRemoteArtifactCustomProperty();
+                try {
+                    // get project generic properties
+                    ArrayOfRemoteCustomProperty typeProperties = this.soap
+                            .customPropertyRetrieveForArtifactType(
+                                    INCIDENTARTIFACTTYPEID,
+                                    false);
+
+                    for (RemoteCustomProperty typeProp : typeProperties
+                            .getRemoteCustomProperty()) {
+                        // create new Artifact Property, set its definition
+                        RemoteArtifactCustomProperty aProp = of
+                                .createRemoteArtifactCustomProperty();
+
+                        aProp.setDefinition(ISTMetaCache
+                                .CreateJAXBRemoteCustomProperty(
+                                        "Definition",
+                                        typeProp));
+                        // attach new property to list of customProperties
+                        this.customs.getRemoteArtifactCustomProperty().add(
+                                aProp);
+                    }
+
+                    // attach customs to incident
+                    this.incident.setCustomProperties(ISTMetaCache
+                            .CreateJAXBArrayOfRemoteArtifactCustomProperty(
+                                    "CustomProperties",
+                                    this.customs));
+
+                } catch (IImportExportCustomPropertyRetrieveForArtifactTypeServiceFaultMessageFaultFaultMessage e) {
+                    log.error(
+                            "Failed to fetch Custom Properties for Artifact Type "
+                                    + this.incident.getArtifactTypeId(),
+                                    e);
+
+                }
+
+            }
+        }
+
+        return this.customs;
+    }
+
+    /**
+     * loads all documents for the incident. Returns cached object on subsequent
+     * calls.
+     *
+     * OPTIMIZE we could use a project wide list of documents - fetched once
+     * when connecting - instead
+     *
+     * @return
+     */
+    private ArrayOfRemoteDocument getAllDocuments() {
+        if (this.attachments == null) {
+            this.attachments = new ArrayOfRemoteDocument();
+            try {
+                ArrayOfRemoteDocument documents = soap
+                        .documentRetrieveForArtifact(
+                                this.incident.getArtifactTypeId(),
+                                this.incident.getIncidentId().getValue(),
+                                ISTHandler.UNFILTERED,
+                                ISTHandler.UNSORTED);
+                this.attachments = documents;
+            } catch (IImportExportDocumentRetrieveForArtifactServiceFaultMessageFaultFaultMessage e) {
+                log.error(
+                        "Failed to retrieve documents for incident #"
+                                + this.incident.getIncidentId().getValue(),
+                                e);
+            }
+        }
+        return this.attachments;
+    }
+
     private String getAttachmentsDump() {
-        if (this.attachments == null)
-            this.attachments = this.retrieveAllDocuments();
 
         if (this.attachmentsDump == null) {
-            String ret = "";
-            for (RemoteDocument doc : this.attachments.getRemoteDocument()) {
-                ret += doc.getFilenameOrUrl() + "::" + doc.getArtifactTypeId()
-                        + DUMPSEPARATOR
-                        + df.format(ISTHandler.toDate(doc.getEditedDate()));
+            if (this.getAllDocuments().getRemoteDocument().size() > 0) {
+                for (RemoteDocument doc : this.attachments.getRemoteDocument()) {
+                    String ret = "";
+                    ret += doc.getFilenameOrUrl().getValue() + DUMPSEPARATOR
+                            + doc.getArtifactTypeId().getValue()
+                            + DUMPSEPARATOR
+                            + df.format(ISTHandler.toDate(doc.getEditedDate()));
+                    if (useExtendedHashLogging)
+                        log.trace(String.format(
+                                "   AT %-15d %s",
+                                this.calculateHash(ret),
+                                ret));
+                    this.attachmentsDump += ret;
+                }
+            } else {
+                this.attachmentsDump = EMPTYDUMPVAL;
             }
-            this.attachmentsDump = ret;
         }
         return this.attachmentsDump;
     }
 
     private String getCommentsDump() {
 
-        if (this.comments == null)
-            this.comments = this.retrieveAllComments();
-
         if (this.commentsDump == null) {
-            String ret = "";
-            for (RemoteComment rc : comments.getRemoteComment()) {
-                ret += JerichoUtils.htmlToText(rc.getText().getValue())
-                        + DUMPSEPARATOR
-                        + df.format(ISTHandler.toDate(rc.getCreationDate()
-                                .getValue()));
+            if (this.getAllComments().getRemoteComment().size() > 0) {
+                for (RemoteComment rc : comments.getRemoteComment()) {
+                    String ret = "";
+                    ret += JerichoUtils.htmlToText(rc.getText().getValue())
+                            + DUMPSEPARATOR
+                            + df.format(ISTHandler.toDate(rc.getCreationDate()
+                                    .getValue())) + DUMPSEPARATOR
+                                    + rc.getUserName().getValue() + "["
+                                    + rc.getUserId().getValue() + "]";
+                    if (useExtendedHashLogging)
+                        log.trace(String.format(
+                                "   CO %-15d %s",
+                                this.calculateHash(ret),
+                                ret));
+                    this.commentsDump += ret;
+                }
+            } else {
+                this.commentsDump = EMPTYDUMPVAL;
             }
-            this.commentsDump = ret;
         }
         return this.commentsDump;
     }
@@ -492,18 +646,26 @@ public class ISTIncident extends ISTVersion {
 
     private String getCustomsDump() {
 
-        if (this.customs == null) {
-            this.customs = this.retrieveAllCustoms();
-            String ret = "";
-            for (RemoteArtifactCustomProperty prop : this.customs
-                    .getRemoteArtifactCustomProperty()) {
-                ret += ISTMetaCache.getName(prop) + DUMPNAMEVALSEPARATOR;
-                ret += this.getCustomValueAsString(prop) == null ? EMPTYDUMPVAL
-                        : this.getCustomValueAsString(prop);
-                ret += DUMPSEPARATOR;
+        if (this.customsDump == null) {
+            if (this.getAllCustoms().getRemoteArtifactCustomProperty().size() > 0) {
+                for (RemoteArtifactCustomProperty prop : this.getAllCustoms()
+                        .getRemoteArtifactCustomProperty()) {
+                    String ret = "";
+                    ret += ISTMetaCache.getName(prop) + DUMPNAMEVALSEPARATOR;
+                    ret += this.getCustomValueAsString(prop) == null ? EMPTYDUMPVAL
+                            : this.getCustomValueAsString(prop);
+                    ret += DUMPSEPARATOR;
+                    if (useExtendedHashLogging) {
+                        log.trace(String.format(
+                                "   CP %-15d %s",
+                                this.calculateHash(ret),
+                                ret));
+                    }
+                    this.customsDump += ret;
+                }
+            } else {
+                this.customsDump = EMPTYDUMPVAL;
             }
-
-            this.customsDump = ret;
         }
         return this.customsDump;
     }
@@ -516,8 +678,10 @@ public class ISTIncident extends ISTVersion {
                 .getCustomPropertyTypeName().getValue());
         switch (type) {
             case Text:
-                return JerichoUtils
-                        .htmlToText(prop.getStringValue().getValue());
+                if (prop.getStringValue() != null)
+                    return JerichoUtils.htmlToText(prop.getStringValue()
+                            .getValue());
+                break;
             case Date:
                 if (prop.getDateTimeValue().getValue() != null)
                     return df.format(ISTHandler.toDate(prop.getDateTimeValue()
@@ -533,9 +697,8 @@ public class ISTIncident extends ISTVersion {
                         ",") + "]";
             case Integer:
                 return String.valueOf(prop.getIntegerValue().getValue());
-            default:
-                return null;
         }
+        return null;
     }
 
     public int getId() {
@@ -554,15 +717,14 @@ public class ISTIncident extends ISTVersion {
                     .getLastUpdateDate());
             Date myUpdated = lastUpdated;
 
-            for (RemoteDocument doc : this.retrieveAllDocuments()
+            for (RemoteDocument doc : this.getAllDocuments()
                     .getRemoteDocument()) {
                 Date uploadDate = ISTHandler.toDate(doc.getEditedDate());
                 lastUpdated = uploadDate.after(lastUpdated) ? uploadDate
                         : lastUpdated;
             }
 
-            for (RemoteComment com : this.retrieveAllComments()
-                    .getRemoteComment()) {
+            for (RemoteComment com : this.getAllComments().getRemoteComment()) {
                 Date createdDate = ISTHandler.toDate(com.getCreationDate()
                         .getValue());
                 lastUpdated = createdDate.after(lastUpdated) ? createdDate
@@ -573,6 +735,35 @@ public class ISTIncident extends ISTVersion {
             this.lastUpdated = lastUpdated;
         }
         return this.lastUpdated;
+    }
+
+    private String getMandatoriesDump() {
+        if (this.mandatoryDump == null) {
+            for (ISTMandatoryFieldType fieldMeta : ISTMandatoryFieldType
+                    .getIdentifyingMandatoryFields()) {
+                String toAdd = "";
+                Object value = this.getMandatoryFieldValue(fieldMeta);
+                toAdd += fieldMeta.name() + DUMPSEPARATOR;
+                if (value != null) {
+                    switch (fieldMeta.istFieldValueType()) {
+                        case Date:
+                            toAdd += df.format((Date) value);
+                            break;
+                        default:
+                            toAdd += String.valueOf(value);
+                    }
+                } else {
+                    toAdd += EMPTYDUMPVAL;
+                }
+                if (useExtendedHashLogging)
+                    log.trace(String.format(
+                            "   MF %-15d %s",
+                            this.calculateHash(toAdd),
+                            toAdd));
+                this.mandatoryDump += toAdd;
+            }
+        }
+        return this.mandatoryDump;
     }
 
     /**
@@ -654,22 +845,18 @@ public class ISTIncident extends ISTVersion {
     /**
      * dumps the incident to the log, also writes TRACE messages
      */
-    public void printIncidentInfo(boolean overview) {
+    public void printIncidentInfo() {
 
         String dateInfo = df.format(this.getLastUpdateDate());
         dateInfo += this.hasPatchedUpdate ? " (*)" : "";
-        log.trace("\n====================================================================================="
-                + "\n-------------------------------------------------------------------------------------"
-                + "\n-------------------------------------------------------------------------------------"
-                + "\n=====================================================================================");
-        log.debug(String.format(
-                "Incident %d `%s` was last updated on %s",
+        log.trace(String.format(
+                "Incident %d `%s` was last updated on %s with hash %d",
                 this.getId(),
                 this.getMandatoryFieldValue(ISTMandatoryFieldType.Name),
-                dateInfo));
-        log.debug("   version: " + this.getVersionString());
+                dateInfo,
+                this.getVersionHash()));
 
-        if (!overview) {
+        if (useExtendedCreateLogging || useExtendedUpdateLogging) {
             this.traceMandatories();
             this.traceCustoms();
             this.traceAttachments();
@@ -679,6 +866,7 @@ public class ISTIncident extends ISTVersion {
     public void reload(int incidentId) {
         try {
             RemoteIncident iload = this.soap.incidentRetrieveById(incidentId);
+            this.clearCache();
             log.trace("refreshed incident #" + incidentId);
             this.incident = iload;
         } catch (IImportExportIncidentRetrieveByIdServiceFaultMessageFaultFaultMessage e) {
@@ -687,54 +875,8 @@ public class ISTIncident extends ISTVersion {
         }
     }
 
-    private ArrayOfRemoteComment retrieveAllComments() {
-        ArrayOfRemoteComment comments = new ArrayOfRemoteComment();
-        try {
-            comments = this.soap.incidentRetrieveComments(this.getId());
-        } catch (IImportExportIncidentRetrieveCommentsServiceFaultMessageFaultFaultMessage e) {
-            log.error(
-                    "Failed to retrieve comments for incident #" + this.getId(),
-                    e);
-        }
-
-        return comments;
-    }
-
-    private ArrayOfRemoteArtifactCustomProperty retrieveAllCustoms() {
-        if (this.customs == null) {
-            this.customs = this.incident.getCustomProperties().getValue();
-        }
-
-        return this.customs;
-    }
-
-    /**
-     * loads all documents for the incident
-     *
-     * OPTIMIZE we could use a project wide list of documents - fetched once
-     * when connecting - instead
-     *
-     * @return
-     */
-    private ArrayOfRemoteDocument retrieveAllDocuments() {
-        if (this.attachments == null) {
-            this.attachments = new ArrayOfRemoteDocument();
-            try {
-                ArrayOfRemoteDocument documents = soap
-                        .documentRetrieveForArtifact(
-                                this.incident.getArtifactTypeId(),
-                                this.incident.getIncidentId().getValue(),
-                                ISTHandler.UNFILTERED,
-                                ISTHandler.UNSORTED);
-                this.attachments = documents;
-            } catch (IImportExportDocumentRetrieveForArtifactServiceFaultMessageFaultFaultMessage e) {
-                log.error(
-                        "Failed to retrieve documents for incident #"
-                                + this.incident.getIncidentId().getValue(),
-                                e);
-            }
-        }
-        return this.attachments;
+    public void retrieveIncident(int incidentId) {
+        this.reload(incidentId);
     }
 
     /**
@@ -747,6 +889,10 @@ public class ISTIncident extends ISTVersion {
             String value) {
 
         RemoteCustomProperty propDef = prop.getDefinition().getValue();
+
+        // without the propertyNumber, the data doesn't get saved
+        prop.setPropertyNumber(propDef.getPropertyNumber());
+
         ISTCustomFieldType type = ISTCustomFieldType.valueOf(propDef
                 .getCustomPropertyTypeName().getValue());
 
@@ -755,6 +901,7 @@ public class ISTIncident extends ISTVersion {
                 prop.setBooleanValue(ISTMetaCache.CreateJAXBBoolean(
                         "BooleanValue",
                         Boolean.valueOf(value)));
+                log.debug(propDef.getName().getValue() + ": set to " + value);
                 break;
             case Date:
                 try {
@@ -763,6 +910,9 @@ public class ISTIncident extends ISTVersion {
                                     "DateTimeValue",
                                     ISTHandler.toXMLGregorianCalendar(df
                                             .parse(value))));
+                    log.debug(propDef.getName().getValue() + ": set to "
+                            + df.format(df.parse(value)));
+
                 } catch (ParseException e) {
                     throw new CCFRuntimeException(
                             "Could not transform date string " + value, e);
@@ -772,19 +922,79 @@ public class ISTIncident extends ISTVersion {
                 prop.setIntegerValue(ISTMetaCache.CreateJAXBInteger(
                         "IntegerValue",
                         Integer.valueOf(value)));
+                log.debug(propDef.getName().getValue() + ": set to " + value);
+                break;
             case List:
-                log.warn("Writing to to Single Lists is currently not supported");
+                int itemId = this.meta.getCustomListItemIdForValue(
+                        prop,
+                        value);
+                if (itemId != -1) {
+                    prop.setIntegerValue(ISTMetaCache.CreateJAXBInteger(
+                            "IntegerValue",
+                            itemId));
+                    log.debug(propDef.getName().getValue() + ": set to "
+                            + value + " (" + itemId + ")");
+                } else {
+                    String cause = String
+                            .format(
+                                    "Value `%s` does not exist in field `%s`, please edit your transformation or add the value to SpiraTest",
+                                    value,
+                                    propDef.getName().getValue());
+                    throw new CCFRuntimeException(cause);
+
+                }
                 break;
             case MultiList:
-                log.warn("Writing to to Multi Lists is currently not supported");
+                int multiId = this.meta.getCustomListItemIdForValue(
+                        prop,
+                        value);
+                // we're setting one value (of one or more fields of same name in GA data)
+                if (multiId != -1) {
+                    if (prop.getIntegerValue() == null
+                            || prop.getIntegerListValue().getValue() == null) {
+                        // first time visit - create and append Array object
+                        ArrayOfint intValues = of.createArrayOfint();
+                        prop.setIntegerListValue(ISTMetaCache
+                                .CreateJAXBArrayOfint(
+                                        "IntegerListValue",
+                                        intValues));
+                    }
+                    // add value to list of int
+                    prop.getIntegerListValue().getValue().getInt().add(
+                            multiId);
+
+                    log.debug(propDef.getName().getValue() + ": added value "
+                            + value + " (" + multiId + ")");
+                } else if (value != null) {
+                    String cause = String
+                            .format(
+                                    "Value `%s` does not exist in field `%s`, please edit your transformation or add the value to SpiraTest",
+                                    value,
+                                    propDef.getName().getValue());
+                    // we'll keep on going
+                    log.warn(cause);
+                }
                 break;
             case Text:
+                // FIXME acknowledge newlines (for all or only for rich text?)
                 prop.setStringValue(ISTMetaCache.CreateJAXBString(
                         "StringValue",
-                        value));
+                        value.replaceAll(
+                                "\n",
+                                RICHTEXTNEWLINE)));
+                String valInfo = value.length() > 10 ? value.substring(
+                        0,
+                        9) + "..." : value;
+                if (useExtendedUpdateLogging)
+                    log.debug(propDef.getName().getValue() + ": set to "
+                            + valInfo);
                 break;
 
         }
+    }
+
+    public void setIncident(RemoteIncident ri) {
+        this.incident = ri;
     }
 
     /**
@@ -794,12 +1004,13 @@ public class ISTIncident extends ISTVersion {
      * @param fieldMeta
      * @return
      */
-    @SuppressWarnings("unchecked")
-    private Object setMandatoryFieldValue(ISTMandatoryFieldType fieldMeta,
+    private void setMandatoryFieldValue(ISTMandatoryFieldType fieldMeta,
             Object value) {
         String methodName = "unknown";
         String returnType = "unknown";
         Method callee;
+        // FIXME acknowledge newlines in description
+        // FIXME remove all newlines from other text fields
         try {
             methodName = "set" + fieldMeta.name();
             callee = this.incident.getClass().getMethod(
@@ -836,13 +1047,51 @@ public class ISTIncident extends ISTVersion {
                                         Boolean.valueOf(value.toString())));
                         break;
                     case List:
-                        log.warn("Setting JAX List values is currently not implemented");
-                        log.trace(String.format(
-                                "%s %s: generic %s  ; reaOnly: %s",
-                                fieldMeta.istFieldValueType().name(),
-                                fieldMeta.name(),
-                                fieldMeta.genericFielValueType().name(),
-                                fieldMeta.isReadOnly()));
+                        // each mandatory list field comes in xyzId and xyzName pairs
+                        // we'll need to get the id based on the name value, then
+                        // set the ID sibling
+                        String idFieldName = null;
+                        int idFieldValue = this.meta.getMandatoryIdForValue(
+                                fieldMeta,
+                                String.valueOf(value));
+                        // no fancy code saving here, plain and brutal
+                        if (fieldMeta.name().endsWith(
+                                "Name"))
+                            idFieldName = fieldMeta.name().replace(
+                                    "Name",
+                                    "Id");
+                        if (fieldMeta.name().endsWith(
+                                "VersionNumber"))
+                            idFieldName = fieldMeta.name().replace(
+                                    "VersionNumber",
+                                    "Id");
+                        // call the nethod to set the id instead
+                        String idMethodName = "set" + idFieldName;
+                        Method idCallee = this.incident.getClass().getMethod(
+                                idMethodName,
+                                JAXBElement.class);
+
+                        if (idFieldValue != -1) {
+                            idCallee.invoke(
+                                    this.incident,
+                                    ISTMetaCache.CreateJAXBInteger(
+                                            idFieldName,
+                                            idFieldValue));
+                            if (useExtendedUpdateLogging)
+                                log.trace(String.format(
+                                        "%s set to %d (%s)",
+                                        idFieldName,
+                                        idFieldValue,
+                                        value));
+                        } else {
+                            String cause = String
+                                    .format(
+                                            "Value `%s` does not exist in field `%s`, please edit your transformation or add the value to SpiraTest",
+                                            value,
+                                            fieldMeta.name());
+                            log.error(cause);
+                            throw new CCFRuntimeException(cause);
+                        }
                         break;
                     case MultiList:
                         log.warn("Unexpected JAX Mandatory MultiSelect Field!");
@@ -881,12 +1130,13 @@ public class ISTIncident extends ISTVersion {
                         break;
                     case List:
                         log.warn("Setting List values is currently not implemented");
-                        log.trace(String.format(
-                                "%s %s: generic %s  ; reaOnly: %s",
-                                fieldMeta.istFieldValueType().name(),
-                                fieldMeta.name(),
-                                fieldMeta.genericFielValueType().name(),
-                                fieldMeta.isReadOnly()));
+                        if (useExtendedUpdateLogging)
+                            log.trace(String.format(
+                                    "%s %s: generic %s  ; reaOnly: %s",
+                                    fieldMeta.istFieldValueType().name(),
+                                    fieldMeta.name(),
+                                    fieldMeta.genericFielValueType().name(),
+                                    fieldMeta.isReadOnly()));
                         break;
                     case MultiList:
                         log.warn("Unexpected Mandatory MultiSelect Field!");
@@ -919,11 +1169,10 @@ public class ISTIncident extends ISTVersion {
             e.printStackTrace();
         }
 
-        return value;
     }
 
     private void traceAttachments() {
-        int docCount = this.retrieveAllDocuments().getRemoteDocument().size();
+        int docCount = this.getAllDocuments().getRemoteDocument().size();
 
         if (docCount > 0) {
             log.trace("============ " + docCount + " Attachments ============");
@@ -940,7 +1189,7 @@ public class ISTIncident extends ISTVersion {
                     "-----------",
                     "----"));
 
-            for (RemoteDocument doc : this.retrieveAllDocuments()
+            for (RemoteDocument doc : this.getAllDocuments()
                     .getRemoteDocument()) {
                 log.trace(String.format(
                         "%-30s %10s %30s, %d bytes",
@@ -955,48 +1204,75 @@ public class ISTIncident extends ISTVersion {
     }
 
     private void traceCustoms() {
-        if (log.isTraceEnabled()) {
-            int customsCount = this.retrieveAllCustoms()
-                    .getRemoteArtifactCustomProperty().size();
-            if (customsCount > 0) {
-                log.trace("============ " + customsCount
-                        + " Custom Properties ============");
+        int customsCount = this.getAllCustoms()
+                .getRemoteArtifactCustomProperty().size();
+        if (customsCount > 0) {
+            log.trace("============ " + customsCount
+                    + " Custom Properties ============");
+            log.trace(String.format(
+                    "%-30s  %-15s  %-15s  %-15s",
+                    "Field Name",
+                    "System Type",
+                    "Field Type",
+                    "Value"));
+            log.trace(String.format(
+                    "%-30s  %-15s  %-15s  %-15s",
+                    "----------",
+                    "-----------",
+                    "----------",
+                    "-----"));
+            for (RemoteArtifactCustomProperty aprop : this.getAllCustoms()
+                    .getRemoteArtifactCustomProperty()) {
+                RemoteCustomProperty propDef = aprop.getDefinition().getValue();
+                String fieldType = propDef.getCustomPropertyTypeName()
+                        .getValue();
+                String systemType = propDef.getSystemDataType().getValue();
+                if (systemType.length() > 15)
+                    systemType = systemType.substring(
+                            0,
+                            14);
+                String fieldName = this.meta.getName(aprop);
+                String value = this.getCustomValueAsString(aprop);
                 log.trace(String.format(
                         "%-30s  %-15s  %-15s  %-15s",
-                        "Field Name",
-                        "System Type",
-                        "Field Type",
-                        "Value"));
-                log.trace(String.format(
-                        "%-30s  %-15s  %-15s  %-15s",
-                        "----------",
-                        "-----------",
-                        "----------",
-                        "-----"));
-                for (RemoteArtifactCustomProperty aprop : this.customs
-                        .getRemoteArtifactCustomProperty()) {
-                    RemoteCustomProperty propDef = aprop.getDefinition()
-                            .getValue();
-                    String fieldType = propDef.getCustomPropertyTypeName()
-                            .getValue();
-                    String systemType = propDef.getSystemDataType().getValue();
-                    if (systemType.length() > 15)
-                        systemType = systemType.substring(
-                                0,
-                                14);
-                    String fieldName = this.meta.getName(aprop);
-                    String value = this.getCustomValueAsString(aprop);
-                    log.trace(String.format(
-                            "%-30s  %-15s  %-15s  %-15s",
-                            fieldName,
-                            systemType,
-                            fieldType,
-                            value));
-                }
-            } else {
-                log.trace("============ No Custom Properties ============");
+                        fieldName,
+                        systemType,
+                        fieldType,
+                        value));
             }
+        } else {
+            log.trace("============ No Custom Properties ============");
         }
+    }
+
+    public void traceHashIntel() {
+        String header = "Hashes for incident #" + this.getId();
+        log.trace(StringUtils.repeat(
+                "=",
+                header.length()));
+        log.trace(header);
+        log.trace(StringUtils.repeat(
+                "-",
+                header.length()));
+
+        log.trace(String.format(
+                "%-15s %-15s %-15s %-15s ",
+                "Mandatory",
+                "Comments",
+                "Attachments",
+                "Customs"));
+        log.trace(String.format(
+                "%-15d %-15d %-15d %-15d ",
+                this.calculateHash(this.getMandatoriesDump()),
+                this.calculateHash(this.getCommentsDump()),
+                this.calculateHash(this.getAttachmentsDump()),
+                this.calculateHash(this.getCustomsDump())));
+        log.trace("CNT.HSH = " + this.getVersionInfoString());
+        log.trace("VERSION = " + this.getVersion());
+        log.trace(StringUtils.repeat(
+                "-",
+                header.length()));
+
     }
 
     private void traceMandatories() {
@@ -1019,37 +1295,86 @@ public class ISTIncident extends ISTVersion {
     }
 
     /**
-     * used by Writer (also via CreateNewIncident) to update RemoteIncident with
-     * GA data
+     * used by Writer to update RemoteIncident with GA data
      *
      * @param ga
      */
     public void updateIncident(GenericArtifact ga) {
-        this.fetchCustoms(ga);
         this.fillMandatoryFields(ga);
+        this.fillCustoms(ga);
+        // documents won't be handled here
+
+        try {
+            this.soap.incidentUpdate(this.incident);
+            this.uploadComments(ga);
+            this.reload(this.getId());
+        } catch (IImportExportIncidentUpdateServiceFaultMessageFaultFaultMessage e) {
+            String cause = "Could not update incident #" + this.getId();
+            ga.setErrorCode(GenericArtifact.ERROR_EXTERNAL_SYSTEM_WRITE);
+            throw new CCFRuntimeException(cause, e);
+        } catch (IImportExportIncidentUpdateValidationFaultMessageFaultFaultMessage e) {
+            String cause = "Validation failed for incident #" + this.getId()
+                    + " udpate";
+            ga.setErrorCode(GenericArtifact.ERROR_EXTERNAL_SYSTEM_WRITE);
+            throw new CCFRuntimeException(cause, e);
+        }
+
     }
 
     /**
-     * determines by hash comparison if the last change was done by CCF or not.
+     * read comments from GA and update the Incident
      *
-     * if the hash parts are equal, the last update was via ISTWriter
+     * the incident has to have an id (a.k.a. has to exist in and be read from
+     * IST)
      *
-     * UNLESS the vesion part is INITIALVERSION, then the incident was never
-     * updated/created via ISTWriter
-     *
-     * @param previousVesion
-     * @return
+     * @param ga
      */
-    public boolean wasModifedExternally(String previousVesion) {
+    private void uploadComments(GenericArtifact ga) {
 
-        // initial shipment when incident was created in SpiraTest
-        if (INITIALVERSION.equals(String
-                .valueOf(getVersionPart(previousVesion))))
-            return true;
+        List<GenericArtifactField> newComments = ga
+                .getAllGenericArtifactFieldsWithSameFieldName("Comments");
 
-        int oreviousHash = getHashPart(Long.parseLong(previousVesion));
-        int currentHash = getHashPart(this.determineHash());
+        ArrayOfRemoteComment rCommentArray = new ArrayOfRemoteComment();
 
-        return oreviousHash != currentHash;
+        if (newComments != null) {
+            for (GenericArtifactField comment : newComments) {
+                if (comment != null) {
+                    RemoteComment rc = new RemoteComment();
+                    rc.setArtifactId(this.getId());
+                    String cText = String.valueOf(
+                            comment.getFieldValue()).replaceAll(
+                                    "\n",
+                                    RICHTEXTNEWLINE);
+                    rc.setText(ISTMetaCache.CreateJAXBString(
+                            "Text",
+                            cText));
+                    // FIXME this date has to use the IST server timezone and not the date of the CCF instance 
+                    //                    rc.setCreationDate(ISTMetaCache.toJaxCalendar(
+                    //                            "CreationDate",
+                    //                            new Date()));
+
+                    if (!rCommentArray.getRemoteComment().add(
+                            rc)) {
+                        String cause = "Could not add a comment to incident #"
+                                + this.getId();
+                        throw new CCFRuntimeException(cause);
+                    }
+
+                }
+            }
+
+            if (rCommentArray.getRemoteComment().size() > 0) {
+                try {
+                    this.soap.incidentAddComments(rCommentArray);
+                } catch (IImportExportIncidentAddCommentsServiceFaultMessageFaultFaultMessage e) {
+                    String cause = "Could not add "
+                            + rCommentArray.getRemoteComment().size()
+                            + " comment/s to incident #" + this.getId();
+                    throw new CCFRuntimeException(cause, e);
+                }
+            }
+        }
+
     }
+
 }

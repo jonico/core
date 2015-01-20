@@ -439,10 +439,16 @@
 			This ISTWriter will write the data contained in the incoming
 			document to IST.
 		</description>
-		<property name="serverUrl" value="${ccf.participant.ist.url}" />
-		<property name="userName" value="${ccf.landscape.ist.username}" />
-		<property name="password" value="${ccf.landscape.ist.password}" />
+		<property name="serverUrl" value="${ccf.participant.ist.server}" />
+		<property name="username" value="${ccf.participant.ist.username}" />
+		<property name="password" value="${ccf.participant.ist.password}" />
 		<property name="connectionManager" ref="ISTConnectionManager"></property>
+
+		<!-- TODO allow to set extended logging in CCF UI -->
+		<property name="useExtendedHashLogging" value="false" />
+		<property name="useExtendedCreateLogging" value="false" />
+		<property name="useExtendedUpdateLogging" value="false" />
+		
 	</bean>
 
 	<bean id="IdentityMappingTableInserter"

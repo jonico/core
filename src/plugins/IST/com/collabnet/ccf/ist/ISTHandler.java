@@ -101,7 +101,7 @@ public class ISTHandler {
             log.error(
                     "Failed to convert Date to XML Gregorian: "
                             + date.toString(),
-                    ex);
+                            ex);
         }
         return xmlCalendar;
     }
@@ -110,16 +110,18 @@ public class ISTHandler {
     private static final ObjectFactory of         = new ObjectFactory();
 
     private static final Log           log        = LogFactory
-            .getLog(ISTHandler.class);
+                                                          .getLog(ISTHandler.class);
     private ISTConnection              connection = null;
+    private ISTMetaCache               meta       = null;
 
     private RemoteSort                 dateSort   = of.createRemoteSort();
     static final ArrayOfRemoteFilter   UNFILTERED = of.createArrayOfRemoteFilter();
 
     static final RemoteSort            UNSORTED   = of.createRemoteSort();
 
-    public ISTHandler(ISTConnection conn) {
+    public ISTHandler(ISTConnection conn, ISTMetaCache cache) {
         this.connection = conn;
+        this.meta = cache;
 
         // Configure the Incident Query to sort after Last Update
         // not really needed as we have to walk over all of them in any case....
@@ -131,7 +133,7 @@ public class ISTHandler {
     public void retrieveChangedIncidents(final Date lastModifiedDate,
             ArrayList<ArtifactState> artifactStates) {
 
-        ArrayOfRemoteIncident allincidents = of.createArrayOfRemoteIncident();
+        ArrayOfRemoteIncident allincidents = null;
 
         try {
             // fetch *all* incidents
@@ -150,7 +152,9 @@ public class ISTHandler {
         }
 
         for (RemoteIncident ri : allincidents.getRemoteIncident()) {
-            ISTIncident inc = new ISTIncident(connection.getService(), ri);
+            ISTIncident inc = new ISTIncident(connection.getService(),
+                    this.meta);
+            inc.setIncident(ri);
             ArtifactState xs = new ArtifactState();
             xs.setArtifactId(String.valueOf(inc.getId()));
 
@@ -159,9 +163,7 @@ public class ISTHandler {
             xs.setArtifactLastModifiedDate(lastUpdated);
             xs.setArtifactVersion(inc.getVersion());
 
-            // print intel on the incident
-            // TODO use overview mode in production
-            inc.printIncidentInfo(true);
+            inc.printIncidentInfo();
 
             artifactStates.add(xs);
         }
@@ -171,31 +173,10 @@ public class ISTHandler {
                 artifactStates,
                 new ArtifactStateComparator());
 
-        int totalLength = artifactStates.size();
+        artifactStates.size();
 
-        if (artifactStates.size() > 0 && log.isTraceEnabled()) {
-            log.trace("Incident Dump List");
-            log.trace("------------------");
-            log.trace(String.format(
-                    "  %-4s  %-40s  %-15s  %-15s",
-                    "ID",
-                    "Last Update",
-                    "Full Version",
-                    "Version.Hash"));
-            for (ArtifactState as : artifactStates) {
-                long fullVersion = as.getArtifactVersion();
-                log.trace(String.format(
-                        "  %-4s  %-40s  %-15d  %-15s",
-                        as.getArtifactId(),
-                        df.format(as.getArtifactLastModifiedDate()),
-                        fullVersion,
-                        ISTIncident.getVersionString(String
-                                .valueOf(fullVersion))));
-
-            }
-        }
-
-        // TODO remove a few seconds from last modified to avoid racing conditions - check with DEV abotu heuristics
+        // TODO do I have to remove a few seconds from last modified to avoid racing conditions?
+        // check with DEV about heuristics
         CollectionUtils.filter(
                 artifactStates,
                 new Predicate() {
@@ -208,19 +189,16 @@ public class ISTHandler {
                     }
                 });
 
-        int filterLength = artifactStates.size();
-
-        log.debug("Filtered " + filterLength + " artifacts out of "
-                + totalLength);
-
     }
 
     public void retrieveIncident(Date lastVisitedDate, String storedVersion,
             GenericArtifact ga) {
 
         // load incident
-        ISTIncident ri = new ISTIncident(connection.getService(),
-                Integer.valueOf(ga.getSourceArtifactId()), true);
+
+        ISTIncident ri = new ISTIncident(connection.getService(), this.meta);
+
+        ri.retrieveIncident(Integer.valueOf(ga.getSourceArtifactId()));
 
         // write data from incident to ga
         ri.fetchIncident(
@@ -230,26 +208,24 @@ public class ISTHandler {
         boolean isResync = false;
         boolean isIgnore = false;
 
-        String compareToVersion = String.valueOf(ri.getVersion());
+        long compareToVersion = ri.getVersion();
         if (storedVersion != null) {
-            // update version increment to match the table increment
-            ri.setVersionPart(ISTVersion.getVersionPart(storedVersion));
+            // update version counter to match the database
+            ri.setVersionCount(ISTVersion.getCountPart(Long
+                    .valueOf(storedVersion)));
         }
 
-        // the incident was updated, so increase its version increment
-        String oldVersion = ri.getVersion() + " (" + ri.getVersionString()
-                + ")";
-        ri.setVersionPart(ri.getVersionPart() + 1);
-        ga.setSourceArtifactVersion(String.valueOf(ri.getVersion()));
-        log.trace("version incremented: " + oldVersion + " => "
-                + ri.getVersion() + " (" + ri.getVersionString() + ")");
+        ri.getVersionCount();
+        ri.incrementVersionCount();
 
-        if (!ri.wasModifedExternally(compareToVersion)) {
+        ga.setSourceArtifactVersion(String.valueOf(ri.getVersion()));
+
+        if (!ri.hashEquals(compareToVersion)) {
             if (ri.getCreationDate().after(
                     lastVisitedDate)) {
                 log.info(String
                         .format(
-                                "resync is necessary, artifact #%s was created on %s which is after the last visit on %s",
+                                "resync is necessary, artifact #%s was created on %s, last visit on %s",
                                 ga.getSourceArtifactId(),
                                 df.format(ri.getCreationDate()),
                                 df.format(lastVisitedDate)));

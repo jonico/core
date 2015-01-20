@@ -1,5 +1,10 @@
 package com.collabnet.ccf.ist;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
 import java.text.DateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -10,7 +15,9 @@ import org.apache.commons.logging.LogFactory;
 
 import com.collabnet.ccf.core.CCFRuntimeException;
 import com.collabnet.ccf.core.ga.AttachmentMetaData;
+import com.collabnet.ccf.core.ga.AttachmentMetaData.AttachmentType;
 import com.collabnet.ccf.core.ga.GenericArtifact;
+import com.collabnet.ccf.core.ga.GenericArtifact.ArtifactActionValue;
 import com.collabnet.ccf.core.ga.GenericArtifactField;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.utils.DateUtil;
@@ -68,7 +75,7 @@ public class ISTAttachmentHandler {
                 int lastId = doc.getAttachmentId().getValue();
                 String lastName = doc.getFilenameOrUrl().getValue();
 
-                log.debug(String.format(
+                log.trace(String.format(
                         "%4d.%-4d `%s` has %s and was uploaded on %s",
                         inc.getIncidentId().getValue(),
                         doc.getAttachmentId().getValue(),
@@ -87,7 +94,7 @@ public class ISTAttachmentHandler {
                             .getRemoteDocumentVersion()) {
                         Date versionDate = ISTHandler
                                 .toDate(dv.getUploadDate());
-                        log.debug(String.format(
+                        log.trace(String.format(
                                 "Version %s uploaded on %s",
                                 dv.getVersionNumber().getValue(),
                                 df.format(versionDate)));
@@ -204,4 +211,88 @@ public class ISTAttachmentHandler {
         return attachments;
     }
 
+    public void handleAttachment(ISTConnection connection,
+            GenericArtifact attachmentGA, ISTIncident incident) {
+        int parentIncidentId = Integer.valueOf(attachmentGA
+                .getDepParentTargetArtifactId());
+        log.info("An attachment will be created for artifact id #"
+                + parentIncidentId);
+        String contentType = GenericArtifactHelper.getStringFlexGAField(
+                AttachmentMetaData.ATTACHMENT_TYPE,
+                attachmentGA);
+        String attachDescription = GenericArtifactHelper.getStringFlexGAField(
+                AttachmentMetaData.ATTACHMENT_DESCRIPTION,
+                attachmentGA);
+        String attachmentName = GenericArtifactHelper.getStringFlexGAField(
+                AttachmentMetaData.ATTACHMENT_NAME,
+                attachmentGA);
+
+        GenericArtifact.ArtifactActionValue attachmentAction = attachmentGA
+                .getArtifactAction();
+
+        if (attachmentAction == ArtifactActionValue.CREATE) {
+
+            if (AttachmentMetaData.AttachmentType.valueOf(contentType) == AttachmentType.DATA) {
+
+                String fileName = GenericArtifactHelper.getStringFlexGAField(
+                        AttachmentMetaData.ATTACHMENT_DATA_FILE,
+                        attachmentGA);
+
+                File attachment = new File(fileName);
+                log.trace("Attempting to read " + attachment.getPath());
+
+                RemoteDocument newAttachment = incident.attachDocument(
+                        readLocalFile(attachment),
+                        attachmentName,
+                        attachDescription);
+
+                if (newAttachment != null) {
+                    // update Generic Artifact info for attachment
+                    attachmentGA.setTargetArtifactLastModifiedDate(df
+                            .format(ISTHandler.toDate(newAttachment
+                                    .getEditedDate())));
+                    attachmentGA.setTargetArtifactVersion("1");
+                    attachmentGA
+                            .setTargetArtifactId(String.valueOf(newAttachment
+                                    .getAttachmentId().getValue()));
+                }
+
+            } else {
+                String cause = "Attachments of type " + contentType
+                        + " are not supported";
+                throw new CCFRuntimeException(cause);
+            }
+        } else if (attachmentAction == ArtifactActionValue.UPDATE) {
+            String cause = "Attachment UPDATE is not supported";
+            throw new CCFRuntimeException(cause);
+        }
+    }
+
+    private byte[] readLocalFile(File file) {
+        byte[] buffer = new byte[(int) file.length()];
+        InputStream ios = null;
+        try {
+            ios = new FileInputStream(file);
+            if (ios.read(buffer) == -1) {
+                throw new CCFRuntimeException(
+                        "too early EOF while reading local file "
+                                + file.getPath());
+            }
+        } catch (FileNotFoundException e) {
+            String cause = "could not find local attachment " + file.getPath();
+            throw new CCFRuntimeException(cause, e);
+        } catch (IOException e) {
+            String cause = "IO error with " + file.getPath();
+            throw new CCFRuntimeException(cause, e);
+        } finally {
+            try {
+                if (ios != null)
+                    ios.close();
+            } catch (IOException e) {
+                String cause = "could not close " + file.getPath();
+                throw new CCFRuntimeException(cause, e);
+            }
+        }
+        return buffer;
+    }
 }

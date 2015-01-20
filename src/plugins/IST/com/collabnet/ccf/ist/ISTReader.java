@@ -6,6 +6,8 @@ import java.util.Date;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections.Predicate;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.dom4j.Document;
@@ -28,6 +30,21 @@ import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
 
 public class ISTReader extends AbstractReader<ISTConnection> {
 
+    class ConnectorUpdatesPredicate implements Predicate {
+
+        private List<ArtifactState> connectorUpdates = null;
+
+        public ConnectorUpdatesPredicate(List<ArtifactState> connectorUpdates) {
+            this.connectorUpdates = connectorUpdates;
+        }
+
+        @Override
+        public boolean evaluate(Object o) {
+            return !connectorUpdates.contains((ArtifactState) o);
+        }
+
+    }
+
     private static final Log  log                        = LogFactory
             .getLog(ISTReader.class);
 
@@ -48,10 +65,14 @@ public class ISTReader extends AbstractReader<ISTConnection> {
     private boolean           ignoreConnectorUserUpdates = true;
 
     private ISTHandler        handler                    = null;
+    private ISTMetaCache      meta                       = null;
 
     private DateFormat        df                         = GenericArtifactHelper.df;
 
     private JDBCReadConnector identityMapping            = null;
+
+    private boolean           useExtendedHashLogging     = false;
+    private boolean           logShowXMLdata             = false;
 
     private ISTConnection connect(String systemId, String systemKind,
             String repositoryId, String repositoryKind) {
@@ -87,10 +108,8 @@ public class ISTReader extends AbstractReader<ISTConnection> {
             throw new CCFRuntimeException(cause, e);
         }
 
-        // load handler - this also loads all current Custom Property List Values
-        this.handler = new ISTHandler(connection);
-
-        log.debug("     succesfully connected");
+        this.meta = new ISTMetaCache(connection.getService());
+        this.handler = new ISTHandler(connection, this.meta);
 
         return connection;
     }
@@ -171,15 +190,15 @@ public class ISTReader extends AbstractReader<ISTConnection> {
                 repositoryMappingId);
 
         if (storedVersion == null)
-            log.debug(String.format(
-                    "No previous version found for rmID-artfID %s-%s",
+            log.trace(String.format(
+                    "No previous version found for ID-artfID %s-%s",
                     repositoryMappingId,
                     artifactId));
         else
-            log.debug(String.format(
+            log.trace(String.format(
                     "Found stored version for incident #%s: %s: ",
                     artifactId,
-                    ISTIncident.getVersionString(storedVersion)));
+                    storedVersion));
 
         Date lastModifiedDate = this.getLastModifiedDate(syncInfo);
         ISTConnection connection = null;
@@ -219,14 +238,13 @@ public class ISTReader extends AbstractReader<ISTConnection> {
         }
 
         try {
-            log.trace("Rendered Source Artifact XML for "
+            log.debug("Source Artifact XML for incident #"
                     + ga.getSourceArtifactId() + ":\n"
                     + GenericArtifactHelper.createGenericArtifactXMLDocument(
                             ga).asXML());
         } catch (GenericArtifactParsingException e) {
             log.warn("Tried to convert GA to XML but failed!");
         }
-
         return ga;
     }
 
@@ -244,23 +262,16 @@ public class ISTReader extends AbstractReader<ISTConnection> {
         String sourceSystemKind = this.getSourceSystemKind(syncInfo);
         String sourceRepositoryId = this.getSourceRepositoryId(syncInfo);
         String sourceRepositoryKind = this.getSourceRepositoryKind(syncInfo);
-        String lastSynchronizedVersion = this.getLastSourceVersion(syncInfo);
+        this.getLastSourceVersion(syncInfo);
         Date lastModifiedDate = this.getLastModifiedDate(syncInfo);
 
         ISTConnection connection = null;
         ArrayList<ArtifactState> artifactStates = new ArrayList<ArtifactState>();
+        ArrayList<ArtifactState> connectorUpdates = new ArrayList<ArtifactState>();
 
-        //        try {
-        //            lastModifiedDate = df.parse("Fr, 1 Jan 1999 00:00:00.000 +0700");
-        //        } catch (ParseException e) {
-        //            log.warn("could not reset date");
-        //        }
-
-        //FIXME multi list values get lost (again)
-
-        log.debug("retrieving incidents changed since "
-                + df.format(lastModifiedDate) + " and version "
-                + lastSynchronizedVersion);
+        log.trace("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+        log.trace("retrieving incidents changed since "
+                + df.format(lastModifiedDate));
 
         boolean skipit = false;
         if (skipit)
@@ -277,42 +288,63 @@ public class ISTReader extends AbstractReader<ISTConnection> {
                     lastModifiedDate,
                     artifactStates);
 
-            if (artifactStates.size() > 0 && log.isTraceEnabled()) {
-                log.trace("====================");
-                log.trace("Incident Update List");
-                log.trace("====================");
-                log.trace(String.format(
-                        "  %-4s  %-40s  %-15s  %-15s %-15s %-15s",
-                        "ID",
-                        "Last Update",
-                        "Full Version",
-                        "DB Version",
-                        "Version.Hash",
-                        "DB Version.Hash"));
+            if (artifactStates.size() > 0) {
+                if (log.isTraceEnabled()) {
+                    log.trace("=========================");
+                    log.trace("List of updated incidents");
+                    log.trace("-------------------------");
+                    log.trace(String.format(
+                            "  %-4s  %-34s  %-15s  %-15s  %-8s  %-8s",
+                            "ID",
+                            "Last Update",
+                            "Version",
+                            "DB Version",
+                            "Hash",
+                            "DB Hash"));
+                }
                 String repoMappingId = getRepositoryMappingId(syncInfo);
                 for (ArtifactState as : artifactStates) {
-                    long fullVersion = as.getArtifactVersion();
-                    String tableVersion = this.lookupSourceArtifactVersion(
+                    long version = as.getArtifactVersion();
+                    int hash = ISTIncident.getHashPart(version);
+
+                    String dbVersion = this.lookupSourceArtifactVersion(
                             as.getArtifactId(),
                             repoMappingId);
-                    log.trace(String.format(
-                            "  %-4s  %-40s  %-15d  %-15s %-15s %-15s",
-                            as.getArtifactId(),
-                            df.format(as.getArtifactLastModifiedDate()),
-                            fullVersion,
-                            tableVersion,
-                            ISTIncident.getVersionString(String
-                                    .valueOf(fullVersion)),
-                                    ISTIncident.getVersionString(String
-                                            .valueOf(tableVersion))));
+                    long dbHash = 0;
+                    if (dbVersion != null) {
+                        dbHash = ISTIncident.getHashPart(Long
+                                .valueOf(dbVersion));
+                    }
+
+                    if (log.isTraceEnabled()) {
+                        String skipped = "";
+                        if (hash == dbHash) {
+                            skipped = "* ccf update *";
+                        }
+                        log.trace(String.format(
+                                "  %-4s  %-34s  %-15d  %-15s  %-8d  %-8d  %s",
+                                as.getArtifactId(),
+                                df.format(as.getArtifactLastModifiedDate()),
+                                version,
+                                dbVersion,
+                                hash,
+                                dbHash,
+                                skipped));
+                    }
+
+                    if (hash == dbHash) {
+                        connectorUpdates.add(as);
+                    }
 
                 }
-            } else {
-
-                log.debug("found no artifacts changed since "
-                        + df.format(lastModifiedDate)
-                        + "; last sync'd Version: " + lastSynchronizedVersion);
+                log.trace("------------------------------------------");
             }
+
+            // remove connectorUpdates from list of Artifact States
+            CollectionUtils.filter(
+                    artifactStates,
+                    new ConnectorUpdatesPredicate(connectorUpdates));
+
         } finally {
             // release connection to pool
             getConnectionManager().releaseConnection(
@@ -351,6 +383,10 @@ public class ISTReader extends AbstractReader<ISTConnection> {
 
     public boolean isIgnoreConnectorUserUpdates() {
         return ignoreConnectorUserUpdates;
+    }
+
+    public boolean isUseExtendedHashLogging() {
+        return useExtendedHashLogging;
     }
 
     /**
@@ -485,6 +521,10 @@ public class ISTReader extends AbstractReader<ISTConnection> {
         this.handler = istHandler;
     }
 
+    public void setLogShowXMLdata(boolean logShowXMLdata) {
+        this.logShowXMLdata = logShowXMLdata;
+    }
+
     public void setPassword(String password) {
         this.password = password;
     }
@@ -495,6 +535,10 @@ public class ISTReader extends AbstractReader<ISTConnection> {
 
     public void setServerUrl(String serverUrl) {
         this.serverUrl = serverUrl;
+    }
+
+    public void setUseExtendedHashLogging(boolean useExtendedHashLogging) {
+        this.useExtendedHashLogging = useExtendedHashLogging;
     }
 
     public void setUsername(String username) {
@@ -519,6 +563,9 @@ public class ISTReader extends AbstractReader<ISTConnection> {
                 "SpiraTest Server URL not set",
                 this,
                 exceptions);
+
+        // configure extended logging
+        ISTIncident.setUseExtendedHashLogging(useExtendedHashLogging);
 
         log.info("===========================================================");
         log.info("started SpiraTest Reader " + ISTVersionInfo.getVersion());

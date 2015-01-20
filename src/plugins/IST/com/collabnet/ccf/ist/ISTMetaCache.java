@@ -44,28 +44,21 @@ import com.inflectra.spirateam.mylyn.core.internal.services.soap.RemoteRelease;
 
 public class ISTMetaCache {
 
-    private static final String buildKey(RemoteArtifactCustomProperty prop,
-            int valueId) {
-        return getName(prop) + KEYSEPARATOR + valueId;
-    }
-
-    private static final String buildKey(RemoteCustomProperty prop, int valueId) {
-        return getName(prop) + KEYSEPARATOR + valueId;
-    }
-
     /***
      * Creates a JAXB web service IntegerList element from a Java IntegerList
      *
      * @param value
      * @return
      */
-    public static JAXBElement<ArrayOfint> CreateJAXBArrayOfInt(
+    public static JAXBElement<ArrayOfint> CreateJAXBArrayOfint(
             String fieldName, ArrayOfint value) {
         JAXBElement<ArrayOfint> jaxIntegerList = new JAXBElement<ArrayOfint>(
                 new QName(WEB_SERVICE_NAMESPACE_DATA_OBJECTS, fieldName),
                 ArrayOfint.class, value);
         if (value == null) {
             jaxIntegerList.setNil(true);
+        } else {
+            jaxIntegerList.setNil(false);
         }
         return jaxIntegerList;
     }
@@ -91,6 +84,8 @@ public class ISTMetaCache {
                 ArrayOfint.class, arrayOfint);
         if (value == null) {
             jaxIntegerList.setNil(true);
+        } else {
+            jaxIntegerList.setNil(false);
         }
         return jaxIntegerList;
     }
@@ -109,6 +104,8 @@ public class ISTMetaCache {
                 ArrayOfRemoteArtifactCustomProperty.class, value);
         if (value == null) {
             jaxArrayOfRemoteArtifactCustomProperty.setNil(true);
+        } else {
+            jaxArrayOfRemoteArtifactCustomProperty.setNil(false);
         }
         return jaxArrayOfRemoteArtifactCustomProperty;
     }
@@ -126,6 +123,8 @@ public class ISTMetaCache {
                 BigDecimal.class, value);
         if (value == null) {
             jaxBigDecimal.setNil(true);
+        } else {
+            jaxBigDecimal.setNil(false);
         }
         return jaxBigDecimal;
     }
@@ -143,6 +142,8 @@ public class ISTMetaCache {
                 value);
         if (value == null) {
             jaxBoolean.setNil(true);
+        } else {
+            jaxBoolean.setNil(false);
         }
         return jaxBoolean;
     }
@@ -160,8 +161,31 @@ public class ISTMetaCache {
                 value);
         if (value == null) {
             jaxInteger.setNil(true);
+        } else {
+            jaxInteger.setNil(false);
         }
         return jaxInteger;
+    }
+
+    /***
+     * Creates a JAXB web service ArrayOfRemoteArtifactCustomProperty element
+     * from a Java ArrayOfRemoteArtifactCustomProperty object
+     *
+     * @param value
+     * @return
+     */
+    public static JAXBElement<RemoteCustomProperty> CreateJAXBRemoteCustomProperty(
+            String fieldName, RemoteCustomProperty value) {
+        JAXBElement<RemoteCustomProperty> jaxRemoteCustomProperty = new JAXBElement<RemoteCustomProperty>(
+                new QName(WEB_SERVICE_NAMESPACE_DATA_OBJECTS, fieldName),
+                RemoteCustomProperty.class, value);
+        if (value == null) {
+            jaxRemoteCustomProperty.setNil(true);
+        } else {
+            jaxRemoteCustomProperty.setNil(false);
+        }
+
+        return jaxRemoteCustomProperty;
     }
 
     /***
@@ -177,6 +201,9 @@ public class ISTMetaCache {
                 value);
         if (value == null) {
             jaxString.setNil(true);
+        } else {
+            jaxString.setNil(false);
+
         }
         return jaxString;
     }
@@ -195,12 +222,14 @@ public class ISTMetaCache {
                 XMLGregorianCalendar.class, value);
         if (value == null) {
             jaxXMLGregorianCalendar.setNil(true);
+        } else {
+            jaxXMLGregorianCalendar.setNil(false);
         }
         return jaxXMLGregorianCalendar;
     }
 
     public static final int getListItemId(String key) {
-        return Integer.valueOf(key.split(KEYSEPARATOR)[1]);
+        return Integer.valueOf(key.split(VALUESEPARATOR)[1]);
     }
 
     public static final String getName(RemoteArtifactCustomProperty prop) {
@@ -236,9 +265,9 @@ public class ISTMetaCache {
     private static final Log        log                                = LogFactory
                                                                                .getLog(ISTReader.class);
 
-    private static final String     KEYSEPARATOR                       = "::";
+    private static final String     VALUESEPARATOR                     = "::";
 
-    private Map<String, String>     customlistValues                   = null;
+    private Map<Integer, String>    customlistValues                   = null;
 
     private Map<Integer, String>    priorityValues                     = new HashMap<Integer, String>();
 
@@ -247,6 +276,7 @@ public class ISTMetaCache {
     private Map<Integer, String>    severityValues                     = new HashMap<Integer, String>();
 
     private Map<Integer, String>    incidentTypeValues                 = new HashMap<Integer, String>();
+    private int                     incidentDefaultType                = 0;
 
     private Map<Integer, String>    resolutionValues                   = new HashMap<Integer, String>();
 
@@ -254,62 +284,61 @@ public class ISTMetaCache {
 
     private IImportExport           soap                               = null;
 
-    public ISTMetaCache(IImportExport theSoap, boolean cacheMandatories) {
+    public ISTMetaCache(IImportExport theSoap) {
 
         // all custom lists
         this.soap = theSoap;
         try {
 
             // get other list values in order to write to SpiraTest
-            if (cacheMandatories) {
-                // mandatory lists
-                ArrayOfRemoteIncidentPriority priorityList;
-                ArrayOfRemoteIncidentSeverity severityList;
-                ArrayOfRemoteIncidentStatus statusList;
-                ArrayOfRemoteIncidentType incidentTypeList;
-                ArrayOfRemoteRelease releaseList;
+            // mandatory lists
+            ArrayOfRemoteIncidentPriority priorityList;
+            ArrayOfRemoteIncidentSeverity severityList;
+            ArrayOfRemoteIncidentStatus statusList;
+            ArrayOfRemoteIncidentType incidentTypeList;
+            ArrayOfRemoteRelease releaseList;
 
-                priorityList = soap.incidentRetrievePriorities();
-                severityList = soap.incidentRetrieveSeverities();
-                statusList = soap.incidentRetrieveStatuses();
-                incidentTypeList = soap.incidentRetrieveTypes();
-                releaseList = soap.releaseRetrieve(false);
+            priorityList = soap.incidentRetrievePriorities();
+            severityList = soap.incidentRetrieveSeverities();
+            statusList = soap.incidentRetrieveStatuses();
+            incidentTypeList = soap.incidentRetrieveTypes();
+            releaseList = soap.releaseRetrieve(false);
 
-                for (RemoteIncidentPriority prio : priorityList
-                        .getRemoteIncidentPriority()) {
-                    this.priorityValues.put(
-                            prio.getPriorityId().getValue(),
-                            prio.getName().getValue());
-                }
+            for (RemoteIncidentPriority prio : priorityList
+                    .getRemoteIncidentPriority()) {
+                this.priorityValues.put(
+                        prio.getPriorityId().getValue(),
+                        prio.getName().getValue());
+            }
 
-                for (RemoteIncidentSeverity sev : severityList
-                        .getRemoteIncidentSeverity()) {
-                    this.severityValues.put(
-                            sev.getSeverityId().getValue(),
-                            sev.getName().getValue());
-                }
+            for (RemoteIncidentSeverity sev : severityList
+                    .getRemoteIncidentSeverity()) {
+                this.severityValues.put(
+                        sev.getSeverityId().getValue(),
+                        sev.getName().getValue());
+            }
 
-                for (RemoteIncidentStatus sta : statusList
-                        .getRemoteIncidentStatus()) {
-                    this.statusValues.put(
-                            sta.getIncidentStatusId().getValue(),
-                            sta.getName().getValue());
-                }
+            for (RemoteIncidentStatus sta : statusList
+                    .getRemoteIncidentStatus()) {
+                this.statusValues.put(
+                        sta.getIncidentStatusId().getValue(),
+                        sta.getName().getValue());
+            }
 
-                for (RemoteIncidentType typ : incidentTypeList
-                        .getRemoteIncidentType()) {
-                    this.incidentTypeValues.put(
-                            typ.getIncidentTypeId().getValue(),
-                            typ.getName().getValue());
-                }
+            for (RemoteIncidentType typ : incidentTypeList
+                    .getRemoteIncidentType()) {
+                this.incidentTypeValues.put(
+                        typ.getIncidentTypeId().getValue(),
+                        typ.getName().getValue());
+            }
 
-                for (RemoteRelease rel : releaseList.getRemoteRelease()) {
-                    this.releaseValues.put(
-                            rel.getReleaseId().getValue(),
-                            rel.getName().getValue());
-                }
-
-                log.debug(String
+            for (RemoteRelease rel : releaseList.getRemoteRelease()) {
+                this.releaseValues.put(
+                        rel.getReleaseId().getValue(),
+                        rel.getName().getValue());
+            }
+            if (ISTIncident.isUseExtendedHashLogging())
+                log.trace(String
                         .format(
                                 "Cached %d Priorties, %d Severities, %d status values, %d incident types, %d releases",
                                 this.priorityValues.size(),
@@ -318,9 +347,8 @@ public class ISTMetaCache {
                                 this.incidentTypeValues.size(),
                                 this.releaseValues.size()));
 
-                // MAYBE get list values globally, or via incident itself?
+            // MAYBE get list values globally, or via incident itself?
 
-            }
         } catch (IImportExportIncidentRetrieveTypesServiceFaultMessageFaultFaultMessage e) {
             // TODO Auto-generated catch block
             e.printStackTrace();
@@ -349,14 +377,29 @@ public class ISTMetaCache {
         return -1;
     }
 
+    public int getCustomListItemIdForValue(RemoteArtifactCustomProperty prop,
+            String value) {
+        if (this.customlistValues == null)
+            this.loadCustomListsForReadAccess(prop);
+
+        String combined = prop.getDefinition().getValue().getName().getValue()
+                + VALUESEPARATOR + value;
+
+        return this.findKeyForValue(
+                this.customlistValues,
+                combined);
+    }
+
     public String getCustomListItemValueById(RemoteArtifactCustomProperty prop,
             int customPropertyListValueId) {
 
         if (this.customlistValues == null)
             this.loadCustomListsForReadAccess(prop);
 
-        return this.customlistValues.get(String
-                .valueOf(customPropertyListValueId));
+        String combined = this.customlistValues.get(customPropertyListValueId);
+
+        // propertName::valueString
+        return combined.split(VALUESEPARATOR)[1];
     }
 
     public int getIncidentTypeKeyForValue(Object value) {
@@ -383,6 +426,48 @@ public class ISTMetaCache {
             default:
                 return ISTCustomFieldType.Text;
         }
+    }
+
+    public Integer getMandatoryIdForValue(ISTMandatoryFieldType mField,
+            String value) {
+
+        // no fancy code saving here, plain and brutal
+        switch (mField) {
+            case IncidentStatusName:
+                return this.findKeyForValue(
+                        statusValues,
+                        value);
+            case IncidentTypeName:
+                return this.findKeyForValue(
+                        incidentTypeValues,
+                        value);
+            case PriorityName:
+                return this.findKeyForValue(
+                        priorityValues,
+                        value);
+            case ResolvedReleaseVersionNumber:
+            case DetectedReleaseVersionNumber:
+            case VerifiedReleaseVersionNumber:
+                return this.findKeyForValue(
+                        releaseValues,
+                        value);
+            case SeverityName:
+                return this.findKeyForValue(
+                        severityValues,
+                        value);
+            case OpenerName:
+            case FixedBuildName:
+                log.error("unsupported mandatory field: " + mField.name());
+                break;
+            case ProjectName:
+                log.warn("An Incident's Project Name cannot be set via CCF");
+                break;
+            default:
+                log.warn("Unexpected request for list item id for field "
+                        + mField.name());
+
+        }
+        return null;
     }
 
     public ArrayList<String> getMultiListValues(
@@ -434,7 +519,7 @@ public class ISTMetaCache {
         // get artifactType ID
         int artfTypeId = prop.getDefinition().getValue().getArtifactTypeId();
 
-        this.customlistValues = new HashMap<String, String>();
+        this.customlistValues = new HashMap<Integer, String>();
         try {
             ArrayOfRemoteCustomProperty customProps = soap
                     .customPropertyRetrieveForArtifactType(
@@ -447,19 +532,17 @@ public class ISTMetaCache {
 
                     for (RemoteCustomListValue listItem : rcl.getValues()
                             .getValue().getRemoteCustomListValue()) {
-                        this.customlistValues
-                        .put(
-                                String.valueOf(listItem
-                                        .getCustomPropertyValueId()
-                                        .getValue()),
-                                        listItem.getName().getValue());
+                        this.customlistValues.put(
+                                listItem.getCustomPropertyValueId().getValue(),
+                                cProp.getName().getValue() + VALUESEPARATOR
+                                        + listItem.getName().getValue());
                     }
                 }
             }
-
-            log.debug(String.format(
-                    "Cached %d Custom Property Values",
-                    this.customlistValues.size()));
+            if (ISTIncident.isUseExtendedHashLogging())
+                log.trace(String.format(
+                        "Cached %d Custom Property List Values",
+                        this.customlistValues.size()));
 
         } catch (IImportExportCustomPropertyRetrieveForArtifactTypeServiceFaultMessageFaultFaultMessage e) {
             // TODO Auto-generated catch block

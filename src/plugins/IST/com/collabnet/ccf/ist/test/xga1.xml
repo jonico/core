@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<artifact xmlns="http://ccf.open.collab.net/GenericArtifactV1.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" artifactAction="create"
+	artifactMode="complete" artifactType="plainArtifact"
+	includesFieldMetaData="false" sourceArtifactLastModifiedDate="Mi, 14 Jan 2015 13:01:49.000 +0700"
+	targetArtifactLastModifiedDate="unknown" errorCode="ok"
+	sourceArtifactVersion="102" targetArtifactVersion="unknown"
+	conflictResolutionPriority="alwaysOverride" depParentSourceArtifactId="none"
+	depParentSourceRepositoryId="unknown" depParentSourceRepositoryKind="unknown"
+	depParentTargetArtifactId="none" depParentTargetRepositoryId="unknown"
+	depParentTargetRepositoryKind="unknown" sourceArtifactId="artf1448"
+	sourceRepositoryId="tracker1017" sourceRepositoryKind="FORWARD/1/TF Tracker Artfiact to IST Incident/"
+	sourceSystemId="1" sourceSystemKind="1" targetArtifactId="unknown"
+	targetRepositoryId="21" targetRepositoryKind="CUSTOM_XSLT"
+	targetSystemId="2" targetSystemKind="1" sourceSystemTimezone="Asia/Shanghai"
+	targetSystemTimezone="Asia/Shanghai" transactionId="unknown"
+	xsi:schemaLocation="http://ccf.open.collab.net/GenericArtifactV1.0 http://ccf.open.collab.net/files/documents/177/1972/genericartifactschema.xsd">
+	<field fieldAction="replace" fieldName="Description" fieldType="mandatoryField"
+		fieldValueHasChanged="true" fieldValueType="String" fieldValueIsNull="false">You're welcome!
+		
+		Here's another line!
+		
+		Thjank you!</field>
+	<field fieldAction="replace" fieldName="IncidentTypeName" fieldType="mandatoryField"
+		fieldValueHasChanged="true" fieldValueType="String" fieldValueIsNull="false">Bug</field>
+	<field fieldAction="replace" fieldName="PriorityName" fieldType="mandatoryField"
+		fieldValueHasChanged="true" fieldValueType="Integer" fieldValueIsNull="false">3 - Medium</field>
+	<field fieldAction="replace" fieldName="IncidentStatusName"
+		fieldType="mandatoryField" fieldValueHasChanged="true" fieldValueType="String"
+		fieldValueIsNull="false">Open</field>
+	<field fieldAction="replace" fieldName="Name" fieldType="mandatoryField"
+		fieldValueHasChanged="true" fieldValueType="String" fieldValueIsNull="false">Hello SpiraTest 1</field>
+	<field fieldAction="replace" fieldName="CCF Single Select"
+		fieldType="flexField" fieldValueHasChanged="true" fieldValueType="String"
+		fieldValueIsNull="false">A.2</field>
+	<field fieldAction="replace" fieldName="CCF Rich Text Property" fieldType="mandatoryField"
+		fieldValueHasChanged="true" fieldValueType="String" fieldValueIsNull="false">Some Memo
+		Line
+		2
+		3
+		4
+		</field>
+	<field fieldAction="replace" fieldName="CCF Integer Property"
+		fieldType="flexField" fieldValueHasChanged="true" fieldValueType="String"
+		fieldValueIsNull="false">1</field>
+	<field fieldAction="replace" fieldName="CCF Multi Select"
+		fieldType="flexField" fieldValueHasChanged="true" fieldValueType="String"
+		fieldValueIsNull="false">B.4</field>
+	<field fieldAction="replace" fieldName="CCF Multi Select"
+		fieldType="flexField" fieldValueHasChanged="true" fieldValueType="String"
+		fieldValueIsNull="false">B.5</field>
+	<field fieldAction="replace" fieldName="CCF Plain Text Property"
+		fieldType="flexField" fieldValueHasChanged="true" fieldValueType="String"
+		fieldValueIsNull="false">Line</field>
+	<field fieldAction="replace" fieldName="CCF Date Property"
+		fieldType="flexField" fieldValueHasChanged="true" fieldValueType="DateTime"
+		fieldValueIsNull="false">Mi, 14 Jan 2015 00:00:00.000 +0700</field>
+</artifact>

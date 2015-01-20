@@ -16,21 +16,28 @@ import com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportCo
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportConnectionDisconnectServiceFaultMessageFaultFaultMessage;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportUserRetrieveByUserNameServiceFaultMessageFaultFaultMessage;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.ImportExport;
+import com.inflectra.spirateam.mylyn.core.internal.services.soap.RemoteUser;
 
 public class ISTConnection {
 
+    public static int getConnectorUserId() {
+        return connectorUserId;
+    }
+
     private static final String WEB_SERVICE_SUFFIX    = "/SpiraTest/Services/v4_0/ImportExport.svc";                      //$NON-NLS-1$
+
     private static final String WEB_SERVICE_NAMESPACE = "{http://www.inflectra.com/SpiraTest/Services/v4.0/}ImportExport"; //$NON-NLS-1$
-
     private static final Log    log                   = LogFactory
-            .getLog(ISTConnection.class);
-    private IImportExport       soap                  = null;
+                                                              .getLog(ISTConnection.class);
 
+    private IImportExport       soap                  = null;
     private String              username              = null;
     private String              password              = null;
     private String              baseUrl               = null;
     private int                 projectId             = 0;
     private URL                 serviceUrl            = null;
+
+    private static int          connectorUserId       = 0;
 
     public ISTConnection(String credentialInfo, String connectionInfo) {
 
@@ -71,10 +78,7 @@ public class ISTConnection {
         } catch (MalformedURLException e) {
             log.error("Malformed URL: " + connectionInfo + WEB_SERVICE_SUFFIX);
         }
-        log.debug("Connecting to Spira Test: " + serviceUrl + " as " + username
-                + " to project " + projectId);
 
-        // connect SOAP session
         connect();
     }
 
@@ -103,7 +107,6 @@ public class ISTConnection {
         requestContext.put(
                 BindingProvider.SESSION_MAINTAIN_PROPERTY,
                 true);
-        log.debug("Connecting to IST project #" + projectId + " as " + username);
 
         try {
             if (!soap.connectionAuthenticate(
@@ -115,18 +118,25 @@ public class ISTConnection {
                 log.error("Project Connection failed");
             }
 
+            RemoteUser ru = soap.userRetrieveByUserName(username);
+            connectorUserId = ru.getUserId().getValue();
+
         } catch (IImportExportConnectionAuthenticateServiceFaultMessageFaultFaultMessage e) {
             log.error(
                     "Could not authenticate user " + username
-                            + ", please verify credentials",
+                    + ", please verify credentials",
                     e);
         } catch (IImportExportConnectionConnectToProjectServiceFaultMessageFaultFaultMessage e) {
             log.error(
                     "Could not open project ID (" + projectId + ")",
                     e);
+        } catch (IImportExportUserRetrieveByUserNameServiceFaultMessageFaultFaultMessage e) {
+            log.error(
+                    "Could not retrieve user id for user (" + username + ")",
+                    e);
         }
 
-        log.info("Connection (v" + ISTVersionInfo.getVersion() + ") to "
+        log.info("New connection (v" + ISTVersionInfo.getVersion() + ") to "
                 + serviceUrl.getHost() + " as " + username + " to project #"
                 + projectId);
     }

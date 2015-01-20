@@ -19,7 +19,7 @@ public enum ISTMandatoryFieldType {
     ClosedDate(true, ISTCustomFieldType.Date, false, FieldValueTypeValue.DATETIME, true),
     CompletionPercent(false, ISTCustomFieldType.Integer, false, FieldValueTypeValue.STRING, true),
     ConcurrencyDate(false, ISTCustomFieldType.Date, false, FieldValueTypeValue.DATETIME, true),
-    CreationDate(true, ISTCustomFieldType.Date, false, FieldValueTypeValue.DATETIME, true),
+    CreationDate(true, ISTCustomFieldType.Date, false, FieldValueTypeValue.DATETIME, false),
     Description(true, ISTCustomFieldType.Text, false, FieldValueTypeValue.HTMLSTRING, true),
     DetectedReleaseId(true, ISTCustomFieldType.Integer, false, FieldValueTypeValue.STRING, true),
     DetectedReleaseVersionNumber(true, ISTCustomFieldType.Text, false, FieldValueTypeValue.STRING, true),
@@ -82,12 +82,12 @@ public enum ISTMandatoryFieldType {
     private final boolean             identifying;
 
     private ISTMandatoryFieldType(boolean jax, ISTCustomFieldType fvt,
-            boolean ro, FieldValueTypeValue gat, boolean isid) {
+            boolean ro, FieldValueTypeValue gat, boolean isIdentifying) {
         this.usesJAXWrapper = jax;
         this.fieldValueType = fvt;
         this.isReadOnlyField = ro;
         this.genericFieldType = gat;
-        this.identifying = isid;
+        this.identifying = isIdentifying;
     }
 
     FieldValueTypeValue genericFielValueType() {

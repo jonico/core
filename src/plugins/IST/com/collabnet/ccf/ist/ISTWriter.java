@@ -21,21 +21,74 @@ import com.inflectra.spirateam.mylyn.core.internal.services.soap.ObjectFactory;
 
 public class ISTWriter extends AbstractWriter<ISTConnection> {
 
-    private static final Log           log                  = LogFactory
-                                                                    .getLog(ISTWriter.class);
+    private static final Log           log                      = LogFactory
+                                                                        .getLog(ISTWriter.class);
 
-    private static final Log           logConflictResolutor = LogFactory
-                                                                    .getLog("com.collabnet.ccf.core.conflict.resolution");
+    private static final Log           logConflictResolutor     = LogFactory
+                                                                        .getLog(ISTWriter.class);
 
-    private String                     serverUrl            = null;
-    private String                     username             = null;
-    private String                     password             = null;
+    private String                     serverUrl                = null;
+    private String                     username                 = null;
+    private String                     password                 = null;
 
-    private ISTHandler                 handler              = null;
-    private static final DateFormat    df                   = GenericArtifactHelper.df;
-    private static final ObjectFactory of                   = new ObjectFactory();
+    private ISTHandler                 handler                  = null;
+    private ISTMetaCache               meta                     = null;
+    private static final DateFormat    df                       = GenericArtifactHelper.df;
+    private static final ObjectFactory of                       = new ObjectFactory();
+
+    private boolean                    useExtendedHashLogging   = false;
+    private boolean                    useExtendedUpdateLogging = false;
+    private boolean                    useExtendedCreateLogging = false;
 
     public ISTWriter() {
+    }
+
+    private GenericArtifact buildGaForAttachmentParent(
+            GenericArtifact attachmentGA, ISTIncident parentIncident) {
+
+        GenericArtifact parentArtifact = new GenericArtifact();
+        // make sure that we do not update the synchronization status record
+        // for replayed attachments
+        parentArtifact.setTransactionId(attachmentGA.getTransactionId());
+        parentArtifact
+        .setArtifactType(GenericArtifact.ArtifactTypeValue.PLAINARTIFACT);
+        parentArtifact
+        .setArtifactAction(GenericArtifact.ArtifactActionValue.UPDATE);
+        parentArtifact
+        .setArtifactMode(GenericArtifact.ArtifactModeValue.CHANGEDFIELDSONLY);
+        parentArtifact.setConflictResolutionPriority(attachmentGA
+                .getConflictResolutionPriority());
+        parentArtifact.setSourceArtifactId(attachmentGA
+                .getDepParentSourceArtifactId());
+        parentArtifact.setSourceArtifactLastModifiedDate(attachmentGA
+                .getSourceArtifactLastModifiedDate());
+        parentArtifact.setSourceArtifactVersion(attachmentGA
+                .getSourceArtifactVersion());
+        parentArtifact.setSourceRepositoryId(attachmentGA
+                .getSourceRepositoryId());
+        parentArtifact.setSourceSystemId(attachmentGA.getSourceSystemId());
+        parentArtifact.setSourceSystemKind(attachmentGA.getSourceSystemKind());
+        parentArtifact.setSourceRepositoryKind(attachmentGA
+                .getSourceRepositoryKind());
+        parentArtifact.setSourceSystemTimezone(attachmentGA
+                .getSourceSystemTimezone());
+
+        parentArtifact.setTargetArtifactId(attachmentGA
+                .getDepParentTargetArtifactId());
+        parentArtifact.setTargetArtifactLastModifiedDate(df
+                .format(parentIncident.getLastUpdateDate()));
+        parentArtifact.setTargetArtifactVersion(Long.toString(parentIncident
+                .getVersion()));
+        parentArtifact.setTargetRepositoryId(attachmentGA
+                .getTargetRepositoryId());
+        parentArtifact.setTargetRepositoryKind(attachmentGA
+                .getTargetRepositoryKind());
+        parentArtifact.setTargetSystemId(attachmentGA.getTargetSystemId());
+        parentArtifact.setTargetSystemKind(attachmentGA.getTargetSystemKind());
+        parentArtifact.setTargetSystemTimezone(attachmentGA
+                .getTargetSystemTimezone());
+
+        return parentArtifact;
     }
 
     private ISTConnection connect(GenericArtifact ga) {
@@ -72,6 +125,8 @@ public class ISTWriter extends AbstractWriter<ISTConnection> {
                                 connectionInfo,
                                 credentialInfo);
             }
+            this.meta = new ISTMetaCache(connection.getService());
+
         } catch (MaxConnectionsReachedException e) {
             String cause = "The maximum allowed connection configuration for a Connection Pool is reached."
                     + serverUrl;
@@ -113,8 +168,8 @@ public class ISTWriter extends AbstractWriter<ISTConnection> {
         ISTConnection connection = null;
         try {
             connection = connect(ga);
-            ISTIncident ri = new ISTIncident(connection.getService(), ga);
-
+            ISTIncident ri = new ISTIncident(connection.getService(), this.meta);
+            ri.createIncident(ga);
             // fill in missing Target values
             ga.setTargetArtifactId(String.valueOf(ri.getId()));
             ga.setTargetArtifactLastModifiedDate(df.format(ri
@@ -138,10 +193,76 @@ public class ISTWriter extends AbstractWriter<ISTConnection> {
         return this.GAtoDocument(ga);
     }
 
+    /**
+     * returns array of two Document objects:
+     *
+     * @- [0] = attachment Document
+     * @- [1] = parent Artifact Document
+     *
+     */
     @Override
-    public Document[] createAttachment(Document gaDocument) {
-        // TODO Auto-generated method stub
-        return null;
+    public Document[] createAttachment(Document doc) {
+
+        GenericArtifact ga = new GenericArtifact();
+        try {
+            ga = GenericArtifactHelper.createGenericArtifactJavaObject(doc);
+        } catch (GenericArtifactParsingException e) {
+            String cause = "Problem occured while parsing the GenericArtifact into Document";
+            log.error(
+                    cause,
+                    e);
+            XPathUtils.addAttribute(
+                    doc.getRootElement(),
+                    GenericArtifactHelper.ERROR_CODE,
+                    GenericArtifact.ERROR_GENERIC_ARTIFACT_PARSING);
+            throw new CCFRuntimeException(cause, e);
+        }
+
+        ISTConnection connection = connect(ga);
+        ISTIncident incident = null;
+        try {
+
+            ISTAttachmentHandler ath = new ISTAttachmentHandler();
+            incident = new ISTIncident(connection.getService(), this.meta);
+            incident.retrieveIncident(Integer.valueOf(ga
+                    .getDepParentTargetArtifactId()));
+            ath.handleAttachment(
+                    connection,
+                    ga,
+                    incident);
+        } finally {
+            getConnectionManager().releaseConnection(
+                    connection);
+        }
+        Document attachmentDoc;
+        Document parentDoc;
+
+        try {
+            attachmentDoc = GenericArtifactHelper
+                    .createGenericArtifactXMLDocument(ga);
+        } catch (GenericArtifactParsingException e1) {
+            String cause = "Problem occured while converting attachment GenericArtifact to Document";
+            log.error(
+                    cause,
+                    e1);
+            throw new CCFRuntimeException(cause, e1);
+        }
+
+        GenericArtifact parentGA = this.buildGaForAttachmentParent(
+                ga,
+                incident);
+        try {
+            parentDoc = GenericArtifactHelper
+                    .createGenericArtifactXMLDocument(parentGA);
+        } catch (GenericArtifactParsingException e) {
+            String cause = "Problem occured while converting attachment parent GenericArtifact to Document";
+            log.error(
+                    cause,
+                    e);
+            throw new CCFRuntimeException(cause, e);
+        }
+
+        return new Document[] { attachmentDoc, parentDoc };
     }
 
     @Override
@@ -166,6 +287,11 @@ public class ISTWriter extends AbstractWriter<ISTConnection> {
     public Document deleteDependency(Document gaDocument) {
         // not implemented
         return null;
+    }
+
+    private void disconnect(ISTConnection connection) {
+        getConnectionManager().releaseConnection(
+                connection);
     }
 
     private Document GAtoDocument(GenericArtifact ga) {
@@ -196,6 +322,10 @@ public class ISTWriter extends AbstractWriter<ISTConnection> {
         return username;
     }
 
+    public boolean isUseExtendedCreateLogging() {
+        return useExtendedCreateLogging;
+    }
+
     public void setPassword(String password) {
         this.password = password;
     }
@@ -204,14 +334,91 @@ public class ISTWriter extends AbstractWriter<ISTConnection> {
         this.serverUrl = serverUrl;
     }
 
+    public void setUseExtendedCreateLogging(boolean useExtendedCreateLogging) {
+        this.useExtendedCreateLogging = useExtendedCreateLogging;
+    }
+
+    public void setUseExtendedHashLogging(boolean useExtendedHashLogging) {
+        this.useExtendedHashLogging = useExtendedHashLogging;
+    }
+
+    public void setUseExtendedUpdateLogging(boolean useExtendedUpdateLogging) {
+        this.useExtendedUpdateLogging = useExtendedUpdateLogging;
+    }
+
     public void setUsername(String newval) {
         this.username = newval;
     }
 
     @Override
     public Document updateArtifact(Document gaDocument) {
-        // TODO Auto-generated method stub
-        return null;
+
+        GenericArtifact ga = null;
+        try {
+            ga = GenericArtifactHelper
+                    .createGenericArtifactJavaObject(gaDocument);
+        } catch (GenericArtifactParsingException e) {
+            String cause = "Problem occured while parsing the GenericArtifact into Document";
+            log.error(
+                    cause,
+                    e);
+            XPathUtils.addAttribute(
+                    gaDocument.getRootElement(),
+                    GenericArtifactHelper.ERROR_CODE,
+                    GenericArtifact.ERROR_GENERIC_ARTIFACT_PARSING);
+            throw new CCFRuntimeException(cause, e);
+        }
+
+        ISTConnection connection = connect(ga);
+
+        try {
+            ISTIncident incident = new ISTIncident(connection.getService(),
+                    this.meta);
+            incident.retrieveIncident(Integer.valueOf(ga.getTargetArtifactId()));
+
+            incident.updateIncident(ga);
+
+            if (!AbstractWriter.handleConflicts(
+                    incident.getVersion(),
+                    ga)) {
+                return null;
+            }
+
+            // increment the version count
+            String knownSVersion = ga.getTargetArtifactVersion();
+            if (knownSVersion != null) {
+                int count = ISTVersion
+                        .getCountPart(Long.valueOf(knownSVersion));
+                incident.setVersionCount(count);
+            }
+            incident.incrementVersionCount();
+            ga.setTargetArtifactVersion(String.valueOf(incident.getVersion()));
+            ga.setTargetArtifactLastModifiedDate(df.format(incident
+                    .getLastUpdateDate()));
+
+            log.debug(String
+                    .format(
+                            "updated incident #%d, version = %d, count.hash = %s, modified = %s",
+                            incident.getId(),
+                            incident.getVersion(),
+                            incident.getVersionInfoString(),
+                            ga.getTargetArtifactLastModifiedDate()));
+        } finally {
+            disconnect(connection);
+        }
+
+        Document ret = null;
+        try {
+            ret = GenericArtifactHelper.createGenericArtifactXMLDocument(ga);
+        } catch (GenericArtifactParsingException e1) {
+            String cause = "Problem occured while converting GenericArtifact back to Document";
+            log.error(
+                    cause,
+                    e1);
+            throw new CCFRuntimeException(cause, e1);
+        }
+
+        return ret;
     }
 
     @Override
@@ -244,8 +451,13 @@ public class ISTWriter extends AbstractWriter<ISTConnection> {
                 this,
                 exceptions);
 
+        // set extended logging
+        ISTIncident.setUseExtendedCreateLogging(useExtendedCreateLogging);
+        ISTIncident.setUseExtendedHashLogging(useExtendedHashLogging);
+        ISTIncident.setUseExtendedUpdateLogging(useExtendedUpdateLogging);
+
         log.info("===========================================================");
-        log.info("started SpiraTest Reader " + ISTVersionInfo.getVersion());
+        log.info("started SpiraTest Writer " + ISTVersionInfo.getVersion());
 
     }
 
