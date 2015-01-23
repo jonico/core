@@ -1,0 +1,476 @@
+INFO  2015-01-23 23:04:39,922 IST2TF org.apache.commons.vfs.impl.DefaultFileReplicator - Using "C:\Windows\TEMP\vfs_cache" as temporary files store.
+INFO  2015-01-23 23:04:40,009 IST2TF com.collabnet.ccf.ist.ISTReader - ===========================================================
+INFO  2015-01-23 23:04:40,010 IST2TF com.collabnet.ccf.ist.ISTReader - started SpiraTest Reader 0.0.6
+DEBUG 2015-01-23 23:04:40,519 IST2ISTynchronizationStatusPollingReader com.collabnet.ccf.ist.ISTReader - xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+DEBUG 2015-01-23 23:04:40,520 IST2ISTynchronizationStatusPollingReader com.collabnet.ccf.ist.ISTReader - retrieving incidents changed since Fri, 1 Jan 1999 00:00:00.000 +0700
+DEBUG 2015-01-23 23:04:40,520 IST2ISTynchronizationStatusPollingReader com.collabnet.ccf.ist.ISTConnectionFactory - creating new connection for: 4-2-21-REVERSE\2\Default IST Incident to TF Tracker Item\
+ERROR 2015-01-23 23:04:45,194 IST2ISTynchronizationStatusPollingReader com.collabnet.ccf.ist.ISTConnection - Authentication failed, please verify credentials
+ERROR 2015-01-23 23:04:45,326 IST2ISTynchronizationStatusPollingReader com.collabnet.ccf.ist.ISTConnection - Could not open project ID (21)
+com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportConnectionConnectToProjectServiceFaultMessageFaultFaultMessage: The session was not authenticated, please call the Connection_Authenticate() method first
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method)
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance(Unknown Source)
+	at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(Unknown Source)
+	at java.lang.reflect.Constructor.newInstance(Unknown Source)
+	at com.sun.xml.internal.ws.fault.SOAPFaultBuilder.createException(Unknown Source)
+	at com.sun.xml.internal.ws.client.sei.StubHandler.readResponse(Unknown Source)
+	at com.sun.xml.internal.ws.db.DatabindingImpl.deserializeResponse(Unknown Source)
+	at com.sun.xml.internal.ws.db.DatabindingImpl.deserializeResponse(Unknown Source)
+	at com.sun.xml.internal.ws.client.sei.SyncMethodHandler.invoke(Unknown Source)
+	at com.sun.xml.internal.ws.client.sei.SyncMethodHandler.invoke(Unknown Source)
+	at com.sun.xml.internal.ws.client.sei.SEIStub.invoke(Unknown Source)
+	at com.sun.proxy.$Proxy36.connectionConnectToProject(Unknown Source)
+	at com.collabnet.ccf.ist.ISTConnection.connect(ISTConnection.java:117)
+	at com.collabnet.ccf.ist.ISTConnection.<init>(ISTConnection.java:82)
+	at com.collabnet.ccf.ist.ISTConnectionFactory.createConnection(ISTConnectionFactory.java:36)
+	at com.collabnet.ccf.ist.ISTConnectionFactory.createConnection(ISTConnectionFactory.java:10)
+	at com.collabnet.ccf.core.eis.connection.ConnectionPool.createConnection(ConnectionPool.java:423)
+	at com.collabnet.ccf.core.eis.connection.ConnectionPool.getConnection(ConnectionPool.java:203)
+	at com.collabnet.ccf.core.eis.connection.ConnectionManager.getConnectionToUpdateOrExtractArtifact(ConnectionManager.java:188)
+	at com.collabnet.ccf.ist.ISTReader.connect(ISTReader.java:87)
+	at com.collabnet.ccf.ist.ISTReader.getChangedArtifacts(ISTReader.java:281)
+	at com.collabnet.ccf.core.AbstractReader.getChangedArtifactsFromHospitalAndRepository(AbstractReader.java:1700)
+	at com.collabnet.ccf.core.AbstractReader.process(AbstractReader.java:956)
+	at org.openadaptor.core.node.Node.processSingleRecord(Node.java:151)
+	at org.openadaptor.core.node.Node.process(Node.java:168)
+	at org.openadaptor.core.node.ProcessorNode.process(ProcessorNode.java:96)
+	at org.openadaptor.core.router.AbstractRouter.process(AbstractRouter.java:184)
+	at org.openadaptor.core.router.AbstractRouter.process(AbstractRouter.java:173)
+	at org.openadaptor.core.router.AbstractRouter.process(AbstractRouter.java:156)
+	at org.openadaptor.core.adaptor.Adaptor.process(Adaptor.java:290)
+	at org.openadaptor.core.node.Node.callChainedMessageProcessor(Node.java:209)
+	at org.openadaptor.core.node.Node.process(Node.java:195)
+	at org.openadaptor.core.node.ReadNode.process(ReadNode.java:237)
+	at org.openadaptor.core.node.ReadNode.run(ReadNode.java:193)
+	at java.lang.Thread.run(Unknown Source)
+INFO  2015-01-23 23:04:45,329 IST2ISTynchronizationStatusPollingReader com.collabnet.ccf.ist.ISTConnection - New connection (v0.0.6) to test.ebaotech.com as ccf.connector to project #21
+ERROR 2015-01-23 23:04:45,732 IST2ISTynchronizationStatusPollingReader com.collabnet.ccf.ist.ISTHandler - Failed to retrieve indicents!
+com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportIncidentRetrieveServiceFaultMessageFaultFaultMessage: The session was not authenticated, please call the Connection_Authenticate() method first
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method)
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance(Unknown Source)
+	at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(Unknown Source)
+	at java.lang.reflect.Constructor.newInstance(Unknown Source)
+	at com.sun.xml.internal.ws.fault.SOAPFaultBuilder.createException(Unknown Source)
+	at com.sun.xml.internal.ws.client.sei.StubHandler.readResponse(Unknown Source)
+	at com.sun.xml.internal.ws.db.DatabindingImpl.deserializeResponse(Unknown Source)
+	at com.sun.xml.internal.ws.db.DatabindingImpl.deserializeResponse(Unknown Source)
+	at com.sun.xml.internal.ws.client.sei.SyncMethodHandler.invoke(Unknown Source)
+	at com.sun.xml.internal.ws.client.sei.SyncMethodHandler.invoke(Unknown Source)
+	at com.sun.xml.internal.ws.client.sei.SEIStub.invoke(Unknown Source)
+	at com.sun.proxy.$Proxy36.incidentRetrieve(Unknown Source)
+	at com.collabnet.ccf.ist.ISTHandler.retrieveChangedIncidents(ISTHandler.java:143)
+	at com.collabnet.ccf.ist.ISTReader.getChangedArtifacts(ISTReader.java:287)
+	at com.collabnet.ccf.core.AbstractReader.getChangedArtifactsFromHospitalAndRepository(AbstractReader.java:1700)
+	at com.collabnet.ccf.core.AbstractReader.process(AbstractReader.java:956)
+	at org.openadaptor.core.node.Node.processSingleRecord(Node.java:151)
+	at org.openadaptor.core.node.Node.process(Node.java:168)
+	at org.openadaptor.core.node.ProcessorNode.process(ProcessorNode.java:96)
+	at org.openadaptor.core.router.AbstractRouter.process(AbstractRouter.java:184)
+	at org.openadaptor.core.router.AbstractRouter.process(AbstractRouter.java:173)
+	at org.openadaptor.core.router.AbstractRouter.process(AbstractRouter.java:156)
+	at org.openadaptor.core.adaptor.Adaptor.process(Adaptor.java:290)
+	at org.openadaptor.core.node.Node.callChainedMessageProcessor(Node.java:209)
+	at org.openadaptor.core.node.Node.process(Node.java:195)
+	at org.openadaptor.core.node.ReadNode.process(ReadNode.java:237)
+	at org.openadaptor.core.node.ReadNode.run(ReadNode.java:193)
+	at java.lang.Thread.run(Unknown Source)
+WARN  2015-01-23 23:04:45,743 IST2ISTynchronizationStatusPollingReader com.collabnet.ccf.core.hospital.CCFExceptionToOrderedMapConvertor - Exception caught that is not going to be quarantined. Characteristics:
+TIMESTAMP: 2015-01-23 23:04:45 ICT
+EXCEPTION_CLASS_NAME: java.lang.NullPointerException
+EXCEPTION_MESSAGE: null
+CAUSE_EXCEPTION_CLASS_NAME: No cause exception detected.
+CAUSE_EXCEPTION_MESSAGE: No cause exception detected.
+STACK_TRACE: com.collabnet.ccf.ist.ISTHandler.retrieveChangedIncidents(ISTHandler.java:154)
+com.collabnet.ccf.ist.ISTReader.getChangedArtifacts(ISTReader.java:287)
+com.collabnet.ccf.core.AbstractReader.getChangedArtifactsFromHospitalAndRepository(AbstractReader.java:1700)
+com.collabnet.ccf.core.AbstractReader.process(AbstractReader.java:956)
+org.openadaptor.core.node.Node.processSingleRecord(Node.java:151)
+org.openadaptor.core.node.Node.process(Node.java:168)
+org.openadaptor.core.node.ProcessorNode.process(ProcessorNode.java:96)
+org.openadaptor.core.router.AbstractRouter.process(AbstractRouter.java:184)
+org.openadaptor.core.router.AbstractRouter.process(AbstractRouter.java:173)
+org.openadaptor.core.router.AbstractRouter.process(AbstractRouter.java:156)
+org.openadaptor.core.adaptor.Adaptor.process(Adaptor.java:290)
+org.openadaptor.core.node.Node.callChainedMessageProcessor(Node.java:209)
+org.openadaptor.core.node.Node.process(Node.java:195)
+org.openadaptor.core.node.ReadNode.process(ReadNode.java:237)
+org.openadaptor.core.node.ReadNode.run(ReadNode.java:193)
+java.lang.Thread.run(Unknown Source)
+
+ADAPTOR_NAME: IST2TF
+ORIGINATING_COMPONENT: ISTReader
+DATA_TYPE: org.dom4j.tree.DefaultDocument
+DATA: org.dom4j.tree.DefaultDocument@2ded4f2b [Document: name null]
+THREAD_NAME: IST2ISTynchronizationStatusPollingReader
+FIXED: false
+REPROCESSED: false
+SOURCE_SYSTEM_ID: null
+SOURCE_REPOSITORY_ID: null
+TARGET_SYSTEM_ID: null
+TARGET_REPOSITORY_ID: null
+SOURCE_SYSTEM_KIND: null
+SOURCE_REPOSITORY_KIND: null
+TARGET_SYSTEM_KIND: null
+TARGET_REPOSITORY_KIND: null
+SOURCE_ARTIFACT_ID: null
+TARGET_ARTIFACT_ID: null
+GENERIC_ARTIFACT: <?xml version="1.0" encoding="UTF-8"?>
+<EmptySyncInf><SOURCE_REPOSITORY_ID>21</SOURCE_REPOSITORY_ID><FIELD_MAPPING_SCOPE>REPOSITORY_MAPPING_DIRECTION</FIELD_MAPPING_SCOPE><EXTERNAL_APP_LINK_ID>prpl1009</EXTERNAL_APP_LINK_ID><REPOSITORY_MAPPING_DIRECTION_DIRECTION>1</REPOSITORY_MAPPING_DIRECTION_DIRECTION><SOURCE_SYSTEM_ID>4</SOURCE_SYSTEM_ID><REPOSITORY_MAPPING_DIRECTION_ID>2</REPOSITORY_MAPPING_DIRECTION_ID><TARGET_REPOSITORY_ID>tracker1020</TARGET_REPOSITORY_ID><FIELD_MAPPING_KIND>CUSTOM_XSLT</FIELD_MAPPING_KIND><FIELD_MAPPING_NAME>Default IST Incident to TF Tracker Item</FIELD_MAPPING_NAME><TARGET_SYSTEM_ID>3</TARGET_SYSTEM_ID><REPOSITORY_MAPPING_ID>1</REPOSITORY_MAPPING_ID><LAST_SOURCE_ARTIFACT_MODIFICATION_DATE>1999-01-01 00:00:00.000000</LAST_SOURCE_ARTIFACT_MODIFICATION_DATE><LAST_SOURCE_ARTIFACT_VERSION>0</LAST_SOURCE_ARTIFACT_VERSION><LAST_SOURCE_ARTIFACT_ID></LAST_SOURCE_ARTIFACT_ID><CONFLICT_RESOLUTION_PRIORITY>alwaysOverride</CONFLICT_RESOLUTION_PRIORITY><SOURCE_SYSTEM_TIMEZONE>Asia_SLASH_Shanghai</SOURCE_SYSTEM_TIMEZONE><TARGET_SYSTEM_TIMEZONE>ACT</TARGET_SYSTEM_TIMEZONE><SOURCE_SYSTEM_ENCODING/><TARGET_SYSTEM_ENCODING/></EmptySyncInf>
+ERROR_CODE: null
+SOURCE_LAST_MODIFICATION_TIME: null
+TARGET_LAST_MODIFICATION_TIME: null
+SOURCE_ARTIFACT_VERSION: null
+TARGET_ARTIFACT_VERSION: null
+ARTIFACT_TYPE: null
+
+DEBUG 2015-01-23 23:04:45,797 IST2ISTynchronizationStatusPollingReader com.collabnet.ccf.ist.ISTReader - xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+DEBUG 2015-01-23 23:04:45,798 IST2ISTynchronizationStatusPollingReader com.collabnet.ccf.ist.ISTReader - retrieving incidents changed since Fri, 1 Jan 1999 00:00:00.000 +0700
+DEBUG 2015-01-23 23:04:45,994 IST2ISTynchronizationStatusPollingReader com.collabnet.ccf.ist.ISTConnection - failed to get user info for ccf.connector
+com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportUserRetrieveByUserNameServiceFaultMessageFaultFaultMessage: The session was not authenticated, please call the Connection_Authenticate() method first
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method)
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance(Unknown Source)
+	at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(Unknown Source)
+	at java.lang.reflect.Constructor.newInstance(Unknown Source)
+	at com.sun.xml.internal.ws.fault.SOAPFaultBuilder.createException(Unknown Source)
+	at com.sun.xml.internal.ws.client.sei.StubHandler.readResponse(Unknown Source)
+	at com.sun.xml.internal.ws.db.DatabindingImpl.deserializeResponse(Unknown Source)
+	at com.sun.xml.internal.ws.db.DatabindingImpl.deserializeResponse(Unknown Source)
+	at com.sun.xml.internal.ws.client.sei.SyncMethodHandler.invoke(Unknown Source)
+	at com.sun.xml.internal.ws.client.sei.SyncMethodHandler.invoke(Unknown Source)
+	at com.sun.xml.internal.ws.client.sei.SEIStub.invoke(Unknown Source)
+	at com.sun.proxy.$Proxy36.userRetrieveByUserName(Unknown Source)
+	at com.collabnet.ccf.ist.ISTConnection.isAlive(ISTConnection.java:158)
+	at com.collabnet.ccf.ist.ISTConnectionFactory.isAlive(ISTConnectionFactory.java:41)
+	at com.collabnet.ccf.ist.ISTConnectionFactory.isAlive(ISTConnectionFactory.java:10)
+	at com.collabnet.ccf.core.eis.connection.ConnectionPool.getFreeConnectionForKey(ConnectionPool.java:486)
+	at com.collabnet.ccf.core.eis.connection.ConnectionPool.getConnection(ConnectionPool.java:199)
+	at com.collabnet.ccf.core.eis.connection.ConnectionManager.getConnectionToUpdateOrExtractArtifact(ConnectionManager.java:188)
+	at com.collabnet.ccf.ist.ISTReader.connect(ISTReader.java:87)
+	at com.collabnet.ccf.ist.ISTReader.getChangedArtifacts(ISTReader.java:281)
+	at com.collabnet.ccf.core.AbstractReader.getChangedArtifactsFromHospitalAndRepository(AbstractReader.java:1700)
+	at com.collabnet.ccf.core.AbstractReader.process(AbstractReader.java:956)
+	at org.openadaptor.core.node.Node.processSingleRecord(Node.java:151)
+	at org.openadaptor.core.node.Node.process(Node.java:168)
+	at org.openadaptor.core.node.ProcessorNode.process(ProcessorNode.java:96)
+	at org.openadaptor.core.router.AbstractRouter.process(AbstractRouter.java:184)
+	at org.openadaptor.core.router.AbstractRouter.process(AbstractRouter.java:173)
+	at org.openadaptor.core.router.AbstractRouter.process(AbstractRouter.java:156)
+	at org.openadaptor.core.adaptor.Adaptor.process(Adaptor.java:290)
+	at org.openadaptor.core.node.Node.callChainedMessageProcessor(Node.java:209)
+	at org.openadaptor.core.node.Node.process(Node.java:195)
+	at org.openadaptor.core.node.ReadNode.process(ReadNode.java:237)
+	at org.openadaptor.core.node.ReadNode.run(ReadNode.java:193)
+	at java.lang.Thread.run(Unknown Source)
+DEBUG 2015-01-23 23:04:45,994 IST2ISTynchronizationStatusPollingReader com.collabnet.ccf.ist.ISTConnectionFactory - creating new connection for: 4-2-21-REVERSE\2\Default IST Incident to TF Tracker Item\
+ERROR 2015-01-23 23:04:49,910 IST2ISTynchronizationStatusPollingReader com.collabnet.ccf.ist.ISTConnection - Authentication failed, please verify credentials
+ERROR 2015-01-23 23:04:50,021 IST2ISTynchronizationStatusPollingReader com.collabnet.ccf.ist.ISTConnection - Could not open project ID (21)
+com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportConnectionConnectToProjectServiceFaultMessageFaultFaultMessage: The session was not authenticated, please call the Connection_Authenticate() method first
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method)
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance(Unknown Source)
+	at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(Unknown Source)
+	at java.lang.reflect.Constructor.newInstance(Unknown Source)
+	at com.sun.xml.internal.ws.fault.SOAPFaultBuilder.createException(Unknown Source)
+	at com.sun.xml.internal.ws.client.sei.StubHandler.readResponse(Unknown Source)
+	at com.sun.xml.internal.ws.db.DatabindingImpl.deserializeResponse(Unknown Source)
+	at com.sun.xml.internal.ws.db.DatabindingImpl.deserializeResponse(Unknown Source)
+	at com.sun.xml.internal.ws.client.sei.SyncMethodHandler.invoke(Unknown Source)
+	at com.sun.xml.internal.ws.client.sei.SyncMethodHandler.invoke(Unknown Source)
+	at com.sun.xml.internal.ws.client.sei.SEIStub.invoke(Unknown Source)
+	at com.sun.proxy.$Proxy36.connectionConnectToProject(Unknown Source)
+	at com.collabnet.ccf.ist.ISTConnection.connect(ISTConnection.java:117)
+	at com.collabnet.ccf.ist.ISTConnection.<init>(ISTConnection.java:82)
+	at com.collabnet.ccf.ist.ISTConnectionFactory.createConnection(ISTConnectionFactory.java:36)
+	at com.collabnet.ccf.ist.ISTConnectionFactory.createConnection(ISTConnectionFactory.java:10)
+	at com.collabnet.ccf.core.eis.connection.ConnectionPool.createConnection(ConnectionPool.java:423)
+	at com.collabnet.ccf.core.eis.connection.ConnectionPool.getConnection(ConnectionPool.java:203)
+	at com.collabnet.ccf.core.eis.connection.ConnectionManager.getConnectionToUpdateOrExtractArtifact(ConnectionManager.java:188)
+	at com.collabnet.ccf.ist.ISTReader.connect(ISTReader.java:87)
+	at com.collabnet.ccf.ist.ISTReader.getChangedArtifacts(ISTReader.java:281)
+	at com.collabnet.ccf.core.AbstractReader.getChangedArtifactsFromHospitalAndRepository(AbstractReader.java:1700)
+	at com.collabnet.ccf.core.AbstractReader.process(AbstractReader.java:956)
+	at org.openadaptor.core.node.Node.processSingleRecord(Node.java:151)
+	at org.openadaptor.core.node.Node.process(Node.java:168)
+	at org.openadaptor.core.node.ProcessorNode.process(ProcessorNode.java:96)
+	at org.openadaptor.core.router.AbstractRouter.process(AbstractRouter.java:184)
+	at org.openadaptor.core.router.AbstractRouter.process(AbstractRouter.java:173)
+	at org.openadaptor.core.router.AbstractRouter.process(AbstractRouter.java:156)
+	at org.openadaptor.core.adaptor.Adaptor.process(Adaptor.java:290)
+	at org.openadaptor.core.node.Node.callChainedMessageProcessor(Node.java:209)
+	at org.openadaptor.core.node.Node.process(Node.java:195)
+	at org.openadaptor.core.node.ReadNode.process(ReadNode.java:237)
+	at org.openadaptor.core.node.ReadNode.run(ReadNode.java:193)
+	at java.lang.Thread.run(Unknown Source)
+INFO  2015-01-23 23:04:50,022 IST2ISTynchronizationStatusPollingReader com.collabnet.ccf.ist.ISTConnection - New connection (v0.0.6) to test.ebaotech.com as ccf.connector to project #21
+ERROR 2015-01-23 23:04:50,423 IST2ISTynchronizationStatusPollingReader com.collabnet.ccf.ist.ISTHandler - Failed to retrieve indicents!
+com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportIncidentRetrieveServiceFaultMessageFaultFaultMessage: The session was not authenticated, please call the Connection_Authenticate() method first
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method)
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance(Unknown Source)
+	at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(Unknown Source)
+	at java.lang.reflect.Constructor.newInstance(Unknown Source)
+	at com.sun.xml.internal.ws.fault.SOAPFaultBuilder.createException(Unknown Source)
+	at com.sun.xml.internal.ws.client.sei.StubHandler.readResponse(Unknown Source)
+	at com.sun.xml.internal.ws.db.DatabindingImpl.deserializeResponse(Unknown Source)
+	at com.sun.xml.internal.ws.db.DatabindingImpl.deserializeResponse(Unknown Source)
+	at com.sun.xml.internal.ws.client.sei.SyncMethodHandler.invoke(Unknown Source)
+	at com.sun.xml.internal.ws.client.sei.SyncMethodHandler.invoke(Unknown Source)
+	at com.sun.xml.internal.ws.client.sei.SEIStub.invoke(Unknown Source)
+	at com.sun.proxy.$Proxy36.incidentRetrieve(Unknown Source)
+	at com.collabnet.ccf.ist.ISTHandler.retrieveChangedIncidents(ISTHandler.java:143)
+	at com.collabnet.ccf.ist.ISTReader.getChangedArtifacts(ISTReader.java:287)
+	at com.collabnet.ccf.core.AbstractReader.getChangedArtifactsFromHospitalAndRepository(AbstractReader.java:1700)
+	at com.collabnet.ccf.core.AbstractReader.process(AbstractReader.java:956)
+	at org.openadaptor.core.node.Node.processSingleRecord(Node.java:151)
+	at org.openadaptor.core.node.Node.process(Node.java:168)
+	at org.openadaptor.core.node.ProcessorNode.process(ProcessorNode.java:96)
+	at org.openadaptor.core.router.AbstractRouter.process(AbstractRouter.java:184)
+	at org.openadaptor.core.router.AbstractRouter.process(AbstractRouter.java:173)
+	at org.openadaptor.core.router.AbstractRouter.process(AbstractRouter.java:156)
+	at org.openadaptor.core.adaptor.Adaptor.process(Adaptor.java:290)
+	at org.openadaptor.core.node.Node.callChainedMessageProcessor(Node.java:209)
+	at org.openadaptor.core.node.Node.process(Node.java:195)
+	at org.openadaptor.core.node.ReadNode.process(ReadNode.java:237)
+	at org.openadaptor.core.node.ReadNode.run(ReadNode.java:193)
+	at java.lang.Thread.run(Unknown Source)
+WARN  2015-01-23 23:04:50,425 IST2ISTynchronizationStatusPollingReader com.collabnet.ccf.core.hospital.CCFExceptionToOrderedMapConvertor - Exception caught that is not going to be quarantined. Characteristics:
+TIMESTAMP: 2015-01-23 23:04:50 ICT
+EXCEPTION_CLASS_NAME: java.lang.NullPointerException
+EXCEPTION_MESSAGE: null
+CAUSE_EXCEPTION_CLASS_NAME: No cause exception detected.
+CAUSE_EXCEPTION_MESSAGE: No cause exception detected.
+STACK_TRACE: com.collabnet.ccf.ist.ISTHandler.retrieveChangedIncidents(ISTHandler.java:154)
+com.collabnet.ccf.ist.ISTReader.getChangedArtifacts(ISTReader.java:287)
+com.collabnet.ccf.core.AbstractReader.getChangedArtifactsFromHospitalAndRepository(AbstractReader.java:1700)
+com.collabnet.ccf.core.AbstractReader.process(AbstractReader.java:956)
+org.openadaptor.core.node.Node.processSingleRecord(Node.java:151)
+org.openadaptor.core.node.Node.process(Node.java:168)
+org.openadaptor.core.node.ProcessorNode.process(ProcessorNode.java:96)
+org.openadaptor.core.router.AbstractRouter.process(AbstractRouter.java:184)
+org.openadaptor.core.router.AbstractRouter.process(AbstractRouter.java:173)
+org.openadaptor.core.router.AbstractRouter.process(AbstractRouter.java:156)
+org.openadaptor.core.adaptor.Adaptor.process(Adaptor.java:290)
+org.openadaptor.core.node.Node.callChainedMessageProcessor(Node.java:209)
+org.openadaptor.core.node.Node.process(Node.java:195)
+org.openadaptor.core.node.ReadNode.process(ReadNode.java:237)
+org.openadaptor.core.node.ReadNode.run(ReadNode.java:193)
+java.lang.Thread.run(Unknown Source)
+
+ADAPTOR_NAME: IST2TF
+ORIGINATING_COMPONENT: ISTReader
+DATA_TYPE: org.dom4j.tree.DefaultDocument
+DATA: org.dom4j.tree.DefaultDocument@95555a5 [Document: name null]
+THREAD_NAME: IST2ISTynchronizationStatusPollingReader
+FIXED: false
+REPROCESSED: false
+SOURCE_SYSTEM_ID: null
+SOURCE_REPOSITORY_ID: null
+TARGET_SYSTEM_ID: null
+TARGET_REPOSITORY_ID: null
+SOURCE_SYSTEM_KIND: null
+SOURCE_REPOSITORY_KIND: null
+TARGET_SYSTEM_KIND: null
+TARGET_REPOSITORY_KIND: null
+SOURCE_ARTIFACT_ID: null
+TARGET_ARTIFACT_ID: null
+GENERIC_ARTIFACT: <?xml version="1.0" encoding="UTF-8"?>
+<EmptySyncInf><SOURCE_REPOSITORY_ID>21</SOURCE_REPOSITORY_ID><FIELD_MAPPING_SCOPE>REPOSITORY_MAPPING_DIRECTION</FIELD_MAPPING_SCOPE><EXTERNAL_APP_LINK_ID>prpl1009</EXTERNAL_APP_LINK_ID><REPOSITORY_MAPPING_DIRECTION_DIRECTION>1</REPOSITORY_MAPPING_DIRECTION_DIRECTION><SOURCE_SYSTEM_ID>4</SOURCE_SYSTEM_ID><REPOSITORY_MAPPING_DIRECTION_ID>2</REPOSITORY_MAPPING_DIRECTION_ID><TARGET_REPOSITORY_ID>tracker1020</TARGET_REPOSITORY_ID><FIELD_MAPPING_KIND>CUSTOM_XSLT</FIELD_MAPPING_KIND><FIELD_MAPPING_NAME>Default IST Incident to TF Tracker Item</FIELD_MAPPING_NAME><TARGET_SYSTEM_ID>3</TARGET_SYSTEM_ID><REPOSITORY_MAPPING_ID>1</REPOSITORY_MAPPING_ID><LAST_SOURCE_ARTIFACT_MODIFICATION_DATE>1999-01-01 00:00:00.000000</LAST_SOURCE_ARTIFACT_MODIFICATION_DATE><LAST_SOURCE_ARTIFACT_VERSION>0</LAST_SOURCE_ARTIFACT_VERSION><LAST_SOURCE_ARTIFACT_ID></LAST_SOURCE_ARTIFACT_ID><CONFLICT_RESOLUTION_PRIORITY>alwaysOverride</CONFLICT_RESOLUTION_PRIORITY><SOURCE_SYSTEM_TIMEZONE>Asia_SLASH_Shanghai</SOURCE_SYSTEM_TIMEZONE><TARGET_SYSTEM_TIMEZONE>ACT</TARGET_SYSTEM_TIMEZONE><SOURCE_SYSTEM_ENCODING/><TARGET_SYSTEM_ENCODING/></EmptySyncInf>
+ERROR_CODE: null
+SOURCE_LAST_MODIFICATION_TIME: null
+TARGET_LAST_MODIFICATION_TIME: null
+SOURCE_ARTIFACT_VERSION: null
+TARGET_ARTIFACT_VERSION: null
+ARTIFACT_TYPE: null
+
+DEBUG 2015-01-23 23:04:50,502 IST2ISTynchronizationStatusPollingReader com.collabnet.ccf.ist.ISTReader - xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+DEBUG 2015-01-23 23:04:50,502 IST2ISTynchronizationStatusPollingReader com.collabnet.ccf.ist.ISTReader - retrieving incidents changed since Fri, 1 Jan 1999 00:00:00.000 +0700
+DEBUG 2015-01-23 23:04:50,702 IST2ISTynchronizationStatusPollingReader com.collabnet.ccf.ist.ISTConnection - failed to get user info for ccf.connector
+com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportUserRetrieveByUserNameServiceFaultMessageFaultFaultMessage: The session was not authenticated, please call the Connection_Authenticate() method first
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method)
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance(Unknown Source)
+	at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(Unknown Source)
+	at java.lang.reflect.Constructor.newInstance(Unknown Source)
+	at com.sun.xml.internal.ws.fault.SOAPFaultBuilder.createException(Unknown Source)
+	at com.sun.xml.internal.ws.client.sei.StubHandler.readResponse(Unknown Source)
+	at com.sun.xml.internal.ws.db.DatabindingImpl.deserializeResponse(Unknown Source)
+	at com.sun.xml.internal.ws.db.DatabindingImpl.deserializeResponse(Unknown Source)
+	at com.sun.xml.internal.ws.client.sei.SyncMethodHandler.invoke(Unknown Source)
+	at com.sun.xml.internal.ws.client.sei.SyncMethodHandler.invoke(Unknown Source)
+	at com.sun.xml.internal.ws.client.sei.SEIStub.invoke(Unknown Source)
+	at com.sun.proxy.$Proxy36.userRetrieveByUserName(Unknown Source)
+	at com.collabnet.ccf.ist.ISTConnection.isAlive(ISTConnection.java:158)
+	at com.collabnet.ccf.ist.ISTConnectionFactory.isAlive(ISTConnectionFactory.java:41)
+	at com.collabnet.ccf.ist.ISTConnectionFactory.isAlive(ISTConnectionFactory.java:10)
+	at com.collabnet.ccf.core.eis.connection.ConnectionPool.getFreeConnectionForKey(ConnectionPool.java:486)
+	at com.collabnet.ccf.core.eis.connection.ConnectionPool.getConnection(ConnectionPool.java:199)
+	at com.collabnet.ccf.core.eis.connection.ConnectionManager.getConnectionToUpdateOrExtractArtifact(ConnectionManager.java:188)
+	at com.collabnet.ccf.ist.ISTReader.connect(ISTReader.java:87)
+	at com.collabnet.ccf.ist.ISTReader.getChangedArtifacts(ISTReader.java:281)
+	at com.collabnet.ccf.core.AbstractReader.getChangedArtifactsFromHospitalAndRepository(AbstractReader.java:1700)
+	at com.collabnet.ccf.core.AbstractReader.process(AbstractReader.java:956)
+	at org.openadaptor.core.node.Node.processSingleRecord(Node.java:151)
+	at org.openadaptor.core.node.Node.process(Node.java:168)
+	at org.openadaptor.core.node.ProcessorNode.process(ProcessorNode.java:96)
+	at org.openadaptor.core.router.AbstractRouter.process(AbstractRouter.java:184)
+	at org.openadaptor.core.router.AbstractRouter.process(AbstractRouter.java:173)
+	at org.openadaptor.core.router.AbstractRouter.process(AbstractRouter.java:156)
+	at org.openadaptor.core.adaptor.Adaptor.process(Adaptor.java:290)
+	at org.openadaptor.core.node.Node.callChainedMessageProcessor(Node.java:209)
+	at org.openadaptor.core.node.Node.process(Node.java:195)
+	at org.openadaptor.core.node.ReadNode.process(ReadNode.java:237)
+	at org.openadaptor.core.node.ReadNode.run(ReadNode.java:193)
+	at java.lang.Thread.run(Unknown Source)
+INFO  2015-01-23 23:04:50,794 WrapperListener_stop_runner com.collabnet.ccf.core.ShutDownCCF - CCF has been informed to shutdown ...
+DEBUG 2015-01-23 23:04:50,906 IST2ISTynchronizationStatusPollingReader com.collabnet.ccf.ist.ISTConnection - failed to get user info for ccf.connector
+com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportUserRetrieveByUserNameServiceFaultMessageFaultFaultMessage: The session was not authenticated, please call the Connection_Authenticate() method first
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method)
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance(Unknown Source)
+	at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(Unknown Source)
+	at java.lang.reflect.Constructor.newInstance(Unknown Source)
+	at com.sun.xml.internal.ws.fault.SOAPFaultBuilder.createException(Unknown Source)
+	at com.sun.xml.internal.ws.client.sei.StubHandler.readResponse(Unknown Source)
+	at com.sun.xml.internal.ws.db.DatabindingImpl.deserializeResponse(Unknown Source)
+	at com.sun.xml.internal.ws.db.DatabindingImpl.deserializeResponse(Unknown Source)
+	at com.sun.xml.internal.ws.client.sei.SyncMethodHandler.invoke(Unknown Source)
+	at com.sun.xml.internal.ws.client.sei.SyncMethodHandler.invoke(Unknown Source)
+	at com.sun.xml.internal.ws.client.sei.SEIStub.invoke(Unknown Source)
+	at com.sun.proxy.$Proxy36.userRetrieveByUserName(Unknown Source)
+	at com.collabnet.ccf.ist.ISTConnection.isAlive(ISTConnection.java:158)
+	at com.collabnet.ccf.ist.ISTConnectionFactory.isAlive(ISTConnectionFactory.java:41)
+	at com.collabnet.ccf.ist.ISTConnectionFactory.isAlive(ISTConnectionFactory.java:10)
+	at com.collabnet.ccf.core.eis.connection.ConnectionPool.getFreeConnectionForKey(ConnectionPool.java:486)
+	at com.collabnet.ccf.core.eis.connection.ConnectionPool.getConnection(ConnectionPool.java:199)
+	at com.collabnet.ccf.core.eis.connection.ConnectionManager.getConnectionToUpdateOrExtractArtifact(ConnectionManager.java:188)
+	at com.collabnet.ccf.ist.ISTReader.connect(ISTReader.java:87)
+	at com.collabnet.ccf.ist.ISTReader.getChangedArtifacts(ISTReader.java:281)
+	at com.collabnet.ccf.core.AbstractReader.getChangedArtifactsFromHospitalAndRepository(AbstractReader.java:1700)
+	at com.collabnet.ccf.core.AbstractReader.process(AbstractReader.java:956)
+	at org.openadaptor.core.node.Node.processSingleRecord(Node.java:151)
+	at org.openadaptor.core.node.Node.process(Node.java:168)
+	at org.openadaptor.core.node.ProcessorNode.process(ProcessorNode.java:96)
+	at org.openadaptor.core.router.AbstractRouter.process(AbstractRouter.java:184)
+	at org.openadaptor.core.router.AbstractRouter.process(AbstractRouter.java:173)
+	at org.openadaptor.core.router.AbstractRouter.process(AbstractRouter.java:156)
+	at org.openadaptor.core.adaptor.Adaptor.process(Adaptor.java:290)
+	at org.openadaptor.core.node.Node.callChainedMessageProcessor(Node.java:209)
+	at org.openadaptor.core.node.Node.process(Node.java:195)
+	at org.openadaptor.core.node.ReadNode.process(ReadNode.java:237)
+	at org.openadaptor.core.node.ReadNode.run(ReadNode.java:193)
+	at java.lang.Thread.run(Unknown Source)
+DEBUG 2015-01-23 23:04:50,907 IST2ISTynchronizationStatusPollingReader com.collabnet.ccf.ist.ISTConnectionFactory - creating new connection for: 4-2-21-REVERSE\2\Default IST Incident to TF Tracker Item\
+ERROR 2015-01-23 23:04:53,813 IST2ISTynchronizationStatusPollingReader com.collabnet.ccf.ist.ISTConnection - Authentication failed, please verify credentials
+ERROR 2015-01-23 23:04:53,927 IST2ISTynchronizationStatusPollingReader com.collabnet.ccf.ist.ISTConnection - Could not open project ID (21)
+com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportConnectionConnectToProjectServiceFaultMessageFaultFaultMessage: The session was not authenticated, please call the Connection_Authenticate() method first
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method)
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance(Unknown Source)
+	at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(Unknown Source)
+	at java.lang.reflect.Constructor.newInstance(Unknown Source)
+	at com.sun.xml.internal.ws.fault.SOAPFaultBuilder.createException(Unknown Source)
+	at com.sun.xml.internal.ws.client.sei.StubHandler.readResponse(Unknown Source)
+	at com.sun.xml.internal.ws.db.DatabindingImpl.deserializeResponse(Unknown Source)
+	at com.sun.xml.internal.ws.db.DatabindingImpl.deserializeResponse(Unknown Source)
+	at com.sun.xml.internal.ws.client.sei.SyncMethodHandler.invoke(Unknown Source)
+	at com.sun.xml.internal.ws.client.sei.SyncMethodHandler.invoke(Unknown Source)
+	at com.sun.xml.internal.ws.client.sei.SEIStub.invoke(Unknown Source)
+	at com.sun.proxy.$Proxy36.connectionConnectToProject(Unknown Source)
+	at com.collabnet.ccf.ist.ISTConnection.connect(ISTConnection.java:117)
+	at com.collabnet.ccf.ist.ISTConnection.<init>(ISTConnection.java:82)
+	at com.collabnet.ccf.ist.ISTConnectionFactory.createConnection(ISTConnectionFactory.java:36)
+	at com.collabnet.ccf.ist.ISTConnectionFactory.createConnection(ISTConnectionFactory.java:10)
+	at com.collabnet.ccf.core.eis.connection.ConnectionPool.createConnection(ConnectionPool.java:423)
+	at com.collabnet.ccf.core.eis.connection.ConnectionPool.getConnection(ConnectionPool.java:203)
+	at com.collabnet.ccf.core.eis.connection.ConnectionManager.getConnectionToUpdateOrExtractArtifact(ConnectionManager.java:188)
+	at com.collabnet.ccf.ist.ISTReader.connect(ISTReader.java:87)
+	at com.collabnet.ccf.ist.ISTReader.getChangedArtifacts(ISTReader.java:281)
+	at com.collabnet.ccf.core.AbstractReader.getChangedArtifactsFromHospitalAndRepository(AbstractReader.java:1700)
+	at com.collabnet.ccf.core.AbstractReader.process(AbstractReader.java:956)
+	at org.openadaptor.core.node.Node.processSingleRecord(Node.java:151)
+	at org.openadaptor.core.node.Node.process(Node.java:168)
+	at org.openadaptor.core.node.ProcessorNode.process(ProcessorNode.java:96)
+	at org.openadaptor.core.router.AbstractRouter.process(AbstractRouter.java:184)
+	at org.openadaptor.core.router.AbstractRouter.process(AbstractRouter.java:173)
+	at org.openadaptor.core.router.AbstractRouter.process(AbstractRouter.java:156)
+	at org.openadaptor.core.adaptor.Adaptor.process(Adaptor.java:290)
+	at org.openadaptor.core.node.Node.callChainedMessageProcessor(Node.java:209)
+	at org.openadaptor.core.node.Node.process(Node.java:195)
+	at org.openadaptor.core.node.ReadNode.process(ReadNode.java:237)
+	at org.openadaptor.core.node.ReadNode.run(ReadNode.java:193)
+	at java.lang.Thread.run(Unknown Source)
+INFO  2015-01-23 23:04:53,927 IST2ISTynchronizationStatusPollingReader com.collabnet.ccf.ist.ISTConnection - New connection (v0.0.6) to test.ebaotech.com as ccf.connector to project #21
+ERROR 2015-01-23 23:04:54,328 IST2ISTynchronizationStatusPollingReader com.collabnet.ccf.ist.ISTHandler - Failed to retrieve indicents!
+com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportIncidentRetrieveServiceFaultMessageFaultFaultMessage: The session was not authenticated, please call the Connection_Authenticate() method first
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method)
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance(Unknown Source)
+	at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(Unknown Source)
+	at java.lang.reflect.Constructor.newInstance(Unknown Source)
+	at com.sun.xml.internal.ws.fault.SOAPFaultBuilder.createException(Unknown Source)
+	at com.sun.xml.internal.ws.client.sei.StubHandler.readResponse(Unknown Source)
+	at com.sun.xml.internal.ws.db.DatabindingImpl.deserializeResponse(Unknown Source)
+	at com.sun.xml.internal.ws.db.DatabindingImpl.deserializeResponse(Unknown Source)
+	at com.sun.xml.internal.ws.client.sei.SyncMethodHandler.invoke(Unknown Source)
+	at com.sun.xml.internal.ws.client.sei.SyncMethodHandler.invoke(Unknown Source)
+	at com.sun.xml.internal.ws.client.sei.SEIStub.invoke(Unknown Source)
+	at com.sun.proxy.$Proxy36.incidentRetrieve(Unknown Source)
+	at com.collabnet.ccf.ist.ISTHandler.retrieveChangedIncidents(ISTHandler.java:143)
+	at com.collabnet.ccf.ist.ISTReader.getChangedArtifacts(ISTReader.java:287)
+	at com.collabnet.ccf.core.AbstractReader.getChangedArtifactsFromHospitalAndRepository(AbstractReader.java:1700)
+	at com.collabnet.ccf.core.AbstractReader.process(AbstractReader.java:956)
+	at org.openadaptor.core.node.Node.processSingleRecord(Node.java:151)
+	at org.openadaptor.core.node.Node.process(Node.java:168)
+	at org.openadaptor.core.node.ProcessorNode.process(ProcessorNode.java:96)
+	at org.openadaptor.core.router.AbstractRouter.process(AbstractRouter.java:184)
+	at org.openadaptor.core.router.AbstractRouter.process(AbstractRouter.java:173)
+	at org.openadaptor.core.router.AbstractRouter.process(AbstractRouter.java:156)
+	at org.openadaptor.core.adaptor.Adaptor.process(Adaptor.java:290)
+	at org.openadaptor.core.node.Node.callChainedMessageProcessor(Node.java:209)
+	at org.openadaptor.core.node.Node.process(Node.java:195)
+	at org.openadaptor.core.node.ReadNode.process(ReadNode.java:237)
+	at org.openadaptor.core.node.ReadNode.run(ReadNode.java:193)
+	at java.lang.Thread.run(Unknown Source)
+WARN  2015-01-23 23:04:54,329 IST2ISTynchronizationStatusPollingReader com.collabnet.ccf.core.hospital.CCFExceptionToOrderedMapConvertor - Exception caught that is not going to be quarantined. Characteristics:
+TIMESTAMP: 2015-01-23 23:04:54 ICT
+EXCEPTION_CLASS_NAME: java.lang.NullPointerException
+EXCEPTION_MESSAGE: null
+CAUSE_EXCEPTION_CLASS_NAME: No cause exception detected.
+CAUSE_EXCEPTION_MESSAGE: No cause exception detected.
+STACK_TRACE: com.collabnet.ccf.ist.ISTHandler.retrieveChangedIncidents(ISTHandler.java:154)
+com.collabnet.ccf.ist.ISTReader.getChangedArtifacts(ISTReader.java:287)
+com.collabnet.ccf.core.AbstractReader.getChangedArtifactsFromHospitalAndRepository(AbstractReader.java:1700)
+com.collabnet.ccf.core.AbstractReader.process(AbstractReader.java:956)
+org.openadaptor.core.node.Node.processSingleRecord(Node.java:151)
+org.openadaptor.core.node.Node.process(Node.java:168)
+org.openadaptor.core.node.ProcessorNode.process(ProcessorNode.java:96)
+org.openadaptor.core.router.AbstractRouter.process(AbstractRouter.java:184)
+org.openadaptor.core.router.AbstractRouter.process(AbstractRouter.java:173)
+org.openadaptor.core.router.AbstractRouter.process(AbstractRouter.java:156)
+org.openadaptor.core.adaptor.Adaptor.process(Adaptor.java:290)
+org.openadaptor.core.node.Node.callChainedMessageProcessor(Node.java:209)
+org.openadaptor.core.node.Node.process(Node.java:195)
+org.openadaptor.core.node.ReadNode.process(ReadNode.java:237)
+org.openadaptor.core.node.ReadNode.run(ReadNode.java:193)
+java.lang.Thread.run(Unknown Source)
+
+ADAPTOR_NAME: IST2TF
+ORIGINATING_COMPONENT: ISTReader
+DATA_TYPE: org.dom4j.tree.DefaultDocument
+DATA: org.dom4j.tree.DefaultDocument@482db47a [Document: name null]
+THREAD_NAME: IST2ISTynchronizationStatusPollingReader
+FIXED: false
+REPROCESSED: false
+SOURCE_SYSTEM_ID: null
+SOURCE_REPOSITORY_ID: null
+TARGET_SYSTEM_ID: null
+TARGET_REPOSITORY_ID: null
+SOURCE_SYSTEM_KIND: null
+SOURCE_REPOSITORY_KIND: null
+TARGET_SYSTEM_KIND: null
+TARGET_REPOSITORY_KIND: null
+SOURCE_ARTIFACT_ID: null
+TARGET_ARTIFACT_ID: null
+GENERIC_ARTIFACT: <?xml version="1.0" encoding="UTF-8"?>
+<EmptySyncInf><SOURCE_REPOSITORY_ID>21</SOURCE_REPOSITORY_ID><FIELD_MAPPING_SCOPE>REPOSITORY_MAPPING_DIRECTION</FIELD_MAPPING_SCOPE><EXTERNAL_APP_LINK_ID>prpl1009</EXTERNAL_APP_LINK_ID><REPOSITORY_MAPPING_DIRECTION_DIRECTION>1</REPOSITORY_MAPPING_DIRECTION_DIRECTION><SOURCE_SYSTEM_ID>4</SOURCE_SYSTEM_ID><REPOSITORY_MAPPING_DIRECTION_ID>2</REPOSITORY_MAPPING_DIRECTION_ID><TARGET_REPOSITORY_ID>tracker1020</TARGET_REPOSITORY_ID><FIELD_MAPPING_KIND>CUSTOM_XSLT</FIELD_MAPPING_KIND><FIELD_MAPPING_NAME>Default IST Incident to TF Tracker Item</FIELD_MAPPING_NAME><TARGET_SYSTEM_ID>3</TARGET_SYSTEM_ID><REPOSITORY_MAPPING_ID>1</REPOSITORY_MAPPING_ID><LAST_SOURCE_ARTIFACT_MODIFICATION_DATE>1999-01-01 00:00:00.000000</LAST_SOURCE_ARTIFACT_MODIFICATION_DATE><LAST_SOURCE_ARTIFACT_VERSION>0</LAST_SOURCE_ARTIFACT_VERSION><LAST_SOURCE_ARTIFACT_ID></LAST_SOURCE_ARTIFACT_ID><CONFLICT_RESOLUTION_PRIORITY>alwaysOverride</CONFLICT_RESOLUTION_PRIORITY><SOURCE_SYSTEM_TIMEZONE>Asia_SLASH_Shanghai</SOURCE_SYSTEM_TIMEZONE><TARGET_SYSTEM_TIMEZONE>ACT</TARGET_SYSTEM_TIMEZONE><SOURCE_SYSTEM_ENCODING/><TARGET_SYSTEM_ENCODING/></EmptySyncInf>
+ERROR_CODE: null
+SOURCE_LAST_MODIFICATION_TIME: null
+TARGET_LAST_MODIFICATION_TIME: null
+SOURCE_ARTIFACT_VERSION: null
+TARGET_ARTIFACT_VERSION: null
+ARTIFACT_TYPE: null
+
+INFO  2015-01-23 23:04:54,416 Thread-18 com.collabnet.ccf.core.ShutDownCCF - Calling System.exit with exit code 0

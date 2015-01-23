@@ -1,0 +1,55 @@
+STATUS | wrapper  | 2015/01/23 22:46:14 | --> Wrapper Started as Console
+STATUS | wrapper  | 2015/01/23 22:46:14 | Java Service Wrapper Community Edition 32-bit 3.3.9
+STATUS | wrapper  | 2015/01/23 22:46:14 |   Copyright (C) 1999-2009 Tanuki Software, Ltd.  All Rights Reserved.
+STATUS | wrapper  | 2015/01/23 22:46:14 |     http://wrapper.tanukisoftware.org
+STATUS | wrapper  | 2015/01/23 22:46:14 |   Licensed to CollabNet, Inc for CollabNet Connector Framework
+STATUS | wrapper  | 2015/01/23 22:46:14 | 
+STATUS | wrapper  | 2015/01/23 22:46:14 | Launching a JVM...
+INFO   | jvm 1    | 2015/01/23 22:46:15 | WrapperManager: Initializing...
+INFO   | jvm 1    | 2015/01/23 22:46:15 | WrapperManager: 
+INFO   | jvm 1    | 2015/01/23 22:46:15 | WrapperManager: WARNING - Unable to load the Wrapper's native library 'wrapper.dll'.
+INFO   | jvm 1    | 2015/01/23 22:46:15 | WrapperManager:           The file is located on the path at the following location but
+INFO   | jvm 1    | 2015/01/23 22:46:15 | WrapperManager:           could not be loaded:
+INFO   | jvm 1    | 2015/01/23 22:46:15 | WrapperManager:             C:\ccf.spiratest\ccfhome\landscape1\samples\ISTTF\TF2IST\..\..\..\lib\extlib\native\windows-x86-32\wrapper.dll
+INFO   | jvm 1    | 2015/01/23 22:46:15 | WrapperManager:           Please verify that the file is readable by the current user
+INFO   | jvm 1    | 2015/01/23 22:46:15 | WrapperManager:           and that the file has not been corrupted in any way.
+INFO   | jvm 1    | 2015/01/23 22:46:15 | WrapperManager:           One common cause of this problem is running a 32-bit version
+INFO   | jvm 1    | 2015/01/23 22:46:15 | WrapperManager:           of the Wrapper with a 64-bit version of Java, or vica versa.
+INFO   | jvm 1    | 2015/01/23 22:46:15 | WrapperManager:           This is a 64-bit JVM.
+INFO   | jvm 1    | 2015/01/23 22:46:15 | WrapperManager:           Reported cause:
+INFO   | jvm 1    | 2015/01/23 22:46:15 | WrapperManager:             C:\ccf.spiratest\ccfhome\landscape1\lib\extlib\native\windows-x86-32\wrapper.dll: Can't load IA 32-bit .dll on a AMD 64-bit platform
+INFO   | jvm 1    | 2015/01/23 22:46:15 | WrapperManager:           System signals will not be handled correctly.
+INFO   | jvm 1    | 2015/01/23 22:46:15 | WrapperManager: 
+INFO   | jvm 1    | 2015/01/23 22:46:15 | 
+INFO   | jvm 1    | 2015/01/23 22:46:15 |  Copyright (C) 2001 - 2008 The Software Conservancy as Trustee. All rights reserved.
+INFO   | jvm 1    | 2015/01/23 22:46:15 | 
+INFO   | jvm 1    | 2015/01/23 22:46:15 |  Permission is hereby granted, free of charge, to any person obtaining a copy of
+INFO   | jvm 1    | 2015/01/23 22:46:15 |  this software and associated documentation files (the "Software"), to deal in the
+INFO   | jvm 1    | 2015/01/23 22:46:15 |  Software without restriction, including without limitation the rights to use, copy,
+INFO   | jvm 1    | 2015/01/23 22:46:15 |  modify, merge, publish, distribute, sublicense, and/or sell copies of the Software,
+INFO   | jvm 1    | 2015/01/23 22:46:15 |  and to permit persons to whom the Software is furnished to do so, subject to the
+INFO   | jvm 1    | 2015/01/23 22:46:15 |  following conditions:
+INFO   | jvm 1    | 2015/01/23 22:46:15 | 
+INFO   | jvm 1    | 2015/01/23 22:46:15 |  The above copyright notice and this permission notice shall be included in all 
+INFO   | jvm 1    | 2015/01/23 22:46:15 |  copies or substantial portions of the Software.
+INFO   | jvm 1    | 2015/01/23 22:46:15 | 
+INFO   | jvm 1    | 2015/01/23 22:46:15 |  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED,
+INFO   | jvm 1    | 2015/01/23 22:46:15 |  INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A
+INFO   | jvm 1    | 2015/01/23 22:46:15 |  PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+INFO   | jvm 1    | 2015/01/23 22:46:15 |  HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+INFO   | jvm 1    | 2015/01/23 22:46:15 |  OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+INFO   | jvm 1    | 2015/01/23 22:46:15 |  SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+INFO   | jvm 1    | 2015/01/23 22:46:15 | 
+INFO   | jvm 1    | 2015/01/23 22:46:15 |  Nothing in this notice shall be deemed to grant any rights to trademarks, copyrights,
+INFO   | jvm 1    | 2015/01/23 22:46:15 |  patents, trade secrets or any other intellectual property of the licensor or any
+INFO   | jvm 1    | 2015/01/23 22:46:15 |  contributor except as expressly stated herein. No patent license is granted separate
+INFO   | jvm 1    | 2015/01/23 22:46:15 |  from the Software, for code that you delete from the Software, or for combinations
+INFO   | jvm 1    | 2015/01/23 22:46:15 |  of the Software with other software or hardware.
+INFO   | jvm 1    | 2015/01/23 22:46:15 | 
+INFO   | jvm 1    | 2015/01/23 22:46:16 | INFO  2015-01-23 22:46:16,593 [TF2IST] (ISTWriter.java:459) - ===========================================================
+INFO   | jvm 1    | 2015/01/23 22:46:16 | INFO  2015-01-23 22:46:16,594 [TF2IST] (ISTWriter.java:460) - started SpiraTest Writer 0.0.6
+INFO   | jvm 1    | 2015/01/23 22:46:16 | INFO  2015-01-23 22:46:16,605 [TF2IST] (VfsLog.java:122) - Using "C:\Users\VOLKER~1\AppData\Local\Temp\vfs_cache" as temporary files store.
+INFO   | jvm 1    | 2015/01/23 22:53:40 | INFO  2015-01-23 22:53:40,695 [WrapperListener_stop_runner] (ShutDownCCF.java:75) - CCF has been informed to shutdown ...
+ERROR  | wrapper  | 2015/01/23 22:54:13 | Shutdown failed: Timed out waiting for signal from JVM.
+ERROR  | wrapper  | 2015/01/23 22:54:14 | JVM did not exit on request, terminated
+STATUS | wrapper  | 2015/01/23 22:54:14 | <-- Wrapper Stopped

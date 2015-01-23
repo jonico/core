@@ -440,8 +440,8 @@
 			document to IST.
 		</description>
 		<property name="serverUrl" value="${ccf.participant.ist.server}" />
-		<property name="username" value="${ccf.participant.ist.username}" />
-		<property name="password" value="${ccf.participant.ist.password}" />
+		<property name="username" value="${ccf.landscape.ist.username}" />
+		<property name="password" value="${ccf.landscape.ist.password}" />
 		<property name="connectionManager" ref="ISTConnectionManager"></property>
 
 		<!-- TODO allow to set extended logging in CCF UI -->

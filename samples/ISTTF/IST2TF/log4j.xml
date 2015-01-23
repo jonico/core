@@ -3,17 +3,18 @@
 <log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/">
 
 	<appender name="console" class="org.apache.log4j.ConsoleAppender">
-		<param name="Threshold" value="TRACE"/>
+		<param name="Threshold" value="INFO"/>
 		<param name="Target" value="System.out"/>
 		<layout class="org.apache.log4j.PatternLayout">
 			<param name="ConversionPattern" value="%-5p %d{ISO8601} [%t] (%F:%L) - %m%n"/>
 		</layout>
 	</appender>
 
-	<appender name="R" class="org.apache.log4j.FileAppender">
-		<param name="File" value="logs/ccf-debug.log"/>
-<!-- 		<param name="MaxFileSize" value="10240KB"/> -->
-<!-- 		<param name="MaxBackupIndex" value="10"/> -->
+	<appender name="R" class="org.apache.log4j.RollingFileAppender">
+		<param name="File" value="logs/ccf-ist2tf.log"/>
+		<param name="Threshold" value="TRACE"/>
+ 		<param name="MaxFileSize" value="10240KB"/>
+ 		<param name="MaxBackupIndex" value="10"/>
 		<layout class="org.apache.log4j.PatternLayout">
 			<param name="ConversionPattern" value="%-5p %d{ISO8601} %t %c - %m%n"/>
 		</layout>
@@ -65,7 +66,7 @@
   	<category name="com.collabnet.ccf.ist" additivity="false">
     	<level value="TRACE"/>
     		<appender-ref ref="console" />
-<!-- 			<appender-ref ref="R" /> -->
+ 			<appender-ref ref="R" /> 
 <!--		<appender-ref ref="HospitalNotifier" />-->
   	</category>
  

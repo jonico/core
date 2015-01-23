@@ -1,0 +1,4 @@
+INFO  2015-01-23 22:46:16,593 TF2IST com.collabnet.ccf.ist.ISTWriter - ===========================================================
+INFO  2015-01-23 22:46:16,594 TF2IST com.collabnet.ccf.ist.ISTWriter - started SpiraTest Writer 0.0.6
+INFO  2015-01-23 22:46:16,605 TF2IST org.apache.commons.vfs.impl.DefaultFileReplicator - Using "C:\Users\VOLKER~1\AppData\Local\Temp\vfs_cache" as temporary files store.
+INFO  2015-01-23 22:53:40,695 WrapperListener_stop_runner com.collabnet.ccf.core.ShutDownCCF - CCF has been informed to shutdown ...
