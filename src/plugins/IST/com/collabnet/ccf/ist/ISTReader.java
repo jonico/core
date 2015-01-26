@@ -47,7 +47,7 @@ public class ISTReader extends AbstractReader<ISTConnection> {
     }
 
     private static final Log  log                        = LogFactory
-            .getLog(ISTReader.class);
+                                                                 .getLog(ISTReader.class);
 
     /**
      * Properties set via injection
@@ -161,8 +161,8 @@ public class ISTReader extends AbstractReader<ISTConnection> {
                 try {
                     log.trace("Attachment XML\n"
                             + GenericArtifactHelper
-                            .createGenericArtifactXMLDocument(
-                                    ga).asXML());
+                                    .createGenericArtifactXMLDocument(
+                                            ga).asXML());
                 } catch (GenericArtifactParsingException e) {
                     log.warn("Could not render attachment XML: "
                             + e.getMessage());
@@ -570,8 +570,8 @@ public class ISTReader extends AbstractReader<ISTConnection> {
 
         log.info("===========================================================");
         log.info("started SpiraTest Reader " + ISTVersionInfo.getVersion());
-        log.trace("user: " + this.getUsername() + ", pass: "
-                + this.getPassword());
+        //        log.trace("user: " + this.getUsername() + ", pass: "
+        //                + this.getPassword());
 
     }
 
