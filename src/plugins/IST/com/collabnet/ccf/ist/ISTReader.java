@@ -27,6 +27,7 @@ import com.collabnet.ccf.core.ga.GenericArtifact.ArtifactModeValue;
 import com.collabnet.ccf.core.ga.GenericArtifact.ArtifactTypeValue;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
+import com.collabnet.ccf.core.utils.Obfuscator;
 
 public class ISTReader extends AbstractReader<ISTConnection> {
 
@@ -526,7 +527,7 @@ public class ISTReader extends AbstractReader<ISTConnection> {
     }
 
     public void setPassword(String password) {
-        this.password = password;
+        this.password = Obfuscator.deObfuscatePassword(password);
     }
 
     public void setProjectId(String projectId) {
@@ -569,6 +570,8 @@ public class ISTReader extends AbstractReader<ISTConnection> {
 
         log.info("===========================================================");
         log.info("started SpiraTest Reader " + ISTVersionInfo.getVersion());
+        log.trace("user: " + this.getUsername() + ", pass: "
+                + this.getPassword());
 
     }
 

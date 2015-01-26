@@ -16,16 +16,17 @@ import com.collabnet.ccf.core.eis.connection.MaxConnectionsReachedException;
 import com.collabnet.ccf.core.ga.GenericArtifact;
 import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
+import com.collabnet.ccf.core.utils.Obfuscator;
 import com.collabnet.ccf.core.utils.XPathUtils;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.ObjectFactory;
 
 public class ISTWriter extends AbstractWriter<ISTConnection> {
 
     private static final Log           log                      = LogFactory
-                                                                        .getLog(ISTWriter.class);
+            .getLog(ISTWriter.class);
 
     private static final Log           logConflictResolutor     = LogFactory
-                                                                        .getLog(ISTWriter.class);
+            .getLog(ISTWriter.class);
 
     private String                     serverUrl                = null;
     private String                     username                 = null;
@@ -51,11 +52,11 @@ public class ISTWriter extends AbstractWriter<ISTConnection> {
         // for replayed attachments
         parentArtifact.setTransactionId(attachmentGA.getTransactionId());
         parentArtifact
-        .setArtifactType(GenericArtifact.ArtifactTypeValue.PLAINARTIFACT);
+                .setArtifactType(GenericArtifact.ArtifactTypeValue.PLAINARTIFACT);
         parentArtifact
-        .setArtifactAction(GenericArtifact.ArtifactActionValue.UPDATE);
+                .setArtifactAction(GenericArtifact.ArtifactActionValue.UPDATE);
         parentArtifact
-        .setArtifactMode(GenericArtifact.ArtifactModeValue.CHANGEDFIELDSONLY);
+                .setArtifactMode(GenericArtifact.ArtifactModeValue.CHANGEDFIELDSONLY);
         parentArtifact.setConflictResolutionPriority(attachmentGA
                 .getConflictResolutionPriority());
         parentArtifact.setSourceArtifactId(attachmentGA
@@ -327,7 +328,7 @@ public class ISTWriter extends AbstractWriter<ISTConnection> {
     }
 
     public void setPassword(String password) {
-        this.password = password;
+        this.password = Obfuscator.deObfuscatePassword(password);
     }
 
     public void setServerUrl(String serverUrl) {
