@@ -81,6 +81,19 @@ public enum ISTMandatoryFieldType {
 
     private final boolean             identifying;
 
+    /**
+     *
+     * @param jax
+     *            Uses a JAX wrapper
+     * @param fvt
+     *            SpiraTest field type
+     * @param ro
+     *            Read Only field
+     * @param gat
+     *            GenericArtifact field type
+     * @param isIdentifying
+     *            used to hash calculation?
+     */
     private ISTMandatoryFieldType(boolean jax, ISTCustomFieldType fvt,
             boolean ro, FieldValueTypeValue gat, boolean isIdentifying) {
         this.usesJAXWrapper = jax;

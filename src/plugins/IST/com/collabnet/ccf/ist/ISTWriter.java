@@ -18,28 +18,25 @@ import com.collabnet.ccf.core.ga.GenericArtifactHelper;
 import com.collabnet.ccf.core.ga.GenericArtifactParsingException;
 import com.collabnet.ccf.core.utils.Obfuscator;
 import com.collabnet.ccf.core.utils.XPathUtils;
-import com.inflectra.spirateam.mylyn.core.internal.services.soap.ObjectFactory;
 
 public class ISTWriter extends AbstractWriter<ISTConnection> {
 
-    private static final Log           log                      = LogFactory
-            .getLog(ISTWriter.class);
+    private static final Log        log                      = LogFactory
+                                                                     .getLog(ISTWriter.class);
 
-    private static final Log           logConflictResolutor     = LogFactory
-            .getLog(ISTWriter.class);
+    private static final Log        logConflictResolutor     = LogFactory
+                                                                     .getLog(ISTWriter.class);
 
-    private String                     serverUrl                = null;
-    private String                     username                 = null;
-    private String                     password                 = null;
+    private String                  serverUrl                = null;
+    private String                  username                 = null;
+    private String                  password                 = null;
 
-    private ISTHandler                 handler                  = null;
-    private ISTMetaCache               meta                     = null;
-    private static final DateFormat    df                       = GenericArtifactHelper.df;
-    private static final ObjectFactory of                       = new ObjectFactory();
+    private ISTMetaCache            meta                     = null;
+    private static final DateFormat df                       = GenericArtifactHelper.df;
 
-    private boolean                    useExtendedHashLogging   = false;
-    private boolean                    useExtendedUpdateLogging = false;
-    private boolean                    useExtendedCreateLogging = false;
+    private boolean                 useExtendedHashLogging   = false;
+    private boolean                 useExtendedUpdateLogging = false;
+    private boolean                 useExtendedCreateLogging = false;
 
     public ISTWriter() {
     }
@@ -424,7 +421,7 @@ public class ISTWriter extends AbstractWriter<ISTConnection> {
 
     @Override
     public Document updateAttachment(Document gaDocument) {
-        // TODO Auto-generated method stub
+        // not implemented
         return null;
     }
 
@@ -434,6 +431,7 @@ public class ISTWriter extends AbstractWriter<ISTConnection> {
         return null;
     }
 
+    @SuppressWarnings({ "rawtypes", "unchecked" })
     public void validate(List exceptions) {
         super.validate(exceptions);
         validateNotNull(

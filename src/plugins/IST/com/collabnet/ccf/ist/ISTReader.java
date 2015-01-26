@@ -158,15 +158,17 @@ public class ISTReader extends AbstractReader<ISTConnection> {
                         ga.getDepParentSourceArtifactId(),
                         ga.getSourceArtifactId(),
                         ga.getSourceArtifactLastModifiedDate()));
-                try {
-                    log.trace("Attachment XML\n"
-                            + GenericArtifactHelper
-                                    .createGenericArtifactXMLDocument(
-                                            ga).asXML());
-                } catch (GenericArtifactParsingException e) {
-                    log.warn("Could not render attachment XML: "
-                            + e.getMessage());
-                }
+
+                if (this.logShowXMLdata)
+                    try {
+                        log.info("Attachment XML\n"
+                                + GenericArtifactHelper
+                                .createGenericArtifactXMLDocument(
+                                        ga).asXML());
+                    } catch (GenericArtifactParsingException e) {
+                        log.warn("Could not render attachment XML: "
+                                + e.getMessage());
+                    }
             }
         } finally {
             // release connection to pool
@@ -237,15 +239,17 @@ public class ISTReader extends AbstractReader<ISTConnection> {
             getConnectionManager().releaseConnection(
                     connection);
         }
-
-        try {
-            log.debug("Source Artifact XML for incident #"
-                    + ga.getSourceArtifactId() + ":\n"
-                    + GenericArtifactHelper.createGenericArtifactXMLDocument(
-                            ga).asXML());
-        } catch (GenericArtifactParsingException e) {
-            log.warn("Tried to convert GA to XML but failed!");
-        }
+        if (this.logShowXMLdata)
+            try {
+                log.info("Source Artifact XML for incident #"
+                        + ga.getSourceArtifactId()
+                        + ":\n"
+                        + GenericArtifactHelper
+                        .createGenericArtifactXMLDocument(
+                                ga).asXML());
+            } catch (GenericArtifactParsingException e) {
+                log.warn("Tried to convert GA to XML but failed!");
+            }
         return ga;
     }
 
@@ -358,7 +362,7 @@ public class ISTReader extends AbstractReader<ISTConnection> {
     @Override
     public List<ArtifactState> getChangedArtifactsToForceSync(
             Set<String> artifactsToForce, Document SyncInfo) {
-        // TODO Auto-generated method stub
+        // not implemented
         return null;
     }
 

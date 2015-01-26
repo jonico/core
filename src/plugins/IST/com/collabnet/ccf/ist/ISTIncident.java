@@ -90,14 +90,13 @@ public class ISTIncident extends ISTVersion {
 
     private static final DateFormat             df                       = GenericArtifactHelper.df;
     private final ObjectFactory                 of                       = new ObjectFactory();
+    private static final JerichoUtils           ju                       = new JerichoUtils();
     private static final Log                    log                      = LogFactory
             .getLog(ISTIncident.class);
 
     private final String                        DUMPSEPARATOR            = "::";
 
     private final String                        DUMPNAMEVALSEPARATOR     = "=";
-
-    private final String                        RICHTEXTNEWLINE          = "<br />";
 
     private final String                        EMPTYDUMPVAL             = "null";
 
@@ -279,6 +278,7 @@ public class ISTIncident extends ISTVersion {
      * @param ga
      * @param prop
      */
+    @SuppressWarnings("incomplete-switch")
     private void fetchCustomProperty(GenericArtifact ga,
             RemoteArtifactCustomProperty prop) {
 
@@ -445,6 +445,7 @@ public class ISTIncident extends ISTVersion {
      * @param ga
      */
     private void fillMandatoryFields(GenericArtifact ga) {
+
         for (ISTMandatoryFieldType fieldMeta : ISTMandatoryFieldType.values()) {
 
             // get mandatory field value from ga
@@ -476,12 +477,18 @@ public class ISTIncident extends ISTVersion {
                             gaField.getFieldValue());
 
                 }
+                if (useExtendedUpdateLogging)
+                    log.trace("updated field `"
+                            + fieldMeta.name()
+                            + "` = `"
+                            + String.valueOf(this
+                                    .getMandatoryFieldValue(fieldMeta)) + "`");
+
             } else {
                 if (useExtendedUpdateLogging)
                     log.trace("Mandatory field `" + fieldMeta.name()
                             + "` is not in present GenericArtifact");
             }
-
         }
     }
 
@@ -564,8 +571,8 @@ public class ISTIncident extends ISTVersion {
      * loads all documents for the incident. Returns cached object on subsequent
      * calls.
      *
-     * OPTIMIZE we could use a project wide list of documents - fetched once
-     * when connecting - instead
+     * ? we could use a project wide list of documents cached once when
+     * connecting
      *
      * @return
      */
@@ -670,6 +677,7 @@ public class ISTIncident extends ISTVersion {
         return this.customsDump;
     }
 
+    @SuppressWarnings("incomplete-switch")
     private String getCustomValueAsString(RemoteArtifactCustomProperty prop) {
 
         RemoteCustomProperty propDef = prop.getDefinition().getValue();
@@ -795,7 +803,7 @@ public class ISTIncident extends ISTVersion {
                                 .invoke(this.incident)).getValue();
                         break;
 
-                        // the mandatory list fields return a string value for the item name
+                    // the mandatory list fields return a string value for the item name
                     case Text:
                     case List:
                         value = ((JAXBElement<String>) callee
@@ -803,7 +811,9 @@ public class ISTIncident extends ISTVersion {
                         break;
                     case Boolean:
                     case MultiList:
-                        // TODO
+                        log.warn("Ignoring unexpected mandatory field type "
+                                + fieldMeta.istFieldValueType().name()
+                                + " for field " + fieldMeta.name());
                         break;
                 }
             } else {
@@ -823,6 +833,9 @@ public class ISTIncident extends ISTVersion {
                     case List:
                     case Boolean:
                     case MultiList:
+                        log.warn("Ignoring unexpected mandatory field type "
+                                + fieldMeta.istFieldValueType().name()
+                                + " for plain field " + fieldMeta.name());
                         break;
                 }
             }
@@ -867,8 +880,8 @@ public class ISTIncident extends ISTVersion {
         try {
             RemoteIncident iload = this.soap.incidentRetrieveById(incidentId);
             this.clearCache();
-            log.trace("refreshed incident #" + incidentId);
             this.incident = iload;
+            log.trace("retrieved incident #" + incidentId);
         } catch (IImportExportIncidentRetrieveByIdServiceFaultMessageFaultFaultMessage e) {
             String cause = "Failed to load incident #" + incidentId;
             throw new CCFRuntimeException(cause, e);
@@ -976,18 +989,20 @@ public class ISTIncident extends ISTVersion {
                 }
                 break;
             case Text:
-                // FIXME acknowledge newlines (for all or only for rich text?)
+                String myVal = (String) value;
+                if (myVal.contains(System.getProperty("line.separator"))) {
+                    myVal = ju.convertTextToHtml(myVal);
+                }
                 prop.setStringValue(ISTMetaCache.CreateJAXBString(
                         "StringValue",
-                        value.replaceAll(
-                                "\n",
-                                RICHTEXTNEWLINE)));
-                String valInfo = value.length() > 10 ? value.substring(
-                        0,
-                        9) + "..." : value;
-                if (useExtendedUpdateLogging)
-                    log.debug(propDef.getName().getValue() + ": set to "
+                        myVal));
+                if (useExtendedUpdateLogging) {
+                    String valInfo = value.length() > 10 ? value.substring(
+                            0,
+                            9) + " (...)" : value;
+                    log.trace(propDef.getName().getValue() + ": set to "
                             + valInfo);
+                }
                 break;
 
         }
@@ -1006,11 +1021,9 @@ public class ISTIncident extends ISTVersion {
      */
     private void setMandatoryFieldValue(ISTMandatoryFieldType fieldMeta,
             Object value) {
+
         String methodName = "unknown";
-        String returnType = "unknown";
         Method callee;
-        // FIXME acknowledge newlines in description
-        // FIXME remove all newlines from other text fields
         try {
             methodName = "set" + fieldMeta.name();
             callee = this.incident.getClass().getMethod(
@@ -1033,11 +1046,15 @@ public class ISTIncident extends ISTVersion {
                                         value));
                         break;
                     case Text:
+                        String myVal = (String) value;
+                        if (fieldMeta.genericFielValueType() == FieldValueTypeValue.HTMLSTRING)
+                            myVal = ju.convertTextToHtml(myVal);
+
                         callee.invoke(
                                 this.incident,
                                 ISTMetaCache.toJXString(
                                         fieldMeta.name(),
-                                        value));
+                                        myVal));
                         break;
                     case Boolean:
                         callee.invoke(
@@ -1154,19 +1171,19 @@ public class ISTIncident extends ISTVersion {
             String cause = "API Method not found: RemoteIncident." + methodName;
             throw new CCFRuntimeException(cause, e);
         } catch (IllegalAccessException e) {
-            String cause = "Not allowed to access " + returnType
-                    + " RemoteIncident." + methodName;
+            String cause = "Not allowed to access RemoteIncident." + methodName;
             throw new CCFRuntimeException(cause, e);
         } catch (InvocationTargetException e) {
-            String cause = "Failed to execute " + returnType
-                    + " RemoteIncident." + methodName;
+            String cause = "Failed to execute RemoteIncident." + methodName;
             throw new CCFRuntimeException(cause, e);
         } catch (IllegalArgumentException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            String cause = "Unexpected call error RemoteIncident." + methodName;
+            throw new CCFRuntimeException(cause, e);
         } catch (ParseException e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
+            String cause = "Failed to parse date value "
+                    + String.valueOf(value) + " for mandatory field "
+                    + fieldMeta.name();
+            throw new CCFRuntimeException(cause, e);
         }
 
     }
@@ -1231,7 +1248,7 @@ public class ISTIncident extends ISTVersion {
                     systemType = systemType.substring(
                             0,
                             14);
-                String fieldName = this.meta.getName(aprop);
+                String fieldName = ISTMetaCache.getName(aprop);
                 String value = this.getCustomValueAsString(aprop);
                 log.trace(String.format(
                         "%-30s  %-15s  %-15s  %-15s",
@@ -1341,17 +1358,10 @@ public class ISTIncident extends ISTVersion {
                 if (comment != null) {
                     RemoteComment rc = new RemoteComment();
                     rc.setArtifactId(this.getId());
-                    String cText = String.valueOf(
-                            comment.getFieldValue()).replaceAll(
-                                    "\n",
-                                    RICHTEXTNEWLINE);
+                    String cText = String.valueOf(comment.getFieldValue());
                     rc.setText(ISTMetaCache.CreateJAXBString(
                             "Text",
-                            cText));
-                    // FIXME this date has to use the IST server timezone and not the date of the CCF instance 
-                    //                    rc.setCreationDate(ISTMetaCache.toJaxCalendar(
-                    //                            "CreationDate",
-                    //                            new Date()));
+                            ju.convertTextToHtml(cText)));
 
                     if (!rCommentArray.getRemoteComment().add(
                             rc)) {
