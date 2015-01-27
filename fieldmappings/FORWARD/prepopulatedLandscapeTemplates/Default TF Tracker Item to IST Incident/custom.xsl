@@ -1,48 +1,29 @@
 <xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform" xmlns:ccf="http://ccf.open.collab.net/GenericArtifactV1.0" xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns:stringutil="xalan://com.collabnet.ccf.core.utils.StringUtils" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="2.0" exclude-result-prefixes="xsl xs ccf stringutil" xsi:schemaLocation="http://www.w3.org/1999/XSL/Transform http://www.w3.org/2007/schema-for-xslt20.xsd">
 <!-- LIST OF SPIRA TEST MANDATORY INCIDENT FIELDS
-  When shipping to one of these fields, the field  HAS to have a fieldType of mandatoryField 
+   EXCEPTION: Comments needs to be a flexField when shipping them to CTF
   
-  <xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
-  
-  EXCEPTION: Comments needs to be a flexField when targeting CTF
-  
-  All these field names are case sensitive! 
-    - ArtifactTypeId
-    - ClosedDate
-    - Comments
-    - CompletionPercent
-    - ConcurrencyDate
-    - CreationDate
-    - Description
-    - DetectedReleaseId
-    - DetectedReleaseVersionNumber
-    - EstimatedEffort
-    - FixedBuildId
-    - FixedBuildName
-    - IncidentId
-    - IncidentStatusId
-    - IncidentStatusName
-    - IncidentStatusOpenStatus
-    - IncidentTypeId
-    - IncidentTypeName
-    - Name
-    - OpenerId
-    - OpenerName
-    - OwnerId
-    - PriorityId
-    - PriorityName
-    - ProjectedEffort
-    - ProjectId
-    - ProjectName
-    - RemainingEffort
-    - ResolvedReleaseId
-    - ResolvedReleaseVersionNumber
-    - SeverityId
-    - SeverityName
-    - StartDate
-    - TestRunStepId
-    - VerifiedReleaseId
-    - VerifiedReleaseVersionNumber
+  		All these field names are case sensitive!
+	 
+		ArtifactTypeId 					Name 
+		ClosedDate 						OpenerId 
+		Comments (since last visit) 	OpenerName 
+		CompletionPercent 				OwnerId 
+		ConcurrencyDate 				PriorityId 
+		CreationDate 					PriorityName 
+		Description 					ProjectedEffort 
+		DetectedReleaseId 				ProjectId 
+		DetectedReleaseVersionNumber 	ProjectName 
+		EstimatedEffort 				RemainingEffort 
+		FixedBuildId 					ResolvedReleaseId 
+		FixedBuildName 					ResolvedReleaseVersionNumber 
+		IncidentId 						SeverityId 
+		IncidentStatusId 				SeverityName 
+		IncidentStatusName 				StartDate 
+		IncidentStatusOpenStatus 		TestRunStepId 
+		IncidentTypeId 					VerifiedReleaseId 
+		IncidentTypeName 				VerifiedReleaseVersionNumber 
+		
+		THIS TEMPLATE SHIPS FROM TEAMFORGE => SPIRATEST
  -->
  
  	<xsl:template match="/ccf:artifact[@artifactType = &quot;plainArtifact&quot;]">
@@ -52,10 +33,6 @@
 		</artifact>
 	</xsl:template>
 
-	<xsl:template match="/ccf:artifact[@artifactType = 'attachment']">
-		<xsl:copy-of select="."/>
-	</xsl:template>
-	
 	<xsl:template match="ccf:field[@fieldName='title']">
 		<field>
 			<xsl:copy-of select="@*"/>
@@ -64,14 +41,7 @@
 			<xsl:value-of select="."/>
 		</field>
 	</xsl:template>
-	<xsl:template match="ccf:field[@fieldName='description']">
-		<field>
-			<xsl:copy-of select="@*"/>
-			<xsl:attribute name="fieldName">Description</xsl:attribute>
-			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
-			<xsl:value-of select="."/>
-		</field>
-	</xsl:template>
+
 	<xsl:template match="ccf:field[@fieldName='status']">
 		<xsl:variable name="statusValue" as="xs:string" select="."/>
 		<field>
@@ -104,6 +74,7 @@
 			</xsl:if>	
 		</field>
 	</xsl:template>
+	
 	<xsl:template match="ccf:field[@fieldName='priority']">
 		<xsl:variable name="priorityValue" as="xs:string" select="."/>
 		<field>
@@ -127,55 +98,34 @@
 			</xsl:if>
 		</field>
 	</xsl:template>
-	<xsl:template match="ccf:field[@fieldName='Test Date']">
+	
+	<xsl:template match="ccf:field[@fieldName='id']">
 		<field>
 			<xsl:copy-of select="@*"/>
-			<xsl:attribute name="fieldName">CCF Date Property</xsl:attribute>
+			<xsl:attribute name="fieldName">TeamForge Incident #</xsl:attribute>
 			<xsl:attribute name="fieldType">flexField</xsl:attribute>
 			<xsl:value-of select="."/>
 		</field>
 	</xsl:template>
-	<xsl:template match="ccf:field[@fieldName='Integer Field']">
+	
+	<xsl:template match="ccf:field[@fieldName='Req ID']">
 		<field>
 			<xsl:copy-of select="@*"/>
-			<xsl:attribute name="fieldName">CCF Integer Property</xsl:attribute>
+			<xsl:attribute name="fieldName">Req ID</xsl:attribute>
 			<xsl:attribute name="fieldType">flexField</xsl:attribute>
 			<xsl:value-of select="."/>
 		</field>
 	</xsl:template>
-	<xsl:template match="ccf:field[@fieldName='Single List Field']">
+	
+	<xsl:template match="ccf:field[@fieldName='description']">
 		<field>
 			<xsl:copy-of select="@*"/>
-			<xsl:attribute name="fieldName">CCF Single Select</xsl:attribute>
-			<xsl:attribute name="fieldType">flexField</xsl:attribute>
+			<xsl:attribute name="fieldName">Description</xsl:attribute>
+			<xsl:attribute name="fieldType">mandatoryField</xsl:attribute>
 			<xsl:value-of select="."/>
 		</field>
 	</xsl:template>
-	<xsl:template match="ccf:field[@fieldName='Text Line']">
-		<field>
-			<xsl:copy-of select="@*"/>
-			<xsl:attribute name="fieldName">CCF Plain Text Property</xsl:attribute>
-			<xsl:attribute name="fieldType">flexField</xsl:attribute>
-			<xsl:value-of select="."/>
-		</field>
-	</xsl:template>
-	<xsl:template match="ccf:field[@fieldName='Multi List Field']">
-		<field>
-			<xsl:copy-of select="@*"/>
-			<xsl:attribute name="fieldName">CCF Multi Select</xsl:attribute>
-			<xsl:attribute name="fieldType">flexField</xsl:attribute>
-			<xsl:value-of select="."/>
-		</field>
-	</xsl:template>
-	<xsl:template match="ccf:field[@fieldName='Memo Field']">
-		<field>
-			<xsl:copy-of select="@*"/>
-			<xsl:attribute name="fieldName">CCF Rich Text Property</xsl:attribute>
-			<xsl:attribute name="fieldType">flexField</xsl:attribute>
-			<xsl:value-of select="."/>
-		</field>
-	</xsl:template>
-
+	
 	<xsl:template match="ccf:field[@fieldName='Comment Text']">
 		<field>
 			<xsl:copy-of select="@*"/>
@@ -184,6 +134,11 @@
 			<xsl:value-of select="."/>
 		</field>
 	</xsl:template>
+
+	<xsl:template match="/ccf:artifact[@artifactType = 'attachment']">
+		<xsl:copy-of select="."/>
+	</xsl:template>
+
 	
 	<xsl:template match="text()"/>
 </xsl:stylesheet>
