@@ -74,6 +74,7 @@ public class ISTReader extends AbstractReader<ISTConnection> {
 
     private boolean           useExtendedHashLogging     = false;
     private boolean           logShowXMLdata             = false;
+    private boolean           logShowXMLAttachmentdata   = false;
 
     private ISTConnection connect(String systemId, String systemKind,
             String repositoryId, String repositoryKind) {
@@ -159,7 +160,7 @@ public class ISTReader extends AbstractReader<ISTConnection> {
                         ga.getSourceArtifactId(),
                         ga.getSourceArtifactLastModifiedDate()));
 
-                if (this.logShowXMLdata)
+                if (this.logShowXMLAttachmentdata)
                     try {
                         log.info("Attachment XML\n"
                                 + GenericArtifactHelper
@@ -524,6 +525,10 @@ public class ISTReader extends AbstractReader<ISTConnection> {
 
     public void setIstHandler(ISTHandler istHandler) {
         this.handler = istHandler;
+    }
+
+    public void setLogShowXMLAttachmentdata(boolean logShowXMLAttachmentdata) {
+        this.logShowXMLAttachmentdata = logShowXMLAttachmentdata;
     }
 
     public void setLogShowXMLdata(boolean logShowXMLdata) {

@@ -268,7 +268,9 @@
 		<property name="password" value="${ccf.landscape.ist.password}" />
 
 		<!-- TODO allow to set extended logging in CCF UI -->
-		<property name="useExtendedHashLogging" value="true" />
+		<property name="useExtendedHashLogging" value="false" />
+		<property name="logShowXMLAttachmentdata" value="false" />
+		<property name="logShowXMLdata" value="true" />
 
 		<property name="connectionManager" ref="ISTConnectionManager"></property>
 		<property name="sleepInterval" value="${ccf.direction.ist.sleepinterval}"></property>
