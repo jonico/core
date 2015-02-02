@@ -40,14 +40,12 @@ import com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportIn
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportIncidentRetrieveCommentsServiceFaultMessageFaultFaultMessage;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportIncidentUpdateServiceFaultMessageFaultFaultMessage;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportIncidentUpdateValidationFaultMessageFaultFaultMessage;
-import com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportUserRetrieveByIdServiceFaultMessageFaultFaultMessage;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.ObjectFactory;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.RemoteArtifactCustomProperty;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.RemoteComment;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.RemoteCustomProperty;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.RemoteDocument;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.RemoteIncident;
-import com.inflectra.spirateam.mylyn.core.internal.services.soap.RemoteUser;
 
 /**
  * this class wraps the SpiraTest RemoteIncident, especially the Jax conversions
@@ -97,7 +95,7 @@ public class ISTIncident extends ISTVersion {
     private final ObjectFactory                 of                       = new ObjectFactory();
     private static final JerichoUtils           ju                       = new JerichoUtils();
     private static final Log                    log                      = LogFactory
-            .getLog(ISTIncident.class);
+                                                                                 .getLog(ISTIncident.class);
 
     private final String                        DUMPSEPARATOR            = "::";
 
@@ -260,7 +258,7 @@ public class ISTIncident extends ISTVersion {
             retrieved++;
             if (creationDate.after(lastModifiedDate)
                     && c.getUserId().getValue() != ISTConnection
-                    .getConnectorUserId()) {
+                            .getConnectorUserId()) {
                 fetched++;
                 ISTHandler.addGAField(
                         ga,
@@ -283,7 +281,6 @@ public class ISTIncident extends ISTVersion {
      * @param ga
      * @param prop
      */
-    @SuppressWarnings("incomplete-switch")
     private void fetchCustomProperty(GenericArtifact ga,
             RemoteArtifactCustomProperty prop) {
 
@@ -366,17 +363,9 @@ public class ISTIncident extends ISTVersion {
                 break;
             case User:
                 fieldValueTypeValue = FieldValueTypeValue.USER;
-                int uid = prop.getIntegerValue().getValue();
-                RemoteUser user = null;
-                try {
-                    user = this.soap.userRetrieveById(uid);
-                } catch (IImportExportUserRetrieveByIdServiceFaultMessageFaultFaultMessage e) {
-                    // TODO Auto-generated catch block
-                    e.printStackTrace();
-                }
-                if (user != null) {
-                    values.add(user.getUserName().getValue().toLowerCase());
-                }
+                values.add(this.meta.getUserNameById(prop.getIntegerValue()
+                        .getValue()));
+                break;
 
         }
 
@@ -565,7 +554,7 @@ public class ISTIncident extends ISTVersion {
                 log.error(
                         "Failed to retrieve comments for incident #"
                                 + this.getId(),
-                                e);
+                        e);
             }
         }
         return this.comments;
@@ -616,7 +605,7 @@ public class ISTIncident extends ISTVersion {
                     log.error(
                             "Failed to fetch Custom Properties for Artifact Type "
                                     + this.incident.getArtifactTypeId(),
-                                    e);
+                            e);
 
                 }
 
@@ -650,7 +639,7 @@ public class ISTIncident extends ISTVersion {
                 log.error(
                         "Failed to retrieve documents for incident #"
                                 + this.incident.getIncidentId().getValue(),
-                                e);
+                        e);
             }
         }
         return this.attachments;
@@ -690,8 +679,8 @@ public class ISTIncident extends ISTVersion {
                             + DUMPSEPARATOR
                             + df.format(ISTHandler.toDate(rc.getCreationDate()
                                     .getValue())) + DUMPSEPARATOR
-                                    + rc.getUserName().getValue() + "["
-                                    + rc.getUserId().getValue() + "]";
+                            + rc.getUserName().getValue() + "["
+                            + rc.getUserId().getValue() + "]";
                     if (useExtendedHashLogging)
                         log.trace(String.format(
                                 "   CO %-15d %s",
@@ -854,19 +843,31 @@ public class ISTIncident extends ISTVersion {
                 switch (fieldMeta.istFieldValueType()) {
                     case Date:
                         value = ISTHandler
-                        .toDate(((JAXBElement<XMLGregorianCalendar>) callee
-                                .invoke(this.incident)).getValue());
+                                .toDate(((JAXBElement<XMLGregorianCalendar>) callee
+                                        .invoke(this.incident)).getValue());
                         break;
                     case Integer:
                         value = ((JAXBElement<Integer>) callee
                                 .invoke(this.incident)).getValue();
+                        break;
+                    case User:
+                        String userIdFieldName = fieldMeta.name().replace(
+                                "Name",
+                                "Id");
+                        Method uidCallee = this.incident.getClass().getMethod(
+                                "get" + userIdFieldName);
+                        Integer uid = ((JAXBElement<Integer>) uidCallee
+                                .invoke(this.incident)).getValue();
+                        value = this.meta.getUserNameById(uid);
                         break;
                     case Text:
                     case List:
                         // the mandatory list fields also returns a string value for the item name
                         value = ((JAXBElement<String>) callee
                                 .invoke(this.incident)).getValue();
-                        if (value != null) {
+                        if (log.isTraceEnabled()
+                                && fieldMeta.istFieldValueType() == ISTCustomFieldType.Text
+                                && value != null) {
                             int len1 = ((String) value).length();
                             value = ((String) value).trim();
                             int trimmed = len1 - ((String) value).length();
@@ -886,11 +887,15 @@ public class ISTIncident extends ISTVersion {
                         }
                         break;
                     case Boolean:
+                        value = ((JAXBElement<Boolean>) callee
+                                .invoke(this.incident)).getValue();
+                        break;
                     case MultiList:
                         log.warn("Ignoring unexpected mandatory field type "
                                 + fieldMeta.istFieldValueType().name()
                                 + " for field " + fieldMeta.name());
                         break;
+
                 }
             } else {
                 // no JAX wrapper; direct method call returns the data already
@@ -924,9 +929,12 @@ public class ISTIncident extends ISTVersion {
                             }
                         }
                         break;
-                    case List:
                     case Boolean:
+                        value = String.valueOf(callee.invoke(this.incident));
+                        break;
+                    case List:
                     case MultiList:
+                    case User:
                         log.warn("Ignoring unexpected mandatory field type "
                                 + fieldMeta.istFieldValueType().name()
                                 + " for plain field " + fieldMeta.name());
@@ -1030,6 +1038,16 @@ public class ISTIncident extends ISTVersion {
                         "IntegerValue",
                         Integer.valueOf(value)));
                 log.debug(propDef.getName().getValue() + ": set to " + value);
+                break;
+            case User:
+                Integer uid = this.meta.getUserIdByName(value);
+                if (uid == null) {
+                    throw new CCFRuntimeException("User not found: " + value);
+                } else {
+                    prop.setIntegerValue(ISTMetaCache.CreateJAXBInteger(
+                            "IntegerValue",
+                            uid));
+                }
                 break;
             case List:
                 int itemId = this.meta.getCustomListItemIdForValue(
@@ -1177,7 +1195,8 @@ public class ISTIncident extends ISTVersion {
                             idFieldName = fieldMeta.name().replace(
                                     "VersionNumber",
                                     "Id");
-                        // call the nethod to set the id instead
+
+                        // call the nethod to set the id
                         String idMethodName = "set" + idFieldName;
                         Method idCallee = this.incident.getClass().getMethod(
                                 idMethodName,
@@ -1214,6 +1233,34 @@ public class ISTIncident extends ISTVersion {
                                 fieldMeta.genericFielValueType().name(),
                                 fieldMeta.isReadOnly()));
 
+                        break;
+                    case User:
+
+                        // call the Id method instead of the Name method
+                        String userIdFieldName = fieldMeta.name().replace(
+                                "Name",
+                                "Id");
+                        String userIdMethodName = "set" + userIdFieldName;
+                        Method userIdCallee = this.incident.getClass()
+                                .getMethod(
+                                        userIdMethodName,
+                                        JAXBElement.class);
+
+                        // set user id
+                        Integer uid = this.meta.getUserIdByName((String) value);
+                        if (uid != null) {
+                            userIdCallee.invoke(
+                                    this.incident,
+                                    ISTMetaCache.CreateJAXBInteger(
+                                            userIdFieldName,
+                                            uid));
+                        } else {
+                            String cause = "User `" + (String) value
+                                    + "` was not found in SpiraTest.";
+                            throw new CCFRuntimeException(cause);
+                        }
+                        break;
+                    default:
                         break;
                 }
             } else {
@@ -1259,6 +1306,9 @@ public class ISTIncident extends ISTVersion {
                                 fieldMeta.genericFielValueType().name(),
                                 fieldMeta.isReadOnly()));
 
+                        break;
+                    case User:
+                        // n/a
                         break;
                 }
             }

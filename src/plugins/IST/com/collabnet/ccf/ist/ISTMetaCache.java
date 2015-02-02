@@ -33,6 +33,8 @@ import com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportIn
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportIncidentRetrieveStatusesServiceFaultMessageFaultFaultMessage;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportIncidentRetrieveTypesServiceFaultMessageFaultFaultMessage;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportReleaseRetrieveServiceFaultMessageFaultFaultMessage;
+import com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportUserRetrieveByIdServiceFaultMessageFaultFaultMessage;
+import com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportUserRetrieveByUserNameServiceFaultMessageFaultFaultMessage;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.RemoteArtifactCustomProperty;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.RemoteCustomList;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.RemoteCustomListValue;
@@ -42,6 +44,7 @@ import com.inflectra.spirateam.mylyn.core.internal.services.soap.RemoteIncidentS
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.RemoteIncidentStatus;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.RemoteIncidentType;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.RemoteRelease;
+import com.inflectra.spirateam.mylyn.core.internal.services.soap.RemoteUser;
 
 public class ISTMetaCache {
 
@@ -263,9 +266,9 @@ public class ISTMetaCache {
     public static final String      WEB_SERVICE_NAMESPACE_DATA_OBJECTS = "http://schemas.datacontract.org/2004/07/Inflectra.SpiraTest.Web.Services.v4_0.DataObjects"; //$NON-NLS-1$
 
     private static final DateFormat df                                 = GenericArtifactHelper.df;
+
     private static final Log        log                                = LogFactory
             .getLog(ISTReader.class);
-
     private static final String     VALUESEPARATOR                     = "::";
 
     private Map<Integer, String>    customlistValues                   = null;
@@ -277,8 +280,8 @@ public class ISTMetaCache {
     private Map<Integer, String>    severityValues                     = new HashMap<Integer, String>();
 
     private Map<Integer, String>    incidentTypeValues                 = new HashMap<Integer, String>();
-    private int                     incidentDefaultType                = 0;
 
+    private int                     incidentDefaultType                = 0;
     private Map<Integer, String>    resolutionValues                   = new HashMap<Integer, String>();
 
     private Map<Integer, String>    releaseValues                      = new HashMap<Integer, String>();
@@ -528,6 +531,38 @@ public class ISTMetaCache {
         return findKeyForValue(
                 this.statusValues,
                 (String) value);
+    }
+
+    public Integer getUserIdByName(String username) {
+        RemoteUser user = null;
+        try {
+            user = this.soap.userRetrieveByUserName(username);
+        } catch (IImportExportUserRetrieveByUserNameServiceFaultMessageFaultFaultMessage e) {
+            log.error(
+                    "Could not retrieve user ID for user name " + username,
+                    e);
+        }
+        if (user != null) {
+            return user.getUserId().getValue();
+        } else {
+            return null;
+        }
+    }
+
+    public String getUserNameById(Integer id) {
+        RemoteUser user = null;
+        if (id != null) {
+            try {
+                user = this.soap.userRetrieveById(id);
+            } catch (IImportExportUserRetrieveByIdServiceFaultMessageFaultFaultMessage e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+            if (user != null && user.getUserName().getValue() != null) {
+                return user.getUserName().getValue().toLowerCase();
+            }
+        }
+        return null;
     }
 
     private void loadCustomListsForReadAccess(RemoteArtifactCustomProperty prop) {
