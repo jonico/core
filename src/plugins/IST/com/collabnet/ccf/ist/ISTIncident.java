@@ -4,9 +4,12 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.text.DateFormat;
 import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
+import java.util.TimeZone;
 
 import javax.xml.bind.JAXBElement;
 import javax.xml.datatype.XMLGregorianCalendar;
@@ -37,12 +40,14 @@ import com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportIn
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportIncidentRetrieveCommentsServiceFaultMessageFaultFaultMessage;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportIncidentUpdateServiceFaultMessageFaultFaultMessage;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportIncidentUpdateValidationFaultMessageFaultFaultMessage;
+import com.inflectra.spirateam.mylyn.core.internal.services.soap.IImportExportUserRetrieveByIdServiceFaultMessageFaultFaultMessage;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.ObjectFactory;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.RemoteArtifactCustomProperty;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.RemoteComment;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.RemoteCustomProperty;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.RemoteDocument;
 import com.inflectra.spirateam.mylyn.core.internal.services.soap.RemoteIncident;
+import com.inflectra.spirateam.mylyn.core.internal.services.soap.RemoteUser;
 
 /**
  * this class wraps the SpiraTest RemoteIncident, especially the Jax conversions
@@ -130,7 +135,7 @@ public class ISTIncident extends ISTVersion {
     public ISTIncident(IImportExport service, ISTMetaCache cache) {
         this.soap = service;
         this.meta = cache;
-
+        df.setTimeZone(TimeZone.getTimeZone("Asia/Shanghai"));
     }
 
     public RemoteDocument attachDocument(byte[] binaryData, String name,
@@ -295,14 +300,57 @@ public class ISTIncident extends ISTVersion {
         switch (type) {
             case Text:
                 fieldValueTypeValue = FieldValueTypeValue.HTMLSTRING;
-                if (prop.getStringValue().getValue() != null)
-                    values.add(prop.getStringValue().getValue());
+                String value = prop.getStringValue().getValue();
+                if (value != null) {
+                    int len1 = value.length();
+                    value = value.trim();
+                    int trimmed = len1 - value.length();
+                    if (trimmed != 0) {
+                        String original = prop.getStringValue().getValue();
+                        log.trace("trimmed field `" + label + "` by " + trimmed
+                                + " chars");
+                        log.trace(String
+                                .format(
+                                        "Strings:\nIncoming with %d chars:\n---%s---\nTrimmed with %d chars:\n---%s---",
+                                        len1,
+                                        original,
+                                        len1 - trimmed,
+                                        (String) value));
+                    }
+                }
+                values.add(value);
                 break;
             case Date:
+                SimpleDateFormat dateParser = new SimpleDateFormat(
+                        "yyyy-MM-dd HH:mm:ss");
+                dateParser.setTimeZone(TimeZone.getTimeZone("GMT"));
                 fieldValueTypeValue = FieldValueTypeValue.DATETIME;
-                if (prop.getDateTimeValue().getValue() != null)
-                    values.add(ISTHandler.toDate(prop.getDateTimeValue()
-                            .getValue()));
+                if (prop.getDateTimeValue().getValue() != null) {
+                    Calendar cal = Calendar.getInstance();
+                    cal.getTimeZone().getID();
+
+                    XMLGregorianCalendar greg = prop.getDateTimeValue()
+                            .getValue();
+
+                    String gmt = String.format(
+                            "%04d-%02d-%02d %02d:%02d:%02d",
+                            greg.getYear(),
+                            greg.getMonth(),
+                            greg.getDay(),
+                            greg.getHour(),
+                            greg.getMinute(),
+                            greg.getSecond());
+                    Date d = null;
+                    try {
+                        d = dateParser.parse(gmt);
+                    } catch (ParseException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+
+                    values.add(d);
+
+                }
                 break;
             case List:
                 values.add(this.meta.getSingleListValue(prop));
@@ -316,6 +364,20 @@ public class ISTIncident extends ISTVersion {
                 fieldValueTypeValue = FieldValueTypeValue.STRING;
                 values.add(prop.getIntegerValue().getValue());
                 break;
+            case User:
+                fieldValueTypeValue = FieldValueTypeValue.USER;
+                int uid = prop.getIntegerValue().getValue();
+                RemoteUser user = null;
+                try {
+                    user = this.soap.userRetrieveById(uid);
+                } catch (IImportExportUserRetrieveByIdServiceFaultMessageFaultFaultMessage e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
+                if (user != null) {
+                    values.add(user.getUserName().getValue().toLowerCase());
+                }
+
         }
 
         // add new fields to ga
@@ -408,21 +470,18 @@ public class ISTIncident extends ISTVersion {
                                         String.valueOf(gaField.getFieldValue()));
                                 break;
                             case DATETIME:
+                            case DATE:
                                 this.setCustomPropertyValue(
                                         prop,
                                         df.format(gaField.getFieldValue()));
                                 break;
-                            case DATE:
-                                log.warn("Ignoring unsupported Date field value for field "
-                                        + this.getId() + "." + fieldName);
-                                break;
                             case BASE64STRING:
                                 log.warn("Ignoring unsupported Base64 field value for field "
-                                        + this.getId() + "." + fieldName);
+                                        + fieldName);
                                 break;
                             case DOUBLE:
                                 log.warn("Ignoring unsupported Double field value for field "
-                                        + this.getId() + "." + fieldName);
+                                        + fieldName);
                                 break;
                         }
                     }
@@ -802,12 +861,29 @@ public class ISTIncident extends ISTVersion {
                         value = ((JAXBElement<Integer>) callee
                                 .invoke(this.incident)).getValue();
                         break;
-
-                    // the mandatory list fields return a string value for the item name
                     case Text:
                     case List:
+                        // the mandatory list fields also returns a string value for the item name
                         value = ((JAXBElement<String>) callee
                                 .invoke(this.incident)).getValue();
+                        if (value != null) {
+                            int len1 = ((String) value).length();
+                            value = ((String) value).trim();
+                            int trimmed = len1 - ((String) value).length();
+                            if (trimmed != 0 && log.isTraceEnabled()) {
+                                String original = (String) ((JAXBElement<String>) callee
+                                        .invoke(this.incident)).getValue();
+                                log.trace("trimmed field `" + fieldMeta.name()
+                                        + "` by " + trimmed + " chars");
+                                log.trace(String
+                                        .format(
+                                                "Strings:\nIncoming with %d chars:\n---%s---\nTrimmed with %d chars:\n---%s---",
+                                                len1,
+                                                original,
+                                                len1 - trimmed,
+                                                (String) value));
+                            }
+                        }
                         break;
                     case Boolean:
                     case MultiList:
@@ -829,6 +905,24 @@ public class ISTIncident extends ISTVersion {
                         break;
                     case Text:
                         value = String.valueOf(callee.invoke(this.incident));
+                        if (value != null) {
+                            int len1 = ((String) value).length();
+                            value = ((String) value).trim();
+                            int trimmed = ((String) value).length() - len1;
+                            if (trimmed != 0) {
+                                String original = String.valueOf(callee
+                                        .invoke(this.incident));
+                                log.trace("trimmed field `" + fieldMeta.name()
+                                        + "` by " + trimmed + " chars");
+                                log.trace(String
+                                        .format(
+                                                "Strings:\nIncoming with %d chars:\n---%s---\nTrimmed with %d chars:\n---%s---",
+                                                len1,
+                                                original,
+                                                len1 - trimmed,
+                                                (String) value));
+                            }
+                        }
                         break;
                     case List:
                     case Boolean:
@@ -990,12 +1084,13 @@ public class ISTIncident extends ISTVersion {
                 break;
             case Text:
                 String myVal = (String) value;
+                // assuming multi-line content to be sent to rich text fields
                 if (myVal.contains(System.getProperty("line.separator"))) {
                     myVal = ju.convertTextToHtml(myVal);
                 }
                 prop.setStringValue(ISTMetaCache.CreateJAXBString(
                         "StringValue",
-                        myVal));
+                        myVal.trim()));
                 if (useExtendedUpdateLogging) {
                     String valInfo = value.length() > 10 ? value.substring(
                             0,

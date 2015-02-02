@@ -101,7 +101,7 @@ public class ISTHandler {
             log.error(
                     "Failed to convert Date to XML Gregorian: "
                             + date.toString(),
-                            ex);
+                    ex);
         }
         return xmlCalendar;
     }
@@ -110,7 +110,7 @@ public class ISTHandler {
     private static final ObjectFactory of         = new ObjectFactory();
 
     private static final Log           log        = LogFactory
-                                                          .getLog(ISTHandler.class);
+            .getLog(ISTHandler.class);
     private ISTConnection              connection = null;
     private ISTMetaCache               meta       = null;
 

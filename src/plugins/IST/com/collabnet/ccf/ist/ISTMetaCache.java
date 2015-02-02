@@ -7,6 +7,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import javax.xml.bind.JAXBElement;
 import javax.xml.datatype.XMLGregorianCalendar;
@@ -263,7 +264,7 @@ public class ISTMetaCache {
 
     private static final DateFormat df                                 = GenericArtifactHelper.df;
     private static final Log        log                                = LogFactory
-                                                                               .getLog(ISTReader.class);
+            .getLog(ISTReader.class);
 
     private static final String     VALUESEPARATOR                     = "::";
 
@@ -385,9 +386,23 @@ public class ISTMetaCache {
         String combined = prop.getDefinition().getValue().getName().getValue()
                 + VALUESEPARATOR + value;
 
-        return this.findKeyForValue(
+        int index = this.findKeyForValue(
                 this.customlistValues,
                 combined);
+
+        if (index == -1) {
+            String customLists = "{ ";
+            for (Entry<Integer, String> val : this.customlistValues.entrySet()) {
+                customLists += val.getValue() + "[" + val.getKey() + "], ";
+            }
+            customLists = customLists.substring(
+                    0,
+                    customLists.length() - 2) + "}";
+            log.warn("could not find ID for value " + combined
+                    + " in list values " + customLists);
+        }
+
+        return index;
     }
 
     public String getCustomListItemValueById(RemoteArtifactCustomProperty prop,
@@ -535,7 +550,7 @@ public class ISTMetaCache {
                         this.customlistValues.put(
                                 listItem.getCustomPropertyValueId().getValue(),
                                 cProp.getName().getValue() + VALUESEPARATOR
-                                        + listItem.getName().getValue());
+                                + listItem.getName().getValue());
                     }
                 }
             }
