@@ -107,10 +107,10 @@
 	<target name="create.ccfcoreversion">
 		<propertyfile file="ccfcoreversion.properties" comment="# File to be used by CCFMaster for sanity check and to display as part of connector maintenance section.Updates will only be possible if version of the new zip file is higher than the one currently displayed">
 				<entry key="ccfcore.major.version" value="2" />
-				<entry key="ccfcore.minor.version" value="4" />
-				<entry key="ccfcore.patch.version" value="0" />
+				<entry key="ccfcore.minor.version" value="3" />
+				<entry key="ccfcore.patch.version" value="3" />
 				<entry key="ccfcore.revisionstring" value="${env.BUILD_NUMBER}" />
-				<entry key="ccfcore.description" value="CCF 2.4" />
+				<entry key="ccfcore.description" value="CCF 2.3.3" />
 		</propertyfile>		
 	</target>
 	
