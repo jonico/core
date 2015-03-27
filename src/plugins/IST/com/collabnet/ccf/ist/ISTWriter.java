@@ -34,8 +34,12 @@ public class ISTWriter extends AbstractWriter<ISTConnection> {
     private ISTMetaCache            meta                     = null;
     private static final DateFormat df                       = GenericArtifactHelper.df;
 
+    private boolean                 logShowXMLdata           = false;
+    private boolean                 logShowXMLAttachmentdata = false;
     private boolean                 useExtendedHashLogging   = false;
+
     private boolean                 useExtendedUpdateLogging = false;
+
     private boolean                 useExtendedCreateLogging = false;
 
     public ISTWriter() {
@@ -164,6 +168,7 @@ public class ISTWriter extends AbstractWriter<ISTConnection> {
         }
 
         ISTConnection connection = null;
+        Document artifactDoc = null;
         try {
             connection = connect(ga);
             ISTIncident ri = new ISTIncident(connection.getService(), this.meta);
@@ -174,21 +179,17 @@ public class ISTWriter extends AbstractWriter<ISTConnection> {
                     .getLastUpdateDate()));
             ga.setTargetArtifactVersion(String.valueOf(ri.getVersion()));
 
-            log.trace("Generic Artifact XML for incident #" + ri.getId()
-                    + ":\n"
-                    + GenericArtifactHelper.createGenericArtifactXMLDocument(
-                            ga).asXML());
-        } catch (GenericArtifactParsingException e) {
-            String cause = "Could not convert generic artifact to XML for logging.";
-            log.warn(
-                    cause,
-                    e);
+            artifactDoc = this.GAtoDocument(ga);
+            if (this.logShowXMLdata) {
+                log.info("New incident #" + ri.getId() + " XML base:\n"
+                        + artifactDoc.asXML());
+            }
         } finally {
             // release connection to pool
             getConnectionManager().releaseConnection(
                     connection);
         }
-        return this.GAtoDocument(ga);
+        return artifactDoc;
     }
 
     /**
@@ -218,6 +219,9 @@ public class ISTWriter extends AbstractWriter<ISTConnection> {
 
         ISTConnection connection = connect(ga);
         ISTIncident incident = null;
+
+        Document attachmentDoc = null;
+        Document parentDoc = null;
         try {
 
             ISTAttachmentHandler ath = new ISTAttachmentHandler();
@@ -228,22 +232,23 @@ public class ISTWriter extends AbstractWriter<ISTConnection> {
                     connection,
                     ga,
                     incident);
-        } finally {
-            getConnectionManager().releaseConnection(
-                    connection);
-        }
-        Document attachmentDoc;
-        Document parentDoc;
 
-        try {
             attachmentDoc = GenericArtifactHelper
                     .createGenericArtifactXMLDocument(ga);
-        } catch (GenericArtifactParsingException e1) {
+
+            if (this.logShowXMLAttachmentdata) {
+                log.info("Created new attachment based on this XML:\n"
+                        + attachmentDoc.asXML());
+            }
+        } catch (GenericArtifactParsingException e) {
             String cause = "Problem occured while converting attachment GenericArtifact to Document";
             log.error(
                     cause,
-                    e1);
-            throw new CCFRuntimeException(cause, e1);
+                    e);
+            throw new CCFRuntimeException(cause, e);
+        } finally {
+            getConnectionManager().releaseConnection(
+                    connection);
         }
 
         GenericArtifact parentGA = this.buildGaForAttachmentParent(
@@ -322,6 +327,14 @@ public class ISTWriter extends AbstractWriter<ISTConnection> {
 
     public boolean isUseExtendedCreateLogging() {
         return useExtendedCreateLogging;
+    }
+
+    public void setLogShowXMLAttachmentdata(boolean logShowXMLAttachmentdata) {
+        this.logShowXMLAttachmentdata = logShowXMLAttachmentdata;
+    }
+
+    public void setLogShowXMLdata(boolean logShowXMLdata) {
+        this.logShowXMLdata = logShowXMLdata;
     }
 
     public void setPassword(String password) {
