@@ -95,7 +95,7 @@ public class ISTIncident extends ISTVersion {
     private final ObjectFactory                 of                       = new ObjectFactory();
     private static final JerichoUtils           ju                       = new JerichoUtils();
     private static final Log                    log                      = LogFactory
-                                                                                 .getLog(ISTIncident.class);
+            .getLog(ISTIncident.class);
 
     private final String                        DUMPSEPARATOR            = "::";
 
@@ -258,7 +258,7 @@ public class ISTIncident extends ISTVersion {
             retrieved++;
             if (creationDate.after(lastModifiedDate)
                     && c.getUserId().getValue() != ISTConnection
-                            .getConnectorUserId()) {
+                    .getConnectorUserId()) {
                 fetched++;
                 ISTHandler.addGAField(
                         ga,
@@ -554,7 +554,7 @@ public class ISTIncident extends ISTVersion {
                 log.error(
                         "Failed to retrieve comments for incident #"
                                 + this.getId(),
-                        e);
+                                e);
             }
         }
         return this.comments;
@@ -605,7 +605,7 @@ public class ISTIncident extends ISTVersion {
                     log.error(
                             "Failed to fetch Custom Properties for Artifact Type "
                                     + this.incident.getArtifactTypeId(),
-                            e);
+                                    e);
 
                 }
 
@@ -639,7 +639,7 @@ public class ISTIncident extends ISTVersion {
                 log.error(
                         "Failed to retrieve documents for incident #"
                                 + this.incident.getIncidentId().getValue(),
-                        e);
+                                e);
             }
         }
         return this.attachments;
@@ -679,8 +679,8 @@ public class ISTIncident extends ISTVersion {
                             + DUMPSEPARATOR
                             + df.format(ISTHandler.toDate(rc.getCreationDate()
                                     .getValue())) + DUMPSEPARATOR
-                            + rc.getUserName().getValue() + "["
-                            + rc.getUserId().getValue() + "]";
+                                    + rc.getUserName().getValue() + "["
+                                    + rc.getUserId().getValue() + "]";
                     if (useExtendedHashLogging)
                         log.trace(String.format(
                                 "   CO %-15d %s",
@@ -843,8 +843,8 @@ public class ISTIncident extends ISTVersion {
                 switch (fieldMeta.istFieldValueType()) {
                     case Date:
                         value = ISTHandler
-                                .toDate(((JAXBElement<XMLGregorianCalendar>) callee
-                                        .invoke(this.incident)).getValue());
+                        .toDate(((JAXBElement<XMLGregorianCalendar>) callee
+                                .invoke(this.incident)).getValue());
                         break;
                     case Integer:
                         value = ((JAXBElement<Integer>) callee
@@ -921,7 +921,7 @@ public class ISTIncident extends ISTVersion {
                                         + "` by " + trimmed + " chars");
                                 log.trace(String
                                         .format(
-                                                "Strings:\nIncoming with %d chars:\n---%s---\nTrimmed with %d chars:\n---%s---",
+                                                "Strings:\nIncoming with %d chars:\n---%s---\n\nTrimmed with %d chars:\n---%s---",
                                                 len1,
                                                 original,
                                                 len1 - trimmed,
