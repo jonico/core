@@ -22,10 +22,10 @@ import com.collabnet.ccf.core.utils.XPathUtils;
 public class ISTWriter extends AbstractWriter<ISTConnection> {
 
     private static final Log        log                      = LogFactory
-                                                                     .getLog(ISTWriter.class);
+            .getLog(ISTWriter.class);
 
     private static final Log        logConflictResolutor     = LogFactory
-                                                                     .getLog(ISTWriter.class);
+            .getLog(ISTWriter.class);
 
     private String                  serverUrl                = null;
     private String                  username                 = null;
@@ -49,11 +49,11 @@ public class ISTWriter extends AbstractWriter<ISTConnection> {
         // for replayed attachments
         parentArtifact.setTransactionId(attachmentGA.getTransactionId());
         parentArtifact
-                .setArtifactType(GenericArtifact.ArtifactTypeValue.PLAINARTIFACT);
+        .setArtifactType(GenericArtifact.ArtifactTypeValue.PLAINARTIFACT);
         parentArtifact
-                .setArtifactAction(GenericArtifact.ArtifactActionValue.UPDATE);
+        .setArtifactAction(GenericArtifact.ArtifactActionValue.UPDATE);
         parentArtifact
-                .setArtifactMode(GenericArtifact.ArtifactModeValue.CHANGEDFIELDSONLY);
+        .setArtifactMode(GenericArtifact.ArtifactModeValue.CHANGEDFIELDSONLY);
         parentArtifact.setConflictResolutionPriority(attachmentGA
                 .getConflictResolutionPriority());
         parentArtifact.setSourceArtifactId(attachmentGA
@@ -151,6 +151,7 @@ public class ISTWriter extends AbstractWriter<ISTConnection> {
 
         try {
             ga = GenericArtifactHelper.createGenericArtifactJavaObject(doc);
+            log.info("About to ship NEW artifact " + ga.getSourceArtifactId());
         } catch (GenericArtifactParsingException e) {
             String cause = "Problem occured while parsing the GenericArtifact into Document";
             log.error(
@@ -355,6 +356,8 @@ public class ISTWriter extends AbstractWriter<ISTConnection> {
         try {
             ga = GenericArtifactHelper
                     .createGenericArtifactJavaObject(gaDocument);
+            log.info("About to ship UPDATED artifact "
+                    + ga.getSourceArtifactId());
         } catch (GenericArtifactParsingException e) {
             String cause = "Problem occured while parsing the GenericArtifact into Document";
             log.error(

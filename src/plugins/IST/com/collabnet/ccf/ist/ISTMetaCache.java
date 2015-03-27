@@ -268,7 +268,7 @@ public class ISTMetaCache {
     private static final DateFormat df                                 = GenericArtifactHelper.df;
 
     private static final Log        log                                = LogFactory
-            .getLog(ISTReader.class);
+                                                                               .getLog(ISTReader.class);
     private static final String     VALUESEPARATOR                     = "::";
 
     private Map<Integer, String>    customlistValues                   = null;
@@ -393,7 +393,7 @@ public class ISTMetaCache {
                 this.customlistValues,
                 combined);
 
-        if (index == -1) {
+        if (index == -1 && !"null".equals(value)) {
             String customLists = "{ ";
             for (Entry<Integer, String> val : this.customlistValues.entrySet()) {
                 customLists += val.getValue() + "[" + val.getKey() + "], ";
@@ -585,7 +585,7 @@ public class ISTMetaCache {
                         this.customlistValues.put(
                                 listItem.getCustomPropertyValueId().getValue(),
                                 cProp.getName().getValue() + VALUESEPARATOR
-                                + listItem.getName().getValue());
+                                        + listItem.getName().getValue());
                     }
                 }
             }

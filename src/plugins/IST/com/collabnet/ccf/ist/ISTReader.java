@@ -47,7 +47,7 @@ public class ISTReader extends AbstractReader<ISTConnection> {
     }
 
     private static final Log  log                        = LogFactory
-                                                                 .getLog(ISTReader.class);
+            .getLog(ISTReader.class);
 
     /**
      * Properties set via injection
@@ -164,8 +164,8 @@ public class ISTReader extends AbstractReader<ISTConnection> {
                     try {
                         log.info("Attachment XML\n"
                                 + GenericArtifactHelper
-                                .createGenericArtifactXMLDocument(
-                                        ga).asXML());
+                                        .createGenericArtifactXMLDocument(
+                                                ga).asXML());
                     } catch (GenericArtifactParsingException e) {
                         log.warn("Could not render attachment XML: "
                                 + e.getMessage());
@@ -246,8 +246,8 @@ public class ISTReader extends AbstractReader<ISTConnection> {
                         + ga.getSourceArtifactId()
                         + ":\n"
                         + GenericArtifactHelper
-                        .createGenericArtifactXMLDocument(
-                                ga).asXML());
+                                .createGenericArtifactXMLDocument(
+                                        ga).asXML());
             } catch (GenericArtifactParsingException e) {
                 log.warn("Tried to convert GA to XML but failed!");
             }
@@ -356,7 +356,9 @@ public class ISTReader extends AbstractReader<ISTConnection> {
             getConnectionManager().releaseConnection(
                     connection);
         }
-        // for now, do not ship stuff over.
+        if (artifactStates.size() > 0) {
+            log.info("Found " + artifactStates.size() + " new shipments");
+        }
         return artifactStates;
     }
 
