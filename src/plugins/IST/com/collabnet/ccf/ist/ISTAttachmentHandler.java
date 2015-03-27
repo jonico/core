@@ -35,7 +35,7 @@ import com.inflectra.spirateam.mylyn.core.internal.services.soap.RemoteSort;
 public class ISTAttachmentHandler {
 
     private static final Log  log = LogFactory
-            .getLog(ISTAttachmentHandler.class);
+                                          .getLog(ISTAttachmentHandler.class);
 
     private static DateFormat df  = GenericArtifactHelper.df;
 
@@ -84,7 +84,7 @@ public class ISTAttachmentHandler {
                                 .getVersions().getValue()
                                 .getRemoteDocumentVersion().size()
                                 + " versions",
-                                df.format(docDate)));
+                        df.format(docDate)));
 
                 if (!doc.getVersions().isNil()) {
                     ArrayOfRemoteDocumentVersion docVersions = doc
@@ -134,11 +134,11 @@ public class ISTAttachmentHandler {
                             AttachmentMetaData.ATTACHMENT_TYPE,
                             GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
                     cTypeField
-                            .setFieldValue(AttachmentMetaData.AttachmentType.DATA);
+                    .setFieldValue(AttachmentMetaData.AttachmentType.DATA);
                     cTypeField
-                            .setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
+                    .setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
                     cTypeField
-                            .setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
+                    .setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
 
                     // Source URL Field
                     GenericArtifactField urlField = ga.addNewField(
@@ -154,9 +154,9 @@ public class ISTAttachmentHandler {
                             GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
                     nameField.setFieldValue(lastName);
                     nameField
-                            .setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
+                    .setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
                     nameField
-                            .setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
+                    .setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
 
                     // Source Size Field
                     GenericArtifactField sizeField = ga.addNewField(
@@ -164,20 +164,20 @@ public class ISTAttachmentHandler {
                             GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
                     sizeField.setFieldValue(Long.valueOf(data.length));
                     sizeField
-                            .setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
+                    .setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
                     sizeField
-                            .setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
+                    .setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
 
                     // Source Mime Type Field
                     GenericArtifactField mimeField = ga.addNewField(
                             AttachmentMetaData.ATTACHMENT_MIME_TYPE,
                             GenericArtifactField.VALUE_FIELD_TYPE_FLEX_FIELD);
                     mimeField
-                            .setFieldValue(AttachmentMetaData.AttachmentType.DATA);
+                    .setFieldValue(AttachmentMetaData.AttachmentType.DATA);
                     mimeField
-                            .setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
+                    .setFieldAction(GenericArtifactField.FieldActionValue.REPLACE);
                     mimeField
-                            .setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
+                    .setFieldValueType(GenericArtifactField.FieldValueTypeValue.STRING);
 
                     if (shouldShipAttachmentsWithArtifact) {
                         if (data != null) {
@@ -195,7 +195,7 @@ public class ISTAttachmentHandler {
             log.warn(
                     "Could not retrieve attachments for incident "
                             + artifactData.getSourceArtifactId(),
-                            e);
+                    e);
         } catch (IImportExportDocumentOpenFileServiceFaultMessageFaultFaultMessage e) {
             String cause = "Could not download attachment";
             throw new CCFRuntimeException(cause, e);
@@ -253,8 +253,10 @@ public class ISTAttachmentHandler {
                                     .getEditedDate())));
                     attachmentGA.setTargetArtifactVersion("1");
                     attachmentGA
-                            .setTargetArtifactId(String.valueOf(newAttachment
-                                    .getAttachmentId().getValue()));
+                    .setTargetArtifactId(String.valueOf(newAttachment
+                            .getAttachmentId().getValue()));
+                    log.info("Created new document for incident #"
+                            + incident.getId());
                 }
 
             } else {

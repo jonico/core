@@ -216,11 +216,9 @@ public class ISTIncident extends ISTVersion {
 
         try {
             this.incident = this.soap.incidentCreate(this.incident);
-            log.info("Created new incident #" + this.getId());
             this.uploadComments(ga);
-
             this.reload(this.getId());
-
+            log.info("Created new incident #" + this.getId());
         } catch (IImportExportIncidentCreateServiceFaultMessageFaultFaultMessage e) {
             String cause = "Failed to create new incident based on "
                     + ga.getSourceArtifactId();
@@ -1090,7 +1088,7 @@ public class ISTIncident extends ISTVersion {
 
                     log.debug(propDef.getName().getValue() + ": added value "
                             + value + " (" + multiId + ")");
-                } else if (value != null) {
+                } else if (value != null && !"null".equals(value)) {
                     String cause = String
                             .format(
                                     "Value `%s` does not exist in field `%s`, please edit your transformation or add the value to SpiraTest",
@@ -1464,12 +1462,13 @@ public class ISTIncident extends ISTVersion {
     public void updateIncident(GenericArtifact ga) {
         this.fillMandatoryFields(ga);
         this.fillCustoms(ga);
-        // documents won't be handled here
+        // documents won't be handled here, they are shipped as their own artifacts
 
         try {
             this.soap.incidentUpdate(this.incident);
             this.uploadComments(ga);
             this.reload(this.getId());
+            log.info("Updated incident #" + this.getId());
         } catch (IImportExportIncidentUpdateServiceFaultMessageFaultFaultMessage e) {
             String cause = "Could not update incident #" + this.getId();
             ga.setErrorCode(GenericArtifact.ERROR_EXTERNAL_SYSTEM_WRITE);

@@ -37,9 +37,7 @@ public class ISTWriter extends AbstractWriter<ISTConnection> {
     private boolean                 logShowXMLdata           = false;
     private boolean                 logShowXMLAttachmentdata = false;
     private boolean                 useExtendedHashLogging   = false;
-
     private boolean                 useExtendedUpdateLogging = false;
-
     private boolean                 useExtendedCreateLogging = false;
 
     public ISTWriter() {
@@ -155,6 +153,7 @@ public class ISTWriter extends AbstractWriter<ISTConnection> {
 
         try {
             ga = GenericArtifactHelper.createGenericArtifactJavaObject(doc);
+            log.info("Shipping NEW artifact " + ga.getSourceArtifactId());
         } catch (GenericArtifactParsingException e) {
             String cause = "Problem occured while parsing the GenericArtifact into Document";
             log.error(
@@ -205,6 +204,8 @@ public class ISTWriter extends AbstractWriter<ISTConnection> {
         GenericArtifact ga = new GenericArtifact();
         try {
             ga = GenericArtifactHelper.createGenericArtifactJavaObject(doc);
+            log.info("Shipping NEW attachment for artifact "
+                    + ga.getDepParentSourceArtifactId());
         } catch (GenericArtifactParsingException e) {
             String cause = "Problem occured while parsing the GenericArtifact into Document";
             log.error(
@@ -368,6 +369,7 @@ public class ISTWriter extends AbstractWriter<ISTConnection> {
         try {
             ga = GenericArtifactHelper
                     .createGenericArtifactJavaObject(gaDocument);
+            log.info("Shipping UPDATED artifact " + ga.getSourceArtifactId());
         } catch (GenericArtifactParsingException e) {
             String cause = "Problem occured while parsing the GenericArtifact into Document";
             log.error(
