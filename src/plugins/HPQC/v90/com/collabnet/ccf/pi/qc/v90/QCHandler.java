@@ -1454,7 +1454,7 @@ public class QCHandler {
 				+ " AND REQ.RQ_TYPE_ID = '"
 				+ technicalRequirementsId
 				+ "'"
-				+ " AND AL.AU_ENTITY_ID = REQ.RQ_REQ_ID"
+				+ " AND REQ.RQ_REQ_ID != '0' AND AL.AU_ENTITY_ID = REQ.RQ_REQ_ID"
 				+ " ORDER BY AL.AU_ACTION_ID";
 
 		log.debug(sql);

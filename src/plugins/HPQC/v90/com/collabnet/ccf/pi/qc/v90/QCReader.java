@@ -544,7 +544,11 @@ public class QCReader extends AbstractReader<IConnection> {
 						if (parentId != null) {
 							if (parentId.equals("-1")) {
 								latestArtifact.setDepParentSourceArtifactId(GenericArtifact.VALUE_NONE);
-							} else {
+							} 
+							else if (parentId.equals("0")) { 
+							    latestArtifact.setDepParentSourceArtifactId(GenericArtifact.VALUE_UNKNOWN);
+							}
+							else {
 								latestArtifact.setDepParentSourceArtifactId(parentId);
 								// find out requirement type of parent
 								QCRequirement parentRequirement = null;
