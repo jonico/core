@@ -722,10 +722,11 @@ public class QCHandler {
     }
 
     public List<ArtifactState> getLatestChangedRequirements(IConnection qcc,
-            String transactionId, String technicalRequirementsId) {
+            String transactionId, String technicalRequirementsId,
+            boolean ignoreRequirementRootFolder) {
         int rc = 0;
         String sql = sqlQueryToRetrieveLatestRequirement(transactionId,
-                technicalRequirementsId);
+                technicalRequirementsId, ignoreRequirementRootFolder);
 
         log.debug(sql);
         ArrayList<ArtifactState> changedRequirements = new ArrayList<ArtifactState>();
@@ -1765,12 +1766,15 @@ public class QCHandler {
     }
 
     private String sqlQueryToRetrieveLatestRequirement(String transactionId,
-            String technicalRequirementsId) {
+            String technicalRequirementsId, boolean ignoreRequirementRootFolder) {
         StringBuilder queryBuilder = new StringBuilder();
         queryBuilder
                 .append("SELECT AL.AU_ENTITY_ID AS AU_ENTITY_ID, AL.AU_ACTION_ID AS AU_ACTION_ID, AL.AU_TIME AS AU_TIME FROM AUDIT_LOG AL, REQ WHERE AL.AU_ENTITY_TYPE = 'REQ' AND AU_ACTION_ID > '")
                 .append(transactionId)
                 .append("' AND AL.AU_ACTION!='DELETE' AND AL.AU_FATHER_ID = '-1'");
+        if (ignoreRequirementRootFolder) {
+            queryBuilder.append(" AND REQ.RQ_REQ_ID != '0'");
+        }
         if (!QCHandler.REQUIREMENT_TYPE_ALL.equals(technicalRequirementsId)) {
             queryBuilder.append(" AND REQ.RQ_TYPE_ID = '")
                     .append(technicalRequirementsId).append("'");

@@ -103,6 +103,8 @@ public class QCReader extends AbstractReader<IConnection> {
 
     private boolean             useAlternativeFieldName        = false;
 
+    private boolean             ignoreRequirementRootFolder    = false;
+
     /**
      * Another user name that is used to login into the CEE instance. This user
      * has to differ from the ordinary user used to log in in order to force
@@ -566,6 +568,10 @@ public class QCReader extends AbstractReader<IConnection> {
                             if (parentId.equals("-1")) {
                                 latestArtifact
                                         .setDepParentSourceArtifactId(GenericArtifact.VALUE_NONE);
+                            } else if (ignoreRequirementRootFolder
+                                    && parentId.equals("0")) {
+                                latestArtifact
+                                        .setDepParentSourceArtifactId(GenericArtifact.VALUE_UNKNOWN);
                             } else {
                                 latestArtifact
                                         .setDepParentSourceArtifactId(parentId);
@@ -727,7 +733,8 @@ public class QCReader extends AbstractReader<IConnection> {
                         .extractTechnicalRequirementsType(sourceRepositoryId,
                                 connection);
                 artifactIds = artifactHandler.getLatestChangedRequirements(
-                        connection, transactionId, technicalRequirementsId);
+                        connection, transactionId, technicalRequirementsId,
+                        ignoreRequirementRootFolder);
             } catch (Exception e1) {
                 String cause = "Error in fetching the defect Ids to be shipped from QC";
                 log.error(cause, e1);
@@ -923,6 +930,17 @@ public class QCReader extends AbstractReader<IConnection> {
         return ignoreConnectorUserUpdates;
     }
 
+    /**
+     * Determines whether requirement root folder to be synched to TF from QC.
+     * If set true then requirement root folder '0' will be ignored.
+     * 
+     * @return the ignoreRequirementRootFolder whether to ignore the requirement
+     *         root folder '0' from QC to TF
+     */
+    public boolean isIgnoreRequirementRootFolder() {
+        return ignoreRequirementRootFolder;
+    }
+
     public boolean isUseAlternativeFieldName() {
         return useAlternativeFieldName;
     }
@@ -989,6 +1007,18 @@ public class QCReader extends AbstractReader<IConnection> {
      */
     public void setIgnoreConnectorUserUpdates(boolean ignoreConnectorUserUpdates) {
         this.ignoreConnectorUserUpdates = ignoreConnectorUserUpdates;
+    }
+
+    /**
+     * Sets whether requirement root folder to be synched to TF from QC. If set
+     * true then requirement root folder '0' will be ignored.
+     * 
+     * @param ignoreRequirementRootFolder
+     *            the ignoreRequirementRootFolder to set
+     */
+    public void setIgnoreRequirementRootFolder(
+            boolean ignoreRequirementRootFolder) {
+        this.ignoreRequirementRootFolder = ignoreRequirementRootFolder;
     }
 
     public void setMaximumAttachmentRetryCount(long maximumAttachmentRetryCount) {

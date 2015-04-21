@@ -59,6 +59,7 @@
 				<prop key="ccf.direction.qc.ignore.connectorupdates">true</prop>
 				<prop key="ccf.direction.qc.translate.technical.releaseids">false</prop>
 				<prop key="ccf.direction.qc.ignoresyncusernamefromattachment">false</prop>
+				<prop key="ccf.direction.qc.ignorerequirementrootfolder">false</prop>
 			</props>
 		</property>
 		<property name="locations">
@@ -339,6 +340,7 @@
 			same named zero byte attachments download -->
 		<property name="maximumAttachmentRetryCount" value="${ccf.direction.qc.max.attachmentretrycount}" />
 		<property name="useAlternativeFieldName" value="${ccf.direction.usealternativefieldname}" />
+		<property name="ignoreRequirementRootFolder" value="${ccf.direction.qc.ignorerequirementrootfolder}" />
 		<property name="ignoreConnectorUserUpdates" value="${ccf.direction.qc.ignore.connectorupdates}" />
 		<!-- Below property -"identityMappingDatabaseReader" makes reader to read 
 			all the comments and attachment; Since CCF Sync is based on Artifact specific 
