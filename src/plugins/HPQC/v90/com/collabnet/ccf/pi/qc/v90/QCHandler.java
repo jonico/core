@@ -463,7 +463,7 @@ public class QCHandler {
             else
                 sql.append("'" + txnIds.get(cnt) + "'");
         }
-        sql.append(")");
+        sql.append(") ORDER BY AP_PROPERTY_ID ASC ");
         log.debug("New SQL in getDeltaOfComment is:" + sql);
         IRecordSet newRs = qcc.executeSQL(sql.toString());
         return newRs;
