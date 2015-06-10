@@ -60,6 +60,7 @@
 				<prop key="ccf.direction.qc.translate.technical.releaseids">false</prop>
 				<prop key="ccf.direction.qc.ignoresyncusernamefromattachment">false</prop>
 				<prop key="ccf.direction.qc.ignorerequirementrootfolder">false</prop>
+				<prop key="ccf.direction.countbeforecomreinitialization">50000</prop>
 			</props>
 		</property>
 		<property name="locations">
@@ -342,6 +343,7 @@
 		<property name="useAlternativeFieldName" value="${ccf.direction.usealternativefieldname}" />
 		<property name="ignoreRequirementRootFolder" value="${ccf.direction.qc.ignorerequirementrootfolder}" />
 		<property name="ignoreConnectorUserUpdates" value="${ccf.direction.qc.ignore.connectorupdates}" />
+		<property name="countBeforeCOMReinitialization" value="${ccf.direction.countbeforecomreinitialization}"/>
 		<!-- Below property -"identityMappingDatabaseReader" makes reader to read 
 			all the comments and attachment; Since CCF Sync is based on Artifact specific 
 			last modified timestamp or last modified version -->
