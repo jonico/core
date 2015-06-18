@@ -60,12 +60,12 @@ public class QCHandler {
     private static final String QC_LINES_WITH_NON_BREAKING_SPACE = "<br />&nbsp;";
     private static final String QC_TAG_WITH_EMPTY_LINE           = "</span></font></div>\\s*<div align=\"left\"><font face=\"Arial\"><span style=\"font-size:8pt\"><br />";
     private static final String QC_FIRST_BREAK                   = "<br[^>]*>";
-    private static final String QC_COMMENT_SEPERATOR             = "(?i)<font[^>]*>(?:<span[^>]*>)?<b>_+</b>(?:</span>)?</font>";
+    private static final String QC_COMMENT_SEPARATOR             = "(?i)<font[^>]*>(?:<span[^>]*>)?<b>_+</b>(?:</span>)?</font>";
     private static final String QC_FIRST_COMMENT_PREFIX          = "<div align=\"left\"><font face=\"Arial\"><span style=\"font-size:8pt\">&nbsp;&nbsp;</span></font></div>";
     private static final String QC_BREAK                         = "<br>";
     private static final String QC_LINE_BREAK                    = "<br />\r\n";
     private static final String QC_COMMENT_PREFIX                = "<div align=";
-    private static final String QC12_INSERT_BREAK                = "\r\n \r\n";
+    private static final String QC12_LINE_BREAK                  = "\r";
     private static final String QC_VERSION_OTHERS_END            = "</b></font>";
     private static final String QC_VERSION_OTHERS_START          = "<font color=\"#000080\"><b>";
     private static final String QC11_FIRST_COMMENT_START         = "<div align=\"left\"><font face=\"Arial\" color=\"#000080\"><span style=\"font-size:8pt\"><b>%s, %s:</b></span></font><font face=\"Arial\"><span style=\"font-size:8pt\">%s</span></font></div>";
@@ -97,8 +97,7 @@ public class QCHandler {
 
     public static final String  REQUIREMENT_TYPE_ALL             = "ALL";
 
-    private final static String QC12_UNDERSCORE_STRING           = "\r\n________________________________________\r\n";
-    private final static String QC12_INSERTNEWLINE               = "________________________________________\r\n";
+    private final static String QC_UNDERSCORE_PREFIX             = "<br>________________________________________";
 
     public QCHandler(boolean useAlternativeFieldName) {
         setUseAlternativeFieldName(useAlternativeFieldName);
@@ -1513,25 +1512,31 @@ public class QCHandler {
 
     /**
      * @param commentHTML
+     * @param qcMajorVersion
      * @return
      */
-    private String cleanUpComment(String commentHTML) {
+    private String cleanUpComment(String commentHTML, String qcMajorVersion) {
         // remove the first comment separator.
         // QC11 introduces a <span> element after the <font> element.
-        // (?i) == use case-insensitive matching
-        String res = commentHTML.replaceFirst(QC_COMMENT_SEPERATOR, "");
+        String res = commentHTML.replaceFirst(QC_COMMENT_SEPARATOR, "");
 
-        // remove gunk that causes Jericho to insert a newline as the first
+        // remove junk that causes Jericho to insert a newline as the first
         // char in the comment, causing "hanging comments" in TF. 
         // Unlike previous versions, the first comment of an artifact in QC11 doesn't 
         // start with a <br/> element, but with an "almost empty" div:
-        final String FIRST_COMMENT_PREFIX = QC_FIRST_COMMENT_PREFIX;
-        if (res.startsWith(FIRST_COMMENT_PREFIX)) {
-            res = res.substring(FIRST_COMMENT_PREFIX.length());
-        } else {
+        if (res.startsWith(QC_FIRST_COMMENT_PREFIX)) {
+            res = res.substring(QC_FIRST_COMMENT_PREFIX.length());
+        } else if (QC_VERSION_11.equals(qcMajorVersion)) {
             // remove the first <br/> to avoid "hanging comments" after Jericho conversion
             res = res.replaceFirst(QC_FIRST_BREAK, "");
         }
+
+        //New comment now start with an underscore string 
+        //so removing it to get the comment value.
+        if (res.startsWith(QC_UNDERSCORE_PREFIX)) {
+            res = res.replaceFirst(QC_UNDERSCORE_PREFIX, "");
+        }
+
         // replace empty lines by lines containing a non-breaking space
         // to prevent Jericho from removing the first empty line.
         // this applies only to QC11, QC10 uses different HTML that
@@ -1586,6 +1591,7 @@ public class QCHandler {
         String emptyString = "";
 
         int newRc = newRs.getRecordCount();
+        String qcMajorVersion = qcc.getMajorVersion();
 
         for (int newCnt = 0; newCnt < newRc; newCnt++, newRs.next()) {
             String fieldName = newRs.getFieldValueAsString("AP_FIELD_NAME");
@@ -1599,7 +1605,6 @@ public class QCHandler {
                     String strippedOldValue = stripStartAndEndTags(oldFieldValue);
                     String strippedNewValue = stripStartAndEndTags(newFieldValue);
                     String delta = "";
-                    final String qcMajorVersion = qcc.getMajorVersion();
                     if (QC_VERSION_12.equals(qcMajorVersion)) {
                         //Extract text values from html tags
                         String trimmedOldValue = JerichoUtils
@@ -1609,11 +1614,11 @@ public class QCHandler {
                         //Get the new comment value from the extracted text
                         String newComment = trimmedNewValue
                                 .substring(trimmedOldValue.length());
-                        //New comment has underscrore string prefixed, so substringafter to get the comment value 
-                        //incase of multi new comments replace underscrore string  with new line for formatting
+                        // All characters before first '\r' will be skipped. 
+                        //This is to get the new comment values alone and omit
+                        // the extra characters carry forwarded when switching between clients.
                         delta = StringUtils.substringAfter(newComment,
-                                QC12_UNDERSCORE_STRING).replaceAll(
-                                QC12_INSERTNEWLINE, QC12_INSERT_BREAK);
+                                QC12_LINE_BREAK);
                         //Encode back html to entity references to preserve tags around the <fullname> in the QC comment format
                         //which is validated during  transformation
                         deltaComment += com.collabnet.ccf.core.utils.StringUtils
@@ -1666,7 +1671,7 @@ public class QCHandler {
         if (StringUtils.isEmpty(newFieldValue))
             return emptyString;
         else {
-            return cleanUpComment(deltaComment);
+            return cleanUpComment(deltaComment, qcMajorVersion);
         }
     }
 
