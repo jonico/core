@@ -24,7 +24,7 @@ public interface IConnection extends ILifeCycle {
 
     public String getUsername();
 
-    public boolean isLikeStatementStandardsCompliant();
+    public boolean isOracle();
 
     public String sanitizeStringForSQLLikeQuery(String unsanitizedString,
             String escapeCharacter);

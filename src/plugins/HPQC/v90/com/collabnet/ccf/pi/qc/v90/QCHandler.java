@@ -453,18 +453,13 @@ public class QCHandler {
 
     public IRecordSet getAuditPropertiesRecordSet(IConnection qcc,
             List<String> txnIds) {
-        StringBuffer sql = new StringBuffer(
-                "SELECT * FROM AUDIT_PROPERTIES WHERE AP_ACTION_ID in (");
-        int len = txnIds.size();
-        for (int cnt = 0; cnt < len; cnt++) {
-            if (cnt != (len - 1))
-                sql.append("'" + txnIds.get(cnt) + "',");
-            else
-                sql.append("'" + txnIds.get(cnt) + "'");
+        String sql;
+        if (txnIds.size() > 1000 && qcc.isOracle()) {
+            sql = getAuditPropertiesWithTuplesQuery(qcc, txnIds);
+        } else {
+            sql = getAuditPropertiesWithSimpleINClause(qcc, txnIds);
         }
-        sql.append(") ORDER BY AP_PROPERTY_ID ASC ");
-        log.debug("New SQL in getDeltaOfComment is:" + sql);
-        IRecordSet newRs = qcc.executeSQL(sql.toString());
+        IRecordSet newRs = qcc.executeSQL(sql);
         return newRs;
     }
 
@@ -766,16 +761,6 @@ public class QCHandler {
         return changedRequirements;
     }
 
-    // public String stripLastTags(String oldFieldValue) {
-    // if (oldFieldValue.endsWith(LAST_TAGS)) {
-    // return oldFieldValue.substring(0, oldFieldValue.length() -
-    // LAST_TAGS.length());
-    // }
-    // else {
-    // return oldFieldValue;
-    // }
-    // }
-
     public String getOldFieldValue(IRecordSet newRs, String fieldName) {
 
         int newRc = newRs.getRecordCount();
@@ -829,6 +814,16 @@ public class QCHandler {
         return fieldValue;
 
     }
+
+    // public String stripLastTags(String oldFieldValue) {
+    // if (oldFieldValue.endsWith(LAST_TAGS)) {
+    // return oldFieldValue.substring(0, oldFieldValue.length() -
+    // LAST_TAGS.length());
+    // }
+    // else {
+    // return oldFieldValue;
+    // }
+    // }
 
     public List<String> getTransactionIdsInRangeForDefects(IConnection qcc,
             int entityId, int syncInfoTxnId, int actionId,
@@ -1577,6 +1572,38 @@ public class QCHandler {
                 rs = null;
             }
         }
+    }
+
+    private String getAuditPropertiesWithSimpleINClause(IConnection qcc,
+            List<String> txnIds) {
+        StringBuilder sql = new StringBuilder(
+                "SELECT * FROM AUDIT_PROPERTIES WHERE AP_ACTION_ID in (");
+        int len = txnIds.size();
+        for (int cnt = 0; cnt < len; cnt++) {
+            if (cnt != (len - 1))
+                sql.append("'" + txnIds.get(cnt) + "',");
+            else
+                sql.append("'" + txnIds.get(cnt) + "'");
+        }
+        sql.append(") ORDER BY AP_PROPERTY_ID ASC ");
+        log.debug("New SQL in getDeltaOfComment is:" + sql);
+        return sql.toString();
+    }
+
+    private String getAuditPropertiesWithTuplesQuery(IConnection qcc,
+            List<String> txnIds) {
+        StringBuilder sql = new StringBuilder(
+                "SELECT * FROM AUDIT_PROPERTIES WHERE (1,AP_ACTION_ID) in (");
+        int len = txnIds.size();
+        for (int cnt = 0; cnt < len; cnt++) {
+            if (cnt != (len - 1))
+                sql.append("(1,'" + txnIds.get(cnt) + "'),");
+            else
+                sql.append("(1,'" + txnIds.get(cnt) + "')");
+        }
+        sql.append(") ORDER BY AP_PROPERTY_ID ASC ");
+        log.debug("New SQL in getDeltaOfComment is:" + sql);
+        return sql.toString();
     }
 
     /**

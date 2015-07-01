@@ -22,20 +22,20 @@ import com.jacob.com.Dispatch;
 import com.jacob.com.Variant;
 
 public class Connection extends ActiveXComponent implements IConnection {
-    private IBugFactory          bugFactory                      = null;
-    private IRequirementsFactory requirementsFactory             = null;
-    private ICommand             command                         = null;
-    private String               userName                        = null;
+    private IBugFactory          bugFactory          = null;
+    private IRequirementsFactory requirementsFactory = null;
+    private ICommand             command             = null;
+    private String               userName            = null;
     private String               majorVersion;
     private String               minorVersion;
 
     /**
 	 *
 	 */
-    private static final long    serialVersionUID                = 1L;
-    boolean                      loggedIn                        = false;
+    private static final long    serialVersionUID    = 1L;
+    boolean                      loggedIn            = false;
 
-    private Boolean              likeStatementStandardsCompliant = null;
+    private Boolean              oracleSupport       = null;
 
     public Connection(String server, String domain, String project,
             String user, String pass) {
@@ -145,6 +145,10 @@ public class Connection extends ActiveXComponent implements IConnection {
         Dispatch.call(this, "InitConnectionEx", serverName);
     }
 
+    public boolean isLoggedIn() {
+        return loggedIn;
+    }
+
     /**
      * Determines whether SQL LIKE-statements are handled according to the SQL
      * standard.
@@ -158,26 +162,21 @@ public class Connection extends ActiveXComponent implements IConnection {
      * clause otherwise.
      */
     @Override
-    public boolean isLikeStatementStandardsCompliant() {
-        if (likeStatementStandardsCompliant != null) {
-            return likeStatementStandardsCompliant.booleanValue();
+    public boolean isOracle() {
+        if (oracleSupport != null) {
+            return oracleSupport.booleanValue();
         }
         IRecordSet rs = null;
         try {
             rs = executeSQL("select distinct 1 from audit_log where 'a' like '[abc]'");
-            likeStatementStandardsCompliant = (rs != null && rs
-                    .getRecordCount() == 0);
-            return likeStatementStandardsCompliant.booleanValue();
+            oracleSupport = (rs != null && rs.getRecordCount() == 0);
+            return oracleSupport.booleanValue();
         } finally {
             if (rs != null) {
                 rs.safeRelease();
                 rs = null;
             }
         }
-    }
-
-    public boolean isLoggedIn() {
-        return loggedIn;
     }
 
     public void login(String user, String pass) {
@@ -219,8 +218,7 @@ public class Connection extends ActiveXComponent implements IConnection {
         unsanitizedString = unsanitizedString.replace(escapeCharacter,
                 escapeCharacter + escapeCharacter);
         unsanitizedString = unsanitizedString.replace("'", "''");
-        String[] escapeStrings = isLikeStatementStandardsCompliant() ? new String[] {
-                "%", "_" }
+        String[] escapeStrings = isOracle() ? new String[] { "%", "_" }
                 : new String[] { "%", "_", "[", "]" };
         for (String s : escapeStrings) {
             unsanitizedString = unsanitizedString.replace(s, escapeCharacter
