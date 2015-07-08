@@ -1586,7 +1586,7 @@ public class QCHandler {
                 sql.append("'" + txnIds.get(cnt) + "'");
         }
         sql.append(") ORDER BY AP_PROPERTY_ID ASC ");
-        log.debug("New SQL in getDeltaOfComment is:" + sql);
+        log.debug("New SQL in getAuditPropertiesWithSimpleINClause is:" + sql);
         return sql.toString();
     }
 
@@ -1602,7 +1602,7 @@ public class QCHandler {
                 sql.append("(1,'" + txnIds.get(cnt) + "')");
         }
         sql.append(") ORDER BY AP_PROPERTY_ID ASC ");
-        log.debug("New SQL in getDeltaOfComment is:" + sql);
+        log.debug("New SQL in getAuditPropertiesWithTuplesQuery is:" + sql);
         return sql.toString();
     }
 
