@@ -622,8 +622,8 @@ public class QCWriter extends AbstractWriter<IConnection> implements IDataProces
             if (QCConnectionFactory.isDefectRepository(targetRepositoryId)) {
                 attachmentHandler.deleteAttachmentForDefect(connection,
                         parentArtifactId, targetArtifactId);
-                String attachmentName = getFieldValueFromGenericArtifact(
-                        genericArtifact, AttachmentMetaData.getAttachmentName());
+                getFieldValueFromGenericArtifact(genericArtifact,
+                        AttachmentMetaData.getAttachmentName());
                 log.info("Attachment " + targetArtifactId
                         + " is deleted from defect " + parentArtifactId
                         + " on " + genericArtifact.getTargetRepositoryId());
@@ -635,8 +635,8 @@ public class QCWriter extends AbstractWriter<IConnection> implements IDataProces
             } else {
                 attachmentHandler.deleteAttachmentForRequirement(connection,
                         parentArtifactId, targetArtifactId);
-                String attachmentName = getFieldValueFromGenericArtifact(
-                        genericArtifact, AttachmentMetaData.getAttachmentName());
+                getFieldValueFromGenericArtifact(genericArtifact,
+                        AttachmentMetaData.getAttachmentName());
                 log.info("Attachment " + targetArtifactId
                         + " is deleted from defect " + parentArtifactId
                         + " on " + genericArtifact.getTargetRepositoryId());
@@ -1281,8 +1281,7 @@ public class QCWriter extends AbstractWriter<IConnection> implements IDataProces
                 connection, targetArtifactId);
         String targetTransactionIdBeforeUpdate = targetAutimeAndTxnIdBeforeUpdate
                 .get(0);
-        int targetTransactionIdBeforeUpdateInt = Integer
-                .parseInt(targetTransactionIdBeforeUpdate);
+        int targetTransactionIdBeforeUpdateInt = getTargetTransactionIdBeforeUpdate(targetTransactionIdBeforeUpdate);
         // now do conflict resolution
         if (!AbstractWriter.handleConflicts(targetTransactionIdBeforeUpdateInt,
                 genericArtifact)) {
@@ -1335,8 +1334,7 @@ public class QCWriter extends AbstractWriter<IConnection> implements IDataProces
                 connection, targetArtifactId);
         String targetTransactionIdBeforeUpdate = targetAutimeAndTxnIdBeforeUpdate
                 .get(0);
-        int targetTransactionIdBeforeUpdateInt = Integer
-                .parseInt(targetTransactionIdBeforeUpdate);
+        int targetTransactionIdBeforeUpdateInt = getTargetTransactionIdBeforeUpdate(targetTransactionIdBeforeUpdate);
         // now do conflict resolution
         if (!AbstractWriter.handleConflicts(targetTransactionIdBeforeUpdateInt,
                 genericArtifact)) {
@@ -1407,6 +1405,19 @@ public class QCWriter extends AbstractWriter<IConnection> implements IDataProces
      */
     private String getResyncUserName() {
         return resyncUserName;
+    }
+
+    private int getTargetTransactionIdBeforeUpdate(
+            String targetTransactionIdBeforeUpdate) {
+        int transactionIdBeforeUpdate;
+        try {
+            transactionIdBeforeUpdate = Integer
+                    .parseInt(targetTransactionIdBeforeUpdate);
+        } catch (NumberFormatException e) {
+            return 0;
+        }
+        return transactionIdBeforeUpdate;
+
     }
 
     private void initCOM() {
