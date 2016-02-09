@@ -40,7 +40,8 @@ public class TFSWPAdhocIntegration {
                     pbi.getDescription(), null, null, "Open", null, 2,
                     pbi.getEstimate() == null ? 0 : pbi.getEstimate(),
                     pbi.getEstimate() == null ? 0 : pbi.getEstimate(), false,
-                    0, null, null, null, new FieldValues(), null, null, null);
+                    0, false, null, null, null, null, new FieldValues(), null,
+                    null, null);
         }
     }
 

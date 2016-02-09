@@ -76,6 +76,7 @@
 				<prop key="ccf.direction.tf.retrieve.parentInfo.forTrackerItems">true</prop>
 				<prop key="ccf.direction.tf.preserve.bulkcommentorder">false</prop>
 				<prop key="ccf.direction.countbeforecomreinitialization">50000</prop>
+				<prop key="ccf.direction.soaptimeout">60000</prop>
 			</props>
 		</property>
 		<property name="locations">
@@ -316,6 +317,7 @@
 			In this case TFConnectionFactory manages TF connections
 			objects.
 		</description>
+		<property name="soapTimeout" value="${ccf.direction.soaptimeout}" />
 	</bean>
 
 	<bean id="JdbcConnectionTF2QC"

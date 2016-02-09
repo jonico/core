@@ -227,8 +227,9 @@ public class TeamForgeTester {
 
         return connection.getTrackerClient().createArtifact(getPbiTracker(),
                 title, formatDescription(description), null, null, STATUS_OPEN,
-                null, 0, 0, 0, false, effort, null, null,
-                getPlanningFolderId(release), flexFields, null, null, null);
+                null, 0, 0, 0, false, effort, false, null, null,
+                getPlanningFolderId(release), null, flexFields, null, null,
+                null);
     }
 
     /**
@@ -266,7 +267,8 @@ public class TeamForgeTester {
         ArtifactDO task = connection.getTrackerClient().createArtifact(
                 getTaskTracker(), title, taskDescription, null, null,
                 taskStatus, null, 0, originalEstimate, remainingEffort, false,
-                0, taskUser, null, null, new FieldValues(), null, null, null);
+                0, false, taskUser, null, null, null, new FieldValues(), null,
+                null, null);
         return task;
     }
 

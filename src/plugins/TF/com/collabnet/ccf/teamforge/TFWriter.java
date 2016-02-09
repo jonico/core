@@ -1306,7 +1306,7 @@ public class TFWriter extends AbstractWriter<Connection> implements IDataProcess
             planningFolder = connection.getPlanningClient()
                     .createPlanningFolder(parentId, title, description,
                             startDate, endDate, status, capacity,
-                            pointsCapacity, releaseId, trackerUnitId);
+                            pointsCapacity, releaseId, trackerUnitId, null);
         } catch (RemoteException e) {
             String cause = "Could not create planning folder: "
                     + e.getMessage();

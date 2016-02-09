@@ -39,6 +39,8 @@ public class TFConnectionFactory implements ConnectionFactory<Connection> {
                                                        .getLog(TFConnectionFactory.class);
     public static final String PARAM_DELIMITER = ":";
 
+    private int                soapTimeout     = 60000;
+
     public void closeConnection(Connection connection)
             throws ConnectionException {
         try {
@@ -109,7 +111,8 @@ public class TFConnectionFactory implements ConnectionFactory<Connection> {
             connection = Connection.builder(connectionInfo)
                     .userNamePassword(username, password)
                     .httpAuth(key, Long.toString(System.currentTimeMillis()))
-                    .proxy(null).validateBeforeBuild(false).build();
+                    .proxy(null).soapTimeout(getSoapTimeout())
+                    .validateBeforeBuild(false).build();
             connection.login();
         } catch (RemoteException e) {
             String cause = "While trying to login into TF " + connectionInfo
@@ -118,6 +121,10 @@ public class TFConnectionFactory implements ConnectionFactory<Connection> {
             throw new ConnectionException(cause, e);
         }
         return connection;
+    }
+
+    public int getSoapTimeout() {
+        return soapTimeout;
     }
 
     public boolean isAlive(Connection connection) {
@@ -134,6 +141,10 @@ public class TFConnectionFactory implements ConnectionFactory<Connection> {
             return false;
         }
         return true;
+    }
+
+    public void setSoapTimeout(int soapTimeout) {
+        this.soapTimeout = soapTimeout;
     }
 
     /**

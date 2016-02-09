@@ -107,6 +107,8 @@ public class TFTrackerHandler {
         flexFields.setNames(flexFieldNames.toArray(new String[0]));
         flexFields.setValues(flexFieldValues.toArray());
         flexFields.setTypes(flexFieldTypes.toArray(new String[0]));
+        String teamId = null;
+        boolean autosummingPoints = false;
 
         ArtifactDO artifactData = connection.getTrackerClient().createArtifact(
                 trackerId, title, description, group,
@@ -118,9 +120,10 @@ public class TFTrackerHandler {
                 autosumming ? 0 : remainingEfforts, // remaining efforts
                 autosumming,
                 points, // story points
+                autosummingPoints,
                 assignedTo, // assigned user name
-                reportedReleaseId, planningFolderId, flexFields, null, null,
-                null);
+                teamId, reportedReleaseId, planningFolderId, flexFields, null,
+                null, null);
         if (!autosumming) {
             artifactData.setActualEffort(actualEfforts);
         }
@@ -234,11 +237,6 @@ public class TFTrackerHandler {
 
     }
 
-    public PlanningFolderDO getChangedPlanningFolderToForce(Connection connection,
-            String artifactID) throws RemoteException {
-        return connection.getPlanningClient().getPlanningFolderData(artifactID);
-    }
-
     public List<PlanningFolderDO> getChangedPlanningFolders(
             Connection connection, String sourceRepositoryId,
             Date lastModifiedDate, String lastSynchronizedArtifactId,
@@ -279,6 +277,11 @@ public class TFTrackerHandler {
             return null;
         else
             return detailRowsNew;
+    }
+
+    public PlanningFolderDO getChangedPlanningFolderToForce(
+            Connection connection, String artifactID) throws RemoteException {
+        return connection.getPlanningClient().getPlanningFolderData(artifactID);
     }
 
     /**

@@ -166,8 +166,8 @@ public class TestTaskWithImproperParentage extends TFSWPIntegrationTest {
                 .createArtifact(getTeamForgeTester().getTaskTracker(),
                         "task with parent task", "<blank>", null, null,
                         TaskStatus.NOT_STARTED.getStatus(), null, 0, 0, 0,
-                        false, 0, getTeamForgeTester().getUserName(), null,
-                        teamForgeParentTask.getPlanningFolderId(),
+                        false, 0, false, getTeamForgeTester().getUserName(),
+                        null, teamForgeParentTask.getPlanningFolderId(), null,
                         new FieldValues(), null, null, null);
         getTeamForgeTester().createArtifactDependency(
                 teamForgeParentTask.getId(), createdTask.getId(),
