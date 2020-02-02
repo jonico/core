@@ -1,5 +1,5 @@
 CollabNet Connector Framework (HP Quality Center and CollabNet ScrumworksPro Integrations with CollabNet TeamForge)
-Version 1.5.1
+Version 1.5.1 - Mirror from ccf.open.collab.net
 
 Introduction:
 -------------             
@@ -104,9 +104,9 @@ Join openCollabNet for community support: http://open.collab.net
 About CollabNet
 ---------------  
 CollabNet leads the industry in Agile application lifecycle management 
-(Agile ALM) in the Cloud. The CollabNet TeamForge™ ALM platform, 
+(Agile ALM) in the Cloud. The CollabNet TeamForgeâ„¢ ALM platform, 
 CollabNet Subversion software configuration management (SCM) solution, 
-and ScrumWorks® project and program management software enable teams 
+and ScrumWorksÂ® project and program management software enable teams 
 using any environment, methodology, and technology to increase productivity 
 by up to 50% and to reduce the cost of software development by up to 80%.  
 The company also offers training, including Certified ScrumMaster training, 
